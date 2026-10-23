@@ -33,9 +33,9 @@ pnpm run check                        # 门禁：整仓那一套（= `pnpm -w ru
 ```
 
 文档站在仓库根跑（Pagoda CLI）：`pnpm run dev:docs` 起站、`pnpm run build:docs` 出
-`packages/docs/site-dist/`。页面是 `packages/docs/site/desktop/views/*.md`，首页是
-`views/index.vue`，配色与正文样式在 `site/desktop/style/`。它也在门禁的 `build` 里 ——
-站点建不出来同样算红。
+`packages/docs/site-dist/`、`pnpm run deploy:docs` 推到 `gh-pages`。页面是
+`packages/docs/site/desktop/views/*.md`，首页是 `views/index.vue`，配色与正文样式在
+`site/desktop/style/`。它也在门禁的 `build` 里 —— 站点建不出来同样算红。
 
 **门禁只有一份，两个入口跑的是同一条链**：包内这条就是 `pnpm -w run check`，也就是仓库根那条 ——
 `lint:commit` → `build` → `typecheck` → `lint` → `coverage` → `arch` → `check:docs` → `check:runtimes` →

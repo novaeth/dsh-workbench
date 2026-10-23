@@ -26,7 +26,7 @@
   <a href="#常见问题">常见问题</a>
 </p>
 
-<img src="assets/readme-hero.svg" alt="dsh-workbench：左栏项目与会话，中间常驻对话，右侧实时数据面板" width="100%"/>
+<img src="assets/readme-hero.png" alt="dsh-workbench：左栏项目与会话，中间常驻对话，右侧实时数据面板" width="100%"/>
 
 </div>
 

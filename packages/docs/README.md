@@ -43,14 +43,13 @@ site/static/               原样拷到站根（logo.svg）
 ## 发到 GitHub Pages
 
 ```bash
-pnpm run build:docs
-git worktree add /tmp/wb-pages gh-pages
-cp -r packages/docs/site-dist/* /tmp/wb-pages/
-cd /tmp/wb-pages && git add -A && git commit -m "docs: publish site" && git push origin gh-pages
+pnpm run deploy:docs              # 构建并推 gh-pages
+pnpm run deploy:docs -- --dry-run # 只构建，不推
 ```
 
-第一次推完，在仓库 Settings → Pages 里把源指到 `gh-pages` 分支。`publicPath` 为空，所以
-仓库页子路径（`/<repo>/`）也能跑。
+底层是 `gh-pages`：把 `site-dist/` 推到 `gh-pages` 分支，顺带写 `.nojekyll`。第一次推完，
+在仓库 Settings → Pages 里把源指到 `gh-pages` 分支。`publicPath` 为空，所以仓库页子路径
+（`/<repo>/`）也能跑。
 
 右上角的 GitHub 入口不在 `pagoda.config.mjs` 里配：框架的 `site.links` 渲染在标题左边、还是个下拉。
 它由 `site/desktop/index.js` 的 `install()` 注入到 `.pagoda-doc-header__right` 末尾，样式跟着

@@ -1,3 +1,4 @@
+/* global document, MutationObserver */
 const GITHUB = "https://github.com/novaeth/dsh-workbench";
 
 function mountGithubLink() {
