@@ -32,9 +32,11 @@ pnpm run check                        # 门禁：整仓那一套（= `pnpm -w ru
 ```
 
 **门禁只有一份，两个入口跑的是同一条链**：包内这条就是 `pnpm -w run check`，也就是仓库根那条 ——
-`lint:commit` → `typecheck` → `lint` → `coverage` → `arch` → `check:docs` → `check:runtimes` →
+`lint:commit` → `build` → `typecheck` → `lint` → `coverage` → `arch` → `check:docs` → `check:runtimes` →
 `selfcheck` → 模块工具包的十三条判据 → `check:release-artifacts`；`pnpm release` 的闸也是它。
 **别在包内另串一份短的**（会漏 lint / 文档 / 模块判据）。
+链首的 `build` 不是可有可无：`module-hello` 从 `@dsh-workbench/core/client` 取 kit，而那是构建产物
+（`client.js` + `dist/types`，都不入库）—— 不先建，干净 clone 上 `typecheck` / `test` 就找不到包。
 `pnpm run dev` / `test` 在根与包内等价（根脚本按 workspace 转发给各包）。
 
 **同一条链不许并发跑**：`check:standalone` 会把 `src/` 整目录改名成 `src.hidden/` 再改回来，

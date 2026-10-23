@@ -557,6 +557,8 @@ profile 的 `cordis.patch.yml` 与 `dsh.profile.bundles` 在监听里，`dsh-hmr
 
 | 命令 | 判什么 |
 |---|---|
+| `lint:commit` | HEAD 的提交信息过 commitlint（Conventional Commits） |
+| `build` | 各包产物与类型面；`module-hello` 从 `@dsh-workbench/core/client` 取 kit，而那是构建产物，所以建在 `typecheck` 之前 |
 | `typecheck` | 类型；`strict`，不开 `any` 逃生舱 |
 | `lint` | ESLint（含 react-hooks）；缓存放 `node_modules/.cache` |
 | `coverage` | 每包的测试与覆盖率；关键目录必须在报告里，基线只升不降 |

@@ -46,6 +46,7 @@
     "build:host": "node scripts/build.mjs host",
     "build:client": "node scripts/build.mjs client",
     "typecheck": "tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/tsconfig.tsbuildinfo",
+    "prepare": "node scripts/build-types.mjs",
     "arch": "arch-guard",
     "selfcheck": "node scripts/selfcheck/index.mjs",
     "check:runtimes": "node scripts/check-runtimes.mjs",

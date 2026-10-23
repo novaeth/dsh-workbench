@@ -23,12 +23,19 @@ map and the six hard constraints.
 git clone https://github.com/novaeth/dsh-workbench.git
 cd dsh-workbench
 pnpm install
-pnpm run check        # the one gate: commit message · typecheck · lint · coverage ·
+pnpm run check        # the one gate: commit message · build · typecheck · lint · coverage ·
                       # arch · docs · runtimes · selfcheck · module checks · release artifacts
 ```
 
 `pnpm run dev` starts the workbench on `:3081` next to `dsh web` on `:3080` and
 watches `packages/workbench/src/**`.
+
+The gate builds before it typechecks: `packages/module-hello` imports the kit from
+`@dsh-workbench/core/client`, and that is a build artifact (`client.js` and
+`dist/types`, both ignored). `pnpm install` already runs a `prepare` that writes
+the type surface, so editors and a per-package `typecheck` work right after
+install; running one package's tests before any build does not, so run
+`pnpm run build` once if you go that way.
 
 Internal maintainers: the design docs and ADRs live in the private `private-docs/`
 submodule. Public builds and the gate do not need it. With access, run

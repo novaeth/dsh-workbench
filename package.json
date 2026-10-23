@@ -19,7 +19,7 @@
     "check:modules": "node packages/module-tools/bin/dsh-wb-module.mjs check",
     "check:contracts": "node packages/module-tools/bin/dsh-wb-module.mjs check --only contracts",
     "check:protocol": "node packages/module-tools/bin/dsh-wb-module.mjs check --only protocol",
-    "check": "pnpm run lint:commit && pnpm run typecheck && pnpm run lint && pnpm run coverage && pnpm run arch && pnpm run check:docs && pnpm run check:runtimes && pnpm run selfcheck && pnpm run check:modules && pnpm run check:release-artifacts",
+    "check": "pnpm run lint:commit && pnpm run build && pnpm run typecheck && pnpm run lint && pnpm run coverage && pnpm run arch && pnpm run check:docs && pnpm run check:runtimes && pnpm run selfcheck && pnpm run check:modules && pnpm run check:release-artifacts",
     "dev": "pnpm --filter @dsh-workbench/core run dev",
     "dev:desktop": "pnpm --filter @dsh-workbench/core run dev:desktop",
     "verify": "./scripts/verify.sh",
@@ -53,6 +53,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "husky": "^9.1.7",
     "semver": "^7.8.5",
+    "typescript": "5.9.3",
     "typescript-eslint": "^8.71.0"
   },
   "packageManager": "pnpm@10.32.1",
