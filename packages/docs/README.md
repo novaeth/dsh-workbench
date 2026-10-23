@@ -26,22 +26,13 @@ site/static/               原样拷到站根（logo.svg）
 ## 加一页
 
 1. 在 `site/desktop/views/` 下建 `xxx.md`（或 `guide/xxx.md`）
-2. 在 `pagoda.config.mjs` 的 `site.nav` 里挂一行 `{ title: '标题', view: 'guide/xxx' }`
+2. 在 `pagoda.config.mjs` 的 `site.nav` 里挂一行 `{ title: '标题', view: 'xxx' }`
 3. 站内跳转用 `<PagodaDocLinkToView view="guide/xxx">…</PagodaDocLinkToView>`，别写死 `href`
 
-## 改样子
-
-整套样式是从 `vite-plugin-aipanel` 的文档站原样搬过来的，**不要重写**：换外观就在这两份里改值，
-别另起一套命名。
-
-- `style/css-vars.scss` —— 框架变量表（`--pd-doc-*` 那批是框架认的），品牌色 `#b39aff` 在文件顶部
-- `style/index.scss` —— 首页与正文的版式（`.hero-*` / `.f-card` / `.qs-*` / `.doc-content`）
-- `views/index.vue` 的 `<style>` —— 首页自己的那段，跟着模板走
-
-品牌色、间距、圆角与 aipanel 保持同一套；两边只有文案和页面内容不同。要改主色，改
-`css-vars.scss` 顶部那组 `--brand-*` 与 `--pd-doc-primary-base`，别在别处另写十六进制。
-
-**别改 `node_modules` 里的框架样式**；要覆盖就写在这两份里。
+目录（`views/guide/`）的落地页必须叫 `guide/index.md`，写成 `views/guide.md` 就成了顶级页 ——
+路由的 `meta.prefix` 是空的，左侧菜单不会出现。分组 `items` 里的 `view` 只写叶子名
+（`quickstart`，不写 `guide/quickstart`）：前缀由框架按分组拼，写全路径会拼成
+`/guide/guide/quickstart`，点了没反应。
 
 ## 一处坑：typescript 版本
 

@@ -5,7 +5,7 @@ export default defineConfig({
   site: {
     headerTitle: "dsh-workbench",
     title: "dsh-workbench · Agent 工作台",
-    subtitle: "给 DeepSeek Harness 换一个外壳",
+    subtitle: "把工作交给 agent，把结果留给自己",
     description:
       "dsh 插件：左栏项目与会话、中间常驻对话、右侧实时数据面板。界面只读，写入只走 agent 工具；不改 dsh 本身。",
     defaultRoute: "index",
@@ -17,11 +17,12 @@ export default defineConfig({
         title: "指南",
         view: "guide",
         items: [
-          { title: "快速开始", view: "guide/quickstart" },
-          { title: "三种装法", view: "guide/install" },
-          { title: "面板与模块", view: "guide/modules" },
-          { title: "数据与设置", view: "guide/data" },
-          { title: "架构", view: "guide/architecture" },
+          { title: "总览", view: "index" },
+          { title: "快速开始", view: "quickstart" },
+          { title: "三种装法", view: "install" },
+          { title: "面板与模块", view: "modules" },
+          { title: "数据与设置", view: "data" },
+          { title: "架构", view: "architecture" },
         ],
       },
       { title: "常见问题", view: "faq" },

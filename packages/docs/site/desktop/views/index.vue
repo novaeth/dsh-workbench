@@ -27,19 +27,18 @@ defineOptions({
         </div>
 
         <h1 class="hero-title">
-          <span class="line">给 DeepSeek Harness</span>
-          <span class="line">换一个<span class="grad">外壳</span></span>
+          <span class="line">把工作交给 agent</span>
+          <span class="line">把结果<span class="grad">留给自己</span></span>
         </h1>
 
         <p class="hero-desc">
-          一个 dsh 插件：左边认领项目与会话，中间那列一直是对话，<br />
-          右边是自研的数据面板。界面只读，写入只走 agent 工具。
+          左栏项目，中间对话，右边一列只读面板。<br />
+          你交代，它执行 —— dsh 本体一行不改。
         </p>
 
         <div class="hero-cta">
           <a
             href="#/guide/quickstart"
-            target="_blank"
             class="btn-primary"
           >
             <svg
@@ -59,13 +58,13 @@ defineOptions({
                 y2="3"
               />
             </svg>
-            30 秒开始
+            三分钟跑起来
           </a>
           <PagodaDocLinkToView
-            view="guide/quickstart"
+            view="guide/install"
             class="btn-ghost"
           >
-            看架构
+            三种装法
             <svg
               width="14"
               height="14"
@@ -102,18 +101,18 @@ defineOptions({
               class="meta-dot"
               style="--c: #10b981"
             ></span>
-            完全开源 · MIT
+            MIT 开源
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ====== 核心能力 ====== -->
+    <!-- ====== 能力 ====== -->
     <section class="features">
       <div class="section-header">
         <span class="section-eyebrow">FEATURES</span>
-        <h2>核心能力</h2>
-        <p>一个 dsh 插件：左栏、常驻对话、只读面板</p>
+        <h2>不是又一个数据看板</h2>
+        <p>面板不用点：agent 改完，它自己更新。</p>
       </div>
 
       <div class="feature-grid">
@@ -152,7 +151,7 @@ defineOptions({
             </svg>
           </div>
           <h3>左栏：项目与会话</h3>
-          <p>工作区、会话、任务收在一列，切回来还是那个现场。</p>
+          <p>项目、会话收在一列；切走再回来，还是那个现场。</p>
         </div>
         <div class="f-card">
           <div
@@ -172,7 +171,7 @@ defineOptions({
             </svg>
           </div>
           <h3>中间：常驻对话</h3>
-          <p>对话不藏在抽屉里，和面板并排，不用来回切上下文。</p>
+          <p>对话不藏进抽屉，和面板并排；不用在聊天窗口和网页之间来回切。</p>
         </div>
         <div class="f-card">
           <div
@@ -191,7 +190,7 @@ defineOptions({
             </svg>
           </div>
           <h3>右侧：只读面板</h3>
-          <p>面板只读，写入只走 agent 工具；出现写接口就是设计错了。</p>
+          <p>面板只读，写入只走 agent 工具 —— 谁改的、改了什么，对话里查得到。</p>
         </div>
         <div class="f-card">
           <div
@@ -210,7 +209,7 @@ defineOptions({
             </svg>
           </div>
           <h3>三种装法</h3>
-          <p>独立实例、装进 dsh web、装进 Desktop；要隔离就隔离。</p>
+          <p>独立实例、并进 dsh web、装进 Desktop；要隔离就单开一份，想省事就并进去。</p>
         </div>
         <div class="f-card">
           <div
@@ -247,7 +246,7 @@ defineOptions({
             </svg>
           </div>
           <h3>模块按需</h3>
-          <p>缺陷、构建、分析都是独立模块，市场里装升卸，或让 agent 代劳。</p>
+          <p>工作台本身不带业务模块：装什么有什么，没有现成的就让 agent 现场做一个。</p>
         </div>
         <div class="f-card">
           <div
@@ -271,7 +270,7 @@ defineOptions({
             </svg>
           </div>
           <h3>门禁守得住</h3>
-          <p>零注释、两个运行时不许互引、面板只读 —— 每条硬约束都有判据在链上跑。</p>
+          <p>改完不是靠自觉：类型、架构、覆盖率、模块判据，红一条就不发版。</p>
         </div>
       </div>
     </section>
@@ -281,7 +280,7 @@ defineOptions({
       <div class="section-header">
         <span class="section-eyebrow">GET STARTED</span>
         <h2>开始使用</h2>
-        <p>三分钟跑起来：装、起、装模块，别的它自己准备</p>
+        <p>三步跑起来；卡住的那一步，常见问题里有解。</p>
       </div>
 
       <div class="qs-entry">
@@ -303,11 +302,11 @@ defineOptions({
             </svg>
           </div>
           <h3>快速开始</h3>
-          <p>npx 一条命令建实例，浏览器打开 :3081，与 dsh web 并存。</p>
+          <p>建实例、起实例，浏览器打开 :3081；它和 dsh web 并排跑，互不打扰。</p>
           <PagodaDocLinkToView
             view="guide/quickstart"
             class="qs-link"
-          >查看完整教程 →</PagodaDocLinkToView>
+          >跟着做 →</PagodaDocLinkToView>
         </div>
         <div class="qs-card">
           <div
@@ -341,7 +340,7 @@ defineOptions({
           <PagodaDocLinkToView
             view="faq"
             class="qs-link"
-          >查看常见问题 →</PagodaDocLinkToView>
+          >按症状查 →</PagodaDocLinkToView>
         </div>
       </div>
     </section>
@@ -350,12 +349,12 @@ defineOptions({
     <section class="footer-cta">
       <div class="footer-cta-inner">
         <h2>先装上，再决定要不要留下</h2>
-        <p>独立实例与 dsh web 并存，装错了删掉数据目录就回到原样</p>
+        <p>独立实例有自己的端口和数据目录，和 dsh web 互不影响；不想要了，删掉两个目录就回到原样。</p>
         <a
           href="#/guide/quickstart"
           class="btn-primary"
         >
-          看快速开始
+          装一个试试
           <svg
             width="14"
             height="14"
