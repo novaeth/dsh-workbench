@@ -1,0 +1,26 @@
+export const messages = {
+  zh: {
+    '__UNIT__.cardTitle': '目录概览',
+    '__UNIT__.needProject': '先打开一个项目',
+    '__UNIT__.loading': '正在读目录…',
+    '__UNIT__.loadingHint': '正在统计文件数、目录数与最大的几个文件',
+    '__UNIT__.errorTitle': '读不到这个目录',
+    '__UNIT__.errorHint': '先确认这个目录还在、你也能读它，然后点右上角刷新重试',
+    '__UNIT__.empty': '这个目录是空的：没有文件，也没有子目录',
+    '__UNIT__.largest': '最大的几个文件',
+    '__UNIT__.fileUnit': ' 个文件',
+    '__UNIT__.dirUnit': ' 个目录',
+  },
+  en: {
+    '__UNIT__.cardTitle': 'Directory overview',
+    '__UNIT__.needProject': 'Open a project first',
+    '__UNIT__.loading': 'Reading the directory…',
+    '__UNIT__.loadingHint': 'Counting files, folders, and the largest files',
+    '__UNIT__.errorTitle': 'Cannot read this directory',
+    '__UNIT__.errorHint': 'Check that the folder still exists and you can read it, then hit refresh in the header',
+    '__UNIT__.empty': 'This directory is empty: no files and no subdirectories',
+    '__UNIT__.largest': 'Largest files',
+    '__UNIT__.fileUnit': ' files',
+    '__UNIT__.dirUnit': ' dirs',
+  },
+};

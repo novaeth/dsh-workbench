@@ -1,0 +1,48 @@
+.wb-mockStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wb-len-4);
+  padding: var(--wb-len-8) var(--wb-len-12);
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+  flex: none;
+}
+
+.wb-mockNote {
+  flex: 1 0 100%;
+  font-size: var(--wb-font-10);
+  line-height: var(--wb-line-14);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.wb-mockChip {
+  flex: none;
+  padding: var(--wb-len-2) var(--wb-len-7);
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: var(--wb-radius-pill);
+  corner-shape: round;
+  background: transparent;
+  font-size: var(--wb-font-10);
+  line-height: var(--wb-line-14);
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+
+.wb-mockChip:hover {
+  color: var(--dsw-alias-label-primary);
+}
+
+.wb-mockChipOn {
+  border-color: transparent;
+  background: var(--dsw-alias-brand-primary);
+  color: var(--dsw-alias-label-primary-foreground);
+}
+
+.wb-mockChipOn:hover {
+  border-color: transparent;
+  background: var(--dsw-alias-brand-primary);
+  color: var(--dsw-alias-label-primary-foreground);
+}
+
+.wb-panelBody.wb-panelMany .wb-mockStrip {
+  display: none;
+}

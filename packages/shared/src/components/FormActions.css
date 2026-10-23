@@ -1,0 +1,13 @@
+.wb-formActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--wb-len-8);
+}
+
+.wb-formActionDanger {
+  color: var(--dsw-alias-state-error-primary);
+  border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary) 30%, transparent);
+  --dsw-alias-interactive-bg-hover: color-mix(in srgb, var(--dsw-alias-state-error-primary) 8%, transparent);
+}

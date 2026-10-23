@@ -1,0 +1,106 @@
+.wb-formRows {
+  display: grid;
+  grid-template-columns: minmax(72px, max-content) minmax(0, 1fr);
+  column-gap: var(--wb-len-8);
+  row-gap: var(--wb-len-12);
+}
+
+.wb-formRows > :not(.wb-formRow) {
+  grid-column: 1 / -1;
+}
+
+.wb-formRow {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(72px, max-content) minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--wb-len-8);
+  row-gap: var(--wb-len-8);
+}
+
+.wb-formRow[data-layout='stacked'] {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: var(--wb-len-6);
+}
+
+.wb-formRows > .wb-formRow[data-layout='stacked'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.wb-formLabel {
+  min-width: 0;
+  font-size: var(--dsw-font-xs-13-font-size);
+  color: var(--dsw-alias-label-secondary);
+  overflow-wrap: anywhere;
+  white-space: nowrap;
+}
+
+.wb-formRow[data-layout='stacked'] .wb-formLabel {
+  white-space: normal;
+}
+
+.wb-formRow[data-layout='stacked'] .wb-formHint,
+.wb-formRow[data-layout='stacked'] .wb-formProblem {
+  grid-column: 1 / -1;
+}
+
+.wb-formControl {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.wb-formControl
+  > :where(
+    .wb-selectAnchor,
+    .wb-choiceMenu,
+    input:not(
+      [type='checkbox'],
+      [type='radio'],
+      [type='button'],
+      [type='submit'],
+      [type='reset'],
+      [type='image'],
+      [type='color'],
+      [type='range']
+    ),
+    select,
+    textarea
+  ) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.wb-formHint {
+  grid-column: 2;
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.wb-formProblem {
+  grid-column: 2;
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.wb-formRow:has(.wb-formProblem) .wb-formLabel {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.wb-formRow:has(:disabled) .wb-formLabel {
+  opacity: 0.4;
+}
+
+.wb-formRows > .wb-formRow {
+  grid-template-columns: subgrid;
+}
+
+@supports not (grid-template-columns: subgrid) {
+  .wb-formRows > .wb-formRow {
+    grid-template-columns: minmax(72px, max-content) minmax(0, 1fr);
+  }
+}

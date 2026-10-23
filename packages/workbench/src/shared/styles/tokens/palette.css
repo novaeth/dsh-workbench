@@ -1,0 +1,4 @@
+:root {
+  --wb-static-mask-opaque: #000;
+  --wb-static-shadow-ghost: 0 8px 20px rgba(0, 0, 0, 0.4);
+}

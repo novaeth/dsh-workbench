@@ -1,0 +1,87 @@
+.wb-cardHead {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-len-6);
+  flex: none;
+  padding: var(--wb-len-8) var(--wb-len-10) var(--wb-len-8) var(--wb-card-gutter);
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+  background: var(--dsw-alias-bg-layer-2);
+}
+
+.wb-cardTitle {
+  margin: 0;
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  font-weight: 600;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.wb-cardMeta {
+  font-size: var(--dsw-font-xxxs-11-font-size);
+  line-height: var(--wb-line-16);
+  color: var(--dsw-alias-label-tertiary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wb-cardMeta::before {
+  content: '\00b7';
+  margin-right: var(--wb-len-6);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.wb-cardOpen {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin-left: auto;
+  flex: none;
+  width: var(--wb-len-22);
+  height: var(--wb-len-22);
+  padding: var(--wb-len-4);
+  border-radius: var(--wb-radius-6);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.wb-cardOpen ~ .wb-cardRefresh {
+  margin-left: 0;
+}
+
+.wb-cardOpen:hover {
+  color: var(--dsw-alias-label-primary);
+}
+
+.wb-cardRefresh {
+  margin-left: auto;
+  flex: none;
+  width: var(--wb-len-22);
+  height: var(--wb-len-22);
+  padding: var(--wb-len-4);
+  border-radius: var(--wb-radius-6);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.wb-cardRefresh:hover:not(:disabled) {
+  color: var(--dsw-alias-label-primary);
+}
+
+.wb-cardRefresh:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.wb-cardGear {
+  flex: none;
+  width: var(--wb-len-22);
+  height: var(--wb-len-22);
+  padding: var(--wb-len-3);
+  border-radius: var(--wb-radius-6);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.wb-cardGear:hover:not(:disabled) {
+  color: var(--dsw-alias-label-primary);
+}

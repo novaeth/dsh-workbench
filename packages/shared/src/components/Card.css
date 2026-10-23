@@ -1,0 +1,19 @@
+.wb-card {
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-xl);
+  background: var(--dsw-alias-bg-layer-1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: none;
+}
+.wb-cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-12);
+  padding: var(--wb-len-12) var(--wb-card-gutter);
+  font-size: var(--dsw-font-xxs-12-font-size);
+}
+.wb-cardBleed {
+  margin-inline: calc(-1 * var(--wb-card-gutter));
+}

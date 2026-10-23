@@ -1,0 +1,114 @@
+.wb-centered.wb-centeredCompact {
+  flex: none;
+  min-height: 0;
+  gap: var(--wb-len-8);
+  padding: var(--wb-len-20) var(--wb-len-16);
+}
+
+.wb-centered.wb-centeredCompact .wb-centeredHero {
+  margin-bottom: var(--wb-len-4);
+}
+
+.wb-skeleton {
+  display: flex;
+  flex-direction: column;
+}
+
+.wb-skeletonRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-8);
+  padding: var(--wb-len-8);
+  border-radius: var(--dsw-radius-md);
+}
+
+.wb-skeletonRow + .wb-skeletonRow::before {
+  content: '';
+  align-self: stretch;
+  height: var(--wb-len-0-5);
+  margin: 0 var(--wb-len-8) var(--wb-len-neg-0-5);
+  background: var(--dsw-alias-border-l2);
+}
+
+.wb-skeletonBar {
+  display: block;
+  height: var(--wb-len-13);
+  border-radius: var(--dsw-radius-xs);
+  background: var(--dsw-alias-bg-skeleton);
+  animation: wb-skeleton-pulse var(--wb-dur-1-4) var(--ds-ease-in-out) infinite;
+}
+
+.wb-skeletonBarTitle {
+  width: 62%;
+}
+
+.wb-skeletonBarMeta {
+  width: 32%;
+  height: var(--wb-len-10);
+}
+
+.wb-skeletonRow:nth-child(2n) .wb-skeletonBarTitle {
+  width: 74%;
+}
+
+.wb-skeletonRow:nth-child(3n) .wb-skeletonBarTitle {
+  width: 52%;
+}
+
+@keyframes wb-skeleton-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.wb-centered {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--wb-len-14);
+  flex: 1;
+  min-height: var(--wb-len-240);
+  padding: 0 var(--wb-len-24) var(--wb-len-24);
+  text-align: center;
+}
+
+.wb-centeredHero {
+  display: flex;
+  margin-bottom: var(--wb-len-16);
+  color: var(--dsw-alias-label-dimmed);
+}
+
+.wb-centeredTitle {
+  font-size: var(--dsw-font-s-14-font-size);
+  line-height: var(--wb-line-22);
+  color: var(--dsw-alias-label-primary);
+}
+
+.wb-centeredHint {
+  max-width: var(--wb-len-300);
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.wb-centeredDetail {
+  max-width: var(--wb-len-320);
+  font-family: var(--ds-font-family-code, monospace);
+  font-size: var(--dsw-font-xxxs-11-font-size);
+  line-height: var(--wb-line-16);
+  color: var(--dsw-alias-label-dimmed);
+  word-break: break-all;
+}
+
+.wb-centeredAction {
+  display: flex;
+  justify-content: center;
+  gap: var(--wb-len-8);
+  margin-top: var(--wb-len-2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .wb-skeletonBar {
+    animation: none;
+  }}

@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" width="1200" height="520" role="img" aria-label="dsh-workbench：左栏项目与会话，中间常驻对话，右侧实时数据面板">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#070b12"/>
+      <stop offset="1" stop-color="#0d1522"/>
+    </linearGradient>
+    <radialGradient id="glowBlue" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#0ea5e9" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#0ea5e9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowTeal" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#2dd4bf" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#2dd4bf" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#1e293b" stroke-width="1" opacity="0.45"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="520" fill="url(#bg)"/>
+  <rect width="1200" height="520" fill="url(#grid)" opacity="0.35"/>
+  <circle cx="980" cy="110" r="260" fill="url(#glowBlue)"/>
+  <circle cx="230" cy="470" r="240" fill="url(#glowTeal)"/>
+
+  <rect x="40" y="40" width="1120" height="440" rx="24" fill="#0a111d" stroke="#223047"/>
+  <circle cx="66" cy="64" r="5" fill="#fb7185"/>
+  <circle cx="86" cy="64" r="5" fill="#fbbf24"/>
+  <circle cx="106" cy="64" r="5" fill="#34d399"/>
+  <text x="128" y="69" fill="#94a3b8" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12" letter-spacing="1.2">dsh-workbench</text>
+  <text x="1136" y="69" fill="#475569" text-anchor="end" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11">localhost:3081</text>
+
+  <rect x="56" y="96" width="250" height="368" rx="16" fill="#0b1220" stroke="#1e293b"/>
+  <g transform="translate(71 117) scale(0.28125)" fill="#e2e8f0">
+    <path d="M10 6H54A5 5 0 0 1 59 11V43A5 5 0 0 1 54 48H10A5 5 0 0 1 5 43V11A5 5 0 0 1 10 6Z M12 10H52A3 3 0 0 1 55 13V41A3 3 0 0 1 52 44H12A3 3 0 0 1 9 41V13A3 3 0 0 1 12 10Z" fill-rule="evenodd"/>
+    <rect x="27.5" y="48" width="9" height="4.75"/>
+    <rect x="19" y="52.75" width="26" height="4.75" rx="2.375"/>
+    <g transform="translate(14.6263 10.5853) scale(1.95)">
+      <path d="M8.844 13.742C8.967 12.328 8.45 10.4 8.45 9.65C8.45 8.94 8.88 8.43 9.6 8.43C11.285 8.43 12.106 8.281 12.685 8.104C13.71 7.791 14.585 6.768 15.055 5.945C15.137 5.803 14.99 5.641 14.829 5.671C13.829 5.86 12.828 5.376 11.827 4.978C10.659 4.514 9.491 4.707 8.935 4.876C8.805 4.915 8.658 4.819 8.636 4.686C8.468 3.643 7.405 2.615 5.498 2.238C4.54 2.048 3.748 1.574 3.347 1.202C3.252 1.113 3.088 1.125 3.03 1.242C2.628 2.059 2.168 3.82 5.248 6.115C5.82 6.494 6.31 6.785 6.574 7.637C6.72 8.104 6.157 9.168 6.061 9.368C5.157 11.27 5.089 12.19 4.926 13.742Z"/>
+      <circle cx="6.885" cy="13.742" r="1.95"/>
+    </g>
+  </g>
+  <text x="98" y="131" fill="#f1f5f9" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13" font-weight="700">Workbench</text>
+  <rect x="72" y="148" width="218" height="34" rx="9" fill="#0f1c2e" stroke="#1e293b"/>
+  <text x="86" y="170" fill="#cbd5e1" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.5">+  New session</text>
+
+  <text x="72" y="208" fill="#64748b" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9" letter-spacing="1.4">PROJECTS</text>
+  <rect x="72" y="220" width="218" height="32" rx="8" fill="#0f2a33"/>
+  <circle cx="88" cy="236" r="4" fill="#5eead4"/>
+  <text x="100" y="240" fill="#e2e8f0" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11">dsh-workbench</text>
+  <circle cx="88" cy="266" r="4" fill="#60a5fa"/>
+  <text x="100" y="270" fill="#94a3b8" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11">platform</text>
+  <circle cx="88" cy="296" r="4" fill="#fbbf24"/>
+  <text x="100" y="300" fill="#94a3b8" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11">infra</text>
+
+  <text x="72" y="334" fill="#64748b" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9" letter-spacing="1.4">SESSIONS</text>
+  <circle cx="84" cy="352" r="3" fill="#475569"/>
+  <text x="96" y="356" fill="#cbd5e1" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10.5">Release risk review</text>
+  <circle cx="84" cy="376" r="3" fill="#334155"/>
+  <text x="96" y="380" fill="#94a3b8" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10.5">Fix build pipeline</text>
+  <circle cx="84" cy="400" r="3" fill="#334155"/>
+  <text x="96" y="404" fill="#94a3b8" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10.5">Weekly summary</text>
+
+  <rect x="72" y="424" width="104" height="26" rx="7" fill="#0f172a" stroke="#1e293b"/>
+  <text x="88" y="441" fill="#5eead4" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10">Board</text>
+  <rect x="184" y="424" width="106" height="26" rx="7" fill="#0f172a" stroke="#1e293b"/>
+  <text x="200" y="441" fill="#94a3b8" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10">Modules</text>
+
+  <rect x="322" y="96" width="470" height="368" rx="16" fill="#0b1220" stroke="#1e293b"/>
+  <text x="342" y="126" fill="#64748b" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9" letter-spacing="1.4">AGENT</text>
+  <rect x="696" y="110" width="76" height="24" rx="12" fill="#0f2a33" stroke="#134e4a"/>
+  <circle cx="712" cy="122" r="3" fill="#34d399"/>
+  <text x="722" y="126" fill="#a7f3d0" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9.5">Live</text>
+  <line x1="342" y1="140" x2="772" y2="140" stroke="#1e293b"/>
+
+  <rect x="342" y="156" width="302" height="52" rx="12" fill="#111c2f"/>
+  <text x="358" y="178" fill="#e2e8f0" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11">Summarize today's release risks</text>
+  <text x="358" y="194" fill="#64748b" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9.5">for the workbench repo</text>
+
+  <rect x="390" y="224" width="382" height="122" rx="12" fill="#0c1f2b" stroke="#134e4a"/>
+  <text x="406" y="246" fill="#5eead4" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9" letter-spacing="1.2">AGENT</text>
+  <text x="406" y="266" fill="#e2e8f0" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11" font-weight="600">3 risks found</text>
+  <circle cx="410" cy="284" r="2.5" fill="#fb7185"/>
+  <text x="420" y="288" fill="#cbd5e1" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10">build: node 24 vs 22</text>
+  <circle cx="410" cy="304" r="2.5" fill="#fbbf24"/>
+  <text x="420" y="308" fill="#cbd5e1" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10">config: missing MARKET_TOKEN</text>
+  <circle cx="410" cy="324" r="2.5" fill="#60a5fa"/>
+  <text x="420" y="328" fill="#cbd5e1" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10">release: 2 PRs unmerged</text>
+
+  <rect x="342" y="398" width="430" height="40" rx="10" fill="#0f172a" stroke="#1e293b"/>
+  <text x="358" y="423" fill="#64748b" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10.5">Ask the agent to do something…</text>
+  <circle cx="752" cy="418" r="11" fill="#0ea5e9"/>
+  <path d="M 747 418 L 757 418 M 753 414 L 757 418 L 753 422" fill="none" stroke="#06121f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="808" y="96" width="336" height="368" rx="16" fill="#0b1220" stroke="#1e293b"/>
+  <text x="828" y="126" fill="#64748b" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9" letter-spacing="1.4">BOARD</text>
+  <text x="1124" y="126" fill="#64748b" text-anchor="end" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11">↻</text>
+
+  <rect x="824" y="142" width="144" height="104" rx="12" fill="#0f172a" stroke="#1e293b"/>
+  <text x="838" y="162" fill="#64748b" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="8.5" letter-spacing="1">BUILDS</text>
+  <text x="838" y="192" fill="#f1f5f9" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="24" font-weight="700">24</text>
+  <text x="838" y="210" fill="#34d399" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9">+2 today</text>
+  <rect x="910" y="202" width="6" height="16" rx="3" fill="#0ea5e9" opacity="0.7"/>
+  <rect x="920" y="194" width="6" height="24" rx="3" fill="#0ea5e9" opacity="0.8"/>
+  <rect x="930" y="186" width="6" height="32" rx="3" fill="#0ea5e9"/>
+  <rect x="940" y="198" width="6" height="20" rx="3" fill="#38bdf8" opacity="0.8"/>
+  <rect x="950" y="190" width="6" height="28" rx="3" fill="#38bdf8"/>
+
+  <rect x="980" y="142" width="148" height="104" rx="12" fill="#0f172a" stroke="#1e293b"/>
+  <text x="994" y="162" fill="#64748b" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="8.5" letter-spacing="1">ISSUES</text>
+  <text x="994" y="192" fill="#f1f5f9" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="24" font-weight="700">3</text>
+  <text x="994" y="210" fill="#fda4af" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9">blocking</text>
+  <path d="M 1072 208 L 1082 200 L 1092 204 L 1102 188 L 1112 194" fill="none" stroke="#fb7185" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="824" y="258" width="304" height="86" rx="12" fill="#0f172a" stroke="#1e293b"/>
+  <text x="838" y="278" fill="#64748b" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="8.5" letter-spacing="1">DEPLOYMENTS</text>
+  <text x="838" y="300" fill="#cbd5e1" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10">production</text>
+  <rect x="930" y="292" width="180" height="6" rx="3" fill="#1e293b"/>
+  <rect x="930" y="292" width="140" height="6" rx="3" fill="#2dd4bf"/>
+  <text x="838" y="324" fill="#cbd5e1" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10">staging</text>
+  <rect x="930" y="316" width="180" height="6" rx="3" fill="#1e293b"/>
+  <rect x="930" y="316" width="88" height="6" rx="3" fill="#60a5fa"/>
+
+  <rect x="824" y="356" width="304" height="92" rx="12" fill="#0f172a" stroke="#1e293b"/>
+  <text x="838" y="376" fill="#64748b" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="8.5" letter-spacing="1">RECENT ACTIVITY</text>
+  <circle cx="842" cy="394" r="2.5" fill="#2dd4bf"/>
+  <text x="852" y="398" fill="#cbd5e1" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9.5">agent updated release notes</text>
+  <circle cx="842" cy="412" r="2.5" fill="#60a5fa"/>
+  <text x="852" y="416" fill="#cbd5e1" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9.5">build #2481 passed</text>
+  <circle cx="842" cy="430" r="2.5" fill="#fbbf24"/>
+  <text x="852" y="434" fill="#cbd5e1" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9.5">issue #4821 closed</text>
+</svg>

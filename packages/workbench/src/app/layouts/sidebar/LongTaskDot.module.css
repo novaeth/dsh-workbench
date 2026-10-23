@@ -1,0 +1,13 @@
+.dot {
+  display: inline-flex;
+  align-items: center;
+}
+
+.hover {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-len-6);
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-secondary);
+}

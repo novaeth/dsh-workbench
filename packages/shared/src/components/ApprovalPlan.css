@@ -1,0 +1,40 @@
+.wb-approvalPlan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-6);
+}
+.wb-approvalHint {
+  margin: 0;
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-secondary);
+}
+.wb-approvalRows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-2);
+  margin: 0;
+}
+.wb-approvalRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--wb-len-8);
+}
+.wb-approvalLabel {
+  flex: none;
+  width: var(--wb-len-56);
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-tertiary);
+}
+.wb-approvalValue {
+  margin: 0;
+  font-size: var(--dsw-font-xs-13-font-size);
+  line-height: var(--wb-line-18);
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+  overflow-wrap: anywhere;
+}
+.wb-approvalWarn {
+  color: var(--dsw-alias-label-secondary);
+}

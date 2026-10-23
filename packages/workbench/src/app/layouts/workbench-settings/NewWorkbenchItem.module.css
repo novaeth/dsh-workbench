@@ -1,0 +1,61 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-12);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-6);
+}
+
+.input {
+  width: 100%;
+}
+
+.label {
+  font-size: var(--dsw-font-xxs-12-font-size);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.hint {
+  margin: 0;
+  font-size: var(--dsw-font-xxs-12-font-size);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.copy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wb-len-8) var(--wb-len-16);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.copy legend {
+  padding: 0;
+  margin-bottom: var(--wb-len-6);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.commandLabel {
+  display: block;
+  margin-top: var(--wb-len-4);
+}
+
+.command {
+  display: block;
+  margin-top: var(--wb-len-4);
+  padding: var(--wb-len-6) var(--wb-len-8);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-1);
+  font-family: var(--ds-font-family-code, monospace);
+  font-size: var(--dsw-font-xxs-12-font-size);
+  overflow-wrap: anywhere;
+}

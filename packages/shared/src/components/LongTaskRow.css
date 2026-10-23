@@ -1,0 +1,99 @@
+.wb-longTask {
+  padding-top: var(--wb-len-12);
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-2);
+}
+
+.wb-longTaskHead {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-len-6);
+  margin: 0;
+}
+
+.wb-longTaskLink {
+  flex: none;
+}
+
+.wb-longTaskHeadline {
+  margin: 0;
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.wb-longTaskProblem {
+  margin: 0;
+  font-size: var(--dsw-font-xxxs-11-font-size);
+  line-height: var(--wb-line-16);
+  color: var(--dsw-alias-state-error-primary);
+  overflow-wrap: anywhere;
+}
+
+.wb-longTaskDump {
+  margin: var(--wb-len-2) 0 0;
+  font-size: var(--dsw-font-xxxs-11-font-size);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.wb-longTaskDump pre {
+  margin: var(--wb-len-4) 0 0;
+  max-height: var(--wb-len-220);
+  overflow: auto;
+}
+
+.wb-longTaskStop {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  align-self: center;
+  justify-content: center;
+  width: var(--wb-len-20);
+  height: var(--wb-len-20);
+  padding: 0;
+  margin-left: auto;
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-specific-menu);
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+
+.wb-longTaskStop:hover:not(:disabled),
+.wb-longTaskStop:focus-visible {
+  border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary) 45%, transparent);
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.wb-longTaskStop:disabled {
+  cursor: default;
+}
+
+.wb-longTaskStopArmed,
+.wb-longTaskStopArmed:hover:not(:disabled),
+.wb-longTaskStopArmed:focus-visible {
+  gap: var(--wb-len-4);
+  width: auto;
+  padding: 0 var(--wb-len-7);
+  border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary) 45%, transparent);
+  background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 12%, transparent);
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.wb-longTaskStopLabel {
+  white-space: nowrap;
+  font-size: var(--dsw-font-xxxs-11-font-size);
+  line-height: var(--wb-line-18);
+}
+
+.wb-longTaskStopWhy {
+  margin: 0;
+  font-size: var(--dsw-font-xxxs-11-font-size);
+  line-height: var(--wb-line-16);
+  color: var(--dsw-alias-state-error-primary);
+  overflow-wrap: anywhere;
+}

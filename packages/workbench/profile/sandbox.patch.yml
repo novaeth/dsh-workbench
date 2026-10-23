@@ -1,0 +1,26 @@
+# 工作台运行时的**可写根**声明 —— 由启动器每次启动叠加（`--patch`）。
+#
+# 为什么必须有它：工作台自己要跑命令（启动体检自动装 opencli、模块市场装/升插件、
+# 查源上有没有新版），而这些命令走 dsh 的**执行缝**，执行缝带**文件沙箱**。
+# 插件发起的调用**没有会话**，于是回落到部署策略；dsh-base 出厂那一条写的是
+# `workspaceRoot: !!js process.cwd()` —— 而安装目标是 `$DSH_HOME/workbench/...`，
+# 不在启动目录下面，沙箱拒写（实测 EPERM：mkdir ~/.npm/_cacache、mkdir
+# $DSH_HOME/workbench/...，见 内部设计记录 第 10.3 节）。
+# 症状：自动安装死在第一步，界面只能退化成"让用户去终端抄一条命令" ——
+# 终端没有沙箱，抄过去反而能跑，于是这个缺口一直看不出来。
+#
+# 指到 `$DSH_HOME/workbench` 之后，沙箱放行的是**同一棵树**：
+#   隔离运行时的工具链 + npm 缓存（opencli-runtime.ts）、
+#   模块专属文件夹（ADR-0011 的 workspaces/）、模块市场的 plugins-npm。
+# 也就是 ADR-0011 说的"启动器给插件声明的可写根"。
+#
+# 为什么用 `--patch` 叠加、而不是写进 profile 的 cordis.patch.yml：
+# profile 可能是**早就建好**的（交接出去的机器尤其如此），没人会回头重跑
+# seed-profile.sh —— 叠加层每次启动都生效，对新旧 profile 一视同仁。
+#
+# mode 与 base 出厂值**一致**（只重述，不改变语义）：patch 的 config 是**整体替换**、
+# 不深合并，所以两个字段都得写全，否则 workspaceRoot 会被替换掉 mode 丢失。
+- id: sandbox-policy
+  config:
+    mode: !!js process.env.DSH_PERMISSION_MODE ?? 'workspace-write'
+    workspaceRoot: !!js process.env.DSH_WORKBENCH_HOME ?? dshHomePath('workbench')

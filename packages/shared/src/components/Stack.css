@@ -1,0 +1,6 @@
+.wb-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-10);
+  min-height: 0;
+}

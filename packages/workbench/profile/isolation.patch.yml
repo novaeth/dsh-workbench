@@ -1,0 +1,46 @@
+# workbench profile 的会话/存储隔离层（片段）。
+#
+# 这个文件是"补丁层片段"，不是独立补丁文件：seed-profile.sh 会把它
+# 追加进 ~/.dsh/profiles/workbench/cordis.patch.yml。
+#
+# 为什么需要它：dsh-base 把会话与存储的根都挂在 $DSH_HOME 上
+# （dshHomePath('sessions') / dshHomePath('storages')），所以默认情况下
+# 两个 profile 共用同一份会话历史。工作台要提供自己的定制工具，等于一个
+# 独立的 agent 环境，共享会话没有意义 —— 这三行把数据分开。
+#
+# 隔离后（默认 profile；新 profile 由 DSH_WORKBENCH_HOME 指到自己的根）：
+#   会话      $DSH_HOME/workbench/sessions/
+#   工作区    $DSH_HOME/workbench/storages/        （workspace 走 storage-domain）
+#   附件      $DSH_HOME/workbench/attachments/v1/
+# 有意不隔离：
+#   凭据      ~/.dsh/.credentials.yaml          （两边共用同一把 API key）
+#
+# 注意：patch 的 config 是整体替换、不深合并。这三行原本各自只声明了
+# root / dshHome，所以只重述这一个字段是安全的；若你给这些行配过别的
+# 字段（例如 session-persistence-jsonl 的 compression），必须一并重述。
+
+- id: session-persistence-jsonl
+  name: '@deepseek-ai/dsh-session-persistence-jsonl'
+  config:
+    root: !!js (process.env.DSH_WORKBENCH_HOME ?? dshHomePath('workbench')) + '/sessions'
+
+- id: storage-json
+  name: '@deepseek-ai/dsh-storage-json'
+  config:
+    root: !!js (process.env.DSH_WORKBENCH_HOME ?? dshHomePath('workbench')) + '/storages'
+
+- id: attachment-local
+  name: '@deepseek-ai/dsh-attachment-local'
+  config:
+    dshHome: !!js process.env.DSH_WORKBENCH_HOME ?? dshHomePath('workbench')
+
+# 可写根：**无会话**的插件命令（市场装模块、自举跑的那几条）回落到它。
+#
+# 跟启动器的 profile/sandbox.patch.yml 同值，两处都在是因为入口不同：启动器每次启动叠
+# 那一层；直接用 `dsh workbench` 起的没有 `--patch`，就靠这一行。两处同值 ⇒ 谁先谁后都不算变更，
+# 不会触发在线重组。**别把它放回 bundle 层**（在线启用会撞 session-controller 的重组竞态，
+# 见 ADR-0037 的 2026-10-22 补记）。
+- id: sandbox-policy
+  config:
+    mode: !!js process.env.DSH_PERMISSION_MODE ?? 'workspace-write'
+    workspaceRoot: !!js process.env.DSH_WORKBENCH_HOME ?? dshHomePath('workbench')

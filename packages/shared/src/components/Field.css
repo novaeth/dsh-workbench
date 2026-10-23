@@ -1,0 +1,20 @@
+.wb-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-6);
+  font-size: var(--dsw-font-xs-13-font-size);
+}
+
+.wb-fieldLabel {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.wb-fieldHint {
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.wb-field:has(:disabled) .wb-fieldLabel {
+  opacity: 0.4;
+}

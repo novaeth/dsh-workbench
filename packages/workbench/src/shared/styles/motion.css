@@ -1,0 +1,4 @@
+[data-animating],
+[data-sidebar-right-panel] {
+  --ds-transition-duration-slow: 0s;
+}

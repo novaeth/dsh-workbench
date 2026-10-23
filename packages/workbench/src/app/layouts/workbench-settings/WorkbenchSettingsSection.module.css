@@ -1,0 +1,17 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-12);
+}
+
+.lead {
+  margin: 0;
+  font-size: var(--dsw-font-xs-13-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.title {
+  font-size: var(--wb-font-18);
+  line-height: var(--wb-line-24);
+}

@@ -1,0 +1,24 @@
+.wb-stripButton {
+  width: var(--wb-len-28);
+  height: var(--wb-len-28);
+  padding: 0;
+  color: var(--dsw-alias-label-secondary);
+}.wb-stripIconFlip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: scaleX(-1);
+}.wb-stripButton:hover:not(:disabled) {
+  color: var(--dsw-alias-label-primary);
+}.wb-stripButton:disabled {
+  cursor: default;
+  opacity: 1;
+}.wb-stripButtonActive {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}@keyframes wb-spin {
+  from {
+    transform: rotate(0deg);
+  }to {
+    transform: rotate(360deg);
+  }}

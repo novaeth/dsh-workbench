@@ -1,0 +1,6 @@
+.wb-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-12);
+  width: 100%;
+}

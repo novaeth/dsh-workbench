@@ -1,0 +1,19 @@
+[data-wb-dot] {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-len-6);
+}
+
+.wb-iconButton:hover {
+  color: var(--dsw-alias-label-primary);
+}
+
+.wb-iconButton:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid
+    var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
+.wb-spinning svg {
+  animation: wb-spin var(--wb-dur-0-9) linear infinite;
+}

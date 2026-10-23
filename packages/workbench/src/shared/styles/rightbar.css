@@ -1,0 +1,68 @@
+.wb-rightbar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--dsw-alias-bg-base);
+  border-left: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.wb-panelHeader {
+  flex: none;
+  height: var(--wb-len-38);
+}
+
+.wb-tabStrip {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--wb-len-4);
+  height: var(--wb-len-38);
+  padding: var(--wb-len-10) var(--wb-len-6) 0 var(--wb-len-10);
+}
+
+.wb-stripFill {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.wb-rightbar :is(button, [role='tab']):focus-visible {
+  outline: var(--dsw-focus-ring-width) solid
+    var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
+.wb-rightbar {
+  container-type: inline-size;
+}
+
+.wb-dangerAction {
+  color: var(--dsw-alias-state-error-primary);
+  border-color: color-mix(in srgb, var(--dsw-alias-state-error-primary) 30%, transparent);
+  --dsw-alias-interactive-bg-hover: color-mix(in srgb, var(--dsw-alias-state-error-primary) 8%, transparent);
+}
+.wb-stripChrome {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-len-8);
+  flex: none;
+  margin-left: var(--wb-len-4);
+}
+
+.wb-panelBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: var(--wb-len-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-12);
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+}
+@container (max-width: 340px) {
+  .wb-panelBody {
+    padding: var(--wb-len-8);
+  }}

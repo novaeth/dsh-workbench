@@ -1,0 +1,28 @@
+.panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--wb-z-10);
+  visibility: hidden;
+}
+
+.panel[data-fullscreen] {
+  z-index: var(--wb-z-40);
+}
+
+.panel[data-open] {
+  visibility: visible;
+}
+
+.columns {
+  display: block;
+  column-gap: var(--wb-len-12);
+}
+
+.cell {
+  display: flow-root;
+  min-width: 0;
+  break-inside: avoid;
+  margin-bottom: var(--wb-len-12);
+}

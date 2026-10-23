@@ -1,0 +1,37 @@
+.group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-len-2);
+}
+
+.button {
+  flex: none;
+  width: var(--wb-len-28);
+  height: var(--wb-len-28);
+  padding: 0;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.button:hover:not(:disabled) {
+  color: var(--dsw-alias-label-primary);
+}
+
+.active {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon svg {
+  display: block;
+  width: var(--wb-len-15);
+  height: var(--wb-len-15);
+}
+
+.mirror {
+  transform: scaleX(-1);
+}

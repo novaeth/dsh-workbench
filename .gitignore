@@ -1,0 +1,42 @@
+# 本地验收产物
+.verify/
+
+# dsh 相关
+node_modules/
+.pnpm-store/
+*.log
+
+# macOS
+.DS_Store
+
+# 构建产物与测试产物
+dist/
+coverage/
+packages/workbench/client.js
+
+# 门禁中间产物：跑 `pnpm run check` 时在仓内出现、正常跑完会自己清掉的那几样。
+#
+# 探针包（packages/.init-* / .design-* / .reconcile-* …共十六种前缀，见 module-tools 自检）：
+# 判据要认出 workspace 根与外壳，只能在仓内建；清理走 finally，而失败路径是 `process.exit`
+# （跳过 finally）、Ctrl-C 也只兜 SIGINT，于是会留下。下一条判据开工先扫一遍清扫它们，
+# 但清扫之前它们已经在 `git status` 里了 —— 而 release.mjs 见脏工作区就拒发。
+# 点开头的目录本就不匹配 pnpm-workspace 的 `packages/*`，也不该被 git 看见。
+packages/.*/
+# standalone 判据把外壳的 `src/` 临时改名成 `src.hidden` 再还原（跑的过程中 git 会看见整棵
+# src 被删）。正常跑完不在；被硬杀会留下，那时该判据自己会报「上次没还原干净」。
+# 它是一份 src 的副本，永远不该进提交 —— 更不能让 `git add -A` 顺手带上。
+packages/workbench/src.hidden/
+
+# npm / pnpm 的下载缓存：跑 ad-hoc 的 `npm --cache <dir>`，或 `.npmrc` 的 cache= 指进仓里
+# （工坊那份 .npmrc 就是 `cache-dir=$DIY_DIR/.npm-cache`）时，会在树里冒出一个 cacache 目录
+# （`_cacache/` + `_update-notifier-last-checked`）。
+#
+# 里面按 URL 记着是从哪个源下载的 —— 私有源连同组织名一起进去，没有任何理由进仓库。
+# `.npm-cache-probe/` 就是这么被一句 `git add -A` 顺手提交进去的（a8d1022 里夹带的，代码与
+# 文档零引用），已从索引里删掉；它仍在历史里，真要清得动历史。
+.npm/
+.npm-cache*/
+
+# 机器相关的 MCP 配置（含本机绝对路径）：不进仓库，各人自己填
+mcp/**/cordis.patch.yml
+.release-state.json

@@ -1,0 +1,25 @@
+section.wb-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-12);
+  padding: var(--wb-len-12) var(--wb-len-16);
+  border: 0;
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-settings-card-fill);
+}
+.wb-settingsHead {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-len-8);
+}
+.wb-settings .wb-settingsTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--dsw-font-s-strong-14-font-size);
+  line-height: var(--wb-line-24);
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+}
