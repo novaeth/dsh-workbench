@@ -165,6 +165,7 @@ Desktop 里个别浏览器调试能力不可用；网页浏览与录制照常。
 | 想了解 | 读 |
 |---|---|
 | 完整用户指南 / 首次打开 / 常见问题 | [packages/workbench/README.md](packages/workbench/README.md) |
+| 文档站（本地起一个看） | [packages/docs/README.md](packages/docs/README.md) |
 | 从源码构建、门禁、提交 | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | 架构 / 模块协议 | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | 写一个模块 | [模块 DIY 指引](packages/workbench/skills/workbench-module-diy/SKILL.md) |

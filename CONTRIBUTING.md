@@ -69,6 +69,23 @@ submodule. Public builds and the gate do not need it. With access, run
   and must pass `dsh-wb-module check`. Start from
   [`packages/workbench/skills/workbench-module-diy/`](packages/workbench/skills/workbench-module-diy/SKILL.md).
 
+## Docs site
+
+The user-facing docs site lives in `packages/docs` and is built with
+[Pagoda CLI](https://www.npmjs.com/package/@pagoda-cli/core). Pages are Markdown
+under `site/desktop/views/`; `views/index.vue` is the landing page; the palette
+and body styles are in `site/desktop/style/`. The workspace `build` compiles it,
+so a broken page fails the gate too.
+
+```bash
+pnpm run dev:docs      # from the repo root
+pnpm run build:docs    # → packages/docs/site-dist/
+```
+
+Add a page by creating `site/desktop/views/<name>.md` and adding a `nav` entry in
+`pagoda.config.mjs`. Link between pages with `<PagodaDocLinkToView view="…">`.
+Details in [`packages/docs/README.md`](packages/docs/README.md).
+
 ## Reporting bugs
 
 Open a GitHub issue with a minimal reproduction, the workbench version, the dsh

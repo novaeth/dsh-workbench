@@ -18,6 +18,7 @@ profile**（插件页一条龙，见 ADR-0037）。
 | `packages/shared/` | 共享包（`@dsh-workbench/shared`，两个入口：`.` 浏览器侧 / `./host` 宿主侧）：契约类型 · 纯 lib · i18n · 哑组件 · 平台解析 · host 工厂。收录判据三条（无模块级可变状态 / 不依赖外壳运行时 / 不产生全局副作用），自带 `check-state` 判据 |
 | `packages/module-tools/` | 模块工具包（`@dsh-workbench/module-tools`）：`build` · `check`（十三条判据，`--only <name>` 单跑）· `lint` · `init`，以及 `arch` / `lint` 两个方言入口 |
 | `packages/module-hello/` | 最小可安装模块样本（`@dsh-workbench/module-hello`），同时是模块包模板 |
+| `packages/docs/` | 文档站（Pagoda CLI，私有包，不出货）：`site/desktop/views/*.md` 是页面，`views/index.vue` 是首页；`pnpm run dev:docs` 起站、`pnpm run build:docs` 出 `site-dist/` |
 | `ARCHITECTURE.md` | 仓库与外壳的架构：层序、两个运行时、单元协议、槽位、数据通路、门禁 |
 | `private-docs/`（私有子仓） | 内部 ADR（`docs/adr/`）与 `.scratch/` 工单；公开构建不需要它 |
 | `CONTRIBUTING.md` | 环境、门禁纪律、提交约定 |
@@ -30,6 +31,11 @@ pnpm run dev                          # 开发：监听 src/** + 起工作台 :3
 pnpm run check                        # 门禁：整仓那一套（= `pnpm -w run check`，见下）
 ./bin/dsh-workbench                   # 起工作台 :3081（dsh web 在 :3080）；pnpm run dev 已经会起它
 ```
+
+文档站在仓库根跑（Pagoda CLI）：`pnpm run dev:docs` 起站、`pnpm run build:docs` 出
+`packages/docs/site-dist/`。页面是 `packages/docs/site/desktop/views/*.md`，首页是
+`views/index.vue`，配色与正文样式在 `site/desktop/style/`。它也在门禁的 `build` 里 ——
+站点建不出来同样算红。
 
 **门禁只有一份，两个入口跑的是同一条链**：包内这条就是 `pnpm -w run check`，也就是仓库根那条 ——
 `lint:commit` → `build` → `typecheck` → `lint` → `coverage` → `arch` → `check:docs` → `check:runtimes` →
@@ -83,6 +89,7 @@ pnpm run check                        # 门禁：整仓那一套（= `pnpm -w ru
 | 模块的构建、十三条判据、模板、设计底稿 | [`packages/module-tools/README.md`](packages/module-tools/README.md) |
 | 共享契约、哑组件、宿主工具、收录判据 | [`packages/shared/README.md`](packages/shared/README.md) |
 | 最小可安装模块样本 | [`packages/module-hello/README.md`](packages/module-hello/README.md) |
+| 改文档站、加一页、换配色 | [`packages/docs/README.md`](packages/docs/README.md) |
 | 对某个术语拿不准 | [`CONTEXT.md`](CONTEXT.md) |
 | 想知道某个选择为什么是这样 | `private-docs/docs/adr/`（需要子仓权限） |
 | 模块的配置落在哪 / 给模块加一份状态 | `private-docs/docs/adr/0011-*.md` |

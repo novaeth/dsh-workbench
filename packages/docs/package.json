@@ -1,0 +1,15 @@
+{
+  "name": "@dsh-workbench/docs",
+  "version": "0.3.11",
+  "private": true,
+  "type": "module",
+  "description": "dsh-workbench 文档站（Pagoda CLI）",
+  "scripts": {
+    "dev": "pagoda-cli site",
+    "build": "pagoda-cli build-site"
+  },
+  "devDependencies": {
+    "@pagoda-cli/core": "^1.0.23",
+    "vue": "^3.5.39"
+  }
+}
