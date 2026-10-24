@@ -1,9 +1,9 @@
 # @dsh-workbench/module-tools
 
 工作台**模块**的工具箱：建骨架、构建、过门禁、管设计底稿、发货前核清单。
-模块作者与替用户造模块的 agent 只跟这几条命令打交道 —— 模块包里不再各带一份构建脚本。
+模块作者只跟这几条命令打交道 —— 模块包里不再各带一份构建脚本。
 
-## 五条命令走一遍
+## 六条命令走一遍
 
 ```bash
 pnpm exec dsh-wb-module init my-unit --template diy   # 建骨架（minimal 是默认）
@@ -13,7 +13,10 @@ pnpm check        # 十三条判据
 pnpm design check # 设计底稿有没有空格、README 有没有落后
 ```
 
-要发货再加一步 `pnpm publish`：跑门禁、核 `files` 与 `npm pack` 清单，只 dry run，不真发。
+要发货再加一步 `pnpm publish`：跑门禁、核 `files` 与 `npm pack` 清单，**只 dry run，不真发**。
+维护者确认要真发时跑 `pnpm exec dsh-wb-module release`：全门禁（build / check / design / typecheck / test / selfcheck）、
+验收必须全勾、预检（登录 / license / git 远端）、按 `--target` 发到团队源 / 公网 npm / 安装包 / git，
+最后从出口侧核包（`--dry-run` 只预览，`--verify` 只核已发布的包）。
 
 骨架自带脚本，日常不用记长命令：`build` · `typecheck` · `test` · `selfcheck` · `check` · `lint` · `design`。
 
@@ -28,6 +31,7 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 | `dsh-wb-module sync` | 按清单生成 `src/declared-tools.ts`（工具名只有清单一处写者） |
 | `dsh-wb-module design <init\|check\|render\|accept>` | 设计底稿：填、查空格、生成 README、验收打勾 |
 | `dsh-wb-module publish` | 发货前清单：门禁 + `files` + `npm pack`（只 dry run） |
+| `dsh-wb-module release` | 真发布：team / public / tarball / git；全门禁 + 验收闸 + 预检接管 + 发后核包（`--dry-run` / `--verify`） |
 
 `--cwd <目录>` 指定包目录，默认当前目录。
 
@@ -201,7 +205,8 @@ node scripts/selfcheck/index.mjs
 ```
 
 工具箱的回归网：两个模板各 `init` 一遍、各跑全套；判据的正例与负例都要对；打包清单不含
-`.tpl` 残留；`design` 的空格、README 同步、`accept`；`publish` 的清单。
+`.tpl` 残留；`design` 的空格、README 同步、`accept`；`publish` 的清单；`release` 的验收闸、
+dry-run、真发后的元数据与发布失败回滚。
 
 ## 相关文档
 

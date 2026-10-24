@@ -24,6 +24,7 @@ import {
   DIY_INSTALL_TOOL,
   DIY_KEYS_TOOL,
   DIY_NETWORK_TOOL,
+  DIY_PUBLISH_TOOL,
   DIY_SCREENSHOT_TOOL,
   DIY_SCROLL_TOOL,
   DIY_SHOW_TOOL,
@@ -183,10 +184,20 @@ describe('装 / 升 / 卸模块与插件：八把写工具，各自说清目标'
 
 describe('工坊那一族一律不问（用户 2026-10-16 的决定：闭环里不回头找他点头）', () => {
   it('★★ 整族都回 allow：装、上板、点、敲、刷新…一把都不弹审批屏', () => {
-    for (const name of DIY_TOOLS) {
+    for (const name of DIY_TOOLS.filter((one) => one !== DIY_PUBLISH_TOOL)) {
       expect(panelsApproval({ name, arguments: { unit: 'demo' } }), name).toEqual({ kind: 'allow' });
       expect(panelsApproval({ name, arguments: {} }), name).toEqual({ kind: 'allow' });
     }
+  });
+
+  it('★★ 发布不跟整族 allow 走：要一次审批，说清发的是工作台模块', () => {
+    const verdict = panelsApproval({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo', target: 'team' } });
+    expect(verdict?.kind).toBe('ask');
+    if (verdict?.kind !== 'ask') return;
+    expect(verdict.question.zh).toContain('工作台模块');
+    expect(verdict.question.zh).toContain('团队源');
+    expect(verdict.question.zh.endsWith('，允许吗？')).toBe(true);
+    expect(verdict.fallback.zh).toContain('不发源码');
   });
 
   it('★★ 调试那四把不跟"整族 allow"走：开始与继续要点头，暂停与收工不问（ADR-0055）', () => {
@@ -274,7 +285,7 @@ describe('清单里的写工具都在自己的策略后面（漏了不报错，�
   it('★ 每把写工具都有一通"真的写"的样例，而且样例表不多不少（新写工具漏了就红）', () => {
     expect(writers.map((tool) => tool.name).sort()).toEqual(Object.keys(WRITE_CALLS).sort());
     expect([...WRITE_TOOLS].sort()).toEqual(Object.keys(WRITE_CALLS).sort());
-    expect(writers).toHaveLength(21);
+    expect(writers).toHaveLength(22);
   });
 
   it('★ 工坊之外的那通真写都要问（外壳按清单的 writes 把它交给策略）', () => {
@@ -317,6 +328,7 @@ describe('文案口径：说清是工作台的动作、目标是哪个模块 / �
     [MODULES_UNINSTALL_PLUGIN_TOOL]: 'opencli 插件',
     [MODULES_UPDATE_WORKBENCH_TOOL]: '工作台本身',
     [DIY_RECORD_PREPARE_TOOL]: '录制',
+    [DIY_PUBLISH_TOOL]: '模块',
     [DIY_DEBUG_START_TOOL]: '调试',
     [DIY_DEBUG_RESUME_TOOL]: '调试',
     [LONG_TASKS_STOP_TOOL]: '长任务',

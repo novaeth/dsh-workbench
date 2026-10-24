@@ -1,13 +1,22 @@
-import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared';
+import { join } from 'node:path';
+import type {
+  DshHostContext,
+  DshShell,
+  DshToolDefinition,
+  DshToolRegistry,
+  DshToolRunContext,
+} from '@dsh-workbench/shared';
 import type { DebugStore, PanelStateStore } from '@dsh-workbench/shared/host';
-import { PANEL_STATE_SERVICE, UNITS_SERVICE, cliCatalogPath } from '@dsh-workbench/shared/host';
+import { PANEL_STATE_SERVICE, UNITS_SERVICE, cliCatalogPath, quoteShellArg, runShell } from '@dsh-workbench/shared/host';
 import { opencliInstallCommand } from '@/shared/api/host/opencli-command';
+import { toolchainBinOf } from '@/shared/api/host/diy-components';
 
 import { registerComponentsTool } from './diy-components';
 import { registerDebugTools } from './diy-debug-tools';
 import { registerLogTools } from './diy-logs';
 import { registerBrowserTools } from './diy-browser-tools';
 import { registerSpecTool } from './diy-spec';
+import { jsonOf } from './diy-browser';
 import type { UnitRegistry } from '@/shared/api/host/unit-registry';
 import { keywordsOf, reconOf } from '@/shared/api/host/diy-recon';
 import { installedPluginsOf, reconCatalogOf } from '@/shared/api/host/diy-recon-fs';
@@ -31,10 +40,13 @@ import type { PanelsService } from './service';
 import {
   DIY_INSTALL_TOOL,
   DIY_PANEL_TOOL,
+  DIY_PUBLISH_TOOL,
   DIY_RECON_TOOL,
   DIY_SHOW_TOOL,
   DIY_STATUS_TOOL,
 } from '../unit';
+
+export const PUBLISH_TIMEOUT_MS = 30 * 60 * 1000;
 
 export function registerDiyTools(
   ctx: DshHostContext,
@@ -296,6 +308,108 @@ export function registerDiyTools(
     },
   };
 
+  const publishTool: DshToolDefinition = {
+    name: DIY_PUBLISH_TOOL,
+    description:
+      '用户说“帮我发布”之后才用：把这一格发到团队源/公网 npm/安装包/git 仓库。先跑全门禁（验收没打完不发），发完给安装命令或文件。',
+    parameters: {
+      type: 'object',
+      properties: {
+        unit: { type: 'string', description: '模块 id（workbench_diy_status 会给）。' },
+        target: {
+          type: 'string',
+          enum: ['team', 'public', 'tarball', 'git', 'local'],
+          description: '发到哪：团队源 / 公共 npm / 本机安装包 / git；不填按环境默认（有私源走团队源，否则安装包）。',
+        },
+        version: {
+          type: 'string',
+          description: '可选：patch / minor / major / x.y.z。不填就首次用当前版本，之后自动 patch。',
+        },
+        verify: {
+          type: 'boolean',
+          description: '只核已发布的包（验证码交接后用），不再发；不用审批。',
+        },
+        license: {
+          type: 'string',
+          description: '公开发布用的许可证（MIT / Apache-2.0 / 仓库已有 LICENSE 的标识）。',
+        },
+      },
+      required: ['unit'],
+      additionalProperties: false,
+    },
+    output: OUTPUT,
+    async execute(raw: unknown, exec: DshToolRunContext) {
+      const { root } = await workspaceOf(ctx, exec);
+      const found = unitOf(root, raw, 'workbench_diy_publish');
+      const shell = ctx.get<DshShell>('shell');
+      if (shell === undefined) throw new Error('这台机器上没有 shell 服务，发布跑不起来');
+      const bin = toolchainBinOf(root) ?? toolchainBinOf(found.dir);
+      if (bin === null) {
+        throw new Error(
+          `这个工作区里没有 dsh-wb-module（${join(root, 'node_modules')} 下没有）—— 先 pnpm install`,
+        );
+      }
+      const target = asText(asRecord(raw)['target']);
+      const version = asText(asRecord(raw)['version']);
+      const license = asText(asRecord(raw)['license']);
+      const verify = asRecord(raw)['verify'] === true;
+      const argv = [bin, 'release', '--cwd', found.dir, '--json'];
+      if (verify) argv.push('--verify');
+      else argv.push('--yes');
+      if (target !== '') argv.push('--target', target);
+      if (version !== '') argv.push('--version', version);
+      if (license !== '') argv.push('--license', license);
+      const result = await runShell(shell, argv.map((one) => quoteShellArg(one)).join(' '), {
+        workdir: root,
+        timeoutMs: PUBLISH_TIMEOUT_MS,
+      });
+      const payload = jsonOf(result.stdout);
+      if (result.exitCode === 3 && payload !== undefined) {
+        const needs = asRecord(payload['needsUser']);
+        const stepText = asText(needs['text']);
+        const command = asText(needs['command']);
+        return plainJson({
+          ...payload,
+          text: [
+            `还差一步：${stepText}`,
+            ...(command === '' ? [] : [`命令：${command}`]),
+            '做完跟我说「好了」，我接着发。',
+          ].join('\n'),
+        });
+      }
+      if (result.exitCode !== 0 || payload === undefined) {
+        const tail = `${result.stderr}\n${result.stdout}`.trim().split('\n').slice(-6).join(' | ');
+        throw new Error(`发布没走通（exit ${String(result.exitCode)}）${tail === '' ? '' : `：${tail}`}`);
+      }
+      const name = asText(payload['name']);
+      const released = asText(payload['version']);
+      const registry = asText(payload['registry']);
+      const file = asText(payload['file']);
+      const install = asText(payload['install']);
+      const git = asRecord(payload['git']);
+      const targetOfPayload = asText(payload['target']);
+      const text =
+        verify
+          ? [`已核过 ${name}@${released}`, `安装：${install}`, '没有重新发布。'].join('\n')
+          : targetOfPayload === 'tarball'
+          ? [`安装包在 ${file}`, `本机装：${install}`, '文件可以从对话里带走，发给同事。'].join('\n')
+          : targetOfPayload === 'git'
+            ? [
+                `已推到 ${asText(git['url'])}（tag ${asText(git['tag'])}）`,
+                `安装：${install}`,
+                '已核过 tag 里的产物。',
+              ].join('\n')
+            : targetOfPayload === 'local'
+              ? '没发，留在本机。'
+              : [
+                  `已发布 ${name}@${released} → ${registry}`,
+                  `同事安装：${install}`,
+                  '包内容已经从源上核过（dist/host.js / client.js / cordis.patch.yml 都在）。',
+                ].join('\n');
+      return plainJson({ ...payload, text });
+    },
+  };
+
   return [
     tools.register(statusTool),
     tools.register(panelTool),
@@ -307,5 +421,6 @@ export function registerDiyTools(
     ...registerDebugTools(ctx, tools, debug),
     tools.register(showTool),
     tools.register(installTool),
+    tools.register(publishTool),
   ];
 }

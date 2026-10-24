@@ -161,106 +161,6 @@ GET /api/__UNIT__/overview?path=<绝对路径>&limit=<1..50>
 卡片侧读数的 hook 是 `kit.hooks.useApiResource`（`route` 就是 `__UNIT__/overview`）。
 注意它的 `value` 是**整个响应对象**（成功时形如 `{ ok: true, ...payload }`），不是 `payload` 本身。
 
-## 这个模块会不会写东西、要不要跑一会儿、靠什么跑起来
-
-**这张卡只读** —— 上面那条 `/overview` 就是全部。要动手（提交、发布、批量改）就得再加两样，
-下面三段是**最小可抄的写法**；不需要的整段删掉，别留半截。
-
-### 会写：清单里标出来 + 认领审批
-
-> 每个工具都写一个 `key`（代码里那个短名，lowerCamelCase），然后 `dsh-wb-module sync` 生成
-> `src/declared-tools.ts`：代码写 `DECLARED_TOOLS.rebuild.name` —— 工具名的字面量只留在清单里。
-
-```ts
-tools: [{ name: 'workbench___UNIT___rebuild', writes: true, key: 'rebuild' }],
-
-needsApproval: (call) => ({
-  kind: 'ask',
-  reason: '会覆盖产物',
-  question: { zh: '要重建这 3 个模块吗？', en: 'Rebuild these 3 modules?' },
-  fallback: { zh: '会覆盖它们的 dist 与 client.js', en: 'Overwrites their dist and client.js' },
-}),
-
-approvalDetail: async (call) => ({ zh: '会覆盖 3 个模块的产物，不碰源码', en: '…' }),
-```
-
-清单写着 `writes: true` 而不认领，外壳**当场 deny**（用户看到的是一次莫名其妙的拒绝）——
-`dsh-wb-module check --only contracts` 会替你先把这条看一遍。用户侧看到的问话就是
-`question` + `approvalDetail` 合起来的那几行：**一行一个事实，别写"这个操作会写数据"这种空话。**
-
-### 跑一会儿：长任务
-
-```ts
-mount({ longTasks, ... }) {
-  const runs = longTasks?.create({
-    key: 'rebuild',
-    run: async ({ payload, onStep, signal }) => {
-      onStep({ kind: 'start', text: '开始…' });
-      // signal 被 abort = 有人按了停止（用户 / agent）：每一轮都看一眼 `signal.aborted`，能收手就收手
-      /* … */
-      return {};
-    },
-    outcome: (result) => ({ why: '…' }),
-    view: (snapshot) => ({ steps: String(snapshot.steps.length) }),
-  });
-  return { routes: {}, registerTools: () => [], ...(runs === undefined ? {} : { longTasks: runs }) };
-}
-```
-
-起这一趟的那把工具里（`execute(args, exec)` 拿得到现场）记下来源：
-
-```ts
-runs.start({ workspace, target, payload, session: sessionIdOf(exec) ?? undefined });
-```
-
-`sessionIdOf`（`@dsh-workbench/shared/host`）说这次调用是哪个会话发的。**不记来源 = 用户按的**
-（或这一版之前起的）—— 停它要走审批；外壳自带的那两把 `workbench_long_tasks_list` /
-`workbench_long_tasks_stop` 就是这么判"谁的"（自己起的免审批，别人的 / 用户按的要审批，
-不在当前工作区的直接拒绝）。
-
-浏览器侧用 kit 那套画（`kit.hooks.useLongTask` + `<LongTaskRow …/>`）：状态有五种 ——
-`running` 进行中 / `needs-login` 要登录 / `stopped` 停下的（用户按停）/ `ok` 完成 / `failed` 出错。
-
-要给用户那颗停止钮，就在卡片上给那一行的 `LongTaskRow` 传 `stop`
-（词与取值照 dsh 任务列表那行：aria `停止任务 {label}` → 上膛 → 可见字 `确认停止`、
-aria `再次点击确认停止`，3 秒落膛；**失败那半是我们自己的** —— 不往钮里写「停止失败」，
-而是把这次请求失败的原话画在那一行下面，`failed` 给什么画什么）；**要停就认 `signal`，不认就别画** ——
-画了就是骗人：外壳只会把这一趟标成 `stopped`，你的活儿还在跑（内部是 opencli 子进程那类编排，
-今天最多做到"我们不再等它"）。要用这个新 prop 就得装带这次改动的那份外壳 ——
-把自己 `peerDependencies['@dsh-workbench/core']` 的下限抬到那一版。
-
-### 存起来：他能自己配什么（`prefs`）
-
-选一次就想让它一直算数（钉哪个环境、忽略哪些、超时多久）→ 走 `prefs` 通道：**按项目记、刷新还在**。
-只是"这次看哪一种"→ 当 route 参数传，别落盘。两种都写进 `design.json` 的 `config[].persistence`
-（`prefs` / `view`）—— 表里写了 `prefs`，产物里就必须真的接上（`check --only contracts` 会拦）。
-
-宿主半侧在 `mount` 里返回（最好单独一个纯文件，像 `src/prefs.ts` 那样能单测）：
-
-```ts
-prefs: {
-  resource: 'your-module',
-  handle: (payload) => applyPref(deps.store.for(UNIT_ID, workspace), payload),
-}
-```
-
-浏览器半侧：`useHostWrite({ channel: 'prefs', resource: 'your-module' })` + `FormRows` / `FormRow` /
-`TextField`，外面套 `SettingsSection`，保存用 `SaveBar`；存失败留在原地。（标签、行距与输入框内边距都是
-外壳给的默认，不用为这个写 CSS。）语义：没写过 ≠ 选空、清空要把文件收掉、不认识的值报错并列出还认的候选。
-
-### 靠什么跑起来：`env`
-
-```ts
-env: {
-  command: 'opencli',
-  libs: [{ name: 'x-lib', registryEnv: 'DSH_WORKBENCH_X_REGISTRY', registryDefault: 'https://…/', purpose: '装它干嘛' }],
-  plugins: [{ name: 'x', commands: ['a', 'b'], installSource: { kind: 'npm', package: 'opencli-plugin-x', registryEnv: '…' } }],
-}
-```
-
-外壳的隔离运行时按它装、按它探（`workbench_modules_list` 里逐条看得到）。**没装好时用户看到的那句话
-由你写**：`libInstallCommand({ need })` 会连源和缓存目录一起拼好，原样给他，别自己拼 npm 命令。
-
 ## 卡片画哪五态
 
 `src/model/overview.ts` 的 `overviewStateOf({ phase, value, error })` 是一条纯函数，
@@ -279,38 +179,9 @@ env: {
 这时刻意继续画旧数据（右上角的转圈由 `Card` 的 `refreshing` 表示），不退回骨架：
 一次刷新不该让整张卡闪一下。
 
-## 装进本地工作台
+## 开发与发布
 
-```bash
-dsh plugin --profile workbench add <本目录>
-```
+开发命令见上面的六个脚本；dsh / 工作台的模块约束见工作台模块指引（随外壳出货）；agent 的工作说明见 `AGENTS.md`。
 
-## 改的时候这些是硬约束
-
-* **只用 kit 里真有的成员**：`check:kit` 拿产物实际取的成员去对 peer 下限那份外壳的 kit，
-  取了旧外壳没有的成员会在用户机器上首帧渲染就炸（peer 下限因此不许比 devDependency 旧）。
-* **两个运行时不许互引**：宿主侧不许碰 DOM / react，浏览器侧不许碰 `node:` / `process.env` / `Buffer`
-  （`check:bundles` 对着产物查）。所以目录读在 `src/host.ts`，卡片只管画。
-  跨运行时那一条**层号拦不住**（`components/` 第 2 层、`host.ts` 第 10 层，"向下依赖"看着合法）——
-  是 `arch` 判据按面判的：`src/components/**` 整片算 client 面，宿主侧 import 它当场红。
-* **层序**：`src/model/**`（纯逻辑，第 1 层）谁都能读，但它**不碰** react / kit / dsh / `node:*`；
-  视图在 `src/components/**`（第 2 层），只许 import 第 1 层；两个面在第 10 层。
-  要加一层就在 `arch.config.mjs` 里明写（`moduleArch({ layers: … })`）—— 多出来的目录默认是 S01 红。
-* **语法卫生**（第十三条）：`eslint.config.mjs` 那份方言管 `console.log` / `as any` / 手搓颜色字面量 /
-  `!important` / hooks 那几条（`rules-of-hooks`、渲染期写 ref、漏依赖是 **error**，其余 recommended 是 **warn**）。
-  `check` 把 error 算红、`warn` 只计数；要动手就先 `dsh-wb-module lint --fix`（`check` 一个字节都不改）。
-  个别地方真要破例就在 `eslint.config.mjs` 里 `moduleLint({ rules })` 开口子，别悄悄换成手写配置
-  （判据按方言指纹认它）。
-* `@/` 只许指自己（`@/modules/__UNIT__/*`）；共享代码走包名；`@deepseek-ai/dsh-*` 只在客户端侧用，
-  且必须同时写进 `package.json` 的 `dsh.client.external`。
-* **自己的样式走 CSS Modules**（`src/x.module.css` + `import styles from './x.module.css'`）：
-  类名照常写就行 —— 构建会**按文件路径哈希**（跨模块不会撞），但**别带 `wb-` 前缀**：
-  `wb-*` 是外壳的全局类名，模块定义它、或借契约里没有的那一个，`check:style` 都会判红。
-  要借外壳契约里的类，写 `:global(.wb-…)`，而且那个类必须在契约里。
-  这份骨架带了一份最小的 `src/components/OverviewCard.module.css`（就一档列间距），
-  演示"样式与组件同目录"；`types/styles.d.ts` 是它给 `tsc` 的类名表声明（少了它 `styles.largest` 直接红）。
-* **源码零注释**（`src/**`）：要说的都写在这里。
-
-要发布：把 `package.json` 里的 `private` 去掉，并显式写上发布目标
-（`publishConfig.access: "public"` 或指向内网源的 `publishConfig.registry`）——
-`private: true` 的包不许发到任何源，这是刻意的默认。
+发布（维护者确认之后）：`dsh-wb-module release --target team|public|tarball|git`；
+`--dry-run` 只预览，`--verify` 只核已发布的包。

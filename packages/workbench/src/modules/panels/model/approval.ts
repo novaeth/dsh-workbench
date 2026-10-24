@@ -20,6 +20,7 @@ import {
   PANELS_RESET_TOOL,
   PANELS_SHOW_TOOL,
   DIY_RECORD_PREPARE_TOOL,
+  DIY_PUBLISH_TOOL,
 } from '../unit';
 import type { LongTaskRunsLookup } from './long-task-tools';
 import { recordRefusalText } from './diy-record-text';
@@ -130,8 +131,61 @@ function stopVerdict(call: ApprovalCall, runs: LongTaskRunsLookup | undefined): 
   );
 }
 
+export interface PublishApprovalPreview {
+  readonly name: string;
+  readonly version: string;
+  readonly registry?: string;
+}
+
+function publishVerdict(
+  call: ApprovalCall,
+  preview?: (unit: string) => PublishApprovalPreview | null,
+): ApprovalVerdict {
+  const raw = argsOf(call);
+  if (raw['verify'] === true || raw['target'] === 'local') return { kind: 'allow' };
+  const unit = textOf(raw, 'unit');
+  const found = unit === '' ? null : (preview?.(unit) ?? null);
+  const asked = textOf(raw, 'target');
+  const target = asked === '' ? (found?.registry === undefined ? 'tarball' : 'team') : asked;
+  const label = unit === '' ? '工作台模块' : `工作台模块 [${unit}]`;
+  const labelEn = unit === '' ? 'the workbench module' : `the workbench module [${unit}]`;
+  const copies: Record<string, { zh: string; en: string }> = {
+    team: {
+      zh: `把${label}发到团队源，只发构建产物，不发源码，允许吗？`,
+      en: `Publish ${labelEn} to the team registry; only built artifacts, never the source. Allow?`,
+    },
+    public: {
+      zh: `把${label}公开发到 npm，任何人都能安装，允许吗？`,
+      en: `Publish ${labelEn} publicly to npm; anyone can install it. Allow?`,
+    },
+    tarball: {
+      zh: `给${label}打一个安装包，只写本机不发源码，允许吗？`,
+      en: `Pack ${labelEn} into a local tarball; nothing leaves this machine. Allow?`,
+    },
+    git: {
+      zh: `把${label}提交并推到 git，源码也会一起推送，允许吗？`,
+      en: `Commit and push ${labelEn} to git; the source is pushed too. Allow?`,
+    },
+    local: {
+      zh: `把${label}留在本机，不发，允许吗？`,
+      en: `Keep ${labelEn} local and publish nothing. Allow?`,
+    },
+  };
+  const copy = copies[target] ?? copies['team'];
+  const targetLabel =
+    found === null
+      ? target
+      : `${found.name}@${found.version} → ${target}${found.registry === undefined ? '' : ` (${found.registry})`}`;
+  return askOf(
+    `${DIY_PUBLISH_TOOL} ${targetLabel}`,
+    pair(copy.zh, copy.en),
+    pair(copy.zh, copy.en),
+  );
+}
+
 export const panelsApproval: ApprovalPolicy = (call) => {
   if (call.name === LONG_TASKS_STOP_TOOL) return stopVerdict(call, undefined);
+  if (call.name === DIY_PUBLISH_TOOL) return publishVerdict(call);
   if (call.name === DIY_DEBUG_START_TOOL || call.name === DIY_DEBUG_RESUME_TOOL) {
     const starting = call.name === DIY_DEBUG_START_TOOL;
     const unit = argsOf(call)['unit'];
@@ -318,9 +372,11 @@ function recordHeldVerdict(
 export function panelsApprovalFor(
   longTaskRuns?: LongTaskRunsLookup | undefined,
   recording?: (() => RecordState | null) | undefined,
+  publishPreview?: ((unit: string) => PublishApprovalPreview | null) | undefined,
 ): ApprovalPolicy {
   return (call) => {
     if (call.name === LONG_TASKS_STOP_TOOL) return stopVerdict(call, longTaskRuns);
+    if (call.name === DIY_PUBLISH_TOOL) return publishVerdict(call, publishPreview);
     return recordHeldVerdict(call, recording) ?? panelsApproval(call);
   };
 }

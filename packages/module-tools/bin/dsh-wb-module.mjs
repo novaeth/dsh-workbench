@@ -6,6 +6,7 @@ import { CHECKS, check } from '../src/check.mjs';
 import { design } from '../src/design.mjs';
 import { init } from '../src/init.mjs';
 import { publish } from '../src/publish.mjs';
+import { release } from '../src/release.mjs';
 import { sync } from '../src/sync.mjs';
 
 async function lint({ root, args }) {
@@ -44,10 +45,10 @@ async function lint({ root, args }) {
 const [command, ...rest] = process.argv.slice(2);
 const cwd = process.env.DSH_WB_MODULE_CWD ?? process.cwd();
 
-const commands = { build, check, init, design, publish, sync, lint };
+const commands = { build, check, init, design, publish, release, sync, lint };
 
 if (!command || !commands[command]) {
-  console.error(`用法：dsh-wb-module <build|check|init|design|publish|sync|lint> [--cwd <目录>]
+  console.error(`用法：dsh-wb-module <build|check|init|design|publish|release|sync|lint> [--cwd <目录>]
       dsh-wb-module check [--only ${Object.keys(CHECKS).join('|')}]
       dsh-wb-module check --only kit                 # 单跑当查询口：这份外壳的 kit 里有什么（--file <名字> 给类型文件绝对路径）
       dsh-wb-module check --only primitives [--all|--files|--json]
@@ -56,7 +57,12 @@ if (!command || !commands[command]) {
       dsh-wb-module design <init|check|render|accept>   # 三张表：填、查空格、生成 README、自验打勾
       dsh-wb-module sync                                 # 按清单生成 src/declared-tools.ts（工具名只有清单一处写者）
       dsh-wb-module lint [--fix]                         # 模块自己那份 eslint.config.mjs；--fix 写回文件
-      dsh-wb-module publish                              # 发货前的清单：门禁 + npm pack 清单 + files 漏项（只 dry run）`);
+      dsh-wb-module publish                              # 发货前的清单：门禁 + npm pack 清单 + files 漏项（只 dry run）
+      dsh-wb-module release [--target team|public|tarball|git|local] [--version patch|minor|major|x.y.z]
+                            [--registry <url>] [--access restricted|public] [--license <id>]
+                            [--out <目录>] [--git <remote>] [--npmrc <文件>]
+                            [--dry-run|--verify] [--yes] [--json]
+                                                         # 真发布：全门禁 + 验收 + 预检接管 + 发到出口（团队源/公网/安装包/git）+ 发后核包`);
   process.exit(2);
 }
 

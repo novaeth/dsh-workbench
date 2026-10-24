@@ -24,6 +24,7 @@
 | 配置持久化 | `config[].persistence` |
 | 联动事实 | `factsOf` + `factOfRoute` / `context` / `warmReads` / `values`（`contracts` 查形状） |
 | 发布预检 | `dsh-wb-module publish`（dry run） |
+| 真发布（用户确认后） | `workbench_diy_publish`（team/public/tarball/git；全门禁 + 验收闸 + 接管 + 发后核包；底层 `dsh-wb-module release`） |
 
 ## 留给 agent
 

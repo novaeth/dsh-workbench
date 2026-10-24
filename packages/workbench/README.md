@@ -145,7 +145,7 @@ npx @dsh-workbench/core --profile wb2
 | 配置同步里某行说 `@x 还没装` | 那一行点名的包不在这个 profile 的 `node_modules` 里：`dsh plugin --profile workbench add @x`（或在模块市场装），装完 dsh 会自行重组，它报 `restartReason` 时才重启 |
 | 启动被拒，说 dsh 太旧 | `npm i -g @deepseek-ai/dsh@latest`，装完重启工作台 |
 | 左栏没有「工作台DIY」，模式下拉里也没有「工作台 DIY 模式」 | 多半是 dsh 太旧：DIY preset 从 dsh 0.2.1-rc.2 的 preset 清单派生，旧一代挂不起来，而 dsh 的模式选择器只列挂得起来的 ⇒ 整个不见且不报错。启动体检会把它摆出来并给升级命令；自己核对就看 dsh 的 设置 → 「Agent presets」那一行的红标与原因 |
-| 在自己项目里开了 DIY，`workbench_diy_panel` 却说没找到模块 | 模块跟**这条会话的工作区**走，不跟工坊走：① 那个工作区要有一个在 `package.json` 里声明 `dsh.workbench` 的包；② 从工坊带过去的，把模块目录挪 / 拷进那个仓库；③ 旧 `shots/` 下的截图不迁移（新的落在 `~/.dsh/workbench/artifacts/<工作区>/`）。只看面板不需要模块（`workbench_diy_panel` / `_status` 直接看装过的） |
+| 在自己项目里开了 DIY，面板却说没找到模块 | 模块跟**这条会话的工作区**走，不跟工坊走：① 那个工作区要有一个在 `package.json` 里声明 `dsh.workbench` 的包；② 从工坊带过去的，把模块目录挪 / 拷进那个仓库；③ 旧截图不迁移（新的落在 `~/.dsh/workbench/artifacts/<工作区>/`）。细节见工作台模块指引 |
 
 ## 从源码跑
 

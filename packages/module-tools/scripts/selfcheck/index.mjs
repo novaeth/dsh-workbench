@@ -12,6 +12,7 @@ import * as declaration from './checks/declaration.mjs';
 import * as cardContent from './checks/card-content.mjs';
 import * as cardsNegative from './checks/cards-negative.mjs';
 import * as publish from './checks/publish.mjs';
+import * as release from './checks/release.mjs';
 import * as negativeProbe from './checks/negative-probe.mjs';
 import * as archGate from './checks/arch-gate.mjs';
 import * as lintGate from './checks/lint-gate.mjs';
@@ -33,6 +34,7 @@ const MODULES = [
   cardContent,
   cardsNegative,
   publish,
+  release,
   negativeProbe,
   archGate,
   lintGate,

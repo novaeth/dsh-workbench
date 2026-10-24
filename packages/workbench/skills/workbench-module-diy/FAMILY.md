@@ -8,10 +8,10 @@
 - 看 / 动 / 网络 / 日志族需先 `workbench_diy_debug_start`（审批一次）；无约定一律拒，零命令。
   不看屏 `_debug_pause`；收工 `_debug_stop`（一并收网络与日志钩子）。
 - 固定会话 `workbench`，每条带 `--window background`。`_status` / `_panel` / `_components` / `_recon` / `_spec` /
-  `_install` / `_show` 不碰屏，无需约定；`_find` / `_eval` 带 `read=` 走只读线，也不碰。
+  `_install` / `_show` / `_publish` 不碰屏，无需约定；`_find` / `_eval` 带 `read=` 走只读线，也不碰。
 - 录制交接（§4）独立：会话 `workbench-rec`；`_record_prepare` 审批一次，其余不问。
 - **Desktop**：屏调试那几把（`debug_*`、`logs_*`、不带 `read` 的看/动）不出现；`read=` 线、
-  `_record_*`、`_status` / `_panel` / `_install` 照旧。验收用 `read` 或录制取证，不要调 `_debug_start`。
+  `_record_*`、`_status` / `_panel` / `_install` / `_publish` 照旧。验收用 `read` 或录制取证，不要调 `_debug_start`。
 
 ## 2 浏览器 14 把
 
@@ -72,3 +72,18 @@
 
 左栏键（`[取消]` / `[停]`）只发消息，不改页面；录完无键。场次 TTL 15 分钟；过期或台账变更会停捕获、收标签。
 流程与写纪律见 [WRITES.md](WRITES.md) 步骤 3。
+
+## 5 发布
+
+`workbench_diy_publish`（`unit` 必填；`target` 可选 `team|public|tarball|git|local`；`version` 可选
+`patch|minor|major|x.y.z`；`verify` 可选，只核不发）——只在用户说「帮我发布」后用。
+
+一次调用做完：预检（登录 / license / git 远端 / 工作区）→ 全门禁（`build` / `check` / `design check` /
+`typecheck` / `test` / `selfcheck`）→ 按出口发布 → 从出口侧核包。审批一次，问句按 `target` 变
+（团队源 / 公开 npm / 安装包 / git 源码也推）。
+
+返回 `target` / `name` / `version` / `registry?` / `file?` / `git?` / `install`（安装命令）/ `files`。
+需要用户接管时返回 `needsUser: { step, text, command? }`，**不抛异常**：agent 把 `text` 说给用户、给命令，
+等「好了」再跑。`step` 有 `login` / `otp` / `license` / `scope` / `name` / `git-remote` / `git-dirty` /
+`git-auth` / `registry` / `acceptance`。验收没打完、源没配、包缺产物都当场拒；不向用户要 token、
+不展示 `package.json`。

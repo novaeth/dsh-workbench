@@ -60,7 +60,24 @@ DIY 族仅在选了 DIY 模式的会话出现（按模式，不按工作区）�
 
 ## 5 发布
 
-DIY 模块 `private: true`，不发任何源。
+默认 `private: true`，不发任何源。用户说「帮我发布」时，**不要手改 `package.json`、不要让他看 npm**，
+走 `workbench_diy_publish`（`unit=…`，`target=team|public|tarball|git`）：
 
-需要发布时：`pnpm exec dsh-wb-module publish`（门禁 + 三张表 + `files` 漏项，仅 dry run）；
-通过后移除 `private`，显式写 `publishConfig.access` 或内网 `publishConfig.registry`。
+1. 先确认他已经在真卡片上说过「没问题」，并已跑过 `design accept`（验收 N/N 全勾）。
+2. 工具调 `dsh-wb-module release`：预检（登录 / license / git 远端 / 工作区）→ 门禁
+   `build` + `check` + `design check` + `typecheck` + `test` + `selfcheck` → 按出口发布 → 从出口侧核包。
+3. 出口与默认：
+
+| `target` | 什么时候 | 凭据 | 报告 |
+|---|---|---|---|
+| `team` | 配了团队私源（默认） | 工坊 `.npmrc` 的 registry + `_authToken` | 同事安装命令 |
+| `public` | 用户明确说“公开” | npm 登录 / 2FA | 同事安装命令 |
+| `tarball` | 没私源（默认）/ 用户说“给个安装包” | 无 | `.tgz` 路径 + 本机安装命令 |
+| `git` | 用户说“推到 git” | git 远端 + 推送权限 | tag + `git+…#tag` 安装命令 |
+
+4. 工具回 `needsUser` 时（`login` / `otp` / `license` / `scope` / `name` / `git-remote` / `git-dirty` /
+   `git-auth` / `registry` / `acceptance`），照它那句 `text` 对用户说一句，给能照抄的命令，等他说「好了」再跑；
+   **不在对话里要 token / OTP**，不把红字贴给用户。`otp` 交接后用 `workbench_diy_publish` 的 `verify=true`
+（或 `release --verify`）只核不发；public 缺 license 时用户选 MIT / Apache-2.0 后，用工具的 `license=…` 重跑。
+5. `dsh-wb-module publish` 仍是**发货前清单**（只 dry run）；`release --dry-run` 只预览；
+   `--verify` 只核已发布的包。公网源必须显式 `--target public` + license，默认只认团队源 / 安装包。

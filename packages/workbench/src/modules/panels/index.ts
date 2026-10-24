@@ -13,6 +13,7 @@ import {
 } from '@dsh-workbench/shared/host';
 import { basename } from 'node:path';
 import { DIY_PRESET_ID } from '@/shared/api/diy';
+import { workshopPathOf } from '@/shared/api/host/diy';
 import { hostSurface } from '@/shared/api/host/platform';
 import { readBundleManager } from '@/shared/api/host/bundle-manager';
 import {
@@ -28,6 +29,7 @@ import { panelsApprovalFor } from './model/approval';
 import { resolveScope } from './model/config';
 import { registerLongTaskTools } from './model/long-task-tools';
 import { registerDiyTools } from './model/diy-tools';
+import { publishPreviewOf } from '@/shared/api/host/diy-publish-preview';
 import { stopObservers, withObserverCleanup } from './model/diy-observers';
 import { diyDebugRoutes } from './model/diy-debug-routes';
 import { diyRecordRoutes } from './model/diy-record-routes';
@@ -132,7 +134,11 @@ export const panelsHost: UnitOwnedFace = {
         ...registerLongTaskTools(ctx, longTaskRuns),
       ],
       factsOf: (call) => panelsFactsOf(call, manifests()),
-      needsApproval: panelsApprovalFor(longTaskRuns, () => record.live(Date.now())),
+      needsApproval: panelsApprovalFor(
+        longTaskRuns,
+        () => record.live(Date.now()),
+        (unit) => publishPreviewOf(workshopPathOf(ctx), unit),
+      ),
       gate: {
         deniedTools: (context) => {
           const boards = panels.boards(context.workspace);

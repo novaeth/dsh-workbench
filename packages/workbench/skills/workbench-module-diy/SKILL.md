@@ -44,6 +44,13 @@ description: 在工作台里把当前面板调明白，或者给它造一块新�
    看 / 动屏前 `workbench_diy_debug_start`（否则整族拒；Desktop 跳过，改用 `read=` / 录制）；`_panel` / `_status` / `read=` 档不用。
    工具全表 [FAMILY.md](FAMILY.md)。走通才 `dsh-wb-module design accept`；走不通如实记"未验"。
    审批项标注「要你真用一次」，不打勾。结论只报：已装、在面板哪一格。
+8. **发布** —— 只在用户说「帮我发布」之后。先确认他已经在真卡片上说过「没问题」（`design accept` 已打勾），
+   再调 `workbench_diy_publish`（`unit=…`，`target=team|public|tarball|git`）。
+   四种出口：团队源（有私源时默认）、公共 npm（必须用户明确说“公开”）、安装包（没私源时默认，零凭据）、
+   git（提交构建产物 + tag + push）。
+   只问「给团队用、公开发、还是先给你一个安装包」；不展示 `package.json` / npm / 版本字段，也不要问 token。
+   工具回 `needsUser` 时（登录、验证码、许可证、git 权限、验收没打完），照它那句 `text` 说、把命令给他，
+   等他说「好了」再跑一次（验证码那条用工具的 `verify=true` 只核不发）；不把红字贴给用户。
 
 ## 索引
 
@@ -74,5 +81,5 @@ description: 在工作台里把当前面板调明白，或者给它造一块新�
 ## 硬约束
 
 - dsh 已有的从 `kit` 拿（`@dsh-workbench/core/client`）；不手搓 DOM + CSS，不直接 import dsh 的包。
-- DIY 模块 `private: true`，不发任何源。
+- DIY 模块默认 `private: true`，不发任何源；用户确认后走 `workbench_diy_publish` 发到团队源 / 公网 / 安装包 / git。
 - 源码零注释（`//`、块注释、`.css` 注释都不许）；说明写模块 `README.md` 或 spec。

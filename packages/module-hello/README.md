@@ -56,11 +56,7 @@ pnpm check     # 十三条模块判据（契约 / 产物边界 / 源码边界 / 
 pnpm selfcheck # build + 产物冒烟
 ```
 
-改了想马上看效果：在工作台里 DIY 模式 `workbench_diy_install` 一次之后，后续只要
-`pnpm build`，卡片按模块路径热重载，不用重装。
-
-这个模块自己也要守**零注释**：说明写在 `README.md`，代码里不留 `//` 与块注释
-（eslint / ts / vitest 指令除外）。
+改了想马上看效果：重新 `pnpm build` 后刷新页面；宿主侧热换，不用重装。
 
 ## 想造自己的模块
 

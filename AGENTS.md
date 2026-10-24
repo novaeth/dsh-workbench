@@ -103,3 +103,15 @@ pnpm run check                        # 门禁：整仓那一套（= `pnpm -w ru
   与 [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md)。
 - 模块设计与 DIY 的共用口径只有一份，住在 `packages/workbench/skills/workbench-module-diy/`，
   **不要在仓内再抄一份**。
+
+### Issue tracker
+
+工单与 spec 是私有子仓里的 markdown：`private-docs/.scratch/<feature>/`。见 `docs/agents/issue-tracker.md`。
+
+### Triage labels
+
+五个默认角色标签：`needs-triage` · `needs-info` · `ready-for-agent` · `ready-for-human` · `wontfix`。见 `docs/agents/triage-labels.md`。
+
+### Domain docs
+
+单上下文：根 `CONTEXT.md` + `private-docs/docs/adr/` 一份 ADR。见 `docs/agents/domain.md`。

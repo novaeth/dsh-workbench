@@ -7,6 +7,7 @@ import {
   DIY_DEBUG_START_TOOL,
   DIY_DEBUG_STOP_TOOL,
   DIY_INSTALL_TOOL,
+  DIY_PUBLISH_TOOL,
   DIY_RECORD_PREPARE_TOOL,
   DIY_SHOW_TOOL,
   DIY_TOOLS,
@@ -46,6 +47,7 @@ export const WRITE_CALLS: Readonly<Record<string, unknown>> = {
   [MODULES_UPDATE_WORKBENCH_TOOL]: {},
   [DIY_RECORD_PREPARE_TOOL]: { unit: 'demo', url: 'https://inventory.example.com/env', doing: '发布' },
   [DIY_INSTALL_TOOL]: { unit: 'demo' },
+  [DIY_PUBLISH_TOOL]: { unit: 'demo', target: 'team', version: 'patch' },
   [DIY_SHOW_TOOL]: { unit: 'demo' },
   [DIY_DEBUG_START_TOOL]: { unit: 'demo' },
   [DIY_DEBUG_PAUSE_TOOL]: {},
@@ -71,6 +73,10 @@ export function stopRuns(
   return () => new Map([['inventory', registry]]);
 }
 
-export const ALLOWED_WRITES = new Set<string>([...DIY_TOOLS, DIY_DEBUG_PAUSE_TOOL, DIY_DEBUG_STOP_TOOL]);
+export const ALLOWED_WRITES = new Set<string>([
+  ...DIY_TOOLS.filter((one) => one !== DIY_PUBLISH_TOOL),
+  DIY_DEBUG_PAUSE_TOOL,
+  DIY_DEBUG_STOP_TOOL,
+]);
 
 export const ASK_TOOLS = WRITE_TOOLS.filter((name) => !ALLOWED_WRITES.has(name));

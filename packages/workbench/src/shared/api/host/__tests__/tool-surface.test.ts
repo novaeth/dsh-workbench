@@ -6,7 +6,7 @@ import { registerDiyTools } from '@/modules/panels/model/diy-tools';
 import { registerLongTaskTools } from '@/modules/panels/model/long-task-tools';
 
 const RESIDENT_CHAR_BUDGET = 1592;
-const WORKSHOP_CHAR_BUDGET = 3658;
+const WORKSHOP_CHAR_BUDGET = 3916;
 
 function registeredTools(workshop = false): DshToolDefinition[] {
   const seen: DshToolDefinition[] = [];
@@ -88,11 +88,11 @@ describe('工具面是常驻上下文：话要一句顶一句', () => {
     );
   });
 
-  it('★ DIY 那 28 把另算一份（+调试约定四把，ADR-0055；枚举 opencli 后按实测重算 —— ADR-0062；组件那把见 ADR-0063 §5；2026-10-20 删 probe、改由那族的只读线档承担，按实测 3721 → 3658（删掉 workbench_diy_list，入口收成 _status））', () => {
+  it('★ DIY 那 29 把另算一份（+调试约定四把，ADR-0055；枚举 opencli 后按实测重算 —— ADR-0062；组件那把见 ADR-0063 §5；2026-10-20 删 probe、改由那族的只读线档承担，按实测 3721 → 3658（删掉 workbench_diy_list，入口收成 _status）；2026-10-24 加 workbench_diy_publish（发布闸），预算按实测重算）', () => {
     const tools = registeredTools(true);
     const total = tools.reduce((sum, tool) => sum + promptTextOf(tool).length, 0);
 
-    expect(tools).toHaveLength(28);
+    expect(tools).toHaveLength(29);
     expect(total, `${String(tools.length)} 把工具 / 共 ${String(total)} 字 / 预算 ${String(WORKSHOP_CHAR_BUDGET)}`).toBeLessThanOrEqual(
       WORKSHOP_CHAR_BUDGET,
     );

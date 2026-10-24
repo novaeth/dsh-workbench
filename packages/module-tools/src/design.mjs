@@ -118,6 +118,16 @@ export function readDesign(root) {
   }
 }
 
+export function acceptanceOf(root) {
+  const design = readDesign(root);
+  const rows = asRows(design?.acceptance);
+  return {
+    total: rows.length,
+    checked: rows.filter((one) => one?.checked === true).length,
+    acceptedAt: typeof design?.acceptedAt === 'string' ? design.acceptedAt : undefined,
+  };
+}
+
 function skeleton(manifest = {}) {
   return {
     unit: text(manifest?.dsh?.workbench?.unit) || text(manifest.name).replace(/^.*\/module-/, ''),
