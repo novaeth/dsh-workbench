@@ -1,6 +1,6 @@
 import type { DshShell } from '../api/dsh.js';
-import { quoteShellArg, tailLines } from './shell-text.js';
-import { runShell } from './shell.js';
+import { quoteShellArg, tailLines } from '../host/shell-text.js';
+import { runShell } from '../host/shell.js';
 
 export type OriginRead =
   | { readonly kind: 'ok'; readonly remote: string }

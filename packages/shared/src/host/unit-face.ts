@@ -1,12 +1,13 @@
 import type { DshHostContext } from '../api/dsh.js';
-import type { UnitManifest } from '../api/unit.js';
+import type { UnitManifest } from '../contract/unit.js';
 import type { RouteTable } from '../host/http.js';
 import type { LongTaskBase, LongTaskHost, LongTaskRegistry } from '../host/long-task.js';
-import type { ProvisionHandler } from '../host/provision.js';
-import type { UnitCapability } from './unit-libs.js';
+import type { ProvisionHandler } from './provision.js';
+import type { UnitCapability } from '../contract/unit-capability.js';
 import type { ApprovalCall, ApprovalFacts, ApprovalPolicy } from '../host/tool-approval.js';
 import type { ValueHandoff } from '../host/value-handoff.js';
 import type { WorkspaceStore } from '../host/workspace-store.js';
+import type { DataReader } from '../contract/data.js';
 
 export interface ToolScopeContext {
   readonly workspace: string | null;
@@ -20,7 +21,7 @@ export interface UnitMountDeps {
   readonly manifests: () => readonly UnitManifest[];
   readonly ownedUnits: () => readonly string[];
   readonly installable?: (() => readonly string[]) | undefined;
-  readonly opencliCommand?: string;
+  readonly data: DataReader;
   readonly store: WorkspaceStore;
   readonly values?: ValueHandoff | undefined;
   readonly probe?: (

@@ -1,6 +1,5 @@
 import { setTimeout as delay } from 'node:timers/promises';
 import type { DshShell } from '../api/dsh.js';
-import type { Opencli, OpencliResult } from '../host/opencli.js';
 
 export interface ShellCall {
   command: string;
@@ -66,43 +65,6 @@ export function createFakeShell(replies: ShellReply[] | ((call: ShellCall, index
   };
 }
 
-export interface OpencliCall {
-  args: readonly string[];
-  key?: string;
-  workdir?: string;
-  session?: string;
-  refresh?: boolean;
-}
-
-export function createFakeOpencli(
-  replies: Array<unknown | Error> | ((call: OpencliCall, index: number) => unknown | Error) = [],
-) {
-  const calls: OpencliCall[] = [];
-
-  const opencli: Opencli = {
-    async json(args, options = {}) {
-      const call: OpencliCall = {
-        args,
-        ...(options.key === undefined ? {} : { key: options.key }),
-        ...(options.workdir === undefined ? {} : { workdir: options.workdir }),
-        ...(options.session === undefined ? {} : { session: options.session }),
-      };
-      calls.push(call);
-      const index = calls.length - 1;
-      const reply =
-        typeof replies === 'function' ? replies(call, index) : (replies[index] ?? []);
-
-      if (reply instanceof Error) throw reply;
-      return { value: reply, at: Date.now() } satisfies OpencliResult;
-    },
-  };
-
-  return {
-    opencli,
-    calls,
-    keys: () => calls.map((call) => call.key),
-  };
-}
 
 export function createFakeLogger() {
   const warnings: string[] = [];

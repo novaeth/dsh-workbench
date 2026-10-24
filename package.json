@@ -13,13 +13,14 @@
     "test": "pnpm --filter \"./packages/*\" --if-present run test",
     "coverage": "node scripts/run-tests.mjs",
     "arch": "pnpm --filter \"./packages/*\" --if-present run arch",
-    "selfcheck": "pnpm --workspace-concurrency=1 --filter \"./packages/*\" --if-present run selfcheck",
+    "selfcheck": "pnpm --workspace-concurrency=4 --filter \"./packages/*\" --if-present run selfcheck",
     "check:runtimes": "pnpm --filter \"./packages/*\" --if-present run check:runtimes",
-    "check:docs": "arch-guard --config packages/workbench/arch.config.mjs --check-docs",
+    "check:docs": "arch-guard --config packages/core/arch.config.mjs --check-docs && node packages/module-tools/scripts/check-docs.mjs",
+    "check:gates:target": "node scripts/gates/target.mjs",
     "check:modules": "node packages/module-tools/bin/dsh-wb-module.mjs check",
     "check:contracts": "node packages/module-tools/bin/dsh-wb-module.mjs check --only contracts",
     "check:protocol": "node packages/module-tools/bin/dsh-wb-module.mjs check --only protocol",
-    "check": "pnpm run lint:commit && pnpm run build && pnpm run typecheck && pnpm run lint && pnpm run coverage && pnpm run arch && pnpm run check:docs && pnpm run check:runtimes && pnpm run selfcheck && pnpm run check:modules && pnpm run check:release-artifacts",
+    "check": "pnpm run lint:commit && pnpm run build && pnpm run typecheck && pnpm run lint && pnpm run coverage && pnpm run check:gates:target -- --fail-on-red && pnpm run arch && pnpm run check:docs && pnpm run check:runtimes && pnpm run selfcheck && pnpm run check:modules && pnpm run check:adapter-defaults && pnpm run check:release-artifacts",
     "dev": "pnpm --filter @dsh-workbench/core run dev",
     "dev:desktop": "pnpm --filter @dsh-workbench/core run dev:desktop",
     "dev:docs": "pnpm --filter @dsh-workbench/docs run dev",
@@ -43,7 +44,8 @@
     "release:resume": "node scripts/release.mjs --resume",
     "check:primitives": "node packages/module-tools/bin/dsh-wb-module.mjs check --only primitives",
     "check:kit": "node packages/module-tools/bin/dsh-wb-module.mjs check --only kit",
-    "check:module-tools": "pnpm --filter @dsh-workbench/module-tools run selfcheck"
+    "check:module-tools": "pnpm --filter @dsh-workbench/module-tools run selfcheck",
+    "check:adapter-defaults": "pnpm --filter @dsh-workbench/core run check:adapter-defaults"
   },
   "devDependencies": {
     "@arch-guard/core": "^0.11.0",

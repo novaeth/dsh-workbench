@@ -1,7 +1,7 @@
 # Contributing
 
 Thanks for helping. This is a pnpm workspace: the shell is
-`packages/workbench` (published as `@dsh-workbench/core`), the shared contracts
+`packages/core` (published as `@dsh-workbench/core`), the shared contracts
 live in `packages/shared`, module tooling in `packages/module-tools`, and
 `packages/module-hello` is the smallest installable module.
 
@@ -28,7 +28,7 @@ pnpm run check        # the one gate: commit message · build · typecheck · li
 ```
 
 `pnpm run dev` starts the workbench on `:3081` next to `dsh web` on `:3080` and
-watches `packages/workbench/src/**`.
+watches `packages/core/src/**`.
 
 The gate builds before it typechecks: `packages/module-hello` imports the kit from
 `@dsh-workbench/core/client`, and that is a build artifact (`client.js` and
@@ -40,7 +40,7 @@ install; running one package's tests before any build does not, so run
 Internal maintainers: the design docs and ADRs live in the private `private-docs/`
 submodule. Public builds and the gate do not need it. With access, run
 `git submodule update --init`. The full command list is in
-[`AGENTS.md`](AGENTS.md) and [`packages/workbench/README.md`](packages/workbench/README.md).
+[`AGENTS.md`](AGENTS.md) and [`packages/core/README.md`](packages/core/README.md).
 
 ## Before you open a pull request
 
@@ -48,8 +48,8 @@ submodule. Public builds and the gate do not need it. With access, run
   are hard to review.
 - Run the gate on a **frozen tree**: record `git status --short` before and
   after `pnpm run check`. Do not run two gates at once — `check:standalone`
-  temporarily renames `packages/workbench/src/`, and `coverage` rewrites
-  `packages/workbench/coverage/`.
+  temporarily renames `packages/core/src/`, and `coverage` rewrites
+  `packages/core/coverage/`.
 - Do not commit `dist/`, `coverage/`, `client.js`, probe output or machine
   specific paths. See [`.gitignore`](.gitignore).
 - Commit messages follow Conventional Commits (`feat(scope): …`, `fix: …`,
@@ -59,7 +59,8 @@ submodule. Public builds and the gate do not need it. With access, run
   specs and work items live there too; they are not part of the public tree.
 - Code comments are not allowed anywhere in the repo (JS / TS / CSS). The only
   exception is JSDoc attached to exported members of a public entry — the kit,
-  plus `@dsh-workbench/shared`'s `.` / `/host` / `/testing` — and tool
+  `@dsh-workbench/core/contract` (types only), plus `@dsh-workbench/shared`'s
+  `.` / `/host` / `/testing` — and tool
   directives (eslint / ts / vitest). The check derives that surface from the
   barrels and the kit object, so internal helper files get no exception. The
   "why" goes into an ADR, `CONTEXT.md`, or the feature spec. CSS carries none.
@@ -67,7 +68,7 @@ submodule. Public builds and the gate do not need it. With access, run
   reused instead of re-drawn. See [`ARCHITECTURE.md`](ARCHITECTURE.md) §13.
 - Modules must not import the shell's source, must ship a single client bundle,
   and must pass `dsh-wb-module check`. Start from
-  [`packages/workbench/skills/workbench-module-diy/`](packages/workbench/skills/workbench-module-diy/SKILL.md).
+  [`packages/core/skills/workbench-module-diy/`](packages/core/skills/workbench-module-diy/SKILL.md).
 
 ## Docs site
 

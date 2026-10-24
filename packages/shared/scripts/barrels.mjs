@@ -72,7 +72,7 @@ function keptHostSpecs() {
   return readFileSync(path, 'utf8')
     .split('\n')
     .map((line) => /^export \* from '(\.[^']+)';$/.exec(line.trim())?.[1])
-    .filter((spec) => spec !== undefined && !spec.startsWith('./host/'));
+    .filter((spec) => spec !== undefined && !spec.startsWith('./host/') && !spec.startsWith('./adapters/'));
 }
 
 const modules = walk(SRC).filter((file) => !BARRELS.includes(relOf(file, SRC)));
@@ -81,9 +81,17 @@ emit(
   'index.ts',
   modules.filter((file) => {
     const rel = relOf(file, SRC);
-    return !rel.startsWith('host/') && !isTestingEntry(rel) && !isInternal(rel);
+    return !rel.startsWith('host/') && !rel.startsWith('adapters/') && !isTestingEntry(rel) && !isInternal(rel);
   }),
   SRC,
 );
 
-emit('host.ts', modules.filter((file) => relOf(file, SRC).startsWith('host/')), SRC, keptHostSpecs());
+emit(
+  'host.ts',
+  modules.filter((file) => {
+    const rel = relOf(file, SRC);
+    return rel.startsWith('host/') || rel.startsWith('adapters/');
+  }),
+  SRC,
+  keptHostSpecs(),
+);

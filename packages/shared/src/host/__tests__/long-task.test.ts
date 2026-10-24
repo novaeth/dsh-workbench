@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { LongTaskStep } from '../../api/long-task.js';
+import type { LongTaskStep } from '../../contract/long-task.js';
 import {
   createLongTaskHost,
   createLongTaskRegistry,

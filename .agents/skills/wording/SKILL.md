@@ -98,4 +98,4 @@ description: 写或改一段文本时用：工具描述、参数说明、工具�
 
 - agent 侧写什么删什么：`prompt-diet/spec.md`
 - 审批屏：`approval-copy/spec.md` · ADR-0065
-- 界面形状：[PANEL.md](../../../packages/workbench/skills/workbench-module-diy/PANEL.md) · [DESIGN.md](../../../packages/workbench/skills/workbench-module-diy/DESIGN.md) · [DATASOURCE.md](../../../packages/workbench/skills/workbench-module-diy/DATASOURCE.md) · [TOOLS.md](../../../packages/workbench/skills/workbench-module-diy/TOOLS.md)
+- 界面形状：[PANEL.md](../../../packages/core/skills/workbench-module-diy/PANEL.md) · [DESIGN.md](../../../packages/core/skills/workbench-module-diy/DESIGN.md) · [DATASOURCE.md](../../../packages/core/skills/workbench-module-diy/DATASOURCE.md) · [TOOLS.md](../../../packages/core/skills/workbench-module-diy/TOOLS.md)

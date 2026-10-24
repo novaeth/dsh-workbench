@@ -1,7 +1,7 @@
-import type { Translate } from './dsh-client.js';
-import type { CapabilityPayload } from './workbench-contract.js';
+import type { Translate } from '../lib/dsh-client.js';
+import type { CapabilityPayload } from '../contract/workbench-contract.js';
 import type { ApiError } from './workbench-client.js';
-import type { BlockerAction, ModuleBlocker } from './blocker.js';
+import type { BlockerAction, ModuleBlocker } from '../contract/blocker.js';
 import { shortenPath } from '../lib/ui.js';
 
 function retryAction(t: Translate): BlockerAction {

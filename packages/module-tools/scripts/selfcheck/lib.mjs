@@ -51,6 +51,7 @@ export function findToolchain() {
     .find(
       (dir) =>
         existsSync(join(dir, 'node_modules', '@dsh-workbench', 'core')) &&
+        existsSync(join(dir, 'node_modules', '@dsh-workbench', 'module-tools')) &&
         existsSync(join(dir, 'node_modules', '.bin', 'vitest')),
     );
 }

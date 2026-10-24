@@ -12,7 +12,7 @@ node_modules/
 # 构建产物与测试产物
 dist/
 coverage/
-packages/workbench/client.js
+packages/core/client.js
 packages/docs/site-dist/
 
 # 门禁中间产物：跑 `pnpm run check` 时在仓内出现、正常跑完会自己清掉的那几样。
@@ -26,7 +26,7 @@ packages/.*/
 # standalone 判据把外壳的 `src/` 临时改名成 `src.hidden` 再还原（跑的过程中 git 会看见整棵
 # src 被删）。正常跑完不在；被硬杀会留下，那时该判据自己会报「上次没还原干净」。
 # 它是一份 src 的副本，永远不该进提交 —— 更不能让 `git add -A` 顺手带上。
-packages/workbench/src.hidden/
+packages/core/src.hidden/
 
 # npm / pnpm 的下载缓存：跑 ad-hoc 的 `npm --cache <dir>`，或 `.npmrc` 的 cache= 指进仓里
 # （工坊那份 .npmrc 就是 `cache-dir=$DIY_DIR/.npm-cache`）时，会在树里冒出一个 cacache 目录

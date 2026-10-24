@@ -54,7 +54,7 @@ fi
 
 echo "=== ⓪ 代码接线自检（不依赖 dsh 运行时）==="
 if (cd "$REPO_DIR" && pnpm --filter @dsh-workbench/core --silent run selfcheck >/dev/null 2>&1); then
-  ok "接线自检（packages/workbench 的 selfcheck）全部通过"
+  ok "接线自检（packages/core 的 selfcheck）全部通过"
 else
   bad "接线自检有失败项，单独运行看明细：pnpm --filter @dsh-workbench/core run selfcheck"
 fi
@@ -106,7 +106,7 @@ else
   else
     bad "ui-sidebar 未被禁用 —— 左栏会和出厂 SidebarRoot 抢 sidebar 槽"
   fi
-  if grep -q 'WEB_PATCH' "$REPO_DIR/packages/workbench/bin/dsh-workbench"; then
+  if grep -q 'WEB_PATCH' "$REPO_DIR/packages/core/bin/dsh-workbench"; then
     bad "启动器又在叠 web 的 patch —— 那一层盖住的行在 :3081 改不动（ADR-0044）"
   else
     ok "启动器只叠工作台自己那层（sandbox 可写根），没有 web 设置的叠层"

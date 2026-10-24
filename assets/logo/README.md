@@ -15,4 +15,4 @@
 - 几何走 64 网格：显示器 5–59 × 6–48，屏幕 9–55 × 10–44，尾巴在屏幕里居中，缩放 1.95。
 - 尾巴取自 dsh 的 running whale（`@deepseek-ai/dsh-client-ui-chat` 的 `REST_PATH`），填成实心、底部收圆；鲸鱼标归 DeepSeek，这里是派生出来的项目自用标。
 
-插件图标 `packages/workbench/icon.svg` 与 [`logo-app.svg`](logo-app.svg) 是同一份；侧栏位用 `@dsh-workbench/shared` 里 `IconBrandMark` 的同形单色版。
+插件图标 `packages/core/icon.svg` 与 [`logo-app.svg`](logo-app.svg) 是同一份；侧栏位用 `@dsh-workbench/shared` 里 `IconBrandMark` 的同形单色版。

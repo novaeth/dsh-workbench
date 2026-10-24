@@ -156,16 +156,16 @@ function bareAnchorsIn(text) {
 
 const CLASS_TOKEN = /(^|[^-\w])\.?(wb-[a-zA-Z0-9-]+)/g;
 
-const SOURCE_BOARD = fileURLToPath(new URL('../../../workbench/src/shared/styles/board.css', import.meta.url));
+const SOURCE_BOARD = fileURLToPath(new URL('../../../core/src/shared/styles/board.css', import.meta.url));
 const SOURCE_COMPONENTS = fileURLToPath(new URL('../../../shared/src/components', import.meta.url));
 const INSTALLED_BOARD = join('node_modules', '@dsh-workbench', 'core', 'dist', 'board.css');
 const INSTALLED_COMPONENTS = join('node_modules', '@dsh-workbench', 'shared', 'src', 'components');
 
-const SOURCE_SHELL_SRC = fileURLToPath(new URL('../../../workbench/src', import.meta.url));
+const SOURCE_SHELL_SRC = fileURLToPath(new URL('../../../core/src', import.meta.url));
 const SOURCE_SHARED_SRC = fileURLToPath(new URL('../../../shared/src', import.meta.url));
 const SHELL_FONT_SCALE_FILES = [
-  fileURLToPath(new URL('../../../workbench/src/shared/styles/tokens/scale.css', import.meta.url)),
-  fileURLToPath(new URL('../../../workbench/src/shared/styles/tokens.css', import.meta.url)),
+  fileURLToPath(new URL('../../../core/src/shared/styles/tokens/scale.css', import.meta.url)),
+  fileURLToPath(new URL('../../../core/src/shared/styles/tokens.css', import.meta.url)),
 ];
 const FONT_DOC = '`@dsh-workbench/core` 的 `skills/workbench-module-diy/PANEL.md` §6「字号与重点」';
 

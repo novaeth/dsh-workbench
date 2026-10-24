@@ -23,7 +23,7 @@ agent 会走工具装、启用、刷新，失败会说明卡在哪一步。
 写代码、跑判据、装上去。你不用先学一套框架；写得对不对由门禁兜。
 
 骨架、判据、模板都在仓库的 `packages/module-tools`，模块 DIY 的共用口径只有一份，
-住在 `packages/workbench/skills/workbench-module-diy/`，不在文档里另抄。
+住在 `packages/core/skills/workbench-module-diy/`，不在文档里另抄。
 
 ## 一条硬规矩
 

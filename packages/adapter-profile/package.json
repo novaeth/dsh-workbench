@@ -1,0 +1,45 @@
+{
+  "name": "@dsh-workbench/adapter-profile",
+  "version": "0.3.11",
+  "description": "Workbench profile adapter package.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/novaeth/dsh-workbench.git",
+    "directory": "packages/adapter-profile"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run --testTimeout=20000",
+    "arch": "node ../../scripts/check-adapter-package.mjs",
+    "check:runtimes": "node ../../scripts/check-adapter-package.mjs --runtime",
+    "coverage": "vitest run --coverage --coverage.reporter=text-summary --testTimeout=20000"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.0",
+    "@types/proper-lockfile": "^4.1.4",
+    "@types/write-file-atomic": "^4.0.3",
+    "vitest": "^5.0.2",
+    "@vitest/coverage-v8": "^5.0.2"
+  },
+  "dependencies": {
+    "@dsh-workbench/shared": "workspace:*",
+    "execa": "^10.2.0",
+    "write-file-atomic": "^8.0.0",
+    "proper-lockfile": "^4.1.2",
+    "@dsh-workbench/adapter-runtime": "workspace:*"
+  }
+}

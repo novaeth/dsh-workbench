@@ -7,7 +7,7 @@ import {
   type ProvisionHandler,
   type ProvisionRequest,
 } from './provision.js';
-import { WorkbenchDataError } from '../host/opencli.js';
+import { WorkbenchDataError } from './data-error.js';
 import { writeResultForClient } from './write-result.js';
 
 export type RouteHandler = (search: URLSearchParams) => Promise<unknown> | unknown;

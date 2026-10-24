@@ -1,0 +1,34 @@
+{
+  "name": "@dsh-workbench/adapter-runtime",
+  "version": "0.3.11",
+  "description": "Opencli, browser and data runtime adapters.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run --testTimeout=20000",
+    "coverage": "vitest run --coverage --coverage.reporter=text-summary --testTimeout=20000",
+    "arch": "node ../../scripts/check-adapter-package.mjs",
+    "check:runtimes": "node ../../scripts/check-adapter-package.mjs --runtime"
+  },
+  "dependencies": {
+    "@dsh-workbench/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.0",
+    "@vitest/coverage-v8": "^5.0.2",
+    "vitest": "^5.0.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT"
+}

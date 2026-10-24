@@ -1,5 +1,6 @@
 import { createRule } from '@arch-guard/core';
 import { deps, designSystem, i18n, library, noneI18nKit } from '@arch-guard/core/presets';
+import { kernelRules } from './arch/rules/kernel.mjs';
 
 const entryKeepsHostOut = createRule({
   id: 'S70',
@@ -30,14 +31,15 @@ export default {
       src: 'src',
       entry: ['index.ts', 'host.ts', 'testing.ts'],
       modules: {
-        lib: 1,
+        contract: 1,
+        lib: 2,
         config: 2,
-        i18n: 3,
+        i18n: 2,
         api: 4,
-        components: 5,
-        '__tests__': 5,
+        components: 3,
+        '__tests__': 99,
         host: 9,
-        testing: 10,
+        testing: 99,
       },
     }),
     designSystem({
@@ -56,11 +58,11 @@ export default {
     }),
     deps({ allow: ['react', 'dayjs'] }),
     i18n(noneI18nKit()),
-    { enable: ['S70'] },
+    { enable: ['S70', 'S71', 'S72'] },
   ],
   overrides: {
     include: ['src/**'],
-    customRules: [entryKeepsHostOut],
+    customRules: [entryKeepsHostOut, ...kernelRules],
     exceptions: [
       {
         rule: 'S11',

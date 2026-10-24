@@ -1,23 +1,10 @@
+import type { HostContext, UnitModuleFace, UnitRegistry } from '@dsh-workbench/core/contract';
+
 const UNIT_ID = '__UNIT__';
 
 export const name = '__NAME__';
 
 export const inject = ['workbenchUnits'];
-
-interface UnitModuleFace {
-  readonly unit: string;
-  mount(): { routes: Record<string, never>; registerTools(): Array<() => void> };
-}
-
-interface UnitRegistry {
-  register(face: UnitModuleFace): () => void;
-}
-
-interface HostContext {
-  get<T = unknown>(name: string): T | undefined;
-  effect(effect: () => void | (() => void), label?: string): () => void;
-  logger?: { warn?(message: string): void } | undefined;
-}
 
 const face: UnitModuleFace = {
   unit: UNIT_ID,

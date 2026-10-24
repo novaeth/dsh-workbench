@@ -1,4 +1,4 @@
-import type { Translate } from '../api/dsh-client.js';
+import type { Translate } from '../lib/dsh-client.js';
 import type { ApprovalInput, UnitClientFace } from '../components/board-module.js';
 import { Fragment, h, type ReactNode } from '../lib/react.js';
 import { CodeBlock } from '@deepseek-ai/dsh-client-ui-primitives';

@@ -48,6 +48,210 @@ importers:
         specifier: ^8.71.0
         version: 8.71.0(eslint@10.11.0(jiti@2.7.0))(typescript@5.9.3)
 
+  packages/adapter-probe:
+    dependencies:
+      '@dsh-workbench/adapter-profile':
+        specifier: workspace:*
+        version: link:../adapter-profile
+      '@dsh-workbench/adapter-runtime':
+        specifier: workspace:*
+        version: link:../adapter-runtime
+      '@dsh-workbench/adapter-supply':
+        specifier: workspace:*
+        version: link:../adapter-supply
+      '@dsh-workbench/shared':
+        specifier: workspace:*
+        version: link:../shared
+      execa:
+        specifier: ^10.2.0
+        version: 10.2.0
+      proper-lockfile:
+        specifier: ^4.1.2
+        version: 4.1.2
+      write-file-atomic:
+        specifier: ^8.0.0
+        version: 8.0.0
+    devDependencies:
+      '@types/node':
+        specifier: ^24.19.0
+        version: 24.19.0
+      '@types/proper-lockfile':
+        specifier: ^4.1.4
+        version: 4.1.4
+      '@types/write-file-atomic':
+        specifier: ^4.0.3
+        version: 4.0.3
+      '@vitest/coverage-v8':
+        specifier: ^5.0.2
+        version: 5.0.2(vitest@5.0.2)
+      dayjs:
+        specifier: ^1.11.23
+        version: 1.11.23
+      vitest:
+        specifier: ^5.0.2
+        version: 5.0.2(@types/node@24.19.0)(@vitest/coverage-v8@5.0.2)(vite@8.3.1(@types/node@24.19.0)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.106.1))
+
+  packages/adapter-profile:
+    dependencies:
+      '@dsh-workbench/adapter-runtime':
+        specifier: workspace:*
+        version: link:../adapter-runtime
+      '@dsh-workbench/shared':
+        specifier: workspace:*
+        version: link:../shared
+      execa:
+        specifier: ^10.2.0
+        version: 10.2.0
+      proper-lockfile:
+        specifier: ^4.1.2
+        version: 4.1.2
+      write-file-atomic:
+        specifier: ^8.0.0
+        version: 8.0.0
+    devDependencies:
+      '@types/node':
+        specifier: ^24.19.0
+        version: 24.19.0
+      '@types/proper-lockfile':
+        specifier: ^4.1.4
+        version: 4.1.4
+      '@types/write-file-atomic':
+        specifier: ^4.0.3
+        version: 4.0.3
+      '@vitest/coverage-v8':
+        specifier: ^5.0.2
+        version: 5.0.2(vitest@5.0.2)
+      vitest:
+        specifier: ^5.0.2
+        version: 5.0.2(@types/node@24.19.0)(@vitest/coverage-v8@5.0.2)(vite@8.3.1(@types/node@24.19.0)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.106.1))
+
+  packages/adapter-runtime:
+    dependencies:
+      '@dsh-workbench/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      '@types/node':
+        specifier: ^24.19.0
+        version: 24.19.0
+      '@vitest/coverage-v8':
+        specifier: ^5.0.2
+        version: 5.0.2(vitest@5.0.2)
+      vitest:
+        specifier: ^5.0.2
+        version: 5.0.2(@types/node@24.19.0)(@vitest/coverage-v8@5.0.2)(vite@8.3.1(@types/node@24.19.0)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.106.1))
+
+  packages/adapter-supply:
+    dependencies:
+      '@dsh-workbench/adapter-runtime':
+        specifier: workspace:*
+        version: link:../adapter-runtime
+      '@dsh-workbench/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      '@types/node':
+        specifier: ^24.19.0
+        version: 24.19.0
+      '@vitest/coverage-v8':
+        specifier: ^5.0.2
+        version: 5.0.2(vitest@5.0.2)
+      vitest:
+        specifier: ^5.0.2
+        version: 5.0.2(@types/node@24.19.0)(@vitest/coverage-v8@5.0.2)(vite@8.3.1(@types/node@24.19.0)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.106.1))
+
+  packages/adapters-default:
+    dependencies:
+      '@dsh-workbench/adapter-probe':
+        specifier: workspace:*
+        version: link:../adapter-probe
+      '@dsh-workbench/adapter-profile':
+        specifier: workspace:*
+        version: link:../adapter-profile
+      '@dsh-workbench/adapter-runtime':
+        specifier: workspace:*
+        version: link:../adapter-runtime
+      '@dsh-workbench/adapter-supply':
+        specifier: workspace:*
+        version: link:../adapter-supply
+    devDependencies:
+      '@types/node':
+        specifier: ^24.19.0
+        version: 24.19.0
+      '@vitest/coverage-v8':
+        specifier: ^5.0.2
+        version: 5.0.2(vitest@5.0.2)
+      vitest:
+        specifier: ^5.0.2
+        version: 5.0.2(@types/node@24.19.0)(@vitest/coverage-v8@5.0.2)(vite@8.3.1(@types/node@24.19.0)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.106.1))
+
+  packages/core:
+    dependencies:
+      '@dsh-workbench/adapters-default':
+        specifier: workspace:*
+        version: link:../adapters-default
+      '@dsh-workbench/shared':
+        specifier: workspace:*
+        version: link:../shared
+      dayjs:
+        specifier: ^1.11.23
+        version: 1.11.23
+      execa:
+        specifier: ^10.2.0
+        version: 10.2.0
+      prompts:
+        specifier: ^2.4.2
+        version: 2.4.2
+      proper-lockfile:
+        specifier: ^4.1.2
+        version: 4.1.2
+      which:
+        specifier: ^7.0.0
+        version: 7.0.0
+      write-file-atomic:
+        specifier: ^8.0.0
+        version: 8.0.0
+    devDependencies:
+      '@arch-guard/core':
+        specifier: ^0.11.0
+        version: 0.11.0(typescript@5.9.3)
+      '@deepseek-ai/dsh-client-ui-primitives':
+        specifier: 0.2.1-rc.2
+        version: 0.2.1-rc.2(@deepseek-ai/cordis@4.0.4)
+      '@types/node':
+        specifier: ^24.19.0
+        version: 24.19.0
+      '@types/proper-lockfile':
+        specifier: ^4.1.4
+        version: 4.1.4
+      '@types/react':
+        specifier: ^19.3.0
+        version: 19.3.0
+      '@types/which':
+        specifier: ^3.0.4
+        version: 3.0.4
+      '@types/write-file-atomic':
+        specifier: ^4.0.3
+        version: 4.0.3
+      '@vitest/coverage-v8':
+        specifier: ^5.0.2
+        version: 5.0.2(vitest@5.0.2)
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
+      react:
+        specifier: ^19.3.0
+        version: 19.3.0
+      typescript:
+        specifier: '5.9'
+        version: 5.9.3
+      vite:
+        specifier: ^8.3.1
+        version: 8.3.1(@types/node@24.19.0)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.106.1)
+      vitest:
+        specifier: ^5.0.2
+        version: 5.0.2(@types/node@24.19.0)(@vitest/coverage-v8@5.0.2)(vite@8.3.1(@types/node@24.19.0)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.106.1))
+
   packages/docs:
     devDependencies:
       '@pagoda-cli/core':
@@ -61,7 +265,7 @@ importers:
     devDependencies:
       '@dsh-workbench/core':
         specifier: workspace:*
-        version: link:../workbench
+        version: link:../core
       '@dsh-workbench/module-tools':
         specifier: workspace:*
         version: link:../module-tools
@@ -141,70 +345,6 @@ importers:
       typescript:
         specifier: '5.9'
         version: 5.9.3
-      vitest:
-        specifier: ^5.0.2
-        version: 5.0.2(@types/node@24.19.0)(@vitest/coverage-v8@5.0.2)(vite@8.3.1(@types/node@24.19.0)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.106.1))
-
-  packages/workbench:
-    dependencies:
-      '@dsh-workbench/shared':
-        specifier: workspace:*
-        version: link:../shared
-      dayjs:
-        specifier: ^1.11.23
-        version: 1.11.23
-      execa:
-        specifier: ^10.2.0
-        version: 10.2.0
-      prompts:
-        specifier: ^2.4.2
-        version: 2.4.2
-      proper-lockfile:
-        specifier: ^4.1.2
-        version: 4.1.2
-      which:
-        specifier: ^7.0.0
-        version: 7.0.0
-      write-file-atomic:
-        specifier: ^8.0.0
-        version: 8.0.0
-    devDependencies:
-      '@arch-guard/core':
-        specifier: ^0.11.0
-        version: 0.11.0(typescript@5.9.3)
-      '@deepseek-ai/dsh-client-ui-primitives':
-        specifier: 0.2.1-rc.2
-        version: 0.2.1-rc.2(@deepseek-ai/cordis@4.0.4)
-      '@types/node':
-        specifier: ^24.19.0
-        version: 24.19.0
-      '@types/proper-lockfile':
-        specifier: ^4.1.4
-        version: 4.1.4
-      '@types/react':
-        specifier: ^19.3.0
-        version: 19.3.0
-      '@types/which':
-        specifier: ^3.0.4
-        version: 3.0.4
-      '@types/write-file-atomic':
-        specifier: ^4.0.3
-        version: 4.0.3
-      '@vitest/coverage-v8':
-        specifier: ^5.0.2
-        version: 5.0.2(vitest@5.0.2)
-      esbuild:
-        specifier: ^0.28.2
-        version: 0.28.2
-      react:
-        specifier: ^19.3.0
-        version: 19.3.0
-      typescript:
-        specifier: '5.9'
-        version: 5.9.3
-      vite:
-        specifier: ^8.3.1
-        version: 8.3.1(@types/node@24.19.0)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.106.1)
       vitest:
         specifier: ^5.0.2
         version: 5.0.2(@types/node@24.19.0)(@vitest/coverage-v8@5.0.2)(vite@8.3.1(@types/node@24.19.0)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.106.1))
@@ -8983,7 +9123,7 @@ snapshots:
     dependencies:
       '@babel/parser': 7.29.9
       '@babel/types': 7.29.8
-      source-map-js: 1.2.1
+      source-map-js: 1.2.2
 
   make-dir@3.1.0:
     dependencies:

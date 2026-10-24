@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import type { UnitManifest } from '../api/unit.js';
-import { readDeclaration } from '../host/unit-declaration.js';
+import type { UnitManifest } from '../contract/unit.js';
+import { readDeclaration } from '../contract/unit-declaration.js';
 
 export function declarationOfPackage(pkg: string, packageJson: URL | string): UnitManifest {
   const at = typeof packageJson === 'string' ? packageJson : fileURLToPath(packageJson);

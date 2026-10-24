@@ -1,5 +1,5 @@
 import { Button } from '@deepseek-ai/dsh-client-ui-primitives';
-import type { Translate } from '../api/dsh-client.js';
+import type { Translate } from '../lib/dsh-client.js';
 import type { ReactNode } from '../lib/react.js';
 import { Component, h } from '../lib/react.js';
 import { Note } from './Note.js';

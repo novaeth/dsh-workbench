@@ -20,7 +20,7 @@ _Avoid_: 初始化、bootstrap（那是 `setup` 那条路的事）
 浏览器半侧跑在页面里（界面），由 dsh 打包成**一个** bundle。两侧不许互相 import。
 _Avoid_: 后端 / 前端、server / client
 
-**接缝（seam）**：两侧各只有一个入口 —— 宿主 `packages/workbench/src/app/host.ts`，浏览器 `packages/workbench/src/app/client.tsx`。
+**接缝（seam）**：两侧各只有一个入口 —— 宿主 `packages/core/src/app/host.ts`，浏览器 `packages/core/src/app/client.tsx`。
 _Avoid_: 入口文件、main
 
 ## 面板

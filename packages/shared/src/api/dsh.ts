@@ -126,7 +126,7 @@ export interface DshHostContext {
       ) => Promise<{ kind: string; messages?: readonly unknown[] }>,
     ): (() => void) | undefined;
   };
-  get<T = unknown>(name: string): T | undefined;
+  get<T = unknown>(name: string, strict?: boolean): T | undefined;
   provide(name: string, value: unknown): () => void;
   effect(effect: () => void | (() => void), label?: string): () => void;
   inject(names: readonly string[], effect: (scoped: DshHostContext) => void): () => void;

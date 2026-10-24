@@ -382,7 +382,7 @@ function build() {
   if ((process.env.WB_STAGE_DIR ?? "") !== "") {
     console.log(
       `   ⚠️  环境里有 WB_STAGE_DIR=${process.env.WB_STAGE_DIR}（那是判据内部的暂存开关）—— 发版构建忽略它，产物照常落包内。` +
-        "\n      想只建到别处看看用 `cd packages/workbench && WB_STAGE_DIR=<目录> node scripts/build.mjs`，别带进发版。",
+        "\n      想只建到别处看看用 `cd packages/core && WB_STAGE_DIR=<目录> node scripts/build.mjs`，别带进发版。",
     );
     delete process.env.WB_STAGE_DIR;
   }
@@ -400,7 +400,7 @@ function build() {
 function assertNoFixtures() {
   const before = shippedArtifactFingerprints();
   const { status } = sh("node", ["scripts/check-release-artifacts.mjs", "--shipped"], {
-    cwd: path.join(rootDir, "packages", "workbench"),
+    cwd: path.join(rootDir, "packages", "core"),
     allowFailure: true,
   });
   if (status !== 0) {
@@ -426,7 +426,7 @@ function assertNoFixtures() {
 }
 
 function shippedArtifactFingerprints() {
-  const root = path.join(rootDir, "packages", "workbench");
+  const root = path.join(rootDir, "packages", "core");
   const out = new Map();
   const walk = (dir) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -782,11 +782,11 @@ function restoreDevArtifact() {
   console.log("\n🧪 把外壳的开发产物建回开发档（发布构建是 WB_RELEASE=1，夹具按设计不在里面）…");
   try {
     const { status } = sh("node", ["scripts/build.mjs", "client"], {
-      cwd: `${rootDir}/packages/workbench`,
+      cwd: `${rootDir}/packages/core`,
       allowFailure: true,
     });
     if (status === 0) console.log("   ✅ 开发档已重建 —— `pnpm run dev` 与 `?wbMock=1` 照常");
-    else console.error("   ⚠️  开发档重建失败，跑一次 `cd packages/workbench && node scripts/build.mjs client` 即可");
+    else console.error("   ⚠️  开发档重建失败，跑一次 `cd packages/core && node scripts/build.mjs client` 即可");
   } catch (error) {
     console.error(`   ⚠️  开发档重建没跑成：${error instanceof Error ? error.message : String(error)}`);
   }

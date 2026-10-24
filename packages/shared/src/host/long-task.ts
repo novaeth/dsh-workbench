@@ -1,5 +1,5 @@
 import { epochOf } from './time.js';
-import { runsRouteOf, type LongTaskStatus, type LongTaskStep } from '../api/long-task.js';
+import { runsRouteOf, type LongTaskStatus, type LongTaskStep } from '../contract/long-task.js';
 
 const LIVE: ReadonlySet<string> = new Set<LongTaskStatus>(['running', 'needs-login']);
 

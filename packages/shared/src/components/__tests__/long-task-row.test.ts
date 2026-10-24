@@ -43,7 +43,7 @@ describe('两按停止钮：接线（这仓的组件测试是 node 环境，读�
   });
 
   it('★★ 上膛后 3 秒自己落膛：用 LONG_TASK_STOP_ARM_MS，卸载 / 落膛都清掉计时器', () => {
-    expect(ROW).toContain("from '../api/long-task.js'");
+    expect(ROW).toContain("from '../contract/long-task.js'");
     expect(ROW).toContain('setTimeout(() => setArmed(false), LONG_TASK_STOP_ARM_MS)');
     expect(ROW).toContain('clearTimeout(timer)');
     expect(ROW).toContain('}, [armed]);');

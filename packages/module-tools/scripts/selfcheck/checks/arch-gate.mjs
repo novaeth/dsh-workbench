@@ -47,6 +47,21 @@ export const checks = [
 
         expectGreen('模板骨架的架构');
 
+        const modelProbe = join(probe, 'src', 'model', 'Bad.ts');
+        writeFileSync(modelProbe, "import { kit } from '@dsh-workbench/core/client';\nexport const probe = kit;\n");
+        expectRed('模型层 import kit', ['S71', '模块核心']);
+        rmSync(modelProbe, { force: true });
+
+        const viewProbe = join(probe, 'src', 'components', 'Bad.tsx');
+        writeFileSync(viewProbe, "import { browserRead } from '@dsh-workbench/shared/host';\nexport const probe = browserRead;\n");
+        expectRed('视图 import 宿主', ['S72', '模块视图']);
+        rmSync(viewProbe, { force: true });
+
+        const protocolProbe = join(probe, 'src', 'components', 'ProtocolBad.ts');
+        writeFileSync(protocolProbe, 'interface UnitModuleFace { readonly unit: string; }\n');
+        expectRed('本地重声明协议', ['S73', '本地声明']);
+        rmSync(protocolProbe, { force: true });
+
         const manifestFile = join(probe, 'package.json');
         const manifest = JSON.parse(readFileSync(manifestFile, 'utf8'));
         const seedProbe = join(probe, 'src', 'components', 'SeedProbe.tsx');
@@ -125,7 +140,7 @@ export const checks = [
           '第十二条判据（arch）的正负例都对',
           true,
           '正例 5（模板骨架 / sync 生成的 declared-tools.ts / 后缀式测试文件 / __tests__ 下的脚手架 / 平台种子词进 dependencies）' +
-            '+ 负例 7（S01 / S16 / 改名成产品代码仍 S16 / S23 / M08 / 非种子第三方依赖 P01 / deny 库 P02）+ 无配置的「不适用」都对',
+            '+ 负例 10（S01 / S16 / 改名成产品代码仍 S16 / S23 / M08 / S71 / S72 / S73 / 非种子第三方依赖 P01 / deny 库 P02）+ 无配置的「不适用」都对',
         );
       } finally {
         rmSync(workshop, { recursive: true, force: true });

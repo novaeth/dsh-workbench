@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import type { SessionsSnapshot, Translate, WorkspaceSnapshot, WorkspaceView } from '../api/dsh-client.js';
-import type { UnitManifest } from '../api/unit.js';
-import type { CapabilityPayload } from '../api/workbench-contract.js';
+import type { SessionsSnapshot, Translate, WorkspaceSnapshot, WorkspaceView } from '../lib/dsh-client.js';
+import type { UnitManifest } from '../contract/unit.js';
+import type { CapabilityPayload } from '../contract/workbench-contract.js';
 import type { Dictionaries } from '../i18n/index.js';
 
 /**

@@ -6,7 +6,7 @@
 
 ```
 dsh（本体：会话、工具、审批、插件表）
-└── 外壳 packages/workbench   左栏 + 常驻对话 + 右侧数据面板
+└── 外壳 packages/core   左栏 + 常驻对话 + 右侧数据面板
     ├── 域 packages/*/src/modules/*      一个域一个视角
     └── 模块（别人发布 / agent 现做）    一张卡一份能力
 ```
@@ -18,7 +18,7 @@ dsh（本体：会话、工具、审批、插件表）
 
 宿主侧与浏览器侧是两条链，**不许互引**：
 
-- 宿主侧：`packages/workbench/src/shared/api/host/**`、`src/modules/*/model/**`
+- 宿主侧：`packages/core/src/shared/api/host/**`、`src/modules/*/model/**`
 - 浏览器侧：界面、组件、hooks
 
 判据会顺着 import 图走一遍，越界就红。理由很实际：宿主侧的代码能碰文件与进程，
@@ -58,4 +58,4 @@ dsh（本体：会话、工具、审批、插件表）
 ## 想读更深
 
 `ARCHITECTURE.md` 是这套东西的完整版（层序、协议、槽位、数据通路、每条判据的由来），
-在仓库根目录。给模块作者的手册在 `packages/workbench/skills/workbench-module-diy/`。
+在仓库根目录。给模块作者的手册在 `packages/core/skills/workbench-module-diy/`。

@@ -1,4 +1,4 @@
-import type { ProvisionAction } from '../api/workbench-contract.js';
+import type { ProvisionAction } from '../contract/workbench-contract.js';
 
 export type { ProvisionAction };
 

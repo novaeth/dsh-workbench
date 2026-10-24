@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isFactScope, scopePrefixOf } from '../../api/facts.js';
+import { isFactScope, scopePrefixOf } from '../../contract/facts.js';
 import { unitFactScope } from '../facts.js';
 
 describe('unitFactScope', () => {

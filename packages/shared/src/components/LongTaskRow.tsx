@@ -1,4 +1,4 @@
-import { longTaskDot, longTaskStopPress, longTaskStopStage, LONG_TASK_STOP_ARM_MS, type LongTaskStatus } from '../api/long-task.js';
+import { longTaskDot, longTaskStopPress, longTaskStopStage, LONG_TASK_STOP_ARM_MS, type LongTaskStatus } from '../contract/long-task.js';
 import { Link } from './Link.js';
 import { Fragment, h, useEffect, useState } from '../lib/react.js';
 import {

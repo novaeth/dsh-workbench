@@ -45,7 +45,7 @@ CSS 处理。
 | `src/config/` | 常量与存储键 |
 | `src/i18n/` | zh / en 字典、合并与设置 |
 | `src/lib/` | 纯函数：文本、忙碌态、表单问题、看板事实 |
-| `src/host/` | 宿主侧：数据根、opencli、git、http、插件台账、单元声明 |
+| `src/host/` | 宿主侧内核与领域：http、facts、面板状态、workspace、单元声明 |
 | `src/testing/` | 测试假件与声明读取 |
 
 `src/index.ts` 与 `src/host.ts` 是**生成的 barrel**：新增文件后跑 `pnpm run barrels`，别手抄。
@@ -91,7 +91,7 @@ pnpm --filter @dsh-workbench/shared run selfcheck  # check-state：无模块级�
 | 想了解 | 读 |
 |---|---|
 | 层序、两个运行时、槽位、数据通路 | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
-| 组件怎么选、kit 里有什么 | [KIT.md](../workbench/skills/workbench-module-diy/KIT.md) |
+| 组件怎么选、kit 里有什么 | [KIT.md](../core/skills/workbench-module-diy/KIT.md) |
 | 模块的构建与门禁 | [module-tools](../module-tools/README.md) |
 | 最小模块样本 | [module-hello](../module-hello/README.md) |
 | 环境与提交 | [CONTRIBUTING.md](../../CONTRIBUTING.md) |

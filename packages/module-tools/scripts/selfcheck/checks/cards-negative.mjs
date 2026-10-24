@@ -13,7 +13,7 @@ export const checks = [
     run(ctx, report) {
 
       const probe = mkdtempSync(join(PACKAGES_DIR, '.cards-states-'));
-      const shellClient = join(REPO_ROOT, 'packages', 'workbench', 'client.js');
+      const shellClient = join(REPO_ROOT, 'packages', 'core', 'client.js');
       const messagesFor = (extraZh = '', extraEn = '') => `{
         zh: { 'demo.cardTitle': '演示', 'demo.body': '正文', 'demo.loading': '正在读…', 'demo.error': '读不到'${extraZh} },
         en: { 'demo.cardTitle': 'Demo', 'demo.body': 'Body', 'demo.loading': 'Reading…', 'demo.error': 'Unreadable'${extraEn} },

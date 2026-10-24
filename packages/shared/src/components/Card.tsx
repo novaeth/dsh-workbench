@@ -1,5 +1,5 @@
 import type { ReactNode } from '../lib/react.js';
-import type { Translate } from '../api/dsh-client.js';
+import type { Translate } from '../lib/dsh-client.js';
 import { h } from '../lib/react.js';
 import { CardHead } from './CardHead.js';
 import './Card.css';

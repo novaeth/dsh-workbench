@@ -26,7 +26,7 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 |---|---|
 | `dsh-wb-module init <unit> [--dir <目录>] [--template minimal\|diy] [--description "一句话"]` | 建模块骨架 |
 | `dsh-wb-module build` | 出 `dist/host.js`（单文件 ESM）与 `client.js`（套 loader 壳） |
-| `dsh-wb-module check [--only <判据>]` | 十三条判据；`--only` 单跑，也当查询口用 |
+| `dsh-wb-module check [--only <判据>]` | 十三条判据；`--only` 单跑，也当查询口用；`--list [--json\|--markdown]` 只列判据元数据 |
 | `dsh-wb-module lint [--fix]` | 用模块自己那份 `eslint.config.mjs`；`--fix` 写回文件 |
 | `dsh-wb-module sync` | 按清单生成 `src/declared-tools.ts`（工具名只有清单一处写者） |
 | `dsh-wb-module design <init\|check\|render\|accept>` | 设计底稿：填、查空格、生成 README、验收打勾 |
@@ -39,21 +39,25 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 
 `dsh-wb-module check` 一次跑完，三态输出：`✔ 通过` / `○ 不适用` / `✖ 不过`；有任何不过就退出 1。
 
-| 判据 | 盯什么 |
-|---|---|
-| `contracts` | 模块契约：单元 id 唯一、两个面、四个脚本、`files`、peer 下限；外加两处对账 —— 清单 ↔ 真正注册的工具、`design.json` ↔ 清单的能力名 |
-| `protocol` | `dsh.workbench` 声明：`apiVersion` 要在、静态半形状要对、不许有协议不认识的键（`scope` 就是生字段之一） |
-| `bundles` | 产物边界：宿主面里不许有浏览器侧的东西；浏览器产物里不许内联外壳 CSS；产物里出现夹具标记判红 |
-| `source` | 源码边界：**模块源码零注释**；不直接引 dsh 的包、不引不是种子词的 `@deepseek-ai/*`；`@dsh-workbench/shared` 的两个入口按运行时分开（根入口只许 `import type`，`/host` 只许宿主侧取运行值） |
-| `primitives` | dsh 原语只从模块表（`kit`）拿 |
-| `kit` | 这份外壳的 kit 里到底有什么（缺什么当场点名） |
-| `cards` | 卡片渲染：八态 × zh/en 各渲一遍（idle / loading / 刷新保留旧值 / ready / 空容器 / 三种不可读），不许抛、不许空白、不许 `undefined` / `NaN` / `[object Object]`，要套外壳的卡壳，`titleKey` 两语都有落点 |
-| `standalone` | 独立构建：产物不依赖工坊里才有的东西 |
-| `markers` | 公开包无内部标识（私有 npm 源 / 私网 IP / 内部域名后缀）。组织特有的词表由 `DSH_WB_INTERNAL_MARKERS` 在 CI 或本机提供，不写进仓库 |
-| `style` | 样式归属：不定义外壳类 `wb-*` 的规则；裸 `<a>` 与裸 `<button>` / `<input>` / `<select>` 判红，改用 kit 的 `Link` / `Button` / `TextField` / `SelectField`（少数几何上无法替换的形态收在豁免表里） |
-| `alias` | 模块不指外壳：源码里没有指向外壳 `@/` 的引用 |
-| `arch` | 模块自己的**分层形状**（见下）。只跑带 `arch.config.mjs` 的模块，没有就是 `○ 不适用` |
-| `lint` | 模块自己的**语法卫生**（见下）。只跑带 `eslint.config.mjs` 的模块，没有就是 `○ 不适用` |
+表由 `dsh-wb-module check --list --markdown` 生成；`层` 是 manifest / source / build / render / meta。
+
+<!-- dsh-wb-module:begin checks -->
+| 判据 | 层 | 摘要 |
+|---|---|---|
+| `contracts` | manifest | 单元 id、两个面、四个脚本、files、peer 下限，以及清单与代码注册对账 |
+| `protocol` | manifest | dsh.workbench 的 apiVersion、静态半形状与未知键 |
+| `bundles` | build | 宿主产物不含浏览器侧、浏览器产物不内联外壳 CSS 与夹具 |
+| `source` | source | 零注释、包与运行时入口分开、不手写进程/锁/原子写 |
+| `arch` | source | 模块自己的层序、运行时边界与设计系统配置 |
+| `lint` | source | 模块自己的 eslint.config.mjs 与规则集 |
+| `primitives` | build | dsh 包只从 kit 取，模块自己声明 external |
+| `kit` | build | 模块产物对得上所装外壳的 kit 面与 peer 下限 |
+| `cards` | render | 八态 × zh/en 渲染：不抛、不空白、不冒裸键名 |
+| `standalone` | build | 外壳源码不在场时仍能 build + typecheck |
+| `markers` | meta | 公开包不含私有源、私网 IP、内部域名后缀 |
+| `style` | source | 不定义 wb-* 规则；裸标签控件改走 kit |
+| `alias` | source | 模块源码里没有指向外壳 @/ 的引用 |
+<!-- dsh-wb-module:end checks -->
 
 `style` 还有两族更窄的判据：**手写的「标签 + 控件」行与手写的操作区**判红（归 kit 的
 `FormRow(s)` 与 `FormActions`），**裸 `<form>` 与手写整张表单**也判红（归 `Form`）。
@@ -97,7 +101,7 @@ export default moduleArch({
 ```
 
 `exceptions` 每条必须写 `reason`。怎么读红、常见红、还有哪些口子，见
-[REVIEW.md](../workbench/skills/workbench-module-diy/REVIEW.md)。
+[REVIEW.md](../core/skills/workbench-module-diy/REVIEW.md)。
 
 ### `lint`：模块包的语法卫生方言
 
@@ -212,11 +216,11 @@ dry-run、真发后的元数据与发布失败回滚。
 
 | 想了解 | 读 |
 |---|---|
-| 模块怎么写、DIY 整套流程 | [workbench-module-diy](../workbench/skills/workbench-module-diy/SKILL.md) |
-| 构建骨架、接线（bundle / client / 注册） | [BUILD.md](../workbench/skills/workbench-module-diy/BUILD.md) · [WIRING.md](../workbench/skills/workbench-module-diy/WIRING.md) |
-| kit 组件与 hooks | [KIT.md](../workbench/skills/workbench-module-diy/KIT.md) |
-| 面板、状态矩阵、界面规则 | [PANEL.md](../workbench/skills/workbench-module-diy/PANEL.md) |
-| 工具、审批、长任务 | [TOOLS.md](../workbench/skills/workbench-module-diy/TOOLS.md) |
-| 判据红了怎么读 | [REVIEW.md](../workbench/skills/workbench-module-diy/REVIEW.md) |
+| 模块怎么写、DIY 整套流程 | [workbench-module-diy](../core/skills/workbench-module-diy/SKILL.md) |
+| 构建骨架、接线（bundle / client / 注册） | [BUILD.md](../core/skills/workbench-module-diy/BUILD.md) · [WIRING.md](../core/skills/workbench-module-diy/WIRING.md) |
+| kit 组件与 hooks | [KIT.md](../core/skills/workbench-module-diy/KIT.md) |
+| 面板、状态矩阵、界面规则 | [PANEL.md](../core/skills/workbench-module-diy/PANEL.md) |
+| 工具、审批、长任务 | [TOOLS.md](../core/skills/workbench-module-diy/TOOLS.md) |
+| 判据红了怎么读 | [REVIEW.md](../core/skills/workbench-module-diy/REVIEW.md) |
 | 最小可安装样本 | [module-hello](../module-hello/README.md) |
 | 契约类型与共享组件 | [shared](../shared/README.md) |

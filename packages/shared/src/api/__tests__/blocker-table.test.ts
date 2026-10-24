@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Translate } from '../dsh-client.js';
-import type { CapabilityPayload } from '../workbench-contract.js';
+import type { Translate } from '../../lib/dsh-client.js';
+import type { CapabilityPayload } from '../../contract/workbench-contract.js';
 import { blockerOfCapability, blockerOfError } from '../blocker-table.js';
 
 const t: Translate = (key, params) => (params === undefined ? key : `${key}(${JSON.stringify(params)})`);

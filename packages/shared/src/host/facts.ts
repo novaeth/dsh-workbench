@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import type { UnitManifest } from '../api/unit.js';
-import { FACT_SCOPE_SUFFIX } from '../api/facts.js';
+import type { UnitManifest } from '../contract/unit.js';
+import { FACT_SCOPE_SUFFIX } from '../contract/facts.js';
 
 export interface FactChange {
   readonly rev: number;

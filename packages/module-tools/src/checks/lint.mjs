@@ -162,6 +162,8 @@ export async function lintPackage(pkg, { fix = false } = {}) {
         ...loaded.config,
       ],
       errorOnUnmatchedPattern: false,
+      cache: true,
+      cacheLocation: join(pkg.dir, 'node_modules/.cache/eslint'),
       fix: fixMode,
     }).lintFiles(['.']);
 

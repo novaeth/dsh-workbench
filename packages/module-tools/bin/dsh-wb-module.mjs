@@ -49,7 +49,7 @@ const commands = { build, check, init, design, publish, release, sync, lint };
 
 if (!command || !commands[command]) {
   console.error(`用法：dsh-wb-module <build|check|init|design|publish|release|sync|lint> [--cwd <目录>]
-      dsh-wb-module check [--only ${Object.keys(CHECKS).join('|')}]
+      dsh-wb-module check [--only ${Object.keys(CHECKS).join('|')}] [--list [--json|--markdown]]
       dsh-wb-module check --only kit                 # 单跑当查询口：这份外壳的 kit 里有什么（--file <名字> 给类型文件绝对路径）
       dsh-wb-module check --only primitives [--all|--files|--json]
                                                      # 单跑当查询口：dsh 原语里有什么 + --file <名字> 给类型文件绝对路径

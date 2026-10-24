@@ -1,5 +1,6 @@
 import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import type { HostContext, UnitModuleFace, UnitRegistry } from '@dsh-workbench/core/contract';
 import type { OverviewFile, OverviewPayload } from './model/overview';
 
 const UNIT_ID = '__UNIT__';
@@ -41,21 +42,6 @@ function limitOf(search: URLSearchParams): number {
   const parsed = Number(raw);
   if (!Number.isFinite(parsed)) return DEFAULT_LIMIT;
   return Math.min(MAX_LIMIT, Math.max(1, Math.trunc(parsed)));
-}
-
-interface UnitModuleFace {
-  readonly unit: string;
-  mount(): { routes: Record<string, RouteHandler>; registerTools(): Array<() => void> };
-}
-
-interface UnitRegistry {
-  register(face: UnitModuleFace): () => void;
-}
-
-interface HostContext {
-  get<T = unknown>(name: string): T | undefined;
-  effect(effect: () => void | (() => void), label?: string): () => void;
-  logger?: { warn?(message: string): void } | undefined;
 }
 
 const face: UnitModuleFace = {

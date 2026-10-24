@@ -15,7 +15,7 @@ and to publish a fix or a mitigation as soon as it is ready.
 
 In scope:
 
-- the workbench shell (`@dsh-workbench/core`, `packages/workbench`)
+- the workbench shell (`@dsh-workbench/core`, `packages/core`)
 - the shared contracts and helpers (`@dsh-workbench/shared`)
 - the module tooling (`@dsh-workbench/module-tools`)
 - the installer and the profile seeding scripts

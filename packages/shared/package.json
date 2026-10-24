@@ -16,6 +16,10 @@
     "./testing": {
       "types": "./dist/testing.d.ts",
       "default": "./dist/testing.js"
+    },
+    "./contract/*": {
+      "types": "./dist/contract/*.d.ts",
+      "default": "./dist/contract/*.js"
     }
   },
   "files": [

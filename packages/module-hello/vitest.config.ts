@@ -12,7 +12,7 @@ export default defineConfig({
       { find: /^@\/platforms\/[^/]+\//, replacement: `${here('./src/platforms')}/` },
       {
         find: '@deepseek-ai/dsh-client-ui-primitives',
-        replacement: here('../workbench/scripts/dsh-primitives-stub.ts'),
+        replacement: here('../core/scripts/dsh-primitives-stub.ts'),
       },
     ],
   },

@@ -153,7 +153,7 @@ export const checks = [
       const title =
         '查询口：check --only primitives 列出装机那份（Button / Icon*Regular / kit 求交 / 版本三连），--json 是合法 JSON';
 
-      const cwd = join(PACKAGES_DIR, 'workbench');
+      const cwd = join(PACKAGES_DIR, 'core');
       const run = (args) =>
         String(
           execFileSync(process.execPath, [BIN, 'check', '--only', 'primitives', ...args], {
@@ -192,7 +192,7 @@ export const checks = [
       const title =
         '查询口能落到类型文件：kit / primitives 的 --file 与 --json 给出的路径都存在（kit 全表零漏）';
 
-      const cwd = join(PACKAGES_DIR, 'workbench');
+      const cwd = join(PACKAGES_DIR, 'core');
       const run = (args) =>
         String(
           execFileSync(process.execPath, [BIN, 'check', ...args], { cwd, encoding: 'utf8', stdio: 'pipe' }),
@@ -233,7 +233,7 @@ export const checks = [
       const title = '★ kit 面每个成员的 .d.ts 里都有 JSDoc（用法第一现场在声明里，不在指引里）';
 
       try {
-        const shellDir = join(PACKAGES_DIR, 'workbench');
+        const shellDir = join(PACKAGES_DIR, 'core');
         const client = join(shellDir, 'client.js');
         if (!existsSync(client)) return report(title, false, `外壳产物不在：${client}`);
         const kit = shellKitOf(client);

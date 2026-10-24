@@ -1,11 +1,9 @@
-import type { PluginSource } from '../api/unit.js';
+import type { PluginSource } from '../contract/unit.js';
 import { quoteShellArg } from './shell-text.js';
-import { npmCacheDir, toolchainOpencliDir, vendorPeerLink, vendorPrefix } from '../host/opencli-runtime.js';
+import { npmCacheDir, toolchainOpencliDir, vendorPeerLink, vendorPrefix } from './paths.js';
 
-export type PluginSourceProblem =
-  | "not-declared"
-  | "env-missing"
-  | "malformed";
+import type { PluginSourceProblem } from '../contract/plugin-source.js';
+export type { PluginSourceProblem } from '../contract/plugin-source.js';
 
 export interface PluginSourceCommand {
   readonly line: string;

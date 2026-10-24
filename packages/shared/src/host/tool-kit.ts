@@ -1,5 +1,5 @@
 import type { DshToolRunContext } from '../api/dsh.js';
-import { WorkbenchDataError } from './opencli.js';
+import { WorkbenchDataError } from './data-error.js';
 
 export function sessionWorkspace(exec: DshToolRunContext | undefined): string | null {
   const cwd = exec?.agent?.session?.header?.cwd;

@@ -108,7 +108,7 @@ WORKBENCH_PORT=3091 npx @dsh-workbench/core
 3. 刷新页面
 
 装在你当前环境里：会话、存储、附件接着用，不另开一份。之后和独立实例一样用；
-细节见 [详细用户指南](packages/workbench/README.md)。
+细节见 [详细用户指南](packages/core/README.md)。
 
 ## 装进 Desktop（DeepSeek Harness.app）
 
@@ -121,7 +121,7 @@ Desktop 用自己那份配置，**不要跑 `setup`** —— 那会另建一个�
 
 Desktop 里个别浏览器调试能力不可用；网页浏览与录制照常。
 装模块 / 更新工作台遇到权限或重启提示，退出并重开 Desktop；仍有问题看
-[packages/workbench/README.md](packages/workbench/README.md) 的常见问题。
+[packages/core/README.md](packages/core/README.md) 的常见问题。
 
 ## 第一次打开
 
@@ -136,7 +136,7 @@ Desktop 里个别浏览器调试能力不可用；网页浏览与录制照常。
 或者直接让 agent 代劳。工作台本身不带业务模块，装什么有什么。
 
 想做自己的？开 DIY 模式，让 agent 现场做一个并装上——不用先学一套框架。
-具体做法见 [模块 DIY 指引](packages/workbench/skills/workbench-module-diy/SKILL.md)。
+具体做法见 [模块 DIY 指引](packages/core/skills/workbench-module-diy/SKILL.md)。
 
 ## 数据和设置
 
@@ -164,11 +164,11 @@ Desktop 里个别浏览器调试能力不可用；网页浏览与录制照常。
 
 | 想了解 | 读 |
 |---|---|
-| 完整用户指南 / 首次打开 / 常见问题 | [packages/workbench/README.md](packages/workbench/README.md) |
+| 完整用户指南 / 首次打开 / 常见问题 | [packages/core/README.md](packages/core/README.md) |
 | 文档站（本地起一个看） | [packages/docs/README.md](packages/docs/README.md) |
 | 从源码构建、门禁、提交 | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | 架构 / 模块协议 | [ARCHITECTURE.md](ARCHITECTURE.md) |
-| 写一个模块 | [模块 DIY 指引](packages/workbench/skills/workbench-module-diy/SKILL.md) |
+| 写一个模块 | [模块 DIY 指引](packages/core/skills/workbench-module-diy/SKILL.md) |
 | 安全 | [SECURITY.md](SECURITY.md) |
 
 ## 参与开发

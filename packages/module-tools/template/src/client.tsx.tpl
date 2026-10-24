@@ -1,25 +1,8 @@
-import type { ReactElement } from 'react';
+import type { ClientContext, UnitClientApi, UnitClientFace } from '@dsh-workbench/core/contract';
 import { HelloCard } from './components/HelloCard';
 import { messages } from './messages';
 
 const UNIT_ID = '__UNIT__';
-
-type Translate = (key: string, params?: Record<string, unknown>) => string;
-
-interface UnitClientFace {
-  readonly unit: string;
-  readonly messages: { readonly zh: Readonly<Record<string, string>>; readonly en: Readonly<Record<string, string>> };
-  readonly card: (props: { readonly t: Translate; readonly onRefresh: () => void }) => ReactElement;
-}
-
-interface UnitClientApi {
-  registerUnit(face: UnitClientFace): () => void;
-}
-
-interface ClientContext {
-  get<T = unknown>(name: string): T | undefined;
-  effect(effect: () => void | (() => void), label?: string): () => void;
-}
 
 const face: UnitClientFace = {
   unit: UNIT_ID,

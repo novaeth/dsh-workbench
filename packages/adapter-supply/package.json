@@ -1,0 +1,40 @@
+{
+  "name": "@dsh-workbench/adapter-supply",
+  "version": "0.3.11",
+  "description": "Workbench supply adapter package.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/novaeth/dsh-workbench.git",
+    "directory": "packages/adapter-supply"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "arch": "node ../../scripts/check-adapter-package.mjs",
+    "check:runtimes": "node ../../scripts/check-adapter-package.mjs --runtime",
+    "coverage": "vitest run --coverage --coverage.reporter=text-summary --testTimeout=20000"
+  },
+  "dependencies": {
+    "@dsh-workbench/shared": "workspace:*",
+    "@dsh-workbench/adapter-runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.0",
+    "vitest": "^5.0.2",
+    "@vitest/coverage-v8": "^5.0.2"
+  }
+}

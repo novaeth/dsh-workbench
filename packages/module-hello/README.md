@@ -67,14 +67,14 @@ pnpm exec dsh-wb-module init my-unit --template diy
 ```
 
 `diy` 模板有真数据源、五态卡片和填好的设计底稿。完整流程见
-[模块 DIY 指引](../workbench/skills/workbench-module-diy/SKILL.md)，
+[模块 DIY 指引](../core/skills/workbench-module-diy/SKILL.md)，
 判据与工具见 [module-tools](../module-tools/README.md)。
 
 ## 相关文档
 
 | 想了解 | 读 |
 |---|---|
-| 模块怎么写、怎么装、怎么验收 | [DIY 指引](../workbench/skills/workbench-module-diy/SKILL.md) |
-| 构建、接线、注册的细节 | [BUILD.md](../workbench/skills/workbench-module-diy/BUILD.md) · [WIRING.md](../workbench/skills/workbench-module-diy/WIRING.md) |
+| 模块怎么写、怎么装、怎么验收 | [DIY 指引](../core/skills/workbench-module-diy/SKILL.md) |
+| 构建、接线、注册的细节 | [BUILD.md](../core/skills/workbench-module-diy/BUILD.md) · [WIRING.md](../core/skills/workbench-module-diy/WIRING.md) |
 | 十三条判据、模板、设计底稿 | [module-tools](../module-tools/README.md) |
 | 契约类型与共享组件 | [shared](../shared/README.md) |
