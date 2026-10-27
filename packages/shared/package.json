@@ -1,0 +1,71 @@
+{
+  "name": "@dsh-workbench/shared",
+  "version": "1.1.1",
+  "description": "工作台与模块共享的纯代码与契约类型：类型、纯逻辑、哑组件、平台解析。宿主侧的东西从 /host 进（不影响浏览器产物）。",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./host": {
+      "types": "./dist/host.d.ts",
+      "default": "./dist/host.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
+    },
+    "./contract/*": {
+      "types": "./dist/contract/*.d.ts",
+      "default": "./dist/contract/*.js"
+    }
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "node scripts/gen-release-packages.mjs && tsc -p tsconfig.build.json && node scripts/copy-css.mjs",
+    "typecheck": "tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/tsconfig.tsbuildinfo",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
+    "barrels": "node scripts/barrels.mjs",
+    "prepack": "node scripts/gen-release-packages.mjs && tsc -p tsconfig.build.json && node scripts/copy-css.mjs",
+    "prepare": "node scripts/gen-release-packages.mjs && tsc -p tsconfig.build.json && node scripts/copy-css.mjs",
+    "selfcheck": "node scripts/check-state.mjs && node scripts/gen-release-packages.mjs --check",
+    "arch:report": "arch-guard --report-only",
+    "arch": "arch-guard"
+  },
+  "peerDependencies": {
+    "react": "*"
+  },
+  "devDependencies": {
+    "@arch-guard/core": "^0.11.1",
+    "@deepseek-ai/dsh-client-ui-primitives": "0.2.1-rc.2",
+    "@types/node": "^24.19.0",
+    "@types/react": "^19.0.0",
+    "@types/semver": "^7.8.0",
+    "@vitest/coverage-v8": "^5.0.2",
+    "react": "^18.0.0",
+    "typescript": "5.9",
+    "vitest": "^5.0.2"
+  },
+  "dependencies": {
+    "dayjs": "^1.11.23",
+    "semver": "^7.8.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/novaeth/dsh-workbench.git",
+    "directory": "packages/shared"
+  },
+  "homepage": "https://github.com/novaeth/dsh-workbench#readme",
+  "bugs": {
+    "url": "https://github.com/novaeth/dsh-workbench/issues"
+  }
+}

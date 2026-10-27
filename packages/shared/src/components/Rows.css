@@ -1,0 +1,42 @@
+.wb-rows {
+  display: grid;
+  grid-template-columns: minmax(72px, max-content) minmax(0, 1fr);
+  column-gap: var(--wb-len-8);
+}
+.wb-rows > :not(.wb-row) {
+  grid-column: 1 / -1;
+}
+.wb-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(72px, max-content) minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--wb-len-8);
+  padding: var(--wb-len-4) 0;
+}
+.wb-row + .wb-row {
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+}
+.wb-rowKey {
+  white-space: nowrap;
+  font-size: var(--dsw-font-xxxs-11-font-size);
+  line-height: var(--wb-line-16);
+  color: var(--dsw-alias-label-tertiary);
+}
+.wb-rowValue {
+  min-width: 0;
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-primary);
+  overflow-wrap: anywhere;
+}
+
+.wb-rows > .wb-row {
+  grid-template-columns: subgrid;
+}
+
+@supports not (grid-template-columns: subgrid) {
+  .wb-rows > .wb-row {
+    grid-template-columns: minmax(72px, max-content) minmax(0, 1fr);
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "name": "@dsh-workbench/adapters-default",
+  "version": "1.1.1",
+  "description": "Default host adapter set installed with @dsh-workbench/core.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@dsh-workbench/adapter-probe": "workspace:*",
+    "@dsh-workbench/adapter-profile": "workspace:*",
+    "@dsh-workbench/adapter-runtime": "workspace:*",
+    "@dsh-workbench/adapter-supply": "workspace:*",
+    "@dsh-workbench/shared": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/novaeth/dsh-workbench.git",
+    "directory": "packages/adapters-default"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "arch": "arch-guard",
+    "check:runtimes": "node ../../scripts/check-adapter-package.mjs --runtime",
+    "coverage": "vitest run --coverage --coverage.reporter=text-summary --testTimeout=20000"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.0",
+    "vitest": "^5.0.2",
+    "@vitest/coverage-v8": "^5.0.2"
+  }
+}

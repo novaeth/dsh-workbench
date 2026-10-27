@@ -1,0 +1,6 @@
+{
+  "name": "workbench",
+  "version": "0.1.0",
+  "description": "DSH 工作台的公共通道：用浏览器登录态在 Node 侧发请求",
+  "opencli": ">=1.8.0 <2.0.0"
+}

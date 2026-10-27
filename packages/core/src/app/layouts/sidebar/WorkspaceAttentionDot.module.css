@@ -1,0 +1,12 @@
+.dot {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay {
+  position: absolute;
+  inset-block-start: var(--wb-len-neg-3);
+  inset-inline-end: var(--wb-len-neg-3);
+}

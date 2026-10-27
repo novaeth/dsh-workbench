@@ -1,0 +1,80 @@
+{
+  "name": "@dsh-workbench/core-workspace",
+  "version": "1.1.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm --filter \"./packages/*\" --if-present run build",
+    "build:host": "pnpm --filter \"./packages/*\" --if-present run build:host",
+    "build:client": "pnpm --filter \"./packages/*\" --if-present run build:client",
+    "typecheck": "pnpm --filter \"./packages/*\" --if-present run typecheck",
+    "lint:commit": "git log -1 --format=%B | commitlint --verbose",
+    "prepare": "husky",
+    "test": "pnpm --filter \"./packages/*\" --if-present run test",
+    "coverage": "node scripts/run-tests.mjs",
+    "arch": "pnpm --filter \"./packages/*\" --if-present run arch",
+    "selfcheck": "pnpm --workspace-concurrency=4 --filter \"./packages/*\" --if-present run selfcheck",
+    "check:runtimes": "pnpm --filter \"./packages/*\" --if-present run check:runtimes",
+    "check:docs": "arch-guard --config packages/core/arch.config.mjs --check-docs && node packages/module-tools/scripts/check-docs.mjs",
+    "check:gates:target": "node scripts/gates/target.mjs",
+    "check:modules": "node packages/module-tools/bin/dsh-wb-module.mjs check",
+    "check:contracts": "node packages/module-tools/bin/dsh-wb-module.mjs check --only contracts",
+    "check:protocol": "node packages/module-tools/bin/dsh-wb-module.mjs check --only protocol",
+    "check": "pnpm run lint:commit && pnpm run build && pnpm run typecheck && pnpm run lint && pnpm run coverage && pnpm run check:gates:target -- --fail-on-red && pnpm run arch && pnpm run check:docs && pnpm run check:runtimes && pnpm run selfcheck && pnpm run check:modules && pnpm run check:adapter-defaults && pnpm run check:release-artifacts",
+    "dev": "pnpm --filter @dsh-workbench/core run dev",
+    "dev:desktop": "pnpm --filter @dsh-workbench/core run dev:desktop",
+    "dev:docs": "pnpm --filter @dsh-workbench/docs run dev",
+    "build:docs": "pnpm --filter @dsh-workbench/docs run build",
+    "deploy:docs": "node scripts/deploy-docs.mjs",
+    "verify": "./scripts/verify.sh",
+    "check:bundles": "node packages/module-tools/bin/dsh-wb-module.mjs check --only bundles",
+    "check:source": "node packages/module-tools/bin/dsh-wb-module.mjs check --only source",
+    "check:cards": "node packages/module-tools/bin/dsh-wb-module.mjs check --only cards",
+    "check:standalone": "node packages/module-tools/bin/dsh-wb-module.mjs check --only standalone",
+    "check:markers": "node packages/module-tools/bin/dsh-wb-module.mjs check --only markers",
+    "check:alias": "node packages/module-tools/bin/dsh-wb-module.mjs check --only alias",
+    "release": "node scripts/release.mjs",
+    "release:dry": "node scripts/release.mjs --dry-run",
+    "check:style": "node packages/module-tools/bin/dsh-wb-module.mjs check --only style",
+    "check:arch": "node packages/module-tools/bin/dsh-wb-module.mjs check --only arch",
+    "check:lint": "node packages/module-tools/bin/dsh-wb-module.mjs check --only lint",
+    "check:release-artifacts": "pnpm --filter @dsh-workbench/core run check:release-artifacts",
+    "lint": "eslint . --cache --cache-location node_modules/.cache/eslint --cache-strategy content",
+    "lint:fix": "eslint . --fix --cache --cache-location node_modules/.cache/eslint --cache-strategy content",
+    "release:resume": "node scripts/release.mjs --resume",
+    "check:primitives": "node packages/module-tools/bin/dsh-wb-module.mjs check --only primitives",
+    "check:kit": "node packages/module-tools/bin/dsh-wb-module.mjs check --only kit",
+    "check:module-tools": "pnpm --filter @dsh-workbench/module-tools run selfcheck",
+    "check:adapter-defaults": "pnpm --filter @dsh-workbench/core run check:adapter-defaults"
+  },
+  "devDependencies": {
+    "@arch-guard/core": "^0.11.1",
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@eslint/js": "^10.0.1",
+    "enquirer": "^2.4.1",
+    "eslint": "^10.11.0",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "gh-pages": "^6.3.0",
+    "husky": "^9.1.7",
+    "semver": "^7.8.5",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.71.0"
+  },
+  "packageManager": "pnpm@10.32.1",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/novaeth/dsh-workbench.git"
+  },
+  "homepage": "https://github.com/novaeth/dsh-workbench#readme",
+  "bugs": {
+    "url": "https://github.com/novaeth/dsh-workbench/issues"
+  }
+}

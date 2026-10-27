@@ -1,0 +1,7 @@
+# 模块自己的 bundle 层：把自己插进 profile。
+#
+# 与外壳那份 cordis.patch.yml 同形 —— 一个模块包就是一个 dsh bundle，
+# 装 = 把这个包装进 profile（`dsh plugin add`），插行由这一层负责。
+- insert:
+    - id: workbench-module-hello
+      name: '@dsh-workbench/module-hello'

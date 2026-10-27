@@ -1,0 +1,33 @@
+{
+  "name": "@dsh-workbench/adapter-fixture",
+  "version": "1.1.1",
+  "private": true,
+  "description": "Minimal AdapterSet fixture used by integration tests.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "pretest": "pnpm build",
+    "test": "vitest run",
+    "arch": "arch-guard",
+    "check:runtimes": "node ../../scripts/check-adapter-package.mjs --runtime",
+    "precoverage": "pnpm build",
+    "coverage": "vitest run --coverage --coverage.reporter=text-summary --testTimeout=20000"
+  },
+  "dependencies": {
+    "@dsh-workbench/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.0",
+    "vitest": "^5.0.2",
+    "@vitest/coverage-v8": "^5.0.2"
+  }
+}

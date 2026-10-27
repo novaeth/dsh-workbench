@@ -1,0 +1,102 @@
+.root {
+  position: relative;
+  flex: none;
+  margin: 0 var(--wb-len-2) var(--wb-len-4);
+}
+
+.rail {
+  margin: 0 0 var(--wb-len-4);
+}
+
+.glyphBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.glyph {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--wb-len-16);
+  height: var(--wb-len-20);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.glyphActive {
+  color: var(--dsw-alias-state-business-primary);
+}
+
+.triggerName {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--wb-len-6);
+  font-size: var(--wb-font-row);
+  line-height: var(--wb-line-20);
+  overflow: hidden;
+}
+
+.dir {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.name {
+  flex: 0 1 auto;
+  max-width: 50%;
+  font-size: var(--dsw-font-xxs-12-font-size);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.triggerName .name {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-len-6);
+  width: 100%;
+  min-width: 0;
+}
+
+.trailing {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--wb-len-20);
+  height: var(--wb-len-20);
+  margin-inline-start: auto;
+}
+
+.trailing .rowAction {
+  width: var(--wb-len-20);
+  min-width: var(--wb-len-20);
+  height: var(--wb-len-20);
+  min-height: var(--wb-len-20);
+  padding: 0;
+  border-radius: var(--dsw-radius-sm);
+}
+
+.row .name {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.current {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  color: var(--dsw-alias-label-primary);
+}

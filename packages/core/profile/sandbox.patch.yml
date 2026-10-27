@@ -1,0 +1,28 @@
+# 工作台运行时的**可写根**声明。两个入口共用同一行：
+#   1. 启动器每次启动用 `--patch` 叠一层（对新旧 profile 都生效）；
+#   2. `scripts/share-data-root.mjs` 把这一行补进 profile 的 cordis.patch.yml，
+#      给不带启动器的 `dsh <profile>` 兜底（只抄这一行，不抄注释）。
+#
+# 为什么必须有它：工作台自己要跑命令（启动体检自动装 opencli、模块市场装/升插件、
+# 查源上有没有新版），而这些命令走 dsh 的**执行缝**，执行缝带**文件沙箱**。
+# 插件发起的调用**没有会话**，于是回落到部署策略；dsh-base 出厂那一条写的是
+# `workspaceRoot: !!js process.cwd()` —— 而安装目标是 `$DSH_HOME/workbench/...`，
+# 不在启动目录下面，沙箱拒写（实测 EPERM：mkdir ~/.npm/_cacache、mkdir
+# $DSH_HOME/workbench/...，见 内部设计记录 第 10.3 节）。
+# 症状：自动安装死在第一步，界面只能退化成"让用户去终端抄一条命令" ——
+# 终端没有沙箱，抄过去反而能跑，于是这个缺口一直看不出来。
+#
+# 指到运行时根之后，沙箱放行的是**同一棵树**：
+#   隔离运行时的工具链 + npm 缓存（opencli-runtime.ts）、
+#   模块专属文件夹（ADR-0011 的 workspaces/）、模块市场的 plugins-npm。
+# 也就是 ADR-0011 说的"启动器给插件声明的可写根"。
+#
+# 会话 / 项目 / 附件**不在这里**：它们跟 `dsh web` / Desktop 共用 `$DSH_HOME`，
+# 不再由工作台按 profile 隔离（见 ADR-0085）。
+#
+# mode 与 base 出厂值**一致**（只重述，不改变语义）：patch 的 config 是**整体替换**、
+# 不深合并，所以两个字段都得写全，否则 workspaceRoot 会被替换掉 mode 丢失。
+- id: sandbox-policy
+  config:
+    mode: !!js process.env.DSH_PERMISSION_MODE ?? 'workspace-write'
+    workspaceRoot: !!js process.env.DSH_WORKBENCH_HOME ?? dshHomePath('workbench')

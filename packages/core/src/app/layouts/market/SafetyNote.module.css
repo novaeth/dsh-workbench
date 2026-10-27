@@ -1,0 +1,18 @@
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wb-len-8);
+  margin: 0;
+  padding: var(--wb-len-10) var(--wb-len-12);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-state-warn-tertiary);
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.note > svg {
+  flex: none;
+  margin-top: var(--wb-len-2);
+  color: var(--dsw-alias-state-warn-primary);
+}

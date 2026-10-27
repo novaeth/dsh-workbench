@@ -1,0 +1,22 @@
+:where(.wb-link) {
+  margin-left: var(--wb-len-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-len-2);
+  font: inherit;
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-primary);
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+:where(.wb-link:hover) {
+  text-decoration: underline;
+}
+
+:where(.wb-link:focus-visible) {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}

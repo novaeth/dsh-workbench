@@ -1,0 +1,69 @@
+.wb-activityBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-6);
+  padding-top: var(--wb-len-10);
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.wb-activityBlock:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.wb-activityBlockHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wb-len-8);
+}
+
+.wb-activityLine {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-len-6);
+  margin: 0;
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.wb-activityLineText {
+  flex: none;
+  min-width: 0;
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  max-height: var(--wb-len-72);
+  overflow-y: auto;
+}
+
+.wb-activityLineAt {
+  flex: none;
+  margin-left: auto;
+  font-size: var(--wb-font-10);
+  line-height: var(--wb-line-16);
+  font-variant-numeric: tabular-nums;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.wb-activityLine > .wb-activityLineAt,
+.wb-activityLine > .wb-activityLineActions {
+  margin-left: auto;
+}
+
+.wb-activityLine > .wb-activityLineAt + .wb-activityLineActions {
+  margin-left: 0;
+}
+
+.wb-activityLineActions {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-len-6);
+}
+
+.wb-activityActionFailed {
+  color: var(--dsw-alias-state-error-primary);
+}

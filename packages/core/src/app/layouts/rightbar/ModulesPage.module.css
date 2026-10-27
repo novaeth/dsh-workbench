@@ -1,0 +1,198 @@
+.trigger {
+  display: flex;
+  align-items: center;
+}
+
+.pop {
+  position: absolute;
+  top: calc(var(--wb-len-38) + var(--wb-len-8));
+  right: var(--wb-len-6);
+  z-index: var(--wb-z-30);
+  width: min(var(--wb-len-360), calc(100% - var(--wb-len-12)));
+  max-width: calc(100vw - var(--wb-len-48));
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: var(--wb-radius-14);
+  background: var(--dsw-alias-bg-layer-2);
+  box-shadow: var(--dsw-shadow-lv3);
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-len-8);
+  padding: var(--wb-len-10) var(--wb-len-12) var(--wb-len-9) var(--wb-len-14);
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.title {
+  flex: 1;
+  font-size: var(--dsw-font-xs-13-font-size);
+  line-height: var(--wb-line-20);
+  font-weight: 600;
+  color: var(--dsw-alias-label-primary);
+}
+
+.rowControls {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-len-8);
+}
+
+.reset {
+  flex: none;
+  padding: var(--wb-len-3) var(--wb-len-8);
+  border: none;
+  border-radius: var(--wb-radius-6);
+  background: transparent;
+  font-size: var(--dsw-font-xxxs-11-font-size);
+  line-height: var(--wb-line-16);
+  color: var(--dsw-alias-label-tertiary);
+  cursor: pointer;
+}
+
+.reset:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+.reset:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: var(--wb-len-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-2);
+}
+
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--wb-len-8);
+  padding: var(--wb-len-7) var(--wb-len-8);
+  border-radius: var(--dsw-radius-sm);
+  cursor: default;
+}
+
+.rowDragging {
+  cursor: grabbing;
+}
+
+.rowBlocked {
+  cursor: not-allowed;
+}
+
+.listDragging .rowControls {
+  pointer-events: none;
+}
+
+.row:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.rowOff {
+  opacity: 0.55;
+}
+
+.rowOff:hover {
+  opacity: 1;
+}
+
+.rowOver::before {
+  content: '';
+  position: absolute;
+  top: var(--wb-len-neg-3);
+  left: var(--wb-len-8);
+  right: var(--wb-len-8);
+  height: var(--wb-len-2);
+  background: var(--dsw-alias-brand-primary);
+}
+
+.ghost {
+  position: fixed;
+  z-index: var(--wb-z-40);
+  pointer-events: none;
+  padding: var(--wb-len-4) var(--wb-len-10);
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-alias-bg-layer-1);
+  box-shadow: var(--wb-static-shadow-ghost);
+  font-size: var(--dsw-font-xs-13-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-primary);
+  white-space: nowrap;
+}
+
+.grip {
+  font-size: var(--dsw-font-xxxs-11-font-size);
+  line-height: var(--wb-line-16);
+  text-align: center;
+  color: var(--dsw-alias-label-tertiary);
+  user-select: none;
+  cursor: grab;
+  touch-action: none;
+}
+
+.gripDragging {
+  cursor: grabbing;
+}
+
+.gripBlocked {
+  cursor: not-allowed;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-len-6);
+  min-width: 0;
+}
+
+.name {
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--dsw-font-xs-13-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-primary);
+}
+
+.error {
+  margin: 0;
+  padding: 0 var(--wb-len-14) var(--wb-len-10);
+  font-size: var(--dsw-font-xxxs-11-font-size);
+  line-height: var(--wb-line-16);
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.dep {
+  flex: none;
+  font-size: var(--dsw-font-xxxs-11-font-size);
+  line-height: var(--wb-line-16);
+  color: var(--dsw-alias-label-tertiary);
+  white-space: nowrap;
+}
+
+.group {
+  padding-top: var(--wb-len-6);
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.groupTitle {
+  margin: 0;
+  padding: var(--wb-len-2) var(--wb-len-8) 0 var(--wb-len-14);
+  font-size: var(--dsw-font-xxxs-11-font-size);
+  line-height: var(--wb-line-16);
+  font-weight: 400;
+  color: var(--dsw-alias-label-tertiary);
+}

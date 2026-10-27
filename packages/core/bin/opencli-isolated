@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+#
+# 工作台**隔离的** opencli：所有 opencli 调用都从这里过（探测、取数、装/卸插件）。
+#
+# 为什么需要它：opencli 的**插件目录只认 `HOME`** —— `dist/src/plugin.js` 里
+#
+#     function getHomeDir() {
+#       return process.env.HOME || process.env.USERPROFILE || os.homedir();
+#     }
+#
+# 而 `OPENCLI_CONFIG_DIR` 只管配置 / trace / browser-profiles。两套开关，别混。
+# 所以想让"工作台装的插件"与"用户本机装的插件"分开，唯一的开关是 `HOME`：
+# 指到工作台自己的目录，`~/.opencli` 就一个字节都不会被碰。
+#
+# 为什么必须是**单一路径、不含空格**：`DSH_WORKBENCH_OPENCLI` 既被**原样**当命令跑
+# （能力探测：`$DSH_WORKBENCH_OPENCLI plugin list -f json`），又被 `quoteShellArg`
+# 整体单引号包住（一键修那条 line）。写 `HOME=/x opencli` 会被包成 `'HOME=/x opencli'`，
+# 当成一个不存在的可执行文件。
+#
+# ⚠️ 落点必须与 `src/shared/api/host/opencli-runtime.ts` 一致（两边都从 $DSH_HOME 推）。
+#
+set -euo pipefail
+
+DSH_HOME="${DSH_HOME:-$HOME/.dsh}"
+WORKBENCH_HOME="${DSH_WORKBENCH_HOME:-$DSH_HOME/workbench}"
+ROOT="$WORKBENCH_HOME/opencli"
+REAL_HOME="$HOME"
+
+mkdir -p "$ROOT/home"
+
+# 隔离的 HOME：插件、plugins.lock.json、monorepo 克隆、trace 全落这下面。
+export HOME="$ROOT/home"
+
+# 换 HOME 会连带丢掉 ~/.npmrc —— 里面有私有源的 _authToken
+# （内网源地址由使用者自己配）。不指回去，从私有源装插件会 404/401（实测）。
+if [ -f "$REAL_HOME/.npmrc" ]; then
+  export NPM_CONFIG_USERCONFIG="$REAL_HOME/.npmrc"
+fi
+
+# npm 缓存**必须留在隔离运行时里**（与 `opencli-runtime.ts` 的 npmCacheDir() 同一落点）。
+#
+# ⚠️ **不能用 `${npm_config_cache:-…}`**：用 `npx` / `npm exec dsh-workbench` 起工作台时，
+# npm 会往进程里**注入** `npm_config_cache=/Users/<你>/.npm`（实测：`npm exec -- node -e …`
+# 打出来就是它），这个值一路继承到执行缝里的每条命令。带默认值等于"外面给什么就用什么"，
+# 于是隔离形同虚设 —— opencli 自己内部还会跑 npm（`plugin install` 就要，见它 dist 里
+# `execFileSync('npm', ['install', …])`），那次会去写 `~/.npm`；而执行缝只放行
+# `$DSH_HOME/workbench`（或 `DSH_WORKBENCH_HOME`），写入被拒 → 市场装插件**报错退出 1**，报的还是 npm 那句
+# "cache folder contains root-owned files"（那台机器上其实一个 root 文件都没有，是假话术）。
+# 所以这里是**无条件改写**：缓存落点只有这一处说了算。
+#
+# 另一条老账：`~/.npm` 里只要有一个 root 的文件（以前 `sudo npm` 留下的），npm 也会拒绝
+# 使用整个缓存。隔离运行时本来就有自己的缓存，没理由去赌用户那份。
+export npm_config_cache="$ROOT/npm-cache"
+
+BIN="$ROOT/toolchain/node_modules/.bin/opencli"
+if [ ! -x "$BIN" ]; then
+  echo "dsh-workbench: opencli 的隔离运行时还没装好（$ROOT/toolchain）。" >&2
+  echo "  打开工作台：启动体检会给出一条能直接照做的安装命令。" >&2
+  exit 127
+fi
+
+exec "$BIN" "$@"

@@ -1,0 +1,91 @@
+{
+  "name": "@dsh-workbench/module-hello",
+  "version": "1.1.1",
+  "description": "最小示例模块：装上后面板里多一张卡片，用来试装试卸。",
+  "type": "module",
+  "exports": {
+    ".": "./dist/host.js",
+    "./client": "./client.js"
+  },
+  "files": [
+    "dist",
+    "client.js",
+    "cordis.patch.yml",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "dsh-wb-module build",
+    "typecheck": "tsc --noEmit",
+    "selfcheck": "dsh-wb-module build && node scripts/smoke.mjs",
+    "prepack": "dsh-wb-module build",
+    "test": "vitest run",
+    "check": "dsh-wb-module check",
+    "arch": "node ../module-tools/bin/dsh-wb-module.mjs check --only arch",
+    "lint": "dsh-wb-module lint"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@dsh-workbench/core"
+      ],
+      "external": [
+        "@dsh-workbench/core/client"
+      ]
+    },
+    "workbench": {
+      "apiVersion": 3,
+      "unit": "hello",
+      "title": {
+        "zh": "示例模块",
+        "en": "Sample module"
+      },
+      "card": {
+        "order": 90
+      },
+      "tools": [],
+      "host": {
+        "inject": []
+      }
+    },
+    "workbenchFaces": {
+      "host": "src/host.ts",
+      "client": "src/client.tsx"
+    }
+  },
+  "peerDependencies": {
+    "@dsh-workbench/core": "^0.1.0",
+    "react": "*"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@dsh-workbench/core": "workspace:*",
+    "@dsh-workbench/module-tools": "workspace:*",
+    "@types/node": "^24.19.0",
+    "@types/react": "^19.3.0",
+    "esbuild": "^0.28.2",
+    "react": "^19.3.0",
+    "typescript": "5.9",
+    "vitest": "^5.0.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/novaeth/dsh-workbench.git",
+    "directory": "packages/module-hello"
+  },
+  "homepage": "https://github.com/novaeth/dsh-workbench#readme",
+  "bugs": {
+    "url": "https://github.com/novaeth/dsh-workbench/issues"
+  }
+}

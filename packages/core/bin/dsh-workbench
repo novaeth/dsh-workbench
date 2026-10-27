@@ -1,0 +1,488 @@
+#!/usr/bin/env bash
+#
+# 工作台：建 profile / 起工作台。
+#
+#   ./bin/dsh-workbench create                # ① 交互式新建工作台（推荐）
+#   ./bin/dsh-workbench setup                 #    建默认 workbench profile（幂等）
+#   ./bin/dsh-workbench setup --from web --profile wb2
+#                                            #    以 web 为模板建一个独立工作台
+#   ./bin/dsh-workbench --profile wb2         # ② 起指定 profile，默认 :3081
+#   ./bin/dsh-workbench --no-open             #    其余参数透传给 dsh web
+#   ./bin/dsh-workbench migrate               #    把旧实例的会话/项目/附件并到共用数据根（--force 可重跑）
+#   ./bin/dsh-workbench --help
+#
+# 与 `dsh web` 并存：不同的 profile、不同的 node_modules、不同的端口、独立的进程。
+# 会话 / 项目 / 附件跟 `dsh web` 和 Desktop 共用一份（都在 $DSH_HOME 下），
+# 只有设置与插件分家；运行时的 opencli、工坊、模块市场仍按 profile 各一份。
+#
+# ── 这份脚本有两种身份，它自己分得清 ──────────────────────────────────────
+#   · **仓库副本**（这个包落在一个 git 工作树里）：开发用。bundle 以 link 方式装本目录，
+#     改源码立刻生效（配合 `pnpm run dev`）。
+#   · **安装包**（从内网源下下来的）：`setup` 把 **registry 上那个包** 装进 profile。
+# 判据是「**这个包的 package.json 被那个 git 顶层跟踪**」—— `npm pack` 的产物里不含 .git
+# （见 package.json 的 files）；只问"顶层在不在"不够：装出来的那份完全可能落在某个仓库里
+# （`$HOME` 是 dotfiles 仓库、而 npm 前缀就在 `$HOME` 下，实测踩过 —— 症状见下面 GIT_TOP 那段）。
+# ⚠️ 不能判 `$REPO_DIR/.git`：workspace 之后 .git 在**仓库根**，不在这个包里（实测踩过，
+#    判错的症状是"仓库副本却去源上装"，改源码不再生效，而且不报错）。
+
+set -euo pipefail
+
+PKG='@dsh-workbench/core'
+DSH_HOME="${DSH_HOME:-$HOME/.dsh}"
+PROFILE="${WORKBENCH_PROFILE:-workbench}"
+SRC_PROFILE="${WORKBENCH_SOURCE_PROFILE:-web}"
+PORT="${WORKBENCH_PORT:-3081}"
+PROFILE_EXPLICIT=0
+[ -n "${WORKBENCH_PROFILE:-}" ] && PROFILE_EXPLICIT=1
+SETUP=0
+CREATE=0
+MIGRATE=0
+FORCE=0
+DSH_ARGS=()
+
+die() {
+  echo "dsh-workbench: $*" >&2
+  exit 1
+}
+
+usage() {
+  sed -n '3,12p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+}
+
+if [ "${1:-}" = "create" ]; then
+  CREATE=1
+  shift
+fi
+if [ "${1:-}" = "setup" ]; then
+  SETUP=1
+  shift
+fi
+if [ "${1:-}" = "migrate" ]; then
+  MIGRATE=1
+  shift
+fi
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --profile | --workbench-profile)
+      [ $# -ge 2 ] || die "$1 需要跟一个 profile 名字（例如 --profile wb2）"
+      PROFILE="$2"
+      PROFILE_EXPLICIT=1
+      shift 2
+      ;;
+    --from | --source-profile)
+      [ "$SETUP" = "1" ] || die "$1 只用于 setup（例如 setup --from web --profile wb2）"
+      [ $# -ge 2 ] || die "$1 需要跟一个来源 profile（例如 --from web）"
+      SRC_PROFILE="$2"
+      export WORKBENCH_SOURCE_PROFILE="$SRC_PROFILE"
+      WB_CLONE=1
+      shift 2
+      ;;
+    --with-sessions | --no-sessions | --no-projects)
+      echo "dsh-workbench: 会话与项目跟 dsh web 共用一份数据根，$1 不再需要（忽略）。" >&2
+      shift
+      ;;
+    --force)
+      [ "$MIGRATE" = "1" ] || die "--force 只用于 migrate"
+      FORCE=1
+      shift
+      ;;
+    --no-settings) WB_COPY_SETTINGS=0; shift ;;
+    help | --help | -h) usage; exit 0 ;;
+    --) shift; DSH_ARGS+=("$@"); break ;;
+    *) DSH_ARGS+=("$1"); shift ;;
+  esac
+done
+
+if [ "$SETUP" = "1" ] && [ ${#DSH_ARGS[@]} -gt 0 ]; then
+  die "setup 不认识这些参数：${DSH_ARGS[*]}"
+fi
+if [ "$MIGRATE" = "1" ] && [ ${#DSH_ARGS[@]} -gt 0 ]; then
+  die "migrate 不认识这些参数：${DSH_ARGS[*]}"
+fi
+if [ "${WB_CLONE:-0}" = "1" ] && [ "$PROFILE_EXPLICIT" = "0" ]; then
+  die "用 --from 时还要指定 --profile <新名字>（例如 --from web --profile wb2）"
+fi
+
+# `desktop` 只归 Desktop app 管（Electron 自己起 profile、自己决定数据根），dsh 那边也拒。
+# 更要紧的是 setup：它把隔离层**追加**进目标 profile —— 目标是 desktop 时，那个 profile
+# 就再也看不到 `$DSH_HOME/sessions` 里的历史，而且一声不响（2026-10-23 发生过一次）。
+if [ "$PROFILE" = "desktop" ]; then
+  die "'desktop' 只归 Desktop app 管（dsh 自己也拒）—— 换一个名字，例如 --profile wb2"
+fi
+
+export WORKBENCH_PROFILE="$PROFILE"
+export WB_CLONE="${WB_CLONE:-0}"
+PROFILE_DIR="$DSH_HOME/profiles/$PROFILE"
+# 每个 profile 一份自己的**运行时**根（opencli 隔离运行时、工坊、模块市场）；
+# 会话 / 项目 / 附件不在这里 —— 它们跟 `dsh web` / Desktop 共用 $DSH_HOME。
+WORKBENCH_HOME="${DSH_WORKBENCH_HOME:-$DSH_HOME/$PROFILE}"
+export DSH_WORKBENCH_HOME="$WORKBENCH_HOME"
+
+# 本包的真实位置。**不能**直接 `dirname "$0"/..`：npx 是经 `node_modules/.bin/dsh-workbench`
+# 这条软链调进来的，那样算出来会停在 `node_modules`（实测），于是下面
+# `$REPO_DIR/bin/opencli-isolated` 与 `$REPO_DIR/profile/*` 全指着不存在的地方
+# —— 症状是隔离运行时那条软链变成死链、启动体检一直说"没装好"。
+# 所以先把软链解析到底，再取它的上一级。
+SELF="${BASH_SOURCE[0]}"
+while [ -L "$SELF" ]; do
+  SELF="$(cd "$(dirname "$SELF")" && pwd -P)/$(readlink "$SELF")"
+done
+REPO_DIR="$(cd "$(dirname "$SELF")/.." && pwd -P)"
+GIT_TOP="$(git -C "$REPO_DIR" rev-parse --show-toplevel 2>/dev/null || true)"
+# `rev-parse --show-toplevel` 只说明"**某个祖先目录**是个仓库"—— 装出来的那份完全可能刚好落在
+# 某个仓库里：最常见的是 `$HOME` 本身就是 dotfiles 仓库，而 npm 的前缀（`~/.nvm/...`、
+# `~/.npm-global`…）就在 `$HOME` 下。那会把"装出来的那份"当成仓库副本，以 link 装进 profile：
+# 市场里工作台那一行会打上「本地」标，而 `npm i -g …@latest` 之后 profile
+# 指向的东西还会悄悄变。所以还得证明**这份 package.json 本身被那个仓库跟踪**（仓库副本才有的事；
+# 与 seed-workshop.sh 那条"工作树里真有 packages/core + packages/module-tools"同旨）。
+if [ -n "$GIT_TOP" ] && ! git -C "$REPO_DIR" ls-files --error-unmatch package.json >/dev/null 2>&1; then
+  GIT_TOP=""
+fi
+
+if [ "$CREATE" = "1" ]; then
+  [ $# -eq 0 ] || die "create 不接受参数；它会在终端里问你"
+  exec node "$REPO_DIR/scripts/create-workbench.mjs"
+fi
+
+if ! command -v dsh >/dev/null 2>&1; then
+  echo "dsh-workbench: PATH 上没有 dsh。先装：npm i -g @deepseek-ai/dsh" >&2
+  exit 1
+fi
+
+# ── 硬门禁：dsh 太旧就别起（DIY 模式会整个不见，而且一句错都不报）────────────
+#
+# DIY 模式就是 `preset/diy.patch.yml` 那一行 agent preset，而它是**从 dsh 出厂那份
+# `standard.patch.yml` 派生的**（scripts/gen-diy-preset.mjs）—— 所以它跟的是**派生那一刻的
+# dsh**。dsh 旧到那份清单里有几个包它根本没有时（实测 0.2.0-rc.2 缺
+# `@deepseek-ai/dsh-tool-schedule`），preset 挂不起来；dsh 的模式选择器**只列挂得起来的**
+# （healthy presets only），于是「工作台 DIY 模式」在用户面前整个消失，界面与终端都不吭声。
+# 同一代 dsh 0.2.0 的 `uiWorkspace.startSession()` 也**不收** `agentPreset`（0.2.1-alpha.3 才收），
+# 所以就算 preset 挂上了，「造一个模块」也落不到 DIY 模式 —— 这一档没有"少一把工具"的降级空间。
+#
+# 为什么门禁写在启动器、而不只写 package.json 的 `engines.dsh`：
+# engines.dsh 只有 **0.2.1-alpha.4 起**的 dsh 才读（见 HANDOFF §八），而这台机器上那份 dsh
+# 恰恰可能就是旧到不认识的（0.2.0-rc.2 只读 peerDependencies，而 peer 不能写 ——
+# pnpm 的 auto-install-peers 会把整套 dsh 拖进 profile）。所以旧 dsh 由这里兜。
+#
+# 下限只有一处真相：package.json 的 engines.dsh。这里只读它，别在这儿另写一个版本号。
+DSH_FLOOR="$(WB_MANIFEST="$REPO_DIR/package.json" node -e 'const p = require(process.env.WB_MANIFEST); const e = p.engines ?? {}; process.stdout.write(typeof e.dsh === "string" ? e.dsh : "");' 2>/dev/null || true)"
+DSH_VERSION="$(dsh --version 2>/dev/null | tr -d '[:space:]' | sed 's/^v//' || true)"
+
+if [ -n "$DSH_FLOOR" ] && [ -n "$DSH_VERSION" ]; then
+  # `>=X.Y.Z[-pre]` 一档：与 dsh 自己那条预检同一口径（semver + includePrerelease）。
+  # 认不出的下限形状就不拦 —— 这条是给用户的诊断门，权威仍是 dsh 自己的预检。
+  DSH_FLOOR="$DSH_FLOOR" DSH_VERSION="$DSH_VERSION" node -e '
+const floor = /^>=\s*(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$/.exec((process.env.DSH_FLOOR ?? "").trim());
+const got = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?/.exec((process.env.DSH_VERSION ?? "").trim());
+if (floor === null || got === null) process.exit(0);
+const want = { nums: [+floor[1], +floor[2], +floor[3]], pre: floor[4] === undefined ? [] : floor[4].split(".") };
+const have = { nums: [+got[1], +got[2], +got[3]], pre: got[4] === undefined ? [] : got[4].split(".") };
+for (let i = 0; i < 3; i += 1) {
+  if (have.nums[i] !== want.nums[i]) process.exit(have.nums[i] > want.nums[i] ? 0 : 1);
+}
+if (have.pre.length === 0) process.exit(0);
+if (want.pre.length === 0) process.exit(1);
+for (let i = 0; i < Math.max(have.pre.length, want.pre.length); i += 1) {
+  const a = have.pre[i];
+  const b = want.pre[i];
+  if (a === undefined) process.exit(1);
+  if (b === undefined) process.exit(0);
+  const an = /^\d+$/.test(a);
+  const bn = /^\d+$/.test(b);
+  if (an && bn) { if (+a !== +b) process.exit(+a > +b ? 0 : 1); continue; }
+  if (an !== bn) process.exit(an ? 1 : 0);
+  if (a !== b) process.exit(a > b ? 0 : 1);
+}
+process.exit(0);
+' || DSH_FLOOR_GUARD=$?
+  if [ "${DSH_FLOOR_GUARD:-0}" -eq 1 ]; then
+    echo "dsh-workbench: 这台机器上的 dsh 是 ${DSH_VERSION}，这份工作台要 ${DSH_FLOOR}。" >&2
+    echo "  低于它时 DIY 模式（会话里的「工作台 DIY 模式」）挂不起来，而 dsh 的模式选择器只列挂得起来的" >&2
+    echo "  —— 它会**整个不出现**，不报错。所以这里直接拒绝启动。" >&2
+    echo "  升级 dsh（再重启一次工作台）: npm i -g @deepseek-ai/dsh@latest" >&2
+    exit 1
+  fi
+fi
+
+pkg_version() {
+  node -p "require('$REPO_DIR/package.json').version" 2>/dev/null || echo "0.0.0"
+}
+
+# ── setup：建 profile + 把工作台装进去 ─────────────────────────────────────
+#
+# 交给 dsh 自己的 `plugin` 子命令装，而不是我们自己拼 pnpm：它走的是与
+# install_bundle **同一条**通路（runPluginCommand）—— 兼容性预检、
+# profile 写锁、装完把 bundle 登记进 dsh.profile.bundles 全都在里面。
+# 自己拼 pnpm 会漏掉登记，症状是"包装上了但侧边栏不出现"。
+run_setup() {
+  # ⚠️ 用 `bash` 呼，不靠文件的 x 位：pnpm publish（release.mjs 走 `pnpm -r publish`）
+  # 只给 `package.json#bin` 点名的那一个文件 755，其余在 tarball 里一律 644
+  # （实测 pnpm pack 的产物：bin/dsh-workbench 是 755，bin/opencli-isolated 与
+  #  scripts/seed-profile.sh 都是 644；npm pack 会保留 x 位，所以这是 pnpm 独有的坑）。
+  # 症状是「本机怎么跑都行、别人机器上 Permission denied」——因为 git 里有 x 位，
+  # 只有装出来的副本会丢。
+  bash "$REPO_DIR/scripts/seed-profile.sh"
+
+  if [ "${WB_CLONE:-0}" = "1" ]; then
+    WB_SOURCE_PROFILE="$SRC_PROFILE" \
+      WB_TARGET_PROFILE="$PROFILE" \
+      WB_COPY_SETTINGS="${WB_COPY_SETTINGS:-1}" \
+      node "$REPO_DIR/scripts/clone-profile.mjs" || die "从 $SRC_PROFILE 初始化 $PROFILE 失败"
+  fi
+
+  if [ -n "$GIT_TOP" ]; then
+    SPEC="$REPO_DIR"
+    echo "→ 仓库副本：以 link 方式装本目录（${SPEC}）"
+  else
+    SPEC="$PKG@^$(pkg_version)"
+    echo "→ 从内网源装 ${SPEC}（源在 package.json 的 publishConfig.registry）"
+    echo "  这一份启动器是装在哪就是哪一代：换 profile / 重建 profile 之前，先"
+    echo "  npm i -g ${PKG}@latest。已经在跑的那个 profile 升级走市场里工作台那一行的「更新」。"
+  fi
+
+  dsh plugin --profile "$PROFILE" add "$SPEC"
+
+  # 装包与"被选中"是 dsh 那侧的两件事：`dsh plugin add` 的 pnpm 那半管装，
+  # 而登记 `dsh.profile.bundles` 是它装完后的对账，那条对账**跳过已存在的依赖** ——
+  # 依赖已经在清单里时（重跑 setup、上次装到一半），bundle 名单永远缺那一项。
+  # 所以装完再确保选中一遍：缺了就补进 `dsh.profile.bundles`，相等就一个字节不写。
+  # 启动器现在拿"选中"当硬门禁（没选中就拒绝启动），这一步就是那条修复命令的落点。
+  bash "$REPO_DIR/scripts/seed-profile.sh" ensure-selected
+
+  if [ -n "$GIT_TOP" ]; then
+    BASE_CMD="$REPO_DIR/bin/dsh-workbench"
+  elif command -v dsh-workbench >/dev/null 2>&1; then
+    BASE_CMD="dsh-workbench"
+  else
+    BASE_CMD="npx @dsh-workbench/core"
+  fi
+  if [ "$PROFILE" = "workbench" ]; then
+    START_CMD="$BASE_CMD"
+  else
+    START_CMD="$BASE_CMD --profile $PROFILE"
+  fi
+
+  cat <<EOF
+
+装好了。起工作台：
+
+  $START_CMD
+
+（全局装过就用 dsh-workbench；npx 就用 npx @dsh-workbench/core；本仓开发用 ./packages/core/bin/dsh-workbench。）
+
+首次打开会走启动体检，它会自己把 opencli 的隔离运行时装好 —— 不用你动手。
+EOF
+}
+
+
+if [ "$SETUP" = "1" ]; then
+  run_setup
+  exit 0
+fi
+
+if [ ! -f "$PROFILE_DIR/package.json" ]; then
+  echo "dsh-workbench: profile '$PROFILE' 还不存在。" >&2
+  echo "  先运行: $REPO_DIR/bin/dsh-workbench setup" >&2
+  exit 1
+fi
+
+if [ "$MIGRATE" = "1" ]; then
+  MIGRATE_ARGS=(--migrate)
+  [ "$FORCE" = "1" ] && MIGRATE_ARGS+=(--force)
+  WORKBENCH_PROFILE="$PROFILE" DSH_HOME="$DSH_HOME" DSH_WORKBENCH_HOME="$WORKBENCH_HOME" \
+    node "$REPO_DIR/scripts/share-data-root.mjs" "${MIGRATE_ARGS[@]}" || exit 1
+  if [ "$PROFILE" = "workbench" ]; then
+    START_CMD="$REPO_DIR/bin/dsh-workbench"
+  else
+    START_CMD="$REPO_DIR/bin/dsh-workbench --profile $PROFILE"
+  fi
+  echo
+  echo "迁移结束。现在起工作台：$START_CMD"
+  echo "如果 dsh web 刚才也开着，先重启它，让它从共用根重新读一遍。"
+  exit 0
+fi
+
+# ── 硬门禁：工作台 bundle 必须**被选中**（在 `dsh.profile.bundles` 里）─────────
+#
+# 判据只能是 `dsh.profile.bundles`，**不能** grep 整个 package.json：依赖装着 ≠ 被选中。
+# 只有 dependencies 而没有 bundles 时，profile 照常组起来、服务照常监听，只是
+# 侧边栏什么也不出现 —— 用户拿到的是一台"什么都对、就是没有工作台"的实例，
+# 而且没有任何报错。所以这里读到没选中就**拒绝启动**，并给一条能照抄的修复命令。
+#
+# 这条断法是真会发生的：依赖已经在清单里时（重跑 setup、上次装到一半），
+# `dsh plugin add` 的 pnpm 那半只回一句"已是最新"，而它装完的登记跳过**已存在**的
+# 依赖，于是 bundle 名单永远缺那一项。setup 为此多了一步"确保选中"
+# （`scripts/seed-profile.sh ensure-selected`），这里给的就是回到那一步的命令。
+BUNDLE_GUARD=0
+WB_PROFILE_MANIFEST="$PROFILE_DIR/package.json" WB_PKG="$PKG" node -e '
+const fs = require("node:fs");
+const manifestPath = process.env.WB_PROFILE_MANIFEST;
+let profile = {};
+try {
+  profile = (JSON.parse(fs.readFileSync(manifestPath, "utf8")).dsh || {}).profile || {};
+} catch (error) {
+  console.error("dsh-workbench: 读不了 profile 清单 " + manifestPath + "：" + error.message);
+  process.exit(2);
+}
+const bundles = Array.isArray(profile.bundles) ? profile.bundles : [];
+if (!bundles.includes(process.env.WB_PKG)) process.exit(1);
+' || BUNDLE_GUARD=$?
+
+if [ "$BUNDLE_GUARD" -ne 0 ]; then
+  if [ "$BUNDLE_GUARD" -eq 1 ]; then
+    echo "dsh-workbench: profile '$PROFILE' 没选中工作台 bundle（$PKG 不在 dsh.profile.bundles 里）。" >&2
+    echo "  这样起只会得到一台没有工作台入口的实例，所以这里直接拒绝启动。" >&2
+  fi
+  echo "  修好它（幂等，会补上这一项）: $REPO_DIR/bin/dsh-workbench setup" >&2
+  exit 1
+fi
+
+# ── 已有实例：只整理配置，旧数据不自动迁移
+#
+# 旧版本给 workbench profile 追加过隔离的三行（sessions / storages / attachment 指到
+# `$DSH_HOME/workbench/**`）。现在缺省跟 Desktop 一样「只分 profile、不分数据根」；
+# 但如果旧目录里还有数据、且没有 `.data-root-shared`，这里只打印 migrate 提示，
+# 不改 profile、不动数据 —— 由用户自己决定什么时候并。
+# 必须排在这里（exec dsh 之前）：配置要在这一代 dsh 读进去之前就定好。
+WORKBENCH_PROFILE="$PROFILE" DSH_HOME="$DSH_HOME" DSH_WORKBENCH_HOME="$WORKBENCH_HOME" \
+  node "$REPO_DIR/scripts/share-data-root.mjs" ||
+  echo "dsh-workbench: 提醒 —— 数据根配置没整理成（见上一行），这次仍按现在的 profile 起。" >&2
+
+# 清掉从父 dsh 会话继承来的身份变量。
+#
+# 它们描述的是**另一个** profile 和会话。如果你是在某个 dsh 会话的 shell 里
+# 启动工作台（很常见），不清掉的话 workbench 进程会认错身份 ——
+# 实测：跑在 :3081 的 workbench 进程继承了 DSH_PROFILE=web、
+# DSH_PROFILE_DIR=…/profiles/web、DSH_WEB_URL=…:3080、
+# 以及那个会话的 DSH_SESSION_ID。
+#
+# 保留 DSH_HOME：它是"harness 家目录在哪"的配置输入，应该被尊重。
+
+unset DSH_PROFILE DSH_PROFILE_DIR DSH_WEB_URL DSH_SESSION_ID DSH_SHELL
+
+# 告诉 profile 里的 hmr 条目该监听哪个目录（宿主侧的模块监听）。
+#
+# 监听**dsh 真正加载的那份代码**：profile 里那份优先，其次才是本目录 ——
+# 用 npx 起的安装包里，本目录在 npx 缓存里（会被回收），而 profile 里那份才是常驻的。
+# 那条通常是软链，用 `cd -P` 取真实路径：chokidar 收不到软链那头的事件。
+#
+# 为什么要环境变量：bundle 补丁里的相对路径以 profile 目录为基准，从 profile 目录
+# 出发走不到真实路径（实测 root: ['.'] 无效），所以由启动器给出绝对路径。
+PROFILE_COPY="$PROFILE_DIR/node_modules/$PKG"
+if [ -d "$PROFILE_COPY" ]; then
+  export DSH_WORKBENCH_ROOT="$(cd -P "$PROFILE_COPY" && pwd)"
+else
+  export DSH_WORKBENCH_ROOT="$REPO_DIR"
+fi
+
+# ── 告诉工坊自愈「当前外壳」是谁（**显式基准**；不设 = 这一轮不做代际比对）────────
+#
+# dsh 接下来加载的是 **profile 里那份**（$PROFILE_COPY），版本以它为准；启动器自己这份
+# （$REPO_DIR）可能比它旧。实测漂移（同一天两次）：启动器 0.3.0 / profile 0.3.1 / 工坊已跟到
+# 0.3.1 时，启动器先跑 entry（它在 `exec dsh` **之前**），拿自己那份当基准，把工坊**降级**到
+# 0.3.0；宿主随后再跑 entry，看到工坊"与它同代" → no-op，整场会话停在错的一代。
+# 所以基准给 profile 里那份，而且**只在它真的可读时才给**：干净机器上 profile 还没装出这一份，
+# 那时没有基准 —— 比对归 setup 之后的第一次启动。
+if [ -f "$PROFILE_COPY/package.json" ]; then
+  export DSH_WB_SHELL_ROOT="$DSH_WORKBENCH_ROOT"
+fi
+
+# ── 设置从哪来：工作台自己的 profile patch（不再叠 web 那一份）──────────────
+#
+# 以前每次启动都用 `--patch` 把 `profiles/web/cordis.patch.yml` 叠成**最高层**。
+# 代价是那一层盖住的行在 :3081 的 Settings 里**改不动**：dsh 的 config-editor 写文件
+# **之前**会拿组合后的值跟你写的值对，不等就抛
+# `overridden by a home patch or command-line overlay` —— 文件根本没写。
+# 症状就是"模型供应商这类设置只能去 :3080 改，工作台这边看着能点、点了没用"。
+#
+# 现在改成：**工作台自己的 patch 是唯一真相**。想要 web 的哪几行，去
+# 设置 → 「配置同步」里勾（它读源 profile 的 cordis.patch.yml，按行搬运，
+# 见 内部设计记录 与 ADR-0044）。启动器只负责把工作台起起来。
+PATCH_ARGS=()
+
+# ── 声明工作台运行时的**可写根**（执行缝的沙箱只放行 process.cwd()）──────────
+#
+# 工作台自己要跑命令：启动体检自动装 opencli、模块市场装/升插件、查源上新版。
+# 这些命令走 dsh 的执行缝，而那条缝带**文件沙箱**；插件发起的调用**没有会话**，
+# 回落到部署策略，出厂值是 `workspaceRoot: process.cwd()` —— 安装目标
+# `$DSH_HOME/workbench/...` 不在启动目录下，被拒写（EPERM），"自动装"死在第一步，
+# 界面只能退化成"让用户去终端抄一条命令"。这一层把可写根指到工作台运行时，
+# 那一整棵树（隔离工具链 + npm 缓存 + 模块专属文件夹 + 市场 prefix）就都放行了。
+#
+# 为什么是 `--patch` 叠加而不是改 profile 的 cordis.patch.yml：profile 可能是旧的
+# （交接出去的机器尤其如此），没人会回头重跑 seed；叠加层每次启动都生效。
+# ⚠️ 必须排在 profile 自己那一层**之后**：工作台的可写根要赢。
+SANDBOX_PATCH="$REPO_DIR/profile/sandbox.patch.yml"
+if [ -f "$SANDBOX_PATCH" ]; then
+  PATCH_ARGS+=(--patch "$SANDBOX_PATCH")
+else
+  echo "dsh-workbench: 提醒 —— 找不到 ${SANDBOX_PATCH}，这次不声明可写根（自动装会失败）。" >&2
+fi
+
+# 把 opencli 指到**隔离运行时**：所有 opencli 调用（探测、取数、装/卸插件）都走它，
+# 于是装/卸插件不碰用户本机的 ~/.opencli。
+#
+# 为什么隔离要用 HOME（而不是 OPENCLI_CONFIG_DIR）：opencli 的**插件目录只认 HOME**
+# —— 见 bin/opencli-isolated 开头的说明。
+#
+# 建一个**稳定路径**的软链：别处（包括给用户"复制这条命令"的文案）都能用
+# $WORKBENCH_HOME/opencli/bin/opencli 引用它，不必知道本目录在哪 ——
+# 而且从那里跑出来同样是隔离的。指向 profile 里那份，别指 npx 缓存（会回收）。
+OPENCLI_ROOT="$WORKBENCH_HOME/opencli"
+mkdir -p "$OPENCLI_ROOT/bin" "$OPENCLI_ROOT/home"
+
+# DIY 工坊的目录必须**每次启动都在**：`cordis.patch.yml` 的 hmr 行把它列成一个监听根
+# （工坊里的模块是被 link 进 profile 的仓外目录，Node 解析到的是工坊里的真路径，
+# 所以不把它列进去，模块重建 dist/host.js 就不热换 —— 而且**不报错**）。
+# chokidar 对不存在的根收不到事件，所以这里保住它，不必等用户重跑 setup。
+# 只建目录：骨架与依赖是 seed-profile.sh 第 6 步的事。
+mkdir -p "$WORKBENCH_HOME/diy/packages"
+
+# 工坊的**稳定入口**：每次启动都重写一遍（幂等、几乎不花时间），挂进 PATH。
+# 于是 agent 在工坊里（或任何目录里）都能直接叫 `dsh-wb-module`，不必记着 `pnpm exec` 前缀 ——
+# 指令里那句"工坊里没有全局 dsh-wb-module"是**旧**状态，现在有一个我们自己的转发脚本。
+bash "$REPO_DIR/scripts/seed-workshop.sh" entry || true
+export PATH="$WORKBENCH_HOME/bin:$PATH"
+
+# 骨架不在就**当场建**（不是只提醒）：工坊看着"能用"，可模块的 build / check 会把
+# "不在 workspace 里"说成"声明写错了"——实测就是在这一步卡住过（干净机器上 seed 第 6 步没跑）。
+# 提醒是对人说的，而先撞上它的是 agent：它读到的报错指着别的地方，于是开始自由发挥。
+if [ ! -f "$WORKBENCH_HOME/diy/package.json" ]; then
+  bash "$REPO_DIR/scripts/seed-workshop.sh" || {
+    echo "dsh-workbench: 提醒 —— DIY 工坊的骨架没建起来（$WORKBENCH_HOME/diy/package.json）。" >&2
+    echo "  跑一次 dsh-workbench setup；在那之前工坊里的模块 build / check 都会报错。" >&2
+  }
+fi
+
+# 工坊**自己带着** DIY 的指引（软链到随包出货的那份 `skills/workbench-module-diy/`）。
+# 这条链**不在这里挂** —— 写口只有一处，在 `scripts/seed-workshop.sh` 的 `link_workshop_skills`
+# （上面那次 `entry` 已经跑过它）。为什么收成一处：启动器与宿主自举都跑那个脚本，从前两处
+# 各写一遍（这里一段 bash + 宿主 TS 的 `linkSkills`），目标虽一致，却是**同一件事两个实现** ——
+# 哪天只有一边改了源或判据就会互相改指，而软链指到哪 skill 发现都**不报错**。
+# 稳定路径不直接软链到随包脚本：同上面那条 —— pnpm publish 之后
+# `bin/opencli-isolated` 是 644，软链过去一执行就是 Permission denied
+# （症状：启动体检永远说"隔离运行时没装好"，而它其实是没权限跑）。
+# 所以这里写一个**我们自己拥有**的转发脚本，x 位由 chmod 当场给。
+# ⚠️ 先 rm -f：旧版本留下的软链还在时，`>` 会顺着软链把真脚本覆盖掉。
+# ⚠️ DSH_HOME 必须**钉在命令里**：执行缝不继承它，而 bin/opencli-isolated 用
+# `${DSH_HOME:-$HOME/.dsh}` 推根 —— 不钉的话，DSH_HOME 不是默认值的机器上，
+# 隔离运行时会被认成用户真家目录那一份（实测：同一条路上的 seed-workshop.sh
+# 就是这样把入口写进了 ~/.dsh，见 ADR-0037 的"执行缝不继承 DSH_HOME"）。
+rm -f "$OPENCLI_ROOT/bin/opencli"
+printf '#!/bin/sh\nexec env DSH_HOME=%q bash %q "$@"\n' "$DSH_HOME" "$DSH_WORKBENCH_ROOT/bin/opencli-isolated" \
+  >"$OPENCLI_ROOT/bin/opencli"
+chmod +x "$OPENCLI_ROOT/bin/opencli"
+export DSH_WORKBENCH_OPENCLI="$OPENCLI_ROOT/bin/opencli"
+
+# 软提醒：隔离运行时没装的话，启动体检会**自己装**（沙箱已放行工作台运行时，
+# 见上面那层 SANDBOX_PATCH）；这条只是提前说一声，免得盯着全屏 loading 猜。
+if [ ! -x "$OPENCLI_ROOT/toolchain/node_modules/.bin/opencli" ]; then
+  echo "dsh-workbench: opencli 的隔离运行时还没装好 —— 启动体检会自己装，" >&2
+  echo "  装不上时它会给一条能直接照抄到终端的命令。" >&2
+fi
+
+# ⚠️ 顺序有讲究：`--patch` 是 **dsh 本体**的选项，必须排在 `--port`（应用参数）**之前** ——
+# 参数一旦进了应用的透传区（第一个应用自己的选项开始），后面的都直接交给应用，
+# `--patch` 会被应用当成未知选项（实测：`--port` 在前时报 `unknown option '--patch'`）。
+exec dsh "$PROFILE" ${PATCH_ARGS[@]+"${PATCH_ARGS[@]}"} --port "$PORT" ${DSH_ARGS[@]+"${DSH_ARGS[@]}"}

@@ -1,0 +1,147 @@
+# 工作台 bundle 的补丁层。做两件事：
+#   1. 打开宿主的模块监听 —— 让 `npm run dev` 重建后宿主插件能热换；
+#   2. 插入工作台插件本体。
+#
+# 组合顺序（实测）：
+#   1. bundle 层（dsh.profile.bundles 顺序）   ← 本文件在这里
+#   2. profile 用户层（profiles/<name>/cordis.patch.yml，Settings 页写的就是它）
+#   3. 机器公共层（$DSH_HOME/cordis.patch.yml，对所有 profile 生效）
+#   4. --patch 叠加层
+#
+# 我们排在 bundle 列表最后，所以能覆盖 dsh-web-app 插入的行。
+
+# ── 左栏二选一：官方 ui-sidebar / 工作台自己的 ─────────────────────────
+#
+# 默认是**官方**左栏（这一层不再摘 ui-sidebar）。Guest 的「设置 → 工作台设置 →
+# 会话列表」选「自定义」时，往 **profile 用户层**（profiles/<name>/cordis.patch.yml）
+# 写一行 `- id: ui-sidebar` + `disabled: true`；dsh-hmr 盯着 profile patch，
+# 变了会重组，刷新页面即生效（不用重启进程）。
+#
+# 为什么不能运行时遮蔽：sidebar 的子座位（sidebar.panellist / .settings / …）是
+# **独占 claim**，两个 entry 声明同一批座位会抛错；而运行时只给声明了 children 的
+# entry 发 `renderSlot`。所以两套左栏不能同时在场，只能按组合层二选一。
+# 证据：内部设计记录 §3。
+
+# ── 权限预设：多给一档「全盘写 + 保留审批」 ────────────────────────────
+# dsh 出厂只有「工作区内修改」（workspace-write + ask）与「完全权限」
+# （danger-full-access + never）。中间那档「文件边界全开、但审批策略仍是 ask」
+# 不在表里，用户选不到；这里把它加进选择器。
+#
+# 这一档是 dsh 层的权限档，不绑任何产品：名字与描述都不带产品字样。
+# 它只改变两个旋钮，谁读这两个旋钮（写闸门、升权审批、插件命令……）
+# 各自按自己的规则响应。
+#
+# `config` 是整体替换、不深合并：dsh 出厂那三档必须一起写全。
+# `defaultPreset` 不写，保持 dsh 按组合默认值推断（通常是 workspace-write）。
+#
+# id 用 `danger-full-access-ask`，不覆盖 `danger-full-access`：后者要留给
+# 真正「不问审批」的完全权限。代价是 dsh 客户端只对 `danger-full-access` /
+# `auto` 两个 id 弹全盘风险确认、也只给那四个内置 id 图标 —— 这一档点了直接切、
+# 而且没有图标（2026-10-22 明确接受）。
+- id: permission
+  config:
+    presets:
+      read-only:
+        sandbox: read-only
+        approval: ask
+      workspace-write:
+        sandbox: workspace-write
+        approval: ask
+      danger-full-access:
+        sandbox: danger-full-access
+        approval: never
+      danger-full-access-ask:
+        sandbox: danger-full-access
+        approval: ask
+        name: 完全权限（保留审批）
+        description: 允许写工作区外；需要审批的操作仍会继续询问。
+
+# ── 宿主侧热更新 ──────────────────────────────────────────────────────
+# 出厂默认 `root: []` = 不监听任何模块目录，改了宿主代码只能重启。
+# 这里打开监听，**两个根**：
+#   1. 外壳自己（路径由启动器通过 `DSH_WORKBENCH_ROOT` 给出）。实测过 `'.'`
+#      （以 profile 目录为基准）不行：我们的包在 profile 里只是一个指向本仓库的
+#      符号链接，从 profile 目录出发根本走不到 /Volumes/…，chokidar 收不到事件。
+#   2. **DIY 工坊**（`$DSH_HOME/workbench/diy`）。工坊里的模块是**被 link 进 profile
+#      的第三方目录**（`link:` 依赖），Node 解析到的是工坊里的真路径，而 dsh-hmr 的
+#      归属判定整个走 realpath —— 所以工坊不在 `root` 里，模块重建 `dist/host.js`
+#      就**不热换**，而且**不报错**（症状是"改了一行，界面上没变"）。
+#      外壳自己就是同一个处境的现成反例：它也是 link 进来、也是靠这一条热换的。
+#
+# 注意 `config` 是**整体替换**（不深合并），所以 `root` 必须写全。
+# 工坊目录由启动器每次启动 `mkdir -p` 出来（chokidar 的根不存在时收不到事件）。
+- id: hmr
+  config:
+    root:
+      - !!js process.env.DSH_WORKBENCH_ROOT ?? '.'
+      - !!js process.env.DSH_WORKBENCH_HOME ?? dshHomePath('workbench/diy')
+    # ★ followSymlinks: false（2026-10-11 实测：这就是"改了没反应、而且不报错"的根因）
+    #
+    # 两个根底下的 `node_modules/@dsh-workbench/*` 是一串**互相指向**的软链
+    # （工坊 → core → 本仓 packages/core → 它自己的 node_modules/@dsh-workbench/shared → …）。
+    # 默认跟随软链时 chokidar 会一路走进去，而默认的 `ignored: ['**/node_modules', …]` 在
+    # **根之外的路径**上根本不生效：chokidar 传给 ignored 的是 `relative(baseDir, path)`，
+    # 根在 baseDir 之外时它长这样 —— `../../../../.dsh/workbench/diy/node_modules/…`，
+    # 而 picomatch 的 `**` **不匹配 `..` 这种点段**，于是没有任何剪枝。结果是 fd 用光：
+    #     Error: EMFILE: too many open files, watch '…/@dsh-workbench/core/node_modules/…/vitest/…'
+    # 监听器当场报错退出（错误只落到宿主日志里），**之后一个 change 事件都收不到**。
+    #
+    # 关掉跟随软链之后（实测用同一份 chokidar + picomatch 复现）：监听器活着，
+    # 工坊里 `packages/<模块>/dist/host.js` 的原地改动照常报出来，而且
+    # canonicalPath(事件) == require.resolve('@dsh-workbench/module-<unit>') == 加载器记的入口 ✓，
+    # 于是 dsh-hmr 那条"入口文件精确匹配"的分支能对上、模块真的会热换。
+    #
+    # schemastery 的 Config 不吞未知键（已实测），所以这个选项会原样传进 chokidar。
+    followSymlinks: false
+    # ★ ignored 与 root 同一条规矩：**整表替换**（不深合并），所以默认那四条必须照抄。
+    #
+    # 为什么还要多出两条 extglob（2026-10-20 实测）：dsh 把 pattern 交给 picomatch 去匹配
+    # `relative(baseDir, path)`，而 baseDir 是**声明本行的那份 patch 的目录**（= 外壳包目录，
+    # 也就是上面第一个根）：工坊那个根在它之外，相对路径长这样 ——
+    #     ../../../../../.dsh/workbench/diy/node_modules/.pnpm/…
+    # 而 picomatch 的 `**` **永不吃 `..` 段**（实测连 `dot: true` 都救不了 `..`，只救点段），
+    # 默认那四条在这种形态下一条都不生效：chokidar 一路走进工坊 node_modules 的**实目录**
+    # （主体是 `.pnpm/**`；软链那一半由上面那条 followSymlinks 挡住，两件不同的事）。
+    # 实测（同参数、chokidar 5.0.0 + picomatch 4.0.7）：被监听目录 919 个，其中 286 个在
+    # `node_modules` 下；外壳那个根就在 baseDir 里，四条剪枝照常生效（0 个）。
+    #
+    # `*(../)` 是 extglob「零个或多个 `../`」，所以这两条覆盖的正是「相对路径以若干 `..` 打头」
+    # 这一形态 —— 两个根正好一个干净、一个 `..` 打头。加完之后：被监听目录 102 个、
+    # `node_modules` 下 0 个，而工坊 `packages/<模块>/dist/host.js` 仍在监听里（改一行照样热换）。
+    #
+    # 边界（ADR-0034 §3）：根因是 dsh 用 `relative(...)` 喂 picomatch 这个组合，根治在上游
+    # （喂绝对路径 + `{ dot: true }`，实测那样 `**/node_modules` 能剪掉 `.dsh/…/node_modules`）。
+    # 在那之前，selfcheck 有一条判据钉着下面这六条，别删；若将来 base 被挪到 $DSH_HOME 之上
+    # （相对路径变成 `.dsh/…` 打头）这两条就不管用了。
+    #
+    # 生效条件：**改完这个文件要重启一次工作台进程。** 本文件是 bundle 层，而 dsh-hmr 的
+    # patchFiles 只有两个（profile 自己的 cordis.patch.yml 与 $DSH_HOME/cordis.patch.yml）
+    # —— 它们是"变了就 recomposeProfile"的那两个，bundle 层的 patch 内容不在里面（实测读的是
+    # dsh-hmr `patchFiles = [profile.patchPath, join(profile.home, 'cordis.patch.yml')]`）。
+    ignored:
+      - '**/node_modules'
+      - '**/.*'
+      - cache
+      - data
+      - '*(../)**/node_modules'
+      - '*(../)**/.*'
+
+# ── 可写根**不在这里**（2026-10-22 挪走）──────────────────────────────────
+#
+# 这一格曾经有一行 `sandbox-policy`（`workspaceRoot` → `$DSH_HOME/workbench`），
+# 为的是"装进别人的 profile 也就地放行"。它被挪走了，因为 **bundle 层是在线启用时
+# 才生效的**：dsh 0.2.1 的在线重组在改这一行时会重建 `session-controller`，与
+# `file-upload` 注销 resolver 赛跑 —— 启用当场把 session-controller 打成 failed，
+# 之后每次新建会话都是 `gateway/service-unavailable`（连 toggle 都救不回来，只能重启）。
+#
+# 证据与 A/B：ADR-0037 的 2026-10-22 补记。自带 profile 的可写根仍有两处：启动器每次启动
+# 叠的 `--patch profile/sandbox.patch.yml`，以及 `profile/isolation.patch.yml` 里同值的那一行
+# （seed-profile.sh 追加进 profile，给不带启动器的 `dsh workbench`）。装进别人的 profile 时，
+# 请把那一行写进那个 profile 的 `cordis.patch.yml` 再**重启**（在线写同一行也会撞同一个竞态）。
+# 少了它只会让"无会话的插件命令"被沙箱挡，不会再动会话接口；宿主启动时会就此打一条 warn
+# （见 runtime-seed 的 coversWritableRoot）。
+
+- insert:
+    - id: workbench
+      name: '@dsh-workbench/core'
+

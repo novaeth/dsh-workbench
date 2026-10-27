@@ -1,0 +1,3 @@
+[submodule "private-docs"]
+	path = private-docs
+	url = ../dsh-workbench-private.git

@@ -1,0 +1,182 @@
+.wb-choiceMenu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-2);
+  background: transparent;
+}
+
+.wb-choiceMenu[data-variant='boxed'] {
+  padding: var(--wb-len-4);
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-md);
+}
+
+.wb-choiceOption {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--wb-len-6);
+  min-height: var(--wb-len-28);
+  padding: var(--wb-len-4) var(--wb-len-8);
+  border-radius: var(--dsw-radius-md);
+  cursor: pointer;
+  font-size: var(--dsw-font-xs-13-font-size);
+  line-height: var(--wb-line-20);
+  color: var(--dsw-alias-label-primary);
+}
+
+.wb-choiceOptionOn {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.wb-checkbox {
+  position: absolute;
+  width: var(--wb-len-16);
+  height: var(--wb-len-16);
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wb-checkboxBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  flex: none;
+  width: var(--wb-len-16);
+  height: var(--wb-len-16);
+  border: 1px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-xs);
+  corner-shape: round;
+  color: var(--dsw-alias-label-primary-foreground);
+  transition:
+    background-color var(--wb-dur-0-12) ease, border-color var(--wb-dur-0-12) ease;
+}
+
+.wb-choiceOption:hover .wb-checkboxBox {
+  border-color: var(--dsw-alias-label-tertiary);
+}
+
+.wb-checkbox:checked + .wb-checkboxBox {
+  border-color: var(--dsw-alias-brand-primary);
+  background: var(--dsw-alias-brand-primary);
+}
+
+.wb-checkbox:disabled + .wb-checkboxBox {
+  cursor: default;
+}
+
+.wb-checkbox:focus-visible + .wb-checkboxBox {
+  outline: var(--dsw-focus-ring-width, var(--wb-len-2)) solid
+    var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
+}
+
+.wb-choiceOption:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.wb-choiceOption:has(:disabled) {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.wb-choiceOption:has(:disabled),
+.wb-choiceOption:has(:disabled):hover {
+  background: transparent;
+}
+
+.wb-choiceLabel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.wb-choiceLabelText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wb-choiceLabel:has(.wb-choiceDescription) .wb-choiceLabelText {
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.wb-choiceDescription {
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-tertiary);
+  overflow-wrap: anywhere;
+}
+
+.wb-choiceLoading {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-len-6);
+  min-height: var(--wb-len-28);
+  padding: var(--wb-len-4) var(--wb-len-8);
+  font-size: var(--dsw-font-xs-13-font-size);
+  line-height: var(--wb-line-20);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.wb-choiceLoadingText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wb-choiceEmpty {
+  display: flex;
+  align-items: center;
+  min-height: var(--wb-len-28);
+  padding: var(--wb-len-4) var(--wb-len-8);
+  font-size: var(--dsw-font-xs-13-font-size);
+  line-height: var(--wb-line-20);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.wb-radio {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  box-sizing: border-box;
+  width: var(--wb-len-12);
+  height: var(--wb-len-12);
+  margin: 0;
+  border: 1px solid var(--dsw-alias-border-l3);
+  border-radius: 50%;
+  corner-shape: round;
+  background-color: transparent;
+  cursor: pointer;
+  transition:
+    background-color var(--wb-dur-0-12) ease, border-color var(--wb-dur-0-12) ease;
+}
+
+.wb-radio:not(:checked):hover {
+  border-color: var(--dsw-alias-label-tertiary);
+}
+
+.wb-radio:checked {
+  border-color: var(--dsw-alias-brand-primary);
+  background-image: radial-gradient(
+    circle at center,
+    var(--dsw-alias-brand-primary) 0 3px,
+    transparent 3px
+  );
+}
+
+.wb-radio:disabled {
+  cursor: default;
+}
+
+.wb-radio:focus-visible {
+  outline: var(--dsw-focus-ring-width, var(--wb-len-2)) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
+}

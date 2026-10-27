@@ -1,0 +1,335 @@
+:root,
+:root.dark {
+  /* ============================================================
+     主色调（紫色 #b39aff，全站统一）
+     ============================================================ */
+  --pd-doc-primary-base: #b39aff;
+  --pd-doc-primary: var(--pd-doc-primary-base);
+
+  /* 品牌渐变 */
+  --brand-gradient: linear-gradient(135deg, #b39aff 0%, #818cf8 40%, #22d3ee 100%);
+  --brand-gradient-horizontal: linear-gradient(90deg, #b39aff, #818cf8, #22d3ee);
+  --brand-purple: #b39aff;
+  --brand-indigo: #818cf8;
+  --brand-cyan: #22d3ee;
+
+  /* ============================================================
+     暗色背景（站点默认就是暗黑主题）
+     ============================================================ */
+  --brand-dark: #0a0a14;
+  --brand-dark-surface: #111122;
+
+  /* 文本色（覆盖框架默认） */
+  --pd-doc-text-1: rgba(241, 245, 249, 0.92);
+  --pd-doc-text-2: rgba(203, 213, 225, 0.72);
+  --pd-doc-text-3: rgba(148, 163, 184, 0.56);
+  --pd-doc-text-color: #cbd5e1;
+
+  /* Markdown 行高 */
+  --pd-doc-md-line-height-p: 1.7;
+
+  /* 背景层级 */
+  --pd-doc-bg: #0a0a14;
+  --pd-doc-bg-alt: #11111c;
+  --pd-doc-bg-soft: #15151f;
+  --pd-doc-backdrop-bg: rgba(10, 10, 20, 0.6);
+
+  /* 边框/分割线 */
+  --pd-doc-border: rgba(255, 255, 255, 0.08);
+  --pd-doc-divider: rgba(255, 255, 255, 0.06);
+  --pd-doc-gutter: #000;
+
+  /* 阴影 */
+  --pd-doc-shadow-2: 0 0 8px 0 rgba(0, 0, 0, 0.8), 0 2px 4px 0 rgba(0, 0, 0, 0.6);
+  --pd-doc-shadow-3: 0 8px 16px 0 rgba(0, 0, 0, 0.4), 0 2px 6px 0 rgba(0, 0, 0, 0.2);
+
+  /* 滚动条 */
+  --pd-doc-scrollbar-thumb-color: #ffffff26;
+  --pd-doc-scrollbar-thumb-hover-color: #ffffff40;
+
+  /* ============================================================
+     Header 玻璃态
+     ============================================================ */
+  --pd-doc-header-height: 60px;
+  --pd-doc-header-bg-color: rgba(10, 10, 20, 0.6);
+  --pd-doc-header-border-color: rgba(255, 255, 255, 0.06);
+  --pd-doc-header-title-color: #f1f5f9;
+  --pd-doc-header-title-font-size: 15px;
+  --pd-doc-header-title-font-weight: 700;
+  --pd-doc-header-divider-color: rgba(255, 255, 255, 0.06);
+  --pd-doc-header-shadow-color: rgba(0, 0, 0, 0.5);
+  --pd-doc-nav-active-bg-color: transparent;
+  --pd-doc-header-nav-text-color: #94a3b8;
+  --pd-doc-header-nav-item-padding: 0 6px;
+
+  /* ============================================================
+     Markdown 内容
+     ============================================================ */
+  --pd-doc-md-h1-color: #f8fafc;
+  --pd-doc-md-h2-color: #f1f5f9;
+  --pd-doc-md-h3-color: #e2e8f0;
+  --pd-doc-md-h4-color: #e2e8f0;
+  --pd-doc-md-h5-color: #e2e8f0;
+  --pd-doc-md-border-color: rgba(255, 255, 255, 0.06);
+  --pd-doc-md-table-border-color: rgba(255, 255, 255, 0.06);
+  --pd-doc-md-table-first-child-code-color: var(--pd-doc-md-code-tag-text-color);
+  --pd-doc-md-table-first-child-code-bg-color: var(--pd-doc-brand-weak-bg);
+
+  /* 链接色 */
+  --pd-doc-link-color: var(--pd-doc-primary-base);
+  --pd-doc-link-hover-color: var(--pd-doc-md-code-tag-text-color);
+
+  --pd-doc-md-code-block-bg-color: #14141f;
+  --pd-doc-md-code-block-text-color: #f1f5f9;
+  --pd-doc-md-code-block-border-color: rgba(255, 255, 255, 0.1);
+  --pd-doc-md-code-block-border-radius: 12px;
+  --pd-doc-md-code-tag-bg-color: rgba(179, 154, 255, 0.12);
+  --pd-doc-md-code-tag-text-color: #d4c5ff;
+
+  /* 引用与提示框 */
+  --pd-doc-md-blockquote-bg-color: rgba(179, 154, 255, 0.07);
+  --pd-doc-md-blockquote-padding: 12px 20px;
+  --pd-doc-md-border-radius-blockquote: 10px;
+  --pd-doc-md-alert-padding: 16px 20px 16px 52px;
+  --pd-doc-md-border-radius-alert: 10px;
+  --pd-doc-md-alert-title-margin-bottom: 6px;
+  --pd-doc-md-font-size-alert-title: 14px;
+  --pd-doc-md-alert-tip-bg-color: rgba(179, 154, 255, 0.13);
+  --pd-doc-md-alert-tip-text-color: #cbd5e1;
+  --pd-doc-md-alert-tip-code-bg-color: rgba(179, 154, 255, 0.13);
+  --pd-doc-md-alert-tip-code-text-color: #d4c5ff;
+  --pd-doc-md-alert-warning-bg-color: rgba(245, 158, 11, 0.1);
+  --pd-doc-md-alert-warning-text-color: #cbd5e1;
+  --pd-doc-md-alert-warning-code-bg-color: rgba(245, 158, 11, 0.15);
+  --pd-doc-md-alert-warning-code-text-color: #fbbf24;
+
+  /* 代码语法高亮（紫色系） */
+  --pd-doc-code-text-color: #cbd5e1;
+  --pd-doc-code-string-text-color: #b39aff;
+  --pd-doc-code-number-text-color: #67e8f9;
+  --pd-doc-code-keyword-text-color: #d4c5ff;
+  --pd-doc-code-comment-text-color: #64748b;
+  --pd-doc-code-variable-text-color: #f0abfc;
+  --pd-doc-code-attribute-text-color: #67e8f9;
+
+  /* Demo 预览框 */
+  --pd-doc-demo-preview-bg-color: #0f0f1a;
+  --pd-doc-demo-preview-border-color: rgba(255, 255, 255, 0.06);
+
+  /* 文本三级色（纯色，导航/表格内联代码用） */
+  --pd-doc-text-tertiary: #94a3b8;
+
+  /* 品牌色弱化层（背景/边框） */
+  --pd-doc-brand-weak-bg: rgba(179, 154, 255, 0.13);
+  --pd-doc-brand-border: rgba(179, 154, 255, 0.25);
+
+  /* 导航 hover 弱化背景 */
+  --pd-doc-nav-hover-bg: rgba(255, 255, 255, 0.05);
+
+  /* 警告边框 */
+  --pd-doc-warning-border: rgba(245, 158, 11, 0.3);
+
+  /* 侧边栏 */
+  --pd-doc-sidebar-width: 260px;
+}
+
+/* ============================================================
+   Header 毛玻璃（全站统一）
+   ============================================================ */
+.pagoda-doc-header__title {
+  background: none !important;
+}
+.pagoda-doc-header__divider {
+  display: none !important;
+}
+
+/* ============================================================
+   顶部导航样式（全站统一）
+   ============================================================ */
+.pagoda-doc-header__nav-list {
+  gap: 2px !important;
+}
+.pagoda-doc-header__nav-item a {
+  position: relative;
+  display: inline-block !important;
+  height: auto !important;
+  line-height: 1.5 !important;
+  padding: 6px 14px !important;
+  border-radius: 8px !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+  border-bottom: none !important;
+  background: transparent !important;
+  transition: all 0.2s !important;
+  min-width: auto !important;
+  width: auto !important;
+}
+.pagoda-doc-header__nav-item a::after {
+  display: none !important;
+}
+.pagoda-doc-header__nav-item a:not(.active):hover {
+  color: var(--pd-doc-md-h3-color) !important;
+  background: var(--pd-doc-nav-hover-bg) !important;
+}
+.pagoda-doc-header__nav-item a:hover::after {
+  display: none !important;
+}
+.pagoda-doc-header__nav-item a.active {
+  background: transparent !important;
+}
+.pagoda-doc-header__nav-item a.active::after {
+  display: none !important;
+}
+
+/* ============================================================
+   响应式（小屏 header padding 缩小）
+   ============================================================ */
+@media (max-width: 768px) {
+  .pagoda-doc-header {
+    padding: 0 16px;
+  }
+  .pagoda-doc-main__content:has(> .home) {
+    padding: 0 16px;
+  }
+}
+
+/* ============================================================
+   Markdown 暗色样式（全站统一）
+   ============================================================ */
+.pagoda-doc-markdown-body {
+  background: transparent;
+}
+.pagoda-doc-markdown-body .pagoda-doc-md-p {
+  color: var(--pd-doc-text-color);
+}
+.pagoda-doc-markdown-body .pagoda-doc-md-a {
+  text-decoration: none;
+  border-bottom: 1px dashed var(--pd-doc-brand-border);
+  transition: color 0.2s;
+}
+.pagoda-doc-markdown-body .pagoda-doc-md-code:not(pre .pagoda-doc-md-code) {
+  border: 1px solid var(--pd-doc-brand-border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: var(--pd-doc-code-font-family);
+}
+.pagoda-doc-markdown-body pre {
+  border: 1px solid var(--pd-doc-md-code-block-border-color);
+}
+
+.pagoda-doc-markdown-body .pagoda-doc-md-table .pagoda-doc-md-code:not(pre .pagoda-doc-md-code) {
+  background: var(--pd-doc-divider);
+  color: var(--pd-doc-text-tertiary);
+  border: 1px solid var(--pd-doc-border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.pagoda-doc-markdown-body .pagoda-doc-md-table td:first-child .pagoda-doc-md-code {
+  border: 1px solid var(--pd-doc-brand-border);
+}
+
+/* ============================================================
+   Markdown 提示框（:::tip / :::warning）
+   ============================================================ */
+.pagoda-doc-markdown-alert.tip,
+.pagoda-doc-markdown-alert.warning {
+  position: relative;
+  border: 1px solid var(--pd-doc-md-border-color);
+}
+
+.pagoda-doc-markdown-alert.tip {
+  border-color: var(--pd-doc-brand-border);
+}
+
+.pagoda-doc-markdown-alert.warning {
+  border-color: var(--pd-doc-warning-border);
+}
+
+.pagoda-doc-markdown-alert-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--pd-doc-header-title-color);
+  letter-spacing: 0.01em;
+}
+
+.pagoda-doc-markdown-alert.tip .pagoda-doc-markdown-alert-title::before {
+  content: "✦";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  font-size: 14px;
+  color: var(--pd-doc-primary-base);
+  line-height: 1;
+}
+
+.pagoda-doc-markdown-alert.warning .pagoda-doc-markdown-alert-title::before {
+  content: "⚠";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  left: 18px;
+  top: 17px;
+  font-size: 16px;
+  color: var(--pd-doc-md-alert-warning-code-text-color);
+  line-height: 1;
+}
+
+.pagoda-doc-markdown-alert .pagoda-doc-md-p {
+  margin: 0;
+  color: var(--pd-doc-text-color);
+}
+
+.pagoda-doc-markdown-alert .pagoda-doc-md-code {
+  font-size: 13px;
+  padding: 1px 6px;
+}
+
+.pagoda-doc-markdown-alert.tip .pagoda-doc-md-code {
+  border: 1px solid var(--pd-doc-brand-border);
+}
+
+.pagoda-doc-markdown-alert.warning .pagoda-doc-md-code {
+  border: 1px solid var(--pd-doc-warning-border);
+}
+
+.pagoda-doc-markdown-body .pagoda-doc-md-blockquote {
+  border: 1px solid var(--pd-doc-brand-border);
+  border-left-width: 3px;
+  color: var(--pd-doc-text-color);
+}
+
+.pagoda-doc-markdown-body .pagoda-doc-md-blockquote .pagoda-doc-md-p {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--pd-doc-text-color);
+}
+
+.pagoda-doc-markdown-body .pagoda-doc-md-blockquote .pagoda-doc-md-code {
+  background: var(--pd-doc-brand-weak-bg);
+  color: var(--pd-doc-md-code-tag-text-color);
+  border: 1px solid var(--pd-doc-brand-border);
+}
+
+/* ============================================================
+   首页专属：全宽布局（用 :has() 隔离）
+   ============================================================ */
+.pagoda-doc-main:has(> .pagoda-doc-main__content-wrapper > .pagoda-doc-main__content > .home)
+  .pagoda-doc-main__content-wrapper {
+  background: transparent;
+}
+.pagoda-doc-main__content:has(> .home) {
+  max-width: none;
+  padding: 0;
+}
+.pagoda-doc-main__content:has(> .home) .pagoda-doc-markdown-body {
+  background: transparent;
+}

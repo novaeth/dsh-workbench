@@ -1,0 +1,128 @@
+import type { SupplySource, UnitManifest } from '@dsh-workbench/shared';
+import { needIdOf, needsOf } from '@dsh-workbench/shared';
+import type { CapabilityMap } from '@/shared/hooks/use-capabilities';
+import type { MarketRowAction } from './market-row-types';
+
+export type SharedState =
+  | 'checking'
+  | 'installed'
+  | 'outdated'
+  | 'unsatisfied'
+  | 'missing'
+  | 'unchecked';
+
+export const SHARED_STATE_KEY: Readonly<Record<SharedState, string>> = {
+  checking: 'panels.market.checking',
+  installed: 'panels.market.sharedOk',
+  outdated: 'panels.market.sharedOutdated',
+  unsatisfied: 'panels.market.sharedUnsatisfied',
+  missing: 'panels.market.sharedMissing',
+  unchecked: 'panels.market.unchecked',
+};
+
+export interface SharedRow {
+  readonly id: string;
+  readonly kind: 'extension' | 'lib';
+  readonly label: string;
+  readonly usedByKeys: readonly string[];
+  readonly state: SharedState;
+  readonly canUpdate: boolean;
+  readonly version?: { readonly installed?: string; readonly latest?: string };
+}
+
+export function sharedActions(row: SharedRow): MarketRowAction[] {
+  return [...(row.canUpdate ? (['update-dependency'] as const) : [])];
+}
+
+const SHARED_RANK: Readonly<Record<SharedState, number>> = {
+  checking: -1,
+  unchecked: 0,
+  installed: 1,
+  outdated: 2,
+  unsatisfied: 3,
+  missing: 4,
+};
+
+interface SharedBucket {
+  readonly kind: 'extension' | 'lib';
+  readonly name: string;
+  readonly label: string;
+  readonly users: string[];
+  readonly states: SharedState[];
+  installed?: string;
+  latest?: string;
+  command?: string;
+}
+
+export function sharedRows(
+  manifests: readonly UnitManifest[],
+  capabilities: CapabilityMap | null,
+): SharedRow[] {
+  const catalog = manifests.filter((manifest) => needsOf(manifest).length > 0);
+  const byId = new Map(catalog.map((manifest) => [manifest.id, manifest] as const));
+  const buckets = new Map<string, SharedBucket>();
+  const bucketOf = (kind: 'extension' | 'lib', name: string, label: string): SharedBucket => {
+    const id = `${kind}:${name}`;
+    const found = buckets.get(id);
+    if (found !== undefined) {
+      return found;
+    }
+    const created: SharedBucket = { kind, name, label, users: [], states: [] };
+    buckets.set(id, created);
+    return created;
+  };
+
+  for (const manifest of catalog) {
+    const capability = capabilities?.[manifest.id];
+    const released = capability?.released === true;
+    for (const need of needsOf(manifest)) {
+      if (need.kind !== 'extension' && need.kind !== 'lib') continue;
+      const source: Extract<SupplySource, { kind: 'npm' }> | undefined =
+        need.kind === 'extension'
+          ? need.sources?.find((one): one is Extract<SupplySource, { kind: 'npm' }> => one.kind === 'npm')
+          : undefined;
+      const label = source?.package?.trim() || need.name;
+      const bucket = bucketOf(need.kind, need.name, label);
+      if (released) continue;
+      bucket.users.push(manifest.id);
+      const id = needIdOf(need);
+      const state = capability?.needs.find((item) => item.id === id);
+      bucket.states.push(
+        state === undefined ? 'unchecked' : state.status === 'ok' ? 'installed' : state.status,
+      );
+      if (state?.installed !== undefined) bucket.installed ??= state.installed;
+      if (state?.latest !== undefined) bucket.latest ??= state.latest;
+      bucket.command ??= state?.command;
+    }
+  }
+
+  const rows: SharedRow[] = [];
+  for (const bucket of buckets.values()) {
+    if (bucket.users.length === 0) continue;
+    const state: SharedState =
+      capabilities === null
+        ? 'checking'
+        : bucket.states.reduce<SharedState>(
+            (soFar, item) => (SHARED_RANK[item] > SHARED_RANK[soFar] ? item : soFar),
+            'unchecked',
+          );
+    const version =
+      bucket.installed === undefined && bucket.latest === undefined
+        ? undefined
+        : { ...(bucket.installed === undefined ? {} : { installed: bucket.installed }), ...(bucket.latest === undefined ? {} : { latest: bucket.latest }) };
+    rows.push({
+      id: `${bucket.kind}:${bucket.name}`,
+      kind: bucket.kind,
+      label: bucket.label,
+      usedByKeys: bucket.users.map((unit) => {
+        const manifest = byId.get(unit);
+        if (manifest === undefined) return unit;
+        return manifest.titleKey;
+      }),
+      state,
+      canUpdate: state === 'outdated' || state === 'unsatisfied',
+      ...(version === undefined ? {} : { version }),
+    });
+  }
+  return rows;
+}

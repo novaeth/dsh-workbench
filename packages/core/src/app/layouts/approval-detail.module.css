@@ -1,0 +1,27 @@
+.changelog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-6);
+  margin-top: var(--wb-len-10);
+  min-width: 0;
+}
+
+.changelogTitle {
+  margin: 0;
+  font: var(--dsw-font-s-14);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.changelogMissing {
+  margin: 0;
+  font: var(--dsw-font-s-14);
+  color: var(--dsw-alias-label-primary);
+}
+
+.changelogBody {
+  max-height: var(--wb-len-320);
+  overflow: auto;
+  padding: var(--wb-len-10);
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-lg);
+}

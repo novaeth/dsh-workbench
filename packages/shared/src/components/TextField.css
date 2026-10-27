@@ -1,0 +1,32 @@
+.wb-textField {
+  box-sizing: border-box;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-3);
+  font: var(--dsw-font-xs-13);
+  color: var(--dsw-alias-label-primary);
+  outline: none;
+}
+
+.wb-textField:focus {
+  border-color: var(--dsw-alias-state-business-primary);
+  box-shadow: inset 0 0 0 0.5px var(--dsw-alias-state-business-primary);
+}
+
+.wb-textField:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.wb-textField[aria-invalid='true'] {
+  border-color: var(--dsw-alias-state-error-primary);
+}
+
+.wb-textField[aria-invalid='true']:focus {
+  box-shadow: inset 0 0 0 0.5px var(--dsw-alias-state-error-primary);
+}
+
+:where(.wb-textField) {
+  min-height: var(--wb-len-28);
+  padding: var(--wb-len-4) var(--wb-len-10);
+}

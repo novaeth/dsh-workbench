@@ -1,0 +1,26 @@
+.wb-confirmBar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-8);
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--wb-len-10) var(--wb-len-12);
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-1);
+}
+.wb-confirmBarTitle {
+  margin: 0;
+  font-size: var(--dsw-font-xxs-12-font-size);
+  font-weight: 600;
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-primary);
+  overflow-wrap: anywhere;
+}
+.wb-confirmBarHint {
+  margin: 0;
+  font-size: var(--dsw-font-xxxs-11-font-size);
+  line-height: var(--wb-line-16);
+  color: var(--dsw-alias-label-secondary);
+  overflow-wrap: anywhere;
+}

@@ -1,0 +1,24 @@
+.dialog {
+  width: min(var(--wb-len-420), 100%);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-8);
+  min-width: 0;
+}
+
+.input {
+  width: 100%;
+  height: var(--wb-len-40);
+  padding: 0 var(--wb-len-12);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wb-len-12);
+  min-width: 0;
+}

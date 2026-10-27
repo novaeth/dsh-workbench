@@ -1,0 +1,6 @@
+.wb-root,
+.wb-rightbar {
+  --wb-gap-xs: 6px;
+  --wb-font-row: 14px;
+  --wb-card-gutter: var(--wb-len-16);
+}
