@@ -10,7 +10,7 @@ import type { BundleManager } from '@dsh-workbench/shared/host';
 import { OPENCLI_MANIFEST_FILE, refusalReason } from '@dsh-workbench/adapters-default';
 import { resetPackageRouteCache } from '@dsh-workbench/adapters-default';
 import { createMarketService } from '../model/market';
-import { installRouted, type BundleInstallDeps } from '../model/market-route';
+import { bundleNameOf, installRouted, type BundleInstallDeps } from '../model/market-route';
 import type { BundleInstallOutcome } from '../model/market-types';
 import { createPluginLedger, type PluginLedger } from '../model/plugin-ledger';
 
@@ -248,6 +248,28 @@ describe('添加一个 spec：按内容判它是什么，再决定走哪条路',
 
     for (const word of banned) expect(text, word).not.toContain(word);
     expect(text).toContain('opencli');
+  });
+});
+
+describe('从安装结果里认包名：git 源那种 spec 不许在 path 的 @ 上乱切', () => {
+  const failed = (over: Partial<BundleChange> = {}): BundleChange =>
+    ({ application: 'failed', stage: 'install', changed: false, target: '', ...over }) as BundleChange;
+
+  it('★ path 里带 scope 时，包名就是路径末段（不是把 spec 从 @ 处切一半）', () => {
+    const spec =
+      'git+ssh://git@host/org/repo.git#0123456789012345678901234567890123456789&path:/packages/@dsh-workbench/module-mcp';
+    expect(bundleNameOf(failed(), spec)).toBe('@dsh-workbench/module-mcp');
+  });
+
+  it('path 不带 scope 也给得对；dsh 回了 bundle 就听 dsh 的', () => {
+    const spec = 'git+https://host/org/repo.git#0123456789012345678901234567890123456789&path:/packages/module-x';
+    expect(bundleNameOf(failed(), spec)).toBe('module-x');
+    expect(bundleNameOf(failed({ bundle: '@t/real' }), spec)).toBe('@t/real');
+  });
+
+  it('npm 那种带版本的 spec 照旧按最后一个 @ 切', () => {
+    expect(bundleNameOf(failed(), '@t/module@1.2.3')).toBe('@t/module');
+    expect(bundleNameOf(failed(), '@t/module')).toBe('@t/module');
   });
 });
 

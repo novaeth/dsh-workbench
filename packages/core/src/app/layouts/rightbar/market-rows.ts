@@ -1,4 +1,5 @@
 import type { ModuleUpdateBlock, ModuleVersion } from '@/kernel/contract/bundle-install';
+import type { MarketInstalledModule } from '@/kernel/contract/market-index';
 import type { NeedState, SupplySource, Translate, UnitManifest, UnitTitle } from '@dsh-workbench/shared';
 import { supplyNeedsOf } from '@dsh-workbench/shared';
 import type { MarketNameMap } from './market-names';
@@ -70,6 +71,7 @@ export interface InstalledWorkbenchModule {
   readonly local?: boolean | undefined;
   readonly refused?: readonly string[] | undefined;
   readonly clientRefused?: readonly string[] | undefined;
+  readonly market?: MarketInstalledModule | undefined;
 }
 
 export function withClientRefusals(
@@ -163,9 +165,11 @@ export function installedRows(
               installed: module.installed,
               latest,
               ...(blocked === undefined ? {} : { blocked }),
+              ...(module.market === undefined ? {} : { market: module.market }),
             },
           }
         : {}),
+      ...(module.market === undefined ? {} : { market: module.market }),
       defaultShown: defaults.has(module.unit),
       defaultChanged: changed[module.unit] ?? 0,
     });
@@ -199,7 +203,7 @@ export function marketActions(row: MarketRow): MarketRowAction[] {
         ? (['update'] as const)
         : []
       : row.moduleUpdate.blocked === undefined
-        ? (['update-bundle'] as const)
+        ? ([row.market === undefined ? ('update-bundle' as const) : ('install-version' as const)])
         : []),
     ...(row.canUninstall
       ? ([row.pkg === undefined ? 'uninstall' : 'remove-bundle'] as const)
@@ -332,6 +336,7 @@ export function marketUpdatesOf(
         ? {}
         : { blocked: module.latestBlocked }),
       ...(local ? { local: true } : {}),
+      ...(local || module.market === undefined ? {} : { market: module.market }),
     };
   }
   return next;
@@ -393,6 +398,7 @@ export function marketRows(
             installed: entry.installed,
             latest: entry.latest,
             ...(entry.blocked === undefined ? {} : { blocked: entry.blocked }),
+            ...(entry.market === undefined ? {} : { market: entry.market }),
           };
     const shown = moduleUpdate === undefined ? state : 'outdated';
     const hint =
@@ -413,6 +419,7 @@ export function marketRows(
         ? {}
         : { version: { installed: entry.installed, ...(entry.latest === undefined ? {} : { latest: entry.latest }) } }),
       ...(moduleUpdate === undefined ? {} : { moduleUpdate }),
+      ...(entry?.market === undefined ? {} : { market: entry.market }),
       ...(moduleUpdate === undefined ? (note === undefined ? {} : { note }) : {}),
       ...(local ? { local: true } : {}),
       defaultShown: defaults.has(manifest.id),

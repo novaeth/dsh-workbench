@@ -154,6 +154,7 @@ export const en: Record<keyof WorkbenchMessages, string> = {
     'I understand: using it again means reinstalling it.',
   'panels.market.confirmYes': 'Uninstall',
   'panels.market.confirmNo': 'Cancel',
+  'panels.market.noMarketSource': 'The index has no newer version of this module (refresh the index and retry)',
   'panels.market.failed': 'Failed: {reason}',
   'panels.market.needEnv': 'Set {env} in the terminal that started the workbench first',
   'panels.market.needCommands': 'Missing commands: {commands}',

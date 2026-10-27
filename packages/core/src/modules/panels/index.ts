@@ -20,6 +20,8 @@ import { releaseQuietly } from './model/diy-record';
 import { createMarketService } from './model/market';
 import { createMarketDiscover } from './model/market-discover';
 import { marketDiscoverRoutes } from './model/market-discover-routes';
+import { installedFromIndexes, marketInstalledRoutes } from './model/market-installed';
+import { dependencyReader } from '@/shared/api/host/profile-dependencies';
 import { markSourceReadOnly, marketSourcesAction, marketSourcesRoutes } from './model/market-sources-act';
 import { publishPreviewRoutes } from './model/publish-preview-routes';
 import { createMarketIndexReader } from '@/shared/api/host/market-index-fetch';
@@ -145,6 +147,15 @@ export const panelsHost: UnitOwnedFace = {
         ...diyRecordRoutes(record),
         ...marketDiscoverRoutes(discover),
         ...marketSourcesRoutes(marketSources),
+        ...marketInstalledRoutes(() => ({
+          modules: installedFromIndexes({
+            sources: marketSources.read().sources,
+            cached: (source) => marketIndex.cached(source)?.index,
+            modules: supply.profileModules(profileDir),
+            dependencyOf: dependencyReader(profileDir),
+            isNewer: supply.isNewerVersion,
+          }),
+        })),
         ...publishPreviewRoutes(workshopPathOf(ctx), (unit) =>
           inferredAuthorOf(workshopPathOf(ctx), unit, shell),
         ),

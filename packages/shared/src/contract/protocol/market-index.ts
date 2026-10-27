@@ -3,6 +3,7 @@ export const MARKET_INDEX_PATH = 'market.json';
 export const MARKET_DISCOVER_ROUTE = 'panels/market-discover';
 export const MARKET_DOC_ROUTE = 'panels/market-doc';
 export const MARKET_GIT_PROBE_ROUTE = 'panels/git-probe';
+export const MARKET_INSTALLED_ROUTE = 'panels/market-installed';
 export const MARKET_PUBLISH_PREVIEW_ROUTE = 'panels/market-publish-preview';
 export const MARKET_SOURCES_RESOURCE = 'market-sources';
 export const MARKET_SOURCES_ROUTE = 'panels/market-sources';
@@ -220,6 +221,19 @@ export interface DiscoverFilter {
 export interface MarketSourcesPayload {
   readonly sources: readonly MarketSourceConfig[];
   readonly selected: string | null;
+}
+
+export interface MarketInstalledModule {
+  readonly pkg: string;
+  readonly unit: string;
+  readonly version: string;
+  readonly sourceId: string;
+  readonly sourceLabel: string;
+  readonly source: MarketIndexSource;
+}
+
+export interface MarketInstalledPayload {
+  readonly modules: readonly MarketInstalledModule[];
 }
 
 export interface MarketPublishDestination {

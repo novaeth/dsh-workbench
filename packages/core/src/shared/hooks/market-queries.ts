@@ -4,12 +4,14 @@ import {
   MARKET_DISCOVER_ROUTE,
   MARKET_DOC_ROUTE,
   MARKET_GIT_PROBE_ROUTE,
+  MARKET_INSTALLED_ROUTE,
   MARKET_PUBLISH_PREVIEW_ROUTE,
   MARKET_SOURCES_ROUTE,
   type DiscoverDoc,
   type DiscoverDocKind,
   type DiscoverPayload,
   type GitProbePayload,
+  type MarketInstalledPayload,
   type MarketSourcesPayload,
   type PublishPreview,
 } from '@/kernel/contract/market-index';
@@ -24,6 +26,10 @@ export function readMarketSources(): Promise<ApiResponse<MarketSourcesPayload>> 
 
 export function readGitProbe(url: string): Promise<ApiResponse<GitProbePayload>> {
   return apiGet<GitProbePayload>(MARKET_GIT_PROBE_ROUTE, { url });
+}
+
+export function readMarketInstalled(): Promise<ApiResponse<MarketInstalledPayload>> {
+  return apiGet<MarketInstalledPayload>(MARKET_INSTALLED_ROUTE);
 }
 
 export function readMarketDoc(

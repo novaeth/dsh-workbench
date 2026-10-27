@@ -3,6 +3,7 @@ import type { ApiResponse } from '@dsh-workbench/shared';
 import type { InstalledPluginsPayload } from '@/shared/api/installed-plugins';
 import type { ModuleVersionsPayload } from '@/kernel/contract/bundle-install';
 import { readInstalledPlugins, readModuleVersions } from '@/shared/hooks/bundle-queries';
+import { readMarketInstalled } from '@/shared/hooks/market-queries';
 import {
   bumpModuleVersionsEpoch,
   moduleVersionsValue,
@@ -13,6 +14,10 @@ import {
 vi.mock('@/shared/hooks/bundle-queries', () => ({
   readModuleVersions: vi.fn(),
   readInstalledPlugins: vi.fn(),
+}));
+
+vi.mock('@/shared/hooks/market-queries', () => ({
+  readMarketInstalled: vi.fn(),
 }));
 
 const versions = (installed: string): ApiResponse<ModuleVersionsPayload> => ({
@@ -33,6 +38,7 @@ function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
 beforeEach(() => {
   resetModuleVersions();
   vi.mocked(readInstalledPlugins).mockResolvedValue(noPlugins);
+  vi.mocked(readMarketInstalled).mockResolvedValue({ ok: true, modules: [] });
   vi.mocked(readModuleVersions).mockReset();
 });
 

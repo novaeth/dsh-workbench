@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import type { ModuleVersion, WorkbenchSelfUpdate, WorkbenchVersion } from '@/kernel/contract/bundle-install';
+import type { MarketInstalledModule } from '@/kernel/contract/market-index';
 import type { InstalledPlugin } from '@/shared/api/installed-plugins';
 import { readInstalledPlugins, readModuleVersions } from '@/shared/hooks/bundle-queries';
+import { readMarketInstalled } from '@/shared/hooks/market-queries';
 import { CAPABILITY_FACT } from '@/shared/hooks/use-capabilities';
 import { useFactRevision } from '@/shared/hooks/use-facts';
 
@@ -62,6 +64,18 @@ export function subscribeModuleVersions(listener: () => void): () => void {
   };
 }
 
+export function withMarketUpdates(
+  modules: readonly ModuleVersion[],
+  rows: readonly MarketInstalledModule[],
+): readonly ModuleVersion[] {
+  if (rows.length === 0) return modules;
+  const byPkg = new Map(rows.map((row) => [row.pkg, row] as const));
+  return modules.map((module) => {
+    const row = byPkg.get(module.pkg);
+    return row === undefined ? module : { ...module, latest: row.version, market: row };
+  });
+}
+
 function publish(next: ModuleVersionsState): void {
   state = next;
   for (const listener of [...listeners]) listener();
@@ -75,15 +89,19 @@ export function runModuleVersionsRead(force = false, fresh = false): Promise<voi
   const seq = (readSeq += 1);
   if (force) newestForceSeq = seq;
   if (!state.checking) publish({ ...state, checking: true });
-  const promise = Promise.all([readModuleVersions(force), readInstalledPlugins(force)])
+  const promise = Promise.all([readModuleVersions(force), readInstalledPlugins(force), readMarketInstalled()])
     .catch(() => null)
     .then((responses) => {
       if (at !== epoch) return;
       if (!force && seq < newestForceSeq) return;
       const versions = responses?.[0];
       const plugins = responses?.[1];
+      const market = responses?.[2];
       publish({
-        modules: versions?.ok === true ? versions.modules : state.modules,
+        modules:
+          versions?.ok === true
+            ? withMarketUpdates(versions.modules, market?.ok === true ? market.modules : [])
+            : state.modules,
         plugins: plugins?.ok === true ? plugins.plugins : state.plugins,
         workbench: versions?.ok === true ? (versions.workbench ?? null) : state.workbench,
         selfUpdate: versions?.ok === true ? (versions.selfUpdate ?? null) : state.selfUpdate,

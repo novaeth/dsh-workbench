@@ -35,6 +35,7 @@ export function swapUntil(
 const READ_BACK_ACTIONS: ReadonlySet<MarketRowAction> = new Set<MarketRowAction>([
   'update',
   'update-bundle',
+  'install-version',
   'update-dependency',
   'update-plugin',
 ]);
@@ -53,7 +54,7 @@ export function awaitsReadBack(
   if (application !== 'applied') return false;
   if (REMOVAL_ACTIONS.has(action)) return true;
   if (!READ_BACK_ACTIONS.has(action)) return false;
-  return action === 'update-bundle' ? version !== undefined : true;
+  return action === 'update-bundle' || action === 'install-version' ? version !== undefined : true;
 }
 
 export function readBackDone(input: {

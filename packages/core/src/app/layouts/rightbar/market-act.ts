@@ -1,3 +1,4 @@
+import { marketInstallTarget } from '@dsh-workbench/shared';
 import type { Translate, WriteOutcome } from '@dsh-workbench/shared';
 import type { BundleChange } from '@/kernel/contract/bundle-install';
 import type { MarketRow } from './market-row-types';
@@ -10,6 +11,7 @@ import { REMOVAL_ACTIONS, awaitsReadBack, swapUntil } from './market-settle';
 const STEADY_ACTIONS: ReadonlySet<MarketRowAction> = new Set<MarketRowAction>([
   'update',
   'update-bundle',
+  'install-version',
 ]);
 
 function assumedApplied(action: MarketRowAction): boolean {
@@ -87,6 +89,16 @@ export function marketActOf(options: MarketActOptions): (id: string, action: Mar
       action === 'uninstall-plugin' ||
       action === 'update-workbench' ||
       action === 'migrate-workbench';
+    const market = action === 'install-version' ? row?.market : undefined;
+    const marketSpec =
+      market === undefined || row?.pkg === undefined
+        ? undefined
+        : marketInstallTarget(row.pkg, market.version, market.source).spec;
+    if (action === 'install-version' && marketSpec === undefined) {
+      seats.setPending(null);
+      seats.setFailed({ id, message: t('panels.market.failed', { reason: t('panels.market.noMarketSource') }) });
+      return;
+    }
     const outcome = await send(
       action === 'dismiss-followup'
         ? { action, id: row?.followUp?.id ?? '' }
@@ -94,7 +106,9 @@ export function marketActOf(options: MarketActOptions): (id: string, action: Mar
           ? { action, id }
           : byName
             ? { action, name: row?.pkg ?? '' }
-            : { action, unit: id },
+            : marketSpec === undefined
+              ? { action, unit: id }
+              : { action, spec: marketSpec, requestId: globalThis.crypto.randomUUID() },
     );
     if (!outcome.ok) {
       onChanged({ force: true });

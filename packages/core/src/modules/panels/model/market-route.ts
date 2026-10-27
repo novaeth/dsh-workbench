@@ -27,10 +27,23 @@ export interface BundleInstallDeps {
   readonly remove?: ((pkg: string) => Promise<BundleChange>) | undefined;
 }
 
-function bundleNameOf(change: BundleChange, spec: string): string {
+function packageNameInPath(path: string): string | undefined {
+  const parts = path.split('/').filter((part) => part !== '');
+  const last = parts[parts.length - 1];
+  if (last === undefined || last === '') return undefined;
+  const parent = parts[parts.length - 2];
+  return parent !== undefined && parent.startsWith('@') ? `${parent}/${last}` : last;
+}
+
+export function bundleNameOf(change: BundleChange, spec: string): string {
   if (change.bundle !== undefined && change.bundle !== '') return change.bundle;
-  const at = spec.lastIndexOf('@');
-  return at > 0 ? spec.slice(0, at) : spec;
+  const at = spec.indexOf('&path:');
+  if (at !== -1) {
+    const inPath = packageNameInPath(spec.slice(at + '&path:'.length));
+    if (inPath !== undefined) return inPath;
+  }
+  const version = spec.lastIndexOf('@');
+  return version > 0 ? spec.slice(0, version) : spec;
 }
 
 function installedPluginName(spec: string, pkg: string): string | undefined {

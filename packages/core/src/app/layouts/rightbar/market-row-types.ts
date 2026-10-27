@@ -1,9 +1,11 @@
 import type { ModuleUpdateBlock } from '@/kernel/contract/bundle-install';
+import type { MarketInstalledModule } from '@/kernel/contract/market-index';
 
 export type MarketRowAction =
   | 'install'
   | 'update'
   | 'update-bundle'
+  | 'install-version'
   | 'remove-bundle'
   | 'uninstall'
   | 'update-dependency'
@@ -54,6 +56,7 @@ export interface ModuleUpdate {
   readonly latest?: string;
   readonly local?: boolean;
   readonly blocked?: ModuleUpdateBlock;
+  readonly market?: MarketInstalledModule;
 }
 
 export interface MarketFollowUp {
@@ -76,6 +79,7 @@ export interface MarketRow {
   readonly hint?: MarketHintKey;
   readonly version?: { readonly installed?: string; readonly latest?: string };
   readonly moduleUpdate?: ModuleUpdate;
+  readonly market?: MarketInstalledModule;
   readonly pkg?: string;
   readonly local?: boolean;
   readonly versionLabel?: string;

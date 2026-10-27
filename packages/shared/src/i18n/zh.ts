@@ -151,6 +151,7 @@ export const zh = {
   'panels.market.confirmUninstallAck': '我明白：卸载后想再用，得重新装一遍。',
   'panels.market.confirmYes': '卸载',
   'panels.market.confirmNo': '取消',
+  'panels.market.noMarketSource': '索引里没有这个模块的新版本（刷新一次索引再试）',
   'panels.market.failed': '没成功：{reason}',
   'panels.market.needEnv': '先在启动工作台的终端里设 {env}',
   'panels.market.needCommands': '缺这几条命令：{commands}',

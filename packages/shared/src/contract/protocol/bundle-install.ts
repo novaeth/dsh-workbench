@@ -1,3 +1,4 @@
+import type { MarketInstalledModule } from './market-index.js';
 import type { UnitTitle } from '../unit.js';
 
 export const BUNDLE_REGISTRIES_ROUTE = 'bundle-registries';
@@ -187,6 +188,7 @@ export interface ModuleVersion {
   readonly latestBlocked?: ModuleUpdateBlock;
   readonly local?: boolean;
   readonly refused?: readonly string[];
+  readonly market?: MarketInstalledModule;
 }
 
 export interface WorkbenchVersion {
