@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
-import { MIN_BUSY_MS } from '@dsh-workbench/shared';
 import { useHostWrite } from '@/shared/hooks/use-host-write';
-import { useVisibleBusy } from '@/shared/hooks/use-visible-busy';
 import { machineBoardSignature, useBoardSettle } from './panel-write';
 
 export interface MarketDefaultSeat {
-  readonly busy: boolean;
+  readonly pending: boolean;
   setDefault(id: string, next: boolean): Promise<void>;
 }
 
@@ -25,7 +23,6 @@ export function useMarketDefault(input: {
   });
   const [writing, setWriting] = useState(false);
   const settle = useBoardSettle(machineBoardSignature(defaults, changed));
-  const { busy } = useVisibleBusy(writing || settle.pending, MIN_BUSY_MS);
 
   const setDefault = async (id: string, next: boolean): Promise<void> => {
     if (mocked) return;
@@ -39,5 +36,5 @@ export function useMarketDefault(input: {
     }
   };
 
-  return { busy, setDefault };
+  return { pending: writing || settle.pending, setDefault };
 }

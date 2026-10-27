@@ -22,10 +22,6 @@ export interface InstalledIndexInput {
   readonly preferred?: ((host: string) => GitTransportKind | undefined) | undefined;
 }
 
-/**
- * 用哪种传输，现问现定：先试你当初装它那种（多半还通），不通就换另一种；
- * 两种都读不到才退回原来那种，让更新自己去报那句话。
- */
 async function transportOf(
   source: MarketIndexSource,
   spec: string | undefined,
@@ -48,10 +44,6 @@ async function transportOf(
   return { ...source, url: ordered[0]?.url ?? source.url };
 }
 
-/**
- * 已装的模块里，哪些在当前索引里有更新的版本：版本取索引里最新那一行，
- * 地址换成「你当初装它用的那种传输」（https 装的还走 https，ssh 装的还走 ssh）。
- */
 export async function installedFromIndexes(
   input: InstalledIndexInput,
 ): Promise<readonly MarketInstalledModule[]> {

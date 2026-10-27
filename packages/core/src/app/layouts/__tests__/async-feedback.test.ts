@@ -8,9 +8,7 @@ const read = (name: string): string => readFileSync(new URL(name, HERE), 'utf8')
 describe('每一次异步操作都要自己显形（ADR-0039）', () => {
   it('★ 本地写那一档：控件自己压暗 + 有可见下限（面板行、市场那颗默认拨钮）', () => {
     expect(read('rightbar/ModulesPage.tsx')).toContain('useVisibleBusy(writing || settle.pending, MIN_BUSY_MS)');
-    expect(read('rightbar/use-market-default.ts')).toContain(
-      'useVisibleBusy(writing || settle.pending, MIN_BUSY_MS)',
-    );
+    expect(read('rightbar/MarketView.tsx')).toContain('useVisibleBusy(defaultPending, MIN_BUSY_MS)');
   });
 
   it('★ 那一档的解禁要等读数回来：写响应回来还不算（不然宿主慢一拍就是"先解禁、后变色"）', () => {

@@ -321,13 +321,14 @@ export function MarketView({
     });
   usePublishMarketBusy(busyId);
   const provision = useHostWrite({ channel: 'provision', networkText: t('panels.failed') });
-  const { busy: boardBusy, setDefault } = useMarketDefault({
+  const { pending: defaultPending, setDefault } = useMarketDefault({
     t,
     mocked: mock !== undefined,
     defaults,
     changed,
     setNotice,
   });
+  const { busy: boardBusy } = useVisibleBusy(defaultPending, MIN_BUSY_MS);
   const pendingRow = pendingRowOf({ pending, removing, rows, names });
   const self = workbenchRow(mock === undefined ? workbench : mock.workbench);
   const shown = withPinnedRow(pendingRow === undefined ? rows : [...rows, pendingRow], pinned);
@@ -406,26 +407,53 @@ export function MarketView({
         check={check}
       />
 
-      <ConfirmUninstall
-        key={confirming ?? ''}
+      <UninstallConfirm
         t={t}
-        name={confirmingRow === undefined ? null : marketRowTitle(confirmingRow, t)}
-        onCancel={() => setConfirming(null)}
-        onConfirm={() => {
-          const id = confirming;
-          setConfirming(null);
-          if (id === null) return;
-          const row = rowById.get(id);
-          void act(
-            id,
-            row?.plugin === true
-              ? 'uninstall-plugin'
-              : row?.pkg === undefined
-                ? 'uninstall'
-                : 'remove-bundle',
-          );
-        }}
+        confirming={confirming}
+        row={confirmingRow}
+        onClose={() => setConfirming(null)}
+        act={act}
+        rowById={rowById}
       />
     </>
+  );
+}
+
+function UninstallConfirm({
+  t,
+  confirming,
+  row,
+  onClose,
+  act,
+  rowById,
+}: {
+  readonly t: Translate;
+  readonly confirming: string | null;
+  readonly row: MarketRow | undefined;
+  readonly onClose: () => void;
+  readonly act: (id: string, action: MarketRowAction) => Promise<void>;
+  readonly rowById: ReadonlyMap<string, MarketRow>;
+}) {
+  return (
+    <ConfirmUninstall
+      key={confirming ?? ''}
+      t={t}
+      name={row === undefined ? null : marketRowTitle(row, t)}
+      onCancel={onClose}
+      onConfirm={() => {
+        const id = confirming;
+        onClose();
+        if (id === null) return;
+        const target = rowById.get(id);
+        void act(
+          id,
+          target?.plugin === true
+            ? 'uninstall-plugin'
+            : target?.pkg === undefined
+              ? 'uninstall'
+              : 'remove-bundle',
+        );
+      }}
+    />
   );
 }
