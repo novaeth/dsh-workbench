@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { marketSourceKey } from '@dsh-workbench/shared/host';
 import type { MarketSourceConfig } from '@/kernel/contract/market-index';
 import { panelsApprovalFor } from '../model/approval';
+import { PUBLISH_TIMEOUT_MS, registerPublishTool } from '../model/diy-publish';
 import { inferredAuthorOf, publishPreviewOf } from '@/shared/api/host/diy-publish-preview';
 import { DIY_PUBLISH_TOOL } from '../unit';
 import { createDiyRig } from './diy-harness';
@@ -76,6 +77,30 @@ describe('workbench_diy_publish · 预览', () => {
       );
       expect(publishPreviewOf(rig.WORKSHOP(), 'demo')?.author).toBe('陈康');
       expect(publishPreviewOf(rig.WORKSHOP(), 'demo', { author: '   ' })?.author).toBe('陈康');
+    } finally {
+      if (previous === undefined) delete process.env.DSH_WORKBENCH_HOME;
+      else process.env.DSH_WORKBENCH_HOME = previous;
+    }
+  });
+
+  it('带了 changelogNote 就预览「将要写进去的那一段」；这一版已有就预览已落盘那段', () => {
+    const dir = rig.scaffold('demo');
+    const previous = process.env.DSH_WORKBENCH_HOME;
+    process.env.DSH_WORKBENCH_HOME = path.join(rig.root(), 'workbench');
+    try {
+      const fresh = publishPreviewOf(rig.WORKSHOP(), 'demo', { changelog: '一条', changelogType: 'fixed' });
+      expect(fresh?.changelog?.version).toBe('0.0.0');
+      expect(fresh?.changelog?.pending).toBe(true);
+      expect(fresh?.changelog?.text).toContain('### 🐛 修复');
+      expect(fresh?.changelog?.text).toContain('- 一条');
+      fs.writeFileSync(
+        path.join(dir, 'CHANGELOG.md'),
+        '# 更新日志\n\n## v0.0.0\n\n`2026-10-26`\n\n### ✨ 新增\n\n- 已落盘的那条\n',
+      );
+      const kept = publishPreviewOf(rig.WORKSHOP(), 'demo', { changelog: '一条', changelogType: 'fixed' });
+      expect(kept?.changelog?.pending).toBeUndefined();
+      expect(kept?.changelog?.text).toContain('已落盘的那条');
+      expect(kept?.changelog?.text).not.toContain('- 一条');
     } finally {
       if (previous === undefined) delete process.env.DSH_WORKBENCH_HOME;
       else process.env.DSH_WORKBENCH_HOME = previous;
@@ -323,6 +348,62 @@ describe('workbench_diy_publish · 推断的署名就是发布用的署名', () 
   });
 });
 
+  it('changelogNote / changelogType 原样传给 release，结果里说清写没写', async () => {
+    rig.scaffold('demo');
+    withBin();
+    const { tool, commands } = rig.harness({
+      probe: [
+        {
+          stdout: JSON.stringify({
+            ok: true,
+            target: 'team',
+            name: '@dsh-workbench/module-demo',
+            version: '0.1.0',
+            registry: 'https://npm.demo.test/',
+            install: 'dsh plugin --profile workbench add @dsh-workbench/module-demo@0.1.0',
+            changelog: { version: '0.1.0', action: 'written' },
+          }),
+        },
+      ],
+    });
+
+    const result = (await tool(DIY_PUBLISH_TOOL)?.execute(
+      { unit: 'demo', target: 'team', changelogNote: '这一版修了一条\n还加了一条', changelogType: 'fixed' },
+      rig.diyExec(),
+    )) as { text: string };
+
+    expect(commands[0]).toContain("'--changelog-note'");
+    expect(commands[0]).toContain('这一版修了一条');
+    expect(commands[0]).toContain("'--changelog-type' 'fixed'");
+    expect(result.text).toContain('更新日志：已写进 CHANGELOG.md 的 0.1.0');
+  });
+
+  it('这一版已有更新日志：release 回 kept，结果里说没动', async () => {
+    rig.scaffold('demo');
+    withBin();
+    const { tool } = rig.harness({
+      probe: [
+        {
+          stdout: JSON.stringify({
+            ok: true,
+            target: 'team',
+            name: '@dsh-workbench/module-demo',
+            version: '0.1.0',
+            registry: 'https://npm.demo.test/',
+            install: 'dsh plugin --profile workbench add @dsh-workbench/module-demo@0.1.0',
+            changelog: { version: '0.1.0', action: 'kept' },
+          }),
+        },
+      ],
+    });
+
+    const result = (await tool(DIY_PUBLISH_TOOL)?.execute({ unit: 'demo', target: 'team' }, rig.diyExec())) as {
+      text: string;
+    };
+
+    expect(result.text).toContain('更新日志：这一版已有（0.1.0），没动');
+  });
+
 describe('workbench_diy_publish · 审批', () => {
   it('发布不跟工坊整族 allow 走：要一次审批，reason 里点名包与版本', () => {
     const policy = panelsApprovalFor(undefined, undefined, () => ({
@@ -401,11 +482,61 @@ describe('workbench_diy_publish · 审批', () => {
     expect(verdict.reason).toContain('（元数据）');
   });
 
+  it('★ 这一版没有更新日志又没带 changelogNote：不弹审批屏，直接拒给 agent 改法', () => {
+    const policy = panelsApprovalFor(undefined, undefined, () => ({
+      name: '@demo/probe',
+      version: '0.1.0',
+      changelog: { version: '0.1.0', missing: true },
+    }));
+    const verdict = policy({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo' } });
+
+    expect(verdict?.kind).toBe('deny');
+    expect(verdict?.kind === 'deny' ? verdict.reason : '').toContain('changelogNote');
+  });
+
+  it('带了更新日志、或这一版已有，就照常问一次；只刷元数据不查更新日志', () => {
+    const missing = panelsApprovalFor(undefined, undefined, () => ({
+      name: '@demo/probe',
+      version: '0.1.0',
+      changelog: { version: '0.1.0', missing: true },
+    }));
+    expect(missing({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo', changelogNote: '一条' } })?.kind).toBe('ask');
+    expect(missing({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo', refresh: true } })?.kind).toBe('ask');
+
+    const has = panelsApprovalFor(undefined, undefined, () => ({
+      name: '@demo/probe',
+      version: '0.1.0',
+      changelog: { version: '0.1.0', text: '- 一条' },
+    }));
+    expect(has({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo' } })?.kind).toBe('ask');
+  });
+
   it('只核验（verify）不问：它不发任何东西', () => {
     const policy = panelsApprovalFor(undefined, undefined, () => null);
     expect(policy({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo', target: 'team', verify: true } })).toEqual({
       kind: 'allow',
     });
+  });
+});
+
+describe('workbench_diy_publish · 注册', () => {
+  it('注册出发布这一把，超时按 30 分钟算', () => {
+    const seen: string[] = [];
+    const tools = {
+      register: (definition: { readonly name: string }) => {
+        seen.push(definition.name);
+        return () => {};
+      },
+    };
+    registerPublishTool({} as never, tools as never, {
+      resolve: () => {
+        throw new Error('注册时不该解析模块');
+      },
+      previewOf: () => null,
+      inferredAuthorOf: async () => undefined,
+    });
+    expect(seen).toEqual([DIY_PUBLISH_TOOL]);
+    expect(PUBLISH_TIMEOUT_MS).toBe(30 * 60 * 1000);
   });
 });
 

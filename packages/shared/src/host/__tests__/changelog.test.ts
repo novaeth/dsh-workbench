@@ -6,6 +6,7 @@ import {
   changelogSectionOf,
   changelogSkeleton,
   parseChangelog,
+  planChangelog,
 } from '../changelog.js';
 
 const SAMPLE = [
@@ -98,5 +99,37 @@ describe('appendChangelogEntry', () => {
 describe('changelogSkeleton', () => {
   it('只有标题，不给假条目', () => {
     expect(changelogSkeleton()).toBe('# 更新日志\n');
+  });
+});
+
+describe('planChangelog', () => {
+  it('这一版已有内容就 kept，不追加也不改原文', () => {
+    const plan = planChangelog(SAMPLE, { version: '1.2.0', kind: 'fixed', note: '又修了一条' });
+    expect(plan?.action).toBe('kept');
+    expect(plan?.text).toBe(SAMPLE);
+    expect(plan?.section).toContain('模块详情能看说明与更新日志');
+    expect(plan?.section).not.toContain('又修了一条');
+  });
+
+  it('缺这一版且有 note 就 written：空文件从骨架起，段里就是这条', () => {
+    const plan = planChangelog('', { version: '0.1.0', kind: 'added', note: '第一次发布', date: '2026-10-27' });
+    expect(plan?.action).toBe('written');
+    expect(plan?.version).toBe('0.1.0');
+    expect(plan?.text.startsWith('# 更新日志')).toBe(true);
+    expect(plan?.section).toContain('- 第一次发布');
+    expect(changelogHasEntry(plan?.text ?? '', '0.1.0')).toBe(true);
+  });
+
+  it('缺这一版又没有 note 就 undefined（发布前先要一句话）', () => {
+    expect(planChangelog(SAMPLE, { version: '9.9.9', note: '   ' })).toBeUndefined();
+    expect(planChangelog('', { version: '9.9.9', note: '' })).toBeUndefined();
+  });
+
+  it('只有版本标题没有条目时算缺，补进去而不是再开一段', () => {
+    const empty = '# 更新日志\n\n## v0.2.0\n\n`2026-10-26`\n';
+    const plan = planChangelog(empty, { version: '0.2.0', kind: 'fixed', note: '修一条' });
+    expect(plan?.action).toBe('written');
+    expect(parseChangelog(plan?.text ?? '').filter((one) => one.version === '0.2.0')).toHaveLength(1);
+    expect(plan?.section).toContain('- 修一条');
   });
 });

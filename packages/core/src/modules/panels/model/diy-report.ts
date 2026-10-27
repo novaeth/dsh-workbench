@@ -277,7 +277,7 @@ export function publishStatusOf(preview: PublishPreview | null): string {
     preview.changelog === undefined
       ? undefined
       : preview.changelog.missing
-        ? `发布前置：CHANGELOG 还差 ${preview.changelog.version} 这一版 —— 先 workbench_diy_changelog（unit=…）`
+        ? `发布前置：CHANGELOG 还差 ${preview.changelog.version} 这一版 —— 发布时带 changelogNote（会先建文件）`
         : `发布前置：CHANGELOG 里已有 ${preview.changelog.version}`;
   return [exit, changelog].filter((one) => one !== undefined).join('\n');
 }

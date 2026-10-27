@@ -12,8 +12,10 @@ export function publishPreviewRoutes(
       const unit = (param(search, 'unit') ?? '').trim();
       const version = (param(search, 'version') ?? '').trim();
       const author = (param(search, 'author') ?? '').trim();
+      const changelog = param(search, 'changelog') ?? '';
+      const changelogType = (param(search, 'changelogType') ?? '').trim();
       if (unit === '') return { ok: true, preview: null };
-      let preview = publishPreviewOf(workshop, unit, { version, author });
+      let preview = publishPreviewOf(workshop, unit, { version, author, changelog, changelogType });
       if (preview !== null && author === '' && (preview.author === undefined || preview.author === '')) {
         const inferred = await inferredAuthorOf(unit);
         if (inferred !== undefined && inferred !== '') preview = { ...preview, author: inferred };

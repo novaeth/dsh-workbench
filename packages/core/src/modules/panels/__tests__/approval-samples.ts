@@ -2,7 +2,6 @@ import type { LongTaskBase } from '@dsh-workbench/shared/host';
 import { createLongTaskRegistry } from '@dsh-workbench/shared/host';
 import type { LongTaskRunsLookup } from '../model/long-task-tools';
 import {
-  DIY_CHANGELOG_TOOL,
   DIY_DEBUG_PAUSE_TOOL,
   DIY_DEBUG_RESUME_TOOL,
   DIY_DEBUG_START_TOOL,
@@ -53,7 +52,6 @@ export const WRITE_CALLS: Readonly<Record<string, unknown>> = {
   [DIY_RECORD_PREPARE_TOOL]: { unit: 'demo', url: 'https://inventory.example.com/env', doing: '发布' },
   [DIY_INSTALL_TOOL]: { unit: 'demo' },
   [DIY_PUBLISH_TOOL]: { unit: 'demo', target: 'team', version: 'patch' },
-  [DIY_CHANGELOG_TOOL]: { unit: 'demo', action: 'add', version: '0.1.0', note: '这一版改了什么' },
   [DIY_SHOW_TOOL]: { unit: 'demo' },
   [DIY_DEBUG_START_TOOL]: { unit: 'demo' },
   [DIY_DEBUG_PAUSE_TOOL]: {},

@@ -1,5 +1,3 @@
-import { changelogProblemOf } from './changelog.mjs';
-
 function manifestAuthor(manifest) {
   const author = manifest?.author;
   if (typeof author === 'string') return author.trim();
@@ -21,9 +19,4 @@ export function authorChangeOf(root, manifest, exec) {
     author: email === '' ? name : `${name} <${email}>`,
     change: 'author ← git config',
   };
-}
-
-export function changelogGateOf(root, version) {
-  const problem = changelogProblemOf(root, version);
-  return problem === undefined ? { ok: true } : { ok: false, ...problem };
 }

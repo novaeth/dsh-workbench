@@ -45,7 +45,8 @@ description: 在工作台里把当前面板调明白，或者给它造一块新�
    看 / 动屏前 `workbench_diy_debug_start`（否则整族拒；Desktop 跳过，改用 `read=` / 录制）；`_panel` / `_status` / `read=` 档不用。
    工具全表 [FAMILY.md](FAMILY.md)。走通才 `dsh-wb-module design accept`；走不通如实记"未验"。
    审批项标注「要你真用一次」，不打勾。结论只报：已装、在面板哪一格。
-8. **发布** —— 只在用户说「帮我发布」之后：`workbench_diy_changelog`（`note=…`）记这一版 → `workbench_diy_publish`（`unit=…`）。
+8. **发布** —— 只在用户说「帮我发布」之后：`workbench_diy_publish`（`unit=…`）；这一版还没有更新日志就带上 `changelogNote`（一行一条），
+   发布时一起写进 `CHANGELOG.md` 并随包发，审批屏会展示将写入的那一段。
    不手改 `package.json`、不补标题/署名、不问出口：工具与审批屏已经处理；他明确点名安装包 / 公开 / git 才传 target。
    他说要换作者才传 `author="姓名 <邮箱>"`，别自己编一个；没写作者时审批屏显示推断的署名，他拒绝后再说。
    验收没过先 `design accept`；`needsUser` 照 `text` 转述。细节见 [WIRING.md](WIRING.md) §5。

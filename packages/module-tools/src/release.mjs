@@ -17,7 +17,9 @@ import {
   writeState,
 } from './release-journal.mjs';
 import { emit, installOf, marketInstallOf, stateOf } from './release-report.mjs';
-import { authorChangeOf, changelogGateOf } from './release-changelog.mjs';
+import { authorChangeOf } from './release-changelog.mjs';
+import { CHANGELOG_FILE, CHANGELOG_KINDS, changelogDate } from '@dsh-workbench/shared/host';
+import { applyChangelog, changelogProblemOf } from './changelog.mjs';
 import {
   NeedsUser,
   ReleaseError,
@@ -251,6 +253,11 @@ export async function runRelease({
   if (askedAuthor !== undefined && (explicitAuthor === '' || /[\r\n]/u.test(explicitAuthor))) {
     throw new ReleaseError('--author 只认一行署名：姓名，或 姓名 <邮箱>');
   }
+  const changelogNote = (argValue(args, '--changelog-note') ?? '').trim();
+  const changelogKind = (argValue(args, '--changelog-type') ?? 'changed').trim();
+  if (!CHANGELOG_KINDS.includes(changelogKind)) {
+    throw new ReleaseError(`--changelog-type 只认 ${CHANGELOG_KINDS.join(' / ')}（收到「${changelogKind}」）`);
+  }
   const manifest = readManifest(root);
   const unit = manifest?.dsh?.workbench?.unit;
   if (typeof unit !== 'string' || unit === '') throw new ReleaseError('这不是一个 wb 模块包（没有 dsh.workbench.unit）');
@@ -374,6 +381,36 @@ export async function runRelease({
     writeManifest(root, manifest);
   }
   const frozenVersion = resume && typeof journal?.version === 'string' ? journal.version : undefined;
+  const info =
+    target === 'market'
+      ? { target: 'market', kind: 'market', url: indexPlan.source.url }
+      : targetInfoOf(root, manifest, args, home, exec, target, earlyState?.registry);
+  const askedVersion = argValue(args, '--version');
+  const targetVersionOf = () => {
+    if (info.kind === 'tarball' || info.kind === 'git') {
+      return frozenVersion ?? nextVersion(manifest.version, askedVersion, info.exists);
+    }
+    if (info.kind === 'registry') {
+      return frozenVersion ?? nextVersion(manifest.version, askedVersion, (one) => registryExists(exec, info, manifest.name, one));
+    }
+    if (info.kind === 'market' && indexPlan !== undefined) {
+      return (
+        frozenVersion ??
+        nextVersion(manifest.version, askedVersion, (one) =>
+          marketVersionExists({ plan: indexPlan, exec, home, name: manifest.name, version: one }),
+        )
+      );
+    }
+    return frozenVersion ?? nextVersion(manifest.version, askedVersion, () => false);
+  };
+  const releaseVersion = verify ? undefined : targetVersionOf();
+  const changelogProblem = verify || dryRun ? undefined : changelogProblemOf(root, releaseVersion);
+  if (changelogProblem !== undefined && changelogNote === '') {
+    throw new NeedsUser('changelog', changelogProblem.reason, changelogProblem.command, {
+      target,
+      version: releaseVersion,
+    });
+  }
   const fingerprint = artifactFingerprintOf(root);
   const resumeMatchesTree = resume && frozenVersion !== undefined && journal?.run?.fingerprint === fingerprint;
   const tracking = !verify && !dryRun;
@@ -391,10 +428,6 @@ export async function runRelease({
       },
     });
   }
-  const info =
-    target === 'market'
-      ? { target: 'market', kind: 'market', url: indexPlan.source.url }
-      : targetInfoOf(root, manifest, args, home, exec, target, earlyState?.registry);
   const indexPreviewOf = (name, version) =>
     indexPlan === undefined
       ? undefined
@@ -429,34 +462,12 @@ export async function runRelease({
       now: () => Date.now(),
     });
   };
+  let changelogChange;
   const changesOf = (version) => [
     ...(authorChange === undefined ? [] : [authorChange]),
     ...(version === manifest.version ? [] : [`version → ${version}`]),
+    ...(changelogChange === undefined ? [] : [changelogChange]),
   ];
-  const gateOf = (version) => {
-    if (verify || dryRun) return;
-    const gate = changelogGateOf(root, version);
-    if (gate.ok !== true) throw new NeedsUser('changelog', gate.reason, gate.command, { target, version });
-  };
-  const askedVersion = argValue(args, '--version');
-  const targetVersionOf = () => {
-    if (info.kind === 'tarball' || info.kind === 'git') {
-      return frozenVersion ?? nextVersion(manifest.version, askedVersion, info.exists);
-    }
-    if (info.kind === 'registry') {
-      return frozenVersion ?? nextVersion(manifest.version, askedVersion, (one) => registryExists(exec, info, manifest.name, one));
-    }
-    if (info.kind === 'market' && indexPlan !== undefined) {
-      return (
-        frozenVersion ??
-        nextVersion(manifest.version, askedVersion, (one) =>
-          marketVersionExists({ plan: indexPlan, exec, home, name: manifest.name, version: one }),
-        )
-      );
-    }
-    return frozenVersion ?? nextVersion(manifest.version, askedVersion, () => false);
-  };
-  if (!verify && !dryRun) gateOf(targetVersionOf());
   if (verify) {
     const state = earlyState;
     const version = argValue(args, '--version') ?? state?.version ?? manifest.version;
@@ -627,16 +638,35 @@ export async function runRelease({
   }
   const earlyLicense = info.kind === 'registry' ? licenseOf(root, manifest, target, args) : undefined;
   if (info.kind === 'registry') checkLogin(exec, info);
+  const changelog = dryRun
+    ? undefined
+    : applyChangelog(root, {
+        version: releaseVersion,
+        kind: changelogKind,
+        note: changelogNote,
+        date: changelogDate(),
+      });
+  if (!dryRun && changelog === undefined) {
+    const problem = changelogProblemOf(root, releaseVersion);
+    throw new NeedsUser(
+      'changelog',
+      problem?.reason ?? `${CHANGELOG_FILE} 里没有 ${String(releaseVersion)} 这一版`,
+      problem?.command,
+      { target, version: releaseVersion },
+    );
+  }
+  if (changelog !== undefined && changelog.action === 'written') {
+    changelogChange = `CHANGELOG ← ${changelog.version}`;
+  }
+  const changelogReport =
+    changelog === undefined ? undefined : { version: changelog.version, action: changelog.action };
   const capture = json;
   const stageOptions = { cwd: root, capture, err };
   if (!resumeMatchesTree) runGate(exec, root, stageOptions);
   if (tracking) advanceRun(home, unit, { phase: 'gates' });
 
   if (info.kind === 'market') {
-    const exists = (one) =>
-      marketVersionExists({ plan: indexPlan, exec, home, name: manifest.name, version: one });
-    const version =
-      frozenVersion ?? nextVersion(manifest.version, argValue(args, '--version'), exists);
+    const version = releaseVersion;
     const files = localFiles(exec, root);
     checkPublished(files);
     const summary = {
@@ -647,6 +677,7 @@ export async function runRelease({
       version,
       files,
       changes: changesOf(version),
+      ...(changelogReport === undefined ? {} : { changelog: changelogReport }),
       install: '',
       market: indexPreviewOf(manifest.name, version),
     };
@@ -713,7 +744,7 @@ export async function runRelease({
   }
 
   if (info.kind === 'tarball') {
-    const version = frozenVersion ?? nextVersion(manifest.version, argValue(args, '--version'), info.exists);
+    const version = releaseVersion;
     const files = localFiles(exec, root);
     checkPublished(files);
     const summary = {
@@ -725,6 +756,7 @@ export async function runRelease({
       file: info.fileOf(version),
       files,
       changes: changesOf(version),
+      ...(changelogReport === undefined ? {} : { changelog: changelogReport }),
       install: installOf(info, manifest.name, version),
     };
     if (dryRun) {
@@ -764,7 +796,7 @@ export async function runRelease({
   }
 
   if (info.kind === 'git') {
-    const version = frozenVersion ?? nextVersion(manifest.version, argValue(args, '--version'), info.exists);
+    const version = releaseVersion;
     const files = localFiles(exec, root);
     checkPublished(files);
     const summary = {
@@ -775,6 +807,7 @@ export async function runRelease({
       version,
       files,
       changes: changesOf(version),
+      ...(changelogReport === undefined ? {} : { changelog: changelogReport }),
       git: { url: info.url, tag: info.tagOf(version) },
       install: installOf(info, manifest.name, version),
       ...(dryRun ? { market: indexPreviewOf(manifest.name, version) } : {}),
@@ -844,12 +877,12 @@ export async function runRelease({
     delete next.private;
     changes.push('摘掉 private');
   }
-  const version =
-    frozenVersion ?? nextVersion(next.version, argValue(args, '--version'), (one) => registryExists(exec, info, next.name, one));
+  const version = releaseVersion;
   if (version !== next.version) {
     next.version = version;
     changes.push(`version → ${version}`);
   }
+  if (changelogChange !== undefined) changes.push(changelogChange);
   if (dryRun) {
     if (!resumeMatchesTree) runCliStage(exec, root, ['check'], stageOptions);
     const files = localFiles(exec, root);
@@ -889,6 +922,7 @@ export async function runRelease({
       registry: info.registry,
       changes,
       files,
+      ...(changelogReport === undefined ? {} : { changelog: changelogReport }),
       install: installOf(info, next.name, version),
       market: indexOf(next, version, { registry: info.registry }),
     };

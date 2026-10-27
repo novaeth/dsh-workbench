@@ -663,6 +663,7 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'approval.publish.twoCommits': 'build files + market.json in 2 commits, one push',
   'approval.publish.reading': 'Reading…',
   'approval.publish.changelog': 'Changelog for {version}',
+  'approval.publish.changelogPending': 'This release writes the {version} changelog entry',
   'approval.publish.changelogMissing': 'No changelog entry for {version}; publishing will be blocked',
   'approval.publish.targetAuto': 'configured default',
   'approval.publish.targetTeam': 'team registry',

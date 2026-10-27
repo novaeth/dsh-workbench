@@ -658,6 +658,7 @@ export const zh = {
   'approval.publish.twoCommits': '打包文件 + market.json 两次提交，一次推送',
   'approval.publish.reading': '读取中…',
   'approval.publish.changelog': '{version} 的更新日志',
+  'approval.publish.changelogPending': '{version} 这一版会写进更新日志，随包发布',
   'approval.publish.changelogMissing': '这一版还没有更新日志（{version}），发布会被拦下',
   'approval.publish.targetAuto': '按配置默认',
   'approval.publish.targetTeam': '团队源',

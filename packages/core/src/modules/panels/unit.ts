@@ -25,7 +25,6 @@ export const DIY_PANEL_TOOL = 'workbench_diy_panel';
 export const DIY_COMPONENTS_TOOL = 'workbench_diy_components';
 export const DIY_RECON_TOOL = 'workbench_diy_recon';
 export const DIY_SPEC_TOOL = 'workbench_diy_spec';
-export const DIY_CHANGELOG_TOOL = 'workbench_diy_changelog';
 export const DIY_INSTALL_TOOL = 'workbench_diy_install';
 export const DIY_PUBLISH_TOOL = 'workbench_diy_publish';
 export const DIY_SHOW_TOOL = 'workbench_diy_show';
@@ -84,7 +83,6 @@ export const ALL_TOOLS = [
   DIY_COMPONENTS_TOOL,
   DIY_RECON_TOOL,
   DIY_SPEC_TOOL,
-  DIY_CHANGELOG_TOOL,
   DIY_INSTALL_TOOL,
   DIY_PUBLISH_TOOL,
   DIY_SHOW_TOOL,
@@ -167,7 +165,6 @@ export const WRITE_TOOLS = [
   MODULES_UPDATE_WORKBENCH_TOOL,
   MARKET_ENABLE_TOOL,
   MARKET_DISABLE_TOOL,
-  DIY_CHANGELOG_TOOL,
   DIY_INSTALL_TOOL,
   DIY_PUBLISH_TOOL,
   DIY_SHOW_TOOL,
@@ -194,7 +191,6 @@ export const DIY_TOOLS = [
   DIY_COMPONENTS_TOOL,
   DIY_RECON_TOOL,
   DIY_SPEC_TOOL,
-  DIY_CHANGELOG_TOOL,
   DIY_INSTALL_TOOL,
   DIY_PUBLISH_TOOL,
   DIY_SHOW_TOOL,

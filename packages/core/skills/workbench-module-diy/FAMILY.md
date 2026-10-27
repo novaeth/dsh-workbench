@@ -12,8 +12,7 @@
 | 找 opencli 命令、看命令形状 | `_recon` → `_spec`（`--help -f json` 原样） |
 | kit 有什么 / 令牌叫什么 | `_components`（`bucket` / `name` 取声明；`scope: tokens` 现读 `--dsw-*` / `--wb-*`） |
 | 装一次 / 只上板 | `_install` / `_show` |
-| 发布前记这一版改了什么 | `_changelog`（`note` 必填；文件不在就先建） |
-| 发布 | `_publish`，只在用户说「帮我发布」之后 |
+| 发布（顺带记这一版改了什么） | `_publish`，只在用户说「帮我发布」之后；这一版还没有更新日志时带 `changelogNote` |
 | 看 / 动当前页 | `_state` · `_html` · `_find` · `_screenshot` · `_click` · `_hover` · `_type` · `_fill` · `_keys` · `_scroll` · `_wait` · `_network` · `_dialog` |
 | 控制台 | `_logs_watch` → 操作 → `_logs_read` → `_logs_stop` |
 | 抓「用户点了之后发了什么」 | `_record_prepare` → 用户操作 → `_record_read` → `_record_detail` → `_record_stop` |
@@ -23,7 +22,7 @@
 - 只在 DIY 模式的会话出现；面板得画在屏上。
 - 看 / 动 / 网络 / 日志族先 `_debug_start`（审批一次），否则整族拒、零命令；收工 `_debug_stop`。
   `_pause` 只暂停看屏。不碰屏的：`_status` / `_panel` / `_components` / `_recon` / `_spec` /
-  `_install` / `_show` / `_changelog` / `_publish`；`_find` / `_eval` 带 `read=` 时也不碰。
+  `_install` / `_show` / `_publish`；`_find` / `_eval` 带 `read=` 时也不碰。
 - 录制独立：`_record_prepare` 审批一次，其余不问；同时只有一场，要重来先 `_record_stop`。
 
 ## 3 参数之外的坑
@@ -45,6 +44,6 @@
 
 ## 4 发布
 
-只在用户明确说「帮我发布」后调；先 `_changelog` 把这一版写进 `CHANGELOG.md`。
+只在用户明确说「帮我发布」后调。这一版还没有更新日志（`_status` 会说）时，把改了什么写进 `changelogNote`（一行一条，`changelogType` 选分类，缺省 changed）：审批屏会展示将写进 `CHANGELOG.md` 的那一段，用户点了头才落盘，文件不在会先建。这一版已有内容就不用传，带了也不追加。
 出口、署名、标题、安装命令由工具与审批屏处理，不用问、不用补；没写作者时审批屏显示推断的署名（市集里上次的 / 同工坊的 / 本机 git 身份），用户觉得不对就拒绝后再说，他点名了才传 `author=…`。
 需要用户接管时返回 `needsUser: { step, text, command? }`：把 `text` 说给用户，等「好了」再跑；不向用户要 token。

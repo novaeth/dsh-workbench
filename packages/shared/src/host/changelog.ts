@@ -202,6 +202,25 @@ export function appendChangelogEntry(text: string, options: ChangelogEntryOption
   return `${normalizeWhitespace(out)}\n`;
 }
 
+export interface ChangelogPlan {
+  readonly action: 'kept' | 'written';
+  readonly version: string;
+  readonly text: string;
+  readonly section: string;
+}
+
+export function planChangelog(text: string, options: ChangelogEntryOptions): ChangelogPlan | undefined {
+  const source = normalizeChangelogText(text);
+  const version = changelogVersion(options.version);
+  const section = changelogSectionOf(source, version);
+  if (section !== undefined && changelogHasEntry(source, version)) {
+    return { action: 'kept', version, text: source, section };
+  }
+  if (bulletsOf(options.note).length === 0) return undefined;
+  const next = appendChangelogEntry(source, options);
+  return { action: 'written', version, text: next, section: changelogSectionOf(next, version) ?? '' };
+}
+
 function normalizeWhitespace(rows: readonly string[]): string {
   const out: string[] = [];
   for (const row of rows) {

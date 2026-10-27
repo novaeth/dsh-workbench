@@ -214,6 +214,7 @@ export interface PublishChangelog {
   readonly version: string;
   readonly text?: string;
   readonly missing?: boolean;
+  readonly pending?: boolean;
 }
 
 export interface PublishPreview {

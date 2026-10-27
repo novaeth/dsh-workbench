@@ -866,11 +866,57 @@ export const checks = [
         if (!(error instanceof NeedsUser) || error.step !== 'changelog') {
           throw new Error(`没拦住缺更新日志：${error?.message ?? error}`);
         }
-        if (!String(error.command).includes('changelog add 0.1.1')) {
+        if (!String(error.command).includes('--changelog-note')) {
           throw new Error(`没给补更新日志的命令：${String(error.command)}`);
         }
         if (hasCall(fake.calls, process.execPath, 'build')) throw new Error('更新日志没过就跑了 build');
         if (hasCall(fake.calls, 'npm', 'publish')) throw new Error('更新日志没过却跑了 publish');
+        report(title, true);
+      } catch (error) {
+        report(title, false, error.message.slice(0, 200));
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+        rmSync(home, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    title: 'release：带上这一版的 note 就写进 CHANGELOG，产物再把这一版发出去',
+    async run(_ctx, report) {
+      const title = 'release：带上这一版的 note 就写进 CHANGELOG，产物再把这一版发出去';
+      const dir = probeOf({
+        changelog: '# 更新日志\n\n## v0.1.0\n\n`2026-10-01`\n\n### ✨ 新增\n\n- 老版本\n',
+      });
+      const home = homeOf();
+      const fake = fakeExec(dir, { versions: ['0.1.0'] });
+      try {
+        const result = await runRelease({
+          root: dir,
+          home,
+          args: [
+            '--target',
+            'team',
+            '--registry',
+            'https://npm.demo.test/',
+            '--changelog-note',
+            '这一版修了一条',
+            '--changelog-type',
+            'fixed',
+            '--yes',
+            '--json',
+          ],
+          exec: fake.exec,
+          out: () => {},
+          err: () => {},
+        });
+        if (result.version !== '0.1.1') throw new Error(`版本不对：${String(result.version)}`);
+        if (result.changelog?.action !== 'written') throw new Error(`没写更新日志：${JSON.stringify(result.changelog)}`);
+        if (result.changelog?.version !== '0.1.1') throw new Error('更新的版本不对');
+        const text = readFileSync(join(dir, 'CHANGELOG.md'), 'utf8');
+        if (!text.includes('## v0.1.1')) throw new Error('没写这一版的标题');
+        if (!text.includes('### 🐛 修复')) throw new Error('没按分类写');
+        if (!text.includes('- 这一版修了一条')) throw new Error('条目没写进去');
+        if (!hasCall(fake.calls, 'npm', 'publish')) throw new Error('没有 publish');
         report(title, true);
       } catch (error) {
         report(title, false, error.message.slice(0, 200));

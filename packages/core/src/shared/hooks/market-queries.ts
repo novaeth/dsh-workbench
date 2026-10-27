@@ -32,10 +32,14 @@ export function readPublishPreview(
   unit: string,
   version?: string,
   author?: string,
+  changelog?: string,
+  changelogType?: string,
 ): Promise<ApiResponse<{ readonly preview: PublishPreview | null }>> {
   return apiGet<{ readonly preview: PublishPreview | null }>(MARKET_PUBLISH_PREVIEW_ROUTE, {
     unit,
     ...(version === undefined || version === '' ? {} : { version }),
     ...(author === undefined || author === '' ? {} : { author }),
+    ...(changelog === undefined || changelog.trim() === '' ? {} : { changelog }),
+    ...(changelogType === undefined || changelogType === '' ? {} : { changelogType }),
   });
 }

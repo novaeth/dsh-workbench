@@ -158,6 +158,14 @@ function publishVerdict(
       : asked;
   const label = unit === '' ? '工作台模块' : `工作台模块 [${unit}]`;
   const labelEn = unit === '' ? 'the workbench module' : `the workbench module [${unit}]`;
+  if (!refresh && found?.changelog?.missing === true && textOf(raw, 'changelogNote') === '') {
+    return {
+      kind: 'deny',
+      reason:
+        `这一版还没有更新日志（${found.changelog.version}）—— 带上 changelogNote（一行一条）再调，` +
+        '发布时会一起写进 CHANGELOG.md 并随包发',
+    };
+  }
   const copies: Record<string, { zh: string; en: string }> = {
     team: {
       zh: `把${label}发到团队源，只发构建产物，不发源码，允许吗？`,

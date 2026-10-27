@@ -126,6 +126,28 @@ describe('发布预览的只读路由', () => {
     expect(await localGitIdentityOf(undefined, '/w/demo')).toBeUndefined();
   });
 
+  it('带 changelog 参数就预览将要写进去的那一段（pending），这一版已有就预览已落盘那段', async () => {
+    const root = workshopOf();
+    const previous = process.env.DSH_WORKBENCH_HOME;
+    process.env.DSH_WORKBENCH_HOME = mkdtempSync(join(tmpdir(), 'wb-publish-preview-home-'));
+    try {
+      const handler = publishPreviewRoutes(root)[MARKET_PUBLISH_PREVIEW_ROUTE];
+      const read = async (query: string): Promise<{ readonly preview: PublishPreview | null }> =>
+        (await handler?.(new URLSearchParams(query))) as { readonly preview: PublishPreview | null };
+      const fresh = await read('unit=probe&changelog=一条&changelogType=fixed');
+      expect(fresh.preview?.changelog?.version).toBe('0.0.1');
+      expect(fresh.preview?.changelog?.pending).toBe(true);
+      expect(fresh.preview?.changelog?.text).toContain('### 🐛 修复');
+      expect(fresh.preview?.changelog?.text).toContain('- 一条');
+      const mismatched = await read('unit=probe&changelog=一条&changelogType=nope');
+      expect(mismatched.preview?.changelog?.text).toContain('### ⚡ 改进');
+    } finally {
+      if (previous === undefined) delete process.env.DSH_WORKBENCH_HOME;
+      else process.env.DSH_WORKBENCH_HOME = previous;
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('给了版本就按那个版本找更新日志，缺这一版时标 missing', async () => {
     const root = workshopOf(CHANGELOG);
     const previous = process.env.DSH_WORKBENCH_HOME;

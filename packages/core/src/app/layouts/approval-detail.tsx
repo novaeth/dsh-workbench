@@ -162,7 +162,9 @@ function PublishChangelogSeat({
     h(
       'p',
       { className: styles.changelogTitle },
-      t('approval.publish.changelog', { version: changelog.version }),
+      changelog.pending === true
+        ? t('approval.publish.changelogPending', { version: changelog.version })
+        : t('approval.publish.changelog', { version: changelog.version }),
     ),
     h(
       'div',
@@ -189,19 +191,21 @@ function PublishApprovalSeat({
   const unit = textOf(args, 'unit');
   const version = textOf(args, 'version');
   const author = textOf(args, 'author');
+  const changelog = typeof args['changelogNote'] === 'string' ? args['changelogNote'] : '';
+  const changelogType = textOf(args, 'changelogType');
   const [preview, setPreview] = useState<PublishPreview | null | undefined>(() =>
     unit === '' ? null : undefined,
   );
   useEffect(() => {
     if (unit === '') return;
     let live = true;
-    void readPublishPreview(unit, version, author).then((response) => {
+    void readPublishPreview(unit, version, author, changelog, changelogType).then((response) => {
       if (live) setPreview(response.ok ? response.preview : null);
     });
     return () => {
       live = false;
     };
-  }, [unit, version, author]);
+  }, [unit, version, author, changelog, changelogType]);
   return h(
     ApprovalPlan,
     { rows: publishRows(args, preview, t) },

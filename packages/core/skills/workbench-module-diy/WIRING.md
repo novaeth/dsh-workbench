@@ -63,7 +63,9 @@ DIY 族仅在选了 DIY 模式的会话出现（按模式，不按工作区）�
 默认 `private: true`，不发任何源。用户说「帮我发布」时，**不要手改 `package.json`、不要让他看 npm**，
 走 `workbench_diy_publish`（`unit=…`）：
 
-1. 先把这一版写进 `CHANGELOG.md`（`workbench_diy_changelog`，`note=…`），真卡片验收过（`design accept`）。
+1. 这一版还没有更新日志时（`workbench_diy_status` 会说），把改了什么放进 `changelogNote`（一行一条；`changelogType` 选分类，缺省 changed），
+   发布时一起写进 `CHANGELOG.md`（文件不在先建）；审批屏展示将写入的那一段，用户点头才落盘。已有内容就不用传。
+   真卡片验收过（`design accept`）。
    出口、署名、标题、安装命令都由工具与审批屏处理：不用问、不用补；用户没点名出口就不传 target。
    索引源跟当前选中无关：只有一个可发布源就用它；有多个时传 `source=<id>`（`workbench_market_sources` 会给）。
    用户要换署名（或在审批屏上说作者不对）：传 `author="姓名 <邮箱>"`（或只给姓名），别手改 `package.json`，也别自己编。

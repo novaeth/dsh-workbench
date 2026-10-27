@@ -25,8 +25,11 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 `release` 默认出口就是 `market`：产物与索引一起进那个仓库。
 发布过程中每一步都写进 `~/.dsh/workbench/releases/<unit>.json`；中断后带 `--resume` 接着发
 （沿用记录里的出口、版本与索引计划，产物没变就不重跑门禁）。
-这一版在 `CHANGELOG.md` 里没有记录、或 `package.json` 缺 `files` 里的 `CHANGELOG.md` 时，
-`release` 直接拦下并给出补的命令；`author` 没写时从本机 `git config` 补进 manifest，索引与产物都带上。
+这一版在 `CHANGELOG.md` 里没有记录时，带 `--changelog-note "这一版改了什么"`
+（`--changelog-type` 选分类，缺省 changed）发一次就写进去，文件不在会先建骨架；
+没带 note 又没记录时 `release` 在跑任何门禁之前就拦下。
+日志写在确认之后，发失败不回滚：这一版已经记下了，下一次发布直接用。
+`package.json` 缺 `files` 里的 `CHANGELOG.md` 一样拦下；`author` 没写时从本机 `git config` 补进 manifest，索引与产物都带上。
 模块的 `package.json` 可用 `dsh.workbench.market` 声明 `category` 与 `labels`（字符串数组）；
 不写就不带分类和标签，索引里只留 `metadata.workbench: true` 这条身份标记。
 要换署名时带 `--author "姓名 <邮箱>"`（或只给姓名）：它写回 `package.json`，索引、产物与提交都用它，
@@ -45,7 +48,7 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 | `dsh-wb-module lint [--fix]` | 用模块自己那份 `eslint.config.mjs`；`--fix` 写回文件 |
 | `dsh-wb-module sync` | 按清单生成 `src/declared-tools.ts`，按 `design.json` 的 `key + recipe` 生成 `src/datasource.ts` |
 | `dsh-wb-module design <init\|check\|render\|accept>` | 设计底稿：填、查空格、生成 README、验收打勾 |
-| `dsh-wb-module changelog <init\|add\|check>` | 更新日志：建 `CHANGELOG.md`、记一版、查这一版有没有；`release` 要求当前版本必须有记录 |
+| `dsh-wb-module changelog check [版本]` | 查这一版有没有记录；发布时用 `release --changelog-note` 写进去 |
 | `dsh-wb-module publish` | 发货前清单：门禁 + `files` + `npm pack`（只 dry run） |
 | `dsh-wb-module release` | 真发布：team / public / tarball / git；全门禁 + 验收闸 + 预检接管 + 发后核包 + 更新市场索引（`--dry-run` / `--verify`） |
 

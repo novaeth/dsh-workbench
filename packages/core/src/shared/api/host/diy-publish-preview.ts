@@ -11,15 +11,19 @@ import type {
 import { MARKET_INDEX_PATH } from '@dsh-workbench/shared/contract/protocol/market-index';
 import {
   CHANGELOG_FILE,
+  CHANGELOG_KINDS,
+  changelogDate,
   changelogHasEntry,
   changelogSectionOf,
   marketSourceKey,
   parseMarketIndexJson,
   parseSourceConfig,
+  planChangelog,
   quoteShellArg,
   runShell,
   workbenchRoot,
 } from '@dsh-workbench/shared/host';
+import type { ChangelogKind } from '@dsh-workbench/shared/host';
 import { modulesIn } from './diy-modules';
 
 const ARTIFACTS = ['dist', 'client.js', 'cordis.patch.yml', 'README.md', 'CHANGELOG.md', 'package.json'];
@@ -202,7 +206,12 @@ export async function inferredAuthorOf(
 export function publishPreviewOf(
   root: string | null | undefined,
   unit: string,
-  options: { readonly version?: string | undefined; readonly author?: string | undefined } = {},
+  options: {
+    readonly version?: string | undefined;
+    readonly author?: string | undefined;
+    readonly changelog?: string | undefined;
+    readonly changelogType?: string | undefined;
+  } = {},
 ): PublishPreview | null {
   if (root === null || root === undefined || unit === '') return null;
   const found = modulesIn(root).find((one) => one.unit === unit);
@@ -233,7 +242,7 @@ export function publishPreviewOf(
     ...(author === '' ? {} : { author }),
     ...(typeof registry === 'string' && registry !== '' ? { registry } : {}),
     ...(market === undefined ? {} : { market }),
-    changelog: changelogOf(found.dir, target),
+    changelog: changelogOf(found.dir, target, (options.changelog ?? '').trim(), kindOf(options.changelogType)),
   };
 }
 
@@ -258,12 +267,27 @@ function targetVersionOf(
   return asked;
 }
 
-function changelogOf(dir: string, version: string): PublishChangelog {
+function kindOf(given: string | undefined): ChangelogKind {
+  const wanted = (given ?? '').trim();
+  return (CHANGELOG_KINDS as readonly string[]).includes(wanted) ? (wanted as ChangelogKind) : 'changed';
+}
+
+function changelogOf(dir: string, version: string, note: string, kind: ChangelogKind): PublishChangelog {
   let text: string | undefined;
   try {
     text = readFileSync(join(dir, CHANGELOG_FILE), 'utf8');
   } catch {
     text = undefined;
+  }
+  if (note !== '') {
+    const plan = planChangelog(text ?? '', { version, kind, note, date: changelogDate() });
+    if (plan !== undefined) {
+      return {
+        version: plan.version,
+        text: plan.section,
+        ...(plan.action === 'written' ? { pending: true } : {}),
+      };
+    }
   }
   if (text === undefined || !changelogHasEntry(text, version)) return { version, missing: true };
   return { version, text: changelogSectionOf(text, version) ?? '' };

@@ -287,7 +287,7 @@ describe('清单里的写工具都在自己的策略后面（漏了不报错，�
   it('★ 每把写工具都有一通"真的写"的样例，而且样例表不多不少（新写工具漏了就红）', () => {
     expect(writers.map((tool) => tool.name).sort()).toEqual(Object.keys(WRITE_CALLS).sort());
     expect([...WRITE_TOOLS].sort()).toEqual(Object.keys(WRITE_CALLS).sort());
-    expect(writers).toHaveLength(25);
+    expect(writers).toHaveLength(24);
   });
 
   it('★ 工坊之外的那通真写都要问（外壳按清单的 writes 把它交给策略）', () => {

@@ -61,6 +61,8 @@ const RELEASE_HELP = `
   --registry <url> --access restricted|public --npmrc <文件>
   --license <id> --out <目录> --git <remote>
   --author <署名>                                       换署名（姓名，或 姓名 <邮箱>）；写回 package.json
+  --changelog-note <文字> --changelog-type added|changed|fixed|removed|security|deprecated
+                                                        这一版还没有更新日志时写进 CHANGELOG.md（文件不在先建）
   --index auto|none|<目录|git 地址>                     发布后要更新的索引源
   --index-source <id> --index-ref <分支> --index-path <索引路径> --index-policy artifacts-in-repo|catalog-only
   --resume                                              上次中断后接着发（用记录里的出口与版本）
@@ -75,11 +77,10 @@ const MARKET_INIT_HELP = `
 
 const CHANGELOG_HELP = `
 用法：
-  changelog init
-  changelog add [版本] [--type added|changed|fixed|removed|security|deprecated] [--note <文字>] [--date <日期>]
   changelog check [版本] [--json]
 
-版本省略时用 package.json 里的 version。发布时这一版必须在 CHANGELOG.md 里有记录，否则 release 会拦下。`;
+版本省略时用 package.json 里的 version。发布时这一版必须有记录：
+release --changelog-note "这一版改了什么"（文件不在会先建）。`;
 
 const COMMANDS = {
   build: '出 dist/host.js（单文件 ESM）与 client.js（套 loader 壳）',
@@ -91,7 +92,7 @@ const COMMANDS = {
   release: '真发布：全门禁 + 验收闸 + 预检接管 + 发到出口 + 发后核包 + 更新市场索引（中断可 --resume）',
   sync: '按清单生成 src/declared-tools.ts，按 design.json 生成 src/datasource.ts',
   lint: '用模块自己那份 eslint.config.mjs；--fix 写回文件',
-  changelog: '更新日志：init 建 / add 记一版 / check 查这一版有没有（发布前必须有）',
+  changelog: '更新日志：check 查这一版有没有；发布时用 release --changelog-note 写进去',
 };
 
 function flagValue(raw, flag) {
