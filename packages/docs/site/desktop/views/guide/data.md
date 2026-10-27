@@ -10,7 +10,8 @@
 
 ## 设置在哪
 
-- 独立实例：`:3081` 的 **Settings**。想少配一遍，可以从 `dsh web` 同步已经配好的行。
+- 独立实例：`:3081` 的 **Settings**。想少配一遍，可以从 `dsh web` 同步已经配好的行：
+  设置 → 工作台设置 → 配置同步 → 选来源 → 勾行 → 同步。
 - 装进 `dsh web` / Desktop：就在各自原来的设置里，工作台不多一个入口。
 
 ## 端口与实例
@@ -29,6 +30,7 @@ npx @dsh-workbench/core --profile wb2
 - 会话、项目、附件：在 `~/.dsh/{sessions,storages,attachments}`，跟 `dsh web` 共用。想带走就拷这三个目录。
 - 工作台运行时（opencli、工坊、模块市场、自更新日志）：`~/.dsh/workbench`；别的 profile 是 `~/.dsh/<名字>`。
 - 回到原样：移除插件 / 停掉实例，再删 `~/.dsh/profiles/workbench` 与 `~/.dsh/workbench`。它不会碰你的项目文件，也不会删共用的会话与项目。
+- 浏览器里的 OpenCLI 扩展、平台登录状态不在这几个目录里：删掉工作台不会带走它们；不要了去扩展页移除。
 
 :::tip 从旧版升上来的实例
 旧版本把会话 / 项目 / 附件也按 profile 分过家。新版**不会**自动并；先退出所有 dsh，再跑：

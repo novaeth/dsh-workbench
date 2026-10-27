@@ -328,7 +328,7 @@ defineOptions({
       <div class="section-header">
         <span class="section-eyebrow">GET STARTED</span>
         <h2>开始使用</h2>
-        <p>三步跑起来；卡住的那一步，常见问题里有解。</p>
+        <p>跑起来只要几步；卡住的那一步，常见问题里有解。</p>
       </div>
 
       <div class="qs-entry">
@@ -350,7 +350,7 @@ defineOptions({
             </svg>
           </div>
           <h3>快速开始</h3>
-          <p>建实例、起实例，浏览器打开 :3081；它和 dsh web 并排跑，互不打扰。</p>
+          <p>建实例、起实例，浏览器打开 :3081；第一次打开装一次 OpenCLI 扩展，面板才有数据。</p>
           <PagodaDocLinkToView
             view="guide/quickstart"
             class="qs-link"

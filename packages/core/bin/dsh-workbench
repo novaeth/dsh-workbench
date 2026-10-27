@@ -271,7 +271,13 @@ run_setup() {
 
 （全局装过就用 dsh-workbench；npx 就用 npx @dsh-workbench/core；本仓开发用 ./packages/core/bin/dsh-workbench。）
 
-首次打开会走启动体检，它会自己把 opencli 的隔离运行时装好 —— 不用你动手。
+首次打开会走启动体检，它会自己把 opencli 的隔离运行时装好。还有一步要你动手：
+在浏览器里装一次 OpenCLI 扩展（Chrome / Edge / Brave / Chromium / Vivaldi 都行）：
+
+  https://chromewebstore.google.com/detail/opencli/ildkmabpimmkaediidaifkhjpohdnifk
+
+装完确认已启用、浏览器保持开着；启动后如果「浏览器连接」还没连上，回「准备工作台」那一屏点「重试」。
+面板读的是你浏览器里的登录状态；不装也能进工作台，只是要靠登录状态的面板取不到数据。
 EOF
 }
 

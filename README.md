@@ -86,12 +86,13 @@
 
 ## 30 秒开始
 
-前置三条：
+前置：
 
 | 要有 | 为什么 |
 |---|---|
 | `dsh`（≥ 0.2.1-rc.2） | 本体；更旧的会被拒绝 |
 | Node + pnpm | 安装与插件命令需要 |
+| Chrome / Edge / Brave / Chromium / Vivaldi | 面板要借你浏览器里的登录状态读数据；第一次打开时在里面装一次 OpenCLI 扩展 |
 | 可选：跑过一次 `dsh web` | 想继承它已有的设置 / 插件时；没有也能建 |
 
 ```bash
@@ -105,6 +106,14 @@ npx @dsh-workbench/core
 
 打开 <http://localhost:3081>。原来的 `dsh web` 继续用 `:3080`；会话、项目和附件是同一份，
 设置与插件各一份。
+
+> **第一次打开还要装一次浏览器扩展**
+>
+> 工作台会自己装 opencli 的隔离运行时，但**浏览器里的 OpenCLI 扩展要你装一次** —— 面板读的是
+> 你浏览器里的登录状态。用 Chrome / Edge / Brave / Chromium / Vivaldi 打开
+> [OpenCLI（Chrome 应用商店）](https://chromewebstore.google.com/detail/opencli/ildkmabpimmkaediidaifkhjpohdnifk)
+> 装好、确认启用、浏览器保持开着，回「准备工作台」那一屏点「重试」。不装也能点「先进入工作台」，
+> 只是要靠登录状态的面板取不到数据。Desktop 的这一屏还多一个「打开浏览器」。
 
 全局装过也可以：`npm i -g @dsh-workbench/core`，然后直接 `dsh-workbench`。
 换实例 / 端口：
@@ -138,9 +147,12 @@ Desktop 里个别浏览器调试能力不可用；网页浏览与录制照常。
 装模块 / 更新工作台遇到权限或重启提示，退出并重开 Desktop；仍有问题看
 [packages/core/README.md](packages/core/README.md) 的常见问题。
 
+三种装法装完后都一样：第一次打开要装一次 **OpenCLI 浏览器扩展**，面板才有数据（见上面的说明与「第一次打开」）。
+
 ## 第一次打开
 
-- 首次启动会自己准备运行环境，不改你本机已有的工具配置。
+- 首次启动会自己准备运行环境（opencli 的隔离运行时在 `~/.dsh/workbench/opencli`），不改你本机已有的工具配置。
+- 浏览器里要装一次 **OpenCLI 扩展**，并保持浏览器开着；「准备工作台」里「浏览器连接」显示已连接才算通。
 - 需要登录的平台按卡片提示登录；回来点「重试」。
 - 右侧先是一块空看板：去模块市场装，或让 agent 装。
 - 失败会说明原因和下一步，不留白屏。
@@ -174,7 +186,8 @@ Desktop 里个别浏览器调试能力不可用；网页浏览与录制照常。
 | 启动被拒，说 dsh 太旧 | `npm i -g @deepseek-ai/dsh@latest`，再重启工作台 |
 | `:3081` 被占 | `WORKBENCH_PORT=3091 npx @dsh-workbench/core` |
 | 左栏恢复出厂、右侧看板消失 | 插件被关了；Settings → 插件把 `@dsh-workbench/core` 拨回来，进不去就按 `Meta+,` |
-| 看板一直空着 / 一直转 | 先确认这个工作区装了模块、平台账号登了；第一次加载可能要几秒 |
+| 自检说浏览器没连上 / 看板取不到数据 | 装一次 [OpenCLI 扩展](https://chromewebstore.google.com/detail/opencli/ildkmabpimmkaediidaifkhjpohdnifk)并启用，保持浏览器开着，回「准备工作台」那一屏点「重试」；Desktop 可点「打开浏览器」 |
+| 看板一直空着 / 一直转 | 先确认这个工作区装了模块、平台账号登了、浏览器连接通了；第一次加载可能要几秒 |
 | 页面白屏 / 提示插件加载失败 | 多半是插件冲突；重启工作台、检查插件开关，仍不行去仓库开 issue |
 
 ## 更多文档
