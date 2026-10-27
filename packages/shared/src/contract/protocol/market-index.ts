@@ -2,12 +2,20 @@ export const MARKET_INDEX_FORMAT = 1;
 export const MARKET_INDEX_PATH = 'market.json';
 export const MARKET_DISCOVER_ROUTE = 'panels/market-discover';
 export const MARKET_DOC_ROUTE = 'panels/market-doc';
+export const MARKET_GIT_PROBE_ROUTE = 'panels/git-probe';
 export const MARKET_PUBLISH_PREVIEW_ROUTE = 'panels/market-publish-preview';
 export const MARKET_SOURCES_RESOURCE = 'market-sources';
 export const MARKET_SOURCES_ROUTE = 'panels/market-sources';
 export const MARKET_WORKBENCH_LABEL = 'workbench';
 
 export type MarketSourceKind = 'http' | 'git';
+
+export type GitProbeStatus = 'ok' | 'auth' | 'unreachable';
+
+export interface GitProbePayload {
+  readonly status: GitProbeStatus;
+  readonly detail?: string;
+}
 
 export type MarketSourcePolicy = 'artifacts-in-repo' | 'catalog-only';
 

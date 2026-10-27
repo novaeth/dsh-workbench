@@ -10,11 +10,13 @@ import {
   bundleRegistriesHandler,
   moduleVersionsHandler,
 } from '@/shared/api/host/bundle-routes';
+import { gitProbeHandler } from '@/shared/api/host/git-routes';
 import {
   BUNDLE_INSPECT_ROUTE,
   BUNDLE_REGISTRIES_ROUTE,
   MODULE_VERSIONS_ROUTE,
 } from '@/kernel/contract/bundle-install';
+import { MARKET_GIT_PROBE_ROUTE } from '@/kernel/contract/market-index';
 export function createHostRoutes(input: {
   readonly ctx: DshHostContext;
   readonly facts: FactLog;
@@ -29,6 +31,7 @@ export function createHostRoutes(input: {
     [DSH_PLUGINS_ROUTE]: profile.dshPlugins(ctx),
     [BUNDLE_REGISTRIES_ROUTE]: bundleRegistriesHandler(ctx),
     [BUNDLE_INSPECT_ROUTE]: bundleInspectHandler(ctx),
+    [MARKET_GIT_PROBE_ROUTE]: gitProbeHandler(ctx),
     [MODULE_VERSIONS_ROUTE]: moduleVersionsHandler(
       ctx,
       ctx.get<DshShell>('shell'),

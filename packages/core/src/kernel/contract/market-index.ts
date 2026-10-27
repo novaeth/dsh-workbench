@@ -1,6 +1,7 @@
 export {
   MARKET_DISCOVER_ROUTE,
   MARKET_DOC_ROUTE,
+  MARKET_GIT_PROBE_ROUTE,
   MARKET_INDEX_FORMAT,
   MARKET_INDEX_PATH,
   MARKET_PUBLISH_PREVIEW_ROUTE,
@@ -20,6 +21,8 @@ export type {
   DiscoverSourceRow,
   DiscoverState,
   DiscoverVersionRow,
+  GitProbePayload,
+  GitProbeStatus,
   IndexSourceSpec,
   MarketClaim,
   MarketIndex,

@@ -263,6 +263,18 @@ describe('添加模块浮层：文案与来源选项（按 dsh 插件页的骨�
     expect(failureReasonKey('already-installed')).toBe('panels.market.add.failureInstalled');
     expect(failureReasonKey('something-new')).toBeUndefined();
     expect(failureReason('disk-full', 'failed', t)).toBe('磁盘空间不足，安装已停止');
+    expect(
+      failureCode(
+        change({
+          errorCode: 'operation-error',
+          errorDetail: "fatal: could not read Username for 'https://host': terminal prompts disabled",
+        }),
+      ),
+    ).toBe('credentials');
+    expect(
+      failureCode(change({ errorCode: 'operation-error', errorDetail: 'ERR_PNPM_FETCH_404  GET https://x: Not Found' })),
+    ).toBe('operation-error');
+    expect(failureReason('credentials', 'failed', t)).toContain('要凭证');
     expect(failureReason('failed', 'failed', t)).toBe('没成功，但它没说是为什么（详情见安装输出的那一行）');
     expect(failureReason('some-new-code', 'failed', t)).toBe('some-new-code');
   });

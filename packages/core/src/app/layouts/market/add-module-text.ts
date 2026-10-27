@@ -211,7 +211,11 @@ export function heldWizardPhase(phase: AddModulePhase, classifying: boolean): Ad
   return classifying && (phase === 'preview' || phase === 'idle') ? 'inspecting' : phase;
 }
 
+const CREDENTIAL_TEXT =
+  /authentication failed|could not read (username|password)|permission denied \(publickey\)|terminal prompts disabled|host key verification failed|repository not found|no such identity/i;
+
 const FAILURE_KEYS: Readonly<Record<string, string>> = {
+  credentials: 'panels.market.add.failureCredentials',
   network: 'panels.market.add.failureNetwork',
   'spec-host': 'panels.market.add.failureNetworkHost',
   'not-found': 'panels.market.add.failureNotFound',
@@ -234,9 +238,16 @@ const FAILURE_KEYS: Readonly<Record<string, string>> = {
   'stale-approval': 'panels.market.add.failureGeneric',
 };
 
+function needsCredentials(change: BundleChange): boolean {
+  const text = `${change.errorDetail ?? ''}\n${change.packageResult?.output ?? ''}`;
+  return CREDENTIAL_TEXT.test(text);
+}
+
 export function failureCode(change: BundleChange): string {
   if (change.failedAt === 'spec-host') return 'spec-host';
-  return change.errorCode ?? change.packageResult?.kind ?? change.application;
+  const code = change.errorCode ?? change.packageResult?.kind ?? change.application;
+  if (code === 'operation-error' && needsCredentials(change)) return 'credentials';
+  return code;
 }
 
 export function failureReasonKey(code: string): string | undefined {

@@ -15,6 +15,7 @@ export * from './contract/long-task.js';
 export * from './lib/text.js';
 export * from './lib/ui.js';
 export * from './lib/board-fact.js';
+export * from './lib/git-address.js';
 export * from './api/blocker-table.js';
 export * from './contract/unit-declaration.js';
 export * from './host/board-fact.js';

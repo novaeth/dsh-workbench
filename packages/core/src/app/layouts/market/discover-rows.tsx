@@ -15,6 +15,7 @@ export interface DiscoverRowsProps {
   readonly onOpen: (name: string) => void;
   readonly onInstall: (entry: DiscoverEntry, version: DiscoverVersionRow) => void;
   readonly onShowInstalled: (name: string) => void;
+  readonly installDisabled?: boolean;
 }
 
 export function canInstall(version: DiscoverVersionRow | undefined): boolean {
@@ -53,12 +54,14 @@ export function EntryAction({
   title,
   onInstall,
   onShowInstalled,
+  installDisabled = false,
 }: {
   readonly t: Translate;
   readonly entry: DiscoverEntry;
   readonly title: string;
   readonly onInstall: (entry: DiscoverEntry, version: DiscoverVersionRow) => void;
   readonly onShowInstalled: (name: string) => void;
+  readonly installDisabled?: boolean;
 }) {
   const latest = latestVersionOf(entry);
   if (latest === undefined) return null;
@@ -101,6 +104,7 @@ export function EntryAction({
       type="button"
       variant="outline"
       size="sm"
+      disabled={installDisabled}
       aria-label={t('panels.discover.installTitle', { name: title })}
       onClick={() => onInstall(entry, latest)}
     >
@@ -116,6 +120,7 @@ function EntryCard({
   onOpen,
   onInstall,
   onShowInstalled,
+  installDisabled = false,
 }: {
   readonly t: Translate;
   readonly locale: string;
@@ -123,6 +128,7 @@ function EntryCard({
   readonly onOpen: (name: string) => void;
   readonly onInstall: (entry: DiscoverEntry, version: DiscoverVersionRow) => void;
   readonly onShowInstalled: (name: string) => void;
+  readonly installDisabled?: boolean;
 }) {
   const title = displayTitleOf(entry, locale);
   const latest = latestVersionOf(entry);
@@ -165,13 +171,14 @@ function EntryCard({
           title={title}
           onInstall={onInstall}
           onShowInstalled={onShowInstalled}
+          installDisabled={installDisabled}
         />
       </div>
     </li>
   );
 }
 
-export function DiscoverRows({ t, locale, entries, onOpen, onInstall, onShowInstalled }: DiscoverRowsProps) {
+export function DiscoverRows({ t, locale, entries, onOpen, onInstall, onShowInstalled, installDisabled }: DiscoverRowsProps) {
   return (
     <ul className={styles.discoverList}>
       {entries.map((entry) => (
@@ -183,6 +190,7 @@ export function DiscoverRows({ t, locale, entries, onOpen, onInstall, onShowInst
           onOpen={onOpen}
           onInstall={onInstall}
           onShowInstalled={onShowInstalled}
+          installDisabled={installDisabled === true}
         />
       ))}
     </ul>

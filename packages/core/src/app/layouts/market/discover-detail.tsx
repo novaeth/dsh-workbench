@@ -25,6 +25,7 @@ export interface DiscoverDetailProps {
   readonly onBack: () => void;
   readonly onInstall: (entry: DiscoverEntry, version: DiscoverVersionRow) => void;
   readonly onShowInstalled: (name: string) => void;
+  readonly installDisabled?: boolean;
 }
 
 function factLabel(t: Translate, fact: SourceFact): string {
@@ -57,9 +58,10 @@ interface OverviewPanelProps {
   readonly latest: DiscoverVersionRow | undefined;
   readonly market: string;
   readonly onInstall: (entry: DiscoverEntry, version: DiscoverVersionRow) => void;
+  readonly installDisabled?: boolean;
 }
 
-function OverviewPanel({ t, locale, entry, latest, market, onInstall }: OverviewPanelProps) {
+function OverviewPanel({ t, locale, entry, latest, market, onInstall, installDisabled }: OverviewPanelProps) {
   const description = marketText(entry.description, locale);
   const date = publishDateText(latest?.publishTimestamp, locale, 'long');
   const facts = latest === undefined ? [] : sourceFactsOf(entry.name, latest);
@@ -116,7 +118,13 @@ function OverviewPanel({ t, locale, entry, latest, market, onInstall }: Overview
       {latest === undefined ? null : (
         <section className={styles.discoverSection}>
           <h4 className={styles.discoverSectionTitle}>{t('panels.discover.detailVersions')}</h4>
-          <DiscoverVersions t={t} locale={locale} entry={entry} onInstall={onInstall} />
+          <DiscoverVersions
+            t={t}
+            locale={locale}
+            entry={entry}
+            onInstall={onInstall}
+            installDisabled={installDisabled === true}
+          />
         </section>
       )}
     </>
@@ -177,6 +185,7 @@ export function DiscoverDetail(props: DiscoverDetailProps) {
             title={title}
             onInstall={props.onInstall}
             onShowInstalled={props.onShowInstalled}
+            installDisabled={props.installDisabled === true}
           />
         )}
       </div>
@@ -203,6 +212,7 @@ export function DiscoverDetail(props: DiscoverDetailProps) {
             latest={latest}
             market={props.market}
             onInstall={props.onInstall}
+            installDisabled={props.installDisabled === true}
           />
         </div>
       ) : null}

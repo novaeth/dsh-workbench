@@ -10,6 +10,7 @@ import type {
 } from '@dsh-workbench/shared/contract/protocol/market-index';
 import { gitUrlOk, httpUrlProblem, marketSourceKey, parseMarketIndexJson } from '@dsh-workbench/shared/host';
 import { quoteShellArg, runShell } from '@dsh-workbench/shared/host';
+import { gitNoPromptPrefix, withoutAskpassNoise } from './git-exec.js';
 
 export interface CachedIndex {
   readonly index: MarketIndex;
@@ -50,7 +51,6 @@ export interface MarketIndexReaderOptions {
 const DEFAULT_TTL_MS = 5 * 60 * 1000;
 const DEFAULT_TIMEOUT_MS = 30 * 1000;
 const DEFAULT_MAX_BYTES = 4 * 1024 * 1024;
-const GIT_NO_PROMPT = `${quoteShellArg('env')} GIT_TERMINAL_PROMPT=0`;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -120,7 +120,9 @@ function gitProblemOf(source: MarketSourceConfig): DiscoverProblem | undefined {
 }
 
 function tail(text: string): string {
-  const lines = text.trim().split('\n').filter((line) => line !== '');
+  const lines = withoutAskpassNoise(text)
+    .split('\n')
+    .filter((line) => line !== '');
   return lines.slice(-3).join(' ');
 }
 
@@ -196,7 +198,7 @@ export function createMarketIndexReader(options: MarketIndexReaderOptions): Mark
     const shell = options.shell;
     if (shell === undefined) return { ok: false, problem: { kind: 'git-missing', detail: '没有执行缝，读不了 git 索引' } };
     try {
-      const result = await runShell(shell, `${GIT_NO_PROMPT} ${line}`, { timeoutMs });
+      const result = await runShell(shell, `${gitNoPromptPrefix()} ${line}`, { timeoutMs });
       if (result.exitCode !== 0) {
         return { ok: false, problem: classifyGitError(result.stderr, result.timedOut), stderr: result.stderr };
       }

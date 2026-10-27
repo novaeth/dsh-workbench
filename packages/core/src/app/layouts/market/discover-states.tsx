@@ -1,8 +1,9 @@
-import { createElement as h } from 'react';
+import { Fragment, createElement as h } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import {
   Button,
   IconPlusOutlineRegular,
+  IconWarningOutlineRegular,
   PluginArtworkDefault,
   StateDot,
 } from '@deepseek-ai/dsh-client-ui-primitives';
@@ -98,5 +99,29 @@ export function DiscoverNoSource({ t, onAdd }: { readonly t: Translate; readonly
         {t('panels.discover.addFirstSource')}
       </Button>
     </div>
+  );
+}
+
+export function DiscoverReadFailure({
+  t,
+  text,
+  auth,
+  onRetry,
+}: {
+  readonly t: Translate;
+  readonly text: string;
+  readonly auth: boolean;
+  readonly onRetry: () => void;
+}) {
+  return (
+    <Fragment>
+      <DiscoverFailure t={t} text={text} onRetry={onRetry} />
+      {auth ? (
+        <p className={styles.discoverNotice} role="note">
+          <IconWarningOutlineRegular size={14} aria-hidden="true" />
+          <span>{t('panels.discover.sourceAuth')}</span>
+        </p>
+      ) : null}
+    </Fragment>
   );
 }

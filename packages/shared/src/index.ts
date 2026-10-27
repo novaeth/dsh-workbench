@@ -66,6 +66,7 @@ export * from './i18n/settings.js';
 export * from './i18n/zh.js';
 export * from './lib/blocker-action.js';
 export * from './lib/market-index.js';
+export * from './lib/git-address.js';
 export * from './lib/board-fact.js';
 export * from './lib/busy.js';
 export * from './lib/dsh-client.js';

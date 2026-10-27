@@ -29,8 +29,22 @@ describe('发现页的安装结果分档', () => {
     expect(verdict.text).toContain('panels.market.add.failureNotFound');
   });
 
-  it('cancelled 安静，没有 change 的载荷也不乱报', () => {
-    expect(installVerdictOf(payload({ application: 'cancelled' }), t)).toEqual({ kind: 'quiet' });
+  it('cancelled 单独一档（界面上要说「已取消」），没有 change 的载荷才安静', () => {
+    expect(installVerdictOf(payload({ application: 'cancelled' }), t)).toEqual({ kind: 'cancelled' });
     expect(installVerdictOf({ ok: true }, t)).toEqual({ kind: 'quiet' });
+  });
+
+  it('缺 git 凭据要说「要凭证」，别拿「pnpm 执行出错」糊过去', () => {
+    const verdict = installVerdictOf(
+      payload({
+        application: 'failed',
+        errorCode: 'operation-error',
+        errorDetail: "fatal: could not read Username for 'https://e.coding.net': terminal prompts disabled",
+      }),
+      t,
+    );
+    expect(verdict.kind).toBe('failed');
+    if (verdict.kind !== 'failed') return;
+    expect(verdict.text).toContain('panels.market.add.failureCredentials');
   });
 });

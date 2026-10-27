@@ -838,6 +838,106 @@
   align-self: center;
 }
 
+.discoverTransport {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-8);
+}
+
+.discoverTransportTitle {
+  font: var(--dsw-font-xs-13);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.discoverTransportRows {
+  display: flex;
+  gap: var(--wb-len-8);
+}
+
+.discoverTransportRow {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--wb-len-8);
+  min-width: 0;
+  padding: var(--wb-len-8) var(--wb-len-10);
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: var(--dsw-radius-md);
+  cursor: pointer;
+}
+
+.discoverTransportRow:hover {
+  border-color: var(--dsw-alias-border-l3);
+}
+
+.discoverTransportRow:has(.discoverTransportRadio:checked) {
+  border-color: var(--dsw-alias-label-primary);
+}
+
+.discoverTransportRow:has(.discoverTransportRadio:focus-visible) {
+  outline: 2px solid var(--dsw-alias-label-primary);
+  outline-offset: 1px;
+}
+
+.discoverTransportRadio {
+  flex: none;
+  margin: 0;
+}
+
+.discoverTransportKind {
+  flex: none;
+  font: var(--dsw-font-xs-13);
+  font-weight: 500;
+}
+
+.discoverTransportState {
+  flex: none;
+  margin-left: auto;
+  font: var(--dsw-font-xxs-12);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.discoverTransportRow[data-state='ok'] .discoverTransportState {
+  color: var(--dsw-alias-state-success-primary);
+}
+
+.discoverTransportRow[data-state='auth'] .discoverTransportState {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.discoverTransportRow[data-state='unreachable'] .discoverTransportState,
+.discoverTransportRow[data-state='unknown'] .discoverTransportState {
+  color: var(--dsw-alias-state-warn-primary);
+}
+
+.discoverTransportCustom {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-len-8);
+}
+
+.discoverTransportInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.discoverInstallBar {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-len-8);
+  margin: 0;
+  padding: var(--wb-len-8) var(--wb-len-12);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-module-platform);
+  font: var(--dsw-font-xs-13);
+}
+
+.discoverInstallText {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .discoverDialog {
   width: min(var(--wb-len-560), calc(100vw - var(--wb-len-32)));
 }

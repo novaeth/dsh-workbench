@@ -2,12 +2,14 @@ import { Fragment, createElement as h } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import { Button, IconWarningOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives';
 import { DiscoverDetail } from './discover-detail';
+import { DiscoverInstalling } from './discover-installing';
 import { DiscoverDialogs } from './discover-dialogs';
 import { DiscoverRows } from './discover-rows';
 import { DiscoverToolbar } from './discover-toolbar';
 import {
   DiscoverEmptyText,
   DiscoverFailure,
+  DiscoverReadFailure,
   DiscoverLoading,
   DiscoverNoSource,
   DiscoverSkeleton,
@@ -102,13 +104,28 @@ export function DiscoverPanel({ t, active, onInstalled, onShowInstalled }: Disco
           </p>
         ) : null}
         {uninitialized === null ? (
-          readFailed === null ? null : <DiscoverFailure t={t} text={readFailed} onRetry={d.reload} />
+          readFailed === null ? null : (
+            <DiscoverReadFailure
+              t={t}
+              text={readFailed}
+              auth={d.problem?.kind === 'git-auth'}
+              onRetry={d.reload}
+            />
+          )
         ) : (
           <DiscoverUninitialized
             t={t}
             path={uninitialized.path}
             empty={uninitialized.empty}
             onInit={() => d.setInitOpen(true)}
+          />
+        )}
+        {d.installing === null ? null : (
+          <DiscoverInstalling
+            t={t}
+            name={d.installing}
+            cancelling={d.cancelling}
+            onCancel={d.cancelInstall}
           />
         )}
         {d.notice === null ? null : (
@@ -128,6 +145,7 @@ export function DiscoverPanel({ t, active, onInstalled, onShowInstalled }: Disco
             onBack={d.closeDetail}
             onInstall={(entry, version) => d.setChoice({ entry, version })}
             onShowInstalled={onShowInstalled}
+            installDisabled={d.installDisabled}
           />
         ) : readFailed !== null || uninitialized !== null || retrying ? null : d.shown.length === 0 ? (
           <DiscoverEmptyText text={emptyText} />
@@ -139,6 +157,7 @@ export function DiscoverPanel({ t, active, onInstalled, onShowInstalled }: Disco
             onOpen={d.openDetail}
             onInstall={(entry, version) => d.setChoice({ entry, version })}
             onShowInstalled={onShowInstalled}
+            installDisabled={d.installDisabled}
           />
         )}
         {d.detailEntry !== null || d.total <= d.shown.length ? null : (

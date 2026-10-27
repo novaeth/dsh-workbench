@@ -139,7 +139,8 @@ describe('createMarketIndexReader', () => {
     expect(outcome.commit).toBe(commit);
     expect(fake.calls[0]).toContain("git clone --bare --depth 1 --branch 'main'");
     expect(fake.calls.every((line) => line.includes('GIT_TERMINAL_PROMPT=0'))).toBe(true);
-    expect(fake.calls.every((line) => !line.includes('GIT_ASKPASS='))).toBe(true);
+    expect(fake.calls.every((line) => line.includes('GIT_ASKPASS='))).toBe(true);
+    expect(fake.calls.every((line) => line.includes('SSH_ASKPASS_REQUIRE=never'))).toBe(true);
     expect(fake.calls.some((line) => line.includes('show HEAD:') && line.includes('market.json'))).toBe(true);
     rmSync(root, { recursive: true, force: true });
   });

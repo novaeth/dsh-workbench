@@ -3,11 +3,13 @@ import { apiGet } from '@dsh-workbench/shared';
 import {
   MARKET_DISCOVER_ROUTE,
   MARKET_DOC_ROUTE,
+  MARKET_GIT_PROBE_ROUTE,
   MARKET_PUBLISH_PREVIEW_ROUTE,
   MARKET_SOURCES_ROUTE,
   type DiscoverDoc,
   type DiscoverDocKind,
   type DiscoverPayload,
+  type GitProbePayload,
   type MarketSourcesPayload,
   type PublishPreview,
 } from '@/kernel/contract/market-index';
@@ -18,6 +20,10 @@ export function readMarketDiscover(options: { readonly force?: boolean } = {}): 
 
 export function readMarketSources(): Promise<ApiResponse<MarketSourcesPayload>> {
   return apiGet<MarketSourcesPayload>(MARKET_SOURCES_ROUTE);
+}
+
+export function readGitProbe(url: string): Promise<ApiResponse<GitProbePayload>> {
+  return apiGet<GitProbePayload>(MARKET_GIT_PROBE_ROUTE, { url });
 }
 
 export function readMarketDoc(
