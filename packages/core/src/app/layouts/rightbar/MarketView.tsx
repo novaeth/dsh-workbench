@@ -7,6 +7,7 @@ import type { CapabilityMap } from '@/shared/hooks/use-capabilities';
 
 import { MIN_BUSY_MS } from '@dsh-workbench/shared';
 import { useVisibleBusy } from '@/shared/hooks/use-visible-busy';
+
 import { marketSettled } from './market-freshness';
 import { useSettleHold } from './market-settle-hold';
 import { useMarketTransient } from './market-transient-state';
@@ -48,10 +49,10 @@ import {
   withPinnedRow,
   type Pending,
 } from './market-view-text';
-import { machineBoardSignature, useBoardSettle } from './panel-write';
 import { MarketSection } from './market-section';
 import { marketActOf } from './market-act';
 import { usePublishMarketBusy } from './market-busy';
+import { useMarketDefault } from './use-market-default';
 import { marketSectionIcon } from './market-section-icon';
 import { MarketCheck } from '../market/market-check';
 import { PanelFoot } from '@/shared/components/PanelFoot';
@@ -320,26 +321,13 @@ export function MarketView({
     });
   usePublishMarketBusy(busyId);
   const provision = useHostWrite({ channel: 'provision', networkText: t('panels.failed') });
-  const boardWrite = useHostWrite<unknown>({
-    channel: 'prefs',
-    resource: 'panels',
-    networkText: t('panels.failed'),
+  const { busy: boardBusy, setDefault } = useMarketDefault({
+    t,
+    mocked: mock !== undefined,
+    defaults,
+    changed,
+    setNotice,
   });
-  const [writingDefault, setWritingDefault] = useState(false);
-  const settleDefault = useBoardSettle(machineBoardSignature(defaults, changed));
-  const { busy: boardBusy } = useVisibleBusy(writingDefault || settleDefault.pending, MIN_BUSY_MS);
-
-  const setDefault = async (id: string, next: boolean): Promise<void> => {
-    if (mock !== undefined) return;
-    setWritingDefault(true);
-    settleDefault.begin();
-    const outcome = await boardWrite.send({ action: next ? 'show' : 'hide', id, scope: 'machine' });
-    setWritingDefault(false);
-    if (!outcome.ok) {
-      settleDefault.clear();
-      setNotice(t('panels.failed'));
-    }
-  };
   const pendingRow = pendingRowOf({ pending, removing, rows, names });
   const self = workbenchRow(mock === undefined ? workbench : mock.workbench);
   const shown = withPinnedRow(pendingRow === undefined ? rows : [...rows, pendingRow], pinned);

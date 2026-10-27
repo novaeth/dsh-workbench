@@ -17,7 +17,6 @@ import {
   shouldProbeOnEnter,
   type MarketFreshness,
 } from '../rightbar/market-freshness';
-import { MODULE_SETTLE_MS, holdBack } from '../rightbar/market-settle';
 import { marketUpdatesOf, withClientRefusals } from '../rightbar/market-rows';
 import { marketHintOf } from '../rightbar/market-hint';
 import { useMarketBusy } from '../rightbar/market-busy';
@@ -26,6 +25,7 @@ import type { TitleResolve } from '../rightbar/market-names';
 import { DiscoverPanel } from './DiscoverPanel';
 import { MarketHeader, type MarketTab } from './market-header';
 import { useEnabledUnits } from '../rightbar/use-panels';
+import { useSettlingModules } from './use-settling-modules';
 import { bumpModuleVersionsEpoch, useModuleVersions } from './use-module-versions';
 import { AddModuleDialog } from './AddModuleDialog';
 import styles from './MarketPage.module.css';
@@ -33,7 +33,6 @@ import styles from './MarketPage.module.css';
 export const MARKET_PANEL_ID = 'workbench-market';
 
 const MOCK_FRESHNESS: MarketFreshness = { loaded: true, checking: false, checkedAt: null };
-const NO_UNITS: ReadonlySet<string> = new Set();
 
 function useLiveManifests(units: ClientUnitRegistry): readonly UnitManifest[] {
   const subscribe = useCallback((listener: () => void) => units.subscribe(listener), [units]);
@@ -142,23 +141,11 @@ function MarketPanel({
     forceProbe();
   }, [checkedAt, forceProbe, reloadVersions]);
 
-  const installedKey = (installed ?? []).map((module) => module.unit).join('|');
-  const rosterKey = manifests.map((manifest) => manifest.id).join('|');
-  const activeKey = Object.keys(capabilities ?? {}).join('|');
-  const seenRef = useRef<ReadonlySet<string> | null>(null);
-  const [settling, setSettling] = useState<ReadonlySet<string>>(NO_UNITS);
-
-  useEffect(() => {
-    const units = installedKey === '' ? [] : installedKey.split('|');
-    const roster = new Set(rosterKey === '' ? [] : rosterKey.split('|'));
-    const active = new Set(activeKey === '' ? [] : activeKey.split('|'));
-    const held = holdBack(units, roster, active, seenRef.current);
-    seenRef.current = new Set(units);
-    setSettling(held.length === 0 ? NO_UNITS : new Set(held));
-    if (held.length === 0) return;
-    const timer = setTimeout(() => setSettling(NO_UNITS), MODULE_SETTLE_MS);
-    return () => clearTimeout(timer);
-  }, [installedKey, rosterKey, activeKey]);
+  const settling = useSettlingModules(
+    (installed ?? []).map((module) => module.unit).join('|'),
+    manifests.map((manifest) => manifest.id).join('|'),
+    Object.keys(capabilities ?? {}).join('|'),
+  );
 
   const freshness: MarketFreshness = {
     loaded: capabilities !== null,
