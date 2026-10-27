@@ -207,6 +207,7 @@ export const checks = [
           plan,
           root,
           manifest: MANIFEST,
+          unit: 'probe',
           version: '0.1.0',
           publish: { registry: 'https://npm.demo.test/' },
           exec: fake.exec,
@@ -241,6 +242,7 @@ export const checks = [
           plan,
           root,
           manifest: MANIFEST,
+          unit: 'probe',
           version: '0.1.0',
           publish: {},
           exec: fake.exec,
@@ -260,6 +262,7 @@ export const checks = [
         if (entry.versions[0].source.type !== 'git') throw new Error('source 不是 git');
         if (entry.versions[0].source.commit !== COMMIT) throw new Error('commit 不是 40 位 SHA');
         if (entry.versions[0].source.path !== 'packages/@demo/market-probe') throw new Error('path 不对');
+        if (entry.metadata?.unit !== 'probe') throw new Error(`unit 没写进条目：${JSON.stringify(entry.metadata)}`);
         const commits = fake.calls.filter((one) => one.argv.includes('commit')).length;
         if (commits !== 2) throw new Error(`应该两个 commit，实际 ${commits}`);
         if (fake.calls.filter((one) => one.argv.includes('push')).length !== 2) throw new Error('应该推两次');
@@ -285,6 +288,7 @@ export const checks = [
           plan,
           root,
           manifest: MANIFEST,
+          unit: 'probe',
           version: '0.1.0',
           publish: { registry: 'https://npm.demo.test/' },
           exec: fake.exec,
@@ -317,6 +321,7 @@ export const checks = [
           plan,
           root,
           manifest: MANIFEST,
+          unit: 'probe',
           version: '0.1.0',
           publish: {},
           exec: fake.exec,
@@ -514,9 +519,9 @@ export const checks = [
     },
   },
   {
-    title: 'market-index：别的条目占了同一个产物目录就不发，产物也不写',
+    title: 'market-index：别的条目占着同一个 unit 就不发，产物也不写',
     async run(_ctx, report) {
-      const title = 'market-index：别的条目占了同一个产物目录就不发，产物也不写';
+      const title = 'market-index：别的条目占着同一个 unit 就不发，产物也不写';
       const root = moduleDir();
       const repo = marketDir(
         `${JSON.stringify({
@@ -525,18 +530,8 @@ export const checks = [
             {
               name: '@demo/other',
               owner: 'other',
-              metadata: { workbench: true },
-              versions: [
-                {
-                  version: '0.1.0',
-                  source: {
-                    type: 'git',
-                    url: 'https://git.example.com/wb/market.git',
-                    commit: 'a'.repeat(40),
-                    path: 'packages/@demo/market-probe',
-                  },
-                },
-              ],
+              metadata: { workbench: true, unit: 'probe' },
+              versions: [{ version: '0.1.0', source: { type: 'npm' } }],
             },
           ],
         })}\n`,
@@ -549,6 +544,7 @@ export const checks = [
           plan,
           root,
           manifest: MANIFEST,
+          unit: 'probe',
           version: '0.1.0',
           publish: {},
           exec: fake.exec,
@@ -557,7 +553,7 @@ export const checks = [
         });
         if (market.updated !== false) throw new Error('居然发了');
         if (market.code !== 'market-owner') throw new Error(`code 不对：${String(market.code)}`);
-        if (!String(market.reason).includes('产物目录')) throw new Error(`理由不对：${String(market.reason)}`);
+        if (!String(market.reason).includes('模块 id')) throw new Error(`理由不对：${String(market.reason)}`);
         if (existsSync(join(repo, 'packages', '@demo', 'market-probe'))) throw new Error('被拒了还写了产物');
         if (indexTextOf(repo) !== before) throw new Error('被拒了还改了索引');
         report(title, true);

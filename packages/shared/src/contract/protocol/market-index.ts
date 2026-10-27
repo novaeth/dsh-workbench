@@ -57,6 +57,7 @@ export interface MarketIndexVersion {
 
 export interface MarketIndexEntryMetadata {
   readonly workbench?: boolean;
+  readonly unit?: string;
   readonly category?: string;
   readonly labels?: readonly string[];
   readonly keywords?: readonly string[];
@@ -80,7 +81,8 @@ export type MarketClaim =
   | { readonly state: 'owned'; readonly owner: string }
   | { readonly state: 'unowned' }
   | { readonly state: 'conflict'; readonly owner: string }
-  | { readonly state: 'path-taken'; readonly entry: string; readonly owner?: string }
+  | { readonly state: 'unit-taken'; readonly entry: string }
+  | { readonly state: 'path-taken'; readonly entry: string }
   | { readonly state: 'unknown' };
 
 export interface MarketIndexCategory {
@@ -125,7 +127,8 @@ export type MarketIndexProblemKind =
   | 'git-commit'
   | 'timestamp'
   | 'icon'
-  | 'owner';
+  | 'owner'
+  | 'unit';
 
 export interface MarketIndexProblem {
   readonly kind: MarketIndexProblemKind;

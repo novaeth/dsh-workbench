@@ -391,15 +391,15 @@ export async function runRelease({
     if (publisher === '') throw new ReleaseError(missingPublisherText());
     let claim;
     try {
-      claim = marketClaim({ plan: indexPlan, exec, home, name: manifest.name, publisher });
+      claim = marketClaim({ plan: indexPlan, exec, home, name: manifest.name, unit, publisher });
     } catch (error) {
       if (error instanceof MarketIndexError) {
         throw new NeedsUser(error.step ?? 'index-write', error.message, error.command, { target });
       }
       throw error;
     }
-    if (claim.state === 'conflict' || claim.state === 'path-taken') {
-      throw new ReleaseError(claimProblemText(manifest.name, claim));
+    if (claim.state === 'conflict' || claim.state === 'unit-taken' || claim.state === 'path-taken') {
+      throw new ReleaseError(claimProblemText(manifest.name, claim, unit));
     }
   }
   const frozenVersion = resume && typeof journal?.version === 'string' ? journal.version : undefined;

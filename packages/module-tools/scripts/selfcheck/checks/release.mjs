@@ -1325,4 +1325,55 @@ export const checks = [
       }
     },
   },
+  {
+    title: 'release：换一个包名但沿用同一个 unit 会被拒，旧产物不动',
+    async run(_ctx, report) {
+      const title = 'release：换一个包名但沿用同一个 unit 会被拒，旧产物不动';
+      const dir = probeOf({ manifest: packageOf({ author: '甲 <jia@example.com>' }) });
+      const repo = mkdtempSync(join(tmpdir(), 'wb-rel-unit-'));
+      const home = homeOf();
+      const fake = fakeExec(dir);
+      try {
+        await runRelease({
+          root: dir,
+          home,
+          args: ['--index', repo, '--yes', '--json'],
+          exec: fake.exec,
+          out: () => {},
+          err: () => {},
+        });
+        const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
+        manifest.name = '@demo/other';
+        manifest.version = '0.1.1';
+        writeFileSync(join(dir, 'package.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+        const error = await failureOf(
+          runRelease({
+            root: dir,
+            home,
+            args: ['--index', repo, '--yes', '--json'],
+            exec: fake.exec,
+            out: () => {},
+            err: () => {},
+          }),
+        );
+        if (!(error instanceof ReleaseError)) throw new Error(`没拦住：${error?.message ?? error}`);
+        if (!error.message.includes('模块 id')) throw new Error(`拒的理由不对：${error.message}`);
+        if (!existsSync(join(repo, 'packages', '@demo', 'probe', 'package.json'))) {
+          throw new Error('旧产物被删了');
+        }
+        if (existsSync(join(repo, 'packages', '@demo', 'other'))) throw new Error('新包名也写了产物');
+        const index = JSON.parse(readFileSync(join(repo, 'market.json'), 'utf8'));
+        if (index.plugins.length !== 1 || index.plugins[0].name !== '@demo/probe') {
+          throw new Error(`索引被动了：${JSON.stringify(index.plugins.map((one) => one.name))}`);
+        }
+        report(title, true);
+      } catch (error) {
+        report(title, false, error.message.slice(0, 200));
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+        rmSync(repo, { recursive: true, force: true });
+        rmSync(home, { recursive: true, force: true });
+      }
+    },
+  },
 ];

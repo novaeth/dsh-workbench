@@ -35,8 +35,8 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 要换署名时带 `--author "姓名 <邮箱>"`（或只给姓名）：它写回 `package.json`，索引、产物与提交都用它，
 `--refresh` 时也一样。一个包名归第一次发布的人（`market.json` 里的 `owner`）：换署名发同名会被拒，
 `--refresh` 也一样 —— 真要换人，先改那一条的 `owner`。
-产物目录按包名走（`packages/<包名>/`）；unit 是运行时槽位，同一个 profile 里不能有两个包共用
-（安装时由注册表拒），发布时不用管它。
+同一个市场里，一个模块 id（`dsh.workbench.unit`）只能被一个条目使用；产物目录按包名走
+（`packages/<包名>/`）：换一个包名沿用旧 unit、或两个条目撞同一个 id / 目录，都会被拒。
 
 骨架自带脚本，日常不用记长命令：`build` · `typecheck` · `test` · `selfcheck` · `check` · `lint` · `design`。
 

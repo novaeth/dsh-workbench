@@ -656,6 +656,8 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'approval.publish.owner': 'Owner',
   'approval.publish.ownerUnowned': 'originally unattributed',
   'approval.publish.ownerTaken': 'Owned by {owner}',
+  'approval.publish.unit': 'Module id',
+  'approval.publish.unitTaken': 'Taken by {entry}',
   'approval.publish.path': 'Artifact dir',
   'approval.publish.pathTaken': 'Taken by {entry}',
   'approval.publish.registry': 'Registry',

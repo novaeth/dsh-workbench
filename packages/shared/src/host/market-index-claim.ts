@@ -45,11 +45,24 @@ export function claimOfEntry(entry: MarketIndexEntry | undefined, publisher: str
 export interface MarketClaimInput {
   readonly name: string;
   readonly publisher: string | undefined;
+  readonly unit?: string | undefined;
   readonly artifactPath?: string | undefined;
 }
 
 export function marketArtifactPath(name: string): string {
   return `packages/${name}`;
+}
+
+export function entryUnitOf(entry: MarketIndexEntry): string | undefined {
+  const unit = entry.metadata?.unit?.trim();
+  if (unit !== undefined && unit !== '') return unit;
+  for (const version of entry.versions) {
+    if (version.source.type !== 'git') continue;
+    const match = /^packages\/([^/]+)$/u.exec(version.source.path ?? '');
+    const legacy = match?.[1];
+    if (legacy !== undefined) return legacy;
+  }
+  return undefined;
 }
 
 export function claimOf(index: MarketIndex, input: MarketClaimInput): MarketClaim {
@@ -58,13 +71,20 @@ export function claimOf(index: MarketIndex, input: MarketClaimInput): MarketClai
     input.publisher,
   );
   if (base.state === 'conflict' || base.state === 'unknown') return base;
+  const unit = (input.unit ?? '').trim();
+  if (unit !== '') {
+    for (const other of index.plugins) {
+      if (other.name === input.name) continue;
+      if (entryUnitOf(other) !== unit) continue;
+      return { state: 'unit-taken', entry: other.name };
+    }
+  }
   const path = (input.artifactPath ?? '').trim();
   if (path !== '') {
     for (const other of index.plugins) {
       if (other.name === input.name) continue;
       if (!other.versions.some((one) => one.source.type === 'git' && (one.source.path ?? '') === path)) continue;
-      const owner = entryOwnerOf(other);
-      return { state: 'path-taken', entry: other.name, ...(owner === undefined ? {} : { owner }) };
+      return { state: 'path-taken', entry: other.name };
     }
   }
   return base;

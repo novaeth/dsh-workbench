@@ -225,12 +225,41 @@ describe('发布预览的只读路由', () => {
     }
   });
 
+  it('别的条目用了同一个模块 id：预览出 unit-taken', async () => {
+    const root = workshopOf();
+    const market = marketHomeOf([
+      {
+        name: '@demo/other',
+        owner: '乙 <b@example.com>',
+        metadata: { unit: 'probe' },
+        versions: [{ version: '0.0.1', source: { type: 'npm' } }],
+      },
+    ]);
+    const previous = process.env.DSH_WORKBENCH_HOME;
+    process.env.DSH_WORKBENCH_HOME = market;
+    try {
+      const handler = publishPreviewRoutes(root)[MARKET_PUBLISH_PREVIEW_ROUTE];
+      const read = async (query: string): Promise<{ readonly preview: PublishPreview | null }> =>
+        (await handler?.(new URLSearchParams(query))) as { readonly preview: PublishPreview | null };
+      expect((await read('unit=probe&author=甲')).preview?.claim).toEqual({
+        state: 'unit-taken',
+        entry: '@demo/other',
+      });
+    } finally {
+      if (previous === undefined) delete process.env.DSH_WORKBENCH_HOME;
+      else process.env.DSH_WORKBENCH_HOME = previous;
+      rmSync(root, { recursive: true, force: true });
+      rmSync(market, { recursive: true, force: true });
+    }
+  });
+
   it('别的条目占了同一个产物目录：预览出 path-taken', async () => {
     const root = workshopOf();
     const market = marketHomeOf([
       {
         name: '@demo/other',
         owner: '乙 <b@example.com>',
+        metadata: { unit: 'other' },
         versions: [
           {
             version: '0.0.1',
@@ -253,7 +282,6 @@ describe('发布预览的只读路由', () => {
       expect((await read('unit=probe&author=甲')).preview?.claim).toEqual({
         state: 'path-taken',
         entry: '@demo/other',
-        owner: '乙 <b@example.com>',
       });
     } finally {
       if (previous === undefined) delete process.env.DSH_WORKBENCH_HOME;
