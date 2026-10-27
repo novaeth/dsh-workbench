@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import type { DshShell } from '@dsh-workbench/shared';
 import type {
+  MarketIndex,
   MarketIndexEntry,
   MarketPublishDestination,
   MarketSourceConfig,
@@ -16,7 +17,8 @@ import {
   changelogDate,
   changelogHasEntry,
   changelogSectionOf,
-  claimOfEntry,
+  claimOf,
+  marketArtifactPath,
   marketSourceKey,
   parseMarketIndexJson,
   parseSourceConfig,
@@ -49,13 +51,9 @@ function selectedGitSource(): MarketSourceConfig | undefined {
   return undefined;
 }
 
-interface PublishedEntry {
-  readonly versions: readonly string[];
-  readonly author: string;
-  readonly entry?: MarketIndexEntry;
-}
+const EMPTY_INDEX: MarketIndex = { format: 1, plugins: [] };
 
-function publishedEntryOf(source: MarketSourceConfig, name: string): PublishedEntry | undefined {
+function publishedIndexOf(source: MarketSourceConfig): MarketIndex | undefined {
   const file = join(
     workbenchRoot(),
     'market-index',
@@ -66,17 +64,14 @@ function publishedEntryOf(source: MarketSourceConfig, name: string): PublishedEn
   if (!existsSync(file)) return undefined;
   try {
     const parsed = parseMarketIndexJson(readFileSync(file, 'utf8'));
-    if (!parsed.ok) return undefined;
-    const entry = parsed.index.plugins.find((one) => one.name === name);
-    if (entry === undefined) return { versions: [], author: '' };
-    return {
-      versions: entry.versions.map((one) => one.version),
-      author: typeof entry.author === 'string' ? entry.author.trim() : '',
-      entry,
-    };
+    return parsed.ok ? parsed.index : undefined;
   } catch {
     return undefined;
   }
+}
+
+function publishedEntryOf(index: MarketIndex | undefined, name: string): MarketIndexEntry | undefined {
+  return index?.plugins.find((one) => one.name === name);
 }
 
 function bumped(version: string, kind: string): string {
@@ -103,24 +98,28 @@ function nextVersionOf(version: string, published: readonly string[] | undefined
 
 interface MarketPreview {
   readonly market: MarketPublishDestination;
-  readonly entry?: MarketIndexEntry;
+  readonly index?: MarketIndex;
 }
 
-function marketOf(unit: string, dir: string, name: string, version: string): MarketPreview | undefined {
+function marketOf(dir: string, name: string, version: string): MarketPreview | undefined {
   const source = selectedGitSource();
   if (source === undefined) return undefined;
-  const published = publishedEntryOf(source, name);
-  const nextVersion = nextVersionOf(version, published?.versions);
+  const index = publishedIndexOf(source);
+  const entry = publishedEntryOf(index, name);
+  const nextVersion = nextVersionOf(
+    version,
+    entry?.versions.map((one) => one.version),
+  );
   return {
     market: {
       url: source.url,
       ...(source.ref === undefined ? {} : { ref: source.ref }),
       indexPath: source.path ?? MARKET_INDEX_PATH,
-      artifactPath: `packages/${unit}`,
+      artifactPath: marketArtifactPath(name),
       files: ARTIFACTS.filter((one) => existsSync(join(dir, one))),
       ...(nextVersion === undefined ? {} : { nextVersion }),
     },
-    ...(published?.entry === undefined ? {} : { entry: published.entry }),
+    ...(index === undefined ? {} : { index }),
   };
 }
 
@@ -202,7 +201,7 @@ export async function inferredAuthorOf(
   if (fact.author !== '') return fact.author;
   const source = selectedGitSource();
   if (source !== undefined && fact.name !== '') {
-    const published = publishedEntryOf(source, fact.name)?.author ?? '';
+    const published = publishedEntryOf(publishedIndexOf(source), fact.name)?.author ?? '';
     if (published !== '') return published;
   }
   const sibling = root === null || root === undefined ? undefined : siblingAuthorOf(root, unit);
@@ -241,11 +240,19 @@ export function publishPreviewOf(
     typeof publishConfig === 'object' && publishConfig !== null
       ? (publishConfig as Record<string, unknown>)['registry']
       : undefined;
-  const market = marketOf(found.unit, found.dir, name, version);
+  const market = marketOf(found.dir, name, version);
   const target = targetVersionOf(version, (options.version ?? '').trim(), market?.market);
   const askedAuthor = (options.author ?? '').trim();
   const author = askedAuthor === '' ? authorOf(record) : askedAuthor;
-  const claim = market === undefined ? undefined : claimOfEntry(market.entry, author);
+  const claim =
+    market === undefined
+      ? undefined
+      : claimOf(market.index ?? EMPTY_INDEX, {
+          name,
+          publisher: author,
+          unit,
+          artifactPath: marketArtifactPath(name),
+        });
   return {
     name,
     version,

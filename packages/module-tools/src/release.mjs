@@ -18,7 +18,7 @@ import {
 } from './release-journal.mjs';
 import { emit, installOf, marketInstallOf, stateOf } from './release-report.mjs';
 import { authorChangeOf } from './release-changelog.mjs';
-import { CHANGELOG_FILE, CHANGELOG_KINDS, changelogDate } from '@dsh-workbench/shared/host';
+import { CHANGELOG_FILE, CHANGELOG_KINDS, changelogDate, marketArtifactPath } from '@dsh-workbench/shared/host';
 import { applyChangelog, changelogProblemOf } from './changelog.mjs';
 import {
   NeedsUser,
@@ -391,15 +391,15 @@ export async function runRelease({
     if (publisher === '') throw new ReleaseError(missingPublisherText());
     let claim;
     try {
-      claim = marketClaim({ plan: indexPlan, exec, home, name: manifest.name, publisher });
+      claim = marketClaim({ plan: indexPlan, exec, home, name: manifest.name, unit, publisher });
     } catch (error) {
       if (error instanceof MarketIndexError) {
         throw new NeedsUser(error.step ?? 'index-write', error.message, error.command, { target });
       }
       throw error;
     }
-    if (claim.state === 'conflict') {
-      throw new ReleaseError(claimProblemText(manifest.name, claim.owner));
+    if (claim.state === 'conflict' || claim.state === 'unit-taken' || claim.state === 'path-taken') {
+      throw new ReleaseError(claimProblemText(manifest.name, claim, unit));
     }
   }
   const frozenVersion = resume && typeof journal?.version === 'string' ? journal.version : undefined;
@@ -500,7 +500,14 @@ export async function runRelease({
       if (commit === '') throw new ReleaseError('没有记录上次发布的 commit —— 先正常发一次再核');
       let checked;
       try {
-        checked = verifyMarketArtifact({ plan: indexPlan, exec, home, unit, commit });
+        checked = verifyMarketArtifact({
+          plan: indexPlan,
+          exec,
+          home,
+          name: manifest.name,
+          path: typeof state?.path === 'string' ? state.path : undefined,
+          commit,
+        });
       } catch (error) {
         throw new ReleaseError(error instanceof Error ? error.message : String(error));
       }
@@ -755,7 +762,7 @@ export async function runRelease({
       });
     }
     writeManifest(root, next);
-    const path = index.path ?? `packages/${unit}`;
+    const path = index.path ?? marketArtifactPath(manifest.name);
     const install = marketInstallOf(index.url, index.commit, path);
     const journalNow = tracking ? readState(home, unit)?.run : undefined;
     writeState(home, unit, {

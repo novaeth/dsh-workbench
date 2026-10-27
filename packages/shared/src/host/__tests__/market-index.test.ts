@@ -1,16 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { MarketIndex, MarketIndexEntry } from '../../contract/protocol/market-index.js';
+import { claimOf, claimOfEntry, entryOwnerOf, entryUnitOf, marketArtifactPath, samePublisher } from '../market-index-claim.js';
 import {
-  claimOf,
-  claimOfEntry,
-  entryOwnerOf,
   filterMarketIndex,
   marketInstallTarget,
   marketSourceKey,
   parseMarketIndex,
   parseMarketIndexJson,
   parseSourceConfig,
-  samePublisher,
   upsertMarketEntry,
 } from '../market-index.js';
 
@@ -103,6 +100,17 @@ describe('parseMarketIndex', () => {
     if (parsed.ok) return;
     expect(parsed.problems[0]?.kind).toBe('owner');
   });
+
+  it('收下 metadata.unit；不是合法模块 id 整份拒', () => {
+    const parsed = parseMarketIndex(indexOf([entry({ metadata: { unit: 'inventory' } })]));
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.index.plugins[0]?.metadata?.unit).toBe('inventory');
+    const bad = parseMarketIndex(indexOf([entry({ metadata: { unit: 'Not A Unit' } })]));
+    expect(bad.ok).toBe(false);
+    if (bad.ok) return;
+    expect(bad.problems[0]?.kind).toBe('unit');
+  });
 });
 
 describe('upsertMarketEntry', () => {
@@ -175,10 +183,90 @@ describe('认领', () => {
   it('老条目只有 author：把它当 owner 认', () => {
     const legacy = entry({ author: '陈康 <kang@example.com>' });
     expect(entryOwnerOf(legacy)).toBe('陈康 <kang@example.com>');
-    expect(claimOf({ format: 1, plugins: [legacy] }, '@scope/module-x', '陈康')).toEqual({
+    expect(claimOf({ format: 1, plugins: [legacy] }, { name: '@scope/module-x', publisher: '陈康' })).toEqual({
       state: 'owned',
       owner: '陈康 <kang@example.com>',
     });
+  });
+
+  it('别的条目用了同一个 unit：unit-taken；老条目从产物目录认 unit', () => {
+    const other = entry({ name: '@scope/other', owner: '乙', metadata: { unit: 'inventory' } });
+    expect(claimOf({ format: 1, plugins: [other] }, { name: '@scope/module-x', publisher: '甲', unit: 'inventory' })).toEqual({
+      state: 'unit-taken',
+      entry: '@scope/other',
+      owner: '乙',
+    });
+    const legacy = entry({
+      name: '@scope/legacy',
+      versions: [
+        {
+          version: '0.1.0',
+          source: {
+            type: 'git',
+            url: 'https://git.company.com/wb/market.git',
+            commit: 'a'.repeat(40),
+            path: 'packages/inventory',
+          },
+        },
+      ],
+    });
+    expect(entryUnitOf(legacy)).toBe('inventory');
+    expect(claimOf({ format: 1, plugins: [legacy] }, { name: '@scope/module-x', publisher: '甲', unit: 'inventory' }).state).toBe(
+      'unit-taken',
+    );
+  });
+
+  it('同一个条目自己再用同 unit / 同产物目录，不算撞', () => {
+    const mine = entry({
+      owner: '甲',
+      metadata: { unit: 'inventory' },
+      versions: [
+        {
+          version: '0.1.0',
+          source: {
+            type: 'git',
+            url: 'https://git.company.com/wb/market.git',
+            commit: 'a'.repeat(40),
+            path: marketArtifactPath('@scope/module-x'),
+          },
+        },
+      ],
+    });
+    expect(
+      claimOf(
+        { format: 1, plugins: [mine] },
+        {
+          name: '@scope/module-x',
+          publisher: '甲',
+          unit: 'inventory',
+          artifactPath: marketArtifactPath('@scope/module-x'),
+        },
+      ).state,
+    ).toBe('owned');
+  });
+
+  it('别的条目占了同一个产物目录：path-taken', () => {
+    const other = entry({
+      name: '@scope/other',
+      owner: '乙',
+      versions: [
+        {
+          version: '0.1.0',
+          source: {
+            type: 'git',
+            url: 'https://git.company.com/wb/market.git',
+            commit: 'a'.repeat(40),
+            path: marketArtifactPath('@scope/module-x'),
+          },
+        },
+      ],
+    });
+    expect(
+      claimOf(
+        { format: 1, plugins: [other] },
+        { name: '@scope/module-x', publisher: '甲', unit: 'x', artifactPath: marketArtifactPath('@scope/module-x') },
+      ),
+    ).toEqual({ state: 'path-taken', entry: '@scope/other', owner: '乙' });
   });
 });
 
