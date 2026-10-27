@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import type {
   DiscoverFilter,
   IndexSourceSpec,
+  MarketClaim,
   MarketIndex,
   MarketIndexEntry,
   MarketIndexParse,
@@ -33,6 +34,8 @@ export const MARKET_INDEX_README_LINES: readonly string[] = [
   '```',
   '',
   '产物会提交到 `packages/<unit>/`，并更新 `market.json`。',
+  '',
+  '一个包名归第一次发布的人（`market.json` 里的 `owner`）。换一个署名发同名会被拒；要换人，先把这一条的 `owner` 改成新的人。',
   '',
   '## 使用这个索引',
   '',
@@ -152,6 +155,14 @@ function iconProblem(icon: string): MarketIndexProblem | undefined {
   return problem('icon', 'icon 只能是 base64 data URL 或 http(s) URL');
 }
 
+const MAX_OWNER_CHARS = 200;
+
+function ownerProblem(owner: string): MarketIndexProblem | undefined {
+  if (/[\r\n]/u.test(owner)) return problem('owner', 'owner 只能是一行署名');
+  if (owner.length > MAX_OWNER_CHARS) return problem('owner', 'owner 超过 200 字');
+  return undefined;
+}
+
 function metadataOf(raw: unknown): MarketIndexEntry['metadata'] {
   const record = asRecord(raw);
   if (record === undefined) return undefined;
@@ -194,6 +205,11 @@ function entryOf(raw: unknown, at: string): MarketIndexEntry | MarketIndexProble
   const title = asLocalized(record['title']);
   const description = asLocalized(record['description']);
   const author = asText(record['author']);
+  const owner = asText(record['owner']);
+  if (owner !== '') {
+    const badOwner = ownerProblem(owner);
+    if (badOwner !== undefined) return badOwner;
+  }
   const homepage = asText(record['homepage']);
   const metadata = metadataOf(record['metadata']);
   return {
@@ -202,6 +218,7 @@ function entryOf(raw: unknown, at: string): MarketIndexEntry | MarketIndexProble
     ...(title === undefined ? {} : { title }),
     ...(description === undefined ? {} : { description }),
     ...(author === '' ? {} : { author }),
+    ...(owner === '' ? {} : { owner }),
     ...(homepage === '' ? {} : { homepage }),
     ...(icon === '' ? {} : { icon }),
     ...(metadata === undefined ? {} : { metadata }),
@@ -274,9 +291,64 @@ export function upsertMarketEntry(index: MarketIndex, entry: MarketIndexEntry): 
   const merged = new Map<string, MarketIndexVersion>();
   for (const one of current.versions) merged.set(one.version, one);
   for (const one of entry.versions) merged.set(one.version, one);
+  const owner = current.owner ?? entry.owner;
   const plugins = [...index.plugins];
-  plugins[found] = { ...current, ...entry, versions: sortMarketVersions([...merged.values()]) };
+  plugins[found] = {
+    ...current,
+    ...entry,
+    ...(owner === undefined ? {} : { owner }),
+    versions: sortMarketVersions([...merged.values()]),
+  };
   return { ...index, plugins };
+}
+
+export interface PublisherIdentity {
+  readonly name: string;
+  readonly email?: string;
+}
+
+function foldedName(name: string): string {
+  return name.replace(/\s+/gu, ' ').trim().toLowerCase();
+}
+
+export function publisherIdentityOf(text: string | undefined): PublisherIdentity | undefined {
+  const raw = (text ?? '').trim();
+  if (raw === '') return undefined;
+  const match = /^(.*?)\s*<([^<>]*)>\s*$/u.exec(raw);
+  const name = (match === null ? raw : match[1]).trim();
+  const email = match === null ? '' : match[2].trim().toLowerCase();
+  if (name === '') return undefined;
+  return email === '' ? { name } : { name, email };
+}
+
+export function samePublisher(left: string, right: string): boolean {
+  const a = publisherIdentityOf(left);
+  const b = publisherIdentityOf(right);
+  if (a === undefined || b === undefined) return false;
+  if (a.email !== undefined && b.email !== undefined) return a.email === b.email;
+  return foldedName(a.name) === foldedName(b.name);
+}
+
+export function entryOwnerOf(entry: MarketIndexEntry): string | undefined {
+  const owner = (entry.owner ?? '').trim();
+  if (owner !== '') return owner;
+  const author = (entry.author ?? '').trim();
+  return author === '' ? undefined : author;
+}
+
+export function claimOfEntry(entry: MarketIndexEntry | undefined, publisher: string | undefined): MarketClaim {
+  if (entry === undefined) return { state: 'new' };
+  const owner = entryOwnerOf(entry);
+  if (owner === undefined) return { state: 'unowned' };
+  if (publisher === undefined || publisher.trim() === '') return { state: 'unknown' };
+  return samePublisher(owner, publisher) ? { state: 'owned', owner } : { state: 'conflict', owner };
+}
+
+export function claimOf(index: MarketIndex, name: string, publisher: string | undefined): MarketClaim {
+  return claimOfEntry(
+    index.plugins.find((one) => one.name === name),
+    publisher,
+  );
 }
 
 export function marketEntryLabels(entry: MarketIndexEntry): readonly string[] {

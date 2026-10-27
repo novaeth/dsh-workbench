@@ -96,6 +96,21 @@ describe('发布审批：版本单独一行，仓库 / 分支 / 两个 commit �
     );
     expect(rows.find((row) => row.label === '作者')?.value).toBe('Ada <ada@example.com>');
   });
+
+  it('★ 条目已有认领人：多一行「认领人」；冲突写清是谁的，没主的写原来没署名', () => {
+    const owned = publishRows(
+      { unit: 'probe' },
+      { ...preview, claim: { state: 'owned', owner: '陈康 <kang@example.com>' } },
+      t,
+    );
+    expect(owned.find((row) => row.label === '认领人')?.value).toBe('陈康 <kang@example.com>');
+    const conflict = publishRows({ unit: 'probe' }, { ...preview, claim: { state: 'conflict', owner: '甲' } }, t);
+    expect(conflict.find((row) => row.label === '认领人')?.value).toBe('已有主人：甲');
+    const unowned = publishRows({ unit: 'probe' }, { ...preview, claim: { state: 'unowned' } }, t);
+    expect(unowned.find((row) => row.label === '认领人')?.value).toBe('原来没署名');
+    const fresh = publishRows({ unit: 'probe' }, { ...preview, claim: { state: 'new' } }, t);
+    expect(fresh.some((row) => row.label === '认领人')).toBe(false);
+  });
 });
 
 describe('审批详情座：外壳自己的族也画同一件 ApprovalPlan', () => {

@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import type { DshShell } from '@dsh-workbench/shared';
 import type {
+  MarketIndexEntry,
   MarketPublishDestination,
   MarketSourceConfig,
   PublishChangelog,
@@ -15,6 +16,7 @@ import {
   changelogDate,
   changelogHasEntry,
   changelogSectionOf,
+  claimOfEntry,
   marketSourceKey,
   parseMarketIndexJson,
   parseSourceConfig,
@@ -50,6 +52,7 @@ function selectedGitSource(): MarketSourceConfig | undefined {
 interface PublishedEntry {
   readonly versions: readonly string[];
   readonly author: string;
+  readonly entry?: MarketIndexEntry;
 }
 
 function publishedEntryOf(source: MarketSourceConfig, name: string): PublishedEntry | undefined {
@@ -69,14 +72,11 @@ function publishedEntryOf(source: MarketSourceConfig, name: string): PublishedEn
     return {
       versions: entry.versions.map((one) => one.version),
       author: typeof entry.author === 'string' ? entry.author.trim() : '',
+      entry,
     };
   } catch {
     return undefined;
   }
-}
-
-function publishedVersionsOf(source: MarketSourceConfig, name: string): readonly string[] | undefined {
-  return publishedEntryOf(source, name)?.versions;
 }
 
 function bumped(version: string, kind: string): string {
@@ -101,17 +101,26 @@ function nextVersionOf(version: string, published: readonly string[] | undefined
   return undefined;
 }
 
-function marketOf(unit: string, dir: string, name: string, version: string): MarketPublishDestination | undefined {
+interface MarketPreview {
+  readonly market: MarketPublishDestination;
+  readonly entry?: MarketIndexEntry;
+}
+
+function marketOf(unit: string, dir: string, name: string, version: string): MarketPreview | undefined {
   const source = selectedGitSource();
   if (source === undefined) return undefined;
-  const nextVersion = nextVersionOf(version, publishedVersionsOf(source, name));
+  const published = publishedEntryOf(source, name);
+  const nextVersion = nextVersionOf(version, published?.versions);
   return {
-    url: source.url,
-    ...(source.ref === undefined ? {} : { ref: source.ref }),
-    indexPath: source.path ?? MARKET_INDEX_PATH,
-    artifactPath: `packages/${unit}`,
-    files: ARTIFACTS.filter((one) => existsSync(join(dir, one))),
-    ...(nextVersion === undefined ? {} : { nextVersion }),
+    market: {
+      url: source.url,
+      ...(source.ref === undefined ? {} : { ref: source.ref }),
+      indexPath: source.path ?? MARKET_INDEX_PATH,
+      artifactPath: `packages/${unit}`,
+      files: ARTIFACTS.filter((one) => existsSync(join(dir, one))),
+      ...(nextVersion === undefined ? {} : { nextVersion }),
+    },
+    ...(published?.entry === undefined ? {} : { entry: published.entry }),
   };
 }
 
@@ -233,15 +242,17 @@ export function publishPreviewOf(
       ? (publishConfig as Record<string, unknown>)['registry']
       : undefined;
   const market = marketOf(found.unit, found.dir, name, version);
-  const target = targetVersionOf(version, (options.version ?? '').trim(), market);
+  const target = targetVersionOf(version, (options.version ?? '').trim(), market?.market);
   const askedAuthor = (options.author ?? '').trim();
   const author = askedAuthor === '' ? authorOf(record) : askedAuthor;
+  const claim = market === undefined ? undefined : claimOfEntry(market.entry, author);
   return {
     name,
     version,
     ...(author === '' ? {} : { author }),
     ...(typeof registry === 'string' && registry !== '' ? { registry } : {}),
-    ...(market === undefined ? {} : { market }),
+    ...(market === undefined ? {} : { market: market.market }),
+    ...(claim === undefined ? {} : { claim }),
     changelog: changelogOf(found.dir, target, (options.changelog ?? '').trim(), kindOf(options.changelogType)),
   };
 }

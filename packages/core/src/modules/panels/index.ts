@@ -171,7 +171,8 @@ export const panelsHost: UnitOwnedFace = {
       needsApproval: panelsApprovalFor(
         longTaskRuns,
         () => record.live(Date.now()),
-        (unit) => publishPreviewOf(workshopPathOf(ctx), unit),
+        (unit, author) =>
+          publishPreviewOf(workshopPathOf(ctx), unit, author === undefined ? {} : { author }),
         marketSources,
       ),
       gate: {

@@ -139,13 +139,14 @@ export type PublishApprovalPreview = PublishPreview;
 
 function publishVerdict(
   call: ApprovalCall,
-  preview?: (unit: string) => PublishApprovalPreview | null,
+  preview?: (unit: string, author?: string) => PublishApprovalPreview | null,
 ): ApprovalVerdict {
   const raw = argsOf(call);
   if (raw['verify'] === true || raw['target'] === 'local') return { kind: 'allow' };
   const refresh = raw['refresh'] === true;
   const unit = textOf(raw, 'unit');
-  const found = unit === '' ? null : (preview?.(unit) ?? null);
+  const askedAuthor = textOf(raw, 'author');
+  const found = unit === '' ? null : (preview?.(unit, askedAuthor === '' ? undefined : askedAuthor) ?? null);
   const asked = textOf(raw, 'target');
   const target = refresh
     ? 'market'
@@ -156,6 +157,16 @@ function publishVerdict(
           : 'team'
         : 'market'
       : asked;
+  const source = textOf(raw, 'source');
+  if (found?.claim?.state === 'conflict' && source === '' && target !== 'tarball' && target !== 'local') {
+    return {
+      kind: 'deny',
+      reason:
+        `市场里 ${found.name} 已经有主了（${found.claim.owner}）—— 同一个名字不能换人发。` +
+        '换一个带团队 scope 的包名；你就是原来的作者（只是换了机器或署名），用 author 参数带上原来的署名；' +
+        '确实是接手，让索引维护者改 market.json 里这一条的 owner。',
+    };
+  }
   const label = unit === '' ? '工作台模块' : `工作台模块 [${unit}]`;
   const labelEn = unit === '' ? 'the workbench module' : `the workbench module [${unit}]`;
   if (!refresh && found?.changelog?.missing === true && textOf(raw, 'changelogNote') === '') {
@@ -468,7 +479,7 @@ function recordHeldVerdict(
 export function panelsApprovalFor(
   longTaskRuns?: LongTaskRunsLookup | undefined,
   recording?: (() => RecordState | null) | undefined,
-  publishPreview?: ((unit: string) => PublishApprovalPreview | null) | undefined,
+  publishPreview?: ((unit: string, author?: string) => PublishApprovalPreview | null) | undefined,
   marketSources?: MarketSourcesStore | undefined,
 ): ApprovalPolicy {
   const sourceOf: MarketSourceLookup | undefined =

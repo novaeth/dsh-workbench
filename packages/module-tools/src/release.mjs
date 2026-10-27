@@ -49,8 +49,12 @@ import {
 } from './release-publish.mjs';
 import {
   MarketIndexError,
+  authorTextOf,
+  claimProblemText,
   identityOf,
+  marketClaim,
   marketVersionExists,
+  missingPublisherText,
   refreshMarketEntry,
   resolveIndexPlan,
   updateMarketIndex,
@@ -337,6 +341,7 @@ export async function runRelease({
       throw new ReleaseError('这个索引源是 catalog-only：它只收目录、不放产物。用 --index-policy artifacts-in-repo 或换一个可写仓库');
     }
   }
+  const authored = authorChangeOf(root, manifest, exec);
   if (hasFlag(args, '--refresh')) {
     if (dryRun) throw new ReleaseError('--refresh 没有预览：它只改索引里的标题 / 作者 / 说明');
     if (target !== 'market') throw new ReleaseError('--refresh 只对市场索引有意义（--target market）');
@@ -345,7 +350,8 @@ export async function runRelease({
     }
     const cardTitle = cardTitleFromMessages(root, unit);
     const titled = cardTitle === undefined ? manifest : { ...manifest, title: cardTitle };
-    const result = refreshMarketEntry({ plan: indexPlan, exec, home, manifest: titled });
+    const publisher = authorTextOf(manifest) || authored.author || '';
+    const result = refreshMarketEntry({ plan: indexPlan, exec, home, manifest: titled, publisher });
     if (result.updated !== true && result.reason !== undefined) {
       throw new ReleaseError(`刷新市集元数据没走通：${result.reason}`);
     }
@@ -374,11 +380,27 @@ export async function runRelease({
     emit(out, json, summary);
     return summary;
   }
-  const authored = authorChangeOf(root, manifest, exec);
   const authorChange = explicitAuthor === undefined ? authored.change : 'author ← --author';
   if (!explicitApplied && !verify && !dryRun && authored.author !== undefined) {
     manifest.author = authored.author;
     writeManifest(root, manifest);
+  }
+  const publisher = authorTextOf(manifest);
+  const writesIndex = indexPlan !== undefined && target !== 'local' && target !== 'tarball';
+  if (!verify && !dryRun && writesIndex) {
+    if (publisher === '') throw new ReleaseError(missingPublisherText());
+    let claim;
+    try {
+      claim = marketClaim({ plan: indexPlan, exec, home, name: manifest.name, publisher });
+    } catch (error) {
+      if (error instanceof MarketIndexError) {
+        throw new NeedsUser(error.step ?? 'index-write', error.message, error.command, { target });
+      }
+      throw error;
+    }
+    if (claim.state === 'conflict') {
+      throw new ReleaseError(claimProblemText(manifest.name, claim.owner));
+    }
   }
   const frozenVersion = resume && typeof journal?.version === 'string' ? journal.version : undefined;
   const info =
@@ -457,6 +479,7 @@ export async function runRelease({
       unit,
       version,
       publish,
+      publisher: authorTextOf(manifestNow),
       exec,
       home,
       now: () => Date.now(),
@@ -697,6 +720,7 @@ export async function runRelease({
       unit,
       version,
       publish: {},
+      publisher,
       exec,
       home,
       now: () => Date.now(),
@@ -704,6 +728,17 @@ export async function runRelease({
       ...(tracking ? { onStep: (step) => advanceRun(home, unit, step) } : {}),
     });
     if (index.updated !== true || index.commit === undefined || index.commit === '') {
+      if (index.code === 'market-owner') {
+        if (tracking) {
+          interruptRun(home, unit, {
+            class: 'human',
+            code: 'market-owner',
+            text: index.reason ?? missingPublisherText(),
+            phase: index.phase ?? 'claim',
+          });
+        }
+        throw new ReleaseError(index.reason ?? missingPublisherText());
+      }
       const failure = {
         class: index.code === 'git-market-protected' ? 'human' : 'transient',
         code: index.code ?? 'index-write',
