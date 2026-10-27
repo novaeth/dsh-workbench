@@ -191,8 +191,6 @@ export const zh = {
   'panels.market.checkUpdates': '检查更新',
   'panels.market.checkingNow': '正在检查…',
   'panels.market.checkFailed': '最近一次没查到，检查网络后重试',
-  'panels.market.updatesCount': '{n} 个模块可更新',
-  'panels.market.pluginsUpdatesCount': '{n} 个插件可更新',
   'panels.market.checkedAt': '最近检查：{time}',
   'panels.market.justNow': '刚刚',
   'panels.market.minutesAgo': '{n} 分钟前',

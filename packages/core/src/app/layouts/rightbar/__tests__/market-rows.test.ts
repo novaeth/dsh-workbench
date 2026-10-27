@@ -18,7 +18,6 @@ import {
   marketRowTitle,
   marketRows,
   marketSections,
-  marketUpdateCount,
   sharedRows,
 } from '../market-rows';
 
@@ -380,21 +379,4 @@ describe('marketHasUpdates', () => {
   });
 });
 
-describe('marketUpdateCount', () => {
-  it('★ 只数点得动的那几条：同版本、本地、被工作台版本挡住都不算', () => {
-    expect(
-      marketUpdateCount({
-        issues: { installed: '1.0.0', latest: '1.1.0' },
-        builds: { installed: '2.0.0', latest: '2.0.0' },
-        perms: { installed: '1.0.0', latest: '1.2.0', blocked: 'needs-workbench' },
-        local: { installed: '0.0.0', local: true },
-        unknown: { installed: '3.0.0' },
-      }),
-    ).toBe(1);
-  });
 
-  it('没读过 / 读回来是空 → 0，不编数字', () => {
-    expect(marketUpdateCount(undefined)).toBe(0);
-    expect(marketUpdateCount({})).toBe(0);
-  });
-});

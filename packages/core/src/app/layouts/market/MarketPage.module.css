@@ -565,6 +565,11 @@
   gap: var(--wb-len-8);
 }
 
+.discoverUpdateAction {
+  color: var(--dsw-alias-state-warn-primary);
+  --dsw-alias-interactive-bg-hover: color-mix(in srgb, var(--dsw-alias-state-warn-primary) 8%, transparent);
+}
+
 .discoverBlocked {
   opacity: 0.5;
   cursor: not-allowed;

@@ -322,17 +322,6 @@ export function marketHasUpdates(rows: readonly MarketRow[], shared: readonly Sh
   );
 }
 
-export function marketUpdateCount(updates: ModuleUpdateMap | undefined): number {
-  if (updates === undefined) return 0;
-  return Object.values(updates).filter(
-    (update) =>
-      update.local !== true &&
-      update.latest !== undefined &&
-      update.latest !== update.installed &&
-      update.blocked === undefined,
-  ).length;
-}
-
 export function marketUpdatesOf(
   modules: readonly ModuleVersion[] | null,
 ): ModuleUpdateMap {

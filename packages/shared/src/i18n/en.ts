@@ -194,8 +194,6 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'panels.market.checkUpdates': 'Check for updates',
   'panels.market.checkingNow': 'Checking…',
   'panels.market.checkFailed': 'The last check failed. Check your connection and retry.',
-  'panels.market.updatesCount': '{n} updates available',
-  'panels.market.pluginsUpdatesCount': '{n} plugin updates available',
   'panels.market.checkedAt': 'Last checked: {time}',
   'panels.market.justNow': 'just now',
   'panels.market.minutesAgo': '{n} min ago',

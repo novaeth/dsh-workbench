@@ -192,12 +192,12 @@ describe('市场页头：动作在飞，页头与列表里的钮一起禁用', (
     expect(page).not.toContain('onReload');
     expect(page).toContain('updatesCheckedAt={versionsCheckedAt}');
     expect(page).toContain('onPending={setActing}');
-    expect(view).toContain('scope="modules"');
-    expect(view).toContain('scope="plugins"');
-    expect(view).toContain('headAction={pluginCheck}');
+    expect(view).toContain('headAction={check}');
+    expect(view.match(/headAction=\{check\}/g)).toHaveLength(2);
     expect(view).toContain('disabled={pending !== null}');
     expect(header).not.toContain('IconRefreshOutlineRegular');
     expect(check).toContain('variant="ghost"');
+    expect(check).not.toContain('updatesCount');
     expect(check).toContain('disabled={disabled || checking}');
     expect(view).toContain('useMarketTransient({ mock, onPending })');
     expect(transient).toContain('onPending?.(pending !== null)');

@@ -66,15 +66,17 @@ export function EntryAction({
   const latest = latestVersionOf(entry);
   if (latest === undefined) return null;
   if (latest.install === 'installed' || latest.install === 'update-available') {
+    const update = latest.install === 'update-available';
     return (
       <Button
         type="button"
         variant="ghost"
         size="sm"
+        className={update ? styles.discoverUpdateAction : undefined}
         aria-label={t('panels.discover.openInstalled', { name: title })}
         onClick={() => onShowInstalled(entry.name)}
       >
-        {t(latest.install === 'update-available' ? 'panels.discover.cardUpdate' : 'panels.discover.cardInstalled')}
+        {t(update ? 'panels.discover.cardUpdate' : 'panels.discover.cardInstalled')}
       </Button>
     );
   }
