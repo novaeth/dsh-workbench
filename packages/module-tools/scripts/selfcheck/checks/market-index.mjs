@@ -250,7 +250,7 @@ export const checks = [
           now: () => 1760000000000,
         });
         if (market.updated !== true) throw new Error(`没更新：${market.reason}`);
-        const dir = join(repo, 'packages', 'probe');
+        const dir = join(repo, 'packages', '@demo', 'market-probe');
         for (const file of ['dist/host.js', 'client.js', 'cordis.patch.yml', 'README.md', 'package.json']) {
           if (!existsSync(join(dir, file))) throw new Error(`产物缺 ${file}`);
         }
@@ -261,7 +261,8 @@ export const checks = [
         const entry = entryOfText(indexTextOf(repo));
         if (entry.versions[0].source.type !== 'git') throw new Error('source 不是 git');
         if (entry.versions[0].source.commit !== COMMIT) throw new Error('commit 不是 40 位 SHA');
-        if (entry.versions[0].source.path !== 'packages/probe') throw new Error('path 不对');
+        if (entry.versions[0].source.path !== 'packages/@demo/market-probe') throw new Error('path 不对');
+        if (entry.metadata?.unit !== 'probe') throw new Error(`unit 没写进条目：${JSON.stringify(entry.metadata)}`);
         const commits = fake.calls.filter((one) => one.argv.includes('commit')).length;
         if (commits !== 2) throw new Error(`应该两个 commit，实际 ${commits}`);
         if (fake.calls.filter((one) => one.argv.includes('push')).length !== 2) throw new Error('应该推两次');
@@ -514,6 +515,53 @@ export const checks = [
         report(title, false, error.message.slice(0, 200));
       } finally {
         rmSync(dir, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    title: 'market-index：别的条目占着同一个 unit 就不发，产物也不写',
+    async run(_ctx, report) {
+      const title = 'market-index：别的条目占着同一个 unit 就不发，产物也不写';
+      const root = moduleDir();
+      const repo = marketDir(
+        `${JSON.stringify({
+          format: 1,
+          plugins: [
+            {
+              name: '@demo/other',
+              owner: 'other',
+              metadata: { workbench: true, unit: 'probe' },
+              versions: [{ version: '0.1.0', source: { type: 'npm' } }],
+            },
+          ],
+        })}\n`,
+      );
+      const before = indexTextOf(repo);
+      try {
+        const fake = fakeExec();
+        const plan = resolveIndexPlan({ args: ['--index', repo], home: tmpdir(), exec: fake.exec });
+        const market = updateMarketIndex({
+          plan,
+          root,
+          manifest: MANIFEST,
+          unit: 'probe',
+          version: '0.1.0',
+          publish: {},
+          exec: fake.exec,
+          home: tmpdir(),
+          now: () => 1760000000000,
+        });
+        if (market.updated !== false) throw new Error('居然发了');
+        if (market.code !== 'market-owner') throw new Error(`code 不对：${String(market.code)}`);
+        if (!String(market.reason).includes('模块 id')) throw new Error(`理由不对：${String(market.reason)}`);
+        if (existsSync(join(repo, 'packages', '@demo', 'market-probe'))) throw new Error('被拒了还写了产物');
+        if (indexTextOf(repo) !== before) throw new Error('被拒了还改了索引');
+        report(title, true);
+      } catch (error) {
+        report(title, false, error.message.slice(0, 200));
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+        rmSync(repo, { recursive: true, force: true });
       }
     },
   },

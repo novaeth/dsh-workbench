@@ -128,15 +128,27 @@ export function publishRows(
   ];
   const claim = preview?.claim;
   if (claim !== undefined && claim.state !== 'new' && claim.state !== 'unknown') {
-    rows.push({
-      label: t('approval.publish.owner'),
-      value:
-        claim.state === 'owned'
-          ? claim.owner
-          : claim.state === 'unowned'
-            ? t('approval.publish.ownerUnowned')
-            : t('approval.publish.ownerTaken', { owner: claim.owner }),
-    });
+    if (claim.state === 'unit-taken') {
+      rows.push({
+        label: t('approval.publish.unit'),
+        value: t('approval.publish.unitTaken', { entry: claim.entry }),
+      });
+    } else if (claim.state === 'path-taken') {
+      rows.push({
+        label: t('approval.publish.path'),
+        value: t('approval.publish.pathTaken', { entry: claim.entry }),
+      });
+    } else {
+      rows.push({
+        label: t('approval.publish.owner'),
+        value:
+          claim.state === 'owned'
+            ? claim.owner
+            : claim.state === 'unowned'
+              ? t('approval.publish.ownerUnowned')
+              : t('approval.publish.ownerTaken', { owner: claim.owner }),
+      });
+    }
   }
   const market = preview?.market;
   if (market !== undefined) {

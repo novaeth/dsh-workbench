@@ -72,4 +72,5 @@ export * from './host/extension.js';
 export * from './host/port-types.js';
 export * from './host/version-range.js';
 export * from './host/market-index.js';
+export * from './host/market-index-claim.js';
 export * from './host/changelog.js';

@@ -111,6 +111,21 @@ describe('发布审批：版本单独一行，仓库 / 分支 / 两个 commit �
     const fresh = publishRows({ unit: 'probe' }, { ...preview, claim: { state: 'new' } }, t);
     expect(fresh.some((row) => row.label === '认领人')).toBe(false);
   });
+
+  it('★ 模块 id / 产物目录被占：各一行说清是谁', () => {
+    const unit = publishRows(
+      { unit: 'probe' },
+      { ...preview, claim: { state: 'unit-taken', entry: '@demo/other' } },
+      t,
+    );
+    expect(unit.find((row) => row.label === '模块 id')?.value).toBe('已被 @demo/other 占用');
+    const path = publishRows(
+      { unit: 'probe' },
+      { ...preview, claim: { state: 'path-taken', entry: '@demo/other' } },
+      t,
+    );
+    expect(path.find((row) => row.label === '产物目录')?.value).toBe('已被 @demo/other 占用');
+  });
 });
 
 describe('审批详情座：外壳自己的族也画同一件 ApprovalPlan', () => {
