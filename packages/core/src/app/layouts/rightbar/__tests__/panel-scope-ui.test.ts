@@ -93,13 +93,15 @@ describe('两屏的分工：市场管机器级默认、面板管本工作区', (
   it('★ 市场那屏：默认那颗开关只在"带这个字段的行"上画，写入带 scope: machine', () => {
     const row = read('market-section.tsx');
     const view = read('MarketView.tsx');
+    const seat = read('use-market-default.ts');
 
     expect(row).toMatch(/row\.defaultShown === undefined \? null : \(/);
     expect(row).toContain("t('panels.market.defaultLabel')");
     expect(row).toContain('marketRowTitle(row, t)');
     expect(row).not.toContain('marketDefaultLabel');
     expect(row).toContain('marketSwitchSeat');
-    expect(view).toContain("scope: 'machine'");
+    expect(seat).toContain("scope: 'machine'");
+    expect(view).toContain('useMarketDefault(');
   });
 
   it('★ 那句说明搬进了钮的 Tip：页面上不再为它单占一行（谁也不悬停就少读一行字）', () => {
@@ -140,7 +142,7 @@ describe('两屏的分工：市场管机器级默认、面板管本工作区', (
     const section = read('market-section.tsx');
 
     expect(view).toMatch(/installedPluginRows\([^)]*byDefault[^)]*changed\)/);
-    expect(view).toContain("{ action: next ? 'show' : 'hide', id, scope: 'machine' }");
+    expect(read('use-market-default.ts')).toContain("{ action: next ? 'show' : 'hide', id, scope: 'machine' }");
     expect(section).toContain('onDefault?.(row.id, next)');
     expect(read('market-plugin-rows.ts')).toContain('defaultShown: defaults.has(id)');
   });

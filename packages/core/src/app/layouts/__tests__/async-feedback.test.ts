@@ -8,8 +8,8 @@ const read = (name: string): string => readFileSync(new URL(name, HERE), 'utf8')
 describe('每一次异步操作都要自己显形（ADR-0039）', () => {
   it('★ 本地写那一档：控件自己压暗 + 有可见下限（面板行、市场那颗默认拨钮）', () => {
     expect(read('rightbar/ModulesPage.tsx')).toContain('useVisibleBusy(writing || settle.pending, MIN_BUSY_MS)');
-    expect(read('rightbar/MarketView.tsx')).toContain(
-      'useVisibleBusy(writingDefault || settleDefault.pending, MIN_BUSY_MS)',
+    expect(read('rightbar/use-market-default.ts')).toContain(
+      'useVisibleBusy(writing || settle.pending, MIN_BUSY_MS)',
     );
   });
 
@@ -21,9 +21,11 @@ describe('每一次异步操作都要自己显形（ADR-0039）', () => {
     expect(page).toContain('useBoardSettle(panelBoardSignature(units, plugins, own))');
     expect(page).toContain('settle.begin()');
     expect(page).toContain('settle.clear()');
-    expect(market).toContain('useBoardSettle(machineBoardSignature(defaults, changed))');
-    expect(market).toContain('settleDefault.begin()');
-    expect(market).toContain('settleDefault.clear()');
+    const seat = read('rightbar/use-market-default.ts');
+    expect(seat).toContain('useBoardSettle(machineBoardSignature(defaults, changed))');
+    expect(seat).toContain('settle.begin()');
+    expect(seat).toContain('settle.clear()');
+    expect(market).toContain('useMarketDefault(');
     expect(settle).toContain('setHeld((current) => nextPending(current, signature))');
     expect(settle).toContain('setTimeout(() => setHeld(null), PANEL_SETTLE_MS)');
   });
