@@ -24,6 +24,7 @@ export type {
   DiscoverVersionRow,
   GitProbePayload,
   GitProbeStatus,
+  GitTransportKind,
   MarketInstalledModule,
   MarketInstalledPayload,
   IndexSourceSpec,

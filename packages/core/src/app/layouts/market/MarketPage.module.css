@@ -172,6 +172,14 @@
   color: var(--dsw-alias-label-caption);
 }
 
+.marketSectionAction {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  margin-left: auto;
+  min-width: 0;
+}
+
 .marketSectionQuiet .marketSectionTitle {
   color: var(--dsw-alias-label-secondary);
 }
@@ -280,39 +288,6 @@
   min-width: var(--wb-len-240);
 }
 
-.marketIconButton {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--wb-len-28);
-  height: var(--wb-len-28);
-  padding: 0;
-  border: 0;
-  border-radius: var(--dsw-radius-sm);
-  background: transparent;
-  color: var(--dsw-alias-label-caption);
-  cursor: pointer;
-}
-
-.marketIconButton:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover);
-  color: var(--dsw-alias-label-secondary);
-}
-
-.marketIconButton:disabled {
-  cursor: default;
-  opacity: 0.5;
-}
-
-.marketIconWrap {
-  display: inline-flex;
-}
-
-.marketIconButtonSpinning svg {
-  animation: wb-spin var(--wb-dur-0-9) linear infinite;
-}
-
 .marketAddButton {
   height: var(--wb-len-32);
   padding: 0 var(--wb-len-12);
@@ -333,15 +308,6 @@
 .marketEmptyTitle {
   font: var(--dsw-font-base-strong-16);
   color: var(--dsw-alias-label-primary);
-}
-
-@keyframes wb-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .discoverPage {
@@ -844,9 +810,29 @@
   gap: var(--wb-len-8);
 }
 
+.discoverTransportHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wb-len-8);
+}
+
 .discoverTransportTitle {
   font: var(--dsw-font-xs-13);
   color: var(--dsw-alias-label-secondary);
+}
+
+.discoverTransportHead .discoverTransportKind {
+  font: var(--dsw-font-xs-13);
+  font-weight: 500;
+}
+
+.discoverTransportHead .discoverTransportState {
+  margin-left: 0;
+}
+
+.discoverTransportHead > :last-child {
+  margin-left: auto;
 }
 
 .discoverTransportRows {

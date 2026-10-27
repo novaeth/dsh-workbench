@@ -38,3 +38,18 @@ export async function probeGitAddress(
     ...(detail === '' ? {} : { detail }),
   };
 }
+
+const PROBE_CACHE_MS = 60 * 1000;
+const probeCache = new Map<string, { readonly at: number; readonly payload: GitProbePayload }>();
+
+export async function probeGitAddressCached(
+  shell: DshShell,
+  url: string,
+  options: { readonly timeoutMs?: number } = {},
+): Promise<GitProbePayload> {
+  const hit = probeCache.get(url);
+  if (hit !== undefined && Date.now() - hit.at < PROBE_CACHE_MS) return hit.payload;
+  const payload = await probeGitAddress(shell, url, options);
+  probeCache.set(url, { at: Date.now(), payload });
+  return payload;
+}

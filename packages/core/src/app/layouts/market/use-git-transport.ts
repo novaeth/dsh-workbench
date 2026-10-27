@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { gitTransportCandidates } from '@dsh-workbench/shared';
-import type { GitProbeStatus, MarketIndexGitSource } from '@/kernel/contract/market-index';
+import type { GitProbeStatus, GitTransportKind, MarketIndexGitSource } from '@/kernel/contract/market-index';
 import { readGitProbe } from '@/shared/hooks/market-queries';
 
 export type TransportProbe = GitProbeStatus | 'checking' | 'unknown';
@@ -40,11 +40,18 @@ function defaultOf(rows: readonly GitTransportRow[], states: Readonly<Record<str
   return fallback === undefined ? null : fallback.url;
 }
 
-export function useGitTransport(source: MarketIndexGitSource | null): GitTransportState {
-  const rows = useMemo<readonly GitTransportRow[]>(
-    () => (source === null ? [] : gitTransportCandidates(source.url)),
-    [source],
-  );
+export function useGitTransport(
+  source: MarketIndexGitSource | null,
+  preferredKind?: GitTransportKind | undefined,
+): GitTransportState {
+  const rows = useMemo<readonly GitTransportRow[]>(() => {
+    if (source === null) return [];
+    const candidates = gitTransportCandidates(source.url);
+    if (preferredKind === undefined) return candidates;
+    return [...candidates].sort(
+      (left, right) => Number(right.kind === preferredKind) - Number(left.kind === preferredKind),
+    );
+  }, [source, preferredKind]);
   const [results, setResults] = useState<Readonly<Record<string, TransportProbe>>>({});
   const [picked, setPicked] = useState<string | null>(null);
   const [custom, setCustom] = useState('');

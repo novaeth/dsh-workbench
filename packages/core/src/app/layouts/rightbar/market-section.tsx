@@ -1,5 +1,5 @@
 import { Fragment, createElement as h, useState } from 'react';
-import type { Translate } from '@dsh-workbench/shared';
+import type { ReactNode, Translate } from '@dsh-workbench/shared';
 import { Spinner } from '@dsh-workbench/shared';
 
 import { Tip } from '@/shared/components/Tip';
@@ -295,6 +295,8 @@ export function MarketSection({
   onConfirming,
   onDefault,
   boardBusy,
+  headAction,
+  keepHead,
 }: {
   readonly t: Translate;
   readonly titleKey?: string;
@@ -307,8 +309,10 @@ export function MarketSection({
   readonly boardBusy?: boolean | undefined;
   readonly confirmActions: readonly MarketRowAction[];
   readonly onConfirming: (id: string | null) => void;
+  readonly headAction?: ReactNode;
+  readonly keepHead?: boolean;
 }) {
-  if (rows.length === 0) return null;
+  if (rows.length === 0 && keepHead !== true) return null;
   return (
     <section className={styles.marketSection}>
       {titleKey === undefined ? null : (
@@ -317,8 +321,9 @@ export function MarketSection({
             {icon}
           </span>
           <h2 className={styles.marketSectionTitle}>{t(titleKey)}</h2>
-          {rows.length === 0 ? null : (
-            <span className={styles.marketSectionCount}>{rows.length}</span>
+          <span className={styles.marketSectionCount}>{rows.length}</span>
+          {headAction === undefined ? null : (
+            <span className={styles.marketSectionAction}>{headAction}</span>
           )}
         </div>
       )}

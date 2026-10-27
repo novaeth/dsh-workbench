@@ -1,7 +1,6 @@
 import { Fragment, createElement as h, useMemo } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
-import { Button, IconPlusOutlineRegular, IconRefreshOutlineRegular, SegmentedTabs } from '@deepseek-ai/dsh-client-ui-primitives';
-import { Tip } from '@/shared/components/Tip';
+import { Button, IconPlusOutlineRegular, SegmentedTabs } from '@deepseek-ai/dsh-client-ui-primitives';
 import styles from './MarketPage.module.css';
 
 export type MarketTab = 'installed' | 'discover';
@@ -11,13 +10,11 @@ export interface MarketHeaderProps {
   readonly idPrefix: string;
   readonly tab: MarketTab;
   readonly busy: boolean;
-  readonly checking: boolean;
   readonly onTab: (tab: MarketTab) => void;
-  readonly onReload: () => void;
   readonly onAdd: () => void;
 }
 
-export function MarketHeader({ t, idPrefix, tab, busy, checking, onTab, onReload, onAdd }: MarketHeaderProps) {
+export function MarketHeader({ t, idPrefix, tab, busy, onTab, onAdd }: MarketHeaderProps) {
   const tabItems = useMemo(
     () =>
       [
@@ -46,31 +43,16 @@ export function MarketHeader({ t, idPrefix, tab, busy, checking, onTab, onReload
         </div>
         <div className={styles.marketPageTools}>
           {tab !== 'installed' ? null : (
-            <>
-              <Tip label={t('panels.market.recheck')}>
-                <button
-                  type="button"
-                  className={`${styles.marketIconButton}${checking ? ` ${styles.marketIconButtonSpinning}` : ''}`}
-                  aria-label={t('panels.market.checkUpdates')}
-                  disabled={busy}
-                  onClick={onReload}
-                >
-                  <span className={styles.marketIconWrap} aria-hidden="true">
-                    <IconRefreshOutlineRegular />
-                  </span>
-                </button>
-              </Tip>
-              <Button
-                variant="primary"
-                size="sm"
-                className={styles.marketAddButton}
-                icon={<IconPlusOutlineRegular size={13} />}
-                disabled={busy}
-                onClick={onAdd}
-              >
-                {t('panels.market.add.open')}
-              </Button>
-            </>
+            <Button
+              variant="primary"
+              size="sm"
+              className={styles.marketAddButton}
+              icon={<IconPlusOutlineRegular size={13} />}
+              disabled={busy}
+              onClick={onAdd}
+            >
+              {t('panels.market.add.open')}
+            </Button>
           )}
         </div>
       </header>

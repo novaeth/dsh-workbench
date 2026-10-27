@@ -36,6 +36,7 @@ export function DiscoverDialogs({ t, d }: DiscoverDialogsProps) {
         t={t}
         locale={d.locale}
         choice={d.choice}
+        transports={d.transports}
         onCancel={() => d.setChoice(null)}
         onConfirm={d.install}
       />

@@ -16,6 +16,7 @@ export interface ModuleVersionsState {
   readonly selfUpdate: WorkbenchSelfUpdate | null;
   readonly read: boolean;
   readonly checking: boolean;
+  readonly failed: boolean;
   readonly checkedAt: number | null;
 }
 
@@ -30,6 +31,7 @@ const NOT_READ: ModuleVersionsState = {
   selfUpdate: null,
   read: false,
   checking: false,
+  failed: false,
   checkedAt: null,
 };
 
@@ -97,17 +99,16 @@ export function runModuleVersionsRead(force = false, fresh = false): Promise<voi
       const versions = responses?.[0];
       const plugins = responses?.[1];
       const market = responses?.[2];
+      const read = versions?.ok === true;
       publish({
-        modules:
-          versions?.ok === true
-            ? withMarketUpdates(versions.modules, market?.ok === true ? market.modules : [])
-            : state.modules,
+        modules: read ? withMarketUpdates(versions.modules, market?.ok === true ? market.modules : []) : state.modules,
         plugins: plugins?.ok === true ? plugins.plugins : state.plugins,
-        workbench: versions?.ok === true ? (versions.workbench ?? null) : state.workbench,
-        selfUpdate: versions?.ok === true ? (versions.selfUpdate ?? null) : state.selfUpdate,
+        workbench: read ? (versions.workbench ?? null) : state.workbench,
+        selfUpdate: read ? (versions.selfUpdate ?? null) : state.selfUpdate,
         read: true,
         checking: false,
-        checkedAt: Date.now(),
+        failed: !read,
+        checkedAt: read ? Date.now() : state.checkedAt,
       });
     })
     .finally(() => {
@@ -144,6 +145,7 @@ export function useModuleVersions(): ModuleVersionsView {
     selfUpdate: value.selfUpdate,
     read: value.read,
     checking: value.checking,
+    failed: value.failed,
     checkedAt: value.checkedAt,
     reload,
   };

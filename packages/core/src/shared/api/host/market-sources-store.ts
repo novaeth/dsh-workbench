@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import writeFileAtomic from 'write-file-atomic';
 import type {
+  GitTransportKind,
   MarketSourceConfig,
   MarketSourcesAction,
   MarketSourcesPayload,
@@ -16,6 +17,7 @@ export type MarketSourcesWrite = Exclude<
 export interface MarketSourcesStore {
   read(): MarketSourcesPayload;
   apply(action: MarketSourcesWrite): Promise<MarketSourcesPayload>;
+  rememberTransport(host: string, kind: GitTransportKind): Promise<void>;
 }
 
 export interface MarketSourcesStoreOptions {
@@ -27,12 +29,22 @@ function fileOf(root: string): string {
   return join(root, 'market-index', 'sources.json');
 }
 
+function transportsOf(raw: unknown): Readonly<Record<string, GitTransportKind>> {
+  const record = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
+  const found: Record<string, GitTransportKind> = {};
+  for (const [host, kind] of Object.entries(record)) {
+    if (host === '' || (kind !== 'https' && kind !== 'ssh')) continue;
+    found[host] = kind;
+  }
+  return found;
+}
+
 function readPayload(path: string, logger?: { warn?(message: string): void }): MarketSourcesPayload {
   let raw: unknown;
   try {
     raw = JSON.parse(readFileSync(path, 'utf8'));
   } catch {
-    return { sources: [], selected: null };
+    return { sources: [], selected: null, transports: {} };
   }
   const record = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
   const list = Array.isArray(record['sources']) ? record['sources'] : [];
@@ -50,7 +62,7 @@ function readPayload(path: string, logger?: { warn?(message: string): void }): M
     typeof selectedRaw === 'string' && sources.some((source) => source.id === selectedRaw)
       ? selectedRaw
       : (sources[0]?.id ?? null);
-  return { sources, selected };
+  return { sources, selected, transports: transportsOf(record['transports']) };
 }
 
 async function writePayload(path: string, payload: MarketSourcesPayload): Promise<void> {
@@ -71,6 +83,13 @@ export function createMarketSourcesStore(options: MarketSourcesStoreOptions): Ma
 
   function read(): MarketSourcesPayload {
     return readPayload(path, options.logger);
+  }
+
+  async function rememberTransport(host: string, kind: GitTransportKind): Promise<void> {
+    if (host === '') return;
+    const current = read();
+    const transports = { ...(current.transports ?? {}), [host]: kind };
+    await writePayload(path, { ...current, transports });
   }
 
   async function apply(action: MarketSourcesWrite): Promise<MarketSourcesPayload> {
@@ -98,5 +117,5 @@ export function createMarketSourcesStore(options: MarketSourcesStoreOptions): Ma
     return payload;
   }
 
-  return { read, apply };
+  return { read, apply, rememberTransport };
 }

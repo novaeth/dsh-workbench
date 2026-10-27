@@ -15,7 +15,7 @@ describe('索引源写动作', () => {
 
   it('自己的资源名交给外壳，handle 只转给 store', async () => {
     const apply = vi.fn(async (): Promise<MarketSourcesPayload> => EMPTY);
-    const action = marketSourcesAction({ read: () => EMPTY, apply });
+    const action = marketSourcesAction({ read: () => EMPTY, apply, rememberTransport: vi.fn() });
     expect(action.resource).toBe(MARKET_SOURCES_RESOURCE);
     await expect(action.handle({ action: 'select', id: null })).resolves.toEqual({ ok: true, ...EMPTY });
     expect(apply).toHaveBeenCalledWith({ action: 'select', id: null });
@@ -29,7 +29,7 @@ describe('索引源写动作', () => {
       url: 'https://git.example.com/wb/market.git',
     };
     const payload: MarketSourcesPayload = { sources: [source], selected: 'team' };
-    const routes = marketSourcesRoutes({ read: () => payload, apply: vi.fn() });
+    const routes = marketSourcesRoutes({ read: () => payload, apply: vi.fn(), rememberTransport: vi.fn() });
     expect(Object.keys(routes)).toEqual([MARKET_SOURCES_ROUTE]);
     await expect(routes[MARKET_SOURCES_ROUTE]?.(new URLSearchParams())).resolves.toEqual({ ok: true, ...payload });
   });
@@ -52,7 +52,7 @@ describe('索引源写动作', () => {
       created: ['market.json'],
       changed: true,
     }));
-    const action = marketSourcesAction({ read, apply }, init);
+    const action = marketSourcesAction({ read, apply, rememberTransport: vi.fn() }, init);
     await expect(action.handle({ action: 'init', id: 'team', ref: 'main', stampOnly: true })).resolves.toEqual({
       ok: true,
       sources: [source],

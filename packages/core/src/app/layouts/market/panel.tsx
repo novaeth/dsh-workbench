@@ -95,7 +95,17 @@ function MarketPanel({
   const manifests = useLiveManifests(units);
   const installable = useInstallableUnits(units);
   const { capabilities, checkedAt, checking, forceProbe, reload: reloadCapability } = useCapabilityMap(0);
-  const { modules, plugins, workbench, selfUpdate, checking: versionsChecking, read: installedRead, reload: reloadVersions } = useModuleVersions();
+  const {
+    modules,
+    plugins,
+    workbench,
+    selfUpdate,
+    checking: versionsChecking,
+    failed: versionsFailed,
+    checkedAt: versionsCheckedAt,
+    read: installedRead,
+    reload: reloadVersions,
+  } = useModuleVersions();
   const machineBoard = useEnabledUnits(0, null);
 
   const [adding, setAdding] = useState(false);
@@ -150,7 +160,11 @@ function MarketPanel({
     return () => clearTimeout(timer);
   }, [installedKey, rosterKey, activeKey]);
 
-  const freshness: MarketFreshness = { loaded: capabilities !== null, checking, checkedAt };
+  const freshness: MarketFreshness = {
+    loaded: capabilities !== null,
+    checking: checking || versionsChecking,
+    checkedAt,
+  };
   const pendingFreshness: MarketFreshness = { loaded: false, checking: true, checkedAt: null };
 
   const devMarket = devSurface.useStrips<MarketMock>('market', manifests);
@@ -160,8 +174,7 @@ function MarketPanel({
   const shownFreshness =
     mock === undefined ? freshness : mock.loaded === false ? pendingFreshness : MOCK_FRESHNESS;
   const shownRead = mock === undefined ? installedRead : (mock.installedRead ?? true);
-  const shownChecking = shownFreshness.checking || (mock === undefined && versionsChecking);
-  const busy = !marketSettled(shownFreshness, shownRead) || shownChecking || acting;
+  const busy = !marketSettled(shownFreshness, shownRead) || acting;
   return (
     <div className={styles.marketPage}>
       <MarketHeader
@@ -169,9 +182,7 @@ function MarketPanel({
         idPrefix={MARKET_PANEL_ID}
         tab={tab}
         busy={busy}
-        checking={shownChecking}
         onTab={setTab}
-        onReload={() => reload({ force: true })}
         onAdd={openAddModule}
       />
       {devMarket.strip}
@@ -192,6 +203,8 @@ function MarketPanel({
           onChanged={reload}
           onPending={setActing}
           updates={updates}
+          updatesCheckedAt={versionsCheckedAt}
+          updatesFailed={versionsFailed}
           installed={installed}
           installedRead={shownRead}
           workbench={workbench}

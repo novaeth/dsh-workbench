@@ -218,9 +218,12 @@ export interface DiscoverFilter {
   readonly label?: string;
 }
 
+export type GitTransportKind = 'https' | 'ssh';
+
 export interface MarketSourcesPayload {
   readonly sources: readonly MarketSourceConfig[];
   readonly selected: string | null;
+  readonly transports?: Readonly<Record<string, GitTransportKind>>;
 }
 
 export interface MarketInstalledModule {

@@ -6,6 +6,7 @@ import type {
   DiscoverPayload,
   DiscoverSourceRow,
   DiscoverVersionRow,
+  GitTransportKind,
   MarketSourceConfig,
 } from '@/kernel/contract/market-index';
 import { useHostWrite } from '@/shared/hooks/use-host-write';
@@ -38,6 +39,7 @@ const SHIPPED: readonly string[] = ['applied', 'restart-required', 'overridden']
 interface KnownSources {
   readonly sources: readonly DiscoverSourceRow[];
   readonly selected: string | null;
+  readonly transports: Readonly<Record<string, GitTransportKind>>;
 }
 
 function sourceRowsOf(sources: readonly MarketSourceConfig[]): readonly DiscoverSourceRow[] {
@@ -72,6 +74,7 @@ export interface DiscoverController {
   readonly failure: string | null;
   readonly sources: DiscoverPayload['sources'];
   readonly selected: string | null;
+  readonly transports: Readonly<Record<string, GitTransportKind>>;
   readonly entries: readonly DiscoverEntry[];
   readonly shown: readonly DiscoverEntry[];
   readonly total: number;
@@ -159,7 +162,11 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
     const response = await readMarketSources().catch(() => null);
     if (sourceTicket.current !== ticket) return;
     if (response === null || !response.ok) return;
-    setKnownSources({ sources: sourceRowsOf(response.sources), selected: response.selected });
+    setKnownSources({
+      sources: sourceRowsOf(response.sources),
+      selected: response.selected,
+      transports: response.transports ?? {},
+    });
   }, []);
 
   const load = useCallback(
@@ -178,7 +185,7 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
         return;
       }
       setPayload(response);
-      setKnownSources({ sources: response.sources, selected: response.selected });
+      setKnownSources({ sources: response.sources, selected: response.selected, transports: {} });
       setLimit(DISCOVER_PAGE_SIZE);
     },
     [t],
@@ -348,7 +355,9 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
     setSort('default');
     setDetail(null);
     beginSwitch();
-    setKnownSources((current) => (current === null ? current : { sources: current.sources, selected: id }));
+    setKnownSources((current) =>
+      current === null ? current : { ...current, selected: id },
+    );
     void sources.send({ action: 'select', id }).then(async (outcome) => {
       if (!outcome.ok) {
         setLoading(false);
@@ -425,6 +434,7 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
     failure,
     sources: knownSources?.sources ?? payload?.sources ?? [],
     selected: knownSources?.selected ?? payload?.selected ?? null,
+    transports: knownSources?.transports ?? {},
     entries,
     shown,
     total: sorted.length,

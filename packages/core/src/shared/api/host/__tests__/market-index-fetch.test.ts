@@ -198,7 +198,7 @@ describe('createMarketSourcesStore', () => {
   it('空目录读回空列表，保存后自动选中', async () => {
     const root = tempRoot();
     const store = createMarketSourcesStore({ root });
-    expect(store.read()).toEqual({ sources: [], selected: null });
+    expect(store.read()).toEqual({ sources: [], selected: null, transports: {} });
     const saved = await store.apply({ action: 'save', source: httpSource() });
     expect(saved.sources).toHaveLength(1);
     expect(saved.selected).toBe('team');
@@ -232,7 +232,7 @@ describe('createMarketSourcesStore', () => {
       flag: 'w',
     });
     const store = createMarketSourcesStore({ root });
-    expect(store.read()).toEqual({ sources: [], selected: null });
+    expect(store.read()).toEqual({ sources: [], selected: null, transports: {} });
     rmSync(root, { recursive: true, force: true });
   });
 });

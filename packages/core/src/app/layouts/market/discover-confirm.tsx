@@ -1,6 +1,12 @@
 import { Fragment, createElement as h } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
-import type { DiscoverEntry, DiscoverVersionRow } from '@/kernel/contract/market-index';
+import { Spinner } from '@dsh-workbench/shared';
+import { gitAddressOf } from '@dsh-workbench/shared';
+import type {
+  DiscoverEntry,
+  DiscoverVersionRow,
+  GitTransportKind,
+} from '@/kernel/contract/market-index';
 import { Button, IconWarningOutlineRegular, Modal } from '@deepseek-ai/dsh-client-ui-primitives';
 import { displayTitleOf, sourceFactsOf } from './discover-view';
 import { DiscoverTransport } from './discover-transport';
@@ -17,13 +23,23 @@ export interface DiscoverConfirmProps {
   readonly t: Translate;
   readonly locale: string;
   readonly choice: DiscoverChoice | null;
+  readonly transports: Readonly<Record<string, GitTransportKind>>;
   readonly onCancel: () => void;
   readonly onConfirm: (url?: string) => void;
 }
 
-export function DiscoverConfirm({ t, locale, choice, onCancel, onConfirm }: DiscoverConfirmProps) {
+export function DiscoverConfirm({ t, locale, choice, transports, onCancel, onConfirm }: DiscoverConfirmProps) {
   if (choice === null) return null;
-  return <DiscoverConfirmBody t={t} locale={locale} choice={choice} onCancel={onCancel} onConfirm={onConfirm} />;
+  return (
+    <DiscoverConfirmBody
+      t={t}
+      locale={locale}
+      choice={choice}
+      transports={transports}
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+    />
+  );
 }
 
 function factLabel(t: Translate, kind: string): string {
@@ -44,11 +60,13 @@ function DiscoverConfirmBody({
   t,
   locale,
   choice,
+  transports,
   onCancel,
   onConfirm,
 }: Omit<DiscoverConfirmProps, 'choice'> & { readonly choice: DiscoverChoice }) {
   const git = choice.version.source.type === 'git' ? choice.version.source : null;
-  const transport = useGitTransport(git);
+  const host = git === null ? undefined : gitAddressOf(git.url)?.host;
+  const transport = useGitTransport(git, host === undefined ? undefined : transports[host]);
   const title = displayTitleOf(choice.entry, locale) || choice.entry.name;
   const facts = sourceFactsOf(choice.entry.name, choice.version).filter(
     (fact) => git === null || fact.kind !== 'repository',
@@ -75,7 +93,8 @@ function DiscoverConfirmBody({
             aria-busy={git !== null && transport.probing}
             onClick={() => onConfirm(transport.chosen ?? undefined)}
           >
-            {t('panels.discover.cardInstall')}
+            {git !== null && transport.probing ? <Spinner size={12} /> : null}
+            {t(git !== null && transport.probing ? 'panels.discover.transportChecking' : 'panels.discover.cardInstall')}
           </Button>
         </>
       }

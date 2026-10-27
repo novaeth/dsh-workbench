@@ -179,16 +179,26 @@ describe('两屏的分工：市场管机器级默认、面板管本工作区', (
   });
 });
 
-describe('市场页头：有动作在飞，页头那两颗钮一起禁用', () => {
-  it('★ 行里在装/在更新/在卸 → 刷新与「添加模块」都不许点（不然就是在同一条通道上叠第二笔）', () => {
+describe('市场页头：动作在飞，页头与列表里的钮一起禁用', () => {
+  it('★ 行里在装/在更新/在卸 → 两段区块头那颗刷新与「添加模块」都不许点（不然就是在同一条通道上叠第二笔）', () => {
     const page = readFileSync(new URL('../../market/panel.tsx', import.meta.url), 'utf8');
     const view = read('MarketView.tsx');
+    const header = readFileSync(new URL('../../market/market-header.tsx', import.meta.url), 'utf8');
+    const check = readFileSync(new URL('../../market/market-check.tsx', import.meta.url), 'utf8');
     const transient = read('market-transient-state.ts');
 
-    expect(page).toMatch(/marketSettled\(shownFreshness, shownRead\) \|\| shownChecking \|\| acting/);
-    expect(page).toContain('const shownChecking = shownFreshness.checking || (mock === undefined && versionsChecking)');
-    expect(page).toContain('checking={shownChecking}');
+    expect(page).toMatch(/marketSettled\(shownFreshness, shownRead\) \|\| acting/);
+    expect(page).toContain('busy={busy}');
+    expect(page).not.toContain('onReload');
+    expect(page).toContain('updatesCheckedAt={versionsCheckedAt}');
     expect(page).toContain('onPending={setActing}');
+    expect(view).toContain('scope="modules"');
+    expect(view).toContain('scope="plugins"');
+    expect(view).toContain('headAction={pluginCheck}');
+    expect(view).toContain('disabled={pending !== null}');
+    expect(header).not.toContain('IconRefreshOutlineRegular');
+    expect(check).toContain('variant="ghost"');
+    expect(check).toContain('disabled={disabled || checking}');
     expect(view).toContain('useMarketTransient({ mock, onPending })');
     expect(transient).toContain('onPending?.(pending !== null)');
   });

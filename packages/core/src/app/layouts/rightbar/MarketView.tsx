@@ -1,5 +1,5 @@
 import { Fragment, createElement as h, useState } from 'react';
-import type { Translate } from '@dsh-workbench/shared';
+import type { ReactNode, Translate } from '@dsh-workbench/shared';
 import type { UnitManifest } from '@dsh-workbench/shared';
 import { useHostWrite } from '@/shared/hooks/use-host-write';
 
@@ -21,6 +21,7 @@ import {
   marketRowTitle,
   marketRows,
   marketSections,
+  marketUpdateCount,
   sharedRows,
   type InstalledWorkbenchModule,
   type MarketRow,
@@ -53,10 +54,12 @@ import { MarketSection } from './market-section';
 import { marketActOf } from './market-act';
 import { usePublishMarketBusy } from './market-busy';
 import { marketSectionIcon } from './market-section-icon';
+import { MarketCheck } from '../market/market-check';
 import { PanelFoot } from '@/shared/components/PanelFoot';
 import styles from '../market/MarketPage.module.css';
 
 const CONFIRM_UNINSTALL: readonly MarketRowAction[] = ['uninstall', 'remove-bundle', 'uninstall-plugin'];
+const NO_ROWS: readonly MarketRow[] = [];
 
 export interface MarketViewProps {
   readonly t: Translate;
@@ -68,6 +71,8 @@ export interface MarketViewProps {
   readonly onChanged: (options?: { readonly force?: boolean }) => void;
   readonly onPending?: ((pending: boolean) => void) | undefined;
   readonly updates?: ModuleUpdateMap | undefined;
+  readonly updatesCheckedAt?: number | null | undefined;
+  readonly updatesFailed?: boolean | undefined;
   readonly installed?: readonly InstalledWorkbenchModule[] | undefined;
   readonly installedRead?: boolean | undefined;
   readonly workbench?: WorkbenchVersion | null | undefined;
@@ -122,6 +127,8 @@ function MarketBody({
   onConfirming,
   setDefault,
   boardBusy,
+  check,
+  pluginCheck,
 }: {
   readonly t: Translate;
   readonly self: MarketRow | undefined;
@@ -136,9 +143,16 @@ function MarketBody({
   readonly onConfirming: (id: string | null) => void;
   readonly setDefault: (id: string, next: boolean) => Promise<void>;
   readonly boardBusy: boolean;
+  readonly check: ReactNode;
+  readonly pluginCheck: ReactNode;
 }) {
   const failureOf = (id: string): string | null => (failed?.id === id ? failed.message : null);
   const foot = marketFootVisible(shown, installedList);
+  const sections = marketSections(
+    marketOrder([...shown, ...installedList], (row) => marketRowTitle(row, t)),
+  );
+  const installed = sections.find((section) => section.id === 'installed');
+  const pendingSection = sections.find((section) => section.id === 'not-installed');
   return (
     <>
       {notice === null ? null : <div className={styles.marketNote}>{notice}</div>}
@@ -156,15 +170,27 @@ function MarketBody({
       {self === undefined ? null : (
         <div className={styles.marketSelfDivider} aria-hidden="true" />
       )}
-      {marketSections(
-        marketOrder([...shown, ...installedList], (row) => marketRowTitle(row, t)),
-      ).map((section) => (
+      <MarketSection
+        t={t}
+        titleKey="panels.market.sectionInstalled"
+        icon={marketSectionIcon('installed')}
+        rows={installed?.rows ?? NO_ROWS}
+        keepHead
+        headAction={check}
+        onDefault={setDefault}
+        boardBusy={boardBusy}
+        pending={pending}
+        failureOf={failureOf}
+        act={act}
+        confirmActions={CONFIRM_UNINSTALL}
+        onConfirming={onConfirming}
+      />
+      {pendingSection === undefined ? null : (
         <MarketSection
-          key={section.id}
           t={t}
-          titleKey={section.titleKey}
-          icon={marketSectionIcon(section.id === 'installed' ? 'installed' : 'pending')}
-          rows={section.rows}
+          titleKey={pendingSection.titleKey}
+          icon={marketSectionIcon('pending')}
+          rows={pendingSection.rows}
           onDefault={setDefault}
           boardBusy={boardBusy}
           pending={pending}
@@ -173,12 +199,13 @@ function MarketBody({
           confirmActions={CONFIRM_UNINSTALL}
           onConfirming={onConfirming}
         />
-      ))}
+      )}
       <MarketSection
         t={t}
         titleKey="panels.market.sectionPlugins"
         icon={marketSectionIcon('plugins')}
         rows={pluginList}
+        headAction={pluginCheck}
         onDefault={setDefault}
         boardBusy={boardBusy}
         pending={pending}
@@ -264,6 +291,8 @@ export function MarketView({
   onChanged,
   onPending,
   updates,
+  updatesCheckedAt = null,
+  updatesFailed = false,
   installed,
   installedRead,
   workbench,
@@ -353,6 +382,31 @@ export function MarketView({
   const settled = marketSettled(freshness, installedRead);
   const nothing =
     shown.length === 0 && self === undefined && installedList.length === 0 && pluginList.length === 0;
+  const { busy: checkingShown } = useVisibleBusy(freshness.checking, MIN_BUSY_MS);
+  const check = (
+    <MarketCheck
+      t={t}
+      scope="modules"
+      checkedAt={updatesCheckedAt}
+      checking={checkingShown}
+      failed={updatesFailed}
+      count={marketUpdateCount(updates)}
+      disabled={pending !== null}
+      onCheck={() => onChanged({ force: true })}
+    />
+  );
+  const pluginCheck = (
+    <MarketCheck
+      t={t}
+      scope="plugins"
+      checkedAt={updatesCheckedAt}
+      checking={checkingShown}
+      failed={updatesFailed}
+      count={pluginList.filter((row) => row.canUpdate).length}
+      disabled={pending !== null}
+      onCheck={() => onChanged({ force: true })}
+    />
+  );
 
   if (!settled || ((settling?.size ?? 0) > 0 && shown.length === 0 && installedList.length === 0)) {
     return <MarketChecking t={t} />;
@@ -378,6 +432,8 @@ export function MarketView({
         onConfirming={setConfirming}
         setDefault={setDefault}
         boardBusy={boardBusy}
+        check={check}
+        pluginCheck={pluginCheck}
       />
 
       <ConfirmUninstall

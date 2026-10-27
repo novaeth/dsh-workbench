@@ -54,6 +54,7 @@ function setup(options: {
   const store: MarketSourcesStore = {
     read: () => ({ sources, selected }),
     apply: async () => ({ sources, selected }),
+    rememberTransport: async () => undefined,
   };
   const reader: MarketIndexReader = {
     read: async () => ({ ok: true, index: options.index, fetchedAt: 1000 }),

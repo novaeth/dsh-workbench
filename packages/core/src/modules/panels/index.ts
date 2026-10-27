@@ -20,8 +20,9 @@ import { releaseQuietly } from './model/diy-record';
 import { createMarketService } from './model/market';
 import { createMarketDiscover } from './model/market-discover';
 import { marketDiscoverRoutes } from './model/market-discover-routes';
-import { installedFromIndexes, marketInstalledRoutes } from './model/market-installed';
+import { installedFromIndexes, marketInstalledRoutes, transportOfSpec } from './model/market-installed';
 import { dependencyReader } from '@/shared/api/host/profile-dependencies';
+import { probeGitAddressCached } from '@/shared/api/host/git-probe';
 import { markSourceReadOnly, marketSourcesAction, marketSourcesRoutes } from './model/market-sources-act';
 import { publishPreviewRoutes } from './model/publish-preview-routes';
 import { createMarketIndexReader } from '@/shared/api/host/market-index-fetch';
@@ -147,13 +148,20 @@ export const panelsHost: UnitOwnedFace = {
         ...diyRecordRoutes(record),
         ...marketDiscoverRoutes(discover),
         ...marketSourcesRoutes(marketSources),
-        ...marketInstalledRoutes(() => ({
-          modules: installedFromIndexes({
+        ...marketInstalledRoutes(async () => ({
+          modules: await installedFromIndexes({
             sources: marketSources.read().sources,
             cached: (source) => marketIndex.cached(source)?.index,
             modules: supply.profileModules(profileDir),
             dependencyOf: dependencyReader(profileDir),
             isNewer: supply.isNewerVersion,
+            preferred: (host) => marketSources.read().transports?.[host],
+            ...(shell === undefined
+              ? {}
+              : {
+                  probe: (url: string) =>
+                    probeGitAddressCached(shell, url, { timeoutMs: 4000 }).then((one) => one.status),
+                }),
           }),
         })),
         ...publishPreviewRoutes(workshopPathOf(ctx), (unit) =>
@@ -208,7 +216,19 @@ export const panelsHost: UnitOwnedFace = {
       actions: [marketSourcesAction(marketSources, marketInit)],
       prefs: { resource: PANELS_PREF_RESOURCE, handle: (payload: unknown) => applyPanelsPref(panels, payload) },
       provision: {
-        handle: (request) => dispatchMarket(market, request),
+        handle: async (request) => {
+          const result = await dispatchMarket(market, request);
+          const application = (result as { readonly change?: { readonly application?: string } }).change
+            ?.application;
+          if (
+            request.spec !== undefined &&
+            (application === 'applied' || application === 'restart-required' || application === 'overridden')
+          ) {
+            const used = transportOfSpec(request.spec);
+            if (used !== undefined) await marketSources.rememberTransport(used.host, used.kind);
+          }
+          return result;
+        },
         affectedUnits: (request) => affectedUnitsOf(manifests(), request),
       },
     };

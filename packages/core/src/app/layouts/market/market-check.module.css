@@ -1,0 +1,30 @@
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-len-10);
+  min-width: 0;
+}
+
+.status {
+  font: var(--dsw-font-xxs-12);
+  color: var(--dsw-alias-label-caption);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.button {
+  flex: none;
+  width: var(--wb-len-28);
+  height: var(--wb-len-28);
+  padding: 0;
+}
+
+.icon {
+  display: inline-flex;
+}
+
+@media (max-width: 720px) {
+  .status {
+    display: none;
+  }
+}

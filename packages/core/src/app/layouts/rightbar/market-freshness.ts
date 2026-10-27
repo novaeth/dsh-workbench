@@ -11,6 +11,10 @@ export function checkedAgoText(at: number, now: number, t: Translate): string {
   return t('panels.market.hoursAgo', { n: String(Math.floor(minutes / 60)) });
 }
 
+export function checkedAgo(at: number, t: Translate): string {
+  return checkedAgoText(at, Date.now(), t);
+}
+
 export interface MarketFreshness {
   readonly loaded: boolean;
   readonly checking: boolean;

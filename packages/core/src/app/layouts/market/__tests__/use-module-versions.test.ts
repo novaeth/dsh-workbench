@@ -132,3 +132,37 @@ describe('★ 检查更新的转圈要罩到读数落地', () => {
     expect(moduleVersionsValue().checking).toBe(false);
   });
 });
+
+describe('最近检查：只有读成功才记时间', () => {
+  it('★ 读成功 → 记下这次时间，失败态清掉', async () => {
+    vi.mocked(readModuleVersions).mockResolvedValueOnce({
+      ok: false,
+      error: { code: 'net', message: '没连上' },
+    });
+    await runModuleVersionsRead(true, true);
+    expect(moduleVersionsValue().failed).toBe(true);
+    expect(moduleVersionsValue().checkedAt).toBeNull();
+
+    vi.mocked(readModuleVersions).mockResolvedValueOnce(versions('0.1.1'));
+    await runModuleVersionsRead(true, true);
+    expect(moduleVersionsValue().failed).toBe(false);
+    expect(moduleVersionsValue().checkedAt).not.toBeNull();
+  });
+
+  it('★ 读失败 → 上一次的版本和检查时间都留着，不假装刚查过', async () => {
+    vi.mocked(readModuleVersions).mockResolvedValueOnce(versions('0.1.0'));
+    await runModuleVersionsRead(true, true);
+    const checkedAt = moduleVersionsValue().checkedAt;
+    expect(checkedAt).not.toBeNull();
+
+    vi.mocked(readModuleVersions).mockResolvedValueOnce({
+      ok: false,
+      error: { code: 'net', message: '没连上' },
+    });
+    await runModuleVersionsRead(true, true);
+
+    expect(moduleVersionsValue().modules?.[0]?.installed).toBe('0.1.0');
+    expect(moduleVersionsValue().checkedAt).toBe(checkedAt);
+    expect(moduleVersionsValue().failed).toBe(true);
+  });
+});
