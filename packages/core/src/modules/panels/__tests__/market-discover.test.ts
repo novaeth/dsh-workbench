@@ -86,6 +86,15 @@ describe('发现域', () => {
     expect(payload.entries.map((one) => one.name)).toEqual(['@a/x']);
   });
 
+  it('★ 新条目靠 metadata.workbench 认身份，labels 只是展示、可以没有', async () => {
+    const plain = { ...entry('@a/plain', '0.1.0'), metadata: { workbench: true } };
+    const discover = setup({ index: indexOf([plain, entry('@a/y', '0.1.0', ['other'])]) });
+    const payload = await discover.snapshot();
+
+    expect(payload.entries.map((one) => one.name)).toEqual(['@a/plain']);
+    expect(payload.entries[0]?.labels).toEqual([]);
+  });
+
   it('已装旧版是 update-available，同版是 installed', async () => {
     const discover = setup({
       index: indexOf([

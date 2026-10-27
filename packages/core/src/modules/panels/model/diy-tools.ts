@@ -337,6 +337,10 @@ export function registerDiyTools(
           type: 'string',
           description: '可选：patch / minor / major / x.y.z；不填首次用当前版本，之后自动 patch。',
         },
+        source: {
+          type: 'string',
+          description: '发布到哪个索引源（workbench_market_sources 会给 id）；不填用唯一可发布的源。',
+        },
         verify: {
           type: 'boolean',
           description: '只核已发布的包（交接验证码后用），不再发；不用审批。',
@@ -374,6 +378,7 @@ export function registerDiyTools(
         );
       }
       const target = asText(asRecord(raw)['target']);
+      const source = asText(asRecord(raw)['source']);
       const version = asText(asRecord(raw)['version']);
       const license = asText(asRecord(raw)['license']);
       let author = asText(asRecord(raw)['author']);
@@ -387,6 +392,7 @@ export function registerDiyTools(
       else argv.push('--yes');
       if (resume) argv.push('--resume');
       if (target !== '') argv.push('--target', target);
+      if (source !== '') argv.push('--index-source', source);
       if (version !== '') argv.push('--version', version);
       if (license !== '') argv.push('--license', license);
       if (author !== '') argv.push('--author', author);

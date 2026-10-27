@@ -61,6 +61,7 @@ function normalizedRepo(value: string): string {
 }
 
 function isWorkbenchEntry(entry: MarketIndexEntry): boolean {
+  if (entry.metadata?.workbench === true) return true;
   const labels = marketEntryLabels(entry);
   if (labels.includes(MARKET_WORKBENCH_LABEL)) return true;
   return entry.metadata?.category === MARKET_WORKBENCH_LABEL && labels.length === 0;

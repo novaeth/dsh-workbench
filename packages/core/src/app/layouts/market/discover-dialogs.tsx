@@ -14,7 +14,6 @@ export function DiscoverDialogs({ t, d }: DiscoverDialogsProps) {
   return (
     <Fragment>
       <DiscoverSourcesDialog
-        key={d.manageOpen ? 'open' : 'closed'}
         t={t}
         open={d.manageOpen}
         sources={d.sources}
@@ -22,12 +21,16 @@ export function DiscoverDialogs({ t, d }: DiscoverDialogsProps) {
         loading={d.loading}
         slow={d.slow}
         problem={d.problem}
+        failure={d.writeFailed}
         busy={d.busy}
         adding={d.addingSource}
+        pendingSourceId={d.pendingSourceId}
         onClose={() => d.setManageOpen(false)}
         onAdd={d.addSource}
         onRemove={d.removeSourceById}
         onSelect={d.selectSource}
+        onEnable={d.enableSource}
+        onReadOnly={d.readOnlySource}
       />
       <DiscoverConfirm
         t={t}

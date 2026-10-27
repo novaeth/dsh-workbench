@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { InstalledModule } from '@dsh-workbench/shared/host';
 import { resetReleaseCache } from '@dsh-workbench/adapters-default';
 import { createMarketService } from '../model/market';
@@ -13,6 +13,9 @@ import {
   MODULES_UPDATE_DEPENDENCY_TOOL,
   MODULES_UPDATE_PLUGIN_TOOL,
   MODULES_UPDATE_TOOL,
+  MARKET_SOURCES_TOOL,
+  MARKET_ENABLE_TOOL,
+  MARKET_DISABLE_TOOL,
 } from '../unit';
 import { call, cleanupRoots, fakeBundles, harness, ledgerWith, libUnit, unit } from './market-tools-harness';
 
@@ -27,19 +30,25 @@ beforeEach(() => {
 afterEach(cleanupRoots);
 
 describe('workbench_modules_*：一个动词一把工具', () => {
-  it('★ 声明的工具名 === 实际注册的（防漂移）；读的那把不是写，其余八把都是写', () => {
+  it('★ 声明的工具名 === 实际注册的（防漂移）；读的那两把不是写，其余十把都是写', () => {
     const h = harness({ manifests: [unit('issues', 'demo')] });
 
     const declared = panelsUnit.tools
       .map((tool) => tool.name)
-      .filter((name) => name.startsWith('workbench_modules'));
+      .filter(
+        (name) =>
+          name.startsWith('workbench_modules') ||
+          name === MARKET_SOURCES_TOOL ||
+          name === MARKET_ENABLE_TOOL ||
+          name === MARKET_DISABLE_TOOL,
+      );
     expect(declared).toContain(MODULES_LIST_TOOL);
-    expect(declared).toHaveLength(9);
+    expect(declared).toHaveLength(12);
     expect([...h.registered.map((tool) => tool.name)].sort()).toEqual([...declared].sort());
 
     const writes = new Map(panelsUnit.tools.map((tool) => [tool.name, tool.writes]));
     for (const name of h.registered.map((tool) => tool.name)) {
-      expect(writes.get(name), name).toBe(name !== MODULES_LIST_TOOL);
+      expect(writes.get(name), name).toBe(name !== MODULES_LIST_TOOL && name !== MARKET_SOURCES_TOOL);
     }
     expect(h.registered.map((tool) => tool.name)).not.toContain('workbench_modules');
   });
@@ -209,7 +218,7 @@ describe('workbench_modules_*：一个动词一把工具', () => {
     const ctx = { get: () => undefined, logger: { info: () => {}, warn: () => {} } };
     const market = createMarketService({ manifests: [unit('issues', 'demo')] });
 
-    expect(registerMarketTools(ctx as never, market)).toEqual([]);
+    expect(registerMarketTools(ctx as never, market, undefined)).toEqual([]);
   });
 
   it('没有 shell → 列表照常，动作抛（能看不能装）', async () => {
@@ -312,3 +321,139 @@ describe('workbench_modules · install-bundle（按 spec 装模块包）', () =>
     await expect(call(h, MODULES_INSTALL_BUNDLE_TOOL, { spec: 'x' })).rejects.toThrow(/没有插件管理器/);
   });
 });
+
+describe('workbench_market_enable：把索引源设为可发布', () => {
+  const source = { id: 'team', label: '团队', kind: 'git' as const, url: 'https://git.example/wb/market.git' };
+  const enabled = { ...source, policy: 'artifacts-in-repo' as const, ref: 'main' };
+
+  it('★ 没印章的 git 源：只补印章（stampOnly），不碰仓库', async () => {
+    const init = vi.fn(async () => ({
+      source: enabled,
+      branch: 'main',
+      commit: 'c'.repeat(40),
+      created: [],
+      changed: false,
+    }));
+    const h = harness({
+      manifests: [],
+      marketSources: { read: () => ({ sources: [source], selected: 'team' }), init, readOnly: vi.fn() },
+    });
+
+    const payload = await call(h, MARKET_ENABLE_TOOL, {});
+
+    expect(init).toHaveBeenCalledWith({ id: 'team', stampOnly: true });
+    expect(payload['changed']).toBe(true);
+    expect(String(payload['text'])).toContain('已把');
+    expect(String(payload['text'])).toContain('仓库本身没动');
+  });
+
+  it('已经是可发布：不再调初始化，重复调用是幂等的', async () => {
+    const init = vi.fn();
+    const h = harness({
+      manifests: [],
+      marketSources: { read: () => ({ sources: [enabled], selected: 'team' }), init, readOnly: vi.fn() },
+    });
+
+    const payload = await call(h, MARKET_ENABLE_TOOL, {});
+
+    expect(init).not.toHaveBeenCalled();
+    expect(payload['changed']).toBe(false);
+    expect(String(payload['text'])).toContain('已经是可发布');
+  });
+
+  it('http 源：拒，并说清只能读', async () => {
+    const init = vi.fn();
+    const h = harness({
+      manifests: [],
+      marketSources: {
+        read: () => ({
+          sources: [{ ...source, kind: 'http' as const, url: 'https://r.example/market.json' }],
+          selected: 'team',
+        }),
+        init,
+        readOnly: vi.fn(),
+      },
+    });
+
+    await expect(call(h, MARKET_ENABLE_TOOL, {})).rejects.toThrow(/只能读/);
+    expect(init).not.toHaveBeenCalled();
+  });
+
+  it('没有源：话里列出还能选哪些', async () => {
+    const h = harness({
+      manifests: [],
+      marketSources: { read: () => ({ sources: [], selected: null }), init: vi.fn(), readOnly: vi.fn() },
+    });
+
+    await expect(call(h, MARKET_ENABLE_TOOL, {})).rejects.toThrow(/先在「模块市场 → 发现 → 索引源」/);
+  });
+
+  it('声明成写工具（走审批）', () => {
+    expect(panelsUnit.tools).toContainEqual({ name: MARKET_ENABLE_TOOL, writes: true });
+  });
+});
+
+describe('workbench_market_disable：把索引源改回只读', () => {
+  const source = {
+    id: 'team',
+    label: '团队',
+    kind: 'git' as const,
+    url: 'https://git.example/wb/market.git',
+    policy: 'artifacts-in-repo' as const,
+  };
+
+  it('★ 可发布的源：写回只读，只改本机配置', async () => {
+    const readOnly = vi.fn(async () => ({ ...source, policy: 'catalog-only' as const }));
+    const h = harness({
+      manifests: [],
+      marketSources: { read: () => ({ sources: [source], selected: 'team' }), init: vi.fn(), readOnly },
+    });
+
+    const payload = await call(h, MARKET_DISABLE_TOOL, {});
+
+    expect(readOnly).toHaveBeenCalledWith('team');
+    expect(payload['changed']).toBe(true);
+    expect(String(payload['text'])).toContain('设为只读');
+  });
+
+  it('已经只读：不再写，重复调用是幂等的', async () => {
+    const readOnly = vi.fn();
+    const h = harness({
+      manifests: [],
+      marketSources: {
+        read: () => ({ sources: [{ ...source, policy: 'catalog-only' as const }], selected: 'team' }),
+        init: vi.fn(),
+        readOnly,
+      },
+    });
+
+    const payload = await call(h, MARKET_DISABLE_TOOL, {});
+
+    expect(readOnly).not.toHaveBeenCalled();
+    expect(payload['changed']).toBe(false);
+    expect(String(payload['text'])).toContain('已经是只读');
+  });
+
+  it('http 源：拒，本来就是只读', async () => {
+    const readOnly = vi.fn();
+    const h = harness({
+      manifests: [],
+      marketSources: {
+        read: () => ({
+          sources: [{ ...source, kind: 'http' as const, url: 'https://r.example/market.json' }],
+          selected: 'team',
+        }),
+        init: vi.fn(),
+        readOnly,
+      },
+    });
+
+    await expect(call(h, MARKET_DISABLE_TOOL, {})).rejects.toThrow(/本来就是只读/);
+    expect(readOnly).not.toHaveBeenCalled();
+  });
+
+  it('声明成写工具（收回发布目的地免审批）', () => {
+    expect(panelsUnit.tools).toContainEqual({ name: MARKET_DISABLE_TOOL, writes: true });
+  });
+});
+

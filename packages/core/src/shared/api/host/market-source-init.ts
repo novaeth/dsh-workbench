@@ -18,6 +18,7 @@ import type { MarketSourcesStore } from './market-sources-store';
 export interface MarketSourceInitRequest {
   readonly id: string;
   readonly ref?: string;
+  readonly stampOnly?: boolean;
 }
 
 export interface MarketSourceInitResult {
@@ -115,17 +116,23 @@ export function createMarketSourceInitializer(options: MarketSourceInitOptions):
     }
 
     const indexPath = (source.path ?? MARKET_INDEX_PATH).replace(/^\/+/, '') || MARKET_INDEX_PATH;
-    const written: string[] = [];
     const indexFile = join(workdir, indexPath);
-    if (!existsSync(indexFile)) {
-      mkdirSync(dirname(indexFile), { recursive: true });
-      writeFileSync(indexFile, MARKET_INDEX_SEED);
-      written.push(indexPath);
+    const stampOnly = request.stampOnly === true;
+    if (stampOnly && !existsSync(indexFile)) {
+      throw new Error(`仓库里还没有 ${indexPath} —— 先选中这个源，按发现页的提示把它初始化成索引`);
     }
-    const readmeFile = join(workdir, 'README.md');
-    if (!existsSync(readmeFile)) {
-      writeFileSync(readmeFile, MARKET_INDEX_README_LINES.join('\n'));
-      written.push('README.md');
+    const written: string[] = [];
+    if (!stampOnly) {
+      if (!existsSync(indexFile)) {
+        mkdirSync(dirname(indexFile), { recursive: true });
+        writeFileSync(indexFile, MARKET_INDEX_SEED);
+        written.push(indexPath);
+      }
+      const readmeFile = join(workdir, 'README.md');
+      if (!existsSync(readmeFile)) {
+        writeFileSync(readmeFile, MARKET_INDEX_README_LINES.join('\n'));
+        written.push('README.md');
+      }
     }
 
     if (written.length > 0) {
@@ -142,7 +149,7 @@ export function createMarketSourceInitializer(options: MarketSourceInitOptions):
     const commit = revision.exitCode === 0 ? revision.stdout.trim() : '';
 
     const next: MarketSourceConfig = { ...source, policy: 'artifacts-in-repo', ref: branch };
-    await options.store.apply({ action: 'save', source: next, select: true });
+    await options.store.apply({ action: 'save', source: next });
     forget(source, next);
     return { source: next, branch, commit, created: written, changed: written.length > 0 };
   };

@@ -16,6 +16,9 @@ export const MODULES_UPDATE_DEPENDENCY_TOOL = 'workbench_modules_update_dependen
 export const MODULES_UPDATE_PLUGIN_TOOL = 'workbench_modules_update_plugin';
 export const MODULES_UNINSTALL_PLUGIN_TOOL = 'workbench_modules_uninstall_plugin';
 export const MODULES_UPDATE_WORKBENCH_TOOL = 'workbench_modules_update_workbench';
+export const MARKET_SOURCES_TOOL = 'workbench_market_sources';
+export const MARKET_ENABLE_TOOL = 'workbench_market_enable';
+export const MARKET_DISABLE_TOOL = 'workbench_market_disable';
 
 export const DIY_STATUS_TOOL = 'workbench_diy_status';
 export const DIY_PANEL_TOOL = 'workbench_diy_panel';
@@ -73,6 +76,9 @@ export const ALL_TOOLS = [
   MODULES_UPDATE_PLUGIN_TOOL,
   MODULES_UNINSTALL_PLUGIN_TOOL,
   MODULES_UPDATE_WORKBENCH_TOOL,
+  MARKET_SOURCES_TOOL,
+  MARKET_ENABLE_TOOL,
+  MARKET_DISABLE_TOOL,
   DIY_STATUS_TOOL,
   DIY_PANEL_TOOL,
   DIY_COMPONENTS_TOOL,
@@ -116,6 +122,7 @@ export type PanelsToolName = (typeof ALL_TOOLS)[number];
 export const READ_TOOLS = [
   PANELS_LIST_TOOL,
   MODULES_LIST_TOOL,
+  MARKET_SOURCES_TOOL,
   DIY_STATUS_TOOL,
   DIY_PANEL_TOOL,
   DIY_COMPONENTS_TOOL,
@@ -158,6 +165,8 @@ export const WRITE_TOOLS = [
   MODULES_UPDATE_PLUGIN_TOOL,
   MODULES_UNINSTALL_PLUGIN_TOOL,
   MODULES_UPDATE_WORKBENCH_TOOL,
+  MARKET_ENABLE_TOOL,
+  MARKET_DISABLE_TOOL,
   DIY_CHANGELOG_TOOL,
   DIY_INSTALL_TOOL,
   DIY_PUBLISH_TOOL,

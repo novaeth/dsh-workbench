@@ -7,6 +7,7 @@ import {
   sourceFromUrl,
   sourceFactsOf,
   sourceLabelsOf,
+  sourceStateOf,
   unfiltered,
   versionFlagsOf,
   visibleEntries,
@@ -170,5 +171,22 @@ describe('发现页的纯展示逻辑', () => {
     expect(labels.get('c')).toBe('repo');
     expect(labels.get('d')).toBe('ssh · mirror');
     expect(labels.get('e')).toBe('https · mirror');
+  });
+
+  it('索引源状态：只有可发布与只读两种；http、没写过、catalog-only 都是只读', () => {
+    const row = (overrides: Partial<DiscoverSourceRow>): DiscoverSourceRow => ({
+      id: 's',
+      label: 'repo',
+      kind: 'git',
+      url: 'https://git.example/wb/repo.git',
+      writable: null,
+      ...overrides,
+    });
+    expect(sourceStateOf(row({ kind: 'http', url: 'https://r.example/market.json', writable: false }))).toBe(
+      'read-only',
+    );
+    expect(sourceStateOf(row({ policy: 'artifacts-in-repo' }))).toBe('writable');
+    expect(sourceStateOf(row({ policy: 'catalog-only' }))).toBe('read-only');
+    expect(sourceStateOf(row({}))).toBe('read-only');
   });
 });

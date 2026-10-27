@@ -19,6 +19,7 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 最后从出口侧核包（`--dry-run` 只预览，`--verify` 只核已发布的包）。配了可写 git 索引源时，
 发完还会更新 `market.json`（`--index auto|none|<目录|git 地址>`，`artifacts-in-repo` 连产物一起入库，
 `catalog-only` 只更索引）；索引没更上不影响包已发布这件事，结果里会如实写。
+发布可选 `--index-source <id>` 指定发到哪个索引源；不指定时用唯一可发布的源，有多个可发布源会要求指定。
 空仓库先跑 `dsh-wb-module market-init <git 地址>`：生成 `market.json` 与 README 并推首个 commit
 （用仓库声明的默认分支，读不到时用 `--ref` 指定）。在工作台里配了可写索引源之后，
 `release` 默认出口就是 `market`：产物与索引一起进那个仓库。
@@ -26,6 +27,8 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 （沿用记录里的出口、版本与索引计划，产物没变就不重跑门禁）。
 这一版在 `CHANGELOG.md` 里没有记录、或 `package.json` 缺 `files` 里的 `CHANGELOG.md` 时，
 `release` 直接拦下并给出补的命令；`author` 没写时从本机 `git config` 补进 manifest，索引与产物都带上。
+模块的 `package.json` 可用 `dsh.workbench.market` 声明 `category` 与 `labels`（字符串数组）；
+不写就不带分类和标签，索引里只留 `metadata.workbench: true` 这条身份标记。
 要换署名时带 `--author "姓名 <邮箱>"`（或只给姓名）：它写回 `package.json`，索引、产物与提交都用它，
 `--refresh` 时也一样。
 

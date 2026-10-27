@@ -39,6 +39,13 @@ describe('parseMarketIndex', () => {
     expect(parsed.index.title).toEqual({ zh: '工作台模块' });
   });
 
+  it('★ metadata.workbench 是身份标记，labels 可以为空（不再靠 workbench 标签）', () => {
+    const parsed = parseMarketIndex(indexOf([entry({ metadata: { workbench: true } })]));
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.index.plugins[0]?.metadata).toEqual({ workbench: true });
+  });
+
   it('format 不是 1 就整份拒', () => {
     const parsed = parseMarketIndex({ format: 2, plugins: [] });
     expect(parsed.ok).toBe(false);

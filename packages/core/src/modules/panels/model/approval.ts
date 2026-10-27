@@ -14,6 +14,8 @@ import {
   MODULES_UPDATE_PLUGIN_TOOL,
   MODULES_UPDATE_TOOL,
   MODULES_UPDATE_WORKBENCH_TOOL,
+  MARKET_ENABLE_TOOL,
+  MARKET_DISABLE_TOOL,
   PANELS_FOLLOW_TOOL,
   PANELS_HIDE_TOOL,
   PANELS_MOVE_TOOL,
@@ -22,7 +24,8 @@ import {
   DIY_RECORD_PREPARE_TOOL,
   DIY_PUBLISH_TOOL,
 } from '../unit';
-import type { PublishPreview } from '@dsh-workbench/shared/contract/protocol/market-index';
+import type { MarketSourceConfig, PublishPreview } from '@dsh-workbench/shared/contract/protocol/market-index';
+import type { MarketSourcesStore } from '@/shared/api/host/market-sources-store';
 import type { LongTaskRunsLookup } from './long-task-tools';
 import { recordRefusalText } from './diy-record-text';
 
@@ -197,7 +200,9 @@ function publishVerdict(
   return askOf(`${DIY_PUBLISH_TOOL} ${targetLabel}${refresh ? '（元数据）' : ''}`, question, question);
 }
 
-export const panelsApproval: ApprovalPolicy = (call) => {
+export type MarketSourceLookup = (id: string | undefined) => MarketSourceConfig | undefined;
+
+function approvalVerdict(call: ApprovalCall, marketSource?: MarketSourceLookup): ApprovalVerdict | undefined {
   if (call.name === LONG_TASKS_STOP_TOOL) return stopVerdict(call, undefined);
   if (call.name === DIY_PUBLISH_TOOL) return publishVerdict(call);
   if (call.name === DIY_DEBUG_START_TOOL || call.name === DIY_DEBUG_RESUME_TOOL) {
@@ -367,10 +372,79 @@ export const panelsApproval: ApprovalPolicy = (call) => {
         pair('会把工作台本身更新到源上的新版，允许吗？', 'it updates the workbench itself to the new version from the registry. Allow?'),
         pair('agent 想把工作台本身更新到源上的新版，允许吗？', 'The agent wants to update the workbench itself from the registry. Allow?'),
       );
+    case MARKET_ENABLE_TOOL: {
+      const id = text('id');
+      const source = marketSource?.(id);
+      if (marketSource !== undefined && source === undefined) {
+        return {
+          kind: 'deny',
+          reason:
+            id === undefined
+              ? '这台机器上还没有选中的索引源 —— 先在「模块市场 → 发现」里添加并选中一个'
+              : `没有这个索引源：${id}`,
+        };
+      }
+      if (source !== undefined && source.policy === 'artifacts-in-repo') return { kind: 'allow' };
+      if (source !== undefined && source.kind === 'http') {
+        return { kind: 'deny', reason: 'http 索引源只能读，不能当发布目的地' };
+      }
+      const where =
+        source === undefined
+          ? {
+              zh: id === undefined ? '工作台当前选中的索引源' : `工作台的索引源「${id}」`,
+              en: id === undefined ? 'the selected workbench index source' : `the workbench index source "${id}"`,
+            }
+          : {
+              zh: `工作台的索引源「${source.label}」`,
+              en: `the workbench index source "${source.label}"`,
+            };
+      return askOf(
+        `${MARKET_ENABLE_TOOL}${source === undefined ? '' : ` ${source.url}`} marks a market index source as a publish destination on this machine`,
+        pair(`把${where.zh}设为可发布，允许吗？`, `Make ${where.en} a publish destination. Allow?`),
+        pair(
+          `会把${where.zh}设为可发布，只改本机配置，不碰仓库，允许吗？`,
+          `It makes ${where.en} a publish destination on this machine, without touching the repository. Allow?`,
+        ),
+      );
+    }
+    case MARKET_DISABLE_TOOL: {
+      const id = text('id');
+      const source = marketSource?.(id);
+      if (marketSource !== undefined && source === undefined) {
+        return {
+          kind: 'deny',
+          reason:
+            id === undefined
+              ? '这台机器上还没有选中的索引源 —— 先在「模块市场 → 发现」里添加并选中一个'
+              : `没有这个索引源：${id}`,
+        };
+      }
+      if (source === undefined) {
+        return askOf(
+          `${MARKET_DISABLE_TOOL} stops using a market index source as a publish destination on this machine`,
+          pair('把工作台当前选中的索引源改回只读，允许吗？', 'Make the selected workbench index source read-only again. Allow?'),
+          pair(
+            '会把工作台当前选中的索引源改回只读，只改本机配置，不碰仓库，允许吗？',
+            'It makes the selected workbench index source read-only again on this machine, without touching the repository. Allow?',
+          ),
+        );
+      }
+      if (source.kind !== 'git' || source.policy !== 'artifacts-in-repo') return { kind: 'allow' };
+      return askOf(
+        `${MARKET_DISABLE_TOOL} ${source.url} stops using a market index source as a publish destination on this machine`,
+        pair(`把工作台的索引源「${source.label}」改回只读，允许吗？`, `Make the workbench index source "${source.label}" read-only again. Allow?`),
+        pair(
+          `会把工作台的索引源「${source.label}」改回只读，只改本机配置，不碰仓库，允许吗？`,
+          `It makes the workbench index source "${source.label}" read-only again on this machine, without touching the repository. Allow?`,
+        ),
+      );
+    }
     default:
       return undefined;
   }
-};
+}
+
+export const panelsApproval: ApprovalPolicy = (call) => approvalVerdict(call);
 
 function recordHeldVerdict(
   call: ApprovalCall,
@@ -387,10 +461,19 @@ export function panelsApprovalFor(
   longTaskRuns?: LongTaskRunsLookup | undefined,
   recording?: (() => RecordState | null) | undefined,
   publishPreview?: ((unit: string) => PublishApprovalPreview | null) | undefined,
+  marketSources?: MarketSourcesStore | undefined,
 ): ApprovalPolicy {
+  const sourceOf: MarketSourceLookup | undefined =
+    marketSources === undefined
+      ? undefined
+      : (id) => {
+          const payload = marketSources.read();
+          const wanted = id === undefined || id === '' ? payload.selected : id;
+          return wanted === null ? undefined : payload.sources.find((one) => one.id === wanted);
+        };
   return (call) => {
     if (call.name === LONG_TASKS_STOP_TOOL) return stopVerdict(call, longTaskRuns);
     if (call.name === DIY_PUBLISH_TOOL) return publishVerdict(call, publishPreview);
-    return recordHeldVerdict(call, recording) ?? panelsApproval(call);
+    return recordHeldVerdict(call, recording) ?? approvalVerdict(call, sourceOf);
   };
 }

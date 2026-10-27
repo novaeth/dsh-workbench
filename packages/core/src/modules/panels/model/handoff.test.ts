@@ -50,6 +50,10 @@ describe('panelsFactsOf', () => {
     expect(panelsFactsOf(call, manifests)).toEqual([PANELS_FACT]);
   });
 
+  it('★ 索引源写入不点能力（否则加一个源会顺手把当前索引重读一遍）', () => {
+    expect(panelsFactsOf({ source: 'market-sources', args: {}, result: {} }, manifests)).toEqual([PANELS_FACT]);
+  });
+
   it('★ 读调用最多只惊动两条投影：不再掉进写工具的"整块刷"兜底（拆工具之前做不到）', () => {
     for (const source of READ_TOOLS) {
       const facts = panelsFactsOf({ source, args: {}, result: {} }, manifests) ?? [];

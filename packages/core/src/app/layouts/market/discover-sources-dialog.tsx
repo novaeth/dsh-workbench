@@ -1,18 +1,17 @@
-import { createElement as h, useState } from 'react';
+import { Fragment, createElement as h, useState } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import type { DiscoverSourceRow } from '@/kernel/contract/market-index';
 import {
   Button,
   IconPlusOutlineRegular,
-  IconTrashOutlineRegular,
   IconWarningOutlineRegular,
   Input,
   Modal,
   StateDot,
-  Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives';
 import { sameSourceUrl, sourceFromUrl } from './discover-view';
 import { DiscoverLoading } from './discover-states';
+import { DiscoverSourceConfirm, DiscoverSourceItem } from './discover-source-item';
 import styles from './MarketPage.module.css';
 
 export interface DiscoverSourcesDialogProps {
@@ -23,12 +22,16 @@ export interface DiscoverSourcesDialogProps {
   readonly loading: boolean;
   readonly slow: boolean;
   readonly problem: { readonly id: string; readonly detail: string } | null;
+  readonly failure: string | null;
   readonly busy: boolean;
   readonly adding: boolean;
+  readonly pendingSourceId: string | null;
   readonly onClose: () => void;
   readonly onAdd: (url: string) => void;
   readonly onRemove: (id: string) => void;
   readonly onSelect: (id: string) => void;
+  readonly onEnable: (id: string) => void;
+  readonly onReadOnly: (id: string) => void;
 }
 
 type UrlProblem = 'invalid' | 'duplicate';
@@ -37,7 +40,8 @@ export function DiscoverSourcesDialog(props: DiscoverSourcesDialogProps) {
   const { t } = props;
   const [url, setUrl] = useState('');
   const [problem, setProblem] = useState<UrlProblem | null>(null);
-  const pending = props.busy || props.adding;
+  const [removing, setRemoving] = useState<string | null>(null);
+  const pending = props.busy || props.adding || props.pendingSourceId !== null;
   const selectedVisible = props.sources.some((source) => source.id === props.selected);
   const add = (): void => {
     if (pending) return;
@@ -57,7 +61,12 @@ export function DiscoverSourcesDialog(props: DiscoverSourcesDialogProps) {
   return (
     <Modal
       open={props.open}
-      onClose={props.onClose}
+      onClose={() => {
+        setUrl('');
+        setProblem(null);
+        setRemoving(null);
+        props.onClose();
+      }}
       title={t('panels.discover.sourcesTitle')}
       closeLabel={t('panels.discover.close')}
       description={t('panels.discover.sourcesIntro')}
@@ -77,56 +86,35 @@ export function DiscoverSourcesDialog(props: DiscoverSourcesDialogProps) {
         {props.sources.length === 0 ? null : (
           <ul className={styles.discoverSourceList} aria-label={t('panels.discover.sourcesLabel')}>
             {props.sources.map((source) => (
-              <li key={source.id} className={styles.discoverSourceRow}>
-                <div className={styles.discoverMain}>
-                  <span className={styles.discoverStrong}>{source.label}</span>
-                  <span className={styles.discoverMeta}>{source.url}</span>
-                  {!props.loading && props.problem?.id === source.id ? (
-                    <span className={styles.discoverSourceError}>{props.problem.detail}</span>
-                  ) : null}
-                </div>
-                {source.id === props.selected ? (
-                  props.loading ? (
-                    <span className={styles.discoverSourceLoading}>
-                      <StateDot state="ongoing" />
-                      {t('panels.discover.loading')}
-                    </span>
-                  ) : (
-                    <span className={styles.discoverSourceCurrent}>{t('panels.discover.sourceCurrent')}</span>
-                  )
-                ) : (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    aria-label={t('panels.discover.useSourceNamed', { label: source.label })}
-                    disabled={pending}
-                    onClick={() => {
-                      props.onSelect(source.id);
-                      props.onClose();
+              <Fragment key={source.id}>
+                <DiscoverSourceItem
+                  t={t}
+                  source={source}
+                  selected={source.id === props.selected}
+                  loading={props.loading}
+                  slow={props.slow}
+                  problem={!props.loading && props.problem?.id === source.id ? props.problem.detail : null}
+                  pending={pending}
+                  enable={source.kind === 'git' && source.policy !== 'artifacts-in-repo'}
+                  disable={source.kind === 'git' && source.policy === 'artifacts-in-repo'}
+                  working={source.id === props.pendingSourceId}
+                  onSelect={() => props.onSelect(source.id)}
+                  onRemove={() => setRemoving(source.id)}
+                  onEnable={() => props.onEnable(source.id)}
+                  onReadOnly={() => props.onReadOnly(source.id)}
+                />
+                {removing === source.id ? (
+                  <DiscoverSourceConfirm
+                    t={t}
+                    label={source.label}
+                    onCancel={() => setRemoving(null)}
+                    onConfirm={() => {
+                      props.onRemove(source.id);
+                      setRemoving(null);
                     }}
-                  >
-                    {t('panels.discover.useSource')}
-                  </Button>
-                )}
-                <Tooltip label={t('panels.discover.removeSource')} side="bottom" portal delayMs={300}>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    icon={<IconTrashOutlineRegular size={13} />}
-                    aria-label={t('panels.discover.removeSourceNamed', { url: source.url })}
-                    disabled={pending}
-                    onClick={() => props.onRemove(source.id)}
                   />
-                </Tooltip>
-                {source.id === props.selected && props.loading && props.slow ? (
-                  <span className={styles.discoverSourceHint} role="note">
-                    <IconWarningOutlineRegular size={12} aria-hidden="true" />
-                    {t('panels.discover.slowHint')}
-                  </span>
                 ) : null}
-              </li>
+              </Fragment>
             ))}
           </ul>
         )}
@@ -160,6 +148,11 @@ export function DiscoverSourcesDialog(props: DiscoverSourcesDialogProps) {
             {props.adding ? t('panels.discover.addingSource') : t('panels.discover.addSource')}
           </Button>
         </form>
+        {props.failure === null ? null : (
+          <p className={styles.discoverError} role="alert">
+            {props.failure}
+          </p>
+        )}
         {problem === null ? null : (
           <p className={styles.discoverError} role="alert">
             {problem === 'duplicate'

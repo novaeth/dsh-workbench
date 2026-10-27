@@ -3,13 +3,20 @@ import { describe, expect, it } from 'vitest';
 import type { Translate } from '@dsh-workbench/shared';
 import { ApprovalDetail, ApprovalPlan, zh } from '@dsh-workbench/shared';
 import {
+  marketSourceRows,
   publishRows,
   recordApprovalRows,
   shellApprovalDetail,
   shellClaimsApprovalDetail,
   versionLineOf,
 } from '../approval-detail';
-import { ALL_TOOLS, DIY_RECORD_PREPARE_TOOL, DIY_RECORD_READ_TOOL } from '@/modules/panels/client';
+import {
+  ALL_TOOLS,
+  DIY_RECORD_PREPARE_TOOL,
+  DIY_RECORD_READ_TOOL,
+  MARKET_DISABLE_TOOL,
+  MARKET_ENABLE_TOOL,
+} from '@/modules/panels/client';
 
 const HERE = new URL('../', import.meta.url);
 const read = (path: string): string => readFileSync(new URL(path, HERE), 'utf8');
@@ -197,5 +204,39 @@ describe('座位的查找顺序：模块自己的 renderer → 外壳那张表 �
 
   it('★ 外壳自己的套件不写宿主明细：事实只走详情座，标题里不许再有第二段', () => {
     expect(PANELS_INDEX).not.toContain('approvalDetail');
+  });
+});
+
+describe('索引源审批：把源的名字、地址、操作与当前状态摆出来', () => {
+  const payload = {
+    sources: [
+      {
+        id: 'team',
+        label: '团队',
+        kind: 'git' as const,
+        url: 'https://git.example/wb/market.git',
+        policy: 'artifacts-in-repo' as const,
+      },
+    ],
+    selected: 'team',
+  };
+
+  it('★ 设为可发布：源 / 地址 / 操作 / 当前状态', () => {
+    expect(marketSourceRows(MARKET_ENABLE_TOOL, {}, payload, t)).toEqual([
+      { label: '索引源', value: '团队（team）' },
+      { label: '地址', value: 'https://git.example/wb/market.git' },
+      { label: '这次操作', value: '设为可发布' },
+      { label: '当前状态', value: '可发布' },
+    ]);
+  });
+
+  it('改回只读：即使传了 id 也按 id 找；没传就用当前选中的', () => {
+    expect(marketSourceRows(MARKET_DISABLE_TOOL, {}, payload, t).map((row) => row.value)).toEqual([
+      '团队（team）',
+      'https://git.example/wb/market.git',
+      '改回只读',
+      '可发布',
+    ]);
+    expect(marketSourceRows(MARKET_DISABLE_TOOL, { id: 'nope' }, payload, t)[0]?.value).toBe('nope');
   });
 });

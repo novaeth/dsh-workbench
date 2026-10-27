@@ -13,7 +13,7 @@ import { resolvePluginSource, selfUpdatePaths } from '@dsh-workbench/adapters-de
 import { quoteShellArg } from '@dsh-workbench/shared/host';
 import type { SelfUpdateRequest } from '@dsh-workbench/shared/host';
 import { createPluginLedger, type PluginLedger } from '../model/plugin-ledger';
-import { registerMarketTools } from '../model/market-tools';
+import { registerMarketTools, type MarketSourceGateway } from '../model/market-tools';
 
 export function unit(id: string, plugin: string, sources?: readonly SupplySource[]): UnitManifest {
   return {
@@ -122,6 +122,7 @@ export function harness(options: {
   npmLatest?: string;
   npmMissing?: readonly string[];
   profileName?: string | null;
+  marketSources?: MarketSourceGateway;
 }) {
   const references = options.references;
   const registered: Array<{ name: string; execute: (args: unknown) => Promise<unknown> }> = [];
@@ -167,7 +168,12 @@ export function harness(options: {
       return { started: true, paths: selfUpdatePaths(request.dshHome), forward: '' };
     },
   });
-  return { registered, fake, disposers: registerMarketTools(ctx as never, market), selfUpdates };
+  return {
+    registered,
+    fake,
+    disposers: registerMarketTools(ctx as never, market, options.marketSources),
+    selfUpdates,
+  };
 }
 
 export function fakeBundles(over: Partial<BundleManager> = {}): BundleManager {

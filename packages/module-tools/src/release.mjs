@@ -312,6 +312,21 @@ export async function runRelease({
       throw new ReleaseError('没有可写的 git 索引源 —— 用 --index <仓库> 指定，或先在「模块市场 → 发现」里初始化索引');
     }
     if (indexPlan.policy !== 'artifacts-in-repo') {
+      if (indexPlan.policyStated !== true) {
+        throw new NeedsUser(
+          'index-write',
+          indexPlan.origin === 'argument'
+            ? '这个索引仓库默认只当目录。要往里发产物，加 --index-policy artifacts-in-repo 再跑一次。'
+            : '这个索引源还没设为可发布。到「模块市场 → 发现 → 索引源」点「设为可发布」，再发一次。',
+          undefined,
+          {
+            target: 'market',
+            ...(indexPlan.origin === 'argument' ? {} : { enableTool: 'workbench_market_enable' }),
+            ...(indexPlan.sourceId === undefined ? {} : { sourceId: indexPlan.sourceId }),
+            ...(indexPlan.source.url === '' ? {} : { sourceUrl: indexPlan.source.url }),
+          },
+        );
+      }
       throw new ReleaseError('这个索引源是 catalog-only：它只收目录、不放产物。用 --index-policy artifacts-in-repo 或换一个可写仓库');
     }
   }

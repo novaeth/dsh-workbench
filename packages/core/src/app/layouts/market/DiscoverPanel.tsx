@@ -1,4 +1,4 @@
-import { createElement as h } from 'react';
+import { Fragment, createElement as h } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import { Button, IconWarningOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives';
 import { DiscoverDetail } from './discover-detail';
@@ -61,9 +61,10 @@ export function DiscoverPanel({ t, active, onInstalled, onShowInstalled }: Disco
       </p>
     ) : null;
 
+  let body: JSX.Element;
   if (d.payload === null) {
-    return (
-      <div className={styles.discoverPage}>
+    body = (
+      <Fragment>
         {d.sources.length === 0 ? null : toolbar}
         {d.loading ? (
           <DiscoverSkeleton label={t('panels.discover.loading')} />
@@ -72,89 +73,86 @@ export function DiscoverPanel({ t, active, onInstalled, onShowInstalled }: Disco
         )}
         {slowHint}
         {d.writeFailed === null ? null : <p className={styles.discoverError}>{d.writeFailed}</p>}
-        {dialogs}
-      </div>
+      </Fragment>
+    );
+  } else if (d.payload.state === 'no-source') {
+    body = <DiscoverNoSource t={t} onAdd={() => d.setManageOpen(true)} />;
+  } else {
+    const failed = d.payload.state === 'invalid' || d.payload.state === 'unreadable';
+    const readFailed =
+      !d.loading && failed
+        ? d.payload.state === 'invalid'
+          ? t('panels.discover.invalid')
+          : t('panels.discover.unreadable')
+        : null;
+    const uninitialized = d.loading ? null : d.uninitialized;
+    const retrying = d.loading && failed;
+    const emptyText = unfiltered({ query: d.query, category: d.category, labels: d.selectedLabels })
+      ? t('panels.discover.empty')
+      : t('panels.discover.noMatch');
+    body = (
+      <Fragment>
+        {d.detailEntry === null ? toolbar : null}
+        {d.loading && !d.manageOpen ? <DiscoverLoading label={t('panels.discover.loading')} /> : null}
+        {slowHint}
+        {!d.loading && d.payload.stale === true ? (
+          <p className={styles.discoverNotice} role="note">
+            <IconWarningOutlineRegular size={14} aria-hidden="true" />
+            <span>{t('panels.discover.stale')}</span>
+          </p>
+        ) : null}
+        {uninitialized === null ? (
+          readFailed === null ? null : <DiscoverFailure t={t} text={readFailed} onRetry={d.reload} />
+        ) : (
+          <DiscoverUninitialized
+            t={t}
+            path={uninitialized.path}
+            empty={uninitialized.empty}
+            onInit={() => d.setInitOpen(true)}
+          />
+        )}
+        {d.notice === null ? null : (
+          <p className={styles.discoverNotice} role="note">
+            <IconWarningOutlineRegular size={14} aria-hidden="true" />
+            <span>{d.notice}</span>
+          </p>
+        )}
+        {d.writeFailed === null ? null : <p className={styles.discoverError}>{d.writeFailed}</p>}
+        {d.provisionFailed === null ? null : <p className={styles.discoverError}>{d.provisionFailed}</p>}
+        {d.detailEntry !== null ? (
+          <DiscoverDetail
+            t={t}
+            locale={d.locale}
+            entry={d.detailEntry}
+            market={marketLabel}
+            onBack={d.closeDetail}
+            onInstall={(entry, version) => d.setChoice({ entry, version })}
+            onShowInstalled={onShowInstalled}
+          />
+        ) : readFailed !== null || uninitialized !== null || retrying ? null : d.shown.length === 0 ? (
+          <DiscoverEmptyText text={emptyText} />
+        ) : (
+          <DiscoverRows
+            t={t}
+            locale={d.locale}
+            entries={d.shown}
+            onOpen={d.openDetail}
+            onInstall={(entry, version) => d.setChoice({ entry, version })}
+            onShowInstalled={onShowInstalled}
+          />
+        )}
+        {d.detailEntry !== null || d.total <= d.shown.length ? null : (
+          <Button type="button" variant="outline" size="sm" className={styles.discoverMore} onClick={d.showMore}>
+            {t('panels.discover.showMore')}
+          </Button>
+        )}
+      </Fragment>
     );
   }
-
-  if (d.payload.state === 'no-source') {
-    return (
-      <div className={styles.discoverPage}>
-        <DiscoverNoSource t={t} onAdd={() => d.setManageOpen(true)} />
-        {dialogs}
-      </div>
-    );
-  }
-
-  const failed = d.payload.state === 'invalid' || d.payload.state === 'unreadable';
-  const readFailed =
-    !d.loading && failed
-      ? d.payload.state === 'invalid'
-        ? t('panels.discover.invalid')
-        : t('panels.discover.unreadable')
-      : null;
-  const uninitialized = d.loading ? null : d.uninitialized;
-  const retrying = d.loading && failed;
-  const emptyText = unfiltered({ query: d.query, category: d.category, labels: d.selectedLabels })
-    ? t('panels.discover.empty')
-    : t('panels.discover.noMatch');
 
   return (
     <div className={styles.discoverPage}>
-      {toolbar}
-      {d.loading && !d.manageOpen ? <DiscoverLoading label={t('panels.discover.loading')} /> : null}
-      {slowHint}
-      {!d.loading && d.payload.stale === true ? (
-        <p className={styles.discoverNotice} role="note">
-          <IconWarningOutlineRegular size={14} aria-hidden="true" />
-          <span>{t('panels.discover.stale')}</span>
-        </p>
-      ) : null}
-      {uninitialized === null ? (
-        readFailed === null ? null : <DiscoverFailure t={t} text={readFailed} onRetry={d.reload} />
-      ) : (
-        <DiscoverUninitialized
-          t={t}
-          path={uninitialized.path}
-          empty={uninitialized.empty}
-          onInit={() => d.setInitOpen(true)}
-        />
-      )}
-      {d.notice === null ? null : (
-        <p className={styles.discoverNotice} role="note">
-          <IconWarningOutlineRegular size={14} aria-hidden="true" />
-          <span>{d.notice}</span>
-        </p>
-      )}
-      {d.writeFailed === null ? null : <p className={styles.discoverError}>{d.writeFailed}</p>}
-      {d.provisionFailed === null ? null : <p className={styles.discoverError}>{d.provisionFailed}</p>}
-      {d.detailEntry !== null ? (
-        <DiscoverDetail
-          t={t}
-          locale={d.locale}
-          entry={d.detailEntry}
-          market={marketLabel}
-          onBack={d.closeDetail}
-          onInstall={(entry, version) => d.setChoice({ entry, version })}
-          onShowInstalled={onShowInstalled}
-        />
-      ) : readFailed !== null || uninitialized !== null || retrying ? null : d.shown.length === 0 ? (
-        <DiscoverEmptyText text={emptyText} />
-      ) : (
-        <DiscoverRows
-          t={t}
-          locale={d.locale}
-          entries={d.shown}
-          onOpen={d.openDetail}
-          onInstall={(entry, version) => d.setChoice({ entry, version })}
-          onShowInstalled={onShowInstalled}
-        />
-      )}
-      {d.detailEntry !== null || d.total <= d.shown.length ? null : (
-        <Button type="button" variant="outline" size="sm" className={styles.discoverMore} onClick={d.showMore}>
-          {t('panels.discover.showMore')}
-        </Button>
-      )}
+      {body}
       {dialogs}
     </div>
   );

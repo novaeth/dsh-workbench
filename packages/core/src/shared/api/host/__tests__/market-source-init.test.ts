@@ -132,4 +132,79 @@ describe('createMarketSourceInitializer', () => {
     await expect(init({ id: 'web' })).rejects.toThrow(/git/);
     rmSync(root, { recursive: true, force: true });
   });
+
+  it('只补可发布印章：已有索引文件时不提交、不推送', async () => {
+    const root = tempRoot();
+    const store = createMarketSourcesStore({ root });
+    await store.apply({ action: 'save', source: gitSource() });
+    const worktree = join(root, 'market-index', marketSourceKey(gitSource()), 'worktree');
+    mkdirSync(join(worktree, '.git'), { recursive: true });
+    writeFileSync(join(worktree, 'market.json'), '{"format":1,"plugins":[]}');
+    const fake = fakeShell((command) => {
+      if (command.includes('status')) return { exitCode: 0 };
+      if (command.includes('--verify')) return { exitCode: 0 };
+      if (command.includes('--abbrev-ref')) return { exitCode: 0, stdout: 'main\n' };
+      if (command.includes('rev-parse')) return { exitCode: 0, stdout: `${COMMIT}\n` };
+      return { exitCode: 0 };
+    });
+    const init = createMarketSourceInitializer({ root, store, shell: fake.shell });
+    const result = await init({ id: 'team', stampOnly: true });
+    expect(result.source.policy).toBe('artifacts-in-repo');
+    expect(result.source.ref).toBe('main');
+    expect(result.created).toEqual([]);
+    expect(result.changed).toBe(false);
+    expect(fake.calls.some((line) => line.includes('commit') || line.includes('push'))).toBe(false);
+    expect(store.read().sources[0]?.policy).toBe('artifacts-in-repo');
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it('★ 给没在用的源盖章：当前选中的源不跟着变', async () => {
+    const root = tempRoot();
+    const store = createMarketSourcesStore({ root });
+    const other: MarketSourceConfig = {
+      id: 'other',
+      label: '另一个',
+      kind: 'git',
+      url: 'https://git.example.com/team/other.git',
+    };
+    await store.apply({ action: 'save', source: gitSource(), select: true });
+    await store.apply({ action: 'save', source: other });
+    const worktree = join(root, 'market-index', marketSourceKey(other), 'worktree');
+    mkdirSync(join(worktree, '.git'), { recursive: true });
+    writeFileSync(join(worktree, 'market.json'), '{"format":1,"plugins":[]}');
+    const fake = fakeShell((command) => {
+      if (command.includes('status')) return { exitCode: 0 };
+      if (command.includes('--verify')) return { exitCode: 0 };
+      if (command.includes('--abbrev-ref')) return { exitCode: 0, stdout: 'main\n' };
+      if (command.includes('rev-parse')) return { exitCode: 0, stdout: `${COMMIT}\n` };
+      return { exitCode: 0 };
+    });
+    const init = createMarketSourceInitializer({ root, store, shell: fake.shell });
+
+    const result = await init({ id: 'other', stampOnly: true });
+
+    expect(result.source.id).toBe('other');
+    expect(store.read().selected).toBe('team');
+    expect(store.read().sources.find((one) => one.id === 'other')?.policy).toBe('artifacts-in-repo');
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it('只补印章时仓库里没有索引文件就拒，不写不推', async () => {
+    const root = tempRoot();
+    const store = createMarketSourcesStore({ root });
+    await store.apply({ action: 'save', source: gitSource() });
+    const worktree = join(root, 'market-index', marketSourceKey(gitSource()), 'worktree');
+    mkdirSync(join(worktree, '.git'), { recursive: true });
+    const fake = fakeShell((command) => {
+      if (command.includes('status')) return { exitCode: 0 };
+      if (command.includes('--verify')) return { exitCode: 0 };
+      if (command.includes('--abbrev-ref')) return { exitCode: 0, stdout: 'main\n' };
+      return { exitCode: 0 };
+    });
+    const init = createMarketSourceInitializer({ root, store, shell: fake.shell });
+    await expect(init({ id: 'team', stampOnly: true })).rejects.toThrow(/还没有 market.json/);
+    expect(fake.calls.some((line) => line.includes('commit') || line.includes('push'))).toBe(false);
+    expect(store.read().sources[0]?.policy).toBeUndefined();
+    rmSync(root, { recursive: true, force: true });
+  });
 });

@@ -2,9 +2,16 @@ import { Fragment, createElement as h, useEffect, useState } from 'react';
 import type { ApprovalInput, ReactNode, Translate } from '@dsh-workbench/shared';
 import { ApprovalPlan } from '@dsh-workbench/shared';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
-import type { PublishChangelog, PublishPreview } from '@/kernel/contract/market-index';
-import { ALL_TOOLS, DIY_PUBLISH_TOOL, DIY_RECORD_PREPARE_TOOL, LONG_TASKS_STOP_TOOL } from '@/modules/panels/client';
-import { readPublishPreview } from '@/shared/hooks/market-queries';
+import type { MarketSourcesPayload, PublishChangelog, PublishPreview } from '@/kernel/contract/market-index';
+import {
+  ALL_TOOLS,
+  DIY_PUBLISH_TOOL,
+  DIY_RECORD_PREPARE_TOOL,
+  LONG_TASKS_STOP_TOOL,
+  MARKET_DISABLE_TOOL,
+  MARKET_ENABLE_TOOL,
+} from '@/modules/panels/client';
+import { readMarketSources, readPublishPreview } from '@/shared/hooks/market-queries';
 import styles from './approval-detail.module.css';
 
 export interface ApprovalRow {
@@ -207,6 +214,67 @@ export interface ApprovalPlanView {
   readonly warn?: string | undefined;
 }
 
+export function marketSourceRows(
+  tool: string,
+  args: Readonly<Record<string, unknown>>,
+  payload: MarketSourcesPayload | null | undefined,
+  t: Translate,
+): readonly ApprovalRow[] {
+  const id = textOf(args, 'id');
+  const source =
+    payload === undefined || payload === null
+      ? undefined
+      : payload.sources.find((one) => one.id === (id === '' ? payload.selected : id));
+  const reading = t('approval.market.reading');
+  const rows: ApprovalRow[] = [
+    {
+      label: t('approval.market.source'),
+      value:
+        payload === undefined
+          ? reading
+          : source === undefined
+            ? id === ''
+              ? '—'
+              : id
+            : `${source.label}（${source.id}）`,
+    },
+    { label: t('approval.market.url'), value: source?.url ?? (payload === undefined ? reading : '—') },
+    {
+      label: t('approval.market.action'),
+      value: tool === MARKET_ENABLE_TOOL ? t('approval.market.enable') : t('approval.market.disable'),
+    },
+  ];
+  if (source !== undefined) {
+    rows.push({
+      label: t('approval.market.policy'),
+      value: source.policy === 'artifacts-in-repo' ? t('approval.market.writable') : t('approval.market.readOnly'),
+    });
+  }
+  return rows;
+}
+
+function MarketSourceApprovalSeat({
+  tool,
+  args,
+  t,
+}: {
+  readonly tool: string;
+  readonly args: Readonly<Record<string, unknown>>;
+  readonly t: Translate;
+}) {
+  const [payload, setPayload] = useState<MarketSourcesPayload | null | undefined>(undefined);
+  useEffect(() => {
+    let live = true;
+    void readMarketSources().then((response) => {
+      if (live) setPayload(response.ok ? { sources: response.sources, selected: response.selected } : null);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+  return h(ApprovalPlan, { rows: marketSourceRows(tool, args, payload, t) });
+}
+
 export function shellClaimsApprovalDetail(tool: string): boolean {
   return (ALL_TOOLS as readonly string[]).includes(tool);
 }
@@ -240,6 +308,9 @@ export function shellApprovalPlan(input: ApprovalInput, t: Translate): ApprovalP
 
 export function shellApprovalDetail(input: ApprovalInput, t: Translate): ReactNode {
   if (input.tool === DIY_PUBLISH_TOOL) return h(PublishApprovalSeat, { args: input.args, t });
+  if (input.tool === MARKET_ENABLE_TOOL || input.tool === MARKET_DISABLE_TOOL) {
+    return h(MarketSourceApprovalSeat, { tool: input.tool, args: input.args, t });
+  }
   const plan = shellApprovalPlan(input, t);
   if (plan === undefined) return undefined;
   if (plan.rows.length === 0) return h(Fragment, null);

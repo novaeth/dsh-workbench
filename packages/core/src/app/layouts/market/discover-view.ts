@@ -183,6 +183,12 @@ export function sameSourceUrl(left: string, right: string): boolean {
   return withoutTrailingSlash(left.trim()) === withoutTrailingSlash(right.trim());
 }
 
+export type DiscoverSourceState = 'writable' | 'read-only';
+
+export function sourceStateOf(source: DiscoverSourceRow): DiscoverSourceState {
+  return source.kind === 'git' && source.policy === 'artifacts-in-repo' ? 'writable' : 'read-only';
+}
+
 function sourceSuffix(url: string): string {
   const tail = withoutTrailingSlash(url).split(/[/:]/).filter((part) => part !== '').pop() ?? '';
   return tail.replace(/\.git$/, '');

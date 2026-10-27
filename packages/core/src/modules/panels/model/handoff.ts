@@ -1,4 +1,5 @@
 import { runsRouteOf, unitFactScope } from '@dsh-workbench/shared/host';
+import { MARKET_SOURCES_RESOURCE } from '@dsh-workbench/shared/contract/protocol/market-index';
 import { isDependencyAction, type ProvisionAction, type ProvisionRequest } from '@dsh-workbench/shared/host';
 import type { UnitCall } from '@dsh-workbench/shared/host';
 import type { HandoffEntry } from '@dsh-workbench/shared/host';
@@ -90,6 +91,7 @@ export function panelsFactsOf(
   manifests: readonly UnitManifest[],
 ): readonly string[] | undefined {
   if (call.source === PANELS_LIST_TOOL) return [PANELS_FACT];
+  if (call.source === MARKET_SOURCES_RESOURCE) return [PANELS_FACT];
   if (call.source === LONG_TASKS_LIST_TOOL) return listedRunUnits(call.result).map(runsRouteOf);
   if (call.source === MODULES_LIST_TOOL) return [PANELS_FACT, CAPABILITY_FACT];
   if (call.source === MODULES_UPDATE_WORKBENCH_TOOL) return [PANELS_FACT, CAPABILITY_FACT];

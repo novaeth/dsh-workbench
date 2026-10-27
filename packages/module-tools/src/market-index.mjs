@@ -13,7 +13,6 @@ import {
 
 const MARKET_FILE = 'market.json';
 const PACKAGES_DIR = 'packages';
-const WORKBENCH_LABEL = 'workbench';
 const WORKSPACE_PREFIX = 'workspace:';
 const ARTIFACT_DIRS = ['dist'];
 const ARTIFACT_FILES = ['client.js', 'cordis.patch.yml', 'README.md', 'CHANGELOG.md'];
@@ -51,9 +50,8 @@ function workbenchRootOf(home) {
   return explicit === undefined || explicit === '' ? join(home, 'workbench') : explicit;
 }
 
-function normalizedPolicy(value, fallback) {
-  if (value === 'artifacts-in-repo' || value === 'catalog-only') return value;
-  return fallback;
+function statedPolicy(value) {
+  return value === 'artifacts-in-repo' || value === 'catalog-only' ? value : undefined;
 }
 
 export function sanitizeManifest(manifest) {
@@ -117,12 +115,20 @@ function titleOf(manifest) {
   return { ...(zh === '' ? {} : { zh }), ...(en === '' ? {} : { en }) };
 }
 
+function textListOf(value) {
+  return Array.isArray(value)
+    ? [...new Set(value.flatMap((one) => (typeof one === 'string' && one.trim() !== '' ? [one.trim()] : [])))]
+    : [];
+}
+
 export function entryMetaOf(manifest) {
   const author = authorOf(manifest);
   const homepage = typeof manifest.homepage === 'string' ? manifest.homepage.trim() : '';
-  const keywords = Array.isArray(manifest.keywords)
-    ? manifest.keywords.flatMap((one) => (typeof one === 'string' && one.trim() !== '' ? [one.trim()] : []))
-    : [];
+  const keywords = textListOf(manifest.keywords);
+  const market = manifest.dsh?.workbench?.market;
+  const marketRecord = market !== null && typeof market === 'object' && !Array.isArray(market) ? market : {};
+  const category = typeof marketRecord.category === 'string' ? marketRecord.category.trim() : '';
+  const labels = textListOf(marketRecord.labels);
   const order = manifest.dsh?.workbench?.card?.order;
   const title = titleOf(manifest);
   const description = descriptionOf(manifest);
@@ -132,8 +138,9 @@ export function entryMetaOf(manifest) {
     ...(author === '' ? {} : { author }),
     ...(homepage === '' ? {} : { homepage }),
     metadata: {
-      category: WORKBENCH_LABEL,
-      labels: [WORKBENCH_LABEL],
+      workbench: true,
+      ...(category === '' ? {} : { category }),
+      ...(labels.length === 0 ? {} : { labels }),
       ...(keywords.length === 0 ? {} : { keywords }),
       ...(typeof order === 'number' ? { sortKeys: { order } } : {}),
     },
@@ -179,7 +186,7 @@ function readSources(file) {
   }
 }
 
-function planOf(raw, args, fallbackPolicy) {
+function planOf(raw, args, fallbackPolicy, origin) {
   if (raw === null || typeof raw !== 'object') return undefined;
   if (raw.kind !== 'git') return undefined;
   const url = typeof raw.url === 'string' ? raw.url.trim() : '';
@@ -188,7 +195,8 @@ function planOf(raw, args, fallbackPolicy) {
   if (url !== '' && !gitUrlOk(url)) return undefined;
   const ref = (argValue(args, '--index-ref') ?? (typeof raw.ref === 'string' ? raw.ref : '')).trim();
   const path = (argValue(args, '--index-path') ?? (typeof raw.path === 'string' ? raw.path : '')).trim();
-  const policy = normalizedPolicy(argValue(args, '--index-policy'), normalizedPolicy(raw.policy, fallbackPolicy));
+  const fromArgument = statedPolicy(argValue(args, '--index-policy'));
+  const fromSource = statedPolicy(raw.policy);
   return {
     source: {
       kind: 'git',
@@ -197,7 +205,9 @@ function planOf(raw, args, fallbackPolicy) {
       ...(path === '' ? {} : { path }),
       ...(localPath === '' ? {} : { localPath }),
     },
-    policy,
+    policy: fromArgument ?? fromSource ?? fallbackPolicy,
+    policyStated: fromArgument !== undefined || fromSource !== undefined,
+    origin,
   };
 }
 
@@ -234,7 +244,7 @@ function planFromArgument(asked, args, exec) {
   if (existsSync(asDir)) {
     const remote = exec('git', ['-C', asDir, 'remote', 'get-url', 'origin'], { capture: true, allowFailure: true });
     const url = remote.status === 0 ? remote.stdout.trim() : '';
-    const plan = planOf({ kind: 'git', url, localPath: asDir }, args, 'artifacts-in-repo');
+    const plan = planOf({ kind: 'git', url, localPath: asDir }, args, 'artifacts-in-repo', 'argument');
     if (plan === undefined) {
       throw new MarketIndexError(`--index 指的目录不是 git 仓库或没有 origin：${asDir}`, 'index-write');
     }
@@ -243,13 +253,45 @@ function planFromArgument(asked, args, exec) {
   if (!gitUrlOk(asked)) {
     throw new MarketIndexError(`--index 只认 none / 目录 / git 地址（收到「${asked}」）`, 'index-write');
   }
-  return planOf({ kind: 'git', url: asked }, args, 'catalog-only');
+  return planOf({ kind: 'git', url: asked }, args, 'catalog-only', 'argument');
+}
+
+function findBySourceId(payload, id) {
+  const found = payload.sources.find((one) => one?.id === id);
+  if (found === undefined) {
+    const known = payload.sources.map((one) => one?.id).filter((one) => typeof one === 'string').join('、') || '（空）';
+    throw new MarketIndexError(`没有这个索引源：${id}。现有的：${known}`, 'index-write');
+  }
+  if (found.kind !== 'git') {
+    throw new MarketIndexError(`索引源 ${id} 是 http 地址，只能读，不能当发布目的地`, 'index-write');
+  }
+  return found;
 }
 
 function planFromSources(file, args) {
   const payload = readSources(file);
-  const found = payload.sources.find((one) => one?.id === payload.selected);
-  return planOf(found ?? null, args, 'catalog-only');
+  const asked = (argValue(args, '--index-source') ?? '').trim();
+  let found;
+  if (asked !== '') {
+    found = findBySourceId(payload, asked);
+  } else {
+    const publishable = payload.sources.filter((one) => one?.kind === 'git' && one.policy === 'artifacts-in-repo');
+    if (publishable.length === 1) {
+      found = publishable[0];
+    } else if (publishable.length > 1) {
+      found = publishable.find((one) => one.id === payload.selected);
+      if (found === undefined) {
+        const ids = publishable.map((one) => one.id).join('、');
+        throw new MarketIndexError(`有多个可发布的索引源（${ids}）—— 用 --index-source 指定发到哪一个`, 'index-write');
+      }
+    } else {
+      found = payload.sources.find((one) => one?.id === payload.selected);
+    }
+  }
+  const plan = planOf(found ?? null, args, 'catalog-only', 'sources');
+  return plan === undefined || found === undefined || found === null || typeof found.id !== 'string'
+    ? plan
+    : { ...plan, sourceId: found.id };
 }
 
 function runGit(exec, cwd, argv, { allowFailure = false } = {}) {

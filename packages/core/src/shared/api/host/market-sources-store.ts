@@ -8,7 +8,10 @@ import type {
 } from '@dsh-workbench/shared/contract/protocol/market-index';
 import { parseSourceConfig } from '@dsh-workbench/shared/host';
 
-export type MarketSourcesWrite = Exclude<MarketSourcesAction, { readonly action: 'init' }>;
+export type MarketSourcesWrite = Exclude<
+  MarketSourcesAction,
+  { readonly action: 'init' } | { readonly action: 'read-only' }
+>;
 
 export interface MarketSourcesStore {
   read(): MarketSourcesPayload;

@@ -56,6 +56,7 @@ export interface MarketIndexVersion {
 }
 
 export interface MarketIndexEntryMetadata {
+  readonly workbench?: boolean;
   readonly category?: string;
   readonly labels?: readonly string[];
   readonly keywords?: readonly string[];
@@ -245,4 +246,5 @@ export type MarketSourcesAction =
   | { readonly action: 'save'; readonly source: MarketSourceConfig; readonly select?: boolean }
   | { readonly action: 'remove'; readonly id: string }
   | { readonly action: 'select'; readonly id: string | null }
-  | { readonly action: 'init'; readonly id: string; readonly ref?: string };
+  | { readonly action: 'init'; readonly id: string; readonly ref?: string; readonly stampOnly?: boolean }
+  | { readonly action: 'read-only'; readonly id: string };

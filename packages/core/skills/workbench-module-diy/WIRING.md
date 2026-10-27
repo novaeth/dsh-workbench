@@ -65,6 +65,7 @@ DIY 族仅在选了 DIY 模式的会话出现（按模式，不按工作区）�
 
 1. 先把这一版写进 `CHANGELOG.md`（`workbench_diy_changelog`，`note=…`），真卡片验收过（`design accept`）。
    出口、署名、标题、安装命令都由工具与审批屏处理：不用问、不用补；用户没点名出口就不传 target。
+   索引源跟当前选中无关：只有一个可发布源就用它；有多个时传 `source=<id>`（`workbench_market_sources` 会给）。
    用户要换署名（或在审批屏上说作者不对）：传 `author="姓名 <邮箱>"`（或只给姓名），别手改 `package.json`，也别自己编。
    没写作者时审批屏显示推断的署名；他拒绝后说换成谁，再用 `author` 重发。
 2. 工具回 `needsUser` 时照 `text` 转述，不在对话里要 token / OTP；`otp` 交接后 `verify=true` 只核不发。

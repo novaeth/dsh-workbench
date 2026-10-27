@@ -89,6 +89,7 @@ export interface DiscoverController {
   readonly problem: { readonly id: string; readonly detail: string } | null;
   readonly uninitialized: { readonly path: string; readonly empty: boolean } | null;
   readonly defaultBranch: string;
+  readonly pendingSourceId: string | null;
   readonly initOpen: boolean;
   readonly reload: () => void;
   readonly setQuery: (value: string) => void;
@@ -104,6 +105,8 @@ export interface DiscoverController {
   readonly setManageOpen: (open: boolean) => void;
   readonly setInitOpen: (open: boolean) => void;
   readonly initialize: (branch: string) => void;
+  readonly enableSource: (id: string) => void;
+  readonly readOnlySource: (id: string) => void;
   readonly addSource: (url: string) => void;
   readonly removeSourceById: (id: string) => void;
   readonly selectSource: (id: string) => void;
@@ -126,6 +129,7 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
   const [choice, setChoice] = useState<InstallTarget | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [addingSource, setAddingSource] = useState(false);
+  const [pendingSourceId, setPendingSourceId] = useState<string | null>(null);
   const [knownSources, setKnownSources] = useState<KnownSources | null>(null);
   const loaded = useRef(false);
   const loadTicket = useRef(0);
@@ -164,6 +168,7 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
         return;
       }
       setPayload(response);
+      setKnownSources({ sources: response.sources, selected: response.selected });
       setLimit(DISCOVER_PAGE_SIZE);
     },
     [t],
@@ -235,6 +240,36 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
 
   const defaultBranch = payload?.problem?.branch ?? selectedSource?.ref ?? 'main';
 
+  const enableSource = (id: string): void => {
+    setNotice(null);
+    setPendingSourceId(id);
+    void sources
+      .send({ action: 'init', id, stampOnly: true })
+      .then(async (outcome) => {
+        if (!outcome.ok) return;
+        const label = payload?.sources.find((one) => one.id === id)?.label ?? id;
+        setNotice(t('panels.discover.sourceEnabled', { label }));
+        await loadSources();
+        await load(true);
+      })
+      .finally(() => setPendingSourceId(null));
+  };
+
+  const readOnlySource = (id: string): void => {
+    setNotice(null);
+    setPendingSourceId(id);
+    void sources
+      .send({ action: 'read-only', id })
+      .then(async (outcome) => {
+        if (!outcome.ok) return;
+        const label = payload?.sources.find((one) => one.id === id)?.label ?? id;
+        setNotice(t('panels.discover.sourceReadOnly', { label }));
+        await loadSources();
+        await load(true);
+      })
+      .finally(() => setPendingSourceId(null));
+  };
+
   const initialize = (branch: string): void => {
     if (payload === null || payload.selected === null) return;
     const id = payload.selected;
@@ -262,12 +297,15 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
     const id = `source-${globalThis.crypto.randomUUID()}`;
     setAddingSource(true);
     void sources
-      .send({ action: 'save', source: { ...parsed.source, id }, select: true })
+      .send({ action: 'save', source: { ...parsed.source, id } })
       .then((outcome) => {
         if (!outcome.ok) return;
-        beginSwitch();
+        const value =
+          typeof outcome.value === 'object' && outcome.value !== null
+            ? (outcome.value as Readonly<Record<string, unknown>>)
+            : undefined;
         void loadSources();
-        void load(true);
+        if (value?.['selected'] === id) void load(true);
       })
       .finally(() => setAddingSource(false));
   };
@@ -275,12 +313,18 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
   const removeSourceById = (id: string): void => {
     setNotice(null);
     setInitOpen(false);
+    const wasSelected = (payload?.selected ?? knownSources?.selected ?? null) === id;
     void sources.send({ action: 'remove', id }).then(async (outcome) => {
       if (!outcome.ok) return;
-      setDetail(null);
-      beginSwitch();
+      if (wasSelected) {
+        setQuery('');
+        setCategory(null);
+        setSelectedLabels([]);
+        setSort('default');
+        setDetail(null);
+      }
       await loadSources();
-      await load(true);
+      if (wasSelected) await load(true);
     });
   };
 
@@ -345,8 +389,8 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
     loading,
     slow,
     failure,
-    sources: payload?.sources ?? knownSources?.sources ?? [],
-    selected: payload?.selected ?? knownSources?.selected ?? null,
+    sources: knownSources?.sources ?? payload?.sources ?? [],
+    selected: knownSources?.selected ?? payload?.selected ?? null,
     entries,
     shown,
     total: sorted.length,
@@ -367,6 +411,7 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
     problem,
     uninitialized,
     defaultBranch,
+    pendingSourceId,
     initOpen,
     reload,
     setQuery,
@@ -385,6 +430,8 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
     setManageOpen,
     setInitOpen,
     initialize,
+    enableSource,
+    readOnlySource,
     addSource,
     removeSourceById,
     selectSource,

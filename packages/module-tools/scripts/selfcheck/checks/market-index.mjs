@@ -27,7 +27,13 @@ const MANIFEST = {
   scripts: { prepack: 'dsh-wb-module build', test: 'vitest run' },
   dependencies: { '@demo/shared': 'workspace:*', left: '1.0.0' },
   devDependencies: { '@demo/tools': 'workspace:*' },
-  dsh: { workbench: { unit: 'probe', card: { order: 90 } } },
+  dsh: {
+    workbench: {
+      unit: 'probe',
+      card: { order: 90 },
+      market: { category: '工具', labels: ['探针', '测试'] },
+    },
+  },
 };
 
 const FILES = ['client.js', 'cordis.patch.yml', 'README.md', 'dist/host.js'];
@@ -114,11 +120,35 @@ export const checks = [
         const entry = entryOfText(again.text);
         if (entry.versions.length !== 2) throw new Error(`版本数不对：${entry.versions.length}`);
         if (entry.versions[0].version !== '0.2.0') throw new Error('版本没按降序排');
-        if (entry.metadata?.labels?.[0] !== 'workbench') throw new Error('缺 workbench 标签');
+        if (entry.metadata?.workbench !== true) throw new Error('缺 workbench 身份标记');
+        if (entry.metadata?.category !== '工具') throw new Error('分类没从 manifest 的 market 读');
+        if (entry.metadata?.labels?.join(',') !== '探针,测试') throw new Error('标签没从 manifest 的 market 读');
         if (entry.metadata?.sortKeys?.order !== 90) throw new Error('缺 sortKeys.order');
         if (entry.versions[0].publishTimestamp !== 1760000100) throw new Error('时间戳不是 Unix 秒');
         if (entry.versions[0].engines?.dsh !== '^0.2.1') throw new Error('缺 engines.dsh');
         if (entry.title?.zh !== '探针' || entry.title?.en !== 'Probe') throw new Error('条目没带模块自报的标题');
+        report(title, true);
+      } catch (error) {
+        report(title, false, error.message.slice(0, 200));
+      }
+    },
+  },
+  {
+    title: 'market-index：没写 market 元数据就不编分类与标签（身份标记另算）',
+    async run(_ctx, report) {
+      const title = 'market-index：没写 market 元数据就不编分类与标签（身份标记另算）';
+      try {
+        const { market: _market, ...workbench } = MANIFEST.dsh.workbench;
+        const manifest = { ...MANIFEST, dsh: { workbench } };
+        const entry = indexEntryOf({
+          manifest,
+          version: '0.1.0',
+          source: { type: 'npm' },
+          at: 1760000000000,
+        });
+        if (entry.metadata?.labels !== undefined) throw new Error(`凭空多出标签：${JSON.stringify(entry.metadata.labels)}`);
+        if (entry.metadata?.category !== undefined) throw new Error(`凭空多出分类：${JSON.stringify(entry.metadata.category)}`);
+        if (entry.metadata?.workbench !== true) throw new Error('缺 workbench 身份标记');
         report(title, true);
       } catch (error) {
         report(title, false, error.message.slice(0, 200));
@@ -327,6 +357,85 @@ export const checks = [
         report(title, true);
       } catch (error) {
         report(title, false, error.message.slice(0, 200));
+      }
+    },
+  },
+  {
+    title: 'market-index：没写 policy 的源兜成只读，且能分清「没设过」与「显式写的 catalog-only」',
+    async run(_ctx, report) {
+      const title = 'market-index：没写 policy 的源兜成只读，且能分清「没设过」与「显式写的 catalog-only」';
+      const home = mkdtempSync(join(tmpdir(), 'wb-market-policy-'));
+      const dir = join(home, 'workbench', 'market-index');
+      const base = { id: 'team', label: '团队', kind: 'git', url: 'https://github.com/demo/market.git' };
+      try {
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(join(dir, 'sources.json'), JSON.stringify({ selected: 'team', sources: [base] }));
+        const fallback = resolveIndexPlan({ args: [], home, exec: fakeExec().exec });
+        if (fallback?.policy !== 'catalog-only') throw new Error(`没印章没兜成只读：${fallback?.policy}`);
+        if (fallback?.policyStated !== false) throw new Error('把兜底当成了显式写的 policy');
+        if (fallback?.origin !== 'sources') throw new Error(`来源不对：${fallback?.origin}`);
+        if (fallback?.sourceId !== 'team') throw new Error(`没带出源 id：${fallback?.sourceId}`);
+        writeFileSync(
+          join(dir, 'sources.json'),
+          JSON.stringify({ selected: 'team', sources: [{ ...base, policy: 'catalog-only' }] }),
+        );
+        const stated = resolveIndexPlan({ args: [], home, exec: fakeExec().exec });
+        if (stated?.policyStated !== true) throw new Error('显式写的 policy 没认出来');
+        const flagged = resolveIndexPlan({ args: ['--index-policy', 'artifacts-in-repo'], home, exec: fakeExec().exec });
+        if (flagged?.policy !== 'artifacts-in-repo' || flagged?.policyStated !== true) throw new Error('命令行 policy 没优先');
+        report(title, true);
+      } catch (error) {
+        report(title, false, error.message.slice(0, 200));
+      } finally {
+        rmSync(home, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    title: 'market-index：发布源与当前选中解耦（唯一可发布直接用；多源要指定；--index-source 优先）',
+    async run(_ctx, report) {
+      const title = 'market-index：发布源与当前选中解耦（唯一可发布直接用；多源要指定；--index-source 优先）';
+      const home = mkdtempSync(join(tmpdir(), 'wb-market-source-'));
+      const dir = join(home, 'workbench', 'market-index');
+      const read = { id: 'read', label: '只读', kind: 'git', url: 'https://github.com/demo/read.git', policy: 'catalog-only' };
+      const team = { id: 'team', label: '团队', kind: 'git', url: 'https://github.com/demo/team.git', policy: 'artifacts-in-repo' };
+      const pub = { id: 'pub', label: '公开', kind: 'git', url: 'https://github.com/demo/pub.git', policy: 'artifacts-in-repo' };
+      try {
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(join(dir, 'sources.json'), JSON.stringify({ selected: 'read', sources: [read, team] }));
+        const auto = resolveIndexPlan({ args: [], home, exec: fakeExec().exec });
+        if (auto?.sourceId !== 'team') throw new Error(`唯一可发布源没被用上：${auto?.sourceId}`);
+        if (auto?.policy !== 'artifacts-in-repo') throw new Error(`policy 不对：${auto?.policy}`);
+
+        const asked = resolveIndexPlan({ args: ['--index-source', 'read'], home, exec: fakeExec().exec });
+        if (asked?.sourceId !== 'read') throw new Error(`--index-source 没生效：${asked?.sourceId}`);
+        if (asked?.policy !== 'catalog-only') throw new Error(`指定的只读源 policy 不对：${asked?.policy}`);
+
+        writeFileSync(join(dir, 'sources.json'), JSON.stringify({ selected: 'read', sources: [read, team, pub] }));
+        let ambiguous = '';
+        try {
+          resolveIndexPlan({ args: [], home, exec: fakeExec().exec });
+        } catch (error) {
+          ambiguous = error instanceof MarketIndexError ? error.message : String(error);
+        }
+        if (!ambiguous.includes('多个可发布') || !ambiguous.includes('team') || !ambiguous.includes('pub')) {
+          throw new Error(`多源没拦住：${ambiguous}`);
+        }
+        const picked = resolveIndexPlan({ args: ['--index-source', 'pub'], home, exec: fakeExec().exec });
+        if (picked?.sourceId !== 'pub') throw new Error(`指定多源里的一个没生效：${picked?.sourceId}`);
+
+        let missing = '';
+        try {
+          resolveIndexPlan({ args: ['--index-source', 'nope'], home, exec: fakeExec().exec });
+        } catch (error) {
+          missing = error instanceof MarketIndexError ? error.message : String(error);
+        }
+        if (!missing.includes('没有这个索引源')) throw new Error(`不存在的源没拦住：${missing}`);
+        report(title, true);
+      } catch (error) {
+        report(title, false, error.message.slice(0, 200));
+      } finally {
+        rmSync(home, { recursive: true, force: true });
       }
     },
   },

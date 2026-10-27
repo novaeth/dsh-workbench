@@ -20,7 +20,7 @@ import { releaseQuietly } from './model/diy-record';
 import { createMarketService } from './model/market';
 import { createMarketDiscover } from './model/market-discover';
 import { marketDiscoverRoutes } from './model/market-discover-routes';
-import { marketSourcesAction, marketSourcesRoutes } from './model/market-sources-act';
+import { markSourceReadOnly, marketSourcesAction, marketSourcesRoutes } from './model/market-sources-act';
 import { publishPreviewRoutes } from './model/publish-preview-routes';
 import { createMarketIndexReader } from '@/shared/api/host/market-index-fetch';
 import { createMarketDocReader } from '@/shared/api/host/market-doc';
@@ -151,7 +151,11 @@ export const panelsHost: UnitOwnedFace = {
       },
       registerTools: () => [
         ...registerPanelTools(ctx, panels, values),
-        ...registerMarketTools(ctx, market),
+        ...registerMarketTools(ctx, market, {
+          read: () => marketSources.read(),
+          init: marketInit,
+          readOnly: (id) => markSourceReadOnly(marketSources, id),
+        }),
         ...registerDiyTools(
           ctx,
           market,
@@ -168,6 +172,7 @@ export const panelsHost: UnitOwnedFace = {
         longTaskRuns,
         () => record.live(Date.now()),
         (unit) => publishPreviewOf(workshopPathOf(ctx), unit),
+        marketSources,
       ),
       gate: {
         deniedTools: (context) => {

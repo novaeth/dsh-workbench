@@ -48,6 +48,8 @@ import {
   PANELS_SHOW_TOOL,
   DIY_RECORD_PREPARE_TOOL,
   LONG_TASKS_STOP_TOOL,
+  MARKET_ENABLE_TOOL,
+  MARKET_DISABLE_TOOL,
   READ_TOOLS,
   WRITE_TOOLS,
   panelsUnit,
@@ -285,7 +287,7 @@ describe('清单里的写工具都在自己的策略后面（漏了不报错，�
   it('★ 每把写工具都有一通"真的写"的样例，而且样例表不多不少（新写工具漏了就红）', () => {
     expect(writers.map((tool) => tool.name).sort()).toEqual(Object.keys(WRITE_CALLS).sort());
     expect([...WRITE_TOOLS].sort()).toEqual(Object.keys(WRITE_CALLS).sort());
-    expect(writers).toHaveLength(23);
+    expect(writers).toHaveLength(25);
   });
 
   it('★ 工坊之外的那通真写都要问（外壳按清单的 writes 把它交给策略）', () => {
@@ -332,6 +334,8 @@ describe('文案口径：说清是工作台的动作、目标是哪个模块 / �
     [DIY_DEBUG_START_TOOL]: '调试',
     [DIY_DEBUG_RESUME_TOOL]: '调试',
     [LONG_TASKS_STOP_TOOL]: '长任务',
+    [MARKET_ENABLE_TOOL]: '索引源',
+    [MARKET_DISABLE_TOOL]: '索引源',
   };
 
   const SCENARIOS: readonly { readonly call: ApprovalCall; readonly noun: string }[] = [

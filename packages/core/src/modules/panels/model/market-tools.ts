@@ -1,10 +1,16 @@
 import type { DshHostContext, DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared';
+import type {
+  MarketSourceConfig,
+  MarketSourcesPayload,
+} from '@dsh-workbench/shared/contract/protocol/market-index';
+import type { MarketSourceInitializer } from '@/shared/api/host/market-source-init';
 import type { BundleChange } from '@/kernel/contract/bundle-install';
 import { hostSurface } from '@dsh-workbench/shared/host';
 import type { InstalledModule } from '@dsh-workbench/shared/host';
 import type { BundleSupply, MarketEntry, MarketService } from './market';
 import type { SharedDependency } from './market-dependency';
 import { pluginKeptText, type PluginUninstallOutcome } from './plugin-actions';
+import { marketSourcesTool } from './market-sources-tool';
 import {
   MODULES_INSTALL_BUNDLE_TOOL,
   MODULES_INSTALL_TOOL,
@@ -15,6 +21,8 @@ import {
   MODULES_UPDATE_PLUGIN_TOOL,
   MODULES_UPDATE_TOOL,
   MODULES_UPDATE_WORKBENCH_TOOL,
+  MARKET_ENABLE_TOOL,
+  MARKET_DISABLE_TOOL,
 } from '../unit';
 
 function supplyNamesOf(entry: MarketEntry): readonly string[] {
@@ -169,7 +177,17 @@ function usersOf(shared: readonly SharedDependency[], names: readonly (string | 
   return `它被 ${hit.usedBy.join('、')} 用着（动的是它们的供给，它们的状态跟着重探了一遍）`;
 }
 
-export function registerMarketTools(ctx: DshHostContext, market: MarketService): Array<() => void> {
+export interface MarketSourceGateway {
+  readonly read: () => MarketSourcesPayload;
+  readonly init: MarketSourceInitializer;
+  readonly readOnly: (id: string) => Promise<MarketSourceConfig>;
+}
+
+export function registerMarketTools(
+  ctx: DshHostContext,
+  market: MarketService,
+  sources?: MarketSourceGateway,
+): Array<() => void> {
   const tools = ctx.get<DshToolRegistry>('tools');
   if (tools === undefined) {
     ctx.logger?.info?.('[dsh-workbench] 没有 tools 服务，跳过模块市场工具注册');
@@ -371,6 +389,76 @@ export function registerMarketTools(ctx: DshHostContext, market: MarketService):
     },
   };
 
+  const enableTool: DshToolDefinition = {
+    name: MARKET_ENABLE_TOOL,
+    description: '把索引源设为可发布（只改本机配置，不碰仓库）；要用户审批。',
+    parameters: {
+      type: 'object',
+      properties: { id: { type: 'string', description: '索引源 id；不填=当前选中的那个。' } },
+      additionalProperties: false,
+    },
+    output: OUTPUT,
+    async execute(raw: unknown) {
+      if (sources === undefined) throw new Error('这台机器上没有索引源服务，设不了可发布');
+      const payload = sources.read();
+      const asked = textArg(raw, 'id');
+      const id = asked === '' ? payload.selected : asked;
+      const source = id === null ? undefined : payload.sources.find((one) => one.id === id);
+      if (source === undefined) {
+        const known = payload.sources.map((one) => one.id).join('、') || '（空）';
+        throw new Error(
+          `没有这个索引源${asked === '' ? '' : `：${asked}`}。现有的：${known}；先在「模块市场 → 发现 → 索引源」里加一个。`,
+        );
+      }
+      if (source.kind !== 'git') throw new Error(`索引源 ${source.id} 是 http 地址，只能读，不能当发布目的地`);
+      if (source.policy === 'artifacts-in-repo') {
+        return { source, changed: false, text: `已经是可发布：${source.label}（${source.url}）` };
+      }
+      const result = await sources.init({ id: source.id, stampOnly: true });
+      return {
+        source: result.source,
+        branch: result.branch,
+        commit: result.commit,
+        changed: true,
+        text: `已把「${source.label}」设为可发布（${source.url}，分支 ${result.branch}）—— 仓库本身没动。之后发布可以落到它的 ${source.path ?? 'market.json'}。`,
+      };
+    },
+  };
+
+  const readOnlyTool: DshToolDefinition = {
+    name: MARKET_DISABLE_TOOL,
+    description: '把索引源改回只读（不再作为发布目的地；只改本机配置）。',
+    parameters: {
+      type: 'object',
+      properties: { id: { type: 'string', description: '索引源 id；不填=当前选中的那个。' } },
+      additionalProperties: false,
+    },
+    output: OUTPUT,
+    async execute(raw: unknown) {
+      if (sources === undefined) throw new Error('这台机器上没有索引源服务，改不了');
+      const payload = sources.read();
+      const asked = textArg(raw, 'id');
+      const id = asked === '' ? payload.selected : asked;
+      const source = id === null ? undefined : payload.sources.find((one) => one.id === id);
+      if (source === undefined) {
+        const known = payload.sources.map((one) => one.id).join('、') || '（空）';
+        throw new Error(
+          `没有这个索引源${asked === '' ? '' : `：${asked}`}。现有的：${known}；先在「模块市场 → 发现 → 索引源」里加一个。`,
+        );
+      }
+      if (source.kind !== 'git') throw new Error(`索引源 ${source.id} 是 http 地址，本来就是只读`);
+      if (source.policy === 'catalog-only') {
+        return { source, changed: false, text: `已经是只读：${source.label}（${source.url}）` };
+      }
+      const next = await sources.readOnly(source.id);
+      return {
+        source: next,
+        changed: true,
+        text: `已把「${source.label}」设为只读（${source.url}）—— 发布不会再落到它。`,
+      };
+    },
+  };
+
   return [
     tools.register(listTool),
     tools.register(installTool),
@@ -381,5 +469,8 @@ export function registerMarketTools(ctx: DshHostContext, market: MarketService):
     tools.register(updatePluginTool),
     tools.register(uninstallPluginTool),
     tools.register(updateWorkbenchTool),
+    tools.register(marketSourcesTool(sources === undefined ? undefined : () => sources.read())),
+    tools.register(enableTool),
+    tools.register(readOnlyTool),
   ];
 }

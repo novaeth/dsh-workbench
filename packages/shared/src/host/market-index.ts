@@ -155,6 +155,7 @@ function iconProblem(icon: string): MarketIndexProblem | undefined {
 function metadataOf(raw: unknown): MarketIndexEntry['metadata'] {
   const record = asRecord(raw);
   if (record === undefined) return undefined;
+  const workbench = record['workbench'] === true;
   const category = asText(record['category']);
   const labels = asTextArray(record['labels']);
   const keywords = asTextArray(record['keywords']);
@@ -168,6 +169,7 @@ function metadataOf(raw: unknown): MarketIndexEntry['metadata'] {
           ),
         );
   return {
+    ...(workbench ? { workbench: true } : {}),
     ...(category === '' ? {} : { category }),
     ...(labels.length === 0 ? {} : { labels }),
     ...(keywords.length === 0 ? {} : { keywords }),

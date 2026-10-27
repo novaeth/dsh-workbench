@@ -5,8 +5,8 @@ import { registerMarketTools } from '@/modules/panels/model/market-tools';
 import { registerDiyTools } from '@/modules/panels/model/diy-tools';
 import { registerLongTaskTools } from '@/modules/panels/model/long-task-tools';
 
-const RESIDENT_CHAR_BUDGET = 1592;
-const WORKSHOP_CHAR_BUDGET = 4226;
+const RESIDENT_CHAR_BUDGET = 1710;
+const WORKSHOP_CHAR_BUDGET = 4275;
 
 function registeredTools(workshop = false): DshToolDefinition[] {
   const seen: DshToolDefinition[] = [];
@@ -27,7 +27,7 @@ function registeredTools(workshop = false): DshToolDefinition[] {
     return seen;
   }
   registerPanelTools(ctx, none);
-  registerMarketTools(ctx, none);
+  registerMarketTools(ctx, none, none);
   registerLongTaskTools(ctx, undefined);
   return seen;
 }
@@ -79,7 +79,7 @@ describe('工具面是常驻上下文：话要一句顶一句', () => {
 
     expect(offenders).toEqual([]);
   });
-  it('★ 常驻工具面（面板 6 + 市场 9 + 长任务 2，共 17 把）的描述与参数说明按实测重算：2026-10-21 加长任务那两把（ADR-0070），把上限从旧那个 1833 收到当下的实测 1579；2026-10-23 模块名去标识化后实测 1592（口径见 内部设计记录：棘轮跟着实测走）', () => {
+  it('★ 常驻工具面（面板 6 + 市场 10 + 长任务 2，共 20 把）的描述与参数说明按实测重算：2026-10-21 加长任务那两把（ADR-0070），把上限从旧那个 1833 收到当下的实测 1579；2026-10-23 模块名去标识化后实测 1592；2026-10-27 加 workbench_market_enable（索引源设为可发布）后实测 1636；再加 workbench_market_disable（设为只读）后实测 1682；再加 workbench_market_sources（只读索引源清单）后实测 1710（口径见 内部设计记录：棘轮跟着实测走）', () => {
     const tools = registeredTools();
     const total = tools.reduce((sum, tool) => sum + promptTextOf(tool).length, 0);
 
@@ -88,7 +88,7 @@ describe('工具面是常驻上下文：话要一句顶一句', () => {
     );
   });
 
-  it('★ DIY 那 30 把另算一份（+调试约定四把，ADR-0055；枚举 opencli 后按实测重算 —— ADR-0062；组件那把见 ADR-0063 §5；2026-10-20 删 probe、改由那族的只读线档承担，按实测 3721 → 3658（删掉 workbench_diy_list，入口收成 _status）；2026-10-24 加 workbench_diy_publish（发布闸）；2026-10-26 加 workbench_diy_changelog（发布前的更新日志）、publish 加 refresh（只刷市集元数据），描述收短后实测 4176；2026-10-26 publish 加 author（没写作者时审批屏显示推断的署名），实测 4226，预算跟实测走）', () => {
+  it('★ DIY 那 30 把另算一份（+调试约定四把，ADR-0055；枚举 opencli 后按实测重算 —— ADR-0062；组件那把见 ADR-0063 §5；2026-10-20 删 probe、改由那族的只读线档承担，按实测 3721 → 3658（删掉 workbench_diy_list，入口收成 _status）；2026-10-24 加 workbench_diy_publish（发布闸）；2026-10-26 加 workbench_diy_changelog（发布前的更新日志）、publish 加 refresh（只刷市集元数据），描述收短后实测 4176；2026-10-26 publish 加 author（没写作者时审批屏显示推断的署名），实测 4226；2026-10-27 publish 加 source（多索引源时指定发到哪个）后实测 4275，预算跟实测走）', () => {
     const tools = registeredTools(true);
     const total = tools.reduce((sum, tool) => sum + promptTextOf(tool).length, 0);
 

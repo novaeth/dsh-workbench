@@ -97,6 +97,12 @@ async function document(): Promise<string> {
     '`fallback`（面板族没有宿主明细，`compose()` 没有 detail 就用它），点名"哪一趟 + 谁起的"；详情座画',
     '"要停的那次任务"那一行 + 一行 warn。这一份仍是只许手改 —— 门禁只比对、不写它。',
     '',
+    '**2026-10-27 加 `workbench_market_enable` 那一屏**：把索引源设为可发布，标题同样取 `fallback`，',
+    '点名是哪个索引源，并说清只改本机配置、不碰仓库；详情座由外壳认领（agent 塞的 `command` 进不来）。',
+    '',
+    '**2026-10-27 加 `workbench_market_disable` 那一屏**：把索引源改回只读；和 enable 一样只改本机配置、',
+    '不碰仓库，只有可发布的源才问。',
+    '',
   ];
   for (const tool of ASK_TOOLS) parts.push(...(await screenOf(tool)));
   return parts.join('\n');

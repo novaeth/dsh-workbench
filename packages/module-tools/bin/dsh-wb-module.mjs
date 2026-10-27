@@ -62,7 +62,7 @@ const RELEASE_HELP = `
   --license <id> --out <目录> --git <remote>
   --author <署名>                                       换署名（姓名，或 姓名 <邮箱>）；写回 package.json
   --index auto|none|<目录|git 地址>                     发布后要更新的索引源
-  --index-ref <分支> --index-path <索引路径> --index-policy artifacts-in-repo|catalog-only
+  --index-source <id> --index-ref <分支> --index-path <索引路径> --index-policy artifacts-in-repo|catalog-only
   --resume                                              上次中断后接着发（用记录里的出口与版本）
   --dry-run --verify --yes --json`;
 

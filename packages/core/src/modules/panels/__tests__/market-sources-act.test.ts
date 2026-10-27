@@ -44,6 +44,7 @@ describe('索引源写动作', () => {
       policy: 'artifacts-in-repo' as const,
     };
     const apply = vi.fn(async (): Promise<MarketSourcesPayload> => ({ sources: [source], selected: 'team' }));
+    const read = (): MarketSourcesPayload => ({ sources: [source], selected: 'team' });
     const init = vi.fn(async () => ({
       source,
       branch: 'main',
@@ -51,8 +52,8 @@ describe('索引源写动作', () => {
       created: ['market.json'],
       changed: true,
     }));
-    const action = marketSourcesAction({ read: () => EMPTY, apply }, init);
-    await expect(action.handle({ action: 'init', id: 'team', ref: 'main' })).resolves.toEqual({
+    const action = marketSourcesAction({ read, apply }, init);
+    await expect(action.handle({ action: 'init', id: 'team', ref: 'main', stampOnly: true })).resolves.toEqual({
       ok: true,
       sources: [source],
       selected: 'team',
@@ -60,13 +61,18 @@ describe('索引源写动作', () => {
       commit: 'c'.repeat(40),
       created: ['market.json'],
     });
-    expect(init).toHaveBeenCalledWith({ id: 'team', ref: 'main' });
-    expect(apply).toHaveBeenCalledWith({ action: 'save', source, select: true });
+    expect(init).toHaveBeenCalledWith({ id: 'team', ref: 'main', stampOnly: true });
+    expect(apply).not.toHaveBeenCalled();
   });
 
-  it('init 载荷校验 id 与分支名', () => {
+  it('init 载荷校验 id 与分支名，认得只补印章的写法', () => {
     expect(() => parseMarketSourcesAction({ action: 'init' })).toThrow(/id/);
     expect(() => parseMarketSourcesAction({ action: 'init', id: 'team', ref: 'bad name' })).toThrow(/分支/);
     expect(parseMarketSourcesAction({ action: 'init', id: 'team', ref: '' })).toEqual({ action: 'init', id: 'team' });
+    expect(parseMarketSourcesAction({ action: 'init', id: 'team', stampOnly: true })).toEqual({
+      action: 'init',
+      id: 'team',
+      stampOnly: true,
+    });
   });
 });
