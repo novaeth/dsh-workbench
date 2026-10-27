@@ -13,6 +13,7 @@ export interface ModuleVersionsState {
   readonly workbench: WorkbenchVersion | null;
   readonly selfUpdate: WorkbenchSelfUpdate | null;
   readonly read: boolean;
+  readonly checking: boolean;
   readonly checkedAt: number | null;
 }
 
@@ -26,6 +27,7 @@ const NOT_READ: ModuleVersionsState = {
   workbench: null,
   selfUpdate: null,
   read: false,
+  checking: false,
   checkedAt: null,
 };
 
@@ -72,6 +74,7 @@ export function runModuleVersionsRead(force = false, fresh = false): Promise<voi
   }
   const seq = (readSeq += 1);
   if (force) newestForceSeq = seq;
+  if (!state.checking) publish({ ...state, checking: true });
   const promise = Promise.all([readModuleVersions(force), readInstalledPlugins(force)])
     .catch(() => null)
     .then((responses) => {
@@ -85,6 +88,7 @@ export function runModuleVersionsRead(force = false, fresh = false): Promise<voi
         workbench: versions?.ok === true ? (versions.workbench ?? null) : state.workbench,
         selfUpdate: versions?.ok === true ? (versions.selfUpdate ?? null) : state.selfUpdate,
         read: true,
+        checking: false,
         checkedAt: Date.now(),
       });
     })
@@ -121,6 +125,7 @@ export function useModuleVersions(): ModuleVersionsView {
     workbench: value.workbench,
     selfUpdate: value.selfUpdate,
     read: value.read,
+    checking: value.checking,
     checkedAt: value.checkedAt,
     reload,
   };

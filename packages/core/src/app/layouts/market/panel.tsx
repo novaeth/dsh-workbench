@@ -95,7 +95,7 @@ function MarketPanel({
   const manifests = useLiveManifests(units);
   const installable = useInstallableUnits(units);
   const { capabilities, checkedAt, checking, forceProbe, reload: reloadCapability } = useCapabilityMap(0);
-  const { modules, plugins, workbench, selfUpdate, read: installedRead, reload: reloadVersions } = useModuleVersions();
+  const { modules, plugins, workbench, selfUpdate, checking: versionsChecking, read: installedRead, reload: reloadVersions } = useModuleVersions();
   const machineBoard = useEnabledUnits(0, null);
 
   const [adding, setAdding] = useState(false);
@@ -160,7 +160,8 @@ function MarketPanel({
   const shownFreshness =
     mock === undefined ? freshness : mock.loaded === false ? pendingFreshness : MOCK_FRESHNESS;
   const shownRead = mock === undefined ? installedRead : (mock.installedRead ?? true);
-  const busy = !marketSettled(shownFreshness, shownRead) || shownFreshness.checking || acting;
+  const shownChecking = shownFreshness.checking || (mock === undefined && versionsChecking);
+  const busy = !marketSettled(shownFreshness, shownRead) || shownChecking || acting;
   return (
     <div className={styles.marketPage}>
       <MarketHeader
@@ -168,7 +169,7 @@ function MarketPanel({
         idPrefix={MARKET_PANEL_ID}
         tab={tab}
         busy={busy}
-        checking={shownFreshness.checking}
+        checking={shownChecking}
         onTab={setTab}
         onReload={() => reload({ force: true })}
         onAdd={openAddModule}

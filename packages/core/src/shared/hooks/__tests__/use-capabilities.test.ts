@@ -3,6 +3,7 @@ import type { CapabilityPayload } from '@dsh-workbench/shared';
 import {
   type CapabilityMap,
   beginProbe,
+  bumpCapabilityEpoch,
   capabilityValue,
   endProbe,
   probeValue,
@@ -160,7 +161,6 @@ describe('★ 转圈必须罩到"强探落地"那一刻', () => {
   it('强探在飞时，另一次读缓存落地不许熄灭转圈', async () => {
     const OLD: CapabilityMap = { demo: payload('demo') };
     setCapabilities(OLD);
-    beginProbe();
 
     let landForce!: (value: CapabilityMap) => void;
     const forced = runCapabilityRead({
@@ -213,6 +213,46 @@ describe('★ 转圈必须罩到"强探落地"那一刻', () => {
     expect(probeValue().checking).toBe(false);
 
     await runCapabilityRead({ force: true, silent: true, load: async () => ({ demo: payload('demo') }) });
+    expect(probeValue().checking).toBe(false);
+  });
+
+  it('★ 静默补探落地不许熄灭用户点出来的转圈', async () => {
+    setCapabilities({ demo: payload('demo') });
+    beginProbe();
+
+    await runCapabilityRead({ force: true, silent: true, load: async () => ({ demo: payload('demo') }) });
+
+    expect(probeValue().checking).toBe(true);
+  });
+
+  it('★ 两条强探同时在飞：先落地的那条不放下转圈', async () => {
+    setCapabilities({ demo: payload('demo') });
+    let landFirst!: (value: CapabilityMap) => void;
+    let landSecond!: (value: CapabilityMap) => void;
+
+    bumpCapabilityEpoch();
+    const first = runCapabilityRead({
+      force: true,
+      load: () =>
+        new Promise<CapabilityMap>((resolve) => {
+          landFirst = resolve;
+        }),
+    });
+    bumpCapabilityEpoch();
+    const second = runCapabilityRead({
+      force: true,
+      load: () =>
+        new Promise<CapabilityMap>((resolve) => {
+          landSecond = resolve;
+        }),
+    });
+
+    landFirst({ demo: payload('first') });
+    await first;
+    expect(probeValue().checking).toBe(true);
+
+    landSecond({ demo: payload('second') });
+    await second;
     expect(probeValue().checking).toBe(false);
   });
 });

@@ -25,6 +25,8 @@ export function markNextProbeSilent(): void {
 
 let probe: CapabilityProbeState = NO_PROBE;
 
+let probing = 0;
+
 const probeListeners = new Set<() => void>();
 
 export function probeValue(): CapabilityProbeState {
@@ -70,19 +72,25 @@ export function subscribeCapabilities(listener: () => void): () => void {
 }
 
 export function setCapabilities(next: CapabilityMap | null, rechecked = false): void {
-  if (next === null) setProbe(NO_PROBE);
-  else if (rechecked) setProbe({ ...probe, checkedAt: Date.now() });
+  if (next === null) {
+    probing = 0;
+    setProbe(NO_PROBE);
+  } else if (rechecked) setProbe({ ...probe, checkedAt: Date.now() });
   if (next === current) return;
   current = next;
   for (const listener of [...listeners]) listener();
 }
 
 export function beginProbe(): void {
-  if (probe.checking) return;
+  probing += 1;
+  if (probing > 1) return;
   setProbe({ ...probe, checking: true });
 }
 
 export function endProbe(): void {
+  if (probing === 0) return;
+  probing -= 1;
+  if (probing > 0) return;
   setProbe({ ...probe, checking: false });
 }
 
@@ -131,7 +139,8 @@ export function runCapabilityRead(options: {
   const at = epoch;
   const seq = (readSeq += 1);
   if (force) newestForceSeq = seq;
-  if (force && !silent) beginProbe();
+  const shown = force && !silent;
+  if (shown) beginProbe();
 
   return shareCapabilityFetch(force, load)
     .then((result) => {
@@ -140,7 +149,7 @@ export function runCapabilityRead(options: {
       publishCapability(result, force);
     })
     .finally(() => {
-      if (force) endProbe();
+      if (shown) endProbe();
     });
 }
 

@@ -185,7 +185,9 @@ describe('市场页头：有动作在飞，页头那两颗钮一起禁用', () =
     const view = read('MarketView.tsx');
     const transient = read('market-transient-state.ts');
 
-    expect(page).toMatch(/marketSettled\(shownFreshness, shownRead\) \|\| shownFreshness\.checking \|\| acting/);
+    expect(page).toMatch(/marketSettled\(shownFreshness, shownRead\) \|\| shownChecking \|\| acting/);
+    expect(page).toContain('const shownChecking = shownFreshness.checking || (mock === undefined && versionsChecking)');
+    expect(page).toContain('checking={shownChecking}');
     expect(page).toContain('onPending={setActing}');
     expect(view).toContain('useMarketTransient({ mock, onPending })');
     expect(transient).toContain('onPending?.(pending !== null)');
