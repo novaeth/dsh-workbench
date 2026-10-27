@@ -250,7 +250,6 @@ export function publishPreviewOf(
       : claimOf(market.index ?? EMPTY_INDEX, {
           name,
           publisher: author,
-          unit,
           artifactPath: marketArtifactPath(name),
         });
   return {

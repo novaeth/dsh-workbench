@@ -539,26 +539,6 @@ describe('workbench_diy_publish · 审批', () => {
     expect(verdict?.kind === 'deny' ? verdict.reason : '').toContain('甲 <a@example.com>');
   });
 
-  it('别的模块已占这个 unit：审批直接拒', () => {
-    const policy = panelsApprovalFor(undefined, undefined, () => ({
-      name: '@demo/probe',
-      version: '0.1.0',
-      market: {
-        url: 'https://git.example.com/wb/market.git',
-        ref: 'main',
-        indexPath: 'market.json',
-        artifactPath: 'packages/@demo/probe',
-        files: ['package.json'],
-      },
-      claim: { state: 'unit-taken', entry: '@demo/other' },
-    }));
-    const verdict = policy({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo' } });
-
-    expect(verdict?.kind).toBe('deny');
-    expect(verdict?.kind === 'deny' ? verdict.reason : '').toContain('@demo/other');
-    expect(verdict?.kind === 'deny' ? verdict.reason : '').toContain('模块 id');
-  });
-
   it('参数带了这个署名：认领按这次的署名判，不拿模块里那个', () => {
     const policy = panelsApprovalFor(undefined, undefined, (_unit, author) => ({
       name: '@demo/probe',

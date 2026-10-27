@@ -112,13 +112,7 @@ describe('发布审批：版本单独一行，仓库 / 分支 / 两个 commit �
     expect(fresh.some((row) => row.label === '认领人')).toBe(false);
   });
 
-  it('★ 模块 id / 产物目录被占：各一行说清是谁', () => {
-    const unit = publishRows(
-      { unit: 'probe' },
-      { ...preview, claim: { state: 'unit-taken', entry: '@demo/other' } },
-      t,
-    );
-    expect(unit.find((row) => row.label === '模块 id')?.value).toBe('已被 @demo/other 占用');
+  it('★ 产物目录被占：一行说清是谁', () => {
     const path = publishRows(
       { unit: 'probe' },
       { ...preview, claim: { state: 'path-taken', entry: '@demo/other' } },

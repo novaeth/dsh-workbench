@@ -35,7 +35,6 @@ export const MARKET_INDEX_README_LINES: readonly string[] = [
   '产物会提交到 `packages/<包名>/`（带 scope 时是 `packages/@scope/名字/`），并更新 `market.json`。',
   '',
   '一个包名归第一次发布的人（`market.json` 里的 `owner`）。换一个署名发同名会被拒；要换人，先把这一条的 `owner` 改成新的人。',
-  '一个模块 id（`metadata.unit`）和一个产物目录同时只归一个条目：另一个包名想用同一个 id / 目录也会被拒。',
   '',
   '## 使用这个索引',
   '',
@@ -156,7 +155,6 @@ function iconProblem(icon: string): MarketIndexProblem | undefined {
 }
 
 const MAX_OWNER_CHARS = 200;
-const UNIT_ID = /^[a-z][a-z0-9-]*$/;
 
 function ownerProblem(owner: string): MarketIndexProblem | undefined {
   if (/[\r\n]/u.test(owner)) return problem('owner', 'owner 只能是一行署名');
@@ -168,7 +166,6 @@ function metadataOf(raw: unknown): MarketIndexEntry['metadata'] {
   const record = asRecord(raw);
   if (record === undefined) return undefined;
   const workbench = record['workbench'] === true;
-  const unit = asText(record['unit']);
   const category = asText(record['category']);
   const labels = asTextArray(record['labels']);
   const keywords = asTextArray(record['keywords']);
@@ -183,7 +180,6 @@ function metadataOf(raw: unknown): MarketIndexEntry['metadata'] {
         );
   return {
     ...(workbench ? { workbench: true } : {}),
-    ...(unit === '' ? {} : { unit }),
     ...(category === '' ? {} : { category }),
     ...(labels.length === 0 ? {} : { labels }),
     ...(keywords.length === 0 ? {} : { keywords }),
@@ -215,9 +211,6 @@ function entryOf(raw: unknown, at: string): MarketIndexEntry | MarketIndexProble
   }
   const homepage = asText(record['homepage']);
   const metadata = metadataOf(record['metadata']);
-  if (metadata?.unit !== undefined && !UNIT_ID.test(metadata.unit)) {
-    return problem('unit', `metadata.unit 只能是小写字母开头的 a-z0-9-（现在是 ${JSON.stringify(metadata.unit)}）`, at);
-  }
   return {
     name,
     versions,

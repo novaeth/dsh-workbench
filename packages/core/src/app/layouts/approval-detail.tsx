@@ -128,12 +128,7 @@ export function publishRows(
   ];
   const claim = preview?.claim;
   if (claim !== undefined && claim.state !== 'new' && claim.state !== 'unknown') {
-    if (claim.state === 'unit-taken') {
-      rows.push({
-        label: t('approval.publish.unit'),
-        value: t('approval.publish.unitTaken', { entry: claim.entry }),
-      });
-    } else if (claim.state === 'path-taken') {
+    if (claim.state === 'path-taken') {
       rows.push({
         label: t('approval.publish.path'),
         value: t('approval.publish.pathTaken', { entry: claim.entry }),

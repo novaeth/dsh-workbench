@@ -651,8 +651,6 @@ export const zh = {
   'approval.publish.owner': '认领人',
   'approval.publish.ownerUnowned': '原来没署名',
   'approval.publish.ownerTaken': '已有主人：{owner}',
-  'approval.publish.unit': '模块 id',
-  'approval.publish.unitTaken': '已被 {entry} 占用',
   'approval.publish.path': '产物目录',
   'approval.publish.pathTaken': '已被 {entry} 占用',
   'approval.publish.registry': '源',
