@@ -271,7 +271,6 @@ function mount(ctx: DshClientContext): void {
     official: sidebarRight,
     yieldColumn: () => {
       store.setColumn('dsh');
-      ctx.layout.closeRightbar();
       releaseWorkbenchColumn();
     },
     reclaimColumn: () => {

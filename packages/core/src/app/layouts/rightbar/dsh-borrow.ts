@@ -23,19 +23,36 @@ export function createDshBorrow(host: DshBorrowHost): DshBorrow {
   let restore: (() => void) | undefined;
   let shimmed = false;
 
+  const expand = (official: DshSidebarRight): boolean => {
+    if (official.isExpanded()) return true;
+    try {
+      official.toggleExpanded();
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const flush = (): void => {
     const official = host.official();
-    if (official === undefined || !dshSeatOnScreen(document)) return;
+    if (official === undefined) return;
     if (pendingOpen) {
+      if (!expand(official)) {
+        watch.arm();
+        return;
+      }
       pendingOpen = false;
-      if (!official.isExpanded()) official.toggleExpanded();
     }
     const call = pendingCall;
     pendingCall = undefined;
     call?.();
   };
 
-  const watch = createDshSurfaceWatch(() => dshSeatOnScreen(document), flush, DSH_SURFACE_POLL_MS);
+  const watch = createDshSurfaceWatch(
+    () => host.official()?.mounted.getSnapshot() !== undefined,
+    flush,
+    DSH_SURFACE_POLL_MS,
+  );
 
   const subscribe = (): void => {
     const official = host.official();

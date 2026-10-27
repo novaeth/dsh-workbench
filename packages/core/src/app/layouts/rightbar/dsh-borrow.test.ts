@@ -5,10 +5,12 @@ function fakeOfficial() {
   return {
     expanded: false,
     toggles: 0,
+    refuses: false,
     isExpanded() {
       return this.expanded;
     },
     toggleExpanded() {
+      if (this.refuses) throw new Error('sidebarRight: no session surface is mounted');
       this.toggles += 1;
       this.expanded = !this.expanded;
     },
@@ -151,6 +153,52 @@ describe('createDshBorrow', () => {
 
     borrow.toggle();
     expect(official.toggles).toBe(2);
+  });
+
+  it('官方还接不了（这一拍还没有会话说）：候着，能接那一拍就展开', () => {
+    const official = fakeOfficial();
+    official.refuses = true;
+    let yields = 0;
+    const borrow = createDshBorrow({
+      official: () => official,
+      yieldColumn: () => {
+        yields += 1;
+      },
+      reclaimColumn: () => {},
+    });
+
+    borrow.start();
+    official.openResource('dsh-resource://file/s1/a.md');
+    expect(yields).toBe(1);
+
+    vi.advanceTimersByTime(60);
+    expect(official.expanded).toBe(false);
+    expect(official.opened).toEqual([]);
+
+    official.refuses = false;
+    vi.advanceTimersByTime(60);
+    expect(official.expanded).toBe(true);
+    expect(official.opened).toEqual([['resource', 'dsh-resource://file/s1/a.md']]);
+  });
+
+  it('还没等椅面画出来、官方就能接了：会话一换就当场展开，不耗那 60 毫秒', () => {
+    const official = fakeOfficial();
+    const borrow = createDshBorrow({
+      official: () => official,
+      yieldColumn: () => {},
+      reclaimColumn: () => {},
+    });
+
+    borrow.start();
+    official.openResource('dsh-resource://file/s1/a.md');
+    expect(official.opened).toEqual([]);
+
+    official.mounted.value = 's2';
+    for (const listener of official.mounted.listeners) listener();
+
+    expect(official.toggles).toBe(1);
+    expect(official.expanded).toBe(true);
+    expect(official.opened).toEqual([['resource', 'dsh-resource://file/s1/a.md']]);
   });
 
   it('dispose 把借道的接线还回去（不把包装留在别人的控制器上）', () => {

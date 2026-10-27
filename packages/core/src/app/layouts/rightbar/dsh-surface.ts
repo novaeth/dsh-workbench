@@ -22,11 +22,15 @@ export function createDshSurfaceWatch(
   intervalMs: number,
 ): DshSurfaceWatch {
   let timer: ReturnType<typeof setInterval> | undefined;
+  let observer: MutationObserver | undefined;
 
   const disarm = (): void => {
-    if (timer === undefined) return;
-    clearInterval(timer);
-    timer = undefined;
+    if (timer !== undefined) {
+      clearInterval(timer);
+      timer = undefined;
+    }
+    observer?.disconnect();
+    observer = undefined;
   };
 
   const tick = (): void => {
@@ -35,10 +39,24 @@ export function createDshSurfaceWatch(
     onReady();
   };
 
+  const observe = (): void => {
+    if (observer !== undefined || typeof MutationObserver === 'undefined') return;
+    const root = typeof document === 'undefined' ? undefined : document.documentElement;
+    if (root === undefined || root === null) return;
+    observer = new MutationObserver(tick);
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: [DSH_SEAT_ATTRIBUTE],
+      childList: true,
+      subtree: true,
+    });
+  };
+
   return {
     arm() {
       if (timer !== undefined) return;
       timer = setInterval(tick, intervalMs);
+      observe();
     },
     disarm,
   };

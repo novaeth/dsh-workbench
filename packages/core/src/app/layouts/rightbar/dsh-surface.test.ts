@@ -35,6 +35,7 @@ describe('createDshSurfaceWatch', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    delete (globalThis as { MutationObserver?: unknown }).MutationObserver;
   });
 
   it('没就绪就一直等，就绪那一拍通知一次', () => {
@@ -110,4 +111,51 @@ describe('createDshSurfaceWatch', () => {
     expect(ready).toBe(1);
     watch.disarm();
   });
+
+  it('椅面一画出来就看一眼，不等下一拍定时器', () => {
+    const board = { seat: false };
+    const globals = globalThis as unknown as { MutationObserver?: unknown; document?: unknown };
+    const previous = globals.document;
+    const observers: FakeMutationObserver[] = [];
+    globals.document = { documentElement: {}, querySelector: () => (board.seat ? { id: 'seat' } : null) };
+    globals.MutationObserver = class extends FakeMutationObserver {
+      constructor(callback: () => void) {
+        super(callback);
+        observers.push(this);
+      }
+    };
+
+    let ready = 0;
+    const watch = createDshSurfaceWatch(() => board.seat, () => { ready += 1; }, 60);
+
+    watch.arm();
+    expect(observers).toHaveLength(1);
+
+    board.seat = true;
+    observers[0]?.fire();
+    expect(ready).toBe(1);
+    expect(observers[0]?.disconnected).toBe(1);
+
+    watch.disarm();
+    globals.document = previous;
+  });
 });
+
+class FakeMutationObserver {
+  readonly callback: () => void;
+  disconnected = 0;
+
+  constructor(callback: () => void) {
+    this.callback = callback;
+  }
+
+  observe(): void {}
+
+  disconnect(): void {
+    this.disconnected += 1;
+  }
+
+  fire(): void {
+    this.callback();
+  }
+}
