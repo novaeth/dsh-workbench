@@ -203,7 +203,11 @@ export function marketActions(row: MarketRow): MarketRowAction[] {
         ? (['update'] as const)
         : []
       : row.moduleUpdate.blocked === undefined
-        ? ([row.market === undefined ? ('update-bundle' as const) : ('install-version' as const)])
+        ? ([
+            row.market === undefined || row.pkg === undefined
+              ? ('update-bundle' as const)
+              : ('install-version' as const),
+          ])
         : []),
     ...(row.canUninstall
       ? ([row.pkg === undefined ? 'uninstall' : 'remove-bundle'] as const)
@@ -419,7 +423,7 @@ export function marketRows(
         ? {}
         : { version: { installed: entry.installed, ...(entry.latest === undefined ? {} : { latest: entry.latest }) } }),
       ...(moduleUpdate === undefined ? {} : { moduleUpdate }),
-      ...(entry?.market === undefined ? {} : { market: entry.market }),
+      ...(entry?.market === undefined ? {} : { market: entry.market, pkg: entry.market.pkg }),
       ...(moduleUpdate === undefined ? (note === undefined ? {} : { note }) : {}),
       ...(local ? { local: true } : {}),
       defaultShown: defaults.has(manifest.id),

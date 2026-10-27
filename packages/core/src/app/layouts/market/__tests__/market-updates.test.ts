@@ -57,4 +57,12 @@ describe('已安装页：索引里那条新版，走的是索引自己的更新�
     expect(actions).toContain('update-bundle');
     expect(actions).not.toContain('install-version');
   });
+
+  it('★ 有来源但拼不出 spec（没有包名）时退回 update-bundle，不留一个点了就报错的按钮', () => {
+    const actions = marketActions(
+      rowOf({ pkg: undefined, market, moduleUpdate: { installed: '1.1.0', latest: '1.2.0', market } }),
+    );
+    expect(actions).toContain('update-bundle');
+    expect(actions).not.toContain('install-version');
+  });
 });
