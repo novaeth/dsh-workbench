@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import type { MarketIndex, MarketIndexEntry } from '../../contract/protocol/market-index.js';
 import {
+  claimOf,
+  claimOfEntry,
+  entryOwnerOf,
   filterMarketIndex,
   marketInstallTarget,
   marketSourceKey,
   parseMarketIndex,
   parseMarketIndexJson,
   parseSourceConfig,
+  samePublisher,
   upsertMarketEntry,
 } from '../market-index.js';
 
@@ -85,6 +89,20 @@ describe('parseMarketIndex', () => {
     if (parsed.ok) return;
     expect(parsed.problems[0]?.kind).toBe('not-json');
   });
+
+  it('收下 owner，原样写回', () => {
+    const parsed = parseMarketIndex(indexOf([entry({ owner: '陈康 <kang@example.com>' })]));
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.index.plugins[0]?.owner).toBe('陈康 <kang@example.com>');
+  });
+
+  it('owner 只收一行：带换行整份拒', () => {
+    const parsed = parseMarketIndex(indexOf([entry({ owner: '陈康\n<b>' })]));
+    expect(parsed.ok).toBe(false);
+    if (parsed.ok) return;
+    expect(parsed.problems[0]?.kind).toBe('owner');
+  });
 });
 
 describe('upsertMarketEntry', () => {
@@ -107,6 +125,60 @@ describe('upsertMarketEntry', () => {
     ] }));
     expect(next.plugins[0]?.versions).toHaveLength(1);
     expect(next.plugins[0]?.versions[0]?.source.type).toBe('git');
+  });
+
+  it('已有 owner 就翻不过来：后来的条目只加版本', () => {
+    const owned = upsertMarketEntry(
+      { format: 1, plugins: [entry({ owner: '甲 <a@example.com>' })] },
+      entry({ owner: '乙 <b@example.com>', versions: [{ version: '0.2.0', source: { type: 'npm' } }] }),
+    );
+    expect(owned.plugins[0]?.owner).toBe('甲 <a@example.com>');
+    expect(owned.plugins[0]?.versions[0]?.version).toBe('0.2.0');
+  });
+});
+
+describe('认领', () => {
+  const owned = entry({ owner: '陈康 <kang@example.com>' });
+
+  it('没有条目是 new，条目没 owner 也没 author 是 unowned', () => {
+    expect(claimOfEntry(undefined, '陈康')).toEqual({ state: 'new' });
+    expect(claimOfEntry(entry(), '陈康')).toEqual({ state: 'unowned' });
+  });
+
+  it('邮箱相同就算同一人，大小写不影响', () => {
+    expect(samePublisher('陈康 <KANG@example.com>', '陈康 <kang@example.com>')).toBe(true);
+  });
+
+  it('两边都有邮箱时邮箱说了算：姓名不同也算同一人', () => {
+    expect(samePublisher('陈康 <kang@example.com>', 'Kang Chen <kang@example.com>')).toBe(true);
+  });
+
+  it('只有一边有邮箱就比姓名：格式漂了也认', () => {
+    expect(samePublisher('陈康', '陈康 <kang@example.com>')).toBe(true);
+  });
+
+  it('姓名和邮箱都不同就是冲突', () => {
+    expect(claimOfEntry(owned, '乙 <yi@example.com>')).toEqual({
+      state: 'conflict',
+      owner: '陈康 <kang@example.com>',
+    });
+  });
+
+  it('原主自己发是 owned；没给身份时是 unknown', () => {
+    expect(claimOfEntry(owned, '陈康 <kang@example.com>')).toEqual({
+      state: 'owned',
+      owner: '陈康 <kang@example.com>',
+    });
+    expect(claimOfEntry(owned, '')).toEqual({ state: 'unknown' });
+  });
+
+  it('老条目只有 author：把它当 owner 认', () => {
+    const legacy = entry({ author: '陈康 <kang@example.com>' });
+    expect(entryOwnerOf(legacy)).toBe('陈康 <kang@example.com>');
+    expect(claimOf({ format: 1, plugins: [legacy] }, '@scope/module-x', '陈康')).toEqual({
+      state: 'owned',
+      owner: '陈康 <kang@example.com>',
+    });
   });
 });
 

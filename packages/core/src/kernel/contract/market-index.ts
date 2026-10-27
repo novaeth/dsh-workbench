@@ -21,6 +21,7 @@ export type {
   DiscoverState,
   DiscoverVersionRow,
   IndexSourceSpec,
+  MarketClaim,
   MarketIndex,
   MarketIndexCategory,
   MarketIndexEngines,

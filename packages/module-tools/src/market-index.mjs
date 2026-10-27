@@ -5,6 +5,7 @@ import { isDeepStrictEqual } from 'node:util';
 import {
   MARKET_INDEX_README_LINES,
   MARKET_INDEX_SEED,
+  claimOf,
   gitUrlOk,
   marketSourceKey,
   parseMarketIndexJson,
@@ -91,6 +92,37 @@ function authorOf(manifest) {
   return '';
 }
 
+export function authorTextOf(manifest) {
+  const { name, email } = authorParts(manifest);
+  if (name === '') return '';
+  return email === '' ? name : `${name} <${email}>`;
+}
+
+export function claimProblemText(name, owner) {
+  return (
+    `市场里 ${name} 已经有主了（${owner}），同一个名字不能再由别人发。` +
+    '要发就换个带团队 scope 的包名；你就是原来的作者（只是换了机器或署名），用 author 参数带上原来的署名再发一次（CLI 是 --author）；' +
+    '确实是接手，让索引维护者把这一条的 owner 改成你。'
+  );
+}
+
+export function missingPublisherText() {
+  return '市场里一个名字要有主人：给 package.json 补上 author，或用 author 参数传一个署名（CLI 是 --author），再发。';
+}
+
+function claimOfIndexFile(workdir, indexPath, name, publisher) {
+  const file = join(workdir, indexPath);
+  if (!existsSync(file)) return { state: 'new' };
+  const parsed = parseMarketIndexJson(readFileSync(file, 'utf8'));
+  if (!parsed.ok) {
+    throw new MarketIndexError(
+      `${indexPath} 不合 format 1：${parsed.problems.map((one) => one.detail).join('；')}`,
+      'index-write',
+    );
+  }
+  return claimOf(parsed.index, name, publisher);
+}
+
 export function identityOf(manifest) {
   const { name, email } = authorParts(manifest);
   if (name === '') return undefined;
@@ -150,8 +182,10 @@ export function entryMetaOf(manifest) {
 export function indexEntryOf(input) {
   const manifest = input.manifest;
   const dsh = manifest.engines?.dsh;
+  const owner = authorTextOf(manifest);
   return {
     name: manifest.name,
+    ...(owner === '' ? {} : { owner }),
     ...entryMetaOf(manifest),
     versions: [
       {
@@ -389,9 +423,14 @@ function copyArtifacts(root, workdir, unit, manifest) {
   return `${PACKAGES_DIR}/${unit}`;
 }
 
-function writeEntry(workdir, indexPath, entry) {
+function writeEntry(workdir, indexPath, entry, publisher) {
   const file = join(workdir, indexPath);
   const current = existsSync(file) ? readFileSync(file, 'utf8') : '';
+  if (publisher === '') throw new MarketIndexError(missingPublisherText(), 'market-owner');
+  const claim = claimOfIndexFile(workdir, indexPath, entry.name, publisher);
+  if (claim.state === 'conflict') {
+    throw new MarketIndexError(claimProblemText(entry.name, claim.owner), 'market-owner');
+  }
   const merged = mergeIndexText(current, entry);
   if (!merged.ok) {
     throw new MarketIndexError(
@@ -427,8 +466,14 @@ function publishSourceOf(publish) {
   return undefined;
 }
 
+export function marketClaim({ plan, exec, home, name, publisher }) {
+  const workdir = worktreeOf(plan, exec, home);
+  return claimOfIndexFile(workdir, plan.source.path ?? MARKET_FILE, name, publisher);
+}
+
 export function updateMarketIndex(options) {
   const { plan, exec, home, root, manifest, unit, version, publish, now, resume, onStep } = options;
+  const publisher = options.publisher ?? authorTextOf(manifest);
   const entryName = `${manifest.name}@${version}`;
   let base = { kind: 'git', url: plan.source.url, entry: entryName };
   let phase = 'start';
@@ -464,6 +509,11 @@ export function updateMarketIndex(options) {
         };
       }
     }
+    if (publisher === '') throw new MarketIndexError(missingPublisherText(), 'market-owner');
+    const claim = claimOfIndexFile(workdir, indexPath, manifest.name, publisher);
+    if (claim.state === 'conflict') {
+      throw new MarketIndexError(claimProblemText(manifest.name, claim.owner), 'market-owner');
+    }
     let source;
     let artifactPath;
     if (plan.policy === 'artifacts-in-repo') {
@@ -490,7 +540,7 @@ export function updateMarketIndex(options) {
     }
     const entry = indexEntryOf({ manifest, version, source, at: now() });
     report({ phase: 'index' });
-    writeEntry(workdir, indexPath, entry);
+    writeEntry(workdir, indexPath, entry, publisher);
     let indexSha = commitOf(exec, workdir, `chore(market): ${entryName}`, identityOf(manifest));
     report({ phase: 'index-committed', indexCommit: indexSha });
     const pushed = pushOf(exec, workdir, branch);
@@ -502,7 +552,7 @@ export function updateMarketIndex(options) {
           `模块已进仓库、索引没更新（本地 commit ${indexSha}）：${tailOf(`${pushed.stdout}\n${pushed.stderr}`)}`,
         );
       }
-      writeEntry(workdir, indexPath, entry);
+      writeEntry(workdir, indexPath, entry, publisher);
       indexSha = commitOf(exec, workdir, `chore(market): ${entryName}`, identityOf(manifest));
       report({ phase: 'index-committed', indexCommit: indexSha });
       const retried = pushOf(exec, workdir, branch);
@@ -544,11 +594,13 @@ export function updateMarketIndex(options) {
 
 export function refreshMarketEntry(options) {
   const { plan, exec, home, manifest } = options;
+  const publisher = options.publisher ?? authorTextOf(manifest);
   let base = { kind: 'git', url: plan.source.url, entry: manifest.name };
   let phase = 'start';
   try {
     const workdir = worktreeOf(plan, exec, home);
     const indexPath = plan.source.path ?? MARKET_FILE;
+    if (publisher === '') throw new MarketIndexError(missingPublisherText(), 'market-owner');
     assertClean(exec, workdir);
     const branch = plan.source.ref ?? currentBranch(exec, workdir);
     base = { ...base, branch };
@@ -575,7 +627,7 @@ export function refreshMarketEntry(options) {
     if (isDeepStrictEqual(next, existing)) {
       return { ...base, updated: false, unchanged: true, version: latest, phase: 'done' };
     }
-    writeEntry(workdir, indexPath, next);
+    writeEntry(workdir, indexPath, next, publisher);
     let indexSha = commitOf(exec, workdir, `chore(market): refresh ${manifest.name}`, identityOf(manifest));
     const pushed = pushOf(exec, workdir, branch);
     if (pushed.status !== 0) {
@@ -583,7 +635,7 @@ export function refreshMarketEntry(options) {
       if (!replayed) {
         throw new MarketIndexError(`元数据没推上去（本地 commit ${indexSha}）：${tailOf(pushed.stderr)}`, 'index-write');
       }
-      writeEntry(workdir, indexPath, next);
+      writeEntry(workdir, indexPath, next, publisher);
       indexSha = commitOf(exec, workdir, `chore(market): refresh ${manifest.name}`, identityOf(manifest));
       const retried = pushOf(exec, workdir, branch);
       if (retried.status !== 0) {

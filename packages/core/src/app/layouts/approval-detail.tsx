@@ -126,6 +126,18 @@ export function publishRows(
               : preview.author,
     },
   ];
+  const claim = preview?.claim;
+  if (claim !== undefined && claim.state !== 'new' && claim.state !== 'unknown') {
+    rows.push({
+      label: t('approval.publish.owner'),
+      value:
+        claim.state === 'owned'
+          ? claim.owner
+          : claim.state === 'unowned'
+            ? t('approval.publish.ownerUnowned')
+            : t('approval.publish.ownerTaken', { owner: claim.owner }),
+    });
+  }
   const market = preview?.market;
   if (market !== undefined) {
     rows.push(

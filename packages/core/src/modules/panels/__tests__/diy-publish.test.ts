@@ -115,6 +115,7 @@ describe('workbench_diy_publish · 预览', () => {
           artifactPath: 'packages/demo',
           files: ['package.json'],
         },
+        claim: { state: 'new' },
         changelog: { version: '0.0.0', missing: true },
       });
     } finally {
@@ -406,6 +407,60 @@ describe('workbench_diy_publish · 审批', () => {
     expect(policy({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo', target: 'team', verify: true } })).toEqual({
       kind: 'allow',
     });
+  });
+
+  it('市场里同名归别人：审批直接拒，不让人点同意', () => {
+    const policy = panelsApprovalFor(undefined, undefined, () => ({
+      name: '@demo/probe',
+      version: '0.1.0',
+      market: {
+        url: 'https://git.example.com/wb/market.git',
+        ref: 'main',
+        indexPath: 'market.json',
+        artifactPath: 'packages/demo',
+        files: ['package.json'],
+      },
+      claim: { state: 'conflict', owner: '甲 <a@example.com>' },
+    }));
+    const verdict = policy({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo' } });
+
+    expect(verdict?.kind).toBe('deny');
+    expect(verdict?.kind === 'deny' ? verdict.reason : '').toContain('已经有主');
+    expect(verdict?.kind === 'deny' ? verdict.reason : '').toContain('甲 <a@example.com>');
+  });
+
+  it('参数带了这个署名：认领按这次的署名判，不拿模块里那个', () => {
+    const policy = panelsApprovalFor(undefined, undefined, (_unit, author) => ({
+      name: '@demo/probe',
+      version: '0.1.0',
+      market: {
+        url: 'https://git.example.com/wb/market.git',
+        ref: 'main',
+        indexPath: 'market.json',
+        artifactPath: 'packages/demo',
+        files: ['package.json'],
+      },
+      claim:
+        author === '乙' ? { state: 'conflict', owner: '甲 <a@example.com>' } : { state: 'owned', owner: '甲 <a@example.com>' },
+    }));
+    expect(policy({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo' } })?.kind).toBe('ask');
+    expect(policy({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo', author: '乙' } })?.kind).toBe('deny');
+  });
+
+  it('点名了别的索引源：审批不拦，交给 release 判', () => {
+    const policy = panelsApprovalFor(undefined, undefined, () => ({
+      name: '@demo/probe',
+      version: '0.1.0',
+      market: {
+        url: 'https://git.example.com/wb/market.git',
+        ref: 'main',
+        indexPath: 'market.json',
+        artifactPath: 'packages/demo',
+        files: ['package.json'],
+      },
+      claim: { state: 'conflict', owner: '甲 <a@example.com>' },
+    }));
+    expect(policy({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo', source: 'other' } })?.kind).toBe('ask');
   });
 });
 

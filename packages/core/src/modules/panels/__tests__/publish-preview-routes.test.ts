@@ -1,8 +1,9 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { PublishPreview } from '@/kernel/contract/market-index';
+import { marketSourceKey } from '@dsh-workbench/shared/host';
+import type { MarketIndexEntry, PublishPreview } from '@/kernel/contract/market-index';
 import { MARKET_PUBLISH_PREVIEW_ROUTE } from '@/kernel/contract/market-index';
 import { localGitIdentityOf } from '@/shared/api/host/diy-publish-preview';
 import { publishPreviewRoutes } from '../model/publish-preview-routes';
@@ -19,6 +20,23 @@ function workshopOf(changelog?: string): string {
   );
   if (changelog !== undefined) writeFileSync(join(root, 'CHANGELOG.md'), changelog);
   return root;
+}
+
+function marketHomeOf(entries: readonly MarketIndexEntry[]): string {
+  const home = mkdtempSync(join(tmpdir(), 'wb-publish-preview-market-'));
+  const source = {
+    id: 'team',
+    label: '团队',
+    kind: 'git' as const,
+    url: 'https://git.example.com/wb/market.git',
+    ref: 'main',
+    policy: 'artifacts-in-repo' as const,
+  };
+  const worktree = join(home, 'market-index', marketSourceKey(source), 'worktree');
+  mkdirSync(worktree, { recursive: true });
+  writeFileSync(join(home, 'market-index', 'sources.json'), JSON.stringify({ sources: [source], selected: source.id }));
+  writeFileSync(join(worktree, 'market.json'), JSON.stringify({ format: 1, plugins: entries }));
+  return home;
 }
 
 const CHANGELOG = '# 更新日志\n\n## v0.0.2\n\n`2026-10-26`\n\n### ✨ 新增\n\n- 这一版的新东西\n';
@@ -150,6 +168,83 @@ describe('发布预览的只读路由', () => {
       if (previous === undefined) delete process.env.DSH_WORKBENCH_HOME;
       else process.env.DSH_WORKBENCH_HOME = previous;
       rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('市场里同名归别人：预览把认领冲突带出来', async () => {
+    const root = workshopOf();
+    const market = marketHomeOf([
+      {
+        name: '@demo/probe',
+        owner: '甲 <a@example.com>',
+        versions: [{ version: '0.0.1', source: { type: 'npm' } }],
+      },
+    ]);
+    const previous = process.env.DSH_WORKBENCH_HOME;
+    process.env.DSH_WORKBENCH_HOME = market;
+    try {
+      const handler = publishPreviewRoutes(root)[MARKET_PUBLISH_PREVIEW_ROUTE];
+      const read = async (query: string): Promise<{ readonly preview: PublishPreview | null }> =>
+        (await handler?.(new URLSearchParams(query))) as { readonly preview: PublishPreview | null };
+      expect((await read('unit=probe&author=乙+%3Cyi%40example.com%3E')).preview?.claim).toEqual({
+        state: 'conflict',
+        owner: '甲 <a@example.com>',
+      });
+      expect((await read('unit=probe&author=甲')).preview?.claim).toEqual({
+        state: 'owned',
+        owner: '甲 <a@example.com>',
+      });
+      expect((await read('unit=probe')).preview?.claim).toEqual({ state: 'unknown' });
+    } finally {
+      if (previous === undefined) delete process.env.DSH_WORKBENCH_HOME;
+      else process.env.DSH_WORKBENCH_HOME = previous;
+      rmSync(root, { recursive: true, force: true });
+      rmSync(market, { recursive: true, force: true });
+    }
+  });
+
+  it('没写作者时用推断的署名重算认领', async () => {
+    const root = workshopOf();
+    const market = marketHomeOf([
+      {
+        name: '@demo/probe',
+        owner: '甲 <a@example.com>',
+        versions: [{ version: '0.0.1', source: { type: 'npm' } }],
+      },
+    ]);
+    const previous = process.env.DSH_WORKBENCH_HOME;
+    process.env.DSH_WORKBENCH_HOME = market;
+    try {
+      const handler = publishPreviewRoutes(root, async () => '甲 <a@example.com>')[MARKET_PUBLISH_PREVIEW_ROUTE];
+      const read = async (query: string): Promise<{ readonly preview: PublishPreview | null }> =>
+        (await handler?.(new URLSearchParams(query))) as { readonly preview: PublishPreview | null };
+      expect((await read('unit=probe')).preview?.claim).toEqual({
+        state: 'owned',
+        owner: '甲 <a@example.com>',
+      });
+    } finally {
+      if (previous === undefined) delete process.env.DSH_WORKBENCH_HOME;
+      else process.env.DSH_WORKBENCH_HOME = previous;
+      rmSync(root, { recursive: true, force: true });
+      rmSync(market, { recursive: true, force: true });
+    }
+  });
+
+  it('索引里还没有这个名字：claim 是 new', async () => {
+    const root = workshopOf();
+    const market = marketHomeOf([]);
+    const previous = process.env.DSH_WORKBENCH_HOME;
+    process.env.DSH_WORKBENCH_HOME = market;
+    try {
+      const handler = publishPreviewRoutes(root)[MARKET_PUBLISH_PREVIEW_ROUTE];
+      const read = async (query: string): Promise<{ readonly preview: PublishPreview | null }> =>
+        (await handler?.(new URLSearchParams(query))) as { readonly preview: PublishPreview | null };
+      expect((await read('unit=probe&author=甲')).preview?.claim).toEqual({ state: 'new' });
+    } finally {
+      if (previous === undefined) delete process.env.DSH_WORKBENCH_HOME;
+      else process.env.DSH_WORKBENCH_HOME = previous;
+      rmSync(root, { recursive: true, force: true });
+      rmSync(market, { recursive: true, force: true });
     }
   });
 });

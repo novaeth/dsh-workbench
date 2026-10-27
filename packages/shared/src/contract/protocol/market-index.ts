@@ -68,11 +68,19 @@ export interface MarketIndexEntry {
   readonly title?: MarketLocalizedText;
   readonly description?: MarketLocalizedText;
   readonly author?: string;
+  readonly owner?: string;
   readonly homepage?: string;
   readonly icon?: string;
   readonly metadata?: MarketIndexEntryMetadata;
   readonly versions: readonly MarketIndexVersion[];
 }
+
+export type MarketClaim =
+  | { readonly state: 'new' }
+  | { readonly state: 'owned'; readonly owner: string }
+  | { readonly state: 'unowned' }
+  | { readonly state: 'conflict'; readonly owner: string }
+  | { readonly state: 'unknown' };
 
 export interface MarketIndexCategory {
   readonly title?: MarketLocalizedText;
@@ -115,7 +123,8 @@ export type MarketIndexProblemKind =
   | 'source'
   | 'git-commit'
   | 'timestamp'
-  | 'icon';
+  | 'icon'
+  | 'owner';
 
 export interface MarketIndexProblem {
   readonly kind: MarketIndexProblemKind;
@@ -214,6 +223,7 @@ export interface PublishChangelog {
   readonly version: string;
   readonly text?: string;
   readonly missing?: boolean;
+  readonly pending?: boolean;
 }
 
 export interface PublishPreview {
@@ -222,6 +232,7 @@ export interface PublishPreview {
   readonly author?: string;
   readonly registry?: string;
   readonly market?: MarketPublishDestination;
+  readonly claim?: MarketClaim;
   readonly changelog?: PublishChangelog;
 }
 

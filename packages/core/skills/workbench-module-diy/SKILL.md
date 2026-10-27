@@ -48,6 +48,7 @@ description: 在工作台里把当前面板调明白，或者给它造一块新�
 8. **发布** —— 只在用户说「帮我发布」之后：`workbench_diy_changelog`（`note=…`）记这一版 → `workbench_diy_publish`（`unit=…`）。
    不手改 `package.json`、不补标题/署名、不问出口：工具与审批屏已经处理；他明确点名安装包 / 公开 / git 才传 target。
    他说要换作者才传 `author="姓名 <邮箱>"`，别自己编一个；没写作者时审批屏显示推断的署名，他拒绝后再说。
+   市场里一个包名归第一次发布的人：换署名发同名会被拒；真是接手，让维护者先改那一条的 `owner`。
    验收没过先 `design accept`；`needsUser` 照 `text` 转述。细节见 [WIRING.md](WIRING.md) §5。
 
 ## 索引
