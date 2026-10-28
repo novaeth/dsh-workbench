@@ -1,19 +1,21 @@
 import type { DshHostContext, DshShell } from '../api/dsh.js';
 import type { LibNeed, SupplySource } from '../contract/needs.js';
 import type { NeedProbeInput, UnitCapability } from '../contract/unit-capability.js';
+import type { DataReader } from '../contract/data.js';
+import type { LibRunner } from '../contract/runner.js';
 import type { WorkbenchSelfUpdate } from '../contract/protocol/bundle-install.js';
 import type {
   BundleManager,
   InstalledModule,
-  OpencliResolution,
   ProfileModule,
   ProfilePackage,
   RegistryNotebook,
+  RuntimeStatus,
   SelfUpdateRequest,
   SelfUpdateStart,
 } from './adapter-types.js';
 import type { PostResource, RouteHandler, RouteTable } from './http.js';
-import type { PluginSourceOptions, ResolvedPluginSource } from './plugin-source.js';
+import type { PluginSourceOptions, ResolvedPluginSource } from '../contract/plugin-source.js';
 
 export interface LoggerLike {
   info?(message: string): void;
@@ -96,7 +98,8 @@ export interface ModulePort {
   isolatedHome(): string;
   cliCatalogPath(): string;
   vendorPluginsDir(): string;
-  opencliInstallCommand(): string;
+  runtimeInstallCommand(): string;
+  afterLibInstall(): void;
   profileDirOf(ctx: DshHostContext): string | null;
   profileModules(dir: string | null): readonly ProfileModule[];
   readInstalledModule(dir: string | null, pkg: string): InstalledModule;
@@ -140,8 +143,7 @@ export interface ProbePreflightInput {
   readonly routes: RouteTable;
   readonly ctx: DshHostContext;
   readonly shell: DshShell;
-  readonly opencliCommand: string;
-  readonly installCommand?: string | undefined;
+  readonly runtimeCommands: Readonly<Record<string, string>>;
   readonly warmReads: () => readonly (readonly string[])[];
 }
 
@@ -158,7 +160,9 @@ export interface RuntimeSeedOptions {
 
 export interface RuntimePort {
   packageRoot(moduleUrl: string): string;
-  opencliCommand(ctx: DshHostContext): OpencliResolution;
+  commands(ctx: DshHostContext): Readonly<Record<string, string>>;
+  runners(ctx: DshHostContext, data: DataReader): Readonly<Record<string, LibRunner>>;
+  health(ctx: DshHostContext): Readonly<Record<string, RuntimeStatus>>;
   seed(ctx: DshHostContext, options: RuntimeSeedOptions): void;
   warnUnwritableRoot(ctx: DshHostContext): void;
 }

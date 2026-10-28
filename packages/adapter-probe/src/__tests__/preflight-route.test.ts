@@ -37,7 +37,7 @@ function wire(
     routes: routes as never,
     ctx: ctx as unknown as DshHostContext,
     shell: fake.shell,
-    opencliCommand: 'opencli',
+    runtimeCommands: { opencli: 'opencli' },
     warmReads: () => [],
     ...(desktopBrowser === undefined ? {} : { desktopBrowser }),
   });

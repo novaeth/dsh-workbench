@@ -1,7 +1,12 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { isolatedHome, toolchainOpencliDir, vendorPeerLink, vendorPluginsDir } from './paths.js';
-import { quoteShellArg } from './shell-text.js';
+import {
+  isolatedHome,
+  quoteShellArg,
+  toolchainOpencliDir,
+  vendorPeerLink,
+  vendorPluginsDir,
+} from '@dsh-workbench/shared/host';
 
 export const CHANNEL_PLUGIN_NAME = 'opencli-plugin-workbench';
 export const CHANNEL_PLUGIN_SITE = 'workbench';

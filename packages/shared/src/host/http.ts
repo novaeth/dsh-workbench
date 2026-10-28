@@ -7,6 +7,7 @@ import {
   type ProvisionHandler,
   type ProvisionRequest,
 } from './provision.js';
+import type { RuntimeStatus } from './adapter-types.js';
 import { WorkbenchDataError } from './data-error.js';
 import { writeResultForClient } from './write-result.js';
 
@@ -251,13 +252,10 @@ export function capabilityHandler(
   };
 }
 
-export interface OpencliHealth {
-  readonly command: string;
-  readonly source: 'env' | 'isolated' | 'path';
-  readonly isolated: string | null;
-}
-
-export function healthHandler(ctx: DshHostContext, opencli?: OpencliHealth): RouteHandler {
+export function healthHandler(
+  ctx: DshHostContext,
+  runtimes?: Readonly<Record<string, RuntimeStatus>>,
+): RouteHandler {
   return () => {
     const profile = ctx.get<{ dir?: string }>('profileContext');
     const dir = profile?.dir;
@@ -268,7 +266,7 @@ export function healthHandler(ctx: DshHostContext, opencli?: OpencliHealth): Rou
       profileDir: dir ?? null,
       pid: process.pid,
       now: new Date().toISOString(),
-      ...(opencli === undefined ? {} : { opencli }),
+      ...(runtimes === undefined ? {} : { runtimes }),
     };
   };
 }

@@ -1,14 +1,16 @@
 import { fileURLToPath } from 'node:url';
 import type { DshShell } from '@dsh-workbench/shared';
 import {
-  channelInstalledVersion,
-  channelPluginPlan,
-  channelSiteInstalled,
-  channelVersionOf,
   DEFAULT_RECIPE_MAX_BYTES,
   quoteShellArg,
   runShell,
 } from '@dsh-workbench/shared/host';
+import {
+  channelInstalledVersion,
+  channelPluginPlan,
+  channelSiteInstalled,
+  channelVersionOf,
+} from './channel-plugin.js';
 import type { CallOverrides, RecipeAuth, RequestRecipe } from '@dsh-workbench/shared/host';
 
 export const CHANNEL_DIR = fileURLToPath(new URL('../../channel/', import.meta.url));

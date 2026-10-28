@@ -314,14 +314,14 @@ packages/core/src/
 | `EnvSupplyPort` | `shared/host/port-types.ts` | 供给窄口：插件来源、安装命令、release（7 个方法） |
 | `ModulePort` | `shared/host/port-types.ts` | 已安装模块、registry、bundle、profile 包、自更新 |
 | `ProbePort` | `shared/host/port-types.ts` | `probeUnits` / `registerPreflight` / `declaredPluginCommands` |
-| `RuntimePort` | `shared/host/port-types.ts` | 包根、opencli 解析、自举、可写根告警 |
+| `RuntimePort` | `shared/host/port-types.ts` | 包根、运行时命令/执行器/状态（按名字给）、自举、可写根告警 |
 | `PluginSurface` | `shared/host/port-types.ts` | 插件清单、已装插件合成单元 |
 | `HostActions` | `shared/host/port-types.ts` | config sync / profile create 的 handler 与写动作 |
 | `AdapterSet` | `shared/host/adapters.ts` | 上面这些端口的聚合，外加 `apiVersion` / `id` / `version` |
 
 `AdapterSet` 是组合根交给业务的唯一适配器对象；`WorkbenchAdapters` 是保留的别名。
 `DataReader` 是模块作者最常用的端口；模块不 import adapter 包。
-`CliPort` 仍存在，但它由 `runtime.opencliCommand` 派生，不再是 `AdapterSet` 的成员。
+`CliPort` 仍存在，但它由 `runtime.commands(ctx)` 派生，不再是 `AdapterSet` 的成员。
 
 ### 4.2 组合根
 

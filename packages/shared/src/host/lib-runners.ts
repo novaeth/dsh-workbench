@@ -1,17 +1,15 @@
 import type { LibNeed } from '../contract/needs.js';
 import type { LibReader } from '../contract/lib.js';
-import type { OpencliRunner } from './opencli-runner.js';
+import type { LibRunner } from '../contract/runner.js';
 
-export interface LibRuntimes {
-  readonly opencli?: OpencliRunner | undefined;
-}
+export type LibRuntimes = Readonly<Record<string, LibRunner>>;
 
 interface Logger {
   warn?(message: string): void;
 }
 
-function runnerOf(runtimes: LibRuntimes, runtime: string): OpencliRunner | undefined {
-  return runtime === 'opencli' ? runtimes.opencli : undefined;
+function runnerOf(runtimes: LibRuntimes, runtime: string): LibRunner | undefined {
+  return runtimes[runtime];
 }
 
 function setterNameOf(runtime: string): string {
@@ -62,7 +60,7 @@ export function withLibRunners(
           );
           continue;
         }
-        (setter as (runner: OpencliRunner) => void).call(module, runner);
+        (setter as (runner: LibRunner) => void).call(module, runner);
       }
       return module;
     },

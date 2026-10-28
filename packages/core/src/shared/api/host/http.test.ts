@@ -177,6 +177,27 @@ describe('healthHandler', () => {
     expect(payload.ok).toBe(true);
   });
 
+  it('★ 运行时状态按名字放进 runtimes（外壳不再拼 opencli 这个键）', () => {
+    const { ctx } = fakeCtx();
+    const payload = healthHandler(ctx, {
+      opencli: { command: '/x/opencli', source: 'isolated', isolated: '/x/opencli' },
+    })(new URLSearchParams()) as Record<string, unknown>;
+    expect(payload.runtimes).toEqual({
+      opencli: { command: '/x/opencli', source: 'isolated', isolated: '/x/opencli' },
+    });
+    expect(payload.opencli).toBeUndefined();
+  });
+
+  it('★ 换一个运行时名字也照样上板：health 只转发一张表', () => {
+    const { ctx } = fakeCtx();
+    const payload = healthHandler(ctx, {
+      mcp: { command: '/bin/mcp', source: 'path', isolated: null },
+    })(new URLSearchParams()) as Record<string, unknown>;
+    expect(payload.runtimes).toEqual({
+      mcp: { command: '/bin/mcp', source: 'path', isolated: null },
+    });
+  });
+
   it('没有 profileContext 时给出 null 而不是崩', () => {
     const { ctx } = fakeCtx();
     const bare: DshHostContext = { ...ctx, get: () => undefined };

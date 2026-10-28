@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { LibNeed } from '../../contract/needs.js';
 import type { LibReader } from '../../contract/lib.js';
-import type { OpencliRunner } from '../opencli-runner.js';
+import type { LibRunner } from '../../contract/runner.js';
 import { withLibRunners } from '../lib-runners.js';
 
-const runner: OpencliRunner = async () => ({ stdout: '[]' });
+const runner: LibRunner = async () => ({ stdout: '[]' });
 
 function needOf(runs?: readonly string[]): LibNeed {
   return {
@@ -28,6 +28,15 @@ function logger(): { readonly warn: ReturnType<typeof vi.fn<(message: string) =>
 }
 
 describe('withLibRunners', () => {
+  it('★ 换一个运行时名字（mcp）照样注入：外壳不认具体名字，只看清单的 runs', async () => {
+    const module = { setMcpRunner: vi.fn() };
+    const libs = withLibRunners(libsOf(module), { mcp: runner }, logger());
+
+    await libs.load(needOf(['mcp']), 'src/run.js');
+
+    expect(module.setMcpRunner).toHaveBeenCalledWith(runner);
+  });
+
   it('没声明 runs → 原样返回，不注入、不记 warn', async () => {
     const module = { setOpencliRunner: vi.fn() };
     const warn = logger();

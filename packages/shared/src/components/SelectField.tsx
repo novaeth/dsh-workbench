@@ -425,6 +425,7 @@ export function SelectField(props: SelectFieldProps) {
     value: selectValueNode(current, renderValue, placeholder),
     iconOnly,
     onOpen: () => state.setOpen(true),
+    ref: state.triggerRef,
   });
 
   const anchor =

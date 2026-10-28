@@ -50,7 +50,7 @@ export interface UnitRegistry {
 
 function sourceLabel(source: UnitSource): string {
   if (source.kind === 'owned') return '工作台自己';
-  if (source.kind === 'plugin') return '按已装 opencli 插件合成';
+  if (source.kind === 'plugin') return '按已装插件合成';
   return source.pkg;
 }
 

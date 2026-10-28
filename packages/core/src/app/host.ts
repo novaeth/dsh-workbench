@@ -37,7 +37,7 @@ import {
 import { bindRosterFacts } from '@/shared/api/host/unit-roster-facts';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 import { dshHome } from '@dsh-workbench/shared/host';
-import { ensureLibsBinOnPath, ensureLibsOpencliPeer, opencliRunnerOf, withLibRunners } from '@dsh-workbench/shared/host';
+import { withLibRunners } from '@dsh-workbench/shared/host';
 import { CONFIG_SYNC_ROUTE } from '@/kernel/contract/config-sync';
 import { PROFILE_CREATE_ROUTE } from '@/kernel/contract/profile-create';
 import { SIDEBAR_EDITION_ROUTE } from '@/kernel/contract/sidebar-edition';
@@ -49,7 +49,6 @@ import { asArgs, warn } from '../shared/api/host/host-args';
 import { createApprovalGate } from '@/shared/api/host/approval-gate';
 import { notifyLongTaskStop } from '@/shared/api/host/long-task-notice';
 export const name = 'dsh-workbench';
-const LIB_OPENCLI_TIMEOUT_MS = 30 * 60_000;
 interface ReleasedLookup { isReleased(id: string): boolean }
 export const inject = ['webServer'];
 async function defaultAdapterSet(ctx: DshHostContext): Promise<AdapterSet> {
@@ -71,24 +70,16 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     ctx.logger?.warn?.(`[dsh-workbench] 适配器集合没生效（${loaded.failure}）：${loaded.detail}；先用默认集合`);
   }
   ctx.provide(WORKBENCH_ADAPTERS, adapters);
-  const opencli = adapters.runtime.opencliCommand(ctx);
+  const runtimeCommands = adapters.runtime.commands(ctx);
   const libRunners =
     adapters.libs === undefined
       ? undefined
-      : withLibRunners(
-          adapters.libs,
-          {
-            opencli: opencliRunnerOf((request) => adapters.data.read(request), {
-              timeoutMs: LIB_OPENCLI_TIMEOUT_MS,
-            }),
-          },
-          ctx.logger,
-        );
+      : withLibRunners(adapters.libs, adapters.runtime.runners(ctx, adapters.data), ctx.logger);
   const shell = ctx.get<DshShell>('shell');
   const routes: RouteTable = createHostRoutes({
     ctx,
     facts,
-    opencli,
+    runtimes: adapters.runtime.health(ctx),
     running: runningVersionOf(import.meta.url),
     profile: adapters.profile,
   });
@@ -154,7 +145,6 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
       ctx.logger?.warn?.(`dsh-workbench: 工坊没能登记成工作区 —— ${String(error)}`);
     });
   });
-  const installEnv = process.env.DSH_WORKBENCH_OPENCLI_INSTALL;
   const liveManifests = (): readonly UnitManifest[] => units.manifests();
   const manifestOf = (unit: string): UnitManifest | undefined =>
     liveManifests().find((manifest) => manifest.id === unit);
@@ -164,7 +154,6 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     unit: manifest.id,
     needs: needsOf(manifest),
   });
-  const runtimeCommands: Readonly<Record<string, string>> = { opencli: opencli.command };
   const releasedOf = (unit: string): boolean =>
     ctx.get<ReleasedLookup>(PANELS_SERVICE)?.isReleased(unit) ?? false;
   const probeOne = async (unit: string, force = false): Promise<UnitCapability | undefined> => {
@@ -352,16 +341,11 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   if (shell === undefined) {
     ctx.logger?.warn?.('[dsh-workbench] 没有 shell 服务：需要执行缝的套件会降级');
   } else {
-    ensureLibsOpencliPeer();
-    if (ensureLibsBinOnPath() && ctx.logger?.info !== undefined) {
-      ctx.logger.info('[dsh-workbench] PATH 前插共用依赖的 bin 目录：装了的包，命令直接可用');
-    }
     adapters.probe.registerPreflight({
       routes,
       ctx,
       shell,
-      opencliCommand: opencli.command,
-      ...(installEnv === undefined ? {} : { installCommand: installEnv }),
+      runtimeCommands,
       warmReads: () => [...mounted.values()].flatMap((item) => item.plan.warmReads()),
     });
     routes.capability = capabilityHandler(async (unit, force) => {
@@ -392,10 +376,10 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     });
     ctx.effect(() => {
       void pluginTools.refresh().catch((error: unknown) => {
-        warn(ctx, `探 opencli 插件的命令面时抛了错：${String(error)}`);
+        warn(ctx, `探插件命令面时抛了错：${String(error)}`);
       });
       return () => pluginTools.dispose();
-    }, `${PLUGIN_ID}: 已装且上板的 opencli 插件各合成一个单元（工具面照旧由面板那道闸收窄）`);
+    }, `${PLUGIN_ID}: 已装且上板的插件各合成一个单元（工具面照旧由面板那道闸收窄）`);
     ctx.effect(() => {
       const panels = ctx.get<PluginRowsSource & { subscribe?(listener: () => void): () => void }>(
         PANELS_SERVICE,

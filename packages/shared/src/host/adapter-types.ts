@@ -77,7 +77,7 @@ export interface SelfUpdateStart {
   readonly forward: string;
 }
 
-export interface OpencliResolution {
+export interface RuntimeStatus {
   readonly command: string;
   readonly source: 'env' | 'isolated' | 'path';
   readonly isolated: string | null;

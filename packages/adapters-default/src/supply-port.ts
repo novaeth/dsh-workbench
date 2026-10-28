@@ -1,5 +1,5 @@
 import type { SupplyPort } from '@dsh-workbench/shared/host';
-import { cliCatalogPath, isolatedHome, libInstallCommand, vendorPluginsDir } from '@dsh-workbench/adapter-runtime';
+import { cliCatalogPath, ensureLibsBinOnPath, ensureLibsOpencliPeer, isolatedHome, libInstallCommand, vendorPluginsDir } from '@dsh-workbench/adapter-runtime';
 import { createRegistryNotebook, isNewerVersion, latestVersion, missingReleaseParts, probeRelease } from '@dsh-workbench/adapter-profile';
 import { opencliInstallCommand, startSelfUpdate } from '@dsh-workbench/adapter-probe';
 import {
@@ -25,7 +25,11 @@ export function createSupplyPort(): SupplyPort {
     isolatedHome,
     cliCatalogPath,
     vendorPluginsDir,
-    opencliInstallCommand,
+    runtimeInstallCommand: opencliInstallCommand,
+    afterLibInstall() {
+      ensureLibsOpencliPeer();
+      ensureLibsBinOnPath();
+    },
     profileDirOf,
     profileModules,
     readInstalledModule,

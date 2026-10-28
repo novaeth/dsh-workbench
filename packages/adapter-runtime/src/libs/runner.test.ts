@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { DataRequest, DataResult } from '../../contract/data.js';
-import { opencliRunnerOf } from '../opencli-runner.js';
+import type { DataRequest, DataResult } from '@dsh-workbench/shared';
+import { opencliRunnerOf } from './runner.js';
 
 type Read = (request: DataRequest) => Promise<DataResult<unknown>>;
 

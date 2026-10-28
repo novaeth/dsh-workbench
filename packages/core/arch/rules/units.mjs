@@ -301,6 +301,41 @@ const suitesOwnTheirFolder = createRule({
   },
 });
 
+const RUNTIME_ORCHESTRATION = [/^src\/app\/host\.ts$/, /^src\/kernel\/host\//, /^src\/shared\/api\/host\//];
+const RUNTIME_PRODUCT_FILES = [/^src\/shared\/api\/host\/diy-/, /^src\/shared\/api\/host\/bundle-routes\.ts$/];
+
+const shellHasNoRuntimeImpl = createRule({
+  id: 'S68',
+  domain: 'structure',
+  level: 'L2',
+  severity: 'error',
+  title: '外壳编排面不得出现运行时实现名',
+  hint: '运行时（例如 opencli）是适配器的实现：外壳只认 AdapterSet 的中立形状（commands / runners / health）。名字、路径、安装、注入器留 adapter-* 与 src/modules/**；界面文案与夹具不算编排。',
+  run(ctx) {
+    const findings = [];
+    for (const record of ctx.records) {
+      const rel = record.rel;
+      if (!RUNTIME_ORCHESTRATION.some((pattern) => pattern.test(rel))) continue;
+      if (/\.test\.(ts|tsx)$/.test(rel) || rel.includes('__tests__/')) continue;
+      if (RUNTIME_PRODUCT_FILES.some((pattern) => pattern.test(rel))) continue;
+      const source = ctx.sourceOf(rel) ?? '';
+      source.split('\n').forEach((line, index) => {
+        const text = line.trim();
+        if (text === '') return;
+        if (!/opencli/i.test(text)) return;
+        findings.push({
+          rule: 'S68',
+          file: rel,
+          line: index + 1,
+          text: `外壳编排面出现运行时实现名：${text.slice(0, 80)}`,
+          hint: '把名字/路径/安装搬进 adapters-*，外壳从 RuntimePort 拿中立形状；要显示的文案交给 src/modules/**',
+        });
+      });
+    }
+    return findings;
+  },
+});
+
 const SIZE_PROPS = /^(min|max)-(width|height)$|^flex-basis$|^inset(-(block|inline))?(-(start|end))?$|^(row|column)-gap$/;
 const SIZE_UNITS = ['px', 'rem', 'em'];
 const DECLARATION = /([{;])\s*([a-zA-Z-]+)\s*:\s*([^;{}]*)/g;
@@ -347,5 +382,6 @@ export const unitRules = [
   shellHasNoPlatform,
   shellHasNoSuiteId,
   suitesOwnTheirFolder,
+  shellHasNoRuntimeImpl,
   sizeFamilyHasNoLiterals,
 ];

@@ -197,9 +197,12 @@ export const checks = [
           '★ 仓库工作树副本不在启动时装工坊依赖（那是启动器/开发路径的事）',
           !existsSync(join(fresh, 'workbench', 'diy', 'package.json')),
         );
+        const pathHead = (process.env.PATH ?? '').split(':').slice(0, 3);
         report(
-          '★ 自举把 $DSH_HOME/workbench/bin 前插进 PATH（dsh-wb-module 与 cwd 无关）',
-          (process.env.PATH ?? '').startsWith(join(fresh, 'workbench', 'bin')),
+          '★ 自举把 workbench/bin 与隔离运行的 opencli/bin 一起前插进 PATH（子进程按名字找到同一份）',
+          pathHead.includes(join(fresh, 'workbench', 'bin')) &&
+            pathHead.includes(join(fresh, 'workbench', 'opencli', 'bin')),
+          pathHead.join(':'),
         );
       } finally {
         process.env.PATH = pathBefore;

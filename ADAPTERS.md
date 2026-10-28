@@ -29,7 +29,8 @@ interface AdapterSet {
 - `ModulePort` 是模块/profile/registry/自更新那一组；`supply` 与 `modules` 分开，
   `supply` 只给探针与市场用。
 - `ProbePort`：`probeUnits` / `registerPreflight` / `declaredPluginCommands`。
-- `RuntimePort`：`packageRoot` / `opencliCommand` / `seed` / `warnUnwritableRoot`。
+- `RuntimePort`：`packageRoot` / `commands` / `runners` / `health` / `seed` / `warnUnwritableRoot`。
+  它是**中立**的：端口不点名任何具体运行时，运行时叫什么由模块清单的 `runtime` / `runs` 声明。
 - `PluginSurface`：`declarationLookup` / `createUnits`。
 - `HostActions`：config sync 与 profile create 的 handler/action。
 

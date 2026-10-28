@@ -1,4 +1,3 @@
-import { delimiter } from 'node:path';
 import { workbenchRoot } from './data-root.js';
 
 export function isolatedRoot(): string {
@@ -41,15 +40,3 @@ export function libsBinDir(): string {
   return `${libsPrefix()}/node_modules/.bin`;
 }
 
-/**
- * 把隔离运行时的共用依赖 bin 目录放到 PATH 最前面（可执行文件都从这儿找）。
- * @param env 改哪份环境（默认当前进程）。
- * @returns 真的插进去了就 `true`；已经在里面就 `false`。
- */
-export function ensureLibsBinOnPath(env: NodeJS.ProcessEnv = process.env): boolean {
-  const dir = libsBinDir();
-  const parts = (env.PATH ?? '').split(delimiter).filter((one) => one !== '');
-  if (parts.includes(dir)) return false;
-  env.PATH = [dir, ...parts].join(delimiter);
-  return true;
-}

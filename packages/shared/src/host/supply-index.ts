@@ -1,5 +1,5 @@
 import type { ExtensionNeed, LibNeed, Need, SupplySource } from '../contract/needs.js';
-import { npmRegistryOf } from './plugin-source.js';
+import { npmRegistryOf } from './npm-registry.js';
 
 export interface SupplyDeclaration {
   readonly id: string;

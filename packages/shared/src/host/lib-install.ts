@@ -1,6 +1,6 @@
 import type { BinNeed, LibNeed, SupplySource } from '../contract/needs.js';
 import type { HostOs } from '../contract/protocol/platform.js';
-import { npmRegistryOf } from './plugin-source.js';
+import { npmRegistryOf } from './npm-registry.js';
 import { quoteShellArg } from './shell-text.js';
 import { libsPrefix, npmCacheDir } from './paths.js';
 

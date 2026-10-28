@@ -3,7 +3,7 @@ import { basename } from 'node:path';
 import type { FactLog, ProfilePort, RouteTable } from '@dsh-workbench/shared/host';
 import { changesHandler, healthHandler } from '@dsh-workbench/shared/host';
 import { dshHome } from '@dsh-workbench/shared/host';
-import type { OpencliResolution } from '@dsh-workbench/shared/host';
+import type { RuntimeStatus } from '@dsh-workbench/shared/host';
 import { DSH_PLUGINS_ROUTE } from '@/kernel/contract/dsh-plugins';
 import {
   bundleInspectHandler,
@@ -20,13 +20,13 @@ import { MARKET_GIT_PROBE_ROUTE } from '@/kernel/contract/market-index';
 export function createHostRoutes(input: {
   readonly ctx: DshHostContext;
   readonly facts: FactLog;
-  readonly opencli: OpencliResolution;
+  readonly runtimes: Readonly<Record<string, RuntimeStatus>>;
   readonly running: string | undefined;
   readonly profile: ProfilePort;
 }): RouteTable {
-  const { ctx, facts, opencli, running, profile } = input;
+  const { ctx, facts, runtimes, running, profile } = input;
   return {
-    health: healthHandler(ctx, opencli),
+    health: healthHandler(ctx, runtimes),
     changes: changesHandler(facts),
     [DSH_PLUGINS_ROUTE]: profile.dshPlugins(ctx),
     [BUNDLE_REGISTRIES_ROUTE]: bundleRegistriesHandler(ctx),

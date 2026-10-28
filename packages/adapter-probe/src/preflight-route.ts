@@ -31,24 +31,26 @@ export function registerPreflight(input: {
   routes: RouteTable;
   ctx: DshHostContext;
   shell: DshShell;
-  opencliCommand: string;
-  installCommand?: string | undefined;
+  runtimeCommands: Readonly<Record<string, string>>;
   warmReads: () => readonly (readonly string[])[];
   desktopBrowser?: DesktopBrowser | undefined;
 }): void {
+  const command =
+    input.runtimeCommands['opencli'] ?? Object.values(input.runtimeCommands)[0] ?? 'opencli';
+  const installCommand = process.env.DSH_WORKBENCH_OPENCLI_INSTALL;
   const desktopBrowser =
     input.desktopBrowser ??
     desktopBrowserOf({
       ctx: input.ctx,
       shell: input.shell,
-      command: input.opencliCommand,
+      command,
     });
   const profileDir = profileDirOf(input.ctx);
   const surface = hostSurface({ profile: profileDir === null ? undefined : basename(profileDir) });
   const preflight = createPreflight({
     shell: input.shell,
-    command: input.opencliCommand,
-    ...(input.installCommand === undefined ? {} : { installCommand: input.installCommand }),
+    command,
+    ...(installCommand === undefined || installCommand === '' ? {} : { installCommand }),
     logger: input.ctx.logger,
     warmReads: input.warmReads,
     probeDiy: createDiyPresetProbe(input.ctx),

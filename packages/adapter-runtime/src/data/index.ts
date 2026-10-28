@@ -22,6 +22,8 @@ import {
   type ChannelState,
 } from './channel.js';
 
+export * from './channel-plugin.js';
+
 export interface DataReaderOptions {
   readonly shell?: DshShell | undefined;
   readonly command?: string | undefined;

@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync, mkdtempSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, delimiter } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ensureLibsOpencliPeer } from './runtime-links.js';
+import { ensureLibsBinOnPath, ensureLibsOpencliPeer } from './links.js';
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -27,5 +27,15 @@ describe('ensureLibsOpencliPeer', () => {
 
     expect(ensureLibsOpencliPeer()).toBe(false);
     expect(existsSync(join(root, 'opencli/libs/node_modules/@jackwener/opencli'))).toBe(false);
+  });
+});
+
+describe('ensureLibsBinOnPath', () => {
+  it('★ 把 bin 目录前插一次；再插不会重复（PATH 不许越跑越长）', () => {
+    const env = { PATH: `/usr/bin${delimiter}/bin` };
+    expect(ensureLibsBinOnPath(env)).toBe(true);
+    expect(env.PATH.split(delimiter)[0].endsWith('/opencli/libs/node_modules/.bin')).toBe(true);
+    expect(ensureLibsBinOnPath(env)).toBe(false);
+    expect(env.PATH.split(delimiter).filter((one) => one.endsWith('/opencli/libs/node_modules/.bin'))).toHaveLength(1);
   });
 });

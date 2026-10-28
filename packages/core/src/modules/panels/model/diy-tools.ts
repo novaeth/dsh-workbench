@@ -176,7 +176,7 @@ export function registerDiyTools(
       const catalog = reconCatalogOf(supply.cliCatalogPath());
       if (catalog === undefined) {
         throw new Error(
-          `读不到 opencli 那份目录（${supply.cliCatalogPath()}）—— 隔离运行时还没装好；照做：${supply.opencliInstallCommand()}`,
+          `读不到 opencli 那份目录（${supply.cliCatalogPath()}）—— 隔离运行时还没装好；照做：${supply.runtimeInstallCommand()}`,
         );
       }
       const answer = reconOf(catalog, installedPluginsOf(supply.vendorPluginsDir()), keywords);

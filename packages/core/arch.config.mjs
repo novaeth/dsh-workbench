@@ -139,7 +139,7 @@ export default {
       },
     }),
 
-    { enable: ['S60', 'S62', 'S63', 'S64', 'S65', 'S66', 'S67', 'S71', 'D31'] },
+    { enable: ['S60', 'S62', 'S63', 'S64', 'S65', 'S66', 'S67', 'S68', 'S71', 'D31'] },
 
     i18n(noneI18nKit()),
     uiKit(noneKit()),

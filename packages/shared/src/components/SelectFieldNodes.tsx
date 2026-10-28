@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { Fragment, h } from '../lib/react.js';
 import {
   IconChevronDownOutlineRegular,
@@ -19,6 +19,7 @@ import { Spinner } from './Spinner.js';
  * @param args.value - 已渲染好的当前值节点（文本或占位）。
  * @param args.iconOnly - 只画图标（窄栏那颗切换钮），值与箭头都不画。
  * @param args.onOpen - 点它做什么，通常是把列表打开。
+ * @param args.ref - 挂到这颗 `<button>` 上，取消后回焦点、菜单开着头条滚轮要用它。
  * @returns 一颗 `<button>`。
  */
 export function selectTriggerNode(args: {
@@ -33,10 +34,12 @@ export function selectTriggerNode(args: {
   readonly value: ReactNode;
   readonly iconOnly: boolean;
   readonly onOpen: () => void;
+  readonly ref: Ref<HTMLButtonElement> | undefined;
 }): ReactNode {
   return (
     <button
       type="button"
+      ref={args.ref}
       id={args.id}
       className={args.className}
       disabled={args.disabled}

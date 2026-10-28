@@ -2,7 +2,8 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { DshHostContext } from '@dsh-workbench/shared';
 import type { RuntimePort } from '@dsh-workbench/shared/host';
-import { opencliCommandOf } from '@dsh-workbench/adapter-runtime';
+import { libsBinDir } from '@dsh-workbench/shared/host';
+import { ensureLibsOpencliPeer, opencliCommandOf, opencliRunnerOf } from '@dsh-workbench/adapter-runtime';
 import {
   isInstalledCopy,
   packageRootOf,
@@ -16,11 +17,45 @@ import {
   workshopSeedPlan,
 } from '@dsh-workbench/adapter-probe';
 
+export function runtimePathDirs(
+  paths: ReturnType<typeof runtimeSeedPaths>,
+): readonly string[] {
+  return [paths.opencliBinDir, libsBinDir(), paths.entryDir];
+}
+
+export function prependRuntimePath(
+  paths: ReturnType<typeof runtimeSeedPaths>,
+  env: NodeJS.ProcessEnv = process.env,
+): readonly string[] {
+  const added: string[] = [];
+  for (const dir of [...runtimePathDirs(paths)].reverse()) {
+    if (prependPath(dir, env)) added.push(dir);
+  }
+  return added;
+}
+
+const OPENCLI_RUNNER_TIMEOUT_MS = 30 * 60_000;
+
 export function createRuntimePort(): RuntimePort {
   return {
     packageRoot: packageRootOf,
-    opencliCommand: opencliCommandOf,
     warnUnwritableRoot,
+
+    commands(ctx) {
+      return { opencli: opencliCommandOf(ctx).command };
+    },
+
+    runners(ctx, data) {
+      return {
+        opencli: opencliRunnerOf((request) => data.read(request), {
+          timeoutMs: OPENCLI_RUNNER_TIMEOUT_MS,
+        }),
+      };
+    },
+
+    health(ctx) {
+      return { opencli: opencliCommandOf(ctx) };
+    },
 
     seed(ctx: DshHostContext, options) {
       const root = runtimeSeedRootOf(ctx);
@@ -30,7 +65,8 @@ export function createRuntimePort(): RuntimePort {
       const paths = runtimeSeedPaths(root);
       const log = options.log;
       for (const file of seedRuntimeFiles({ root, home, packageRoot, log })) log(`自举写下 ${file}`);
-      if (prependPath(paths.entryDir)) log(`PATH 前插 ${paths.entryDir}`);
+      ensureLibsOpencliPeer();
+      for (const dir of prependRuntimePath(paths)) log(`PATH 前插 ${dir}`);
       seedWorkbenchToolchain(root, log);
       const plan = workshopSeedPlan(packageRoot, home, root);
       runDetached(plan.entry, log);
