@@ -58,6 +58,14 @@ export function argValue(args, flag) {
   return at === -1 ? undefined : args[at + 1];
 }
 
+export function argValues(args, flag) {
+  const values = [];
+  for (let at = 0; at < args.length; at += 1) {
+    if (args[at] === flag) values.push(args[at + 1] ?? '');
+  }
+  return values;
+}
+
 export function hasFlag(args, flag) {
   return args.includes(flag);
 }

@@ -717,6 +717,8 @@ export const zh = {
   'approval.publish.version': '版本',
   'approval.publish.author': '作者',
   'approval.publish.authorMissing': '未署名',
+  'approval.publish.labels': '标签',
+  'approval.publish.labelsMissing': '还没有（发布到市场时补 1–2 个）',
   'approval.publish.owner': '认领人',
   'approval.publish.ownerUnowned': '原来没署名',
   'approval.publish.ownerTaken': '已有主人：{owner}',

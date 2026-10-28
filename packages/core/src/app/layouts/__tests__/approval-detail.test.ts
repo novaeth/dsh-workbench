@@ -56,7 +56,7 @@ describe('发布审批：版本单独一行，仓库 / 分支 / 两个 commit �
     files: ['dist', 'client.js'],
     nextVersion: '0.0.2',
   };
-  const preview = { name: '@demo/probe', version: '0.0.1', market };
+  const preview = { name: '@demo/probe', version: '0.0.1', labels: ['探针'], market };
 
   it('★ 版本行显示 0.0.1 → 0.0.2，模块行只放包名', () => {
     expect(versionLineOf('0.0.1', '', '0.0.2')).toBe('0.0.1 → 0.0.2');
@@ -66,19 +66,28 @@ describe('发布审批：版本单独一行，仓库 / 分支 / 两个 commit �
     expect(versionLineOf('0.0.1', '', undefined)).toBe('0.0.1');
   });
 
-  it('★ 市场目标的详情行：模块 / 版本 / 目标 / 作者 / 仓库 / 分支 / 打包文件 / 索引 / 提交', () => {
+  it('★ 市场目标的详情行：模块 / 版本 / 目标 / 作者 / 标签 / 仓库 / 分支 / 打包文件 / 索引 / 提交', () => {
     const rows = publishRows({ unit: 'probe' }, preview, t);
     expect(rows.map((row) => [row.label, row.value])).toEqual([
       ['模块', '@demo/probe'],
       ['版本', '0.0.1 → 0.0.2'],
       ['目标', '按配置默认'],
       ['作者', '未署名'],
+      ['标签', '探针'],
       ['仓库', market.url],
       ['分支', 'main'],
       ['打包文件', 'artifacts/probe · dist · client.js'],
       ['索引', 'market'],
       ['提交', '打包文件 + 条目文件两次提交，一次推送'],
     ]);
+  });
+
+  it('★ 这次带的标签排在模块里写的那个前面；模块还没有标签就直说', () => {
+    const asked = publishRows({ unit: 'probe', labels: ['发布编排', '构建状态'] }, preview, t);
+    expect(asked.find((row) => row.label === '标签')?.value).toBe('发布编排 · 构建状态');
+
+    const missing = publishRows({ unit: 'probe' }, { name: '@demo/probe', version: '0.0.1', market }, t);
+    expect(missing.find((row) => row.label === '标签')?.value).toBe('还没有（发布到市场时补 1–2 个）');
   });
 
   it('★ 模块写了 author：作者行把署名原文摆出来（姓名 + 邮箱，和提交署名一致）', () => {

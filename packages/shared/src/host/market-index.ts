@@ -26,9 +26,9 @@ import {
 export const MARKET_ENTRIES_README_LINES: readonly string[] = [
   '# 索引目录',
   '',
-  '一个包一个目录，一个版本一个文件：`market/<包名>/<版本>.json`；产物在 `artifacts/<包名>/<版本>/`。',
+  '一个包一个目录，一个版本一个文件：`market/<包名>/<版本>.json`（只放版本与来源）；产物在 `artifacts/<包名>/<版本>/`。',
   '',
-  '`meta-<epoch>-<随机后缀>.json` 是只改标题 / 署名 / 说明时追加的元数据快照，读取时按 epoch 取最新的一份。',
+  '元数据只住 `meta-<epoch>-<随机后缀>.json`（首次发布或 refresh 时写），读取时按 epoch 取最新的一份；版本文件里不重复存。',
 ];
 
 export const MARKET_INDEX_README_LINES: readonly string[] = [
@@ -64,6 +64,8 @@ export type {
   MarketMetaDoc,
   MarketVersionDoc,
 } from './market-index-doc.js';
+import { marketMetaPath } from './market-index-parse.js';
+
 export {
   compareSemver,
   filterMarketIndex,
@@ -102,6 +104,22 @@ function docFieldsFromEntry(entry: MarketIndexEntry): MarketDocFields {
 
 export function marketVersionDocOf(entry: MarketIndexEntry, version: MarketIndexVersion): MarketVersionDoc {
   return { ...docFieldsFromEntry(entry), ...version };
+}
+
+export function marketVersionDocLeanOf(entry: MarketIndexEntry, version: MarketIndexVersion): MarketVersionDoc {
+  return { name: entry.name, ...version };
+}
+
+function hasMetaFields(doc: MarketEntryDoc | MarketIndexEntry): boolean {
+  return (
+    doc.title !== undefined ||
+    doc.description !== undefined ||
+    doc.author !== undefined ||
+    doc.owner !== undefined ||
+    doc.homepage !== undefined ||
+    doc.icon !== undefined ||
+    doc.metadata !== undefined
+  );
 }
 
 export function marketMetaDocOf(entry: MarketIndexEntry, epoch: number, at: number): MarketMetaDoc {
@@ -147,9 +165,10 @@ export function assembleMarketIndex(files: readonly MarketEntryFile[]): MarketIn
         ...(doc.engines === undefined ? {} : { engines: doc.engines }),
       });
       const newerFallback =
-        group.fallback === undefined ||
-        at > group.fallback.at ||
-        (at === group.fallback.at && file.path > group.fallback.path);
+        hasMetaFields(doc) &&
+        (group.fallback === undefined ||
+          at > group.fallback.at ||
+          (at === group.fallback.at && file.path > group.fallback.path));
       if (newerFallback) group.fallback = { at, path: file.path, doc };
     } else {
       const epoch = doc.epoch ?? 0;
@@ -187,9 +206,15 @@ export function marketEntryFilesOf(index: MarketIndex, dir: string = MARKET_INDE
     for (const version of entry.versions) {
       files.push({
         path: marketEntryPath(dir, entry.name, version.version),
-        text: `${JSON.stringify(marketVersionDocOf(entry, version), null, 2)}\n`,
+        text: `${JSON.stringify(marketVersionDocLeanOf(entry, version), null, 2)}\n`,
       });
     }
+    if (!hasMetaFields(entry)) continue;
+    const at = entry.versions.reduce((latest, one) => Math.max(latest, one.publishTimestamp ?? 0), 0);
+    files.push({
+      path: marketMetaPath(dir, entry.name, 1, 'migr'),
+      text: `${JSON.stringify(marketMetaDocOf(entry, 1, at), null, 2)}\n`,
+    });
   }
   return files;
 }

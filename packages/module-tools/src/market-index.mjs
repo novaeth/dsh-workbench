@@ -18,7 +18,7 @@ import {
   marketMetaDocOf,
   marketMetaPath,
   marketSourceKey,
-  marketVersionDocOf,
+  marketVersionDocLeanOf,
   parseMarketIndexJson,
 } from '@dsh-workbench/shared/host';
 
@@ -183,7 +183,7 @@ function ensureVersionFree(workdir, dir, input) {
 }
 
 function writeEntryFile(workdir, dir, entry, version) {
-  const doc = marketVersionDocOf(entry, version);
+  const doc = marketVersionDocLeanOf(entry, version);
   const rel = marketEntryPath(dir, entry.name, version.version);
   const file = join(workdir, ...rel.split('/'));
   if (existsSync(file)) {
@@ -344,14 +344,44 @@ function textListOf(value) {
     : [];
 }
 
+function recordOf(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+
+function recordFieldOf(container, key) {
+  const value = container[key];
+  if (value !== null && typeof value === 'object' && !Array.isArray(value)) return value;
+  const next = {};
+  container[key] = next;
+  return next;
+}
+
+export function labelsOfManifest(manifest) {
+  const dsh = recordOf(recordOf(manifest).dsh);
+  const workbench = recordOf(dsh.workbench);
+  return textListOf(recordOf(workbench.market).labels);
+}
+
+export function setManifestLabels(manifest, labels) {
+  if (labels.length === 0) return;
+  const market = recordFieldOf(recordFieldOf(recordFieldOf(manifest, 'dsh'), 'workbench'), 'market');
+  market.labels = [...labels];
+}
+
+export function mergeEntryLabels(entry, labels) {
+  if (!Array.isArray(labels) || labels.length === 0) return entry;
+  const wanted = [...labels];
+  if (isDeepStrictEqual(entry.metadata?.labels ?? [], wanted)) return entry;
+  return { ...entry, metadata: { ...(entry.metadata ?? {}), labels: wanted } };
+}
+
 export function entryMetaOf(manifest) {
   const author = authorOf(manifest);
   const homepage = typeof manifest.homepage === 'string' ? manifest.homepage.trim() : '';
   const keywords = textListOf(manifest.keywords);
-  const market = manifest.dsh?.workbench?.market;
-  const marketRecord = market !== null && typeof market === 'object' && !Array.isArray(market) ? market : {};
+  const marketRecord = recordOf(manifest.dsh?.workbench?.market);
   const category = typeof marketRecord.category === 'string' ? marketRecord.category.trim() : '';
-  const labels = textListOf(marketRecord.labels);
+  const labels = labelsOfManifest(manifest);
   const order = manifest.dsh?.workbench?.card?.order;
   const unit = unitOf(manifest);
   const title = titleOf(manifest);
@@ -746,8 +776,11 @@ export function updateMarketIndex(options) {
       if (plan.policy !== 'artifacts-in-repo') migrateLegacyIndex(workdir, dir);
       ensureClaimFree(workdir, dir, claimInput);
       const current = readWorktreeIndex(workdir, dir).plugins.find((one) => one.name === manifest.name);
-      const written = withCurrentMeta(entry, current, options.metadata === true);
-      if (current === undefined || options.metadata === true) writeMetaFile(workdir, dir, written, now());
+      const base = withCurrentMeta(entry, current, options.metadata === true);
+      const written = mergeEntryLabels(base, options.labels);
+      if (current === undefined || options.metadata === true || written !== base) {
+        writeMetaFile(workdir, dir, written, now());
+      }
       writeEntryFile(workdir, dir, written, written.versions[0]);
       indexSha = commitOf(exec, workdir, `chore(market): ${entryName}`, identityOf(manifest));
       report({ phase: 'index-committed', indexCommit: indexSha });

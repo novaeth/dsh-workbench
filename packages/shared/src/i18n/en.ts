@@ -722,6 +722,8 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'approval.publish.version': 'Version',
   'approval.publish.author': 'Author',
   'approval.publish.authorMissing': 'unsigned',
+  'approval.publish.labels': 'Labels',
+  'approval.publish.labelsMissing': 'none yet (1–2 picked on publish)',
   'approval.publish.owner': 'Owner',
   'approval.publish.ownerUnowned': 'originally unattributed',
   'approval.publish.ownerTaken': 'Owned by {owner}',

@@ -24,6 +24,14 @@ function textOf(args: Readonly<Record<string, unknown>>, key: string): string {
   return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
 }
 
+function labelsOf(args: Readonly<Record<string, unknown>>): readonly string[] {
+  const value = args['labels'];
+  if (!Array.isArray(value)) return [];
+  return [
+    ...new Set(value.flatMap((one) => (typeof one === 'string' && one.trim() !== '' ? [one.trim()] : []))),
+  ];
+}
+
 export function recordApprovalRows(
   args: Readonly<Record<string, unknown>>,
   t: Translate,
@@ -126,6 +134,20 @@ export function publishRows(
               : preview.author,
     },
   ];
+  const marketTarget = target === 'market' || (target === '' && preview?.market !== undefined);
+  if (marketTarget) {
+    const asked = labelsOf(args);
+    const labels = asked.length > 0 ? asked : (preview?.labels ?? []);
+    rows.push({
+      label: t('approval.publish.labels'),
+      value:
+        preview === undefined && asked.length === 0
+          ? t('approval.publish.reading')
+          : labels.length === 0
+            ? t('approval.publish.labelsMissing')
+            : labels.join(' · '),
+    });
+  }
   const claim = preview?.claim;
   if (claim !== undefined && claim.state !== 'new' && claim.state !== 'unknown') {
     if (claim.state === 'unit-taken') {

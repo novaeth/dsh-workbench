@@ -25,6 +25,7 @@ import {
   ReleaseError,
   ResumableError,
   argValue,
+  argValues,
   defaultExec,
   dshHomeOf,
   hasFlag,
@@ -52,11 +53,13 @@ import {
   authorTextOf,
   claimProblemText,
   identityOf,
+  labelsOfManifest,
   marketClaim,
   marketVersionExists,
   missingPublisherText,
   refreshMarketEntry,
   resolveIndexPlan,
+  setManifestLabels,
   updateMarketIndex,
   verifyMarketArtifact,
 } from './market-index.mjs';
@@ -262,6 +265,11 @@ export async function runRelease({
   if (!CHANGELOG_KINDS.includes(changelogKind)) {
     throw new ReleaseError(`--changelog-type 只认 ${CHANGELOG_KINDS.join(' / ')}（收到「${changelogKind}」）`);
   }
+  const askedLabels = [...new Set(argValues(args, '--label').map((one) => String(one).trim()))];
+  if (askedLabels.some((one) => one === '' || /[\r\n]/u.test(one))) {
+    throw new ReleaseError('--label 只认一行短词：不能是空的');
+  }
+  if (askedLabels.length > 2) throw new ReleaseError('--label 最多两个 —— 一个模块的标签是 1–2 个短词');
   const manifest = readManifest(root);
   const unit = manifest?.dsh?.workbench?.unit;
   if (typeof unit !== 'string' || unit === '') throw new ReleaseError('这不是一个 wb 模块包（没有 dsh.workbench.unit）');
@@ -313,6 +321,14 @@ export async function runRelease({
     emit(out, json, summary);
     return summary;
   }
+  const labels = askedLabels;
+  const labelsKept = labels.length === 0 || isDeepStrictEqual(labelsOfManifest(manifest), labels);
+  const labelsChange = verify || labelsKept ? undefined : `标签 ← ${labels.join(' · ')}`;
+  if (!labelsKept && !verify && !dryRun) {
+    setManifestLabels(manifest, labels);
+    writeManifest(root, manifest);
+  }
+  const labelsForIndex = labels.length > 0 ? labels : labelsOfManifest(manifest);
   const explicitApplied = explicitAuthor !== undefined && !verify && !dryRun;
   if (explicitApplied) {
     manifest.author = explicitAuthor;
@@ -343,7 +359,7 @@ export async function runRelease({
   }
   const authored = authorChangeOf(root, manifest, exec);
   if (hasFlag(args, '--refresh')) {
-    if (dryRun) throw new ReleaseError('--refresh 没有预览：它只改索引里的标题 / 作者 / 说明');
+    if (dryRun) throw new ReleaseError('--refresh 没有预览：它只改索引里的标题 / 作者 / 说明 / 标签');
     if (target !== 'market') throw new ReleaseError('--refresh 只对市场索引有意义（--target market）');
     if (indexPlan === undefined) {
       throw new ReleaseError('没有可写的 git 索引源 —— 用 --index <仓库> 指定，或先在「模块市场 → 发现」里初始化索引');
@@ -369,8 +385,13 @@ export async function runRelease({
       },
       changes:
         result.updated === true
-          ? ['市集元数据已刷新', ...(explicitAuthor === undefined ? [] : ['author ← --author'])]
+          ? [
+              '市集元数据已刷新',
+              ...(explicitAuthor === undefined ? [] : ['author ← --author']),
+              ...(labelsChange === undefined ? [] : [labelsChange]),
+            ]
           : [],
+      ...(labels.length === 0 ? {} : { labels }),
       install: '',
       text:
         result.updated === true
@@ -481,6 +502,7 @@ export async function runRelease({
       publish,
       publisher: authorTextOf(manifestNow),
       metadata: authorChange !== undefined,
+      ...(labelsForIndex.length === 0 ? {} : { labels: labelsForIndex }),
       exec,
       home,
       now: () => Date.now(),
@@ -489,6 +511,7 @@ export async function runRelease({
   let changelogChange;
   const changesOf = (version) => [
     ...(authorChange === undefined ? [] : [authorChange]),
+    ...(labelsChange === undefined ? [] : [labelsChange]),
     ...(version === manifest.version ? [] : [`version → ${version}`]),
     ...(changelogChange === undefined ? [] : [changelogChange]),
   ];
@@ -708,6 +731,7 @@ export async function runRelease({
       version,
       files,
       changes: changesOf(version),
+      ...(labels.length === 0 ? {} : { labels }),
       ...(changelogReport === undefined ? {} : { changelog: changelogReport }),
       install: '',
       market: indexPreviewOf(manifest.name, version),
@@ -730,6 +754,7 @@ export async function runRelease({
       publish: {},
       publisher,
       metadata: authorChange !== undefined,
+      ...(labelsForIndex.length === 0 ? {} : { labels: labelsForIndex }),
       exec,
       home,
       now: () => Date.now(),

@@ -22,6 +22,7 @@ import {
   collectMarketEntryFiles,
   marketArtifactPathFor,
   marketArtifactRoot,
+  marketEntryLabels,
   marketSourceKey,
   parseMarketIndexJson,
   parseSourceConfig,
@@ -244,6 +245,10 @@ export function publishPreviewOf(
       ? (publishConfig as Record<string, unknown>)['registry']
       : undefined;
   const market = marketOf(found.dir, name, version);
+  const marketEntry = market === undefined ? undefined : publishedEntryOf(market.index, name);
+  const declaredLabels = labelsOfManifest(record);
+  const labels =
+    declaredLabels.length > 0 || marketEntry === undefined ? declaredLabels : marketEntryLabels(marketEntry);
   const target = targetVersionOf(version, (options.version ?? '').trim(), market?.market);
   const askedAuthor = (options.author ?? '').trim();
   const author = askedAuthor === '' ? authorOf(record) : askedAuthor;
@@ -260,11 +265,28 @@ export function publishPreviewOf(
     name,
     version,
     ...(author === '' ? {} : { author }),
+    ...(labels.length === 0 ? {} : { labels }),
     ...(typeof registry === 'string' && registry !== '' ? { registry } : {}),
     ...(market === undefined ? {} : { market: market.market }),
     ...(claim === undefined ? {} : { claim }),
     changelog: changelogOf(found.dir, target, (options.changelog ?? '').trim(), kindOf(options.changelogType)),
   };
+}
+
+function labelsOfManifest(record: Record<string, unknown>): readonly string[] {
+  const dsh = record['dsh'];
+  const workbench =
+    dsh !== null && typeof dsh === 'object' ? (dsh as Record<string, unknown>)['workbench'] : undefined;
+  const market =
+    workbench !== null && typeof workbench === 'object'
+      ? (workbench as Record<string, unknown>)['market']
+      : undefined;
+  const labels =
+    market !== null && typeof market === 'object' ? (market as Record<string, unknown>)['labels'] : undefined;
+  if (!Array.isArray(labels)) return [];
+  return [
+    ...new Set(labels.flatMap((one) => (typeof one === 'string' && one.trim() !== '' ? [one.trim()] : []))),
+  ];
 }
 
 function authorOf(manifest: Record<string, unknown>): string {

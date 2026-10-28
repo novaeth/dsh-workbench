@@ -273,13 +273,19 @@ export function publishStatusOf(preview: PublishPreview | null): string {
       : `发布出口：市场索引 ${preview.market.url}` +
         `${preview.market.ref === undefined ? '' : `（${preview.market.ref}）`}` +
         `—— 不填 target 时默认发这里；这一版会发 ${preview.market.nextVersion ?? preview.version}`;
+  const labels =
+    preview.market === undefined
+      ? undefined
+      : preview.labels === undefined || preview.labels.length === 0
+        ? '标签：还没有 —— 发布到市场时带上 1–2 个（labels）'
+        : `标签：${preview.labels.join(' · ')}`;
   const changelog =
     preview.changelog === undefined
       ? undefined
       : preview.changelog.missing
         ? `发布前置：CHANGELOG 还差 ${preview.changelog.version} 这一版 —— 发布时带 changelogNote（会先建文件）`
         : `发布前置：CHANGELOG 里已有 ${preview.changelog.version}`;
-  return [exit, changelog].filter((one) => one !== undefined).join('\n');
+  return [exit, labels, changelog].filter((one) => one !== undefined).join('\n');
 }
 
 export function renderList(root: string, modules: readonly DiyModule[], shape: WorkspaceShape = 'bare'): string {

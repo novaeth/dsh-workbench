@@ -32,6 +32,8 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 `package.json` 缺 `files` 里的 `CHANGELOG.md` 一样拦下；`author` 没写时从本机 `git config` 补进 manifest，索引与产物都带上。
 模块的 `package.json` 可用 `dsh.workbench.market` 声明 `category` 与 `labels`（字符串数组）；
 不写就不带分类和标签，索引里只留 `metadata.workbench: true` 这条身份标记。
+发布时带 `--label <短词>`（可重复，最多两个）：它写回 `dsh.workbench.market.labels`；不传就用模块里已有的。
+每次发布都会把模块里的标签并进索引条目的 `metadata.labels` —— 标题 / 署名 / 说明仍保持索引里现有的那份不动。
 要换署名时带 `--author "姓名 <邮箱>"`（或只给姓名）：它写回 `package.json`，索引、产物与提交都用它，
 `--refresh` 时也一样。**发布本身不改市集里的标题 / 署名 / 说明**：这些元数据只由 `--refresh`（或显式 `--author`）写，
 避免一台还没更新的机器发新版时把别人刚改的元数据盖回去。一个包名归第一次发布的人（条目文件里的 `owner`）：换署名发同名会被拒，

@@ -431,6 +431,37 @@ describe('条目文件：一个版本一个文件', () => {
     }
   });
 
+  it('版本文件不带元数据时，不遮住老文件里的元数据；meta 又比版本文件优先', () => {
+    const version = (v: string, at: number) => ({
+      name: '@scope/module-x',
+      version: v,
+      source: { type: 'npm' as const },
+      publishTimestamp: at,
+    });
+    const legacyMeta = { ...version('0.1.0', 1_760_000_000), title: { zh: '旧标题' }, author: '甲' };
+    const lean = version('0.2.0', 1_760_000_100);
+    const assembled = assembleMarketIndex([
+      { path: 'market/@scope/module-x/0.1.0.json', text: JSON.stringify(legacyMeta) },
+      { path: 'market/@scope/module-x/0.2.0.json', text: JSON.stringify(lean) },
+    ]);
+    expect(assembled.ok).toBe(true);
+    if (!assembled.ok) return;
+    expect(assembled.index.plugins[0]?.title).toEqual({ zh: '旧标题' });
+    expect(assembled.index.plugins[0]?.author).toBe('甲');
+
+    const withMeta = assembleMarketIndex([
+      { path: 'market/@scope/module-x/0.1.0.json', text: JSON.stringify(legacyMeta) },
+      { path: 'market/@scope/module-x/0.2.0.json', text: JSON.stringify(lean) },
+      {
+        path: 'market/@scope/module-x/meta-1-abcd.json',
+        text: JSON.stringify({ name: '@scope/module-x', epoch: 1, publishTimestamp: 1_760_000_000, title: { zh: '新标题' } }),
+      },
+    ]);
+    expect(withMeta.ok).toBe(true);
+    if (!withMeta.ok) return;
+    expect(withMeta.index.plugins[0]?.title).toEqual({ zh: '新标题' });
+  });
+
   it('迁移：一份 format 1 能拆成条目文件，再组装回来一模一样', () => {
     const legacy: MarketIndex = {
       format: 1,
@@ -450,6 +481,7 @@ describe('条目文件：一个版本一个文件', () => {
     expect(files.map((one) => one.path)).toEqual([
       'market/@scope/module-x/0.2.0.json',
       'market/@scope/module-x/0.1.0.json',
+      'market/@scope/module-x/meta-1-migr.json',
     ]);
     const assembled = assembleMarketIndex(files);
     expect(assembled.ok).toBe(true);

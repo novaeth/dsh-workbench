@@ -61,6 +61,7 @@ const RELEASE_HELP = `
   --registry <url> --access restricted|public --npmrc <文件>
   --license <id> --out <目录> --git <remote>
   --author <署名>                                       换署名（姓名，或 姓名 <邮箱>）；写回 package.json
+  --label <短词>                                        给市集条目打标签（1–2 个，可重复）；写回 package.json
   --changelog-note <文字> --changelog-type added|changed|fixed|removed|security|deprecated
                                                         这一版还没有更新日志时写进 CHANGELOG.md（文件不在先建）
   --index auto|none|<目录|git 地址>                     发布后要更新的索引源

@@ -31,7 +31,8 @@ export function registerPublishTool(
     name: DIY_PUBLISH_TOOL,
     description:
       '用户说“发布”后才用：把这一格发到 target 指定的出口（不填按环境默认）。' +
-      '这一版还没有更新日志时把 changelogNote 一起带上 —— 发布时写进 CHANGELOG.md，随包发。',
+      '这一版还没有更新日志时把 changelogNote 一起带上 —— 发布时写进 CHANGELOG.md，随包发。' +
+      '这个模块还没有市集标签时把 labels 带上（1–2 个短词）。',
     parameters: {
       type: 'object',
       properties: {
@@ -44,6 +45,13 @@ export function registerPublishTool(
           type: 'string',
           enum: [...CHANGELOG_KINDS],
           description: '分类，不填按 changed。',
+        },
+        labels: {
+          type: 'array',
+          items: { type: 'string' },
+          description:
+            '市集条目的标签，1–2 个短词（说它干什么，比如「发布编排」「构建状态」）。' +
+            '模块还没有标签时必填；已有可省，传了会替换掉原来的。',
         },
         target: {
           type: 'string',
@@ -77,7 +85,7 @@ export function registerPublishTool(
         },
         refresh: {
           type: 'boolean',
-          description: '只刷市集元数据（标题/作者/说明），不升版本、不重发产物。',
+          description: '只刷市集元数据（标题/作者/说明/标签），不升版本、不重发产物。',
         },
       },
       required: ['unit'],
@@ -101,6 +109,7 @@ export function registerPublishTool(
       const license = asText(asRecord(raw)['license']);
       const changelogNote = asText(asRecord(raw)['changelogNote']);
       const changelogType = asText(asRecord(raw)['changelogType']);
+      const labels = labelsOf(asRecord(raw)['labels']);
       let author = asText(asRecord(raw)['author']);
       const verify = asRecord(raw)['verify'] === true;
       const resume = asRecord(raw)['resume'] === true;
@@ -118,6 +127,7 @@ export function registerPublishTool(
       if (author !== '') argv.push('--author', author);
       if (changelogNote !== '') argv.push('--changelog-note', changelogNote);
       if (changelogType !== '') argv.push('--changelog-type', changelogType);
+      for (const label of labels) argv.push('--label', label);
       if (asRecord(raw)['refresh'] === true) argv.push('--refresh');
       const result = await runShell(shell, argv.map((one) => quoteShellArg(one)).join(' '), {
         workdir: root,
@@ -196,9 +206,27 @@ export function registerPublishTool(
           : asText(changelog['action']) === 'kept'
             ? `更新日志：这一版已有（${asText(changelog['version'])}），没动`
             : '';
-      return plainJson({ ...payload, text: changelogLine === '' ? text : `${text}\n${changelogLine}` });
+      const labelsLine =
+        labels.length === 0 || (targetOfPayload !== 'market' && payload['refresh'] !== true)
+          ? ''
+          : `标签：${labels.join(' · ')}`;
+      const tail = [changelogLine, labelsLine].filter((one) => one !== '').join('\n');
+      return plainJson({ ...payload, text: tail === '' ? text : `${text}\n${tail}` });
     },
   };
 
   return tools.register(publishTool);
+}
+
+function labelsOf(value: unknown): readonly string[] {
+  if (!Array.isArray(value) || value.length === 0) return [];
+  const labels = value.flatMap((one) => (typeof one === 'string' ? [one.trim()] : []));
+  if (labels.length !== value.length || labels.some((one) => one === '' || /[\r\n]/u.test(one))) {
+    throw new Error('标签是 1–2 个短词：每个都得是一行非空文字');
+  }
+  const unique = [...new Set(labels)];
+  if (unique.length > 2) {
+    throw new Error(`标签最多两个（收到 ${String(unique.length)} 个）—— 挑最能说明这个模块干什么的`);
+  }
+  return unique;
 }

@@ -29,6 +29,7 @@ import type { MarketSourcesStore } from '@/shared/api/host/market-sources-store'
 import type { LongTaskRunsLookup } from './long-task-tools';
 import { recordRefusalText } from './diy-record-text';
 import { publishClaimDenyOf } from './publish-claim';
+import { copiesOf } from './approval-questions';
 
 const SPEC_LIMIT = 80;
 
@@ -106,6 +107,14 @@ function clipped(text: string): string {
   return chars.length > TARGET_LIMIT ? `${chars.slice(0, TARGET_LIMIT).join('')}…` : text;
 }
 
+function labelsOfArgs(raw: Record<string, unknown>): readonly string[] {
+  const value = raw['labels'];
+  if (!Array.isArray(value)) return [];
+  return [
+    ...new Set(value.flatMap((one) => (typeof one === 'string' && one.trim() !== '' ? [one.trim()] : []))),
+  ];
+}
+
 function stopVerdict(call: ApprovalCall, runs: LongTaskRunsLookup | undefined): ApprovalVerdict {
   const raw = argsOf(call);
   const unit = textOf(raw, 'unit');
@@ -173,32 +182,22 @@ function publishVerdict(
         '发布时会一起写进 CHANGELOG.md 并随包发',
     };
   }
-  const copies: Record<string, { zh: string; en: string }> = {
-    team: {
-      zh: `把${label}发到团队源，只发构建产物，不发源码，允许吗？`,
-      en: `Publish ${labelEn} to the team registry; only built artifacts, never the source. Allow?`,
-    },
-    public: {
-      zh: `把${label}公开发到 npm，任何人都能安装，允许吗？`,
-      en: `Publish ${labelEn} publicly to npm; anyone can install it. Allow?`,
-    },
-    tarball: {
-      zh: `给${label}打一个安装包，只写本机不发源码，允许吗？`,
-      en: `Pack ${labelEn} into a local tarball; nothing leaves this machine. Allow?`,
-    },
-    git: {
-      zh: `把${label}提交并推到 git，源码也会一起推送，允许吗？`,
-      en: `Commit and push ${labelEn} to git; the source is pushed too. Allow?`,
-    },
-    market: {
-      zh: `把${label}发到市场仓库，产物与索引一起提交，允许吗？`,
-      en: `Publish ${labelEn} to the market repository; artifacts and the index are committed together. Allow?`,
-    },
-    local: {
-      zh: `把${label}留在本机，不发，允许吗？`,
-      en: `Keep ${labelEn} local and publish nothing. Allow?`,
-    },
-  };
+  const labels = labelsOfArgs(raw);
+  if (labels.length > 2) {
+    return {
+      kind: 'deny',
+      reason: `标签最多两个（收到 ${String(labels.length)} 个）—— 挑最能说明这个模块干什么的 1–2 个`,
+    };
+  }
+  if (target === 'market' && labels.length === 0 && (found?.labels ?? []).length === 0) {
+    return {
+      kind: 'deny',
+      reason:
+        '这个模块还没有标签 —— 发布到市场时给它 1–2 个短词（labels，说它干什么，比如「发布编排」「构建状态」）；' +
+        '已经有标签就不用传',
+    };
+  }
+  const copies = copiesOf(label, labelEn);
   const copy = copies[target] ?? copies['team'];
   const targetLabel =
     found === null
@@ -208,8 +207,8 @@ function publishVerdict(
         : `${found.name}@${found.version} → ${target}${found.registry === undefined ? '' : ` (${found.registry})`}`;
   const question = refresh
     ? pair(
-        `只刷新${label}在市集里的元数据（标题 / 作者 / 说明），不升版本、不重发产物，允许吗？`,
-        `Only refresh ${labelEn}'s market metadata (title, author, description); no version bump, no artifacts. Allow?`,
+        `只刷新${label}在市集里的元数据（标题 / 作者 / 说明 / 标签），不升版本、不重发产物，允许吗？`,
+        `Only refresh ${labelEn}'s market metadata (title, author, description, labels); no version bump, no artifacts. Allow?`,
       )
     : pair(copy.zh, copy.en);
   return askOf(`${DIY_PUBLISH_TOOL} ${targetLabel}${refresh ? '（元数据）' : ''}`, question, question);

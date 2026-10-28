@@ -8,8 +8,11 @@ import {
   MarketIndexError,
   indexEntryOf,
   initializeMarketRepo,
+  labelsOfManifest,
+  mergeEntryLabels,
   resolveIndexPlan,
   sanitizeManifest,
+  setManifestLabels,
   updateMarketIndex,
 } from '../../../src/market-index.mjs';
 
@@ -278,6 +281,10 @@ export const checks = [
         if (metaFiles.length !== 1) throw new Error(`应该有一个 meta 文件，实际 ${metaFiles.length}`);
         const metaDoc = JSON.parse(readFileSync(join(repo, 'market', '@demo', 'market-probe', metaFiles[0]), 'utf8'));
         if (metaDoc.epoch !== 1) throw new Error(`meta epoch 不对：${String(metaDoc.epoch)}`);
+        const versionDoc = JSON.parse(readFileSync(join(repo, 'market', '@demo', 'market-probe', '0.1.0.json'), 'utf8'));
+        if (versionDoc.metadata !== undefined || versionDoc.owner !== undefined || versionDoc.title !== undefined) {
+          throw new Error('版本文件不该带元数据');
+        }
         if (entry.metadata?.unit !== 'probe') throw new Error(`unit 没写进条目：${JSON.stringify(entry.metadata)}`);
         const commits = fake.calls.filter((one) => one.argv.includes('commit')).length;
         if (commits !== 2) throw new Error(`应该两个 commit，实际 ${commits}`);
@@ -505,6 +512,9 @@ export const checks = [
         if (result.changed !== true) throw new Error('迁移没算作改动');
         if (existsSync(join(dir, 'market.json'))) throw new Error('老 market.json 没删');
         if (!existsSync(join(dir, 'market', '@demo', 'old', '0.1.0.json'))) throw new Error('条目没迁出来');
+        if (!existsSync(join(dir, 'market', '@demo', 'old', 'meta-1-migr.json'))) throw new Error('元数据没迁出来');
+        const versionDoc = JSON.parse(readFileSync(join(dir, 'market', '@demo', 'old', '0.1.0.json'), 'utf8'));
+        if (versionDoc.owner !== undefined || versionDoc.title !== undefined) throw new Error('版本文件不该带元数据');
         report(title, true);
       } catch (error) {
         report(title, false, error.message.slice(0, 200));
@@ -696,12 +706,51 @@ export const checks = [
         if (entry.versions[1].version !== '0.1.0') throw new Error('老版本没保住');
         if (entry.versions[1].source.type !== 'npm') throw new Error('老版本的 source 被改');
         if (entry.owner !== 'demo') throw new Error(`owner 漂了：${String(entry.owner)}`);
+        const newDoc = JSON.parse(readFileSync(join(repo, 'market', '@demo', 'market-probe', '0.2.0.json'), 'utf8'));
+        if (newDoc.author !== undefined || newDoc.owner !== undefined) throw new Error('新版本文件不该带元数据');
+        if (!existsSync(join(repo, 'market', '@demo', 'market-probe', 'meta-1-migr.json'))) {
+          throw new Error('迁移出来的元数据文件没了');
+        }
         report(title, true);
       } catch (error) {
         report(title, false, error.message.slice(0, 200));
       } finally {
         rmSync(root, { recursive: true, force: true });
         rmSync(repo, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    title: 'market-index：发布带的标签只并进 metadata.labels，标题 / 署名 / 说明一个字不动',
+    async run(_ctx, report) {
+      const title = 'market-index：发布带的标签只并进 metadata.labels，标题 / 署名 / 说明一个字不动';
+      try {
+        const entry = {
+          name: '@demo/probe',
+          title: { zh: '探针' },
+          author: 'demo',
+          description: { zh: 'probe' },
+          metadata: { workbench: true, unit: 'probe', category: '工具', labels: ['旧标签'] },
+          versions: [{ version: '0.1.0', source: { type: 'npm' } }],
+        };
+        const next = mergeEntryLabels(entry, ['发布编排', '构建状态']);
+        if (next.metadata?.labels?.join(',') !== '发布编排,构建状态') throw new Error('标签没并进去');
+        if (next.title?.zh !== '探针' || next.author !== 'demo') throw new Error('标题 / 署名被改了');
+        if (next.description?.zh !== 'probe') throw new Error('说明被改了');
+        if (next.metadata?.category !== '工具') throw new Error('分类被改');
+        if (next.metadata?.workbench !== true) throw new Error('身份标记丢了');
+        if (mergeEntryLabels(entry, ['旧标签']) !== entry) throw new Error('标签没变还生成了新对象');
+        if (mergeEntryLabels(entry, undefined) !== entry) throw new Error('没带标签时不该动条目');
+
+        const manifest = { dsh: { workbench: { unit: 'probe', card: { order: 3 } } } };
+        setManifestLabels(manifest, ['发布编排']);
+        if (labelsOfManifest(manifest).join(',') !== '发布编排') throw new Error('标签没写回 manifest');
+        if (manifest.dsh.workbench.unit !== 'probe' || manifest.dsh.workbench.card.order !== 3) {
+          throw new Error('写标签时把别的字段改了');
+        }
+        report(title, true);
+      } catch (error) {
+        report(title, false, error.message.slice(0, 200));
       }
     },
   },

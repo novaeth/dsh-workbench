@@ -186,6 +186,61 @@ describe('workbench_diy_publish · 预览', () => {
       else process.env.DSH_WORKBENCH_HOME = previous;
     }
   });
+
+  it('★ 标签：模块自己写的最先；没写就看市集条目里已有的', () => {
+    const dir = rig.scaffold('demo');
+    const manifest = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8')) as {
+      dsh: { workbench: Record<string, unknown> };
+    };
+    const write = (): void => {
+      fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify(manifest));
+    };
+    manifest.dsh.workbench['market'] = { labels: ['发布编排', '构建状态'] };
+    write();
+    const previous = process.env.DSH_WORKBENCH_HOME;
+    process.env.DSH_WORKBENCH_HOME = path.join(rig.root(), 'workbench');
+    try {
+      expect(publishPreviewOf(rig.WORKSHOP(), 'demo')?.labels).toEqual(['发布编排', '构建状态']);
+      delete manifest.dsh.workbench['market'];
+      write();
+      expect(publishPreviewOf(rig.WORKSHOP(), 'demo')?.labels).toBeUndefined();
+
+      const source: MarketSourceConfig = {
+        id: 'team',
+        label: '团队市场',
+        kind: 'git',
+        url: 'https://git.example.com/wb/market.git',
+        ref: 'main',
+        policy: 'artifacts-in-repo',
+      };
+      const worktree = path.join(rig.root(), 'workbench', 'market-index', marketSourceKey(source), 'worktree');
+      fs.mkdirSync(worktree, { recursive: true });
+      fs.writeFileSync(
+        path.join(worktree, 'market.json'),
+        JSON.stringify({
+          format: 1,
+          plugins: [
+            {
+              name: '@dsh-workbench/module-demo',
+              metadata: { labels: ['探针'] },
+              versions: [{ version: '0.0.0', source: { type: 'npm' } }],
+            },
+          ],
+        }),
+      );
+      fs.writeFileSync(
+        path.join(rig.root(), 'workbench', 'market-index', 'sources.json'),
+        JSON.stringify({ sources: [source], selected: 'team' }),
+      );
+      expect(publishPreviewOf(rig.WORKSHOP(), 'demo')?.labels).toEqual(['探针']);
+      manifest.dsh.workbench['market'] = { labels: ['后写的'] };
+      write();
+      expect(publishPreviewOf(rig.WORKSHOP(), 'demo')?.labels).toEqual(['后写的']);
+    } finally {
+      if (previous === undefined) delete process.env.DSH_WORKBENCH_HOME;
+      else process.env.DSH_WORKBENCH_HOME = previous;
+    }
+  });
 });
 
 describe('workbench_diy_publish · 没写作者时推断署名', () => {
@@ -405,6 +460,49 @@ describe('workbench_diy_publish · 推断的署名就是发布用的署名', () 
     expect(result.text).toContain('更新日志：这一版已有（0.1.0），没动');
   });
 
+  it('★ 把标签原样传给 release，结果里说清打了哪几个', async () => {
+    rig.scaffold('demo');
+    withBin();
+    const { tool, commands } = rig.harness({
+      probe: [
+        {
+          stdout: JSON.stringify({
+            ok: true,
+            target: 'market',
+            name: '@dsh-workbench/module-demo',
+            version: '0.1.0',
+            install: 'dsh plugin --profile workbench add git+https://git.example.com/wb/market.git&path:/artifacts/demo/0.1.0',
+            market: { url: 'https://git.example.com/wb/market.git' },
+            labels: ['发布编排', '构建状态'],
+          }),
+        },
+      ],
+    });
+
+    const result = (await tool(DIY_PUBLISH_TOOL)?.execute(
+      { unit: 'demo', target: 'market', labels: ['发布编排', '构建状态'] },
+      rig.diyExec(),
+    )) as { text: string };
+
+    expect(commands[0]).toContain("'--label' '发布编排'");
+    expect(commands[0]).toContain("'--label' '构建状态'");
+    expect(result.text).toContain('标签：发布编排 · 构建状态');
+  });
+
+  it('标签超过两个：工具自己就拦下，不调 release', async () => {
+    rig.scaffold('demo');
+    withBin();
+    const { tool, commands } = rig.harness({ probe: [{ stdout: '{}' }] });
+
+    await expect(
+      tool(DIY_PUBLISH_TOOL)?.execute(
+        { unit: 'demo', target: 'market', labels: ['一', '二', '三'] },
+        rig.diyExec(),
+      ),
+    ).rejects.toThrow(/最多两个/);
+    expect(commands).toHaveLength(0);
+  });
+
 describe('workbench_diy_publish · 审批', () => {
   it('发布不跟工坊整族 allow 走：要一次审批，reason 里点名包与版本', () => {
     const policy = panelsApprovalFor(undefined, undefined, () => ({
@@ -445,6 +543,7 @@ describe('workbench_diy_publish · 审批', () => {
     const policy = panelsApprovalFor(undefined, undefined, () => ({
       name: '@demo/probe',
       version: '0.1.0',
+      labels: ['探针'],
       market: {
         url: 'https://git.example.com/wb/market.git',
         ref: 'main',
@@ -466,6 +565,7 @@ describe('workbench_diy_publish · 审批', () => {
     const policy = panelsApprovalFor(undefined, undefined, () => ({
       name: '@demo/probe',
       version: '0.1.0',
+      labels: ['探针'],
       market: {
         url: 'https://git.example.com/wb/market.git',
         ref: 'main',
@@ -499,6 +599,7 @@ describe('workbench_diy_publish · 审批', () => {
     const missing = panelsApprovalFor(undefined, undefined, () => ({
       name: '@demo/probe',
       version: '0.1.0',
+      labels: ['探针'],
       changelog: { version: '0.1.0', missing: true },
     }));
     expect(missing({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo', changelogNote: '一条' } })?.kind).toBe('ask');
@@ -507,6 +608,7 @@ describe('workbench_diy_publish · 审批', () => {
     const has = panelsApprovalFor(undefined, undefined, () => ({
       name: '@demo/probe',
       version: '0.1.0',
+      labels: ['探针'],
       changelog: { version: '0.1.0', text: '- 一条' },
     }));
     expect(has({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo' } })?.kind).toBe('ask');
@@ -519,10 +621,79 @@ describe('workbench_diy_publish · 审批', () => {
     });
   });
 
+  it('★ 市场里还没有标签又没传 labels：不弹审批屏，直接拒并给改法', () => {
+    const policy = panelsApprovalFor(undefined, undefined, () => ({
+      name: '@demo/probe',
+      version: '0.1.0',
+      market: {
+        url: 'https://git.example.com/wb/market.git',
+        indexPath: 'market',
+        artifactPath: 'artifacts/demo',
+        files: ['package.json'],
+      },
+    }));
+    const verdict = policy({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo' } });
+
+    expect(verdict?.kind).toBe('deny');
+    expect(verdict?.kind === 'deny' ? verdict.reason : '').toContain('labels');
+    expect(verdict?.kind === 'deny' ? verdict.reason : '').toContain('1–2 个短词');
+  });
+
+  it('★ 带了 1–2 个 labels 就照常问；这个模块已有标签时可以不传', () => {
+    const bare = panelsApprovalFor(undefined, undefined, () => ({
+      name: '@demo/probe',
+      version: '0.1.0',
+      market: {
+        url: 'https://git.example.com/wb/market.git',
+        indexPath: 'market',
+        artifactPath: 'artifacts/demo',
+        files: ['package.json'],
+      },
+    }));
+    expect(
+      bare({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo', labels: ['发布编排', '构建状态'] } })?.kind,
+    ).toBe('ask');
+
+    const labelled = panelsApprovalFor(undefined, undefined, () => ({
+      name: '@demo/probe',
+      version: '0.1.0',
+      labels: ['探针'],
+      market: {
+        url: 'https://git.example.com/wb/market.git',
+        indexPath: 'market',
+        artifactPath: 'artifacts/demo',
+        files: ['package.json'],
+      },
+    }));
+    expect(labelled({ name: DIY_PUBLISH_TOOL, arguments: { unit: 'demo' } })?.kind).toBe('ask');
+  });
+
+  it('标签最多两个：三个就不弹审批屏', () => {
+    const policy = panelsApprovalFor(undefined, undefined, () => ({
+      name: '@demo/probe',
+      version: '0.1.0',
+      labels: ['探针'],
+      market: {
+        url: 'https://git.example.com/wb/market.git',
+        indexPath: 'market',
+        artifactPath: 'artifacts/demo',
+        files: ['package.json'],
+      },
+    }));
+    const verdict = policy({
+      name: DIY_PUBLISH_TOOL,
+      arguments: { unit: 'demo', labels: ['一', '二', '三'] },
+    });
+
+    expect(verdict?.kind).toBe('deny');
+    expect(verdict?.kind === 'deny' ? verdict.reason : '').toContain('最多两个');
+  });
+
   it('市场里同名归别人：审批直接拒，不让人点同意', () => {
     const policy = panelsApprovalFor(undefined, undefined, () => ({
       name: '@demo/probe',
       version: '0.1.0',
+      labels: ['探针'],
       market: {
         url: 'https://git.example.com/wb/market.git',
         ref: 'main',
@@ -543,6 +714,7 @@ describe('workbench_diy_publish · 审批', () => {
     const policy = panelsApprovalFor(undefined, undefined, () => ({
       name: '@demo/probe',
       version: '0.1.0',
+      labels: ['探针'],
       market: {
         url: 'https://git.example.com/wb/market.git',
         ref: 'main',
@@ -563,6 +735,7 @@ describe('workbench_diy_publish · 审批', () => {
     const policy = panelsApprovalFor(undefined, undefined, (_unit, author) => ({
       name: '@demo/probe',
       version: '0.1.0',
+      labels: ['探针'],
       market: {
         url: 'https://git.example.com/wb/market.git',
         ref: 'main',
@@ -581,6 +754,7 @@ describe('workbench_diy_publish · 审批', () => {
     const policy = panelsApprovalFor(undefined, undefined, () => ({
       name: '@demo/probe',
       version: '0.1.0',
+      labels: ['探针'],
       market: {
         url: 'https://git.example.com/wb/market.git',
         ref: 'main',

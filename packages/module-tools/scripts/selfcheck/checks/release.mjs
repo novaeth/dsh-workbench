@@ -1444,4 +1444,58 @@ export const checks = [
       }
     },
   },
+  {
+    title: 'release：--label 写回 package.json，标签跟着进索引条目（最多两个）',
+    async run(_ctx, report) {
+      const title = 'release：--label 写回 package.json，标签跟着进索引条目（最多两个）';
+      const dir = probeOf({ manifest: packageOf({ author: 'Probe <probe@example.com>' }) });
+      const repo = mkdtempSync(join(tmpdir(), 'wb-rel-label-'));
+      const home = homeOf();
+      const fake = fakeExec(dir);
+      try {
+        const result = await runRelease({
+          root: dir,
+          home,
+          args: ['--index', repo, '--yes', '--json', '--label', '发布编排', '--label', '构建状态'],
+          exec: fake.exec,
+          out: () => {},
+          err: () => {},
+        });
+        const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
+        const written = manifest.dsh?.workbench?.market?.labels;
+        if (!Array.isArray(written) || written.join(',') !== '发布编排,构建状态') {
+          throw new Error(`标签没写回 package.json：${JSON.stringify(written)}`);
+        }
+        if (manifest.dsh?.workbench?.unit !== 'probe') throw new Error('写标签时把 unit 改了');
+        const entry = readIndex(repo).plugins[0];
+        if (entry.metadata?.labels?.join(',') !== '发布编排,构建状态') {
+          throw new Error(`标签没进索引：${JSON.stringify(entry.metadata)}`);
+        }
+        if (entry.metadata?.unit !== 'probe') throw new Error('索引里的 unit 丢了');
+        if (!Array.isArray(result.labels) || result.labels.join(',') !== '发布编排,构建状态') {
+          throw new Error(`结果里没说标签：${JSON.stringify(result.labels)}`);
+        }
+        const tooMany = await failureOf(
+          runRelease({
+            root: dir,
+            home,
+            args: ['--index', repo, '--yes', '--json', '--label', '一', '--label', '二', '--label', '三'],
+            exec: fake.exec,
+            out: () => {},
+            err: () => {},
+          }),
+        );
+        if (!(tooMany instanceof ReleaseError) || !tooMany.message.includes('最多两个')) {
+          throw new Error(`三个标签没拦住：${tooMany?.message ?? tooMany}`);
+        }
+        report(title, true);
+      } catch (error) {
+        report(title, false, error.message.slice(0, 200));
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+        rmSync(repo, { recursive: true, force: true });
+        rmSync(home, { recursive: true, force: true });
+      }
+    },
+  },
 ];
