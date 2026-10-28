@@ -58,10 +58,6 @@ export function marketArtifactRoot(name: string): string {
   return `${MARKET_ARTIFACTS_DIR}/${name}`;
 }
 
-export function marketArtifactPathFor(name: string, version: string): string {
-  return `${MARKET_ARTIFACTS_DIR}/${name}/${version}`;
-}
-
 export function entryUnitOf(entry: MarketIndexEntry): string | undefined {
   const unit = entry.metadata?.unit?.trim();
   if (unit !== undefined && unit !== '') return unit;

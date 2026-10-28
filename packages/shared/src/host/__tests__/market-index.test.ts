@@ -8,9 +8,8 @@ import {
   marketEntryFilesOf,
   marketEntryPath,
   marketInstallTarget,
-  marketMetaPath,
   marketSourceKey,
-  parseMarketEntryDoc,
+  parseMarketEntryJson,
   parseMarketIndex,
   parseMarketIndexJson,
   parseSourceConfig,
@@ -353,75 +352,69 @@ describe('索引源与安装目标', () => {
   });
 });
 
-describe('条目文件：一个版本一个文件', () => {
-  const versionDoc = (version: string, timestamp: number, title: string) => ({
+describe('条目文件：一个包一个文件', () => {
+  const entryOf = () => ({
     name: '@scope/module-x',
-    version,
-    source: { type: 'npm' },
-    publishTimestamp: timestamp,
-    title: { zh: title },
+    title: { zh: '探针' },
+    versions: [{ version: '0.1.0', source: { type: 'npm' as const }, publishTimestamp: 1_760_000_000 }],
   });
 
-  it('路径按包名分层，meta 文件带 epoch 与随机后缀', () => {
-    expect(marketEntryPath('market', '@scope/module-x', '0.1.0')).toBe('market/@scope/module-x/0.1.0.json');
-    expect(marketMetaPath('market', '@scope/module-x', 3, 'a1b2c3')).toBe(
-      'market/@scope/module-x/meta-3-a1b2c3.json',
-    );
-    expect(marketEntryPath('market', 'plain', '1.0.0')).toBe('market/plain/1.0.0.json');
+  it('路径是 market/<包名>.json', () => {
+    expect(marketEntryPath('market', '@scope/module-x')).toBe('market/@scope/module-x.json');
+    expect(marketEntryPath('market', 'plain')).toBe('market/plain.json');
   });
 
-  it('包名/版本号不合法就不给路径（防止写出目录外）', () => {
-    expect(() => marketEntryPath('market', '../escape', '1.0.0')).toThrow();
-    expect(() => marketEntryPath('market', 'ok', '../1.0.0')).toThrow();
+  it('包名不合法就不给路径（防止写出目录外）', () => {
+    expect(() => marketEntryPath('market', '../escape')).toThrow();
+    expect(() => marketEntryPath('market', 'Bad Name')).toThrow();
   });
 
   it('单条文档能解析，坏文档整条拒', () => {
-    const good = parseMarketEntryDoc(versionDoc('0.1.0', 1_760_000_000, '探针'));
+    const good = parseMarketEntryJson(JSON.stringify(entryOf()));
     expect(good.ok).toBe(true);
     if (!good.ok) return;
-    expect(good.doc.name).toBe('@scope/module-x');
-    const bad = parseMarketEntryDoc({ name: 'Bad Name', version: '0.1.0', source: { type: 'npm' } });
-    expect(bad.ok).toBe(false);
-    const noSource = parseMarketEntryDoc({ name: '@scope/x', version: '0.1.0' });
-    expect(noSource.ok).toBe(false);
+    expect(good.entry.name).toBe('@scope/module-x');
+    expect(parseMarketEntryJson(JSON.stringify({ name: 'Bad Name', versions: [] })).ok).toBe(false);
+    expect(parseMarketEntryJson(JSON.stringify({ name: '@scope/x' })).ok).toBe(false);
+    expect(parseMarketEntryJson('{oops').ok).toBe(false);
   });
 
-  it('组装：版本全收并按 SemVer 降序，元数据取最新那份', () => {
-    const files = [
-      { path: 'market/@scope/module-x/0.1.0.json', text: JSON.stringify(versionDoc('0.1.0', 1_760_000_000, '旧标题')) },
-      { path: 'market/@scope/module-x/0.2.0.json', text: JSON.stringify(versionDoc('0.2.0', 1_760_000_100, '新标题')) },
-      { path: 'market/@scope/module-x/meta-1760000200000.json', text: JSON.stringify({
-        name: '@scope/module-x',
-        publishTimestamp: 1_760_000_200,
-        title: { zh: '最新标题' },
-      }) },
-    ];
-    const assembled = assembleMarketIndex(files);
+  it('组装：版本按 SemVer 降序，一个包一条', () => {
+    const assembled = assembleMarketIndex([
+      {
+        path: 'market/@scope/module-x.json',
+        text: JSON.stringify({
+          ...entryOf(),
+          versions: [
+            { version: '0.2.0', source: { type: 'npm' }, publishTimestamp: 1_760_000_100 },
+            { version: '0.1.0', source: { type: 'npm' }, publishTimestamp: 1_760_000_000 },
+          ],
+        }),
+      },
+    ]);
     expect(assembled.ok).toBe(true);
     if (!assembled.ok) return;
-    const entry = assembled.index.plugins[0];
-    expect(entry?.versions.map((one) => one.version)).toEqual(['0.2.0', '0.1.0']);
-    expect(entry?.title?.zh).toBe('最新标题');
+    expect(assembled.index.plugins[0]?.versions.map((one) => one.version)).toEqual(['0.2.0', '0.1.0']);
   });
 
-  it('组装：同一个版本出现两次就整份拒（那是真重复发布）', () => {
+  it('组装：同一个包出现两次就整份拒', () => {
     const assembled = assembleMarketIndex([
-      { path: 'a/0.1.0.json', text: JSON.stringify(versionDoc('0.1.0', 1_760_000_000, '甲')) },
-      { path: 'b/0.1.0.json', text: JSON.stringify(versionDoc('0.1.0', 1_760_000_100, '乙')) },
+      { path: 'a.json', text: JSON.stringify(entryOf()) },
+      { path: 'b.json', text: JSON.stringify(entryOf()) },
     ]);
     expect(assembled.ok).toBe(false);
     if (assembled.ok) return;
-    expect(assembled.problems.some((one) => one.kind === 'duplicate-version')).toBe(true);
+    expect(assembled.problems.some((one) => one.kind === 'duplicate-name')).toBe(true);
   });
 
   it('从目录读只收 .json，README 不当条目', () => {
     const dir = mkdtempSync(join(tmpdir(), 'wb-entry-'));
     try {
-      mkdirSync(join(dir, '@scope/module-x'), { recursive: true });
+      mkdirSync(dir, { recursive: true });
       writeFileSync(join(dir, 'README.md'), 'index');
-      writeFileSync(join(dir, '@scope/module-x', '0.1.0.json'), JSON.stringify(versionDoc('0.1.0', 1_760_000_000, '探针')));
+      writeFileSync(join(dir, '@scope-module-x.json'), JSON.stringify(entryOf()));
       const files = collectMarketEntryFiles(dir);
-      expect(files.map((one) => one.path)).toEqual(['@scope/module-x/0.1.0.json']);
+      expect(files.map((one) => one.path)).toEqual(['@scope-module-x.json']);
       const assembled = assembleMarketIndex(files);
       expect(assembled.ok).toBe(true);
       if (!assembled.ok) return;
@@ -431,7 +424,7 @@ describe('条目文件：一个版本一个文件', () => {
     }
   });
 
-  it('迁移：一份 format 1 能拆成条目文件，再组装回来一模一样', () => {
+  it('迁移：一份 format 1 拆成每包一个文件，再组装回来一模一样', () => {
     const legacy: MarketIndex = {
       format: 1,
       plugins: [
@@ -447,11 +440,7 @@ describe('条目文件：一个版本一个文件', () => {
       ],
     };
     const files = marketEntryFilesOf(legacy, 'market');
-    expect(files.map((one) => one.path)).toEqual([
-      'market/@scope/module-x/0.2.0.json',
-      'market/@scope/module-x/0.1.0.json',
-      'market/@scope/module-x/meta-1-migr.json',
-    ]);
+    expect(files.map((one) => one.path)).toEqual(['market/@scope/module-x.json']);
     const assembled = assembleMarketIndex(files);
     expect(assembled.ok).toBe(true);
     if (!assembled.ok) return;

@@ -743,9 +743,9 @@ export const checks = [
           err: () => {},
         });
         if (result.target !== 'market') throw new Error(`没默认走 market：${result.target}`);
-        if (!existsSync(join(repo, 'artifacts', '@demo', 'probe', '0.1.0', 'package.json'))) throw new Error('产物没进仓库');
+        if (!existsSync(join(repo, 'artifacts', '@demo', 'probe', 'package.json'))) throw new Error('产物没进仓库');
         if (!indexExists(repo)) throw new Error('索引没写');
-        if (!result.install.includes('&path:/artifacts/@demo/probe/0.1.0')) throw new Error(`安装 spec 不对：${result.install}`);
+        if (!result.install.includes('&path:/artifacts/@demo/probe')) throw new Error(`安装 spec 不对：${result.install}`);
         if (hasCall(fake.calls, 'npm', 'publish')) throw new Error('market 不该 publish');
         if (fake.calls.filter((one) => one.command === 'git' && one.argv.includes('push')).length !== 2) {
           throw new Error('应该推两次（产物 + 索引）');
@@ -800,7 +800,7 @@ export const checks = [
         if (second.target !== 'market') throw new Error(`续跑没走市场：${String(second.target)}`);
         if (second.market?.updated !== true) throw new Error(`续跑没更新索引：${second.market?.reason}`);
         if (hasCall(retry.calls, 'npm', 'run')) throw new Error('续跑又把门禁跑了一遍');
-        if (!second.install.includes('&path:/artifacts/@demo/probe/0.1.0')) throw new Error(`安装 spec 不对：${second.install}`);
+        if (!second.install.includes('&path:/artifacts/@demo/probe')) throw new Error(`安装 spec 不对：${second.install}`);
         const done = JSON.parse(readFileSync(join(home, 'workbench', 'releases', 'probe.json'), 'utf8'));
         if (done.run?.state !== 'done' || done.status !== 'verified') throw new Error('续跑没落 done');
         report(title, true);
@@ -960,11 +960,11 @@ export const checks = [
         if (!result.changes.includes('author ← git config')) {
           throw new Error(`changes 里没记作者来源：${JSON.stringify(result.changes)}`);
         }
-        const shipped = JSON.parse(readFileSync(join(repo, 'artifacts', '@demo', 'probe', '0.1.0', 'package.json'), 'utf8'));
+        const shipped = JSON.parse(readFileSync(join(repo, 'artifacts', '@demo', 'probe', 'package.json'), 'utf8'));
         if (shipped.author !== 'Probe <probe@example.com>') throw new Error(`产物里的 author 不对：${shipped.author}`);
         const index = readIndex(repo);
         if (index.plugins[0]?.author !== 'Probe <probe@example.com>') throw new Error('索引里没写作者');
-        if (!existsSync(join(repo, 'artifacts', '@demo', 'probe', '0.1.0', 'CHANGELOG.md'))) throw new Error('更新日志没随产物发布');
+        if (!existsSync(join(repo, 'artifacts', '@demo', 'probe', 'CHANGELOG.md'))) throw new Error('更新日志没随产物发布');
         report(title, true);
       } catch (error) {
         report(title, false, error.message.slice(0, 200));
@@ -1035,7 +1035,7 @@ export const checks = [
         }
         const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
         if (manifest.author !== '陈康 <kang@example.com>') throw new Error(`manifest 没换：${manifest.author}`);
-        const shipped = JSON.parse(readFileSync(join(repo, 'artifacts', '@demo', 'probe', '0.1.0', 'package.json'), 'utf8'));
+        const shipped = JSON.parse(readFileSync(join(repo, 'artifacts', '@demo', 'probe', 'package.json'), 'utf8'));
         if (shipped.author !== '陈康 <kang@example.com>') throw new Error(`产物里没换：${shipped.author}`);
         const index = readIndex(repo);
         if (index.plugins[0]?.author !== '陈康 <kang@example.com>') throw new Error(`索引里没换：${String(index.plugins[0]?.author)}`);
@@ -1191,7 +1191,7 @@ export const checks = [
         );
         if (!(error instanceof ReleaseError)) throw new Error(`没拦住：${error?.message ?? error}`);
         if (!error.message.includes('已经有主')) throw new Error(`拒的理由不对：${error.message}`);
-        const shipped = JSON.parse(readFileSync(join(repo, 'artifacts', '@demo', 'probe', '0.1.0', 'package.json'), 'utf8'));
+        const shipped = JSON.parse(readFileSync(join(repo, 'artifacts', '@demo', 'probe', 'package.json'), 'utf8'));
         if (shipped.version !== '0.1.0') throw new Error(`别人的产物被动了：${shipped.version}`);
         const index = readIndex(repo);
         const entry = index.plugins[0];
@@ -1245,7 +1245,7 @@ export const checks = [
         if (!entry.versions.some((one) => one.version === '0.1.1')) {
           throw new Error(`新版本没进索引：${JSON.stringify(entry.versions.map((one) => one.version))}`);
         }
-        const shipped = JSON.parse(readFileSync(join(repo, 'artifacts', '@demo', 'probe', '0.1.1', 'package.json'), 'utf8'));
+        const shipped = JSON.parse(readFileSync(join(repo, 'artifacts', '@demo', 'probe', 'package.json'), 'utf8'));
         if (shipped.version !== '0.1.1') throw new Error(`产物没跟上：${shipped.version}`);
         report(title, true);
       } catch (error) {
@@ -1426,7 +1426,7 @@ export const checks = [
         );
         if (!(error instanceof ReleaseError)) throw new Error(`没拦住：${error?.message ?? error}`);
         if (!error.message.includes('模块 id')) throw new Error(`拒的理由不对：${error.message}`);
-        if (!existsSync(join(repo, 'artifacts', '@demo', 'probe', '0.1.0', 'package.json'))) {
+        if (!existsSync(join(repo, 'artifacts', '@demo', 'probe', 'package.json'))) {
           throw new Error('旧产物被删了');
         }
         if (existsSync(join(repo, 'artifacts', '@demo', 'other'))) throw new Error('新包名也写了产物');

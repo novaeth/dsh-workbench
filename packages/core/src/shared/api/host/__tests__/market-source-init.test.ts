@@ -160,7 +160,7 @@ describe('createMarketSourceInitializer', () => {
     expect(result.changed).toBe(true);
     const moved = join(root, 'market-index', marketSourceKey(result.source), 'worktree');
     expect(existsSync(join(moved, 'market.json'))).toBe(false);
-    expect(existsSync(join(moved, 'market', '@scope', 'x', '0.1.0.json'))).toBe(true);
+    expect(existsSync(join(moved, 'market', '@scope', 'x.json'))).toBe(true);
     rmSync(root, { recursive: true, force: true });
   });
 

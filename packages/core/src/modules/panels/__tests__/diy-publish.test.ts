@@ -137,7 +137,7 @@ describe('workbench_diy_publish · 预览', () => {
           url: 'https://git.example.com/wb/market.git',
           ref: 'main',
           indexPath: 'market',
-          artifactPath: 'artifacts/@dsh-workbench/module-demo/0.0.0',
+          artifactPath: 'artifacts/@dsh-workbench/module-demo',
           files: ['package.json'],
         },
         claim: { state: 'new' },

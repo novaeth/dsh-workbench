@@ -1,5 +1,4 @@
-import { randomBytes } from 'node:crypto';
-import { cpSync, copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 
@@ -11,15 +10,12 @@ import {
   collectMarketEntryFiles,
   gitUrlOk,
   marketArtifactPath,
-  marketArtifactPathFor,
   marketArtifactRoot,
+  marketEntryFileOf,
   marketEntryFilesOfLegacy,
-  marketEntryPath,
-  marketMetaDocOf,
-  marketMetaPath,
   marketSourceKey,
-  marketVersionDocLeanOf,
   parseMarketIndexJson,
+  sortMarketVersions,
 } from '@dsh-workbench/shared/host';
 
 const MARKET_DIR = 'market';
@@ -182,48 +178,12 @@ function ensureVersionFree(workdir, dir, input) {
   }
 }
 
-function writeEntryFile(workdir, dir, entry, version) {
-  const doc = marketVersionDocLeanOf(entry, version);
-  const rel = marketEntryPath(dir, entry.name, version.version);
-  const file = join(workdir, ...rel.split('/'));
-  if (existsSync(file)) {
-    const current = JSON.parse(readFileSync(file, 'utf8'));
-    if (isDeepStrictEqual(current, doc)) return rel;
-    throw new MarketIndexError(
-      `索引里已经有 ${entry.name}@${version.version}（${rel}）—— 换个版本号再发`,
-      'market-owner',
-    );
-  }
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify(doc, null, 2)}\n`);
-  return rel;
-}
-
-function metaEpochOf(workdir, dir, name) {
-  const root = join(workdir, dir, name);
-  if (!existsSync(root)) return 0;
-  let epoch = 0;
-  for (const item of readdirSync(root)) {
-    if (!item.startsWith('meta-') || !item.endsWith('.json')) continue;
-    try {
-      const doc = JSON.parse(readFileSync(join(root, item), 'utf8'));
-      if (typeof doc.epoch === 'number' && doc.epoch > epoch) epoch = doc.epoch;
-    } catch {
-      continue;
-    }
-  }
-  return epoch;
-}
-
-function writeMetaFile(workdir, dir, entry, at) {
-  const epoch = metaEpochOf(workdir, dir, entry.name) + 1;
-  const suffix = randomBytes(3).toString('hex');
-  const doc = marketMetaDocOf(entry, epoch, Math.floor(at / 1000));
-  const rel = marketMetaPath(dir, entry.name, epoch, suffix);
-  const file = join(workdir, ...rel.split('/'));
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify(doc, null, 2)}\n`);
-  return rel;
+function writeEntryFile(workdir, dir, entry) {
+  const file = marketEntryFileOf(entry, dir);
+  const target = join(workdir, ...file.path.split('/'));
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, file.text);
+  return file.path;
 }
 
 function migrateLegacyIndex(workdir, dir) {
@@ -403,21 +363,22 @@ export function entryMetaOf(manifest) {
 }
 
 export function indexEntryOf(input) {
-  const manifest = input.manifest;
-  const dsh = manifest.engines?.dsh;
-  const owner = authorTextOf(manifest);
+  const owner = authorTextOf(input.manifest);
   return {
-    name: manifest.name,
+    name: input.manifest.name,
     ...(owner === '' ? {} : { owner }),
-    ...entryMetaOf(manifest),
-    versions: [
-      {
-        version: input.version,
-        publishTimestamp: Math.floor(input.at / 1000),
-        source: input.source,
-        ...(typeof dsh === 'string' && dsh.trim() !== '' ? { engines: { dsh: dsh.trim() } } : {}),
-      },
-    ],
+    ...entryMetaOf(input.manifest),
+    versions: [versionRecordOf(input)],
+  };
+}
+
+export function versionRecordOf(input) {
+  const dsh = input.manifest.engines?.dsh;
+  return {
+    version: input.version,
+    publishTimestamp: Math.floor(input.at / 1000),
+    source: input.source,
+    ...(typeof dsh === 'string' && dsh.trim() !== '' ? { engines: { dsh: dsh.trim() } } : {}),
   };
 }
 
@@ -620,11 +581,11 @@ function remoteHeadOf(exec, workdir, branch) {
   return line.split(/\s+/)[0] ?? '';
 }
 
-function copyArtifacts(root, workdir, name, version, manifest) {
+function copyArtifacts(root, workdir, name, manifest) {
   if (!SAFE_PACKAGE_NAME.test(name)) {
     throw new MarketIndexError(`包名不是合法 npm 名，没法当产物目录：${JSON.stringify(name)}`, 'index-write');
   }
-  const path = marketArtifactPathFor(name, version);
+  const path = marketArtifactRoot(name);
   const dest = join(workdir, path);
   rmSync(dest, { recursive: true, force: true });
   mkdirSync(dest, { recursive: true });
@@ -667,22 +628,6 @@ export function marketClaim({ plan, exec, home, name, unit, publisher }) {
   });
 }
 
-const META_KEYS = ['title', 'description', 'author', 'owner', 'homepage', 'icon', 'metadata'];
-
-function withCurrentMeta(entry, current, update) {
-  if (current === undefined) return entry;
-  const next = { ...entry };
-  if (!update) {
-    for (const key of META_KEYS) {
-      if (key === 'owner') continue;
-      if (current[key] === undefined) delete next[key];
-      else next[key] = current[key];
-    }
-  }
-  if (current.owner !== undefined) next.owner = current.owner;
-  return next;
-}
-
 export function updateMarketIndex(options) {
   const { plan, exec, home, root, manifest, version, publish, now, resume, onStep } = options;
   const unit = options.unit ?? unitOf(manifest);
@@ -707,11 +652,19 @@ export function updateMarketIndex(options) {
       if (plan.source.localPath === undefined) {
         const fetched = runGit(exec, workdir, ['fetch', 'origin', branch], { allowFailure: true });
         if (fetched.status === 0) runGit(exec, workdir, ['reset', '--hard', `origin/${branch}`], { allowFailure: true });
-        runGit(exec, workdir, ['clean', '-fd', '--', marketArtifactPathFor(manifest.name, version), dir], {
+        runGit(exec, workdir, ['clean', '-fd', '--', marketArtifactRoot(manifest.name), dir], {
           allowFailure: true,
         });
       }
-      rmSync(join(workdir, dir, manifest.name, `${version}.json`), { force: true });
+      const file = join(workdir, dir, `${manifest.name}.json`);
+      if (existsSync(file)) {
+        const kept = JSON.parse(readFileSync(file, 'utf8'));
+        const versions = (Array.isArray(kept.versions) ? kept.versions : []).filter(
+          (one) => one?.version !== version,
+        );
+        if (versions.length === 0) rmSync(file, { force: true });
+        else writeFileSync(file, `${JSON.stringify({ ...kept, versions }, null, 2)}\n`);
+      }
     } else {
       assertClean(exec, workdir);
     }
@@ -749,7 +702,7 @@ export function updateMarketIndex(options) {
       const done = replicatePush(exec, workdir, branch, baseSha, () => {
         ensureClaimFree(workdir, dir, claimInput);
         migrateLegacyIndex(workdir, dir);
-        artifactPath = copyArtifacts(root, workdir, manifest.name, version, manifest);
+        artifactPath = copyArtifacts(root, workdir, manifest.name, manifest);
         report({ phase: 'artifacts-copied' });
         artifactSha = commitOf(exec, workdir, `chore(release): ${entryName}`, identityOf(manifest));
         report({ phase: 'artifacts-committed', artifactCommit: artifactSha });
@@ -770,18 +723,32 @@ export function updateMarketIndex(options) {
       if (source === undefined) throw new MarketIndexError('这个出口没有可写进索引的 source（tarball 不进索引）', 'index-write');
       if (source.type === 'npm' && source.registry === 'https://registry.npmjs.org/') delete source.registry;
     }
-    const entry = indexEntryOf({ manifest, version, source, at: now() });
+    const versionRecord = versionRecordOf({ manifest, version, source, at: now() });
     report({ phase: 'index' });
     const indexed = replicatePush(exec, workdir, branch, baseSha, () => {
       if (plan.policy !== 'artifacts-in-repo') migrateLegacyIndex(workdir, dir);
       ensureClaimFree(workdir, dir, claimInput);
+      ensureVersionFree(workdir, dir, claimInput);
       const current = readWorktreeIndex(workdir, dir).plugins.find((one) => one.name === manifest.name);
-      const base = withCurrentMeta(entry, current, options.metadata === true);
-      const written = mergeEntryLabels(base, options.labels);
-      if (current === undefined || options.metadata === true || written !== base) {
-        writeMetaFile(workdir, dir, written, now());
+      const owner = authorTextOf(manifest);
+      let next;
+      if (current === undefined) {
+        next = {
+          name: manifest.name,
+          ...(owner === '' ? {} : { owner }),
+          ...entryMetaOf(manifest),
+          versions: [versionRecord],
+        };
+      } else {
+        next = { ...current, versions: sortMarketVersions([versionRecord, ...current.versions]) };
+        if (options.metadata === true) {
+          const merged = { ...next, ...entryMetaOf(manifest) };
+          if (current.owner !== undefined) merged.owner = current.owner;
+          next = merged;
+        }
       }
-      writeEntryFile(workdir, dir, written, written.versions[0]);
+      next = mergeEntryLabels(next, options.labels);
+      writeEntryFile(workdir, dir, next);
       indexSha = commitOf(exec, workdir, `chore(market): ${entryName}`, identityOf(manifest));
       report({ phase: 'index-committed', indexCommit: indexSha });
       return indexSha;
@@ -863,10 +830,18 @@ export function refreshMarketEntry(options) {
     if (isDeepStrictEqual(next, existing)) {
       return { ...base, updated: false, unchanged: true, version: latest, phase: 'done' };
     }
-    const at = Date.now();
     const baseSha = revOf(exec, workdir, 'HEAD');
     const done = replicatePush(exec, workdir, branch, baseSha, () => {
-      writeMetaFile(workdir, dir, next, at);
+      const fresh = readWorktreeIndex(workdir, dir).plugins.find((one) => one.name === manifest.name);
+      if (fresh === undefined) {
+        throw new MarketIndexError(`${manifest.name} 还不在索引里 —— 先正常发一版`, 'index-write');
+      }
+      const updated = { ...fresh };
+      for (const key of ['title', 'description', 'author', 'homepage', 'metadata']) {
+        if (Object.hasOwn(meta, key)) updated[key] = meta[key];
+        else delete updated[key];
+      }
+      writeEntryFile(workdir, dir, updated);
       return commitOf(exec, workdir, `chore(market): refresh ${manifest.name}`, identityOf(manifest));
     });
     if (!done.ok) throw new MarketIndexError(done.reason, done.code);

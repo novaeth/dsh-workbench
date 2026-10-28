@@ -13,7 +13,6 @@ import type {
 } from '../contract/protocol/market-index.js';
 import { MARKET_INDEX_DIR, MARKET_INDEX_FORMAT } from '../contract/protocol/market-index.js';
 import { marketText } from '../lib/market-index.js';
-import type { MarketDocFields, MarketEntryDocParse } from './market-index-doc.js';
 import { compareVersions, isValidVersion } from './version.js';
 
 const NPM_NAME = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/;
@@ -388,95 +387,32 @@ export function parseSourceConfig(raw: unknown): SourceConfigParse {
 }
 
 
-function docFieldsOf(record: Readonly<Record<string, unknown>>, at: string): MarketDocFields | MarketIndexProblem {
-  const name = asText(record['name']);
-  if (name === '' || name.length > 214 || !NPM_NAME.test(name)) {
-    return problem('name', `不是合法 npm 包名：${JSON.stringify(name)}`, at);
-  }
-  const icon = asText(record['icon']);
-  if (icon !== '') {
-    const badIcon = iconProblem(icon);
-    if (badIcon !== undefined) return badIcon;
-  }
-  const owner = asText(record['owner']);
-  if (owner !== '') {
-    const badOwner = ownerProblem(owner);
-    if (badOwner !== undefined) return badOwner;
-  }
-  const metadata = metadataOf(record['metadata']);
-  if (metadata?.unit !== undefined && !UNIT_ID.test(metadata.unit)) {
-    return problem('unit', `metadata.unit 只能是小写字母开头的 a-z0-9-（现在是 ${JSON.stringify(metadata.unit)}）`, at);
-  }
-  const title = asLocalized(record['title']);
-  const description = asLocalized(record['description']);
-  const author = asText(record['author']);
-  const homepage = asText(record['homepage']);
-  return {
-    name,
-    ...(title === undefined ? {} : { title }),
-    ...(description === undefined ? {} : { description }),
-    ...(author === '' ? {} : { author }),
-    ...(owner === '' ? {} : { owner }),
-    ...(homepage === '' ? {} : { homepage }),
-    ...(icon === '' ? {} : { icon }),
-    ...(metadata === undefined ? {} : { metadata }),
-  };
-}
-
-export function parseMarketEntryDoc(raw: unknown): MarketEntryDocParse {
-  const record = asRecord(raw);
-  if (record === undefined) return { ok: false, problems: [problem('entry', '条目文件必须是一个 JSON 对象')] };
-  const fields = docFieldsOf(record, 'entry');
-  if ('kind' in fields) return { ok: false, problems: [fields] };
-  const version = asText(record['version']);
-  const timestamp = record['publishTimestamp'];
-  if (timestamp !== undefined && (!Number.isInteger(timestamp) || (timestamp as number) < 0)) {
-    return { ok: false, problems: [problem('timestamp', 'publishTimestamp 必须是 Unix 秒整数', 'entry')] };
-  }
-  if (version === '') {
-    if (timestamp === undefined) {
-      return { ok: false, problems: [problem('timestamp', '元数据文件要有 publishTimestamp', 'entry')] };
-    }
-    const epoch = record['epoch'];
-    if (epoch !== undefined && (!Number.isInteger(epoch) || (epoch as number) < 0)) {
-      return { ok: false, problems: [problem('timestamp', 'epoch 必须是非负整数', 'entry')] };
-    }
-    return {
-      ok: true,
-      doc: { ...fields, publishTimestamp: timestamp as number, ...(epoch === undefined ? {} : { epoch: epoch as number }) },
-    };
-  }
-  if (!isValidVersion(version)) {
-    return { ok: false, problems: [problem('version', `版本号不是合法 SemVer：${JSON.stringify(version)}`, 'entry')] };
-  }
-  const source = sourceOf(record['source'], 'entry.source');
-  if ('kind' in source) return { ok: false, problems: [source] };
-  const engines = asRecord(record['engines']);
-  const dsh = engines === undefined ? '' : asText(engines['dsh']);
-  return {
-    ok: true,
-    doc: {
-      ...fields,
-      version,
-      source,
-      ...(timestamp === undefined ? {} : { publishTimestamp: timestamp as number }),
-      ...(dsh === '' ? {} : { engines: { dsh } }),
-    },
-  };
-}
 function indexPathBase(dir: string): string {
   return dir.replace(/^\/+|\/+$/g, '') || MARKET_INDEX_DIR;
 }
 
-export function marketEntryPath(dir: string, name: string, version: string): string {
+export function marketEntryPath(dir: string, name: string): string {
   if (!NPM_NAME.test(name)) throw new Error(`不是合法包名：${JSON.stringify(name)}`);
-  if (!isValidVersion(version)) throw new Error(`不是合法版本号：${JSON.stringify(version)}`);
-  return `${indexPathBase(dir)}/${name}/${version}.json`;
+  return `${indexPathBase(dir)}/${name}.json`;
 }
 
-export function marketMetaPath(dir: string, name: string, epoch: number, suffix: string): string {
-  if (!NPM_NAME.test(name)) throw new Error(`不是合法包名：${JSON.stringify(name)}`);
-  if (!Number.isInteger(epoch) || epoch < 0) throw new Error(`epoch 不合法：${String(epoch)}`);
-  if (!/^[a-z0-9]{4,16}$/u.test(suffix)) throw new Error(`后缀不合法：${suffix}`);
-  return `${indexPathBase(dir)}/${name}/meta-${String(epoch)}-${suffix}.json`;
+export type MarketEntryParse =
+  | { readonly ok: true; readonly entry: MarketIndexEntry }
+  | { readonly ok: false; readonly problems: readonly MarketIndexProblem[] };
+
+export function parseMarketEntryJson(text: string): MarketEntryParse {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch (error) {
+    return {
+      ok: false,
+      problems: [problem('not-json', `JSON 解析失败：${error instanceof Error ? error.message : String(error)}`, 'entry')],
+    };
+  }
+  const parsed = entryOf(raw, 'entry');
+  if ('kind' in parsed) return { ok: false, problems: [parsed] };
+  return { ok: true, entry: parsed };
 }
+
+

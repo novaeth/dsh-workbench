@@ -125,17 +125,15 @@ describe('createMarketIndexReader', () => {
     const commit = 'a'.repeat(40);
     const doc = {
       name: '@scope/module-x',
-      version: '0.1.0',
-      source: { type: 'npm' },
-      publishTimestamp: 1_760_000_000,
       metadata: { labels: ['workbench'] },
+      versions: [{ version: '0.1.0', source: { type: 'npm' }, publishTimestamp: 1_760_000_000 }],
     };
     const fake = fakeShell((command) => {
       if (command.includes('git clone')) return { exitCode: 0 };
       if (command.includes('ls-tree')) {
         return {
           exitCode: 0,
-          stdout: `100644 blob ${'c'.repeat(40)}\tmarket/@scope/module-x/0.1.0.json\n100644 blob ${'d'.repeat(40)}\tmarket/README.md\n`,
+          stdout: `100644 blob ${'c'.repeat(40)}\tmarket/@scope/module-x.json\n100644 blob ${'d'.repeat(40)}\tmarket/README.md\n`,
         };
       }
       if (command.includes('rev-parse')) return { exitCode: 0, stdout: `${commit}\n` };
@@ -157,7 +155,7 @@ describe('createMarketIndexReader', () => {
     expect(fake.calls.every((line) => line.includes('SSH_ASKPASS_REQUIRE=never'))).toBe(true);
     expect(fake.calls.some((line) => line.includes('ls-tree') && line.includes(commit))).toBe(true);
     expect(
-      fake.calls.some((line) => line.includes('show') && line.includes('market/@scope/module-x/0.1.0.json')),
+      fake.calls.some((line) => line.includes('show') && line.includes('market/@scope/module-x.json')),
     ).toBe(true);
     rmSync(root, { recursive: true, force: true });
   });
