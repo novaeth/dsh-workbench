@@ -30,6 +30,8 @@ import {
   writeRegistryChoice,
   writeRegistryCustom,
 } from './add-module-registry-prefs';
+import { appliedUnitsOf } from '../rightbar/market-change';
+import { publishMarketApplied, usePublishMarketInstalling } from '../rightbar/market-install';
 
 export type { AddModulePhase, AddModulePreview } from './add-module-text';
 
@@ -96,6 +98,8 @@ export function useAddModule(options: {
   const generationRef = useRef(0);
   const requestIdRef = useRef('');
   const { busy: classifying } = useVisibleBusy(phase === 'inspecting', MIN_BUSY_MS);
+  const [installToken] = useState(() => `market-install:${newRequestId()}`);
+  usePublishMarketInstalling(installToken, phase === 'installing');
 
   const write = useHostWrite<BundleInstallPayload>({ channel: 'provision', networkText: failedText });
   const cancel = useHostWrite<BundleCancellationPayload>({ channel: 'provision', networkText: failedText });
@@ -177,6 +181,7 @@ export function useAddModule(options: {
             supply: value.supply,
             ...(value.plugin === undefined ? {} : { plugin: value.plugin }),
           });
+          publishMarketApplied(appliedUnitsOf(value));
           setPhase('result');
           if (value.change.application === 'applied' || value.change.application === 'restart-required') {
             onInstalled();

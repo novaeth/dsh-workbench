@@ -13,6 +13,7 @@ import {
 import type { CapabilityMap } from '@/shared/hooks/use-capabilities';
 import {
   MARKET_STATE_KEY,
+  checkingRows,
   marketActions,
   marketHasUpdates,
   marketRowTitle,
@@ -380,3 +381,51 @@ describe('marketHasUpdates', () => {
 });
 
 
+
+describe('checkingRows：装的过程中 / 刚装完那一下的读数缺口', () => {
+  const scoped = (units: readonly string[]) => ({ all: false, units: new Set(units) });
+
+  it('★ 能力表还没跟上：正在装 / 刚装完的那一单元说「检测中」，不挂「重启再试」', () => {
+    const rows = marketRows([unit('issues')], {});
+    expect(rows[0]?.state).toBe('unknown');
+    expect(rows[0]?.hint).toBe('panels.market.uncheckedHint');
+
+    expect(checkingRows(rows, { all: true, units: new Set() })[0]).toMatchObject({
+      state: 'checking',
+      hint: undefined,
+    });
+    expect(checkingRows(rows, scoped(['issues']))[0]?.state).toBe('checking');
+  });
+
+  it('★ 探针自己说检测不了（unchecked）同一处理', () => {
+    const rows = marketRows([unit('issues')], capsOf('issues', 'unchecked'));
+    expect(rows[0]?.state).toBe('unchecked');
+    expect(checkingRows(rows, scoped(['issues']))[0]?.state).toBe('checking');
+  });
+
+  it('★ 还没结论的依赖说明也一起摘掉（别在「检测中」底下说缺什么）', () => {
+    const rows = marketRows(
+      [unit('issues')],
+      capsOf('issues', 'unchecked', [needStateOf(DEMO, 'unchecked', { provision: 'not-declared' })]),
+    );
+    expect(rows[0]?.note?.key).toBe('panels.market.noSource');
+    expect(checkingRows(rows, scoped(['issues']))[0]?.note).toBeUndefined();
+  });
+
+  it('★ 不在装、也不是它 → 原样（判据没被放宽）', () => {
+    const rows = marketRows([unit('issues')], {});
+    expect(checkingRows(rows, { all: false, units: new Set() })[0]).toBe(rows[0]);
+    expect(checkingRows(rows, scoped(['other']))[0]).toBe(rows[0]);
+  });
+
+  it('★ 已经有结论的行不动（已装 / 缺依赖）', () => {
+    const rows = marketRows(
+      [unit('issues'), unit('builds')],
+      { ...installed('issues'), ...missing({}, 'builds') },
+    );
+    const next = checkingRows(rows, { all: true, units: new Set() });
+
+    expect(next[0]?.state).toBe('installed');
+    expect(next[1]?.state).toBe('missing');
+  });
+});

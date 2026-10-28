@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Translate } from '@dsh-workbench/shared';
 import type { BundleChange } from '@/kernel/contract/bundle-install';
-import { changeFailure, changeOf } from '../market-change';
+import { appliedUnitsOf, changeFailure, changeOf } from '../market-change';
 
 const t = ((key: string) => key) as unknown as Translate;
 
@@ -47,5 +47,45 @@ describe('changeFailure：没落下就说为什么（别静默当作成功）', 
 
   it('没有 change（比如共用依赖那条）→ 不出声', () => {
     expect(changeFailure(undefined, t)).toBeUndefined();
+  });
+});
+
+describe('appliedUnitsOf：dsh 真换上了的那一单元（只有它值得等热换落地）', () => {
+  it('★ applied + 模块结果 → 那个 unit', () => {
+    expect(
+      appliedUnitsOf({
+        change: change({ application: 'applied' }),
+        module: { kind: 'module', pkg: '@a/hello', unit: 'hello' },
+      }),
+    ).toEqual(['hello']);
+  });
+
+  it('★ 说要重启 / 失败 / 取消 → 不压后（当场按真实状态说）', () => {
+    for (const application of ['restart-required', 'failed', 'cancelled', 'overridden'] as const) {
+      expect(
+        appliedUnitsOf({
+          change: change({ application }),
+          module: { kind: 'module', pkg: '@a/hello', unit: 'hello' },
+        }),
+        application,
+      ).toEqual([]);
+    }
+  });
+
+  it('插件那份 / 看不出是不是模块 / unit 空 → 不给 hold', () => {
+    expect(appliedUnitsOf({ change: change({ application: 'applied' }) })).toEqual([]);
+    expect(
+      appliedUnitsOf({
+        change: change({ application: 'applied' }),
+        module: { kind: 'not-module', pkg: '@a/plugin' },
+      }),
+    ).toEqual([]);
+    expect(
+      appliedUnitsOf({
+        change: change({ application: 'applied' }),
+        module: { kind: 'module', pkg: '@a/hello', unit: '' },
+      }),
+    ).toEqual([]);
+    expect(appliedUnitsOf(null)).toEqual([]);
   });
 });

@@ -25,6 +25,8 @@ export interface MarketHintInput {
   readonly plugins?: readonly InstalledPlugin[] | null | undefined;
   readonly workbench?: WorkbenchVersion | null | undefined;
   readonly busy?: ReadonlySet<string> | undefined;
+  readonly installing?: boolean | undefined;
+  readonly applied?: ReadonlySet<string> | undefined;
 }
 
 const PROBLEM_KEY = 'panels.market.hasProblem';
@@ -42,8 +44,9 @@ function isProblem(row: MarketRow): boolean {
   );
 }
 
-function isRestart(row: MarketRow): boolean {
-  return row.state === 'inactive' || row.state === 'pending-restart';
+function isRestart(row: MarketRow, installing: boolean): boolean {
+  if (row.state === 'pending-restart') return true;
+  return !installing && row.state === 'inactive';
 }
 
 function isUnknown(row: MarketRow, rosterRead: boolean): boolean {
@@ -62,11 +65,12 @@ function awaitsRestart(
 }
 
 export function marketHintOf(input: MarketHintInput): PanelHint | null {
-  const busy = input.busy ?? new Set<string>();
+  const installing = input.installing === true;
+  const held = new Set([...(input.busy ?? []), ...(input.applied ?? [])]);
   const marketable = marketCatalog(input.manifests, input.installable).filter(
-    (manifest) => !busy.has(manifest.id),
+    (manifest) => !held.has(manifest.id),
   );
-  const installed = (input.installed ?? []).filter((module) => !busy.has(module.unit));
+  const installed = (input.installed ?? []).filter((module) => !held.has(module.unit));
   const catalog = marketRows(marketable, input.capabilities, marketUpdatesOf(input.modules));
   const listed = new Set(catalog.map((row) => row.id));
   const self = workbenchRow(input.workbench);
@@ -77,10 +81,12 @@ export function marketHintOf(input: MarketHintInput): PanelHint | null {
     ...(self === undefined ? [] : [self]),
   ];
   const problem = rows.some(isProblem);
-  const restart = rows.some(isRestart) || awaitsRestart(input.manifests, installed);
+  const restart =
+    rows.some((row) => isRestart(row, installing)) ||
+    (!installing && awaitsRestart(input.manifests, installed));
   const followUp = rows.some((row) => row.state === 'pending-followup');
   const rosterRead = input.modules !== null;
-  const unknown = rows.some((row) => isUnknown(row, rosterRead));
+  const unknown = !installing && rows.some((row) => isUnknown(row, rosterRead));
   const updates = marketHasUpdates(rows, sharedRows(marketable, input.capabilities));
   const more: string[] = [];
   if (problem) {

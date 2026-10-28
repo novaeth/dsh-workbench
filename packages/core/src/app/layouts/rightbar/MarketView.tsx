@@ -14,6 +14,7 @@ import { useMarketTransient } from './market-transient-state';
 import type { MarketFreshness } from './market-freshness';
 import type { InstalledPlugin } from '@/shared/api/installed-plugins';
 import {
+  checkingRows,
   installedIdSet,
   installedRows,
   liveManifests,
@@ -60,6 +61,7 @@ import styles from '../market/MarketPage.module.css';
 
 const CONFIRM_UNINSTALL: readonly MarketRowAction[] = ['uninstall', 'remove-bundle', 'uninstall-plugin'];
 const NO_ROWS: readonly MarketRow[] = [];
+const NO_UNITS: ReadonlySet<string> = new Set();
 
 export interface MarketViewProps {
   readonly t: Translate;
@@ -79,6 +81,7 @@ export interface MarketViewProps {
   readonly selfUpdate?: WorkbenchSelfUpdate | null | undefined;
   readonly plugins?: readonly InstalledPlugin[] | null | undefined;
   readonly settling?: ReadonlySet<string> | undefined;
+  readonly installing?: boolean | undefined;
   readonly mock?: MarketMock | undefined;
   readonly defaults?: readonly string[] | undefined;
   readonly changed?: Readonly<Record<string, number>> | undefined;
@@ -230,6 +233,7 @@ function useMarketScene(input: {
   readonly updates: ModuleUpdateMap | undefined;
   readonly installed: readonly InstalledWorkbenchModule[] | undefined;
   readonly settling: ReadonlySet<string> | undefined;
+  readonly installing: boolean;
   readonly mock: MarketMock | undefined;
   readonly defaults: readonly string[];
   readonly changed: Readonly<Record<string, number>>;
@@ -249,7 +253,7 @@ function useMarketScene(input: {
   readonly removing: string | null;
   readonly busyId: string | null;
 } {
-  const { t, titleOf, manifests, installable, capabilities, updates, installed, settling, mock, defaults, changed, pending, failed } = input;
+  const { t, titleOf, manifests, installable, capabilities, updates, installed, settling, installing, mock, defaults, changed, pending, failed } = input;
   const names = marketNamesOf(t, installed ?? [], titleOf, mock !== undefined);
   const catalog = mock?.manifests ?? manifests;
   const marketable = mock === undefined ? marketCatalog(manifests, installable) : catalog;
@@ -258,7 +262,10 @@ function useMarketScene(input: {
   const source = liveManifests(marketable, effective, installedIds);
   const byDefault = new Set(defaults);
   const updateMap = mock?.updates ?? updates ?? {};
-  const rows = marketRows(source, effective, updateMap, byDefault, changed);
+  const rows = checkingRows(marketRows(source, effective, updateMap, byDefault, changed), {
+    all: installing,
+    units: settling ?? NO_UNITS,
+  });
   const shared = sharedRows(source, effective);
   const removing = removingIdOf(pending, failed);
   const steady = useHeldRow(pending, (id) => catalog.some((manifest) => manifest.id === id));
@@ -297,6 +304,7 @@ export function MarketView({
   selfUpdate,
   plugins,
   settling,
+  installing = false,
   mock,
   defaults = [],
   changed = {},
@@ -313,6 +321,7 @@ export function MarketView({
       updates,
       installed,
       settling,
+      installing,
       mock,
       defaults,
       changed,

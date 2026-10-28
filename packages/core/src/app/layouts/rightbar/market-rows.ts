@@ -375,6 +375,17 @@ export function marketSections(rows: readonly MarketRow[]): MarketSection[] {
   ];
 }
 
+export function checkingRows(
+  rows: readonly MarketRow[],
+  scope: { readonly all: boolean; readonly units: ReadonlySet<string> },
+): MarketRow[] {
+  return rows.map((row) => {
+    if (row.state !== 'unknown' && row.state !== 'unchecked') return row;
+    if (!scope.all && !scope.units.has(row.id)) return row;
+    return { ...row, state: 'checking', hint: undefined, note: undefined };
+  });
+}
+
 export function marketRows(
   manifests: readonly UnitManifest[],
   capabilities: CapabilityMap | null,

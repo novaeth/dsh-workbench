@@ -478,3 +478,86 @@ describe('状态点与入口标签的对应', () => {
     expect(workbenchRow(RESTART_CASES['pending-restart']().workbench)?.state).toBe('pending-restart');
   });
 });
+
+describe('安装进行中 / 刚装上：徽标不许按半截读数说话', () => {
+  const UNKNOWN: MarketHintInput = { manifests: [MANIFEST], capabilities: {}, modules: [] };
+  const WAITING: MarketHintInput = {
+    manifests: [MANIFEST],
+    capabilities: OK,
+    modules: [],
+    installed: [{ unit: 'ghost', pkg: '@a/ghost', installed: '1.0.0' }],
+  };
+  const APPLIED: MarketHintInput = { ...WAITING, applied: new Set(['ghost']) };
+
+  it('★ 正在装：能力表还没跟上（状态未知）不当成问题亮出来', () => {
+    expect(marketHintOf({ ...UNKNOWN, installing: true })).toBeNull();
+    expect(marketHintOf(UNKNOWN)).toEqual({ labelKey: 'panels.market.unchecked', tone: 'warning' });
+  });
+
+  it('★ 正在装：装机名单已经有了、客户端还没挂上的那一行不报「重启后生效」', () => {
+    expect(marketHintOf({ ...WAITING, installing: true })).toBeNull();
+    expect(marketHintOf(WAITING)).toEqual(RESTART);
+  });
+
+  it('★ 正在装：工作台自己那档「重启后生效」照旧亮（那不是安装的副作用）', () => {
+    expect(
+      marketHintOf({
+        manifests: [MANIFEST],
+        capabilities: OK,
+        modules: [],
+        workbench: { pkg: CORE, installed: '0.1.19', running: '0.1.18' },
+        installing: true,
+      }),
+    ).toEqual(RESTART);
+  });
+
+  it('★ 装完（applied）那一单元当它不在名单里：不报重启 / 状态未知 / 有新版本', () => {
+    expect(marketHintOf(APPLIED)).toBeNull();
+    expect(
+      marketHintOf({
+        manifests: [MANIFEST],
+        capabilities: {},
+        modules: [],
+        applied: new Set(['hello']),
+      }),
+    ).toBeNull();
+    expect(
+      marketHintOf({
+        manifests: [MANIFEST],
+        capabilities: OK,
+        modules: [{ unit: 'hello', pkg: 'pkg-hello', installed: '0.1.8', latest: '0.1.9' }],
+        applied: new Set(['hello']),
+      }),
+    ).toBeNull();
+  });
+
+  it('★ applied 只管那一个单元：别的模块等重启照旧亮', () => {
+    expect(
+      marketHintOf({
+        ...APPLIED,
+        installed: [
+          ...(APPLIED.installed ?? []),
+          { unit: 'other', pkg: '@a/other', installed: '1.0.0' },
+        ],
+      }),
+    ).toEqual(RESTART);
+  });
+
+  it('★ 正在装也不许盖掉真正的异常（红档照旧）', () => {
+    expect(
+      marketHintOf({
+        manifests: [MANIFEST],
+        capabilities: OK,
+        modules: [],
+        installed: [
+          { unit: 'ghost', pkg: '@a/ghost', installed: '1.0.0', clientRefused: ['宿主把这份拒了'] },
+        ],
+        installing: true,
+      }),
+    ).toEqual(PROBLEM);
+  });
+
+  it('★ 说要重启的那种（没有 applied）当场按真实状态说，不压后', () => {
+    expect(marketHintOf({ ...WAITING, installing: false })).toEqual(RESTART);
+  });
+});

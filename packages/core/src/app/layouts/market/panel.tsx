@@ -20,6 +20,7 @@ import {
 import { marketUpdatesOf, withClientRefusals } from '../rightbar/market-rows';
 import { marketHintOf } from '../rightbar/market-hint';
 import { useMarketBusy } from '../rightbar/market-busy';
+import { useMarketInstallState } from '../rightbar/market-install';
 import { MarketView } from '../rightbar/MarketView';
 import type { TitleResolve } from '../rightbar/market-names';
 import { DiscoverPanel } from './DiscoverPanel';
@@ -56,6 +57,7 @@ function makeMarketEntryIcon(units: ClientUnitRegistry) {
     const { modules, plugins, workbench } = useModuleVersions();
     const installed = modules === null ? undefined : withClientRefusals(modules, units.refusals());
     const busy = useMarketBusy();
+    const install = useMarketInstallState();
     const hint = marketHintOf({
       manifests,
       installable,
@@ -65,6 +67,7 @@ function makeMarketEntryIcon(units: ClientUnitRegistry) {
       plugins,
       workbench,
       busy,
+      ...install,
     });
 
     useEffect(() => {
@@ -106,6 +109,7 @@ function MarketPanel({
     reload: reloadVersions,
   } = useModuleVersions();
   const machineBoard = useEnabledUnits(0, null);
+  const install = useMarketInstallState();
 
   const [adding, setAdding] = useState(false);
   const [acting, setActing] = useState(false);
@@ -146,6 +150,7 @@ function MarketPanel({
     manifests.map((manifest) => manifest.id).join('|'),
     Object.keys(capabilities ?? {}).join('|'),
   );
+  const held = install.applied.size === 0 ? settling : new Set([...settling, ...install.applied]);
 
   const freshness: MarketFreshness = {
     loaded: capabilities !== null,
@@ -197,7 +202,8 @@ function MarketPanel({
           workbench={workbench}
           selfUpdate={selfUpdate}
           plugins={plugins}
-          settling={mock === undefined ? settling : undefined}
+          settling={mock === undefined ? held : undefined}
+          installing={mock === undefined ? install.installing : false}
           mock={mock}
           defaults={machineBoard?.defaults ?? []}
           changed={machineBoard?.changed ?? {}}

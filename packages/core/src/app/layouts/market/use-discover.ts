@@ -13,7 +13,8 @@ import { useHostWrite } from '@/shared/hooks/use-host-write';
 import { readMarketDiscover, readMarketSources } from '@/shared/hooks/market-queries';
 import { CAPABILITY_FACT } from '@/shared/hooks/use-capabilities';
 import { subscribeFactRevision } from '@/shared/hooks/use-facts';
-import { changeFailure, changeOf } from '../rightbar/market-change';
+import { appliedUnitsOf, changeFailure, changeOf } from '../rightbar/market-change';
+import { publishMarketApplied, usePublishMarketInstalling } from '../rightbar/market-install';
 import {
   DISCOVER_PAGE_SIZE,
   displayTitleOf,
@@ -143,6 +144,8 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
   const [addingSource, setAddingSource] = useState(false);
   const [pendingSourceId, setPendingSourceId] = useState<string | null>(null);
   const [knownSources, setKnownSources] = useState<KnownSources | null>(null);
+  const [installToken] = useState(() => `market-install:${globalThis.crypto.randomUUID()}`);
+  usePublishMarketInstalling(installToken, installing !== null);
   const loaded = useRef(false);
   const loadTicket = useRef(0);
   const sourceTicket = useRef(0);
@@ -392,6 +395,7 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
       })
       .then((outcome) => {
         if (!outcome.ok) return;
+        publishMarketApplied(appliedUnitsOf(outcome.value));
         const verdict = installVerdictOf(outcome.value, t);
         if (verdict.kind === 'failed') {
           provision.fail(verdict.text);
