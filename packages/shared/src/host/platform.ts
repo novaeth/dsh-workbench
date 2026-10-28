@@ -41,7 +41,7 @@ export function hostSurface(input: HostSurfaceInput = {}): HostSurface {
     restartHint: deployment === 'desktop' ? '退出并重开 Desktop' : '重启一次 dsh',
     toolchain: {
       node: { source: deployment === 'desktop' ? 'desktop-shim' : 'path' },
-      npm: { neededFor: 'opencli-install' },
+      npm: { neededFor: 'runtime-install' },
       pnpm: { neededFor: 'workshop', expectedMajor: 10 },
     },
   };

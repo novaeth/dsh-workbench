@@ -12,3 +12,4 @@ export * from './toolchain.js';
 export * from './version-range.js';
 export * from './install.js';
 export * from './self-update.js';
+export { createProbePort } from './probe-port.js';

@@ -1,4 +1,4 @@
-import type { DshShell } from '@dsh-workbench/shared';
+import type { DshShell, RuntimeCapabilities } from '@dsh-workbench/shared';
 import { INSTALL_TIMEOUT_MS, OPENCLI_TIMEOUT_MS, PREFLIGHT_FRESH_MS, WARM_TIMEOUT_MS } from '@dsh-workbench/shared/host';
 import { tailLines } from '@dsh-workbench/shared/host';
 import { opencliCommandLine } from '@dsh-workbench/adapter-runtime';
@@ -14,8 +14,9 @@ import {
   type LocalPnpmProvision,
 } from './toolchain.js';
 import type { DesktopBrowser } from './browser-wake.js';
+import { bridgeFixCommand } from './browser-wake.js';
 
-export type PreflightStepId = 'toolchain' | 'opencli' | 'bridge' | 'diy' | 'warm';
+export type PreflightStepId = 'toolchain' | 'runtime' | 'opencli' | 'bridge' | 'diy' | 'warm';
 
 export type PreflightStepStatus = 'pending' | 'running' | 'ok' | 'warn' | 'failed';
 
@@ -122,12 +123,6 @@ function issuesSection(text: string): string {
   return lines.slice(start).join('\n').trim();
 }
 
-function bridgeFixCommand(command: string, issues: readonly PreflightBridgeIssue[]): string | undefined {
-  if (issues.includes('profile') || issues.includes('stale')) return `${command} profile list`;
-  if (issues.includes('daemon')) return `${command} daemon restart`;
-  return undefined;
-}
-
 export interface PreflightDiyGap {
   readonly rows: readonly string[];
   readonly detail: string;
@@ -166,8 +161,8 @@ export function canWarm(bridge: { ok: boolean; issues: readonly PreflightBridgeI
   return bridge.ok || bridge.issues.every((issue) => WARMABLE_BRIDGE_ISSUES.includes(issue));
 }
 
-function step(id: PreflightStepId): PreflightStep {
-  return { id, status: 'pending' };
+function step(id: PreflightStepId, label?: string): PreflightStep {
+  return { id, status: 'pending', ...(label === undefined || label === '' ? {} : { label }) };
 }
 
 export function createPreflight(options: {
@@ -182,14 +177,21 @@ export function createPreflight(options: {
   provisionNpm?: (() => Promise<LocalNpmProvision>) | undefined;
   provisionPnpm?: (() => Promise<LocalPnpmProvision>) | undefined;
   desktopBrowser?: DesktopBrowser | undefined;
+  capabilities?: RuntimeCapabilities | undefined;
+  runtimeCheck?: (() => Promise<{ ok: boolean; detail: string }>) | undefined;
+  runtimeLabel?: string | undefined;
 }): Preflight {
   const { shell, command = 'opencli', logger } = options;
+  const capabilities = options.capabilities ?? { console: true, pluginMarket: true, browserBridge: true, libs: true };
+  const withConsole = capabilities.console;
+  const withBridge = capabilities.browserBridge;
   const installCommand = options.installCommand ?? OPENCLI_INSTALL_COMMAND;
   const warmReads = (): readonly (readonly string[])[] => options.warmReads?.() ?? [];
   const steps = (): PreflightStep[] => [
     ...(options.probeToolchain === undefined ? [] : [step('toolchain')]),
-    step('opencli'),
-    step('bridge'),
+    ...(options.runtimeCheck === undefined ? [] : [step('runtime', options.runtimeLabel)]),
+    ...(withConsole ? [step('opencli')] : []),
+    ...(withBridge ? [step('bridge')] : []),
     ...(options.probeDiy === undefined ? [] : [step('diy')]),
     ...(warmReads().length === 0 ? [] : [step('warm')]),
   ];
@@ -365,63 +367,75 @@ export function createPreflight(options: {
       }
     }
 
-    patchStep('opencli', { status: 'running', action: `${command} --version` });
-    const diyStarted = options.probeDiy?.();
-    if (diyStarted !== undefined) patchStep('diy', { status: 'running' });
-
-    let version = await probeVersion();
-    if (!version.ok && !version.missing) {
-      patchStep('opencli', { status: 'failed', detail: version.detail, action: undefined });
-      return set({
-        phase: 'failed',
-        error: version.detail,
-        failure: classifyFailure(version.detail),
-        guidance: 'shell',
-      });
+    if (options.runtimeCheck !== undefined) {
+      patchStep('runtime', { status: 'running' });
+      const verdict = await options.runtimeCheck().catch((error: unknown) => ({
+        ok: false,
+        detail: error instanceof Error ? error.message : String(error),
+      }));
+      patchStep('runtime', { status: verdict.ok ? 'ok' : 'failed', detail: verdict.detail, action: undefined });
+      if (!verdict.ok) return set({ phase: 'failed', error: verdict.detail, failure: 'missing', guidance: 'install' });
     }
-    if (!version.ok) {
-      if (toolchain?.npmMissing === true && installCommand.trim().startsWith('npm ')) {
-        patchStep('opencli', { status: 'failed', detail: '没有 npm：装不了 opencli（只影响 opencli 安装）' });
-        return set({
-          phase: 'failed',
-          error: '没有 npm：装不了 opencli（只影响 opencli 安装）',
-          failure: 'missing',
-          guidance: 'install',
-        });
-      }
-      set({ phase: 'installing' });
-      patchStep('opencli', { status: 'running', action: installCommand, command: installCommand });
-      const installed = await installOpencli();
-      if (!installed.ok) {
-        patchStep('opencli', {
-          status: 'failed',
-          detail: installed.detail,
-          command: installCommand,
-        });
-        return set({
-          phase: 'failed',
-          error: installed.detail,
-          failure: classifyFailure(installed.detail),
-          guidance: 'install',
-        });
-      }
+
+    const diyStarted = options.probeDiy?.();
+    if (withConsole) {
       patchStep('opencli', { status: 'running', action: `${command} --version` });
-      version = await probeVersion();
-      if (!version.ok) {
-        patchStep('opencli', { status: 'failed', detail: version.detail, command: installCommand });
+      if (diyStarted !== undefined) patchStep('diy', { status: 'running' });
+
+      let version = await probeVersion();
+      if (!version.ok && !version.missing) {
+        patchStep('opencli', { status: 'failed', detail: version.detail, action: undefined });
         return set({
           phase: 'failed',
           error: version.detail,
           failure: classifyFailure(version.detail),
-          guidance: 'path',
+          guidance: 'shell',
         });
       }
+      if (!version.ok) {
+        if (toolchain?.npmMissing === true && installCommand.trim().startsWith('npm ')) {
+          patchStep('opencli', { status: 'failed', detail: '没有 npm：装不了 opencli（只影响 opencli 安装）' });
+          return set({
+            phase: 'failed',
+            error: '没有 npm：装不了 opencli（只影响 opencli 安装）',
+            failure: 'missing',
+            guidance: 'install',
+          });
+        }
+        set({ phase: 'installing' });
+        patchStep('opencli', { status: 'running', action: installCommand, command: installCommand });
+        const installed = await installOpencli();
+        if (!installed.ok) {
+          patchStep('opencli', {
+            status: 'failed',
+            detail: installed.detail,
+            command: installCommand,
+          });
+          return set({
+            phase: 'failed',
+            error: installed.detail,
+            failure: classifyFailure(installed.detail),
+            guidance: 'install',
+          });
+        }
+        patchStep('opencli', { status: 'running', action: `${command} --version` });
+        version = await probeVersion();
+        if (!version.ok) {
+          patchStep('opencli', { status: 'failed', detail: version.detail, command: installCommand });
+          return set({
+            phase: 'failed',
+            error: version.detail,
+            failure: classifyFailure(version.detail),
+            guidance: 'path',
+          });
+        }
+      }
+      patchStep('opencli', { status: 'ok', detail: version.detail, action: undefined });
     }
-    patchStep('opencli', { status: 'ok', detail: version.detail, action: undefined });
 
     patchStep('bridge', { status: 'running', action: `${command} doctor` });
-    const bridge = await probeBridge();
-    if (options.desktopBrowser !== undefined && bridge.ok) {
+    const bridge = withBridge ? await probeBridge() : { ok: true, detail: '', issues: [] };
+    if (withBridge && options.desktopBrowser !== undefined && bridge.ok) {
       await options.desktopBrowser.observe().catch(() => undefined);
     }
     const healable = !bridge.ok && warmReads().length > 0 && canWarm(bridge);
@@ -434,7 +448,7 @@ export function createPreflight(options: {
       });
     }
 
-    const settled = await warmSites(bridge);
+    const settled = withBridge ? await warmSites(bridge) : bridge;
     const diyGap = await settleDiy(diyStarted);
 
     logger?.warn?.(

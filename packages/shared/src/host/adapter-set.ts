@@ -83,6 +83,7 @@ const FULL_METHODS = [
   ['modules', 'isNewerVersion'],
   ['modules', 'startSelfUpdate'],
   ['runtime', 'packageRoot'],
+  ['runtime', 'capabilities'],
   ['runtime', 'commands'],
   ['runtime', 'runners'],
   ['runtime', 'health'],

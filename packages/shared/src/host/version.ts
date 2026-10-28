@@ -19,12 +19,17 @@ export function isNewerVersion(latest: string, installed: string): boolean {
 }
 
 export function runningVersionOf(moduleUrl: string): string | undefined {
-  try {
-    const read = JSON.parse(readFileSync(new URL('../../package.json', moduleUrl), 'utf8')) as {
-      readonly version?: unknown;
-    };
-    return typeof read.version === 'string' && read.version !== '' ? read.version : undefined;
-  } catch {
-    return undefined;
+  for (const depth of ['../../package.json', '../package.json']) {
+    try {
+      const read = JSON.parse(readFileSync(new URL(depth, moduleUrl), 'utf8')) as {
+        readonly version?: unknown;
+        readonly name?: unknown;
+      };
+      if (typeof read.name !== 'string' || !read.name.startsWith('@dsh-workbench/')) continue;
+      return typeof read.version === 'string' && read.version !== '' ? read.version : undefined;
+    } catch {
+      continue;
+    }
   }
+  return undefined;
 }

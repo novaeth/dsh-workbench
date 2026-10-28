@@ -36,12 +36,12 @@ describe('按内容认一个包：opencli 插件与工作台模块', () => {
   it('★ 真判据：可解析的 opencli-plugin.json + 顶层至少一个命令文件 → opencli 插件', () => {
     const at = pluginDir();
 
-    expect(verdictOf(at)).toEqual({ kind: 'opencli-plugin', pkg: '@t/plugin-a', pluginName: 'plugina' });
+    expect(verdictOf(at)).toEqual({ kind: 'runtime-plugin', pkg: '@t/plugin-a', pluginName: 'plugina' });
   });
 
   it('★ manifest 里没写 name → 还是插件，只是没有显示名', () => {
     expect(verdictOf(pluginDir('plugin-b', { version: '1.0.0' }))).toEqual({
-      kind: 'opencli-plugin',
+      kind: 'runtime-plugin',
       pkg: '@t/plugin-b',
     });
   });
@@ -135,7 +135,7 @@ describe('按内容认一个包：opencli 插件与工作台模块', () => {
     put(at, 'node_modules/opencli-plugin-demo/list.js', 'export const list = 1;\n');
 
     expect(verdictOf(path.join(at, 'node_modules/opencli-plugin-demo'))).toEqual({
-      kind: 'opencli-plugin',
+      kind: 'runtime-plugin',
       pkg: 'opencli-plugin-demo',
       pluginName: 'demo',
     });

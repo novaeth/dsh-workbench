@@ -1,5 +1,5 @@
 import { basename, join } from 'node:path';
-import type { DshHostContext, DshShell } from '@dsh-workbench/shared';
+import type { DshHostContext, DshShell, RuntimeCapabilities } from '@dsh-workbench/shared';
 import type { RouteTable } from '@dsh-workbench/shared/host';
 import { INSTALL_TIMEOUT_MS, preflightHandler, runShell, tailLines, workbenchRoot } from '@dsh-workbench/shared/host';
 import { WAKE_BROWSER_ROUTE } from '@dsh-workbench/shared/contract/protocol/preflight-wake';
@@ -32,6 +32,9 @@ export function registerPreflight(input: {
   ctx: DshHostContext;
   shell: DshShell;
   runtimeCommands: Readonly<Record<string, string>>;
+  runtimeCapabilities?: RuntimeCapabilities | undefined;
+  runtimeCheck?: (() => Promise<{ ok: boolean; detail: string }>) | undefined;
+  runtimeLabel?: string | undefined;
   warmReads: () => readonly (readonly string[])[];
   desktopBrowser?: DesktopBrowser | undefined;
 }): void {
@@ -53,6 +56,9 @@ export function registerPreflight(input: {
     ...(installCommand === undefined || installCommand === '' ? {} : { installCommand }),
     logger: input.ctx.logger,
     warmReads: input.warmReads,
+    ...(input.runtimeCapabilities === undefined ? {} : { capabilities: input.runtimeCapabilities }),
+    ...(input.runtimeCheck === undefined ? {} : { runtimeCheck: input.runtimeCheck }),
+    ...(input.runtimeLabel === undefined ? {} : { runtimeLabel: input.runtimeLabel }),
     probeDiy: createDiyPresetProbe(input.ctx),
     ...(surface.deployment === 'desktop'
       ? {

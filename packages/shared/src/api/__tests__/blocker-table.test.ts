@@ -313,3 +313,28 @@ describe('blockerOfCapability', () => {
     expect(blocker?.actions.map((action) => action.kind)).toEqual(['retry']);
   });
 });
+
+describe('执行类失败的话术由适配器给', () => {
+  it('适配器给了 diagnose.exec 就用它，不再说默认那句', () => {
+    const blocker = blockerOfError(
+      { code: 'cli-exec-failed', message: '跑不起来' },
+      t,
+      { diagnose: { exec: '确认 MCP server 起得来：npx -y chrome-devtools-mcp@latest' } },
+    );
+    expect(blocker.hint).toBe('确认 MCP server 起得来：npx -y chrome-devtools-mcp@latest');
+  });
+
+  it('适配器没给就回词表那句（opencli 那份）', () => {
+    const blocker = blockerOfError({ code: 'cli-exec-failed', message: '跑不起来' }, t);
+    expect(blocker.hint).toBe('blocker.exec.hint');
+  });
+
+  it('错误自己带的 hint 优先级最高', () => {
+    const blocker = blockerOfError(
+      { code: 'cli-exec-failed', message: '跑不起来', hint: '端口被占了' },
+      t,
+      { diagnose: { exec: '确认 MCP server 起得来' } },
+    );
+    expect(blocker.hint).toBe('端口被占了');
+  });
+});

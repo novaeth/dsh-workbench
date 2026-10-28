@@ -176,6 +176,37 @@ importers:
         specifier: ^5.0.2
         version: 5.0.2(@types/node@24.19.0)(@vitest/coverage-v8@5.0.2)(vite@8.3.1(@types/node@24.19.0)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.106.1))
 
+  packages/adapters-chrome-mcp:
+    dependencies:
+      '@dsh-workbench/adapter-probe':
+        specifier: workspace:*
+        version: link:../adapter-probe
+      '@dsh-workbench/adapter-profile':
+        specifier: workspace:*
+        version: link:../adapter-profile
+      '@dsh-workbench/adapter-runtime':
+        specifier: workspace:*
+        version: link:../adapter-runtime
+      '@dsh-workbench/adapter-supply':
+        specifier: workspace:*
+        version: link:../adapter-supply
+      '@dsh-workbench/shared':
+        specifier: workspace:*
+        version: link:../shared
+      execa:
+        specifier: ^10.2.0
+        version: 10.2.0
+    devDependencies:
+      '@types/node':
+        specifier: ^24.19.0
+        version: 24.19.0
+      '@vitest/coverage-v8':
+        specifier: ^5.0.2
+        version: 5.0.2(vitest@5.0.2)
+      vitest:
+        specifier: ^5.0.2
+        version: 5.0.2(@types/node@24.19.0)(@vitest/coverage-v8@5.0.2)(vite@8.3.1(@types/node@24.19.0)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass@1.106.1))
+
   packages/adapters-default:
     dependencies:
       '@dsh-workbench/adapter-probe':

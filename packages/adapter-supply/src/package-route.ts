@@ -5,7 +5,7 @@ import { dshMarkersOf, splitNpmSpec, verdictOf, type PackageVerdict } from './pa
 import { withPackageDir } from './package-content.js';
 import { localDirOf, registryDshOf } from './registry-declaration.js';
 
-export type PackageRouteKind = 'opencli-plugin' | 'dsh-bundle' | 'neither';
+export type PackageRouteKind = 'runtime-plugin' | 'dsh-bundle' | 'neither';
 
 export interface PackageRoute {
   readonly kind: PackageRouteKind;
@@ -23,7 +23,7 @@ function routeOfVerdict(verdict: PackageVerdict, fallback?: string): PackageRout
   if (verdict.kind === 'neither') return { kind: 'neither', ...(pkg === undefined ? {} : { pkg }) };
   if (verdict.kind === 'dsh-bundle' || verdict.kind === 'both') return { kind: 'dsh-bundle' };
   return {
-    kind: 'opencli-plugin',
+    kind: 'runtime-plugin',
     ...(pkg === undefined ? {} : { pkg }),
     ...(verdict.pluginName === undefined ? {} : { pluginName: verdict.pluginName }),
   };

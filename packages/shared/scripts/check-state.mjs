@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const SRC = fileURLToPath(new URL('../src', import.meta.url));
@@ -65,16 +65,20 @@ const PROTOCOL_FILES = [
   'host/http.ts',
   'host/lib-runners.ts',
   'host/adapter-set.ts',
+  ...readdirSync(join(SRC, 'contract', 'protocol'))
+    .filter((name) => name.endsWith('.ts'))
+    .map((name) => join('contract', 'protocol', name).split(sep).join('/')),
 ];
 
-const VOCABULARY = [/'opencli-plugin'/];
+const VOCABULARY = [];
+const IMPLEMENTATION_NAME = /opencli|\bmcp\b/i;
 const COMMENT = /^\s*(\*|\/\/|\/\*)/;
 
 for (const rel of PROTOCOL_FILES) {
   const file = join(SRC, rel);
   if (!existsSync(file)) continue;
   readFileSync(file, 'utf8').split('\n').forEach((line, index) => {
-    if (!/opencli/i.test(line)) return;
+    if (!IMPLEMENTATION_NAME.test(line)) return;
     if (COMMENT.test(line)) return;
     if (VOCABULARY.some((pattern) => pattern.test(line))) return;
     findings.push(`${rel}:${index + 1} 协议面出现运行时实现名：${line.trim()}`);

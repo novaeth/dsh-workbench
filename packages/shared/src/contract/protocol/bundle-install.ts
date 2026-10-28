@@ -155,8 +155,14 @@ export interface BundleSupplyPayload {
   readonly reason?: string;
 }
 
+export type PluginPackageKind = 'runtime-plugin';
+
+export function isPluginPackageKind(kind: unknown): kind is PluginPackageKind {
+  return kind === 'runtime-plugin';
+}
+
 export interface BundleInstalledPlugin {
-  readonly kind: 'opencli-plugin';
+  readonly kind: PluginPackageKind;
   readonly pkg: string;
   readonly name?: string;
 }

@@ -289,3 +289,9 @@ export function createDesktopBrowser(options: {
 
   return { observe, wake };
 }
+
+export function bridgeFixCommand(command: string, issues: readonly string[]): string | undefined {
+  if (issues.includes('profile') || issues.includes('stale')) return `${command} profile list`;
+  if (issues.includes('daemon')) return `${command} daemon restart`;
+  return undefined;
+}

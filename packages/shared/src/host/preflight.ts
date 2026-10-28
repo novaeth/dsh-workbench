@@ -1,4 +1,4 @@
-export type PreflightStepId = 'toolchain' | 'opencli' | 'bridge' | 'diy' | 'warm';
+export type PreflightStepId = 'toolchain' | 'opencli' | 'bridge' | 'runtime' | 'diy' | 'warm';
 export type PreflightStepStatus = 'pending' | 'running' | 'ok' | 'warn' | 'failed';
 export type PreflightFailure = 'permission' | 'network' | 'missing' | 'unknown';
 export type PreflightGuidance = 'install' | 'path' | 'shell';
@@ -6,6 +6,7 @@ export type PreflightBridgeIssue = 'daemon' | 'extension' | 'profile' | 'stale' 
 
 export interface PreflightStep {
   readonly id: PreflightStepId;
+  readonly label?: string;
   readonly status: PreflightStepStatus;
   readonly detail?: string;
   readonly action?: string;

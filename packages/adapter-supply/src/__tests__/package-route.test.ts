@@ -89,7 +89,7 @@ describe('按内容决定走哪条路', () => {
     put(at, 'list.js', 'x');
 
     return expect(packageRouteOf({ spec: at })).resolves.toEqual({
-      kind: 'opencli-plugin',
+      kind: 'runtime-plugin',
       pkg: '@t/plugin-a',
       pluginName: 'plugina',
     });
@@ -129,7 +129,7 @@ describe('按内容决定走哪条路', () => {
     });
 
     await expect(packageRouteOf({ spec: '@t/demo@1.0.0', shell, registry: REGISTRY })).resolves.toEqual({
-      kind: 'opencli-plugin',
+      kind: 'runtime-plugin',
       pkg: '@t/demo',
       pluginName: 'demo',
     });

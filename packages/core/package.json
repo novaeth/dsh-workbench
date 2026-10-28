@@ -132,5 +132,8 @@
   "homepage": "https://github.com/novaeth/dsh-workbench#readme",
   "bugs": {
     "url": "https://github.com/novaeth/dsh-workbench/issues"
+  },
+  "workbench": {
+    "adapterSet": "@dsh-workbench/adapters-default"
   }
 }

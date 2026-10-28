@@ -3,10 +3,9 @@ import type { AdapterSet } from '@dsh-workbench/shared/host';
 import { ADAPTER_SET_API_VERSION, runningVersionOf } from '@dsh-workbench/shared/host';
 import { createCommandReader, createDataReader, createGitReader, createLibReader, opencliCommandOf } from '@dsh-workbench/adapter-runtime';
 import { dshPluginsHandler, profileDirOf } from '@dsh-workbench/adapter-supply';
-import { readSelfUpdateView } from '@dsh-workbench/adapter-probe';
-import { createHostActions } from './host-actions.js';
+import { createHostActions } from '@dsh-workbench/adapter-profile';
+import { createProbePort, readSelfUpdateView } from '@dsh-workbench/adapter-probe';
 import { createPluginSurface } from './plugin-surface.js';
-import { createProbePort } from './probe-port.js';
 import { createRuntimePort } from './runtime-port.js';
 import { createSupplyPort } from './supply-port.js';
 

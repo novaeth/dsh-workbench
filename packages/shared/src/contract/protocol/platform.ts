@@ -21,7 +21,7 @@ export interface HostCapabilities {
 
 export interface ToolchainPlan {
   readonly node: { readonly source: 'desktop-shim' | 'path' };
-  readonly npm: { readonly neededFor: 'opencli-install' };
+  readonly npm: { readonly neededFor: 'runtime-install' };
   readonly pnpm: { readonly neededFor: 'workshop'; readonly expectedMajor: 10 };
 }
 

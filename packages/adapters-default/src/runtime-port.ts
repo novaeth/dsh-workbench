@@ -41,6 +41,33 @@ export function createRuntimePort(): RuntimePort {
     packageRoot: packageRootOf,
     warnUnwritableRoot,
 
+    capabilities() {
+      return {
+        console: true,
+        pluginMarket: true,
+        browserBridge: true,
+        libs: true,
+      };
+    },
+
+    profile() {
+      return {
+        label: 'opencli',
+        terms: {
+          plugin: 'opencli 插件',
+          pluginOf: 'opencli 的插件',
+          pluginThing: 'opencli 插件',
+          pluginArea: 'opencli 的插件区',
+        },
+        installHint: '确认 opencli 已经装好、在终端里能直接运行（which opencli）。',
+        diagnose: {
+          exec: '确认 opencli 已经装好、在终端里能直接运行（which opencli）。',
+          login: '在工作台的浏览器桥里登录一次；登录态会一直留着。',
+          bridge: '后台浏览器没起来，重试一次通常就好。',
+        },
+      };
+    },
+
     commands(ctx) {
       return { opencli: opencliCommandOf(ctx).command };
     },

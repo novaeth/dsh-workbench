@@ -1,4 +1,6 @@
 import type { DshHostContext, DshShell } from '../api/dsh.js';
+import type { RuntimeCapabilities, RuntimeProfile } from '../contract/capabilities.js';
+import type { PluginPackageKind } from '../contract/protocol/bundle-install.js';
 import type { LibNeed, SupplySource } from '../contract/needs.js';
 import type { NeedProbeInput, UnitCapability } from '../contract/unit-capability.js';
 import type { DataReader } from '../contract/data.js';
@@ -31,7 +33,7 @@ export interface ProfilePort {
 export type SupplyPluginSource = ResolvedPluginSource;
 
 export interface SupplyPackageRoute {
-  readonly kind: 'opencli-plugin' | 'dsh-bundle' | 'neither';
+  readonly kind: PluginPackageKind | 'dsh-bundle' | 'neither';
   readonly pkg?: string;
   readonly pluginName?: string;
 }
@@ -145,6 +147,9 @@ export interface ProbePreflightInput {
   readonly ctx: DshHostContext;
   readonly shell: DshShell;
   readonly runtimeCommands: Readonly<Record<string, string>>;
+  readonly runtimeCapabilities: RuntimeCapabilities;
+  readonly runtimeCheck?: (() => Promise<RuntimeCheck>) | undefined;
+  readonly runtimeLabel?: string | undefined;
   readonly warmReads: () => readonly (readonly string[])[];
 }
 
@@ -159,8 +164,18 @@ export interface RuntimeSeedOptions {
   readonly log: (message: string) => void;
 }
 
+export type { RuntimeCapabilities, RuntimeProfile, RuntimeTerms } from '../contract/capabilities.js';
+
+export interface RuntimeCheck {
+  readonly ok: boolean;
+  readonly detail: string;
+}
+
 export interface RuntimePort {
   packageRoot(moduleUrl: string): string;
+  capabilities(ctx: DshHostContext): RuntimeCapabilities;
+  profile?(ctx: DshHostContext): RuntimeProfile;
+  check?(ctx: DshHostContext): Promise<RuntimeCheck>;
   commands(ctx: DshHostContext): Readonly<Record<string, string>>;
   runners(ctx: DshHostContext, data: DataReader): Readonly<Record<string, LibRunner>>;
   health(ctx: DshHostContext): Readonly<Record<string, RuntimeStatus>>;

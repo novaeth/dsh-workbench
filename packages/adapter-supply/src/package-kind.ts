@@ -3,7 +3,7 @@ import path from 'node:path';
 import { isPackageName } from './installed-module.js';
 import { dshRecordOf, packageManifestOf, packageNameOf } from './registry-declaration.js';
 
-export type PackageKind = 'opencli-plugin' | 'dsh-bundle' | 'both' | 'neither';
+export type PackageKind = 'runtime-plugin' | 'dsh-bundle' | 'both' | 'neither';
 
 export interface PackageVerdict {
   readonly kind: PackageKind;
@@ -75,7 +75,7 @@ export function verdictOf(dir: string): PackageVerdict | undefined {
   if (packageManifestOf(dir) === undefined && plugin === undefined) return undefined;
   const dsh = dshMarkersOf(dshRecordOf(dir));
   const kind: PackageKind =
-    plugin !== undefined && dsh ? 'both' : plugin !== undefined ? 'opencli-plugin' : dsh ? 'dsh-bundle' : 'neither';
+    plugin !== undefined && dsh ? 'both' : plugin !== undefined ? 'runtime-plugin' : dsh ? 'dsh-bundle' : 'neither';
   const pkg = packageNameOf(dir);
   return {
     kind,

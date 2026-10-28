@@ -22,7 +22,11 @@ function copyAction(t: Translate, text: string): BlockerAction {
 export function blockerOfError(
   error: ApiError | undefined,
   t: Translate,
-  context: { path?: string | null; platform?: string } = {},
+  context: {
+    path?: string | null;
+    platform?: string;
+    diagnose?: Readonly<Partial<Record<'exec' | 'login' | 'bridge', string>>>;
+  } = {},
 ): ModuleBlocker {
   if (error === undefined) {
     return {
@@ -93,7 +97,7 @@ export function blockerOfError(
         id: 'cli-exec-failed',
         severity: 'block',
         title: error.message,
-        hint: error.hint ?? t('blocker.exec.hint'),
+        hint: error.hint ?? context.diagnose?.exec ?? t('blocker.exec.hint'),
         ...(error.detail === undefined ? {} : { detail: error.detail }),
         actions: [retryAction(t)],
       };
