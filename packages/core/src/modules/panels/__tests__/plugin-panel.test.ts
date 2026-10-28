@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { UnitManifest } from '@dsh-workbench/shared';
-import { createWorkspaceStore, type WorkspaceStore } from '@dsh-workbench/shared/host';
+import { createHostKit, createWorkspaceStore, type WorkspaceStore } from '@dsh-workbench/shared/host';
 import { isolatedHome } from '@dsh-workbench/adapters-default';
 import { createNoopDataReader,
 } from '@dsh-workbench/shared/testing';
@@ -206,6 +206,7 @@ function mountHost(manifests: readonly UnitManifest[] = []) {
     ownedUnits: () => [],
     store,
     data: createNoopDataReader(),
+    ...createHostKit(),
   });
   const dispose = mounted.registerTools?.() ?? [];
   for (const off of dispose) off();

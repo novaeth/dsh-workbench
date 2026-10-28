@@ -11,13 +11,14 @@ import type { DataReader } from '../contract/data.js';
 import type { LibReader } from '../contract/lib.js';
 import type { GitReader } from '../contract/git.js';
 import type { CommandReader } from '../contract/command.js';
+import type { HostKit } from './host-kit.js';
 
 export interface ToolScopeContext {
   readonly workspace: string | null;
   readonly preset: string | null;
 }
 
-export interface UnitMountDeps {
+export interface UnitMountDeps extends HostKit {
   readonly manifest: UnitManifest;
   readonly ctx: DshHostContext;
   readonly logger?: { info?(message: string): void; warn?(message: string): void } | undefined;

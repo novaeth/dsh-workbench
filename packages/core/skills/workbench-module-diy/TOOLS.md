@@ -9,6 +9,7 @@
 | 同一件事、同一份数据，只是要不要展开明细 | 一件事 + 一个"展开"选项 |
 | 动作或后果不同（看 vs 改） | 拆开 |
 | 用户反复做、每次都要点头 | 封成一个动作（一个按钮 + 一件事），不拆成多个小工具 |
+| 用户反复做、步骤多、要等 / 重试 | 固化成一条 workflow（[FLOW.md](FLOW.md)），不拆成多个小工具 |
 
 每件事都要能回答："用户会怎么对 agent 说这件事？"
 
@@ -134,11 +135,11 @@
   库版本太旧、没有 `setOpencliRunner` 时外壳只记一条 warn，照旧按 PATH 跑；用 `version` 卡住那一版即可。
 - `extension` 的 `sources[].kind` 只有 `npm` / `git` / `local`；`lib` 只认 `npm`。
   未知 `kind` 或 `source.kind` 判红；need 里未知字段只警告，`x-` 前缀忽略。
-- 未装好文案由模块写：`libInstallCommand({ need, source })`（`@dsh-workbench/shared/host`）拼好源与缓存目录，
+- 未装好文案由模块写：`deps.libInstallCommand({ need, source })` 拼好源与缓存目录，
   原样输出；放进失败态。
 - `contracts` 判据：`apiVersion` 必须是 3；`needs` 走同一份 `NEED_KINDS` 注册表校验（`purpose` 必填、
   `bin`/`env` 不许带 `sources`（`bin` 要代装就写 `install`）、`lib` 只认 npm 源）；
-  声明了 `lib` 必须用 `libInstallCommand`。
+  声明了 `lib` 必须用 `deps.libInstallCommand`。
   未知 `runtime` 不判红：探针会给「这个运行时工作台还不认识」的 `unchecked`，等运行时 provider 补上。
 
 ## 9 长任务
@@ -150,8 +151,7 @@ longTasks.create({ key, run, step, outcome, view, stopped })
 // run({ payload, onStep, signal })：onStep({ kind: 'start', text }) 报步骤；return 结果
 ```
 
-- 来源：在工具里 `runs.start({ …, session: sessionIdOf(exec) ?? undefined })`（`sessionIdOf` 来自
-  `@dsh-workbench/shared/host`）。不记 = 用户按的 → 停止需审批。
+- 来源：在工具里 `runs.start({ …, session: deps.sessionIdOf(exec) ?? undefined })`。不记 = 用户按的 → 停止需审批。
 - 浏览器侧：`useLongTask` → `feed.runs` / `feed.stop(id)` / `feed.stopping` / `feed.stopFailed`；
   画 `LongTaskRow`（五态：`running` / `needs-login` / `stopped` / `ok` / `failed`）。
 - 停止：`run` 收到 `signal` 被 abort = 有人按停止；在循环点与每条子命令前后查 `signal.aborted`。
@@ -165,6 +165,18 @@ longTasks.create({ key, run, step, outcome, view, stopped })
   产物含 `useLongTask` / `LongTaskRow` 之一。是否真响应 signal 不在射程内。
 - 左栏 loading 点由外壳按 `live()` 驱动，模块不做。
 - 用 `stop` / `session` / 外壳长任务工具需把 `@dsh-workbench/core` peer 下限抬到含它们的版本（`check --only kit` 查）。
+
+## 9.1 多步流程（workflow）
+
+多步、要等、要重试、要取消、以后还要跑 → 先按 [FLOW.md](FLOW.md) 问用户是否固化。
+
+- 固化 = 模块宿主半侧的 `FlowDefinition`（类型从 `@dsh-workbench/core/contract` 取）+ `deps.flow.run` + §9 的长任务 + `registerTools`。
+- 一次性 = 直接用现有工具 / 命令跑，不建模块。
+- 写平台的 flow 工具在清单里 `writes: true` + `needsApproval`；跑前给对象 / 环境 / 影响。
+- `deps.flow.check(flow, actions)` 先过；动作里用 `ctx.login(url)` 报登录，`ctx.log` 报进度。
+- flow 的运行时只走 `deps.flow`，类型只走 `@dsh-workbench/core/contract`；不要为 flow 直接 import `@dsh-workbench/shared/host`。
+- 不要在 flow 里存凭据；不要把一次性任务静默固化。
+- 工具描述写「跑已固化的 <标题> 流程」；不要用它新建 flow，新需求先问用户。
 
 ## 12 按工作区 / 模式收窄工具
 

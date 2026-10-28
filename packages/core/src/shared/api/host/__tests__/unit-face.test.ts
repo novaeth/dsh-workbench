@@ -6,6 +6,37 @@ import type { HostUnit } from '@/kernel/host/unit-registry';
 import { ctxWith, face, hostOf, manifest } from './unit-face-helpers';
 
 describe('mountUnits', () => {
+  it('mount 拿到宿主 flow kit：createActions / check / run', async () => {
+    let seen: UnitMountDeps | undefined;
+    const unit = hostOf(manifest('flow', { inject: [] }), (deps) => {
+      seen = deps;
+      return { routes: {}, registerTools: () => [] };
+    });
+    const plan = mountUnits([unit], { ctx: ctxWith([]), manifests: () => [unit.manifest] });
+
+    expect(plan.mounted).toHaveLength(1);
+    if (seen === undefined) throw new Error('没有拿到宿主 kit');
+    const flowKit = seen.flow;
+    expect(typeof seen.sessionIdOf).toBe('function');
+    expect(typeof seen.sessionWorkspace).toBe('function');
+    expect(typeof seen.libInstallCommand).toBe('function');
+    const actions = flowKit.createActions();
+    actions.register('read', async () => 'ok');
+    const flow = { id: 'f', title: 'F', steps: [{ id: 'read', action: 'read' }] } as const;
+
+    expect(flowKit.check(flow, actions)).toEqual({ ok: true, problems: [] });
+    const result = await flowKit.run({
+      flow,
+      input: {},
+      actions,
+      signal: new AbortController().signal,
+      runId: 'run-1',
+      workspace: '/w',
+      onStep: () => {},
+    });
+    expect(result.status).toBe('ok');
+  });
+
   it('硬依赖缺 → 跳过并记下缺哪个（不半挂）', () => {
     const plan = mountUnits([face(manifest('a', { inject: ['webServer'] }))], {
       ctx: ctxWith([]),

@@ -1,5 +1,5 @@
 import type { DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared';
-import { toolUnits, type ToolScopeContext, type WorkspaceStore } from '@dsh-workbench/shared/host';
+import { createHostKit, toolUnits, type ToolScopeContext, type WorkspaceStore } from '@dsh-workbench/shared/host';
 import { createFakeShell, createNoopDataReader,
 } from '@dsh-workbench/shared/testing';
 import { createFakeOpencli } from './fake-opencli';
@@ -162,6 +162,7 @@ export function harnessOf(options: {
     ownedUnits: () => [],
     store: options.store,
     data: createNoopDataReader(),
+    ...createHostKit(),
   });
 
   return {

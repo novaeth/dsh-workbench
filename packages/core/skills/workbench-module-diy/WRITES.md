@@ -2,7 +2,7 @@
 
 [datasource](DATASOURCE.md) 只管读。本文件管写：提交 / 发布 / 建单 / 改配置。
 
-判域同 [DESIGN.md](DESIGN.md) §0：复用现有登录、一次调用能改完 → DIY；要新凭据 / 多步长流程 / 新服务或依赖 → 工程域。
+判域同 [DESIGN.md](DESIGN.md) §0：复用现有登录、一次调用能改完 → DIY；要新凭据 / 新服务或依赖 → 工程域；多步长流程先问一次性还是固化（[FLOW.md](FLOW.md)）。
 
 ## 四步
 
@@ -72,7 +72,7 @@
 
 - **预览**：先确认是否有 `yes` / `dryRun` / `confirm` 档；有则先走预览。`opencli inventory publish` / `inventory build`
   无预览开关，调用即真发布 / 真构建。**无预览档不许试写。**
-- 要新凭据 / 多步长流程 / 新依赖 → 工程域。
+- 要新凭据 / 新依赖 → 工程域；多步长流程先问固化，固化走 [FLOW.md](FLOW.md) 的 workflow。
 
 ## 写纪律
 

@@ -6,7 +6,7 @@
 
 | 需要 | 来源 |
 |---|---|
-| 宿主侧纯函数 / 常量 | `@dsh-workbench/shared/host`（`dependencies`） |
+| 宿主侧纯函数 / 常量 | 优先工具 / 挂载里的 `deps`（`HostKit`）；模块顶层常量仍从 `@dsh-workbench/shared/host` 取（`dependencies`） |
 | 浏览器侧 hooks / 组件 / 图标 / 文案工具 | `@dsh-workbench/core/client` 的 `kit` |
 | kit 没有的 dsh 控件 / 图标 | `@deepseek-ai/dsh-client-ui-primitives`（`dsh.client.external` + 精确版 devDependency；[KIT.md](KIT.md) §8） |
 | 类型 | `import type` |
@@ -19,7 +19,7 @@
 
 - 根入口只许 `import type`。浏览器侧取运行值会打包进产物（第二份实例）；宿主侧取运行值会使 `dist/host.js`
   无法 import（根 barrel 拉到 dsh 浏览器件）。浏览器运行值走 `kit`。
-- `@dsh-workbench/shared/host` 仅宿主侧。含 `node:*`；浏览器侧纯函数走 `kit`。
+- `@dsh-workbench/shared/host` 仅宿主侧。含 `node:*`；浏览器侧纯函数走 `kit`。工具 / 挂载里优先用 `deps`（`HostKit`）；模块顶层常量仍从这里取。
 - 契约类型（`Translate` / `ApiError`…）从根入口取，允许。
 
 单例只能一份：kit 的 hooks 与容器组件不得复制进模块，否则表现为"agent 改完面板不自动刷新"。

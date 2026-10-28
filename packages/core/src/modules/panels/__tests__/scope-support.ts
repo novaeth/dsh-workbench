@@ -6,7 +6,7 @@ import type { UnitManifest, UnitTool } from '@dsh-workbench/shared';
 import { unitTitleKey } from '@dsh-workbench/shared';
 import { createNoopDataReader,
 } from '@dsh-workbench/shared/testing';
-import { createWorkspaceStore, type WorkspaceStore } from '@dsh-workbench/shared/host';
+import { createHostKit, createWorkspaceStore, type WorkspaceStore } from '@dsh-workbench/shared/host';
 import type { PanelEntry } from '../model/config';
 import { PANELS_FILE, PANELS_MODULE_ID, createPanelsService, type PanelsService } from '../model/service';
 import { registerPanelTools } from '../model/tools';
@@ -94,6 +94,7 @@ export function gate(
     ownedUnits: () => owned,
     store: createWorkspaceStore({ root }),
     data: createNoopDataReader(),
+    ...createHostKit(),
   });
 }
 

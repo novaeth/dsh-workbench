@@ -1,6 +1,6 @@
 ---
 name: workbench-module-diy
-description: 在工作台里把当前面板调明白，或者给它造一块新内容 —— 用在「这块板为什么空白 / 这张卡不对 / 它到底发了什么」「我想在面板上看到 X / 加一块卡」「让 agent 替我读或写某个东西」这类话上。用户只说需求，实现由 agent 自己做、自己验过。
+description: 在工作台里把当前面板调明白，或者给它造一块新内容 —— 用在「这块板为什么空白 / 这张卡不对 / 它到底发了什么」「我想在面板上看到 X / 加一块卡」「让 agent 替我读或写某个东西」「这件事以后还要跑 / 每次都要 / 固化 workflow / 多步要等要重试」这类话上。用户只说需求，实现由 agent 自己做、自己验过。
 ---
 
 # workbench-module-diy
@@ -9,6 +9,9 @@ description: 在工作台里把当前面板调明白，或者给它造一块新�
 |---|---|---|
 | 「这块板空白 / 这张卡不对 / 数据不对 / 它到底发了什么」 | 调：查现有面板 | `workbench_diy_panel` / `_status`；动屏要调试约定 |
 | 「我想在面板上看到 X / 加一块卡」 | 造：新建模块 | 一个能放代码的包（没有就问用户） |
+| 「这件事以后还要跑 / 每次都要 / 固化 workflow / 多步要等要重试」 | **先分叉**：一次性直接跑；固化写一条 workflow | 先问用户（[FLOW.md](FLOW.md) §1）；固化再进「造」 |
+
+> **先分叉**：多步、要等、要重试、要写平台的活，先问「一次性还是以后还要跑」；一次性不建模块，固化再按下面「造」。判断与问法见 [FLOW.md](FLOW.md) §1。
 
 调交付"面板现在怎么样"的事实；造交付面板上能点开的一块内容。不交技术方案。
 
@@ -23,6 +26,8 @@ description: 在工作台里把当前面板调明白，或者给它造一块新�
 **调** —— 用 [REVIEW.md](REVIEW.md) 的四步取证。动屏前 `workbench_diy_debug_start`（`unit` 可省；Desktop 跳过）。
 抓"点了之后发了什么"：`workbench_diy_record_prepare` → 用户操作 → `_record_read`；收工 `_debug_stop` / `_record_stop`。
 不需要源码、工具链、工坊。
+
+**先分叉** —— 用户说的是多步、要等、要重试、还要再跑的活时，先问 [FLOW.md](FLOW.md) §1；一次性直接跑，固化再进「造」。
 
 **造** —— 模块落 `<dir>`。那里没有能放代码的包（没 `package.json`，或有但没声明 workspace）时，问用户二选一：
 在这里建 workspace，还是去工坊那个脚手架工作区。不改用户仓库结构。
@@ -59,6 +64,7 @@ description: 在工作台里把当前面板调明白，或者给它造一块新�
 | 需要 | 读 |
 |---|---|
 | 判域、三张表、ASCII 规则 | [DESIGN.md](DESIGN.md) |
+| 一次性还是固化、workflow 怎么写 | [FLOW.md](FLOW.md) |
 | 步骤与完成判据 | [STEPS.md](STEPS.md) |
 | 探测数据源、固化读、错误码 | [DATASOURCE.md](DATASOURCE.md) |
 | 写通道四步、回读、撤销 | [WRITES.md](WRITES.md) |
