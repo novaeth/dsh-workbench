@@ -681,7 +681,7 @@ mount() 抛错 / 工具注册到一半失败
   → adapter-runtime data
 ```
 
-宿主路由只读；浏览器只经 HTTP 读。
+读只走 `GET` 投影；写见 §6.3。
 
 ```text
 卡片 ──GET /workbench/api/<unit>──► 单元 route ──data.read──► DataReader
@@ -706,8 +706,10 @@ POST /workbench/api/actions
 POST /workbench/api/provision
 ```
 
-写入只走 agent 工具或宿主写通道；界面不直接写。
-会写的工具必须有审批策略；没认领 = fail closed。
+写入只走宿主写通道或 agent 工具；界面不直接写平台。
+用户直接发起的单步业务动作走 `actions`（点击即确认，不审批，记一次 run），且必须与一把 agent 工具
+共用同一实现；其余业务写入走 agent 工具与审批。会写的工具必须有审批策略；没认领 = fail closed
+（ADR-0090）。
 
 ```text
 agent 工具 / 卡片动作

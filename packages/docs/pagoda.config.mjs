@@ -5,9 +5,9 @@ export default defineConfig({
   site: {
     headerTitle: "dsh-workbench",
     title: "dsh-workbench · Agent 工作台",
-    subtitle: "把工作交给 agent，把结果留给自己",
+    subtitle: "少切换。更专注。",
     description:
-      "dsh 插件：左栏项目与会话、中间常驻对话、右侧实时数据面板。界面只读，写入只走 agent 工具；不改 dsh 本身。",
+      "只取平台里你真正用得上的部分，收进一屏；即使平台不提供接口，agent 也能读取与操作。看板轻交互；写入留痕，复杂操作交给 agent。",
     defaultRoute: "index",
     icon: "/logo.svg",
     logoLink: "index",

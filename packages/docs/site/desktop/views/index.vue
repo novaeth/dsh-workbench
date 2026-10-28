@@ -27,14 +27,14 @@ defineOptions({
         </div>
 
         <h1 class="hero-title">
-          <span class="line">看板由你定</span>
-          <span class="line">操作交给<span class="grad">agent</span></span>
+          <span class="line">少切换。</span>
+          <span class="line">更<span class="grad">专注</span>。</span>
         </h1>
 
         <p class="hero-desc">
-          左栏项目，中间对话，右边一块只读看板。<br />
-          装什么、开哪些、谁在前，你定；读数据、改状态、造模块，agent 干 —— 动手前先问你。<br />
-          dsh 本体一行不改。
+          看板由你定义。只取所需，一屏尽览。<br />
+          即使平台不提供接口，agent 也能读取与操作。<br />
+          agent 动手之前，先问你。账号与数据，都留在原处。
         </p>
 
         <div class="hero-cta">
@@ -59,13 +59,13 @@ defineOptions({
                 y2="3"
               />
             </svg>
-            三分钟跑起来
+            快速开始
           </a>
           <PagodaDocLinkToView
             view="guide/modules"
             class="btn-ghost"
           >
-            看板怎么改
+            看板如何定义
             <svg
               width="14"
               height="14"
@@ -86,7 +86,7 @@ defineOptions({
               class="meta-dot"
               style="--c: var(--purple)"
             ></span>
-            dsh ≥ 0.2.1-rc.2
+            独立实例 :3081
           </div>
           <div class="meta-sep"></div>
           <div class="meta-item">
@@ -94,7 +94,7 @@ defineOptions({
               class="meta-dot"
               style="--c: var(--cyan)"
             ></span>
-            独立实例 :3081
+            本地运行
           </div>
           <div class="meta-sep"></div>
           <div class="meta-item">
@@ -108,12 +108,67 @@ defineOptions({
       </div>
     </section>
 
+    <!-- ====== 痛点 ====== -->
+    <section class="problems">
+      <div class="section-header">
+        <span class="section-eyebrow">WHY</span>
+        <h2>不是你不专注。是平台太分散。</h2>
+        <p>每一次切换，都在重建上下文。</p>
+      </div>
+
+      <div class="p-grid">
+        <div
+          class="p-card"
+          style="--c: var(--cyan)"
+        >
+          <span class="p-index">01 · 切换</span>
+          <h3>切换，打断专注。</h3>
+          <p>登录、查找、比对。通知散落各处，思路一次次中断。</p>
+          <div class="p-fix">
+            <span class="p-fix-tag">一屏尽览</span>
+            <span class="p-fix-text">项目、对话与数据，同屏呈现。</span>
+          </div>
+        </div>
+
+        <div
+          class="p-card"
+          style="--c: var(--purple)"
+        >
+          <span class="p-index">02 · 过载</span>
+          <h3>功能很多，用到的很少。</h3>
+          <p>全量功能堆在眼前，日常只需两三处。其余都是干扰。</p>
+          <div class="p-fix">
+            <span class="p-fix-tag">只取所需</span>
+            <span class="p-fix-text">以模块为界，按需而装。</span>
+          </div>
+        </div>
+
+        <div
+          class="p-card"
+          style="--c: var(--amber)"
+        >
+          <span class="p-index">03 · 封闭</span>
+          <h3>平台封闭，AI 无从下手。</h3>
+          <p>接口不开放，数据留在页面里，执行停在最后一步。</p>
+          <div class="p-fix">
+            <span class="p-fix-tag">让 AI 进来</span>
+            <span class="p-fix-text">借登录态读取，写入留痕。</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="p-outro">
+        平台，还是原来的平台。账号与数据，都留在原处。<br />
+        工作台只做一件事：把所需收进一屏，把复杂操作交给 agent。
+      </p>
+    </section>
+
     <!-- ====== 能力 ====== -->
     <section class="features">
       <div class="section-header">
         <span class="section-eyebrow">CUSTOMIZE</span>
-        <h2>看板由你定</h2>
-        <p>装、开、排、配、造 —— 五个动作，一块随工作长的板。</p>
+        <h2>看板，由你定义。</h2>
+        <p>装、开、排、配、造。一张随工作生长的看板。</p>
       </div>
 
       <div class="feature-grid">
@@ -134,8 +189,8 @@ defineOptions({
               <path d="M3 8l9 5 9-5M12 13v8" />
             </svg>
           </div>
-          <h3>装：模块就是看板</h3>
-          <p>缺陷、构建、分析…装哪个来哪个；装在这台机器上，所有项目共用。</p>
+          <h3>装。以模块为单位。</h3>
+          <p>缺陷、构建、分析。需要什么，装什么。</p>
         </div>
         <div class="f-card">
           <div
@@ -171,8 +226,8 @@ defineOptions({
               />
             </svg>
           </div>
-          <h3>开与排：每个项目一张板</h3>
-          <p>每个工作区单独决定开哪几张卡、谁排前面；拖动就能改，换项目不串。</p>
+          <h3>开与排。一项目一板。</h3>
+          <p>卡片、顺序，都由你定。拖动，即调整。</p>
         </div>
         <div class="f-card">
           <div
@@ -243,8 +298,8 @@ defineOptions({
               />
             </svg>
           </div>
-          <h3>配与造：没有的就造</h3>
-          <p>每块卡片有自己的设置；市面上没有的视角，开 DIY 让 agent 现场造一个，过门禁再上板。</p>
+          <h3>配与造。从配置到创造。</h3>
+          <p>每块卡片，都有它的设置。缺什么，让 agent 造。</p>
         </div>
       </div>
     </section>
@@ -253,8 +308,8 @@ defineOptions({
     <section class="features features-next">
       <div class="section-header">
         <span class="section-eyebrow">TOGETHER</span>
-        <h2>和 agent 一起干活</h2>
-        <p>同屏、同事实、同权限 —— 不是把 chat 和看板拼在一起。</p>
+        <h2>和 agent，一起工作。</h2>
+        <p>同屏。同事实。同权限。</p>
       </div>
 
       <div class="feature-grid">
@@ -274,8 +329,8 @@ defineOptions({
               <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
             </svg>
           </div>
-          <h3>同屏</h3>
-          <p>对话、卡片、详情并排；不用在聊天窗口和网页之间来回切。</p>
+          <h3>同屏。</h3>
+          <p>对话、卡片、详情，并排。</p>
         </div>
         <div class="f-card">
           <div
@@ -298,8 +353,8 @@ defineOptions({
               />
             </svg>
           </div>
-          <h3>同事实</h3>
-          <p>面板上的数据 agent 读得到；它知道改完哪张卡会变，你不用复述。</p>
+          <h3>同事实。</h3>
+          <p>agent 读得到看板数据，也清楚哪张卡会变。</p>
         </div>
         <div class="f-card">
           <div
@@ -317,8 +372,8 @@ defineOptions({
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
           </div>
-          <h3>同权限</h3>
-          <p>界面只读，写入只走 agent 工具；会改数据的先弹审批，谁改的都查得到。</p>
+          <h3>同权限。</h3>
+          <p>看板轻交互。写入有记录。谁改的，查得到。</p>
         </div>
       </div>
     </section>
@@ -327,8 +382,8 @@ defineOptions({
     <section class="quickstart">
       <div class="section-header">
         <span class="section-eyebrow">GET STARTED</span>
-        <h2>开始使用</h2>
-        <p>跑起来只要几步；卡住的那一步，常见问题里有解。</p>
+        <h2>开始使用。</h2>
+        <p>几步就好。遇到问题，也有答案。</p>
       </div>
 
       <div class="qs-entry">
@@ -350,7 +405,7 @@ defineOptions({
             </svg>
           </div>
           <h3>快速开始</h3>
-          <p>建实例、起实例，浏览器打开 :3081；第一次打开装一次 OpenCLI 扩展，面板才有数据。</p>
+          <p>建实例，启动，打开 :3081。首次安装 OpenCLI 扩展，数据才会出现。</p>
           <PagodaDocLinkToView
             view="guide/quickstart"
             class="qs-link"
@@ -374,8 +429,8 @@ defineOptions({
               <path d="M3 17l9 5 9-5" />
             </svg>
           </div>
-          <h3>看板怎么改</h3>
-          <p>装模块、按项目开卡片、拖动排序；没有的就开 DIY 让 agent 造一个。</p>
+          <h3>看板如何定义</h3>
+          <p>装模块，开卡片，拖顺序。缺什么，让 agent 造。</p>
           <PagodaDocLinkToView
             view="guide/modules"
             class="qs-link"
@@ -409,7 +464,7 @@ defineOptions({
             </svg>
           </div>
           <h3>常见问题</h3>
-          <p>起不来、面板空、装进 Desktop 没反应？按症状找答案。</p>
+          <p>起不来、看板空、装进 Desktop 没反应？按症状找答案。</p>
           <PagodaDocLinkToView
             view="faq"
             class="qs-link"
@@ -418,7 +473,7 @@ defineOptions({
       </div>
 
       <p class="qs-alt">
-        要装进现有的 <code>dsh web</code> / Desktop 也行 ——
+        也可以装进现有环境。
         <PagodaDocLinkToView
           view="guide/install"
           class="qs-alt-link"
@@ -429,13 +484,13 @@ defineOptions({
     <!-- ====== 底部 ====== -->
     <section class="footer-cta">
       <div class="footer-cta-inner">
-        <h2>装一个，把板改成你的</h2>
-        <p>独立实例有自己的端口、profile 与运行时目录；会话和项目跟 dsh web 共用。不想要了，删掉自己的两个目录就回到原样。</p>
+        <h2>从一张看板开始。</h2>
+        <p>独立实例，有自己的端口、profile 与运行时目录。会话与项目，沿用现有数据。账号与权限，留在原处。不需要时，删掉两个目录即可复原。</p>
         <a
           href="#/guide/quickstart"
           class="btn-primary"
         >
-          装一个试试
+          安装工作台
           <svg
             width="14"
             height="14"
@@ -687,7 +742,88 @@ defineOptions({
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* ====== 痛点 ====== */
+.p-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.p-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 30px 28px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  transition:
+    border-color 0.3s,
+    background 0.3s;
+}
+
+.p-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.p-index {
+  display: inline-block;
+  margin-bottom: 18px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--c);
+}
+
+.p-card h3 {
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  color: var(--text-1) !important;
+  line-height: 1.35 !important;
+  margin: 0 0 10px !important;
+  letter-spacing: -0.01em;
+}
+
+.p-card > p {
+  flex: 1;
+  font-size: 13.5px !important;
+  color: var(--text-4) !important;
+  line-height: 1.65 !important;
+  margin: 0 0 22px !important;
+}
+
+.p-fix {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.p-fix-tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c);
+}
+
+.p-fix-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+.p-outro {
+  max-width: 720px;
+  margin: 28px auto 0 !important;
+  text-align: center;
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+  color: var(--text-4) !important;
+}
+
 /* ====== 通用 Section ====== */
+.problems,
 .features,
 .download,
 .quickstart {
@@ -1025,6 +1161,12 @@ defineOptions({
 @media (max-width: 1024px) {
   .feature-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .p-grid {
+    grid-template-columns: 1fr;
   }
 }
 
