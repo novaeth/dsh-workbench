@@ -43,6 +43,7 @@ export * from './host/shell-text.js';
 export * from './host/shell.js';
 export * from './host/data-error.js';
 export * from './host/install-failure.js';
+export * from './host/runtime-links.js';
 export * from './host/provision.js';
 export * from './host/channel-plugin.js';
 export * from './host/recipe.js';

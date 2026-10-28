@@ -37,6 +37,7 @@ import {
 import { bindRosterFacts } from '@/shared/api/host/unit-roster-facts';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 import { dshHome } from '@dsh-workbench/shared/host';
+import { ensureLibsBinOnPath, ensureLibsOpencliPeer } from '@dsh-workbench/shared/host';
 import { CONFIG_SYNC_ROUTE } from '@/kernel/contract/config-sync';
 import { PROFILE_CREATE_ROUTE } from '@/kernel/contract/profile-create';
 import { SIDEBAR_EDITION_ROUTE } from '@/kernel/contract/sidebar-edition';
@@ -338,6 +339,10 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   if (shell === undefined) {
     ctx.logger?.warn?.('[dsh-workbench] 没有 shell 服务：需要执行缝的套件会降级');
   } else {
+    ensureLibsOpencliPeer();
+    if (ensureLibsBinOnPath() && ctx.logger?.info !== undefined) {
+      ctx.logger.info('[dsh-workbench] PATH 前插共用依赖的 bin 目录：装了的包，命令直接可用');
+    }
     adapters.probe.registerPreflight({
       routes,
       ctx,

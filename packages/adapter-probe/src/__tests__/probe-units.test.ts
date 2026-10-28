@@ -204,6 +204,24 @@ describe('probeUnits：bin / env 两类', () => {
     });
   });
 
+  it('★ install 是 npm 包 → 命令装进隔离运行时的共用依赖前缀（不碰全局）', async () => {
+    const { capability } = await probeOne(
+      [
+        binNeedOf('gitops', {
+          install: { kind: 'npm', package: 'opencli-workflow' },
+        }),
+      ],
+      [{ exitCode: 1, stdout: '' }],
+    );
+
+    const state = stateOf(capability, 'bin', 'gitops');
+    expect(state?.provision).toBe('ready');
+    expect(state?.command).toContain('npm i --prefix');
+    expect(state?.command).toContain('opencli-workflow');
+    expect(state?.command).toContain('--cache');
+    expect(state?.command).not.toContain('-g');
+  });
+
   it('平台对不上 → 不给命令（别教用户在 Windows 上跑 brew）', async () => {
     const other = process.platform === 'darwin' ? 'linux' : 'darwin';
     const { capability } = await probeOne(

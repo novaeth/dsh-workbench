@@ -44,11 +44,19 @@ export interface NeedCommon {
 /**
  * 一条装这个可执行文件的命令；模块作者写，工作台照抄执行。
  */
-export interface BinInstall {
-  readonly kind: 'command';
-  readonly line: string;
-  readonly platforms?: readonly string[] | undefined;
-}
+export type BinInstall =
+  | {
+      readonly kind: 'command';
+      readonly line: string;
+      readonly platforms?: readonly string[] | undefined;
+    }
+  | {
+      readonly kind: 'npm';
+      readonly package: string;
+      readonly registryEnv?: string | undefined;
+      readonly registryDefault?: string | undefined;
+      readonly platforms?: readonly string[] | undefined;
+    };
 
 /**
  * 机器上要有一个可执行文件；探法是 `command -v` / `where`。
@@ -232,12 +240,23 @@ export function binInstallProblemsOf(raw: unknown, at: string): readonly string[
   if (!isRecord(raw)) return [`${at}.install 要是对象`];
   const errors: string[] = [];
   for (const key of Object.keys(raw)) {
-    if (!['kind', 'line', 'platforms'].includes(key)) errors.push(`${at}.install 有不认识的字段 ${key}`);
+    if (!['kind', 'line', 'platforms', 'package', 'registryEnv', 'registryDefault'].includes(key)) {
+      errors.push(`${at}.install 有不认识的字段 ${key}`);
+    }
   }
-  if (text(raw['kind']) !== 'command') {
-    errors.push(`${at}.install.kind 只有 command（一条装它的命令）`);
+  const kind = text(raw['kind']);
+  if (kind !== 'command' && kind !== 'npm') {
+    errors.push(`${at}.install.kind 只认 command（一条命令）或 npm（一个包，装进隔离运行时）`);
   }
-  if (text(raw['line']) === '') errors.push(`${at}.install.line 没写 —— 要一条能直接粘进终端的命令`);
+  if (kind === 'command' && text(raw['line']) === '') {
+    errors.push(`${at}.install.line 没写 —— 要一条能直接粘进终端的命令`);
+  }
+  if (kind === 'npm' && text(raw['package']) === '') {
+    errors.push(`${at}.install.package 没写 —— 这个命令由哪个 npm 包提供`);
+  }
+  if (raw['registryDefault'] !== undefined && !REGISTRY_PATTERN.test(text(raw['registryDefault']))) {
+    errors.push(`${at}.install.registryDefault 要是 http(s):// 或 file:// 的源地址`);
+  }
   if (raw['platforms'] !== undefined) {
     if (!Array.isArray(raw['platforms']) || raw['platforms'].length === 0) {
       errors.push(`${at}.install.platforms 要是非空数组`);

@@ -9,7 +9,7 @@ import type { UnitCapability } from '@dsh-workbench/shared/host';
 import { requireSupply, type SupplyPort, type UnitMountDeps } from '@dsh-workbench/shared/host';
 import { runShell } from '@dsh-workbench/shared/host';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
-import { diagnoseInstallFailure, installWriteProblem, isolatedRoot } from '@dsh-workbench/shared/host';
+import { diagnoseInstallFailure, ensureLibsBinOnPath, ensureLibsOpencliPeer, installWriteProblem, isolatedRoot } from '@dsh-workbench/shared/host';
 import { installError } from './market-install-error';
 import {
   affectedUnitsOf,
@@ -338,6 +338,8 @@ export function createMarketService(options: {
           throw new Error(`没有可执行的安装命令（${state.detail}）`);
         }
         await run(state.command);
+        ensureLibsOpencliPeer();
+        ensureLibsBinOnPath();
       }
       await probeSharing({ action: 'install', unit });
       onInstalled?.(unit);

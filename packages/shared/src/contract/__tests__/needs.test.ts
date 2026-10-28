@@ -49,7 +49,7 @@ describe('needs 校验矩阵', () => {
     ).toEqual([]);
 
     expect(errorsOf({ kind: 'bin', name: 'x', purpose: 'p', install: { kind: 'brew', line: 'x' } }).join(' ')).toContain(
-      'install.kind 只有 command',
+      'install.kind 只认 command',
     );
     expect(errorsOf({ kind: 'bin', name: 'x', purpose: 'p', install: { kind: 'command', line: '' } }).join(' ')).toContain(
       'install.line 没写',
@@ -60,6 +60,34 @@ describe('needs 校验矩阵', () => {
     expect(errorsOf({ kind: 'bin', name: 'x', purpose: 'p', install: { kind: 'command', line: 'x', url: 'y' } }).join(' ')).toContain(
       'install 有不认识的字段 url',
     );
+  });
+
+  it('bin 的 install 也可以是一个 npm 包（命令由包提供，装进隔离运行时）', () => {
+    expect(
+      errorsOf({
+        kind: 'bin',
+        name: 'gitops',
+        purpose: '平台命令',
+        install: {
+          kind: 'npm',
+          package: 'opencli-workflow',
+          registryEnv: 'ACME_REGISTRY',
+          registryDefault: 'https://registry.test/',
+        },
+      }),
+    ).toEqual([]);
+
+    expect(errorsOf({ kind: 'bin', name: 'x', purpose: 'p', install: { kind: 'npm' } }).join(' ')).toContain(
+      'install.package 没写',
+    );
+    expect(
+      errorsOf({
+        kind: 'bin',
+        name: 'x',
+        purpose: 'p',
+        install: { kind: 'npm', package: 'x', registryDefault: 'ftp://x' },
+      }).join(' '),
+    ).toContain('registryDefault 要是 http(s):// 或 file:// 的源地址');
   });
 
   it('bin / env 写了 sources → 红（没有安装路径）', () => {
