@@ -1,6 +1,8 @@
 import { pkg, read, sourceIndex } from '../lib.mjs';
 
 const marketPanel = () => read(pkg('src/app/layouts/market/panel.tsx'));
+const marketEnterProbeSource = () =>
+  `${marketPanel()}\n${read(pkg('src/app/layouts/market/use-market-reload.ts'))}`;
 
 export const checks = [
   {
@@ -53,7 +55,7 @@ export const checks = [
     title: '★ 进市场页不强探（有结论且新鲜就一次都不探；只有"没结论 / 过旧"才后台补一次）',
     run(ctx, report) {
 
-      const source = marketPanel();
+      const source = marketEnterProbeSource();
       const marketEnterProbe =
         source.match(/if \(!shouldProbeOnEnter\(\{[\s\S]{0,120}?markNextProbeSilent\(\);[\s\S]{0,80}?forceProbe\(\);/g) ?? [];
       report(
@@ -156,6 +158,7 @@ export const checks = [
       const floorSites = [
         'shared/hooks/use-visible-busy.ts',
         'shared/hooks/use-unit-board.ts',
+        'app/layouts/market/section-check.tsx',
         'app/layouts/market/use-add-module.ts',
         'app/layouts/rightbar/ModulesPage.tsx',
         'app/layouts/rightbar/MarketView.tsx',

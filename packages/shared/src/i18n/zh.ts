@@ -224,6 +224,7 @@ export const zh = {
   'panels.market.restartNeeded': '新版装好了，重启一次才生效。',
   'panels.market.foot': '装好后到那个项目的面板页勾选它，模块才会出现。',
   'panels.market.checkUpdates': '检查更新',
+  'panels.market.checkAll': '检查全部更新',
   'panels.market.checkingNow': '正在检查…',
   'panels.market.checkFailed': '最近一次没查到，检查网络后重试',
   'panels.market.checkedAt': '最近检查：{time}',

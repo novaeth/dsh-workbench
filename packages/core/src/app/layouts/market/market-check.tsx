@@ -6,6 +6,34 @@ import { checkedAgo } from '../rightbar/market-freshness';
 import type { LatestCheckSummary } from '../rightbar/market-rows';
 import styles from './market-check.module.css';
 
+export interface MarketRefreshButtonProps {
+  readonly label: string;
+  readonly checking: boolean;
+  readonly disabled: boolean;
+  readonly onCheck: () => void;
+}
+
+export function MarketRefreshButton({ label, checking, disabled, onCheck }: MarketRefreshButtonProps) {
+  return (
+    <Tip label={label}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className={styles.button}
+        aria-label={label}
+        disabled={disabled || checking}
+        icon={
+          <span className={`${styles.icon}${checking ? ' wb-spinning' : ''}`} aria-hidden="true">
+            <IconRefreshOutlineRegular size={14} />
+          </span>
+        }
+        onClick={onCheck}
+      />
+    </Tip>
+  );
+}
+
 export interface MarketCheckProps {
   readonly t: Translate;
   readonly checkedAt: number | null;
@@ -45,22 +73,12 @@ export function MarketCheck({
           {status}
         </span>
       )}
-      <Tip label={t('panels.market.checkUpdates')}>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className={styles.button}
-          aria-label={t('panels.market.checkUpdates')}
-          disabled={disabled || checking}
-          icon={
-            <span className={`${styles.icon}${checking ? ' wb-spinning' : ''}`} aria-hidden="true">
-              <IconRefreshOutlineRegular size={14} />
-            </span>
-          }
-          onClick={onCheck}
-        />
-      </Tip>
+      <MarketRefreshButton
+        label={t('panels.market.checkUpdates')}
+        checking={checking}
+        disabled={disabled}
+        onCheck={onCheck}
+      />
     </span>
   );
 }

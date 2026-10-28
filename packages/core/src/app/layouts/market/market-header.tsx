@@ -1,6 +1,7 @@
 import { Fragment, createElement as h, useMemo } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import { Button, IconPlusOutlineRegular, SegmentedTabs } from '@deepseek-ai/dsh-client-ui-primitives';
+import { MarketRefreshButton } from './market-check';
 import styles from './MarketPage.module.css';
 
 export type MarketTab = 'installed' | 'discover';
@@ -10,11 +11,22 @@ export interface MarketHeaderProps {
   readonly idPrefix: string;
   readonly tab: MarketTab;
   readonly busy: boolean;
+  readonly checking: boolean;
   readonly onTab: (tab: MarketTab) => void;
+  readonly onReload: () => void;
   readonly onAdd: () => void;
 }
 
-export function MarketHeader({ t, idPrefix, tab, busy, onTab, onAdd }: MarketHeaderProps) {
+export function MarketHeader({
+  t,
+  idPrefix,
+  tab,
+  busy,
+  checking,
+  onTab,
+  onReload,
+  onAdd,
+}: MarketHeaderProps) {
   const tabItems = useMemo(
     () =>
       [
@@ -43,16 +55,24 @@ export function MarketHeader({ t, idPrefix, tab, busy, onTab, onAdd }: MarketHea
         </div>
         <div className={styles.marketPageTools}>
           {tab !== 'installed' ? null : (
-            <Button
-              variant="primary"
-              size="sm"
-              className={styles.marketAddButton}
-              icon={<IconPlusOutlineRegular size={13} />}
-              disabled={busy}
-              onClick={onAdd}
-            >
-              {t('panels.market.add.open')}
-            </Button>
+            <Fragment>
+              <MarketRefreshButton
+                label={t('panels.market.checkAll')}
+                checking={checking}
+                disabled={busy}
+                onCheck={onReload}
+              />
+              <Button
+                variant="primary"
+                size="sm"
+                className={styles.marketAddButton}
+                icon={<IconPlusOutlineRegular size={13} />}
+                disabled={busy}
+                onClick={onAdd}
+              >
+                {t('panels.market.add.open')}
+              </Button>
+            </Fragment>
           )}
         </div>
       </header>

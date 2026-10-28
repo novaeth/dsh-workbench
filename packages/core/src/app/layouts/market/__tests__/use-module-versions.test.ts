@@ -38,7 +38,9 @@ function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
 beforeEach(() => {
   resetModuleVersions();
   vi.mocked(readInstalledPlugins).mockResolvedValue(noPlugins);
+  vi.mocked(readInstalledPlugins).mockClear();
   vi.mocked(readMarketInstalled).mockResolvedValue({ ok: true, modules: [] });
+  vi.mocked(readMarketInstalled).mockClear();
   vi.mocked(readModuleVersions).mockReset();
 });
 
@@ -88,12 +90,12 @@ describe('★ 检查更新的转圈要罩到读数落地', () => {
     vi.mocked(readModuleVersions).mockReturnValueOnce(read.promise);
 
     const run = runModuleVersionsRead(true, true);
-    expect(moduleVersionsValue().checking).toBe(true);
+    expect(moduleVersionsValue().allChecking).toBe(true);
 
     read.resolve(versions('0.1.1'));
     await run;
 
-    expect(moduleVersionsValue().checking).toBe(false);
+    expect(moduleVersionsValue().allChecking).toBe(false);
     expect(moduleVersionsValue().read).toBe(true);
   });
 
@@ -110,11 +112,11 @@ describe('★ 检查更新的转圈要罩到读数落地', () => {
 
     oldRead.resolve(versions('0.1.0'));
     await before;
-    expect(moduleVersionsValue().checking).toBe(true);
+    expect(moduleVersionsValue().allChecking).toBe(true);
 
     newRead.resolve(versions('0.2.0'));
     await after;
-    expect(moduleVersionsValue().checking).toBe(false);
+    expect(moduleVersionsValue().allChecking).toBe(false);
   });
 
   it('同一次读数被两处要（非 fresh 去重）→ 只亮一次、也只灭一次', async () => {
@@ -124,12 +126,12 @@ describe('★ 检查更新的转圈要罩到读数落地', () => {
     const first = runModuleVersionsRead(false);
     const second = runModuleVersionsRead(false);
     expect(second).toBe(first);
-    expect(moduleVersionsValue().checking).toBe(true);
+    expect(moduleVersionsValue().allChecking).toBe(true);
 
     read.resolve(versions('0.1.1'));
     await first;
 
-    expect(moduleVersionsValue().checking).toBe(false);
+    expect(moduleVersionsValue().allChecking).toBe(false);
   });
 });
 
@@ -140,19 +142,19 @@ describe('最近检查：只有读成功才记时间', () => {
       error: { code: 'net', message: '没连上' },
     });
     await runModuleVersionsRead(true, true);
-    expect(moduleVersionsValue().failed).toBe(true);
-    expect(moduleVersionsValue().checkedAt).toBeNull();
+    expect(moduleVersionsValue().modulesCheck.failed).toBe(true);
+    expect(moduleVersionsValue().modulesCheck.checkedAt).toBeNull();
 
     vi.mocked(readModuleVersions).mockResolvedValueOnce(versions('0.1.1'));
     await runModuleVersionsRead(true, true);
-    expect(moduleVersionsValue().failed).toBe(false);
-    expect(moduleVersionsValue().checkedAt).not.toBeNull();
+    expect(moduleVersionsValue().modulesCheck.failed).toBe(false);
+    expect(moduleVersionsValue().modulesCheck.checkedAt).not.toBeNull();
   });
 
   it('★ 读失败 → 上一次的版本和检查时间都留着，不假装刚查过', async () => {
     vi.mocked(readModuleVersions).mockResolvedValueOnce(versions('0.1.0'));
     await runModuleVersionsRead(true, true);
-    const checkedAt = moduleVersionsValue().checkedAt;
+    const checkedAt = moduleVersionsValue().modulesCheck.checkedAt;
     expect(checkedAt).not.toBeNull();
 
     vi.mocked(readModuleVersions).mockResolvedValueOnce({
@@ -162,7 +164,69 @@ describe('最近检查：只有读成功才记时间', () => {
     await runModuleVersionsRead(true, true);
 
     expect(moduleVersionsValue().modules?.[0]?.installed).toBe('0.1.0');
-    expect(moduleVersionsValue().checkedAt).toBe(checkedAt);
-    expect(moduleVersionsValue().failed).toBe(true);
+    expect(moduleVersionsValue().modulesCheck.checkedAt).toBe(checkedAt);
+    expect(moduleVersionsValue().modulesCheck.failed).toBe(true);
+  });
+});
+
+describe('分区检查：页头查全部，两段各查各的', () => {
+  it('★ 只查模块 → 不碰插件，也不点亮页头那颗全局 ⟳', async () => {
+    vi.mocked(readModuleVersions).mockResolvedValueOnce(versions('0.1.1'));
+    const run = runModuleVersionsRead(true, true, 'modules');
+
+    expect(moduleVersionsValue().allChecking).toBe(false);
+    expect(moduleVersionsValue().modulesCheck.checking).toBe(true);
+    expect(moduleVersionsValue().pluginsCheck.checking).toBe(false);
+
+    await run;
+
+    expect(readInstalledPlugins).not.toHaveBeenCalled();
+    expect(moduleVersionsValue().modulesCheck.checking).toBe(false);
+    expect(moduleVersionsValue().modulesCheck.checkedAt).not.toBeNull();
+    expect(moduleVersionsValue().pluginsCheck.checkedAt).toBeNull();
+  });
+
+  it('★ 只查插件 → 模块的版本与「最近检查」一个都不动', async () => {
+    vi.mocked(readModuleVersions).mockResolvedValueOnce(versions('0.1.1'));
+    await runModuleVersionsRead(true, true, 'modules');
+    const at = moduleVersionsValue().modulesCheck.checkedAt;
+
+    vi.mocked(readInstalledPlugins).mockResolvedValueOnce({ ok: true, plugins: [{ pkg: '@a/p' }] });
+    await runModuleVersionsRead(true, true, 'plugins');
+
+    expect(readModuleVersions).toHaveBeenCalledTimes(1);
+    expect(moduleVersionsValue().modulesCheck.checkedAt).toBe(at);
+    expect(moduleVersionsValue().plugins?.[0]?.pkg).toBe('@a/p');
+    expect(moduleVersionsValue().allChecking).toBe(false);
+  });
+
+  it('★ 全局检查把两段一起点亮、一起熄灭', async () => {
+    const read = deferred<ApiResponse<ModuleVersionsPayload>>();
+    vi.mocked(readModuleVersions).mockReturnValueOnce(read.promise);
+    const run = runModuleVersionsRead(true, true);
+
+    expect(moduleVersionsValue().allChecking).toBe(true);
+    expect(moduleVersionsValue().modulesCheck.checking).toBe(true);
+    expect(moduleVersionsValue().pluginsCheck.checking).toBe(true);
+
+    read.resolve(versions('0.1.1'));
+    await run;
+
+    expect(moduleVersionsValue().allChecking).toBe(false);
+    expect(moduleVersionsValue().modulesCheck.checking).toBe(false);
+    expect(moduleVersionsValue().pluginsCheck.checking).toBe(false);
+    expect(moduleVersionsValue().modulesCheck.checkedAt).not.toBeNull();
+    expect(moduleVersionsValue().pluginsCheck.checkedAt).not.toBeNull();
+  });
+
+  it('★ 分区检查失败只记在自己那一段上', async () => {
+    vi.mocked(readModuleVersions).mockResolvedValueOnce({
+      ok: false,
+      error: { code: 'net', message: '没连上' },
+    });
+    await runModuleVersionsRead(true, true, 'modules');
+
+    expect(moduleVersionsValue().modulesCheck.failed).toBe(true);
+    expect(moduleVersionsValue().pluginsCheck.failed).toBe(false);
   });
 });

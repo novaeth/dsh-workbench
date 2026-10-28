@@ -1,22 +1,16 @@
-import { createElement as h, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { createElement as h, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { DshClientContext } from '@dsh-workbench/shared';
 import type { ClientUnitRegistry } from '@/kernel/client/registry';
 import type { Translate } from '@dsh-workbench/shared';
 import type { UnitManifest } from '@dsh-workbench/shared';
 import { IconModules } from '@/shared/components/IconModules';
-import { bumpCapabilityEpoch, markNextProbeSilent } from '@/shared/hooks/use-capabilities';
 import { useCapabilityMap } from '@/shared/hooks/use-capability-gate';
 import { devSurface } from '@/shared/dev-surface';
 import type { MarketMock } from '../rightbar/market-mock';
 
 import { LOCALE_NS } from '@dsh-workbench/shared';
 import { publishPanelHint } from '../panel-hint';
-import {
-  MARKET_STALE_MS,
-  marketSettled,
-  shouldProbeOnEnter,
-  type MarketFreshness,
-} from '../rightbar/market-freshness';
+import { marketSettled, type MarketFreshness } from '../rightbar/market-freshness';
 import { marketUpdatesOf, withClientRefusals } from '../rightbar/market-rows';
 import { marketHintOf } from '../rightbar/market-hint';
 import { useMarketBusy } from '../rightbar/market-busy';
@@ -27,7 +21,8 @@ import { DiscoverPanel } from './DiscoverPanel';
 import { MarketHeader, type MarketTab } from './market-header';
 import { useEnabledUnits } from '../rightbar/use-panels';
 import { useSettlingModules } from './use-settling-modules';
-import { bumpModuleVersionsEpoch, useModuleVersions } from './use-module-versions';
+import { useModuleVersions } from './use-module-versions';
+import { useMarketReload } from './use-market-reload';
 import { AddModuleDialog } from './AddModuleDialog';
 import styles from './MarketPage.module.css';
 
@@ -103,8 +98,9 @@ function MarketPanel({
     workbench,
     selfUpdate,
     checking: versionsChecking,
-    failed: versionsFailed,
-    checkedAt: versionsCheckedAt,
+    allChecking: versionsAllChecking,
+    modulesCheck,
+    pluginsCheck,
     read: installedRead,
     reload: reloadVersions,
   } = useModuleVersions();
@@ -119,31 +115,12 @@ function MarketPanel({
   const updates = useMemo(() => marketUpdatesOf(modules), [modules]);
   const installed = modules === null ? undefined : withClientRefusals(modules, units.refusals());
 
-  const reload = useCallback(
-    (options?: { readonly force?: boolean }): void => {
-      if (options?.force === true) {
-        bumpModuleVersionsEpoch();
-        bumpCapabilityEpoch();
-        forceProbe();
-        reloadVersions({ force: true, fresh: true });
-        return;
-      }
-      reloadCapability();
-      reloadVersions();
-    },
-    [reloadCapability, reloadVersions, forceProbe],
-  );
-
-  const enteredRef = useRef(false);
-
-  useEffect(() => {
-    if (enteredRef.current) return;
-    enteredRef.current = true;
-    reloadVersions();
-    if (!shouldProbeOnEnter({ checkedAt, now: Date.now(), staleMs: MARKET_STALE_MS })) return;
-    markNextProbeSilent();
-    forceProbe();
-  }, [checkedAt, forceProbe, reloadVersions]);
+  const { reload, checkPart } = useMarketReload({
+    checkedAt,
+    forceProbe,
+    reloadCapability,
+    reloadVersions,
+  });
 
   const settling = useSettlingModules(
     (installed ?? []).map((module) => module.unit).join('|'),
@@ -174,7 +151,9 @@ function MarketPanel({
         idPrefix={MARKET_PANEL_ID}
         tab={tab}
         busy={busy}
+        checking={checking || versionsAllChecking}
         onTab={setTab}
+        onReload={() => reload({ force: true })}
         onAdd={openAddModule}
       />
       {devMarket.strip}
@@ -195,8 +174,9 @@ function MarketPanel({
           onChanged={reload}
           onPending={setActing}
           updates={updates}
-          updatesCheckedAt={versionsCheckedAt}
-          updatesFailed={versionsFailed}
+          modulesCheck={modulesCheck}
+          pluginsCheck={pluginsCheck}
+          onCheck={checkPart}
           installed={installed}
           installedRead={shownRead}
           workbench={workbench}

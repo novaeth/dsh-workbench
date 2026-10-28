@@ -1,4 +1,4 @@
-import { Fragment, createElement as h, useState } from 'react';
+import { Fragment, createElement as h } from 'react';
 import type { ReactNode, Translate } from '@dsh-workbench/shared';
 import type { UnitManifest } from '@dsh-workbench/shared';
 import { useHostWrite } from '@/shared/hooks/use-host-write';
@@ -17,6 +17,7 @@ import {
   checkingRows,
   installedIdSet,
   installedRows,
+  checkedPluginCount,
   latestCheckSummary,
   liveManifests,
   marketCatalog,
@@ -26,6 +27,7 @@ import {
   marketSections,
   sharedRows,
   type InstalledWorkbenchModule,
+  type LatestCheckSummary,
   type MarketRow,
   type MarketRowAction,
   type SharedRow,
@@ -33,7 +35,6 @@ import {
 import { installedPluginRows } from './market-plugin-rows';
 import type { MarketNameMap, TitleResolve } from './market-names';
 import { workbenchRow } from './market-workbench-row';
-import { RiskConfirmation } from '@deepseek-ai/dsh-client-ui-primitives';
 import type { MarketMock } from './market-mock';
 import type { MarketFailure } from './market-row-types';
 import type { ModuleUpdateMap } from './market-rows';
@@ -57,11 +58,14 @@ import { marketActOf } from './market-act';
 import { usePublishMarketBusy } from './market-busy';
 import { useMarketDefault } from './use-market-default';
 import { marketSectionIcon } from './market-section-icon';
-import { MarketCheck } from '../market/market-check';
+import { SectionCheck } from '../market/section-check';
+import type { VersionsCheck, VersionsPart } from '../market/use-module-versions';
+import { UninstallConfirm } from './market-uninstall';
 import { PanelFoot } from '@/shared/components/PanelFoot';
 import styles from '../market/MarketPage.module.css';
 
 const CONFIRM_UNINSTALL: readonly MarketRowAction[] = ['uninstall', 'remove-bundle', 'uninstall-plugin'];
+const NO_CHECK: VersionsCheck = { checking: false, failed: false, checkedAt: null };
 const NO_ROWS: readonly MarketRow[] = [];
 const NO_UNITS: ReadonlySet<string> = new Set();
 
@@ -75,8 +79,9 @@ export interface MarketViewProps {
   readonly onChanged: (options?: { readonly force?: boolean }) => void;
   readonly onPending?: ((pending: boolean) => void) | undefined;
   readonly updates?: ModuleUpdateMap | undefined;
-  readonly updatesCheckedAt?: number | null | undefined;
-  readonly updatesFailed?: boolean | undefined;
+  readonly modulesCheck?: VersionsCheck | undefined;
+  readonly pluginsCheck?: VersionsCheck | undefined;
+  readonly onCheck?: ((part: VersionsPart) => void) | undefined;
   readonly installed?: readonly InstalledWorkbenchModule[] | undefined;
   readonly installedRead?: boolean | undefined;
   readonly workbench?: WorkbenchVersion | null | undefined;
@@ -87,35 +92,6 @@ export interface MarketViewProps {
   readonly mock?: MarketMock | undefined;
   readonly defaults?: readonly string[] | undefined;
   readonly changed?: Readonly<Record<string, number>> | undefined;
-}
-
-function ConfirmUninstall({
-  t,
-  name,
-  onConfirm,
-  onCancel,
-}: {
-  readonly t: Translate;
-  readonly name: string | null;
-  readonly onConfirm: () => void;
-  readonly onCancel: () => void;
-}) {
-  const [acknowledged, setAcknowledged] = useState(false);
-  return (
-    <RiskConfirmation
-      open={name !== null}
-      title={t('panels.market.confirmUninstallTitle', { name: name ?? '' })}
-      description={t('panels.market.confirmUninstallDetail')}
-      acknowledgeLabel={t('panels.market.confirmUninstallAck')}
-      cancelLabel={t('panels.market.confirmNo')}
-      closeLabel={t('panels.market.confirmNo')}
-      confirmLabel={t('panels.market.confirmYes')}
-      acknowledged={acknowledged}
-      onAcknowledgedChange={setAcknowledged}
-      onCancel={onCancel}
-      onConfirm={onConfirm}
-    />
-  );
 }
 
 function MarketBody({
@@ -132,7 +108,7 @@ function MarketBody({
   onConfirming,
   setDefault,
   boardBusy,
-  check,
+  checks,
   onRecheck,
   rechecking,
 }: {
@@ -149,7 +125,7 @@ function MarketBody({
   readonly onConfirming: (id: string | null) => void;
   readonly setDefault: (id: string, next: boolean) => Promise<void>;
   readonly boardBusy: boolean;
-  readonly check: ReactNode;
+  readonly checks: Readonly<Record<VersionsPart, ReactNode>>;
   readonly onRecheck: () => void;
   readonly rechecking: boolean;
 }) {
@@ -185,7 +161,7 @@ function MarketBody({
         icon={marketSectionIcon('installed')}
         rows={installed?.rows ?? NO_ROWS}
         keepHead
-        headAction={check}
+        headAction={checks.modules}
         onDefault={setDefault}
         boardBusy={boardBusy}
         pending={pending}
@@ -218,7 +194,7 @@ function MarketBody({
         titleKey="panels.market.sectionPlugins"
         icon={marketSectionIcon('plugins')}
         rows={pluginList}
-        headAction={check}
+        headAction={checks.plugins}
         onDefault={setDefault}
         boardBusy={boardBusy}
         pending={pending}
@@ -308,6 +284,39 @@ function useMarketScene(input: {
   return { names, catalog, effective, updateMap, rows, shared, installedList, byDefault, steady, pinned, removing, busyId };
 }
 
+function sectionChecksOf(input: {
+  readonly t: Translate;
+  readonly modules?: VersionsCheck | undefined;
+  readonly plugins?: VersionsCheck | undefined;
+  readonly latestModules: LatestCheckSummary;
+  readonly latestPlugins: LatestCheckSummary;
+  readonly disabled: boolean;
+  readonly onCheck?: ((part: VersionsPart) => void) | undefined;
+}): Readonly<Record<VersionsPart, ReactNode>> {
+  return {
+    modules: (
+      <SectionCheck
+        t={input.t}
+        part="modules"
+        seat={input.modules ?? NO_CHECK}
+        latest={input.latestModules}
+        disabled={input.disabled}
+        onCheck={input.onCheck}
+      />
+    ),
+    plugins: (
+      <SectionCheck
+        t={input.t}
+        part="plugins"
+        seat={input.plugins ?? NO_CHECK}
+        latest={input.latestPlugins}
+        disabled={input.disabled}
+        onCheck={input.onCheck}
+      />
+    ),
+  };
+}
+
 export function MarketView({
   t,
   titleOf,
@@ -318,8 +327,9 @@ export function MarketView({
   onChanged,
   onPending,
   updates,
-  updatesCheckedAt = null,
-  updatesFailed = false,
+  modulesCheck,
+  pluginsCheck,
+  onCheck,
   installed,
   installedRead,
   workbench,
@@ -404,18 +414,15 @@ export function MarketView({
     setFailed(null);
     if (mock === undefined) onChanged({ force: true });
   };
-  const latestCheck = latestCheckSummary(mock?.installed ?? installed);
-  const check = (
-    <MarketCheck
-      t={t}
-      checkedAt={updatesCheckedAt}
-      latestCheck={latestCheck}
-      checking={checkingShown}
-      failed={updatesFailed}
-      disabled={pending !== null}
-      onCheck={() => onChanged({ force: true })}
-    />
-  );
+  const checks = sectionChecksOf({
+    t,
+    modules: modulesCheck,
+    plugins: pluginsCheck,
+    latestModules: latestCheckSummary(mock?.installed ?? installed),
+    latestPlugins: { checked: checkedPluginCount(mock?.plugins ?? plugins), unknown: 0 },
+    disabled: pending !== null,
+    onCheck: mock === undefined ? onCheck : undefined,
+  });
 
   if (!settled || ((settling?.size ?? 0) > 0 && shown.length === 0 && installedList.length === 0)) {
     return <MarketChecking t={t} />;
@@ -441,7 +448,7 @@ export function MarketView({
         onConfirming={setConfirming}
         setDefault={setDefault}
         boardBusy={boardBusy}
-        check={check}
+        checks={checks}
         onRecheck={recheck}
         rechecking={checkingShown}
       />
@@ -455,44 +462,5 @@ export function MarketView({
         rowById={rowById}
       />
     </>
-  );
-}
-
-function UninstallConfirm({
-  t,
-  confirming,
-  row,
-  onClose,
-  act,
-  rowById,
-}: {
-  readonly t: Translate;
-  readonly confirming: string | null;
-  readonly row: MarketRow | undefined;
-  readonly onClose: () => void;
-  readonly act: (id: string, action: MarketRowAction) => Promise<void>;
-  readonly rowById: ReadonlyMap<string, MarketRow>;
-}) {
-  return (
-    <ConfirmUninstall
-      key={confirming ?? ''}
-      t={t}
-      name={row === undefined ? null : marketRowTitle(row, t)}
-      onCancel={onClose}
-      onConfirm={() => {
-        const id = confirming;
-        onClose();
-        if (id === null) return;
-        const target = rowById.get(id);
-        void act(
-          id,
-          target?.plugin === true
-            ? 'uninstall-plugin'
-            : target?.pkg === undefined
-              ? 'uninstall'
-              : 'remove-bundle',
-        );
-      }}
-    />
   );
 }

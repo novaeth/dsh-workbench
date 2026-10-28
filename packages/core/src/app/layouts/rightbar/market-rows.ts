@@ -2,6 +2,7 @@ import type { LatestUnavailable, ModuleUpdateBlock, ModuleVersion } from '@/kern
 import type { MarketInstalledModule } from '@/kernel/contract/market-index';
 import type { NeedState, SupplySource, Translate, UnitManifest, UnitTitle } from '@dsh-workbench/shared';
 import { supplyNeedsOf } from '@dsh-workbench/shared';
+import type { InstalledPlugin } from '@/shared/api/installed-plugins';
 import type { MarketNameMap } from './market-names';
 import type {
   MarketHintKey,
@@ -139,6 +140,10 @@ export function latestCheckSummary(
     }
   }
   return { checked, unknown };
+}
+
+export function checkedPluginCount(plugins: readonly InstalledPlugin[] | null | undefined): number {
+  return (plugins ?? []).filter((plugin) => plugin.latest !== undefined).length;
 }
 
 export function installedRows(

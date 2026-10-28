@@ -227,6 +227,7 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'panels.market.restartNeeded': 'The new version is installed — restart once to pick it up.',
   'panels.market.foot': 'After installing, enable it in the panel page of that project.',
   'panels.market.checkUpdates': 'Check for updates',
+  'panels.market.checkAll': 'Check all updates',
   'panels.market.checkingNow': 'Checking…',
   'panels.market.checkFailed': 'The last check failed. Check your connection and retry.',
   'panels.market.checkedAt': 'Last checked: {time}',
