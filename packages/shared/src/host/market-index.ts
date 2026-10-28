@@ -65,6 +65,7 @@ export type {
   MarketVersionDoc,
 } from './market-index-doc.js';
 import { marketMetaPath } from './market-index-parse.js';
+import { entryUnitOf } from './market-index-claim.js';
 
 export {
   compareSemver,
@@ -209,11 +210,13 @@ export function marketEntryFilesOf(index: MarketIndex, dir: string = MARKET_INDE
         text: `${JSON.stringify(marketVersionDocLeanOf(entry, version), null, 2)}\n`,
       });
     }
-    if (!hasMetaFields(entry)) continue;
+    const unit = entry.metadata?.unit ?? entryUnitOf(entry);
+    const healed = unit === undefined ? entry : { ...entry, metadata: { ...entry.metadata, unit } };
+    if (!hasMetaFields(healed)) continue;
     const at = entry.versions.reduce((latest, one) => Math.max(latest, one.publishTimestamp ?? 0), 0);
     files.push({
       path: marketMetaPath(dir, entry.name, 1, 'migr'),
-      text: `${JSON.stringify(marketMetaDocOf(entry, 1, at), null, 2)}\n`,
+      text: `${JSON.stringify(marketMetaDocOf(healed, 1, at), null, 2)}\n`,
     });
   }
   return files;
