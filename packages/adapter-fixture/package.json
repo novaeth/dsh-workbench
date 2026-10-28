@@ -1,6 +1,6 @@
 {
   "name": "@dsh-workbench/adapter-fixture",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "private": true,
   "description": "Minimal AdapterSet fixture used by integration tests.",
   "type": "module",
