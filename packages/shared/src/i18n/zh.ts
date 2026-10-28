@@ -380,7 +380,7 @@ export const zh = {
   'panels.discover.missingIndex': '仓库里还没有索引文件 {path}',
   'panels.discover.initTitle': '把这个仓库初始化成模块市场索引？',
   'panels.discover.initCta': '初始化成市场索引',
-  'panels.discover.initWhat': '会在 {branch} 分支写索引目录 market/ 与 README.md，提交一次并推上去；之后从这个工作台发布的模块会把打包好的文件提交到 artifacts/<包名>/<版本>/，条目写到 market/<包名>/<版本>.json。仓库的写权限归它的所有者。',
+  'panels.discover.initWhat': '会在 {branch} 分支写索引目录 market/ 与 README.md，提交一次并推上去；之后从这个工作台发布的模块会把打包好的文件提交到 artifacts/<包名>/，条目写到 market/<包名>.json。仓库的写权限归它的所有者。',
   'panels.discover.initBranch': '分支',
   'panels.discover.initBranchHint': '索引和打包文件都发到这个分支；空仓库会新建它。',
   'panels.discover.initBranchBad': '分支名只能用字母、数字、点、下划线、斜杠或短横线',
