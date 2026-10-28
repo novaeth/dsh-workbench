@@ -13,10 +13,6 @@ const SCHEMA_TYPE: Readonly<Record<string, string>> = {
   string: 'string',
 };
 
-const KEY_ARG_LIMIT = 3;
-
-const NO_KEY_ARGS = '没有带参数';
-
 export const RUN_CODE_TOOL = 'run_code';
 
 export const PLUGIN_PROMPT_BUDGET = 4_000;
@@ -105,34 +101,18 @@ export function pluginToolArgv(command: PluginCommand, raw: unknown): string[] {
   return argv;
 }
 
-export function pluginKeyArgs(command: PluginCommand, raw: unknown): string {
-  const values = valuesOf(raw);
-  const ordered = [...command.args.filter((arg) => arg.required), ...command.args.filter((arg) => !arg.required)];
-  const parts: string[] = [];
-  for (const arg of ordered) {
-    const value = values[arg.name];
-    if (value === undefined || value === null || value === '') continue;
-    parts.push(`${arg.name}=${String(value)}`);
-    if (parts.length === KEY_ARG_LIMIT) break;
-  }
-  return parts.length === 0 ? NO_KEY_ARGS : parts.join('、');
-}
-
-export function pluginApprovalQuestion(command: PluginCommand, raw: unknown): ApprovalDetail {
-  const key = pluginKeyArgs(command, raw);
-  const zhKey = key === NO_KEY_ARGS ? '这次没带参数' : key;
-  const enKey = key === NO_KEY_ARGS ? 'no arguments' : key;
+export function pluginApprovalQuestion(command: PluginCommand): ApprovalDetail {
   return {
-    zh: `agent 想执行工作台 [${command.plugin}] opencli 插件的 [${command.name}] 命令（${zhKey}），允许吗？`,
-    en: `The agent wants to run the [${command.name}] command of the workbench opencli plugin [${command.plugin}] (${enKey}). Allow?`,
+    zh: `agent 想执行工作台 [${command.plugin}] opencli 插件的 [${command.name}] 命令，允许吗？`,
+    en: `The agent wants to run the [${command.name}] command of the workbench opencli plugin [${command.plugin}]. Allow?`,
   };
 }
 
 export function pluginApprovalFor(command: PluginCommand): ApprovalPolicy {
   const denied = command.access === 'read';
-  return (call) => {
+  return () => {
     if (denied) return { kind: 'read' } satisfies ApprovalVerdict;
-    const question = pluginApprovalQuestion(command, call.arguments);
+    const question = pluginApprovalQuestion(command);
     return {
       kind: 'ask',
       reason:
@@ -141,6 +121,7 @@ export function pluginApprovalFor(command: PluginCommand): ApprovalPolicy {
           : `${command.plugin} ${command.name} 没有拿到 access（fail-safe：按写处理）`,
       question,
       fallback: question,
+      noteInDetail: true,
     } satisfies ApprovalVerdict;
   };
 }

@@ -215,7 +215,15 @@ function faceOf(
     title: { zh: unit.plugin, en: unit.plugin },
     titleKey: unitTitleKey(unit.id),
     card: null,
-    tools: unit.tools.map((tool) => ({ name: tool.name, writes: pluginToolWrites(tool.command) })),
+    tools: unit.tools.map((tool) => ({
+      name: tool.name,
+      writes: pluginToolWrites(tool.command),
+      opencli: {
+        plugin: unit.plugin,
+        command: tool.command.name,
+        args: tool.command.args.map((arg) => arg.name),
+      },
+    })),
     host: { inject: [] },
   };
 

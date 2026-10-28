@@ -67,8 +67,16 @@ describe('★ 已启用的 opencli 插件：它的命令成为 agent 的工具',
     });
     expect(h.ownerOf('inventory_build')?.manifest).toMatchObject({
       tools: [
-        { name: 'inventory_builds', writes: false },
-        { name: 'inventory_build', writes: true },
+        {
+          name: 'inventory_builds',
+          writes: false,
+          opencli: { plugin: 'inventory', command: 'builds', args: ['job'] },
+        },
+        {
+          name: 'inventory_build',
+          writes: true,
+          opencli: { plugin: 'inventory', command: 'build', args: ['enterprise'] },
+        },
       ],
     });
     expect(deny(h, '/w/a')).toEqual([]);
@@ -248,7 +256,7 @@ describe('★ 插件版本一变，工具跟着重挂', () => {
 });
 
 describe('★ 审批走既有那条机制（清单里的 writes + 合成单元自己的策略）', () => {
-  it('写命令 ⇒ 问（agent 那句附注接在文案末尾）；读命令 ⇒ 不问', async () => {
+  it('写命令 ⇒ 问（标题只留动作，附注进详情座）；读命令 ⇒ 不问', async () => {
     ledger.intend({ package: Inventory });
     ledger.complete(Inventory, 'inventory');
     const h = harnessOf({ store, ledger, pluginRows: () => PLUGINS });
@@ -264,7 +272,7 @@ describe('★ 审批走既有那条机制（清单里的 writes + 合成单元�
     );
     expect(denied?.kind).toBe('ask');
     expect(denied?.kind === 'ask' ? denied.displayReason.zh : '').toBe(
-      'agent 想执行工作台 [inventory] opencli 插件的 [build] 命令（enterprise=tencent），允许吗？',
+      'agent 想执行工作台 [inventory] opencli 插件的 [build] 命令，允许吗？',
     );
 
     const note = '把 tencent 预发那条构建发出去';
@@ -285,8 +293,9 @@ describe('★ 审批走既有那条机制（清单里的 writes + 合成单元�
       },
     );
     expect(noted?.kind === 'ask' ? noted.displayReason.zh : '').toBe(
-      `agent 想执行工作台 [inventory] opencli 插件的 [build] 命令（enterprise=tencent），允许吗？ —— ${note}`,
+      'agent 想执行工作台 [inventory] opencli 插件的 [build] 命令，允许吗？',
     );
+    expect(noted?.kind === 'ask' ? noted.displayReason.zh : '').not.toContain(note);
 
     const read = h.ownerOf('inventory_builds');
     const asked = await approvalFor(

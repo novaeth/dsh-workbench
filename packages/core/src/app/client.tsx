@@ -17,7 +17,7 @@ import { createClientUnitRegistry } from '@/kernel/client/registry';
 import { createUnitManifestLoader } from '@/app/units/manifests';
 import type { UnitClientApi, UnitClientFace } from '@dsh-workbench/shared';
 import { createBootGate } from '@/app/layouts/env-gate/boot-gate';
-import { shellApprovalDetail } from '@/app/layouts/approval-detail';
+import { shellApprovalRenderer } from '@/app/layouts/approval-detail';
 import { ColumnSwitch } from '@/app/layouts/rightbar/ColumnSwitch';
 import { createDshColumnSource, DSH_COLUMN_POLL_MS } from '@/app/layouts/rightbar/dsh-column-source';
 import { createDshBorrow } from '@/app/layouts/rightbar/dsh-borrow';
@@ -418,7 +418,7 @@ function mount(ctx: DshClientContext): void {
         inject: () => ({
           t: ctx.locale.bind(LOCALE_NS),
           units: units.all(),
-          renderShell: shellApprovalDetail,
+          renderShell: shellApprovalRenderer(units.declared),
         }),
       },
       ApprovalDetail,

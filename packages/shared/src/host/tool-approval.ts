@@ -1,3 +1,7 @@
+export { APPROVAL_NOTE_ARG } from '../contract/approval.js';
+
+import { APPROVAL_NOTE_ARG } from '../contract/approval.js';
+
 export type AskDecision =
   | {
       readonly kind: 'ask';
@@ -15,8 +19,6 @@ export interface ApprovalDetail {
 }
 
 export type ApprovalFacts = ApprovalDetail | { readonly blocked: string };
-
-export const APPROVAL_NOTE_ARG = 'approval_note';
 
 export const APPROVAL_NOTE_LIMIT = 40;
 
@@ -77,7 +79,8 @@ export interface ApprovalCall {
 
 /**
  * 套件对一次写调用给出的判定：`read` 只是看看、`allow` 会写但本套件不问、`deny` 这一次根本跑不成
- * （连问都不该问，`reason` 原样交给 agent）、`ask` 要用户点头（`question` 接在明细后，`fallback` 是没明细时的整句）。
+ * （连问都不该问，`reason` 原样交给 agent）、`ask` 要用户点头（`question` 接在明细后，`fallback` 是没明细时的整句；
+ * `noteInDetail` 为真表示套件把 agent 的附注画在自己的详情座里，标题只留动作、不再追加）。
  */
 export type ApprovalVerdict =
   | { readonly kind: 'read' }
@@ -91,6 +94,7 @@ export type ApprovalVerdict =
       readonly reason: string;
       readonly question: ApprovalDetail;
       readonly fallback: ApprovalDetail;
+      readonly noteInDetail?: boolean;
     };
 
 export type ApprovalPolicy = (call: ApprovalCall) => ApprovalVerdict | undefined;
@@ -168,9 +172,12 @@ export async function approvalFor(
 
   if (context.skipAsk === true) return undefined;
 
+  const note =
+    context.declaredNote === true && verdict.noteInDetail !== true ? approvalNoteOf(call) : undefined;
+
   return {
     kind: 'ask',
     reason: verdict.reason,
-    displayReason: compose(facts, verdict, context.declaredNote === true ? approvalNoteOf(call) : undefined),
+    displayReason: compose(facts, verdict, note),
   };
 }

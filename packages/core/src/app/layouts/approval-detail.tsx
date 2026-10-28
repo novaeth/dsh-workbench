@@ -1,6 +1,6 @@
 import { Fragment, createElement as h, useEffect, useState } from 'react';
-import type { ApprovalInput, ReactNode, Translate } from '@dsh-workbench/shared';
-import { ApprovalPlan } from '@dsh-workbench/shared';
+import type { ApprovalInput, ReactNode, Translate, UnitManifest, UnitToolOpencli } from '@dsh-workbench/shared';
+import { APPROVAL_NOTE_ARG, ApprovalPlan } from '@dsh-workbench/shared';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import type { MarketSourcesPayload, PublishChangelog, PublishPreview } from '@/kernel/contract/market-index';
 import {
@@ -303,6 +303,52 @@ function MarketSourceApprovalSeat({
   return h(ApprovalPlan, { rows: marketSourceRows(tool, args, payload, t) });
 }
 
+export function pluginToolIndexOf(
+  manifests: readonly UnitManifest[],
+): ReadonlyMap<string, UnitToolOpencli> {
+  const index = new Map<string, UnitToolOpencli>();
+  for (const manifest of manifests) {
+    for (const tool of manifest.tools) {
+      if (tool.opencli === undefined) continue;
+      index.set(tool.name, tool.opencli);
+    }
+  }
+  return index;
+}
+
+function argText(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  const text = JSON.stringify(value);
+  return text === undefined ? String(value) : text;
+}
+
+export function pluginApprovalRows(
+  origin: UnitToolOpencli,
+  args: Readonly<Record<string, unknown>>,
+  t: Translate,
+): readonly ApprovalRow[] {
+  const rows: ApprovalRow[] = [
+    { label: t('approval.plugin.name'), value: origin.plugin },
+    { label: t('approval.plugin.command'), value: origin.command },
+  ];
+  const note = args[APPROVAL_NOTE_ARG];
+  if (typeof note === 'string' && note.trim() !== '') {
+    rows.push({ label: t('approval.plugin.note'), value: note.replace(/\s+/g, ' ').trim() });
+  }
+  for (const name of origin.args) {
+    if (!(name in args)) continue;
+    rows.push({ label: name, value: argText(args[name]) });
+  }
+  return rows;
+}
+
+export function shellApprovalRenderer(
+  manifests: () => readonly UnitManifest[],
+): (input: ApprovalInput, t: Translate) => ReactNode {
+  return (input, t) => shellApprovalDetail(input, t, pluginToolIndexOf(manifests()));
+}
+
 export function shellClaimsApprovalDetail(tool: string): boolean {
   return (ALL_TOOLS as readonly string[]).includes(tool);
 }
@@ -321,7 +367,13 @@ function stopApprovalRows(
   ];
 }
 
-export function shellApprovalPlan(input: ApprovalInput, t: Translate): ApprovalPlanView | undefined {
+export function shellApprovalPlan(
+  input: ApprovalInput,
+  t: Translate,
+  pluginTools?: ReadonlyMap<string, UnitToolOpencli> | undefined,
+): ApprovalPlanView | undefined {
+  const origin = pluginTools?.get(input.tool);
+  if (origin !== undefined) return { rows: pluginApprovalRows(origin, input.args, t) };
   if (input.tool === DIY_RECORD_PREPARE_TOOL) {
     return { rows: recordApprovalRows(input.args, t), warn: t('approval.record.noSwitch') };
   }
@@ -334,12 +386,16 @@ export function shellApprovalPlan(input: ApprovalInput, t: Translate): ApprovalP
   return shellClaimsApprovalDetail(input.tool) ? { rows: [] } : undefined;
 }
 
-export function shellApprovalDetail(input: ApprovalInput, t: Translate): ReactNode {
+export function shellApprovalDetail(
+  input: ApprovalInput,
+  t: Translate,
+  pluginTools?: ReadonlyMap<string, UnitToolOpencli> | undefined,
+): ReactNode {
   if (input.tool === DIY_PUBLISH_TOOL) return h(PublishApprovalSeat, { args: input.args, t });
   if (input.tool === MARKET_ENABLE_TOOL || input.tool === MARKET_DISABLE_TOOL) {
     return h(MarketSourceApprovalSeat, { tool: input.tool, args: input.args, t });
   }
-  const plan = shellApprovalPlan(input, t);
+  const plan = shellApprovalPlan(input, t, pluginTools);
   if (plan === undefined) return undefined;
   if (plan.rows.length === 0) return h(Fragment, null);
   return <ApprovalPlan rows={plan.rows} warn={plan.warn} />;

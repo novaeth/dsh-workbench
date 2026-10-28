@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import type { Translate } from '@dsh-workbench/shared';
+import type { Translate, UnitManifest } from '@dsh-workbench/shared';
 import { zh } from '@dsh-workbench/shared';
 import { approvalFor, type ApprovalCall } from '@dsh-workbench/shared/host';
-import { shellApprovalPlan, type ApprovalPlanView } from '@/app/layouts/approval-detail';
+import { pluginApprovalFor, type PluginCommand } from '@dsh-workbench/adapters-default';
+import { pluginToolIndexOf, shellApprovalPlan, type ApprovalPlanView } from '@/app/layouts/approval-detail';
 import { panelsApprovalFor } from '../model/approval';
 import { ASK_TOOLS, WRITE_CALLS, stopRuns } from './approval-samples';
 
@@ -78,6 +79,64 @@ async function screenOf(tool: string): Promise<readonly string[]> {
   ];
 }
 
+const PLUGIN_TOOL = 'inventory_build';
+
+const PLUGIN_COMMAND: PluginCommand = {
+  plugin: 'inventory',
+  name: 'build',
+  description: 'Inventory 一键构建',
+  access: 'write',
+  browser: true,
+  siteSession: 'ephemeral',
+  args: [
+    {
+      name: 'enterprise',
+      type: 'string',
+      required: true,
+      positional: false,
+      valueRequired: true,
+      choices: [],
+      help: '企业 ID',
+    },
+  ],
+};
+
+const PLUGIN_UNIT: UnitManifest = {
+  id: 'plugin:opencli-plugin-inventory',
+  title: { zh: 'inventory', en: 'inventory' },
+  titleKey: 'dsh-workbench.unit.plugin_inventory.title',
+  card: null,
+  tools: [
+    {
+      name: PLUGIN_TOOL,
+      writes: true,
+      opencli: { plugin: 'inventory', command: 'build', args: ['enterprise'] },
+    },
+  ],
+  host: { inject: [] },
+};
+
+async function pluginScreen(): Promise<readonly string[]> {
+  const args = { enterprise: 'tencent', approval_note: '把预发那条构建发出去' };
+  const call: ApprovalCall = { name: PLUGIN_TOOL, arguments: args };
+  const decision = await approvalFor(call, {
+    writes: true,
+    policy: pluginApprovalFor(PLUGIN_COMMAND),
+    declaredNote: true,
+  });
+  const title = decision?.kind === 'ask' ? decision.displayReason.zh : '（不问）';
+
+  return [
+    `## ${PLUGIN_TOOL}（opencli 插件 [inventory] 的 [build] 命令）`,
+    '',
+    ...box(
+      title,
+      ['', title, '', ...planLines(shellApprovalPlan({ tool: PLUGIN_TOOL, args }, t, pluginToolIndexOf([PLUGIN_UNIT])))],
+    ),
+    '',
+  ];
+}
+
 async function document(): Promise<string> {
   const parts = [
     '# 审批屏清单（黄金文件）',
@@ -103,8 +162,12 @@ async function document(): Promise<string> {
     '**2026-10-27 加 `workbench_market_disable` 那一屏**：把索引源改回只读；和 enable 一样只改本机配置、',
     '不碰仓库，只有可发布的源才问。',
     '',
+    '**2026-10-28 加 opencli 插件命令那一屏**：标题只留动作（插件 + 命令）；参数与 agent 那句话全进详情座 ——',
+    '外壳按清单里那条工具的 `opencli` 那一格认领，画 插件 / 命令 / `agent 说` / 参数各一行。',
+    '',
   ];
   for (const tool of ASK_TOOLS) parts.push(...(await screenOf(tool)));
+  parts.push(...(await pluginScreen()));
   return parts.join('\n');
 }
 

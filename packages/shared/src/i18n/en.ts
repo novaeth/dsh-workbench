@@ -705,6 +705,9 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'approval.longTask.what': 'Task to stop',
   'approval.longTask.signal':
     'stopping only sends an interrupt signal \u2014 wrapping up the run is up to the module',
+  'approval.plugin.name': 'Plugin',
+  'approval.plugin.command': 'Command',
+  'approval.plugin.note': 'Agent says',
   'approval.publish.module': 'Module',
   'approval.publish.target': 'Target',
   'approval.publish.version': 'Version',

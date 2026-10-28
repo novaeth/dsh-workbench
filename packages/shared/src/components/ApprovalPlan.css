@@ -10,22 +10,21 @@
   color: var(--dsw-alias-label-secondary);
 }
 .wb-approvalRows {
-  display: flex;
-  flex-direction: column;
-  gap: var(--wb-len-2);
+  display: grid;
+  grid-template-columns: minmax(var(--wb-len-56), auto) minmax(0, 1fr);
+  column-gap: var(--wb-len-8);
+  row-gap: var(--wb-len-2);
+  align-items: baseline;
   margin: 0;
 }
 .wb-approvalRow {
-  display: flex;
-  align-items: baseline;
-  gap: var(--wb-len-8);
+  display: contents;
 }
 .wb-approvalLabel {
-  flex: none;
-  width: var(--wb-len-56);
   font-size: var(--dsw-font-xxs-12-font-size);
   line-height: var(--wb-line-18);
   color: var(--dsw-alias-label-tertiary);
+  overflow-wrap: anywhere;
 }
 .wb-approvalValue {
   margin: 0;

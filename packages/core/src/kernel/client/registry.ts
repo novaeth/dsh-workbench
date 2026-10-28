@@ -14,6 +14,7 @@ export interface ClientUnitRegistry {
   register(face: UnitClientFace): () => void;
   all(): readonly UnitClientFace[];
   manifests(): readonly UnitManifest[];
+  declared(): readonly UnitManifest[];
   installable(): ReadonlySet<string> | null;
   refusals(): readonly ClientUnitRefusal[];
   setManifests(manifests: readonly UnitManifest[], installable?: readonly string[]): void;
@@ -150,6 +151,8 @@ export function createClientUnitRegistry(
     },
 
     refusals: () => refusals,
+
+    declared: () => [...known.values()],
 
     installable: () => installableIds,
 

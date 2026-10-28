@@ -1,12 +1,15 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import type { Translate } from '@dsh-workbench/shared';
+import type { Translate, UnitManifest } from '@dsh-workbench/shared';
 import { ApprovalDetail, ApprovalPlan, zh } from '@dsh-workbench/shared';
 import {
   marketSourceRows,
+  pluginApprovalRows,
+  pluginToolIndexOf,
   publishRows,
   recordApprovalRows,
   shellApprovalDetail,
+  shellApprovalRenderer,
   shellClaimsApprovalDetail,
   versionLineOf,
 } from '../approval-detail';
@@ -180,11 +183,15 @@ interface SeatNode {
   readonly props?: { readonly code?: unknown; readonly rows?: readonly unknown[]; readonly children?: unknown } | null;
 }
 
-function seatOf(tool: string, args: Record<string, unknown>): SeatNode | null {
+function seatOf(
+  tool: string,
+  args: Record<string, unknown>,
+  renderShell = shellApprovalDetail,
+): SeatNode | null {
   const root = { callId: 'c1', name: tool, phase: 'start', argsRaw: JSON.stringify(args) };
   const snapshot = { nodes: { values: () => [{ kind: 'tool-call', data: { root } }] } };
   const useChat = ((selector: (value: unknown) => unknown) => selector(snapshot)) as never;
-  const node = ApprovalDetail({ callId: 'c1', useChat, renderShell: shellApprovalDetail, t }) as SeatNode | null;
+  const node = ApprovalDetail({ callId: 'c1', useChat, renderShell, t }) as SeatNode | null;
   const child = node?.props?.children;
   return typeof child === 'object' && child !== null && !Array.isArray(child) ? (child as SeatNode) : node;
 }
@@ -212,6 +219,122 @@ describe('详情座的最后一档（参数里的 command）：外壳认领过�
   });
 });
 
+const PLUGIN_UNIT: UnitManifest = {
+  id: 'plugin:opencli-plugin-inventory',
+  title: { zh: 'inventory', en: 'inventory' },
+  titleKey: 'dsh-workbench.unit.plugin_inventory.title',
+  card: null,
+  tools: [
+    {
+      name: 'inventory_build',
+      writes: true,
+      opencli: { plugin: 'inventory', command: 'build', args: ['enterprise', 'wait'] },
+    },
+    {
+      name: 'inventory_builds',
+      writes: false,
+      opencli: { plugin: 'inventory', command: 'builds', args: ['job'] },
+    },
+  ],
+  host: { inject: [] },
+};
+
+const pluginTools = pluginToolIndexOf([PLUGIN_UNIT]);
+const pluginSeat = (tool: string, args: Record<string, unknown>) =>
+  seatOf(tool, args, shellApprovalRenderer(() => [PLUGIN_UNIT]));
+
+describe('插件命令的审批详情座：从清单与参数把"跑哪条命令、带什么"摆出来', () => {
+  it('★ 索引只收带 opencli 那格的工具（手写模块的工具不进）', () => {
+    expect([...pluginTools.keys()].sort()).toEqual(['inventory_build', 'inventory_builds']);
+    expect(pluginTools.get('inventory_build')).toEqual({
+      plugin: 'inventory',
+      command: 'build',
+      args: ['enterprise', 'wait'],
+    });
+    expect(pluginToolIndexOf([{ ...PLUGIN_UNIT, tools: [{ name: 'inventory_build', writes: true }] }]).size).toBe(0);
+  });
+
+  it('★★ 插件 / 命令 / 附注 / 命令声明过的参数各一行；没声明的格子不上屏', () => {
+    const rows = pluginApprovalRows(
+      {
+        plugin: 'pagoda-permission',
+        command: 'personnel-authorize',
+        args: ['ASCode', 'authorizations'],
+      },
+      {
+        ASCode: 'auth_6dc3eb9b7012119',
+        authorizations: [{ code: '20191104004', roleCode: 'dify_developer' }],
+        approval_note: '给陈孝群(20191104004)加开发者角色',
+      },
+      t,
+    );
+
+    expect(rows.map((row) => [row.label, row.value])).toEqual([
+      ['插件', 'pagoda-permission'],
+      ['命令', 'personnel-authorize'],
+      ['agent 说', '给陈孝群(20191104004)加开发者角色'],
+      ['ASCode', 'auth_6dc3eb9b7012119'],
+      ['authorizations', '[{"code":"20191104004","roleCode":"dify_developer"}]'],
+    ]);
+  });
+
+  it('★ 没给附注就没有那一行；折行压成一个空格（详情座里不重复标题的截断）', () => {
+    const without = pluginApprovalRows({ plugin: 'demo', command: 'run', args: ['page'] }, { page: 1 }, t);
+    expect(without.some((row) => row.label === 'agent 说')).toBe(false);
+
+    const folded = pluginApprovalRows(
+      { plugin: 'demo', command: 'run', args: [] },
+      { approval_note: '第一行\n  第二行' },
+      t,
+    );
+    expect(folded.at(-1)).toEqual({ label: 'agent 说', value: '第一行 第二行' });
+  });
+
+  it('★ 值怎么上屏：字符串原样、数字 / 布尔 / null 照写、对象与数组走紧凑 JSON（不出 [object Object]）', () => {
+    const rows = pluginApprovalRows(
+      { plugin: 'demo', command: 'run', args: ['page', 'dry', 'target', 'options', 'empty'] },
+      { page: 3, dry: false, target: null, options: { k: 'v' }, empty: '' },
+      t,
+    );
+
+    expect(rows.slice(2).map((row) => row.value)).toEqual(['3', 'false', 'null', '{"k":"v"}', '']);
+    expect(rows.map((row) => row.value).join(' ')).not.toMatch(/undefined|NaN|\[object/);
+  });
+
+  it('★★ 真调用：详情座认领插件命令画那张表，agent 塞的 command 进不来', () => {
+    const node = pluginSeat('inventory_build', {
+      enterprise: 'tencent',
+      command: 'rm -rf /',
+      approval_note: '把预发那条构建发出去',
+    });
+
+    expect(node?.type).toBe(ApprovalPlan);
+    expect(node?.props?.code).toBeUndefined();
+    const rows = (node?.props?.rows ?? []) as readonly { label: string; value: string }[];
+    expect(rows.map((row) => [row.label, row.value])).toEqual([
+      ['插件', 'inventory'],
+      ['命令', 'build'],
+      ['agent 说', '把预发那条构建发出去'],
+      ['enterprise', 'tencent'],
+    ]);
+  });
+
+  it('★ 不在索引里的工具照旧走 command 兜底（认领不能把那一档一起吃掉）', () => {
+    expect(pluginSeat('bash', { command: 'rm -rf /tmp/x' })?.props?.code).toBe('rm -rf /tmp/x');
+  });
+
+  it('★ 清单每次画的时候现读：插件这一版没合成出来，下一版出来就跟着认领', () => {
+    let manifests: readonly UnitManifest[] = [];
+    const render = shellApprovalRenderer(() => manifests);
+
+    expect(seatOf('inventory_build', { enterprise: 'tencent' }, render)?.props?.rows).toBeUndefined();
+
+    manifests = [PLUGIN_UNIT];
+
+    expect(seatOf('inventory_build', { enterprise: 'tencent' }, render)?.props?.rows).toHaveLength(3);
+  });
+});
+
 describe('座位的查找顺序：模块自己的 renderer → 外壳那张表 → 参数里的 command → 空', () => {
   const DETAIL = code(read('../../../../shared/src/components/ApprovalDetail.tsx'));
   const CLIENT = code(read('../client.tsx'));
@@ -228,7 +351,7 @@ describe('座位的查找顺序：模块自己的 renderer → 外壳那张表 �
   });
 
   it('★ 注册处把外壳那张表交出去（不交这一族永远是空的）', () => {
-    expect(CLIENT).toContain('renderShell: shellApprovalDetail');
+    expect(CLIENT).toContain('renderShell: shellApprovalRenderer(units.declared)');
     expect(CLIENT).toContain("'conversation.approval.detail'");
   });
 

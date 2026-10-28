@@ -261,6 +261,21 @@ describe('★ agent 的附注：只补在文案末尾，判定与审计那半一
     expect(en).not.toContain('the agent says');
   });
 
+  it('★ 套件说"附注进详情座"（noteInDetail）⇒ 标题一个字都不加，判定照旧', async () => {
+    const inDetail: ApprovalPolicy = () => ({
+      kind: 'ask',
+      reason: 'writes for real',
+      question: { en: 'it really does it. Allow?', zh: '会真的做这件事，允许吗？' },
+      fallback: { en: 'The agent wants to do it. Allow?', zh: 'agent 想真的做这件事，允许吗？' },
+      noteInDetail: true,
+    });
+
+    const decision = await approvalFor(noted(writer), { writes: true, policy: inDetail, declaredNote: true });
+
+    expect(askedText(decision)).toBe('agent 想真的做这件事，允许吗？');
+    expect(askedText(decision)).not.toContain(NOTE);
+  });
+
   it('没明细时接在那句整句后面', async () => {
     const decision = await approvalFor(noted(writer), { writes: true, policy: asking, declaredNote: true });
 

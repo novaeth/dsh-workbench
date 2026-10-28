@@ -35,6 +35,7 @@ export * from './components/board-module.js';
 export * from './components/icons.js';
 export * from './config/constants.js';
 export * from './config/storage.js';
+export * from './contract/approval.js';
 export * from './contract/blocker.js';
 export * from './contract/data.js';
 export * from './contract/extension.js';

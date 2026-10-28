@@ -99,6 +99,19 @@ describe('createClientUnitRegistry', () => {
     expect(registry.manifests()).toEqual([]);
   });
 
+  it('★ declared 是宿主担保的全部清单：没有浏览器半侧的合成单元（opencli 插件）也在里面', () => {
+    const registry = createClientUnitRegistry();
+    registry.setManifests([manifest('issues'), manifest('plugin:opencli-plugin-inventory')]);
+    registry.register(face('issues'));
+
+    expect(registry.manifests().map((item) => item.id)).toEqual(['issues']);
+    expect(registry.declared().map((item) => item.id)).toEqual(['issues', 'plugin:opencli-plugin-inventory']);
+
+    registry.setManifests([]);
+
+    expect(registry.declared()).toEqual([]);
+  });
+
   it('★ 没有卡片的模块（清单 card: null）：面照挂、花名册里有它，但看板上不出现、也不算拒因', () => {
     const registry = createClientUnitRegistry();
     registry.setManifests([{ ...manifest('delivery'), card: null }, manifest('inventory')]);

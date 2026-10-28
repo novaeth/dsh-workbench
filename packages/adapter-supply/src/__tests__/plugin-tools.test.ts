@@ -3,7 +3,6 @@ import type { PluginCommand } from '../index.js';
 import {
   pluginApprovalFor,
   pluginApprovalQuestion,
-  pluginKeyArgs,
   pluginToolArgv,
   pluginToolDescription,
   pluginToolName,
@@ -138,14 +137,11 @@ describe('★ 要审批的命令带一格附注：agent 自己说这次想干什
     expect(schema.required).toEqual(['enterprise']);
   });
 
-  it('★ 附注不进 argv、也不进那句"关键参数"（它只是给审批屏看的）', () => {
+  it('★ 附注既不进 argv、也不进标题（它只在详情座里画）', () => {
     expect(pluginToolArgv(COMMAND, { enterprise: 'tencent', approval_note: '想把预发发出去' })).toEqual([
       '--enterprise=tencent',
     ]);
-    expect(pluginApprovalQuestion(COMMAND, { enterprise: 'tencent', approval_note: '想把预发发出去' })).toEqual({
-      zh: 'agent 想执行工作台 [inventory] opencli 插件的 [build] 命令（enterprise=tencent），允许吗？',
-      en: 'The agent wants to run the [build] command of the workbench opencli plugin [inventory] (enterprise=tencent). Allow?',
-    });
+    expect(pluginApprovalQuestion(COMMAND).zh).not.toContain('预发');
   });
 });
 
@@ -214,21 +210,10 @@ describe('站点会话：按命令自己的声明走，没声明才按读/写分
 });
 
 describe('审批：写 / 认不出 access 都要问，文案是那句通用的', () => {
-  it('★ 关键参数先取必填的，最多三个', () => {
-    expect(pluginKeyArgs(COMMAND, { enterprise: 'tencent', jobs: 5, dry: true })).toBe(
-      'enterprise=tencent、jobs=5、dry=true',
-    );
-    expect(pluginKeyArgs(COMMAND, {})).toBe('没有带参数');
-  });
-
-  it('★ 文案：agent 想执行 [插件] 的 [命令] 命令（关键参数），允许吗？', () => {
-    expect(pluginApprovalQuestion(COMMAND, { enterprise: 'tencent' })).toEqual({
-      zh: 'agent 想执行工作台 [inventory] opencli 插件的 [build] 命令（enterprise=tencent），允许吗？',
-      en: 'The agent wants to run the [build] command of the workbench opencli plugin [inventory] (enterprise=tencent). Allow?',
-    });
-    expect(pluginApprovalQuestion(COMMAND, {})).toEqual({
-      zh: 'agent 想执行工作台 [inventory] opencli 插件的 [build] 命令（这次没带参数），允许吗？',
-      en: 'The agent wants to run the [build] command of the workbench opencli plugin [inventory] (no arguments). Allow?',
+  it('★ 文案只留动作：插件 + 命令，参数与附注都不进标题', () => {
+    expect(pluginApprovalQuestion(COMMAND)).toEqual({
+      zh: 'agent 想执行工作台 [inventory] opencli 插件的 [build] 命令，允许吗？',
+      en: 'The agent wants to run the [build] command of the workbench opencli plugin [inventory]. Allow?',
     });
   });
 
@@ -242,13 +227,14 @@ describe('审批：写 / 认不出 access 都要问，文案是那句通用的',
       kind: 'ask',
       reason: 'inventory build 在 opencli 里标着 write',
       question: {
-        zh: 'agent 想执行工作台 [inventory] opencli 插件的 [build] 命令（enterprise=tencent），允许吗？',
-        en: 'The agent wants to run the [build] command of the workbench opencli plugin [inventory] (enterprise=tencent). Allow?',
+        zh: 'agent 想执行工作台 [inventory] opencli 插件的 [build] 命令，允许吗？',
+        en: 'The agent wants to run the [build] command of the workbench opencli plugin [inventory]. Allow?',
       },
       fallback: {
-        zh: 'agent 想执行工作台 [inventory] opencli 插件的 [build] 命令（enterprise=tencent），允许吗？',
-        en: 'The agent wants to run the [build] command of the workbench opencli plugin [inventory] (enterprise=tencent). Allow?',
+        zh: 'agent 想执行工作台 [inventory] opencli 插件的 [build] 命令，允许吗？',
+        en: 'The agent wants to run the [build] command of the workbench opencli plugin [inventory]. Allow?',
       },
+      noteInDetail: true,
     });
   });
 
