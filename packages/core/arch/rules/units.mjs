@@ -336,6 +336,103 @@ const shellHasNoRuntimeImpl = createRule({
   },
 });
 
+const ADAPTER_PACKAGE = /@dsh-workbench\/(?:adapters-default|adapter-[a-z0-9-]+)/;
+
+const shellNamesNoAdapter = createRule({
+  id: 'S69',
+  domain: 'structure',
+  level: 'L2',
+  severity: 'error',
+  title: '外壳不许点名具体适配器包',
+  hint: '默认装哪份集合是部署的事：写在 package.json 的 workbench.adapterSet 里，代码按这个 spec 动态装载。src/** 里出现 @dsh-workbench/adapters-default 或 adapter-* 就是又把实现写回了外壳。',
+  run(ctx) {
+    const findings = [];
+    for (const record of ctx.records) {
+      const rel = record.rel;
+      if (!rel.startsWith('src/')) continue;
+      if (/\.test\.(ts|tsx)$/.test(rel) || rel.includes('__tests__/')) continue;
+      const source = ctx.sourceOf(rel) ?? '';
+      source.split('\n').forEach((line, index) => {
+        const text = line.trim();
+        if (text === '') return;
+        const match = ADAPTER_PACKAGE.exec(text);
+        if (match === null) return;
+        findings.push({
+          rule: 'S69',
+          file: rel,
+          line: index + 1,
+          text: `外壳点名了具体适配器包：${text.slice(0, 80)}`,
+          hint: '默认集合走 package.json 的 workbench.adapterSet；代码只认 AdapterSet 协议（测试夹具不算）。',
+        });
+      });
+    }
+    return findings;
+  },
+});
+
+const ADAPTER_ID_BRANCH = /adapters?\.id\s*[=!]==?\s*['"`]|['"`](?:opencli|chrome-mcp)['"`]\s*[=!]==?\s*(?:adapters?\.id|runtime)/;
+
+const shellBranchesOnRuntimeId = createRule({
+  id: 'S72',
+  domain: 'structure',
+  level: 'L2',
+  severity: 'error',
+  title: '外壳不许按适配器 id 分支',
+  hint: '换不换得动适配器，看的是能力（RuntimeCapabilities），不是 id。编排面里出现 `adapters.id === "…"` 或拿 id 做相等比较，就是又把具体实现写回了选择逻辑。',
+  run(ctx) {
+    const findings = [];
+    for (const record of ctx.records) {
+      const rel = record.rel;
+      if (!RUNTIME_ORCHESTRATION.some((pattern) => pattern.test(rel))) continue;
+      if (/\.test\.(ts|tsx)$/.test(rel) || rel.includes('__tests__/')) continue;
+      if (RUNTIME_PRODUCT_FILES.some((pattern) => pattern.test(rel))) continue;
+      const source = ctx.sourceOf(rel) ?? '';
+      source.split('\n').forEach((line, index) => {
+        if (!ADAPTER_ID_BRANCH.test(line)) return;
+        findings.push({
+          rule: 'S72',
+          file: rel,
+          line: index + 1,
+          text: `外壳按适配器 id 分支：${line.trim().slice(0, 80)}`,
+          hint: '改查 runtime.capabilities(ctx)；id 只许用于日志与 health 展示。',
+        });
+      });
+    }
+    return findings;
+  },
+});
+
+const ADAPTER_IMPORT = /from\s+['"]@dsh-workbench\/(?:adapters-default|adapter-[a-z0-9-]+)/;
+
+const shellTestsUseFakeSet = createRule({
+  id: 'S70',
+  domain: 'structure',
+  level: 'L2',
+  severity: 'error',
+  title: '外壳的测试也不许依赖默认实现',
+  hint: '测试是「协议够不够用」的试金石：要一整套适配器就用 shared/testing 的 fakeAdapterSet；只是某个单元的 helper，就从所属的 adapter-* 包取（单元包进 devDependencies）。',
+  run(ctx) {
+    const findings = [];
+    for (const record of ctx.records) {
+      const rel = record.rel;
+      const isTest = /\.test\.(ts|tsx)$/.test(rel) || rel.includes('__tests__/');
+      if (!isTest) continue;
+      const source = ctx.sourceOf(rel) ?? '';
+      source.split('\n').forEach((line, index) => {
+        if (!ADAPTER_IMPORT.test(line)) return;
+        findings.push({
+          rule: 'S70',
+          file: rel,
+          line: index + 1,
+          text: `测试直接用了真实现：${line.trim().slice(0, 80)}`,
+          hint: '换成 shared/testing 的假适配器集合；这一步做完，协议缺什么会立刻现形。',
+        });
+      });
+    }
+    return findings;
+  },
+});
+
 const SIZE_PROPS = /^(min|max)-(width|height)$|^flex-basis$|^inset(-(block|inline))?(-(start|end))?$|^(row|column)-gap$/;
 const SIZE_UNITS = ['px', 'rem', 'em'];
 const DECLARATION = /([{;])\s*([a-zA-Z-]+)\s*:\s*([^;{}]*)/g;
@@ -383,5 +480,8 @@ export const unitRules = [
   shellHasNoSuiteId,
   suitesOwnTheirFolder,
   shellHasNoRuntimeImpl,
+  shellNamesNoAdapter,
+  shellBranchesOnRuntimeId,
+  shellTestsUseFakeSet,
   sizeFamilyHasNoLiterals,
 ];

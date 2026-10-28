@@ -10,6 +10,12 @@ const names = ['adapter-runtime', 'adapter-supply', 'adapter-profile', 'adapter-
 const problems = [];
 const walk = (dir) => existsSync(dir) ? readdirSync(dir).flatMap((entry) => { const full = join(dir, entry); return statSync(full).isDirectory() ? walk(full) : [full]; }) : [];
 
+const shipped = core.workbench?.adapterSet;
+if (typeof shipped !== 'string' || shipped.trim() === '') {
+  problems.push('core 的 package.json 没写 workbench.adapterSet（外壳靠它知道默认装哪份集合）');
+} else if (core.dependencies?.[shipped] === undefined) {
+  problems.push(`workbench.adapterSet 指的 ${shipped} 不在 dependencies 里`);
+}
 if (core.dependencies?.['@dsh-workbench/adapters-default'] === undefined) problems.push('core 未依赖 adapters-default');
 if (core.optionalDependencies?.['@dsh-workbench/adapters-default'] !== undefined) problems.push('core 把 adapters-default 放进了 optional');
 if (core.peerDependencies?.['@dsh-workbench/adapters-default'] !== undefined) problems.push('core 把 adapters-default 放进了 peer');
@@ -31,10 +37,9 @@ const concrete = `@dsh-workbench/(?:adapters-default|adapter-[a-z0-9-]+)(?:/[^'"
 const STATIC = new RegExp(`(?:from|import)\\s*['"]${concrete}['"]`);
 const DYNAMIC = new RegExp(`import\\s*\\([^'")]*['"]${concrete}['"]`);
 const REQUIRE = new RegExp(`require\\s*\\([^'")]*['"]${concrete}['"]`);
-const DYNAMIC_CONCRETE = new RegExp(`import\\s*\\([^'")]*['"]@dsh-workbench/adapter-[a-z0-9-]+(?:/[^'"]*)?['"]`);
 const stripBlocks = (text) => text.replace(/\/\*[\s\S]*?\*\//g, ' ');
 const areas = [
-  { dir: join(root, 'src'), label: 'core', composed: true },
+  { dir: join(root, 'src'), label: 'core' },
   { dir: join(packages, 'shared', 'src'), label: 'shared' },
   { dir: join(packages, 'module-tools', 'src'), label: 'module-tools' },
 ];
@@ -45,17 +50,8 @@ for (const area of areas) {
     if (!/\.(ts|tsx|mjs|js)$/.test(rel)) continue;
     const text = stripBlocks(readFileSync(file, 'utf8'));
     const where = `${area.label}/${rel}`;
-    if (area.composed === true && rel === 'app/host.ts') {
-      if (STATIC.test(text) || REQUIRE.test(text)) {
-        problems.push('app/host.ts 不许静态 import / require 具体适配器（只许 dynamic import 默认集合兜底）');
-      }
-      if (DYNAMIC_CONCRETE.test(text)) {
-        problems.push('app/host.ts 的 dynamic import 只许 adapters-default，不许具体 adapter 包');
-      }
-      continue;
-    }
     if (STATIC.test(text) || DYNAMIC.test(text) || REQUIRE.test(text)) {
-      problems.push(`${where} 碰了具体适配器；只有 core 的 app/host.ts 可以 dynamic import 默认集合兜底`);
+      problems.push(`${where} 点名了具体适配器包；默认集合写在 package.json 的 workbench.adapterSet 里，代码只认协议`);
     }
   }
 }

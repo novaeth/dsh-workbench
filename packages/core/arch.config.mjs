@@ -84,6 +84,7 @@ export default {
 
           'src/shared/hooks/bundle-queries.ts',
           'src/shared/hooks/market-queries.ts',
+          'src/shared/hooks/runtime-queries.ts',
         ],
       },
 
@@ -139,7 +140,7 @@ export default {
       },
     }),
 
-    { enable: ['S60', 'S62', 'S63', 'S64', 'S65', 'S66', 'S67', 'S68', 'S71', 'D31'] },
+    { enable: ['S60', 'S62', 'S63', 'S64', 'S65', 'S66', 'S67', 'S68', 'S69', 'S70', 'S71', 'S72', 'D31'] },
 
     i18n(noneI18nKit()),
     uiKit(noneKit()),
@@ -172,6 +173,144 @@ export default {
       'arch.config.mjs',
     ],
     exceptions: [
+      {
+        rule: 'S70',
+        glob: 'src/app/layouts/env-gate/__tests__/gate-hold.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/approval-screens.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/diy-tools-status.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/fake-opencli.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/market-dispatch.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/market-plugin.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/market-route.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/market-tools-harness.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/market-tools.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/market-workbench-update.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/plugin-actions.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/plugin-panel.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/plugin-section.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/plugin-tool-units-harness.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/plugin-tool-units.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/test-adapters.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/shared/api/host/__tests__/diy-preset-health.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/shared/api/host/__tests__/plugin-source.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/shared/api/host/__tests__/preflight-cases.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/shared/api/host/__tests__/version-range.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/shared/api/host/bundle-inspect-kind.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/shared/api/host/bundle-routes-self.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/shared/api/host/runtime-seed.test.ts',
+        reason:
+          '现状基线（2026-10-29）：这些测试要的是具体单元或整套真适配器的真实行为，换成 shared/testing 的假集合会让它们失去被测对象。S70 的目标是把它们逐处迁到假集合或各自所属的 adapter-* 包，每清一处就删掉一条；新测试不许再加进来。',
+      },
       {
         rule: 'S16',
         glob: '**/*.{test,spec}.{ts,tsx,mts,cts,js,mjs,cjs}',
