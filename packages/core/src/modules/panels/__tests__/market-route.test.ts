@@ -166,7 +166,7 @@ describe('添加一个 spec：按内容判它是什么，再决定走哪条路',
     expect(install).not.toHaveBeenCalled();
     expect(commands).toEqual([`'opencli' plugin install '${at}'`]);
     expect(outcome.change).toMatchObject({ application: 'applied', stage: 'install' });
-    expect(outcome.plugin).toEqual({ kind: 'opencli-plugin', pkg: '@t/plugin-a', name: 'plugina' });
+    expect(outcome.plugin).toEqual({ kind: 'runtime-plugin', pkg: '@t/plugin-a', name: 'plugina' });
     expect(outcome.supply).toEqual({ state: 'no-needs' });
   });
 
@@ -207,7 +207,7 @@ describe('添加一个 spec：按内容判它是什么，再决定走哪条路',
     expect(install).not.toHaveBeenCalled();
     expect(commands[0]).toContain('npm i --prefix');
     expect(commands.at(-1)).toContain("'opencli' plugin install");
-    expect(outcome.plugin).toEqual({ kind: 'opencli-plugin', pkg: '@t/demo', name: 'demo' });
+    expect(outcome.plugin).toEqual({ kind: 'runtime-plugin', pkg: '@t/demo', name: 'demo' });
     expect(ledger.read('@t/demo')).toMatchObject({ package: '@t/demo', registry: REGISTRY });
     expect(ledger.read('@t/demo')?.local).toBeUndefined();
   });

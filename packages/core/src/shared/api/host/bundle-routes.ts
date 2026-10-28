@@ -297,7 +297,7 @@ async function packageOverride(
     ...(shell === undefined ? {} : { shell }),
     ...(registry === undefined ? {} : { registry }),
   });
-  if (route?.kind === 'opencli-plugin') {
+  if (route !== undefined && route.kind === 'runtime-plugin') {
     if (inspection.status !== 'refused') return undefined;
     const ref = supply.splitNpmSpec(spec);
     return {

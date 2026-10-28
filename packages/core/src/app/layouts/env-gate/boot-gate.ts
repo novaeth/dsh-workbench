@@ -6,7 +6,7 @@ import { WAKE_BROWSER_ROUTE, type WakeBrowserReply } from '@/kernel/contract/pre
 import { apiGet } from '@dsh-workbench/shared';
 import { LOCALE_NS } from '@dsh-workbench/shared';
 import { devSurface } from '@/shared/dev-surface';
-import { bridgeAdvice, showsRawDetails, stepDetailText } from './gate-text';
+import { bridgeAdvice, showsRawAll, stepDetailText } from './gate-text';
 import { createGateDeadline } from './gate-deadline';
 import { el, spinnerIcon, svgIcon } from './gate-dom';
 
@@ -14,9 +14,11 @@ const POLL_MS = 400;
 
 const GIVE_UP_MS = 120_000;
 
-function stepLabel(id: PreflightStepId, t: Translate): string {
+function stepLabel(step: PreflightStep, t: Translate): string {
+  const id: PreflightStepId = step.id;
   if (id === 'toolchain') return t('env.step.toolchain');
-  if (id === 'opencli') return t('env.step.opencli');
+  if (id === 'runtime') return step.label ?? t('env.step.adapter');
+  if (id === 'opencli') return t('env.step.runtime');
   if (id === 'warm') return t('env.step.warm');
   if (id === 'diy') return t('env.step.diy');
   return t('env.step.bridge');
@@ -237,7 +239,7 @@ export function createBootGate(
     const mark = el('span', styles.mark);
     mark.setAttribute('aria-hidden', 'true');
     const row: StepRow = { item, mark, detail: el('span', styles.detail), status: '' };
-    item.append(mark, el('span', styles.label, stepLabel(step.id, t)), row.detail);
+    item.append(mark, el('span', styles.label, stepLabel(step, t)), row.detail);
     rows.set(step.id, row);
     return row;
   }
@@ -279,10 +281,9 @@ export function createBootGate(
 
     const rawLines = snapshot.steps.flatMap((step) => {
       const detail = step.detail ?? '';
-      return detail === '' ? [] : [`${stepLabel(step.id, t)}: ${detail}`];
+      return detail === '' ? [] : [`${stepLabel(step, t)}: ${detail}`];
     });
     rawAllBody.textContent = rawLines.join('\n');
-    rawAll.hidden = !showsRawDetails(snapshot) || rawLines.length === 0;
 
     progressRow.hidden = snapshot.phase !== 'installing';
     if (snapshot.phase === 'installing') startElapsed();
@@ -358,6 +359,9 @@ export function createBootGate(
       diyRawText.textContent = gap.detail;
       diyRaw.hidden = gap.detail === '';
     }
+
+    const panelShown = !actions.hidden || !bridge.hidden || !diy.hidden;
+    rawAll.hidden = !showsRawAll(snapshot, panelShown) || rawLines.length === 0;
   }
 
   async function poll(): Promise<void> {

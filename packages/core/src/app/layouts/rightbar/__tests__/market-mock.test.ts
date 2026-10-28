@@ -5,7 +5,6 @@ import { installedPluginRows } from '../market-plugin-rows';
 import {
   installedRows,
   marketActions,
-  marketAsksAgent,
   marketRows,
   sharedActions,
   sharedRows,
@@ -99,9 +98,6 @@ describe('MARKET_MOCKS', () => {
       if (mock.expect.state === undefined) continue;
       expect(rows[0]?.state, mock.id).toBe(mock.expect.state);
       expect(marketActions(rows[0] as never), mock.id).toEqual(mock.expect.actions);
-      if (mock.expect.askAgent !== undefined) {
-        expect(marketAsksAgent(rows[0] as never), mock.id).toBe(mock.expect.askAgent);
-      }
 
       if (mock.expect.titleChars !== undefined) {
         expect(rows[0]?.titleKey.length, mock.id).toBeGreaterThanOrEqual(mock.expect.titleChars);

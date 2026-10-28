@@ -132,7 +132,7 @@ describe('两屏的分工：市场管机器级默认、面板管本工作区', (
     const row = read('market-section.tsx');
 
     expect(row).toMatch(/danger \? 'wb-dangerAction' : update \? styles\.marketUpdateAction/);
-    expect(row).toContain("'update-workbench',");
+    expect(read('market-view-text.ts')).toContain('UPDATE_ACTIONS');
     expect(row).toMatch(/\{t\(ACTION_LABEL_KEY\[action\]\)\}/);
     expect(row).not.toContain('marketIconAction');
   });

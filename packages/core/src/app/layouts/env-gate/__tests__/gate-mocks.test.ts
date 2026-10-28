@@ -164,7 +164,7 @@ describe('GATE_MOCKS', () => {
     const opencli = { id: 'opencli', status: 'ok', detail: '1.8.8' };
 
     expect(stepDetailText(toolchain as never, snapshot, t)).toBe('env.toolchain.ok');
-    expect(stepDetailText(opencli as never, snapshot, t)).toBe('env.opencli.ok');
+    expect(stepDetailText(opencli as never, snapshot, t)).toBe('env.runtime.ok');
     for (const step of [toolchain, opencli]) {
       expect(stepDetailText(step as never, snapshot, t), step.id).not.toMatch(/\d+\.\d+/);
     }

@@ -1,6 +1,7 @@
 import { Fragment, createElement as h } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import { Spinner } from '@dsh-workbench/shared';
+import { runtimeTermsOf } from '@/shared/hooks/runtime-terms';
 import styles from './AddModule.module.css';
 
 import {
@@ -122,7 +123,7 @@ function AddModuleContent({ t, onClose, onInstalled }: Omit<AddModuleDialogProps
         if (!installing) onClose();
       }}
       title={t('panels.market.add.title')}
-      description={t('panels.market.add.description')}
+      description={t('panels.market.add.description', runtimeTermsOf(t))}
       closeLabel={t('panels.market.add.close')}
       className={styles.dialog}
       contentClassName={styles.content}

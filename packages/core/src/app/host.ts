@@ -14,6 +14,7 @@ import {
 } from '@dsh-workbench/shared/host';
 import { PANEL_STATE_SERVICE, createFactLog, createPanelStateStore, toolUnits, wroteNow } from '@dsh-workbench/shared/host';
 import { basename } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { registerFactStream } from '@/shared/api/host/events';
 import { applyPlanFailures } from '@/kernel/host/mount-units';
 import { WORKSHOP_TITLE } from '@/kernel/contract/diy';
@@ -51,15 +52,30 @@ import { notifyLongTaskStop } from '@/shared/api/host/long-task-notice';
 export const name = 'dsh-workbench';
 interface ReleasedLookup { isReleased(id: string): boolean }
 export const inject = ['webServer'];
-async function defaultAdapterSet(ctx: DshHostContext): Promise<AdapterSet> {
-  const mod = await import('@dsh-workbench/adapters-default');
-  return mod.createAdapterSet(ctx);
+function shippedAdapterSetSpec(moduleUrl: string): string {
+  const read = JSON.parse(readFileSync(new URL('../../package.json', moduleUrl), 'utf8')) as {
+    readonly workbench?: { readonly adapterSet?: unknown };
+  };
+  const spec = read.workbench?.adapterSet;
+  if (typeof spec !== 'string' || spec.trim() === '')
+    throw new Error('package.json 没写 workbench.adapterSet：外壳不知道该装哪份适配器集合');
+  return spec.trim();
+}
+
+async function shippedAdapterSet(ctx: DshHostContext): Promise<AdapterSet> {
+  const spec = shippedAdapterSetSpec(import.meta.url);
+  const mod = (await import(spec)) as {
+    readonly createAdapterSet?: (context: DshHostContext) => AdapterSet | Promise<AdapterSet>;
+  };
+  const factory = mod.createAdapterSet;
+  if (typeof factory !== 'function') throw new Error(`随包的适配器集合 ${spec} 没导出 createAdapterSet(ctx)`);
+  return await factory(ctx);
 }
 export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Promise<void> {
   const facts = createFactLog();
   const values = createValueHandoff();
   const panelState = createPanelStateStore();
-  const resolved = await resolveAdapterSet(ctx, config?.adapterSet, () => defaultAdapterSet(ctx));
+  const resolved = await resolveAdapterSet(ctx, config?.adapterSet, () => shippedAdapterSet(ctx));
   const adapters: AdapterSet = resolved.set;
   const loaded = resolved.load;
   adapters.runtime.seed(ctx, { corePackageUrl: import.meta.url, log: (message) => warn(ctx, message) });
@@ -86,8 +102,13 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   const baseHealth = routes.health;
   const adapterFailure = loaded.ok || loaded.failure === 'not-configured' ? null : loaded.failure;
   const adapterSpec = loaded.spec ?? null;
+  const capabilities = adapters.runtime.capabilities(ctx);
+  const runtimeProfile = adapters.runtime.profile?.(ctx) ?? null;
+  const runtimeCheck = adapters.runtime.check;
   routes.health = async (search) => ({
     ...((await baseHealth?.(search)) as Record<string, unknown>),
+    capabilities,
+    runtimeProfile,
     adapterSet: {
       configured: adapterSpec,
       active: adapters.id,
@@ -346,6 +367,9 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
       ctx,
       shell,
       runtimeCommands,
+      runtimeCapabilities: capabilities,
+      ...(runtimeCheck === undefined ? {} : { runtimeCheck: () => runtimeCheck(ctx) }),
+      ...(runtimeProfile === null ? {} : { runtimeLabel: runtimeProfile.label }),
       warmReads: () => [...mounted.values()].flatMap((item) => item.plan.warmReads()),
     });
     routes.capability = capabilityHandler(async (unit, force) => {

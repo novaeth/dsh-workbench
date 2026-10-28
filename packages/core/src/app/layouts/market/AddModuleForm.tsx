@@ -2,6 +2,7 @@ import { createElement as h } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import styles from './AddModule.module.css';
 import { TextField } from '@dsh-workbench/shared';
+import { runtimeTermsOf } from '@/shared/hooks/runtime-terms';
 import { GUIDE_ITEMS, problemKey } from './add-module-text';
 import { AddModuleRegistry } from './AddModuleRegistry';
 import type { AddModuleState } from './use-add-module';
@@ -32,7 +33,7 @@ export function AddModuleForm({ t, state }: { t: Translate; state: AddModuleStat
 
       {state.problem === null ? null : (
         <p className={styles.problem} role="alert">
-          {t(problemKey(state.problem.problem), { reason: state.problem.reason })}
+          {t(problemKey(state.problem.problem), { ...runtimeTermsOf(t), reason: state.problem.reason })}
         </p>
       )}
       {state.failure === null ? null : (

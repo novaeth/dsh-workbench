@@ -1,6 +1,7 @@
 import { Fragment, createElement as h } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import { Spinner } from '@dsh-workbench/shared';
+import { runtimeTermsOf } from '@/shared/hooks/runtime-terms';
 import styles from './AddModule.module.css';
 
 import {
@@ -59,7 +60,7 @@ export function AddModulePreview({ t, state }: { t: Translate; state: AddModuleS
         {preview.description === '' ? null : <p className={styles.subjectDesc}>{preview.description}</p>}
         <p className={styles.subjectMeta}>{source}</p>
       </div>
-      {plugin ? <p className={styles.result}>{t('panels.market.add.pluginPreview')}</p> : null}
+      {plugin ? <p className={styles.result}>{t('panels.market.add.pluginPreview', runtimeTermsOf(t))}</p> : null}
     </div>
   );
 }
@@ -115,7 +116,7 @@ export function AddModuleResult({ t, state }: { t: Translate; state: AddModuleSt
       </div>
 
       {kind === 'plugin' && plugin !== undefined ? (
-        <p className={styles.result}>{t('panels.market.add.installedPlugin', { name: plugin.name ?? plugin.pkg })}</p>
+        <p className={styles.result}>{t('panels.market.add.installedPlugin', { ...runtimeTermsOf(t), name: plugin.name ?? plugin.pkg })}</p>
       ) : kind === 'failed' ? (
         <p className={styles.resultWarn} role="alert">
           {t('panels.market.add.failed', { reason })}

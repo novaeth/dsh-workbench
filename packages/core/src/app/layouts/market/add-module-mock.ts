@@ -142,7 +142,7 @@ export const ADD_MODULE_MOCKS: readonly AddModuleMock[] = [
       change: change({ target: 'opencli-plugin-inventory' }),
       module: { kind: 'unknown', pkg: 'opencli-plugin-inventory' },
       supply: { state: 'no-needs' },
-      plugin: { kind: 'opencli-plugin', pkg: 'opencli-plugin-inventory', name: 'inventory' },
+      plugin: { kind: 'runtime-plugin', pkg: 'opencli-plugin-inventory', name: 'inventory' },
     },
   },
   {

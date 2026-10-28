@@ -9,6 +9,7 @@ import { CONFIG_SYNC_RESOURCE, CONFIG_SYNC_ROUTE } from '@/kernel/contract/confi
 import { Spinner } from '@dsh-workbench/shared';
 import type { ModuleBlocker, Translate } from '@dsh-workbench/shared';
 import { MIN_BUSY_MS, Note, SkeletonRows, blockerOfError } from '@dsh-workbench/shared';
+import { runtimeProfileValue } from '@/shared/hooks/use-runtime-capabilities';
 import { Button, IconRefreshOutlineRegular, StateDot } from '@deepseek-ai/dsh-client-ui-primitives';
 import { useApiResource } from '@/shared/hooks/use-api-resource';
 import { useHostWrite } from '@/shared/hooks/use-host-write';
@@ -234,7 +235,7 @@ export function ConfigSyncItem({ t }: ConfigSyncItemProps) {
   const value = snapshot.phase === 'ready' ? snapshot.value : undefined;
   const failure = useMemo(() => {
     if (snapshot.phase !== 'error') return null;
-    const blocker = blockerOfError(snapshot.error, t);
+    const blocker = blockerOfError(snapshot.error, t, { diagnose: runtimeProfileValue()?.diagnose });
     return blocker.hint === undefined ? { ...blocker, hint: t('configSync.readHint') } : blocker;
   }, [snapshot.phase, snapshot.error, t]);
   useEffect(() => {

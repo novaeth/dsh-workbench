@@ -10,6 +10,15 @@ const t = ((key: string, params?: Readonly<Record<string, string>>) => {
   return text;
 }) as unknown as Translate;
 
+const TERMS = {
+  plugin: zh['runtime.plugin'],
+  pluginOf: zh['runtime.pluginOf'],
+  pluginThing: zh['runtime.pluginThing'],
+  pluginArea: zh['runtime.pluginArea'],
+};
+
+const PREVIEW_TEXT = t('panels.market.add.pluginPreview', TERMS);
+
 const BASE = { choices: [] } as unknown as AddModuleState;
 
 function stateOf(id: string): AddModuleState {
@@ -39,7 +48,7 @@ describe('添加模块浮层那两屏（插件态）', () => {
 
     expect(shown).toContain('opencli-plugin-dashboards');
     expect(shown).toContain('1.0.16');
-    expect(shown).toContain(zh['panels.market.add.pluginPreview']);
+    expect(shown).toContain(PREVIEW_TEXT);
     expect(shown).toContain('dashboards');
   });
 
@@ -47,7 +56,7 @@ describe('添加模块浮层那两屏（插件态）', () => {
     const shown = texts(AddModulePreview({ t, state: stateOf('preview') })).join('|');
 
     expect(shown).toContain('最小样本模块');
-    expect(shown).not.toContain(zh['panels.market.add.pluginPreview']);
+    expect(shown).not.toContain(PREVIEW_TEXT);
   });
 
   it('★ 装完的插件那一屏只说装上了，不劝人重启（插件不需要重启）', () => {

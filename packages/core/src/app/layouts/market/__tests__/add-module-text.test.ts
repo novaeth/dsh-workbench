@@ -127,9 +127,15 @@ describe('添加模块浮层：文案与来源选项（按 dsh 插件页的骨�
     const banned = ['外壳', '协议', '声明', '清单', 'apiVersion'];
     const reasonKey = failureReasonKey('not-a-module-or-plugin');
     expect(reasonKey).toBeDefined();
+    const terms = {
+      plugin: zh['runtime.plugin'],
+      pluginOf: zh['runtime.pluginOf'],
+      pluginThing: zh['runtime.pluginThing'],
+      pluginArea: zh['runtime.pluginArea'],
+    };
     const seen = [
-      t(problemKey('not-a-module-or-plugin')),
-      t('panels.market.add.failed', { reason: t(reasonKey ?? '') }),
+      t(problemKey('not-a-module-or-plugin'), terms),
+      t('panels.market.add.failed', { ...terms, reason: t(reasonKey ?? '', terms) }),
     ];
 
     for (const text of seen) {

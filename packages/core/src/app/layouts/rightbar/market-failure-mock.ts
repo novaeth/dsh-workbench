@@ -101,7 +101,7 @@ export function failureCardMocks(input: {
           fix: { kind: 'handoff' },
         },
       },
-      expect: { rows: 1, state: 'missing', actions: ['install'], askAgent: false },
+      expect: { rows: 1, state: 'missing', actions: ['install'] },
     },
   ];
 }
@@ -146,7 +146,7 @@ export function binInstallMocks(input: {
           ],
         },
       },
-      expect: { rows: 1, state: 'missing', actions: ['install'], askAgent: false },
+      expect: { rows: 1, state: 'missing', actions: ['install'] },
     },
     {
       id: 'bin-no-install',
@@ -173,7 +173,7 @@ export function binInstallMocks(input: {
           ],
         },
       },
-      expect: { rows: 1, state: 'missing', actions: [], askAgent: true },
+      expect: { rows: 1, state: 'missing', actions: [] },
     },
   ];
 }

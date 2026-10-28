@@ -75,6 +75,7 @@ export interface MarketViewProps {
   readonly manifests: readonly UnitManifest[];
   readonly installable?: ReadonlySet<string> | null | undefined;
   readonly capabilities: CapabilityMap | null;
+  readonly runtimePluginMarket?: boolean | undefined;
   readonly freshness: MarketFreshness;
   readonly onChanged: (options?: { readonly force?: boolean }) => void;
   readonly onPending?: ((pending: boolean) => void) | undefined;
@@ -94,7 +95,7 @@ export interface MarketViewProps {
   readonly changed?: Readonly<Record<string, number>> | undefined;
 }
 
-function MarketBody({
+export function MarketBody({
   t,
   self,
   shown,
@@ -111,8 +112,10 @@ function MarketBody({
   checks,
   onRecheck,
   rechecking,
+  runtimePluginMarket,
 }: {
   readonly t: Translate;
+  readonly runtimePluginMarket?: boolean | undefined;
   readonly self: MarketRow | undefined;
   readonly shown: readonly MarketRow[];
   readonly pluginList: readonly MarketRow[];
@@ -189,6 +192,7 @@ function MarketBody({
           rechecking={rechecking}
         />
       )}
+      {runtimePluginMarket === false ? null : (
       <MarketSection
         t={t}
         titleKey="panels.market.sectionPlugins"
@@ -205,6 +209,7 @@ function MarketBody({
         onRecheck={onRecheck}
         rechecking={rechecking}
       />
+      )}
 
       {foot ? <PanelFoot size="md" text={t('panels.market.foot')} /> : null}
 
@@ -323,6 +328,7 @@ export function MarketView({
   manifests,
   installable,
   capabilities,
+  runtimePluginMarket,
   freshness,
   onChanged,
   onPending,
@@ -436,6 +442,7 @@ export function MarketView({
     <>
       <MarketBody
         t={t}
+        runtimePluginMarket={runtimePluginMarket}
         self={self}
         shown={shown}
         pluginList={pluginList}

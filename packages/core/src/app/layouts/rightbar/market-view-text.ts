@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import type { CapabilityMap } from '@/shared/hooks/use-capabilities';
 import { namesOf, type MarketNameMap, type NameSource, type TitleResolve } from './market-names';
-import { MARKET_STATE_KEY, capabilityOutdated, marketRowTitle } from './market-rows';
+import { capabilityOutdated } from './market-rows';
 import type { MarketRow, MarketRowAction, ModuleUpdateMap } from './market-rows';
 import type { SharedRow } from './market-shared-rows';
 import { MODULE_SETTLE_MS, settleLanded } from './market-settle';
@@ -37,6 +37,10 @@ export const ACTION_LABEL_KEY: Readonly<Record<MarketRowAction, string>> = {
   'migrate-workbench': 'panels.market.migrateAction',
   'dismiss-followup': 'panels.market.dismissFollowUp',
 };
+
+export const UPDATE_ACTIONS: readonly MarketRowAction[] = (
+  Object.keys(ACTION_LABEL_KEY) as MarketRowAction[]
+).filter((action) => ACTION_LABEL_KEY[action] === 'panels.market.update');
 
 export interface HeldRow {
   readonly id: string;
@@ -216,16 +220,3 @@ export function pendingRowOf(input: {
   };
 }
 
-export function askAgentReason(row: MarketRow, t: Translate): string {
-  if (row.hint !== undefined) return t(row.hint);
-  if (row.note !== undefined) return t(row.note.key, row.note.params);
-  return t(MARKET_STATE_KEY[row.state]);
-}
-
-export function askAgentText(row: MarketRow, t: Translate): string {
-  return t('panels.market.askAgentText', {
-    name: marketRowTitle(row, t),
-    unit: row.id,
-    reason: askAgentReason(row, t),
-  });
-}

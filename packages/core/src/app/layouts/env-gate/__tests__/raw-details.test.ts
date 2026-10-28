@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PreflightSnapshot, PreflightStep } from '@dsh-workbench/shared/host';
-import { showsRawDetails } from '../gate-text';
+import { showsRawAll, showsRawDetails } from '../gate-text';
 import { GATE_MOCKS } from '../gate-mock';
 
 function snapshotOf(phase: PreflightSnapshot['phase'], steps: readonly PreflightStep[]): PreflightSnapshot {
@@ -38,5 +38,27 @@ describe('「详细输出（排障用）」只在有东西要排的时候出现'
     const failed = snapshotOf('failed', [{ id: 'opencli', status: 'running' }]);
 
     expect(showsRawDetails(failed)).toBe(true);
+  });
+});
+
+describe('只摆一份「详细输出」', () => {
+  it('已经摆了专用面板（它自带一份详细输出）→ 底下那份汇总不再重复', () => {
+    const failed = snapshotOf('failed', [{ id: 'runtime', status: 'failed', detail: 'MCP server 起不来' }]);
+
+    expect(showsRawDetails(failed)).toBe(true);
+    expect(showsRawAll(failed, true)).toBe(false);
+  });
+
+  it('没有专用面板、又确实有 warn → 汇总那份要摆', () => {
+    const warned = snapshotOf('checking', [{ id: 'runtime', status: 'warn', detail: '2 个工具' }]);
+
+    expect(showsRawAll(warned, false)).toBe(true);
+  });
+
+  it('全绿 → 两份都不摆', () => {
+    const ready = snapshotOf('ready', [{ id: 'runtime', status: 'ok', detail: '32 个工具' }]);
+
+    expect(showsRawAll(ready, false)).toBe(false);
+    expect(showsRawAll(ready, true)).toBe(false);
   });
 });

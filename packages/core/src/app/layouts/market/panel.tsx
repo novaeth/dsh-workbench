@@ -16,6 +16,7 @@ import { marketHintOf } from '../rightbar/market-hint';
 import { useMarketBusy } from '../rightbar/market-busy';
 import { useMarketInstallState } from '../rightbar/market-install';
 import { MarketView } from '../rightbar/MarketView';
+import { pluginMarketOf, useRuntimeCapabilities } from '@/shared/hooks/use-runtime-capabilities';
 import type { TitleResolve } from '../rightbar/market-names';
 import { DiscoverPanel } from './DiscoverPanel';
 import { MarketHeader, type MarketTab } from './market-header';
@@ -106,6 +107,7 @@ function MarketPanel({
   } = useModuleVersions();
   const machineBoard = useEnabledUnits(0, null);
   const install = useMarketInstallState();
+  const runtimeCapabilities = useRuntimeCapabilities();
 
   const [adding, setAdding] = useState(false);
   const [acting, setActing] = useState(false);
@@ -170,6 +172,7 @@ function MarketPanel({
           manifests={manifests}
           installable={installable}
           capabilities={capabilities}
+          runtimePluginMarket={pluginMarketOf(runtimeCapabilities)}
           freshness={shownFreshness}
           onChanged={reload}
           onPending={setActing}

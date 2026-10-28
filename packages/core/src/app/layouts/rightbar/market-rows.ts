@@ -213,14 +213,6 @@ export function marketSwitchLocked(row: MarketRow): boolean {
   return SWITCH_LOCKED.has(row.state);
 }
 
-export function marketAsksAgent(row: MarketRow): boolean {
-  if (row.workbench === true || row.plugin === true) return false;
-  if (row.state === 'installed' || row.state === 'inactive' || row.state === 'outdated') return false;
-  if (row.state === 'checking' || row.state === 'pending-restart') return false;
-  if (row.state === 'pending-followup') return false;
-  return !marketActions(row).includes('install');
-}
-
 export function marketActions(row: MarketRow): MarketRowAction[] {
   if (row.workbench === true) {
     if (row.followUp !== undefined && row.state === 'pending-followup') {

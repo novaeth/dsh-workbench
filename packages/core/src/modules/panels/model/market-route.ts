@@ -185,6 +185,6 @@ export async function installRouted(deps: BundleInstallDeps): Promise<BundleInst
     deps,
     pkg,
     { application: 'applied', stage: 'install', changed: true, target: pkg },
-    { kind: 'opencli-plugin', pkg, ...(route.pluginName === undefined ? {} : { name: route.pluginName }) },
+    { kind: 'runtime-plugin', pkg, ...(route.pluginName === undefined ? {} : { name: route.pluginName }) },
   );
 }

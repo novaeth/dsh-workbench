@@ -5,12 +5,19 @@ import type {
   DshToolRunContext,
 } from '@dsh-workbench/shared';
 import type { DebugStore, PanelStateStore } from '@dsh-workbench/shared/host';
-import { PANEL_STATE_SERVICE, UNITS_SERVICE, supplyPortOf } from '@dsh-workbench/shared/host';
+import { PANEL_STATE_SERVICE, UNITS_SERVICE, WORKBENCH_ADAPTERS, supplyPortOf } from '@dsh-workbench/shared/host';
+import type { AdapterSet } from '@dsh-workbench/shared/host';
 
 import { registerComponentsTool } from './diy-components';
 import { registerDebugTools } from './diy-debug-tools';
 import { registerLogTools } from './diy-logs';
 import { registerBrowserTools } from './diy-browser-tools';
+
+export function browserBridgeOn(ctx: DshHostContext): boolean {
+  const adapters = ctx.get<AdapterSet>(WORKBENCH_ADAPTERS, false);
+  if (adapters === undefined) return true;
+  return adapters.runtime.capabilities(ctx).browserBridge;
+}
 import { registerSpecTool } from './diy-spec';
 import { registerPublishTool } from './diy-publish';
 import type { UnitRegistry } from '@/kernel/host/unit-registry';
@@ -319,7 +326,7 @@ export function registerDiyTools(
     tools.register(reconTool),
     ...registerSpecTool(ctx, tools),
     ...registerLogTools(ctx, tools),
-    ...registerBrowserTools(ctx, tools),
+    ...(browserBridgeOn(ctx) ? registerBrowserTools(ctx, tools) : []),
     ...registerDebugTools(ctx, tools, debug),
     tools.register(showTool),
     tools.register(installTool),
