@@ -109,6 +109,12 @@ export const STORAGE_KEY_RIGHTBAR_COLUMN = "dsh-workbench.rightbar.column";
 /** 记住右栏宽度（像素数字的字符串）的 localStorage 键。 */
 export const STORAGE_KEY_RIGHTBAR_WIDTH = "dsh-workbench.rightbar.width";
 
+/** 记住「添加模块」浮层选过的安装源的 localStorage 键。 */
+export const STORAGE_KEY_MARKET_REGISTRY = "dsh-workbench.market.registry";
+
+/** 记住「添加模块」浮层上次填过的自定义源地址的 localStorage 键。 */
+export const STORAGE_KEY_MARKET_REGISTRY_CUSTOM = "dsh-workbench.market.registry.custom";
+
 /** 右栏宽度达到或超过多少像素就按全屏对待（阈值，像素）。 */
 export const RIGHTBAR_FULLSCREEN_WIDTH = 768;
 

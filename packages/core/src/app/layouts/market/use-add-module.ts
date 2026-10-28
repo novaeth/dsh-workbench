@@ -24,6 +24,12 @@ import {
   type RegistryChoice,
   type RegistryOption,
 } from './add-module-text';
+import {
+  readRegistryPrefs,
+  reconcileRegistryChoice,
+  writeRegistryChoice,
+  writeRegistryCustom,
+} from './add-module-registry-prefs';
 
 export type { AddModulePhase, AddModulePreview } from './add-module-text';
 
@@ -75,9 +81,10 @@ export function useAddModule(options: {
   readonly failedText: string;
 }): AddModuleState {
   const { onInstalled, failedText } = options;
+  const [prefs] = useState(readRegistryPrefs);
   const [spec, setSpec] = useState('');
-  const [choice, setChoice] = useState<RegistryChoice>({ kind: 'default', value: '' });
-  const [custom, setCustom] = useState('');
+  const [choice, setChoice] = useState<RegistryChoice>(prefs.choice);
+  const [custom, setCustom] = useState(prefs.custom);
   const [registryOpen, setRegistryOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [phase, setPhase] = useState<AddModulePhase>('idle');
@@ -98,7 +105,9 @@ export function useAddModule(options: {
     let alive = true;
     void readBundleRegistries().then((response) => {
       if (!alive) return;
-      setChoices(registryOptions(response.ok ? response.registries : null));
+      const options = registryOptions(response.ok ? response.registries : null);
+      setChoices(options);
+      setChoice((previous) => reconcileRegistryChoice(previous, options));
     });
     return () => {
       alive = false;
@@ -206,6 +215,16 @@ export function useAddModule(options: {
     setPhase('idle');
   }, []);
 
+  const choose = useCallback((next: RegistryChoice): void => {
+    setChoice(next);
+    writeRegistryChoice(next);
+  }, []);
+
+  const chooseCustom = useCallback((value: string): void => {
+    setCustom(value);
+    writeRegistryCustom(value);
+  }, []);
+
   return {
     spec,
     choice,
@@ -221,10 +240,8 @@ export function useAddModule(options: {
     removing,
     builds: outcome?.change.pendingBuilds ?? [],
     setSpec,
-    setChoice: useCallback((next: RegistryChoice): void => {
-      setChoice(next);
-    }, []),
-    setCustom,
+    setChoice: choose,
+    setCustom: chooseCustom,
     toggleRegistry: useCallback(() => setRegistryOpen((value) => !value), []),
     closeRegistry: useCallback(() => setRegistryOpen(false), []),
     toggleGuide: useCallback(() => setGuideOpen((value) => !value), []),
