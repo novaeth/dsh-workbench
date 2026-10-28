@@ -48,6 +48,15 @@
    （契约 / 纯逻辑 / 宿主工具）
 ```
 
+默认装哪份集合由 `packages/core/package.json` 的 `workbench.adapterSet` 决定 —— 外壳按这个 spec 动态装载，
+`packages/core/src` 里不出现任何适配器包名（S69 钉着）。协议只有三样东西：`AdapterSet`（成员与版本）、
+`RuntimeCapabilities`（有没有命令行 / 插件市场 / 浏览器桥 / 平台读 / 共用依赖）、`RuntimeProfile`（叫法、术语与
+排障话术）。界面按能力渲染入口，不按适配器 id 分支（S72）。
+
+第二份实现是同仓的 `@dsh-workbench/adapters-chrome-mcp`（实验包，`private: true`，stdio + 仓内 stub MCP server）。
+它跟默认集合跑**同一份** `check:adapter-contract`；要切它，只改 profile 里的一行 `adapterSet`，
+`packages/core/src` 一行都不用动 —— 工具在 `scripts/dev/adapter-set-switch.mjs`（带 `--restore`）。
+
 模块和 core 的关系有六个实际接触点：
 
 | 接触点 | 谁发起 | 发生什么 |
