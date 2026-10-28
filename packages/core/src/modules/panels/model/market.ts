@@ -10,7 +10,7 @@ import type { UnitCapability } from '@dsh-workbench/shared/host';
 import { requireSupply, type SupplyPort, type UnitMountDeps } from '@dsh-workbench/shared/host';
 import { runShell } from '@dsh-workbench/shared/host';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
-import { diagnoseInstallFailure, installWriteProblem, isolatedRoot } from '@dsh-workbench/shared/host';
+import { diagnoseInstallFailure, installWriteProblem } from '@dsh-workbench/shared/host';
 import { installError } from './market-install-error';
 import {
   affectedUnitsOf,
@@ -152,7 +152,7 @@ export function createMarketService(options: {
     if (shell === undefined) {
       throw new Error('没有执行缝（shell 服务不可用），装 / 卸做不了。');
     }
-    const blocked = installWriteProblem({ command: line, fallback: isolatedRoot() });
+    const blocked = installWriteProblem({ command: line, fallback: supply.modules.isolatedRoot() });
     if (blocked !== undefined) throw installError(blocked);
     const result = await runShell(shell, line, { timeoutMs: INSTALL_TIMEOUT_MS });
     if (result.exitCode !== 0 && !optional) {
@@ -161,7 +161,7 @@ export function createMarketService(options: {
           command: line,
           exitCode: result.exitCode,
           output: result.stderr || result.stdout,
-          fallback: isolatedRoot(),
+          fallback: supply.modules.isolatedRoot(),
         }),
       );
     }

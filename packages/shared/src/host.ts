@@ -58,7 +58,6 @@ export * from './contract/unit-capability.js';
 export * from './contract/plugin-source.js';
 export * from './contract/cli.js';
 export * from './host/cli.js';
-export * from './host/command-name.js';
 export * from './host/browser.js';
 export * from './host/preflight.js';
 export * from './host/platform.js';

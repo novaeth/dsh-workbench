@@ -18,6 +18,7 @@ export function supplyPortOf(ctx: DshHostContext): SupplyPort {
     missingReleaseParts: (options) => env.missingReleaseParts(options),
     probeRelease: (options) => env.probeRelease(options),
     splitNpmSpec: (spec) => env.splitNpmSpec(spec),
+    isolatedRoot: () => modules.isolatedRoot(),
     isolatedHome: () => modules.isolatedHome(),
     cliCatalogPath: () => modules.cliCatalogPath(),
     vendorPluginsDir: () => modules.vendorPluginsDir(),

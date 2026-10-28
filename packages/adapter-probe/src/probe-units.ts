@@ -1,11 +1,11 @@
 import type { DshShell } from '@dsh-workbench/shared';
+import { commandNamesMatch } from './command-name.js';
 import {
   OPENCLI_TIMEOUT_MS,
   PROBE_TTL_MS,
   buildSupplyIndex,
   NEED_KIND_SPECS,
   needIdOf,
-  commandNamesMatch,
   npmSourceOf,
   parseJsonLoose,
   quoteShellArg,

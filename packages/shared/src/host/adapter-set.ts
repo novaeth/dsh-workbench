@@ -61,6 +61,7 @@ const CORE_METHODS = [
 const FULL_MEMBERS = ['modules', 'runtime', 'plugins', 'actions'] as const;
 
 const FULL_METHODS = [
+  ['modules', 'isolatedRoot'],
   ['modules', 'isolatedHome'],
   ['modules', 'cliCatalogPath'],
   ['modules', 'vendorPluginsDir'],

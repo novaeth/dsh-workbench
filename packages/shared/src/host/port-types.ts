@@ -95,6 +95,7 @@ export interface EnvSupplyPort {
 }
 
 export interface ModulePort {
+  isolatedRoot(): string;
   isolatedHome(): string;
   cliCatalogPath(): string;
   vendorPluginsDir(): string;
