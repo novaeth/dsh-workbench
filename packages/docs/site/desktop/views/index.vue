@@ -1144,8 +1144,9 @@ defineOptions({
 }
 
 .footer-dev {
-  display: inline-block;
-  margin-top: 28px;
+  display: block;
+  width: fit-content;
+  margin: 28px auto 0;
   font-size: 13px;
   color: var(--text-5) !important;
   text-decoration: none !important;
