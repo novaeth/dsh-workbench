@@ -8,9 +8,10 @@ import type {
   SupplySource,
   UnitCapability,
 } from '@dsh-workbench/shared/host';
-import { needIdOf, quoteShellArg } from '@dsh-workbench/shared/host';
+import { binInstallCommand, needIdOf, quoteShellArg } from '@dsh-workbench/shared/host';
 import { resolvePluginSource } from '@dsh-workbench/adapter-supply';
 import { isNewerVersion } from '@dsh-workbench/adapter-profile';
+import { currentHostOs } from './platform.js';
 
 const RANK: Readonly<Record<NeedState['status'], number>> = {
   ok: 0,
@@ -114,13 +115,17 @@ export function extensionStateOf(options: {
 }
 
 export function binStateOf(need: BinNeed, present: boolean): NeedState {
-  return {
+  const base: NeedState = {
     id: needIdOf(need),
     kind: 'bin',
     name: need.name,
     status: present ? 'ok' : 'missing',
     detail: present ? `${need.name} 命令在` : `这台机器上找不到 ${need.name} 命令（PATH 里没有）`,
   };
+  if (present) return base;
+  const command = binInstallCommand(need, currentHostOs());
+  if (command === undefined) return base;
+  return { ...base, command, provision: 'ready' };
 }
 
 export function envStateOf(need: EnvNeed, value: string | undefined): NeedState {

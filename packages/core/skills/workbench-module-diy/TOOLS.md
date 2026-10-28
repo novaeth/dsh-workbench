@@ -108,18 +108,27 @@
     ]
   },
   { "kind": "lib", "name": "opencli-workflow", "purpose": "发布编排" },
-  { "kind": "bin", "name": "acme", "purpose": "平台命令" },
+  {
+    "kind": "bin",
+    "name": "acme",
+    "purpose": "平台命令",
+    "install": { "kind": "command", "line": "brew install acme/tap/cli", "platforms": ["darwin"] },
+    "docs": "https://internal/acme-cli"
+  },
   { "kind": "env", "name": "ACME_TOKEN", "purpose": "访问令牌", "secret": true }
 ]
 ```
 
 - `sources` 按顺序试（本地 → 私有 → 公共）。没写 `sources` 就是「我自己装，你只帮我判」——外壳只探不代装。
+- `bin` 想让人一键装，就写 `install.line`（一条能直接粘进终端的命令，`platforms` 可限定平台）；
+  不写就只显示「缺这条命令」，按钮都不会有。`docs` 是给人和 agent 看的补充链接。
 - `extension` 的 `sources[].kind` 只有 `npm` / `git` / `local`；`lib` 只认 `npm`。
   未知 `kind` 或 `source.kind` 判红；need 里未知字段只警告，`x-` 前缀忽略。
 - 未装好文案由模块写：`libInstallCommand({ need, source })`（`@dsh-workbench/shared/host`）拼好源与缓存目录，
   原样输出；放进失败态。
 - `contracts` 判据：`apiVersion` 必须是 3；`needs` 走同一份 `NEED_KINDS` 注册表校验（`purpose` 必填、
-  `bin`/`env` 不许带 `sources`、`lib` 只认 npm 源）；声明了 `lib` 必须用 `libInstallCommand`。
+  `bin`/`env` 不许带 `sources`（`bin` 要代装就写 `install`）、`lib` 只认 npm 源）；
+  声明了 `lib` 必须用 `libInstallCommand`。
   未知 `runtime` 不判红：探针会给「这个运行时工作台还不认识」的 `unchecked`，等运行时 provider 补上。
 
 ## 9 长任务

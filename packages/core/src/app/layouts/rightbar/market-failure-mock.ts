@@ -101,7 +101,79 @@ export function failureCardMocks(input: {
           fix: { kind: 'handoff' },
         },
       },
-      expect: { rows: 1, state: 'missing', actions: ['install'] },
+      expect: { rows: 1, state: 'missing', actions: ['install'], askAgent: false },
+    },
+  ];
+}
+
+export function binInstallMocks(input: {
+  readonly id: string;
+  readonly mine: UnitManifest;
+}): readonly MarketMock[] {
+  const { id, mine } = input;
+  return [
+    {
+      id: 'bin-install',
+      label: '缺一条命令，但模块给了装法',
+      manifests: [
+        {
+          ...mine,
+          needs: [
+            {
+              kind: 'bin',
+              name: 'gitops',
+              purpose: '在机器上跑平台命令',
+              install: { kind: 'command', line: 'brew install pagoda/tap/gitops', platforms: ['darwin'] },
+            },
+          ],
+        },
+      ],
+      capabilities: {
+        [id]: {
+          unit: id,
+          status: 'missing',
+          detail: '夹具',
+          needs: [
+            {
+              id: 'bin:gitops',
+              kind: 'bin',
+              name: 'gitops',
+              status: 'missing',
+              detail: '这台机器上找不到 gitops 命令（PATH 里没有）',
+              provision: 'ready',
+              command: 'brew install pagoda/tap/gitops',
+            },
+          ],
+        },
+      },
+      expect: { rows: 1, state: 'missing', actions: ['install'], askAgent: false },
+    },
+    {
+      id: 'bin-no-install',
+      label: '缺一条命令，模块没给装法',
+      manifests: [
+        {
+          ...mine,
+          needs: [{ kind: 'bin', name: 'gitops', purpose: '在机器上跑平台命令' }],
+        },
+      ],
+      capabilities: {
+        [id]: {
+          unit: id,
+          status: 'missing',
+          detail: '夹具',
+          needs: [
+            {
+              id: 'bin:gitops',
+              kind: 'bin',
+              name: 'gitops',
+              status: 'missing',
+              detail: '这台机器上找不到 gitops 命令（PATH 里没有）',
+            },
+          ],
+        },
+      },
+      expect: { rows: 1, state: 'missing', actions: [], askAgent: true },
     },
   ];
 }

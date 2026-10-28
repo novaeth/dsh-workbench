@@ -153,6 +153,10 @@ export const zh = {
   'panels.market.confirmNo': '取消',
   'panels.market.noMarketSource': '索引里没有这个模块的新版本（刷新一次索引再试）',
   'panels.market.failed': '没成功：{reason}',
+  'panels.market.askAgent': '问 agent',
+  'panels.market.askAgentCopied': '已复制',
+  'panels.market.askAgentText':
+    '工作台里「{name}」（单元 {unit}）用不了：{reason}。帮我查清缺什么、怎么补，补完确认真能用。',
   'panels.market.failure.permission': '没装上：没有写入权限',
   'panels.market.failure.diskFull': '没装上：磁盘满了',
   'panels.market.failure.sandbox': '没装上：被系统拦住了',

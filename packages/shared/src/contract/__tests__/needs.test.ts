@@ -37,6 +37,31 @@ describe('needs 校验矩阵', () => {
     );
   });
 
+  it('bin 声明 install → 过；install 写歪了要判红并点名', () => {
+    expect(
+      errorsOf({
+        kind: 'bin',
+        name: 'gitops',
+        purpose: '平台命令',
+        install: { kind: 'command', line: 'brew install pagoda/tap/gitops', platforms: ['darwin'] },
+        docs: 'https://internal/gitops',
+      }),
+    ).toEqual([]);
+
+    expect(errorsOf({ kind: 'bin', name: 'x', purpose: 'p', install: { kind: 'brew', line: 'x' } }).join(' ')).toContain(
+      'install.kind 只有 command',
+    );
+    expect(errorsOf({ kind: 'bin', name: 'x', purpose: 'p', install: { kind: 'command', line: '' } }).join(' ')).toContain(
+      'install.line 没写',
+    );
+    expect(
+      errorsOf({ kind: 'bin', name: 'x', purpose: 'p', install: { kind: 'command', line: 'x', platforms: ['mac'] } }).join(' '),
+    ).toContain('darwin / linux / win32');
+    expect(errorsOf({ kind: 'bin', name: 'x', purpose: 'p', install: { kind: 'command', line: 'x', url: 'y' } }).join(' ')).toContain(
+      'install 有不认识的字段 url',
+    );
+  });
+
   it('bin / env 写了 sources → 红（没有安装路径）', () => {
     expect(errorsOf({ kind: 'bin', name: 'x', purpose: '测试', sources: [npm] }).join(' ')).toContain(
       '不支持 sources',

@@ -15,14 +15,16 @@ import {
   MARKET_DOT,
   MARKET_STATE_KEY,
   marketActions,
+  marketAsksAgent,
   marketRowTitle,
   marketSwitchLocked,
   type MarketRowAction,
 } from './market-rows';
 import { marketRowKind, packageIcon } from './market-row-icon';
 import type { MarketSectionIcon } from './market-section-icon';
-import { ACTION_LABEL_KEY, PROGRESS_KEY, type Pending } from './market-view-text';
+import { ACTION_LABEL_KEY, PROGRESS_KEY, askAgentText, type Pending } from './market-view-text';
 import { FailureCard } from './FailureCard';
+import { AskAgentButton } from './AskAgentButton';
 import styles from '../market/MarketPage.module.css';
 
 const dangerActions: readonly MarketRowAction[] = ['uninstall', 'remove-bundle', 'uninstall-plugin'];
@@ -181,6 +183,7 @@ function MarketLine({
   const quiet =
     row.workbench === true && row.state === 'installed' && row.hint === undefined;
   const actions = marketActions(row);
+  const asksAgent = marketAsksAgent(row);
   const switchLocked = marketSwitchLocked(row);
   return (
     <li className={styles.marketRow}>
@@ -219,8 +222,15 @@ function MarketLine({
             <Spinner size={14} />
             {t(PROGRESS_KEY[running.action])}
           </span>
-        ) : actions.length === 0 ? null : (
+        ) : actions.length === 0 && !asksAgent ? null : (
           <span className={styles.marketActions}>
+            {asksAgent ? (
+              <AskAgentButton
+                t={t}
+                text={askAgentText(row, t)}
+                label={t('panels.market.askAgent')}
+              />
+            ) : null}
             {actions.map((action) => {
               const danger = dangerActions.includes(action);
               const update = updateActions.includes(action);

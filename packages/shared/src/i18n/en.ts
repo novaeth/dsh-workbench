@@ -156,6 +156,10 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'panels.market.confirmNo': 'Cancel',
   'panels.market.noMarketSource': 'The index has no newer version of this module (refresh the index and retry)',
   'panels.market.failed': 'Failed: {reason}',
+  'panels.market.askAgent': 'Ask the agent',
+  'panels.market.askAgentCopied': 'Copied',
+  'panels.market.askAgentText':
+    'This workbench module cannot be used: "{name}" (unit {unit}) — {reason}. Work out what is missing and how to add it, then confirm it works.',
   'panels.market.failure.permission': "Didn't install: no write access",
   'panels.market.failure.diskFull': "Didn't install: the disk is full",
   'panels.market.failure.sandbox': "Didn't install: the system blocked it",

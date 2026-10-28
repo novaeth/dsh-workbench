@@ -187,6 +187,34 @@ describe('probeUnits：bin / env 两类', () => {
     expect(fake.commands().some((line) => line.includes('plugin list'))).toBe(false);
   });
 
+  it('★ 作者声明了 install 且机器上缺 → 带上那条命令，界面才有得点', async () => {
+    const { capability } = await probeOne(
+      [
+        binNeedOf('gitops', {
+          install: { kind: 'command', line: 'brew install pagoda/tap/gitops', platforms: [process.platform] },
+        }),
+      ],
+      [{ exitCode: 1, stdout: '' }],
+    );
+
+    expect(stateOf(capability, 'bin', 'gitops')).toMatchObject({
+      status: 'missing',
+      provision: 'ready',
+      command: 'brew install pagoda/tap/gitops',
+    });
+  });
+
+  it('平台对不上 → 不给命令（别教用户在 Windows 上跑 brew）', async () => {
+    const other = process.platform === 'darwin' ? 'linux' : 'darwin';
+    const { capability } = await probeOne(
+      [binNeedOf('gitops', { install: { kind: 'command', line: 'brew install x', platforms: [other] } })],
+      [{ exitCode: 1, stdout: '' }],
+    );
+
+    expect(stateOf(capability, 'bin', 'gitops')?.command).toBeUndefined();
+    expect(stateOf(capability, 'bin', 'gitops')?.provision).toBeUndefined();
+  });
+
   it('bin 在 PATH → ok', async () => {
     const { capability } = await probeOne([binNeedOf('gitops')], [{ exitCode: 0, stdout: '/usr/bin/gitops' }]);
 

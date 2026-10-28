@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import type { CapabilityMap } from '@/shared/hooks/use-capabilities';
 import { namesOf, type MarketNameMap, type NameSource, type TitleResolve } from './market-names';
-import { capabilityOutdated } from './market-rows';
+import { MARKET_STATE_KEY, capabilityOutdated, marketRowTitle } from './market-rows';
 import type { MarketRow, MarketRowAction, ModuleUpdateMap } from './market-rows';
 import type { SharedRow } from './market-shared-rows';
 import { MODULE_SETTLE_MS, settleLanded } from './market-settle';
@@ -214,4 +214,18 @@ export function pendingRowOf(input: {
     ...(pending.pkg === undefined ? {} : { pkg: pending.pkg }),
     ...(pending.version === undefined ? {} : { version: { installed: pending.version } }),
   };
+}
+
+export function askAgentReason(row: MarketRow, t: Translate): string {
+  if (row.hint !== undefined) return t(row.hint);
+  if (row.note !== undefined) return t(row.note.key, row.note.params);
+  return t(MARKET_STATE_KEY[row.state]);
+}
+
+export function askAgentText(row: MarketRow, t: Translate): string {
+  return t('panels.market.askAgentText', {
+    name: marketRowTitle(row, t),
+    unit: row.id,
+    reason: askAgentReason(row, t),
+  });
 }

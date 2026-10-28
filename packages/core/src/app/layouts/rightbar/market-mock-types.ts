@@ -30,6 +30,7 @@ export interface MarketMockExpect {
   readonly workbenchState?: MarketState;
   readonly workbenchActions?: readonly MarketRowAction[];
   readonly workbenchLocal?: boolean;
+  readonly askAgent?: boolean;
 }
 
 export interface MarketMock {

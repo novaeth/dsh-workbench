@@ -322,7 +322,8 @@ export function createMarketService(options: {
       const before = await capabilityOf(unit, true);
       const absent = before.needs.filter(
         (state) =>
-          state.status === 'missing' && (state.kind === 'extension' || state.kind === 'lib'),
+          state.status === 'missing' &&
+          (state.kind === 'extension' || state.kind === 'lib' || state.kind === 'bin'),
       );
       if (absent.length === 0) {
         onInstalled?.(unit);

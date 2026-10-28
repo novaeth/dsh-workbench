@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { Translate } from '@dsh-workbench/shared';
 import type { InstallFailure } from '@dsh-workbench/shared';
 import { failureCardOf, ownerLabel, shellPath } from '../failure-card-text';
+import type { MarketRow } from '../market-row-types';
+import { askAgentText } from '../market-view-text';
 
 const t: Translate = (key, params) => {
   if (params === undefined) return key;
@@ -71,5 +73,25 @@ describe('failureCardOf（卡片上那三行 + 能照抄的那条）', () => {
   it('uid 0 说 root，别的说 uid', () => {
     expect(ownerLabel(0)).toBe('root');
     expect(ownerLabel(502)).toBe('uid 502');
+  });
+});
+
+describe('askAgentText（没按钮的那一行，交给 agent 的那句话）', () => {
+  const t2: Translate = (key, params) =>
+    params === undefined ? key : `${key} ${JSON.stringify(params)}`;
+  const row = {
+    id: 'gitops',
+    titleKey: 'gitops.title',
+    state: 'missing',
+    note: { key: 'panels.market.needBinary', params: { command: 'gitops' } },
+  } as unknown as MarketRow;
+
+  it('带模块名、单元 id、原因 —— agent 拿得到单元 id 才调得对工具', () => {
+    const text = askAgentText(row, t2);
+
+    expect(text).toContain('panels.market.askAgentText');
+    expect(text).toContain('"unit":"gitops"');
+    expect(text).toContain('panels.market.needBinary');
+    expect(text).toContain('gitops');
   });
 });

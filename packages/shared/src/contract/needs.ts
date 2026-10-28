@@ -42,11 +42,22 @@ export interface NeedCommon {
 }
 
 /**
+ * 一条装这个可执行文件的命令；模块作者写，工作台照抄执行。
+ */
+export interface BinInstall {
+  readonly kind: 'command';
+  readonly line: string;
+  readonly platforms?: readonly string[] | undefined;
+}
+
+/**
  * 机器上要有一个可执行文件；探法是 `command -v` / `where`。
  */
 export interface BinNeed extends NeedCommon {
   readonly kind: 'bin';
   readonly name: string;
+  readonly install?: BinInstall | undefined;
+  readonly docs?: string | undefined;
 }
 
 /**
@@ -107,6 +118,8 @@ export const NEED_KEYS: readonly string[] = [
   'version',
   'sources',
   'secret',
+  'install',
+  'docs',
 ];
 
 /**
@@ -188,7 +201,7 @@ function sourcesProblemsOf(
   if (!Array.isArray(raw)) return [`${at}.sources 要是数组`];
   if (raw.length === 0) return [`${at}.sources 是空数组 —— 不代装就整条删掉`];
   if (allowed.length === 0) {
-    return [`${at} 这种需要不支持 sources —— 它没有「从哪装」这回事`];
+    return [`${at} 这种需要不支持 sources —— 要代装就写 install（一条命令）`];
   }
   const errors: string[] = [];
   raw.forEach((source, index) => {
@@ -214,6 +227,27 @@ function commonProblemsOf(raw: Readonly<Record<string, unknown>>, at: string): r
   return errors;
 }
 
+export function binInstallProblemsOf(raw: unknown, at: string): readonly string[] {
+  if (raw === undefined) return [];
+  if (!isRecord(raw)) return [`${at}.install 要是对象`];
+  const errors: string[] = [];
+  for (const key of Object.keys(raw)) {
+    if (!['kind', 'line', 'platforms'].includes(key)) errors.push(`${at}.install 有不认识的字段 ${key}`);
+  }
+  if (text(raw['kind']) !== 'command') {
+    errors.push(`${at}.install.kind 只有 command（一条装它的命令）`);
+  }
+  if (text(raw['line']) === '') errors.push(`${at}.install.line 没写 —— 要一条能直接粘进终端的命令`);
+  if (raw['platforms'] !== undefined) {
+    if (!Array.isArray(raw['platforms']) || raw['platforms'].length === 0) {
+      errors.push(`${at}.install.platforms 要是非空数组`);
+    } else if (raw['platforms'].some((one) => !['darwin', 'linux', 'win32'].includes(text(one)))) {
+      errors.push(`${at}.install.platforms 只认 darwin / linux / win32`);
+    }
+  }
+  return errors;
+}
+
 function perKindProblemsOf(
   kind: NeedKind,
   raw: Readonly<Record<string, unknown>>,
@@ -223,6 +257,8 @@ function perKindProblemsOf(
   if (kind === 'bin' || kind === 'lib' || kind === 'env') {
     if (text(raw['name']) === '') errors.push(`${at}.name 没写`);
   }
+  if (kind === 'bin') errors.push(...binInstallProblemsOf(raw['install'], at));
+  if (raw['docs'] !== undefined && text(raw['docs']) === '') errors.push(`${at}.docs 是空串`);
   if (kind === 'extension') {
     if (text(raw['runtime']) === '') errors.push(`${at}.runtime 没写 —— 扩展属于哪个运行时（如 opencli）`);
     if (text(raw['name']) === '') errors.push(`${at}.name 没写`);

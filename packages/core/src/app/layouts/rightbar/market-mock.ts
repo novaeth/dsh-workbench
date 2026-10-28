@@ -8,7 +8,7 @@ import type {
 import type { CapabilityMap } from '@/shared/hooks/use-capabilities';
 import { installedMocks } from './market-installed-mock';
 import type { MarketMock } from './market-mock-types';
-import { failureCardMocks } from './market-failure-mock';
+import { binInstallMocks, failureCardMocks } from './market-failure-mock';
 
 export type { MarketMock, MarketMockExpect } from './market-mock-types';
 
@@ -258,6 +258,7 @@ export function buildMarketMocks(roster: readonly UnitManifest[]): readonly Mark
       expect: { rows: 1, state: 'installed', actions: ['uninstall'] },
     },
     ...failureCardMocks({ id, mine, probe }),
+    ...binInstallMocks({ id, mine }),
     {
       id: 'long-title',
       label: '超长模块名',
