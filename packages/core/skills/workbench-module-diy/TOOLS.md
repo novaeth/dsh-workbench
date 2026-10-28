@@ -107,7 +107,13 @@
       { "kind": "local", "env": "ACME_PLUGIN_PATH" }
     ]
   },
-  { "kind": "lib", "name": "opencli-workflow", "purpose": "发布编排" },
+  {
+    "kind": "lib",
+    "name": "opencli-workflow",
+    "version": "^1.1.25",
+    "runs": ["opencli"],
+    "purpose": "发布编排"
+  },
   {
     "kind": "bin",
     "name": "acme",
@@ -122,6 +128,10 @@
 - `sources` 按顺序试（本地 → 私有 → 公共）。没写 `sources` 就是「我自己装，你只帮我判」——外壳只探不代装。
 - `bin` 想让人一键装，就写 `install.line`（一条能直接粘进终端的命令，`platforms` 可限定平台）；
   不写就只显示「缺这条命令」，按钮都不会有。`docs` 是给人和 agent 看的补充链接。
+- `lib` 自己起运行时的命令（比如发布编排库自己 `execFile('opencli')`）就写 `runs: ["opencli"]`：
+  外壳把它手上那份「跑 opencli」的执行器注入进去（库侧约定暴露 `setOpencliRunner`），
+  于是编排与面板用同一份 opencli（同一套插件、同一份登录态）。不写 `runs` 就按库自己的 PATH 找。
+  库版本太旧、没有 `setOpencliRunner` 时外壳只记一条 warn，照旧按 PATH 跑；用 `version` 卡住那一版即可。
 - `extension` 的 `sources[].kind` 只有 `npm` / `git` / `local`；`lib` 只认 `npm`。
   未知 `kind` 或 `source.kind` 判红；need 里未知字段只警告，`x-` 前缀忽略。
 - 未装好文案由模块写：`libInstallCommand({ need, source })`（`@dsh-workbench/shared/host`）拼好源与缓存目录，

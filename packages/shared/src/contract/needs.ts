@@ -82,12 +82,15 @@ export interface ExtensionNeed extends NeedCommon {
 
 /**
  * 要在隔离运行时里有一个共用依赖包。
+ * `runs` 写它自己会起哪些运行时的命令（如 `["opencli"]`）—— 写了外壳就把那份执行器注入进去
+ * （库侧约定 `setOpencliRunner`）；不写就按它自己在 PATH 上找。
  */
 export interface LibNeed extends NeedCommon {
   readonly kind: 'lib';
   readonly name: string;
   readonly version?: string;
   readonly sources?: readonly SupplySource[];
+  readonly runs?: readonly string[] | undefined;
 }
 
 /**
@@ -128,6 +131,7 @@ export const NEED_KEYS: readonly string[] = [
   'secret',
   'install',
   'docs',
+  'runs',
 ];
 
 /**
@@ -267,6 +271,16 @@ export function binInstallProblemsOf(raw: unknown, at: string): readonly string[
   return errors;
 }
 
+function libRunsProblemsOf(raw: unknown, at: string): readonly string[] {
+  if (raw === undefined) return [];
+  if (!Array.isArray(raw)) return [`${at}.runs 要是数组`];
+  if (raw.length === 0) return [`${at}.runs 是空数组 —— 不自己跑命令就整条删掉`];
+  const names = raw.map((one) => text(one));
+  if (names.some((one) => one === '')) return [`${at}.runs 里有空字符串`];
+  if (new Set(names).size !== names.length) return [`${at}.runs 里有重复的运行时`];
+  return [];
+}
+
 function perKindProblemsOf(
   kind: NeedKind,
   raw: Readonly<Record<string, unknown>>,
@@ -278,6 +292,7 @@ function perKindProblemsOf(
   }
   if (kind === 'bin') errors.push(...binInstallProblemsOf(raw['install'], at));
   if (raw['docs'] !== undefined && text(raw['docs']) === '') errors.push(`${at}.docs 是空串`);
+  if (kind === 'lib') errors.push(...libRunsProblemsOf(raw['runs'], at));
   if (kind === 'extension') {
     if (text(raw['runtime']) === '') errors.push(`${at}.runtime 没写 —— 扩展属于哪个运行时（如 opencli）`);
     if (text(raw['name']) === '') errors.push(`${at}.name 没写`);

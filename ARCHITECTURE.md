@@ -520,6 +520,9 @@ export function createAdapterSet(ctx): AdapterSet {
 - `apiVersion` 管形状；不认就不装、不挂。v3 把卡片标题挪成顶层的 `title`（`{ zh, en }` 字面量，`card` 只剩 `order`），v2 声明会被拒收并给迁移提示；v2 起 `env` 换成 `needs`。
 - `needs` 只有四种 `kind`：`bin`（机器上的命令）/ `extension`（运行时插件）/ `lib`（共用 npm 依赖）/ `env`（环境变量）。
   未知 `kind` / `source.kind` 判红；need 内未知字段降为警告，`x-` 前缀忽略；`purpose` 必填。
+- `lib` 自己会起运行时的命令（发布编排库自己 `execFile('opencli')` 就是这种）就写 `runs: ["opencli"]`：
+  外壳在 `libs.load` 之后把「跑这个运行时」的执行器注入库的 `setOpencliRunner` —— 执行器走模块读缝，
+  与面板同一份 opencli。库版本旧、没有这个接缝时退回它自己按 PATH 找，只记一条 warn。
 - `sources` 按顺序试（本地 → 私有 → 公共），没写就只探不代装。
 - `peerDependencies['@dsh-workbench/core']` 管服务面。
 - `workbenchFaces` 只给门禁算可达性，运行期不读。

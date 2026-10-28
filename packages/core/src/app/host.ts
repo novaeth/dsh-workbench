@@ -37,7 +37,7 @@ import {
 import { bindRosterFacts } from '@/shared/api/host/unit-roster-facts';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 import { dshHome } from '@dsh-workbench/shared/host';
-import { ensureLibsBinOnPath, ensureLibsOpencliPeer } from '@dsh-workbench/shared/host';
+import { ensureLibsBinOnPath, ensureLibsOpencliPeer, opencliRunnerOf, withLibRunners } from '@dsh-workbench/shared/host';
 import { CONFIG_SYNC_ROUTE } from '@/kernel/contract/config-sync';
 import { PROFILE_CREATE_ROUTE } from '@/kernel/contract/profile-create';
 import { SIDEBAR_EDITION_ROUTE } from '@/kernel/contract/sidebar-edition';
@@ -49,6 +49,7 @@ import { asArgs, warn } from '../shared/api/host/host-args';
 import { createApprovalGate } from '@/shared/api/host/approval-gate';
 import { notifyLongTaskStop } from '@/shared/api/host/long-task-notice';
 export const name = 'dsh-workbench';
+const LIB_OPENCLI_TIMEOUT_MS = 30 * 60_000;
 interface ReleasedLookup { isReleased(id: string): boolean }
 export const inject = ['webServer'];
 async function defaultAdapterSet(ctx: DshHostContext): Promise<AdapterSet> {
@@ -71,6 +72,18 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   }
   ctx.provide(WORKBENCH_ADAPTERS, adapters);
   const opencli = adapters.runtime.opencliCommand(ctx);
+  const libRunners =
+    adapters.libs === undefined
+      ? undefined
+      : withLibRunners(
+          adapters.libs,
+          {
+            opencli: opencliRunnerOf((request) => adapters.data.read(request), {
+              timeoutMs: LIB_OPENCLI_TIMEOUT_MS,
+            }),
+          },
+          ctx.logger,
+        );
   const shell = ctx.get<DshShell>('shell');
   const routes: RouteTable = createHostRoutes({
     ctx,
@@ -245,7 +258,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
         installable: () => installableUnitsOf(units),
         store,
         data: adapters.data,
-        libs: adapters.libs,
+        libs: libRunners,
         git: adapters.git,
         commands: adapters.commands,
         probe: (unit, options) => probeOne(unit, options?.force ?? false),

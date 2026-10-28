@@ -114,6 +114,14 @@ describe('needs 校验矩阵', () => {
     expect(errorsOf({ ...base, id: '' }).join(' ')).toContain('id 是空串');
   });
 
+  it('lib 声明 runs（会自己起运行时的命令）→ 过；写歪了判红并点名', () => {
+    expect(errorsOf({ ...base, runs: ['opencli'] })).toEqual([]);
+    expect(errorsOf({ ...base, runs: 'opencli' }).join(' ')).toContain('.runs 要是数组');
+    expect(errorsOf({ ...base, runs: [] }).join(' ')).toContain('空数组');
+    expect(errorsOf({ ...base, runs: [''] }).join(' ')).toContain('空字符串');
+    expect(errorsOf({ ...base, runs: ['opencli', 'opencli'] }).join(' ')).toContain('重复');
+  });
+
   it('★ need 内未知字段只是警告；x- 前缀直接忽略（不为可选字段升协议版本）', () => {
     const read = needProblemsOf('demo', { ...base, future: 1, 'x-vendor': true }, 0);
     expect(read.errors).toEqual([]);

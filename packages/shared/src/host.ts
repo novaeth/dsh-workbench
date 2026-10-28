@@ -34,6 +34,8 @@ export * from './host/tokens.js';
 export * from './host/tool-approval.js';
 export * from './host/tool-kit.js';
 export * from './host/unit-face.js';
+export * from './host/opencli-runner.js';
+export * from './host/lib-runners.js';
 export * from './host/value-handoff.js';
 export * from './host/workspace-store.js';
 export * from './host/write-result.js';
