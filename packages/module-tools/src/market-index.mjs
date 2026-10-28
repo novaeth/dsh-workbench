@@ -3,17 +3,24 @@ import { dirname, join, resolve } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 
 import {
+  MARKET_ENTRIES_README_LINES,
   MARKET_INDEX_README_LINES,
-  MARKET_INDEX_SEED,
+  assembleMarketIndex,
   claimOf,
+  collectMarketEntryFiles,
   gitUrlOk,
   marketArtifactPath,
+  marketEntryFilesOfLegacy,
+  marketEntryPath,
+  marketMetaDocOf,
+  marketMetaPath,
   marketSourceKey,
+  marketVersionDocOf,
   parseMarketIndexJson,
-  upsertMarketEntry,
 } from '@dsh-workbench/shared/host';
 
-const MARKET_FILE = 'market.json';
+const MARKET_DIR = 'market';
+const LEGACY_FILE = 'market.json';
 const SAFE_PACKAGE_NAME = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/;
 const WORKSPACE_PREFIX = 'workspace:';
 const ARTIFACT_DIRS = ['dist'];
@@ -128,17 +135,162 @@ function unitOf(manifest) {
   return typeof unit === 'string' ? unit.trim() : '';
 }
 
-function claimOfIndexFile(workdir, indexPath, input) {
-  const file = join(workdir, indexPath);
-  if (!existsSync(file)) return { state: 'new' };
-  const parsed = parseMarketIndexJson(readFileSync(file, 'utf8'));
+function indexPathOf(plan) {
+  const asked = (plan.source.path ?? '').trim();
+  const base = asked === '' ? MARKET_DIR : asked.replace(/^\/+/, '');
+  return base.replace(/\/+$/, '') || MARKET_DIR;
+}
+
+function readWorktreeIndex(workdir, dir) {
+  const root = join(workdir, dir);
+  if (existsSync(root)) {
+    const assembled = assembleMarketIndex(collectMarketEntryFiles(root));
+    if (!assembled.ok) {
+      throw new MarketIndexError(
+        `${dir}/ 里有不合规的条目：${assembled.problems.map((one) => one.detail).join('；')}`,
+        'index-write',
+      );
+    }
+    return assembled.index;
+  }
+  const legacy = join(workdir, LEGACY_FILE);
+  if (!existsSync(legacy)) return { format: 1, plugins: [] };
+  const parsed = parseMarketIndexJson(readFileSync(legacy, 'utf8'));
   if (!parsed.ok) {
     throw new MarketIndexError(
-      `${indexPath} 不合 format 1：${parsed.problems.map((one) => one.detail).join('；')}`,
+      `${LEGACY_FILE} 不合 format 1：${parsed.problems.map((one) => one.detail).join('；')}`,
       'index-write',
     );
   }
-  return claimOf(parsed.index, input);
+  return parsed.index;
+}
+
+function ensureClaimFree(workdir, dir, input) {
+  const claim = claimOf(readWorktreeIndex(workdir, dir), input);
+  if (claim.state === 'conflict' || claim.state === 'unit-taken' || claim.state === 'path-taken') {
+    throw new MarketIndexError(claimProblemText(input.name, claim, input.unit), 'market-owner');
+  }
+}
+
+function ensureVersionFree(workdir, dir, input) {
+  const entry = readWorktreeIndex(workdir, dir).plugins.find((one) => one.name === input.name);
+  if (entry?.versions.some((one) => one.version === input.version) === true) {
+    throw new MarketIndexError(`索引里已经有 ${input.name}@${input.version} —— 换个版本号再发`, 'market-owner');
+  }
+}
+
+function writeEntryFile(workdir, dir, entry, version) {
+  const doc = marketVersionDocOf(entry, version);
+  const rel = marketEntryPath(dir, entry.name, version.version);
+  const file = join(workdir, ...rel.split('/'));
+  if (existsSync(file)) {
+    const current = JSON.parse(readFileSync(file, 'utf8'));
+    if (isDeepStrictEqual(current, doc)) return rel;
+    throw new MarketIndexError(
+      `索引里已经有 ${entry.name}@${version.version}（${rel}）—— 换个版本号再发`,
+      'market-owner',
+    );
+  }
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify(doc, null, 2)}\n`);
+  return rel;
+}
+
+function writeMetaFile(workdir, dir, entry, at) {
+  const doc = marketMetaDocOf(entry, Math.floor(at / 1000));
+  const rel = marketMetaPath(dir, entry.name, at);
+  const file = join(workdir, ...rel.split('/'));
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify(doc, null, 2)}\n`);
+  return rel;
+}
+
+function migrateLegacyIndex(workdir, dir) {
+  const legacy = join(workdir, LEGACY_FILE);
+  if (!existsSync(legacy)) return [];
+  const files = marketEntryFilesOfLegacy(readFileSync(legacy, 'utf8'), dir);
+  if (files === undefined) {
+    const parsed = parseMarketIndexJson(readFileSync(legacy, 'utf8'));
+    throw new MarketIndexError(
+      `${LEGACY_FILE} 不合 format 1：${parsed.ok ? '' : parsed.problems.map((one) => one.detail).join('；')}`,
+      'index-write',
+    );
+  }
+  const written = [];
+  for (const file of files) {
+    const target = join(workdir, ...file.path.split('/'));
+    if (existsSync(target)) continue;
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, file.text);
+    written.push(file.path);
+  }
+  const marker = join(workdir, dir, 'README.md');
+  if (!existsSync(marker)) {
+    mkdirSync(join(workdir, dir), { recursive: true });
+    writeFileSync(marker, MARKET_ENTRIES_README_LINES.join('\n'));
+    written.push(`${dir}/README.md`);
+  }
+  rmSync(legacy);
+  written.push(LEGACY_FILE);
+  return written;
+}
+
+function revOf(exec, workdir, ref) {
+  const result = runGit(exec, workdir, ['rev-parse', ref], { allowFailure: true });
+  return result.status === 0 ? result.stdout.trim() : '';
+}
+
+function syncWorktree(exec, workdir, branch) {
+  const fetched = runGit(exec, workdir, ['fetch', 'origin', branch], { allowFailure: true });
+  if (fetched.status !== 0) {
+    throw new MarketIndexError(
+      `拉不到索引仓库的远端 ${branch}：${tailOf(`${fetched.stdout}\n${fetched.stderr}`)}`,
+      'git-auth',
+      `git -C ${workdir} fetch origin ${branch}`,
+    );
+  }
+  const head = revOf(exec, workdir, 'HEAD');
+  const remote = revOf(exec, workdir, `origin/${branch}`);
+  if (head === '' || remote === '' || head === remote) return;
+  const behind = runGit(exec, workdir, ['merge-base', '--is-ancestor', head, `origin/${branch}`], {
+    allowFailure: true,
+  });
+  if (behind.status !== 0) return;
+  runGit(exec, workdir, ['reset', '--hard', `origin/${branch}`], { allowFailure: true });
+}
+
+function replicatePush(exec, workdir, branch, base, redo) {
+  let last = '';
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const sha = redo();
+    const pushed = pushOf(exec, workdir, branch);
+    if (pushed.status === 0) return { ok: true, sha };
+    last = tailOf(`${pushed.stdout}\n${pushed.stderr}`);
+    const fetched = runGit(exec, workdir, ['fetch', 'origin', branch], { allowFailure: true });
+    if (fetched.status !== 0) return { ok: false, code: 'git-auth', reason: last };
+    const remote = revOf(exec, workdir, `origin/${branch}`);
+    const ancestor =
+      base === ''
+        ? true
+        : runGit(exec, workdir, ['merge-base', '--is-ancestor', base, `origin/${branch}`], {
+            allowFailure: true,
+          }).status === 0;
+    if (!ancestor) {
+      return {
+        ok: false,
+        code: 'git-market-rewritten',
+        reason: `远端 ${branch} 的历史被改写过（本地基点不在它的祖先里）—— 不自动合并：${last}`,
+      };
+    }
+    if (remote === '' || remote === base) {
+      return { ok: false, code: 'git-market-protected', reason: last };
+    }
+    const reset = runGit(exec, workdir, ['reset', '--hard', `origin/${branch}`], { allowFailure: true });
+    if (reset.status !== 0) {
+      return { ok: false, code: 'index-write', reason: `同步远端失败：${tailOf(reset.stderr)}` };
+    }
+  }
+  return { ok: false, code: 'index-write', reason: `远端一直在变，重试 3 次没挤进去（${last}）—— 过一会儿再发` };
 }
 
 export function identityOf(manifest) {
@@ -218,16 +370,6 @@ export function indexEntryOf(input) {
   };
 }
 
-export function mergeIndexText(text, entry) {
-  const raw = String(text ?? '').trim();
-  const parsed = raw === '' ? { ok: true, index: { format: 1, plugins: [] } } : parseMarketIndexJson(raw);
-  if (!parsed.ok) return { ok: false, problems: parsed.problems };
-  const merged = upsertMarketEntry(parsed.index, entry);
-  const checked = parseMarketIndexJson(JSON.stringify(merged));
-  if (!checked.ok) return { ok: false, problems: checked.problems };
-  return { ok: true, text: `${JSON.stringify(checked.index, null, 2)}\n` };
-}
-
 function readSources(file) {
   try {
     const parsed = JSON.parse(readFileSync(file, 'utf8'));
@@ -275,7 +417,7 @@ export function resolveIndexPlan({ args = [], home, exec }) {
   if (plan === undefined) {
     if (asked === 'auto' || asked === '') return undefined;
     throw new MarketIndexError(
-      `这个工坊还没配可写的 git 索引源。给我一个能推的 git 仓库（或它在本机的 clone 路径），我配成索引源并建一份 ${MARKET_FILE}。`,
+      `这个工坊还没配可写的 git 索引源。给我一个能推的 git 仓库（或它在本机的 clone 路径），我配成索引源并建一份 ${MARKET_DIR}/。`,
       'index-write',
     );
   }
@@ -447,37 +589,6 @@ function copyArtifacts(root, workdir, name, manifest) {
   return path;
 }
 
-function writeEntry(workdir, indexPath, entry, publisher, unit) {
-  const file = join(workdir, indexPath);
-  const current = existsSync(file) ? readFileSync(file, 'utf8') : '';
-  if (publisher === '') throw new MarketIndexError(missingPublisherText(), 'market-owner');
-  const claim = claimOfIndexFile(workdir, indexPath, {
-    name: entry.name,
-    publisher,
-    unit,
-    artifactPath: entry.versions[0]?.source?.type === 'git' ? entry.versions[0].source.path : undefined,
-  });
-  if (claim.state === 'conflict' || claim.state === 'unit-taken' || claim.state === 'path-taken') {
-    throw new MarketIndexError(claimProblemText(entry.name, claim, unit), 'market-owner');
-  }
-  const merged = mergeIndexText(current, entry);
-  if (!merged.ok) {
-    throw new MarketIndexError(
-      `${indexPath} 不合 format 1：${merged.problems.map((one) => one.detail).join('；')}`,
-      'index-write',
-    );
-  }
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, merged.text);
-}
-
-function resetToRemote(exec, workdir, branch) {
-  const fetched = runGit(exec, workdir, ['fetch', 'origin', branch], { allowFailure: true });
-  if (fetched.status !== 0) return false;
-  const reset = runGit(exec, workdir, ['reset', '--hard', `origin/${branch}`], { allowFailure: true });
-  return reset.status === 0;
-}
-
 function publishSourceOf(publish) {
   if (publish.git !== undefined) {
     return {
@@ -497,7 +608,7 @@ function publishSourceOf(publish) {
 
 export function marketClaim({ plan, exec, home, name, unit, publisher }) {
   const workdir = worktreeOf(plan, exec, home);
-  return claimOfIndexFile(workdir, plan.source.path ?? MARKET_FILE, {
+  return claimOf(readWorktreeIndex(workdir, indexPathOf(plan)), {
     name,
     publisher,
     unit,
@@ -522,17 +633,21 @@ export function updateMarketIndex(options) {
   };
   try {
     const workdir = worktreeOf(plan, exec, home);
-    const indexPath = plan.source.path ?? MARKET_FILE;
-    if (resume !== undefined && plan.source.localPath === undefined) {
-      runGit(exec, workdir, ['reset', '--hard', 'HEAD'], { allowFailure: true });
-      runGit(exec, workdir, ['clean', '-fd', '--', marketArtifactPath(manifest.name), indexPath], {
-        allowFailure: true,
-      });
+    const dir = indexPathOf(plan);
+    const branch = plan.source.ref ?? resume?.branch ?? currentBranch(exec, workdir);
+    base = { ...base, branch };
+    if (resume !== undefined) {
+      if (plan.source.localPath === undefined) {
+        const fetched = runGit(exec, workdir, ['fetch', 'origin', branch], { allowFailure: true });
+        if (fetched.status === 0) runGit(exec, workdir, ['reset', '--hard', `origin/${branch}`], { allowFailure: true });
+        runGit(exec, workdir, ['clean', '-fd', '--', marketArtifactPath(manifest.name), dir], {
+          allowFailure: true,
+        });
+      }
+      rmSync(join(workdir, dir, manifest.name, `${version}.json`), { force: true });
     } else {
       assertClean(exec, workdir);
     }
-    const branch = plan.source.ref ?? resume?.branch ?? currentBranch(exec, workdir);
-    base = { ...base, branch };
     if (typeof resume?.indexCommit === 'string' && resume.indexCommit !== '' && resume.indexPushed === true) {
       const remote = remoteHeadOf(exec, workdir, branch);
       if (remote === resume.indexCommit) {
@@ -547,34 +662,42 @@ export function updateMarketIndex(options) {
       }
     }
     if (publisher === '') throw new MarketIndexError(missingPublisherText(), 'market-owner');
-    const claim = claimOfIndexFile(workdir, indexPath, {
+    syncWorktree(exec, workdir, branch);
+    const baseSha = revOf(exec, workdir, 'HEAD');
+    const claimInput = {
       name: manifest.name,
       publisher,
       unit,
+      version,
       artifactPath: marketArtifactPath(manifest.name),
-    });
-    if (claim.state === 'conflict' || claim.state === 'unit-taken' || claim.state === 'path-taken') {
-      throw new MarketIndexError(claimProblemText(manifest.name, claim, unit), 'market-owner');
-    }
+    };
+    ensureClaimFree(workdir, dir, claimInput);
+    ensureVersionFree(workdir, dir, claimInput);
     let source;
     let artifactPath;
+    let artifactSha = '';
+    let indexSha = '';
     if (plan.policy === 'artifacts-in-repo') {
       report({ phase: 'artifacts' });
-      artifactPath = copyArtifacts(root, workdir, manifest.name, manifest);
-      report({ phase: 'artifacts-copied' });
-      const sha = commitOf(exec, workdir, `chore(release): ${entryName}`, identityOf(manifest));
-      report({ phase: 'artifacts-committed', artifactCommit: sha });
-      const pushed = pushOf(exec, workdir, branch);
-      if (pushed.status !== 0) {
+      const done = replicatePush(exec, workdir, branch, baseSha, () => {
+        ensureClaimFree(workdir, dir, claimInput);
+        migrateLegacyIndex(workdir, dir);
+        artifactPath = copyArtifacts(root, workdir, manifest.name, manifest);
+        report({ phase: 'artifacts-copied' });
+        artifactSha = commitOf(exec, workdir, `chore(release): ${entryName}`, identityOf(manifest));
+        report({ phase: 'artifacts-committed', artifactCommit: artifactSha });
+        return artifactSha;
+      });
+      if (!done.ok) {
         phase = 'artifacts';
         throw new MarketIndexError(
-          `产物提交推不上去（分支保护或权限）：本地 commit ${sha}；去合并/给权限后跟我说，我补索引。${tailOf(`${pushed.stdout}\n${pushed.stderr}`)}`,
-          'git-market-protected',
+          `产物提交推不上去（分支保护或权限）：本地 commit ${artifactSha}；去合并/给权限后跟我说，我补索引。${done.reason}`,
+          done.code,
           `git -C ${workdir} push origin HEAD:refs/heads/${branch}`,
         );
       }
-      report({ phase: 'artifacts-pushed', artifactCommit: sha, artifactPushed: true });
-      source = { type: 'git', url: plan.source.url, commit: sha, path: artifactPath };
+      report({ phase: 'artifacts-pushed', artifactCommit: artifactSha, artifactPushed: true });
+      source = { type: 'git', url: plan.source.url, commit: artifactSha, path: artifactPath };
     } else {
       source = publishSourceOf(publish ?? {});
       if (source === undefined) throw new MarketIndexError('这个出口没有可写进索引的 source（tarball 不进索引）', 'index-write');
@@ -582,30 +705,27 @@ export function updateMarketIndex(options) {
     }
     const entry = indexEntryOf({ manifest, version, source, at: now() });
     report({ phase: 'index' });
-    writeEntry(workdir, indexPath, entry, publisher, unit);
-    let indexSha = commitOf(exec, workdir, `chore(market): ${entryName}`, identityOf(manifest));
-    report({ phase: 'index-committed', indexCommit: indexSha });
-    const pushed = pushOf(exec, workdir, branch);
-    if (pushed.status !== 0) {
-      const replayed = resetToRemote(exec, workdir, branch);
-      if (!replayed) {
-        phase = 'index';
-        throw new MarketIndexError(
-          `模块已进仓库、索引没更新（本地 commit ${indexSha}）：${tailOf(`${pushed.stdout}\n${pushed.stderr}`)}`,
-        );
-      }
-      writeEntry(workdir, indexPath, entry, publisher, unit);
+    const indexed = replicatePush(exec, workdir, branch, baseSha, () => {
+      if (plan.policy !== 'artifacts-in-repo') migrateLegacyIndex(workdir, dir);
+      ensureClaimFree(workdir, dir, claimInput);
+      const current = readWorktreeIndex(workdir, dir).plugins.find((one) => one.name === manifest.name);
+      const written = current?.owner === undefined ? entry : { ...entry, owner: current.owner };
+      writeEntryFile(workdir, dir, written, written.versions[0]);
       indexSha = commitOf(exec, workdir, `chore(market): ${entryName}`, identityOf(manifest));
       report({ phase: 'index-committed', indexCommit: indexSha });
-      const retried = pushOf(exec, workdir, branch);
-      if (retried.status !== 0) {
-        phase = 'index';
-        throw new MarketIndexError(`模块已进仓库、索引没更新：${tailOf(`${retried.stdout}\n${retried.stderr}`)}`);
-      }
+      return indexSha;
+    });
+    if (!indexed.ok) {
+      phase = 'index';
+      throw new MarketIndexError(
+        indexed.code === 'git-market-protected' || indexed.code === 'git-auth'
+          ? `模块已进仓库、索引没更新（本地 commit ${indexSha}）：${indexed.reason}`
+          : indexed.reason,
+        indexed.code,
+      );
     }
     report({ phase: 'index-pushed', indexCommit: indexSha, indexPushed: true });
-    const local = runGit(exec, workdir, ['rev-parse', 'HEAD']);
-    const headSha = local.status === 0 ? local.stdout.trim() : '';
+    const headSha = revOf(exec, workdir, 'HEAD');
     const remoteHead = remoteHeadOf(exec, workdir, branch);
     if (headSha === '' || remoteHead !== headSha) {
       phase = 'remote-check';
@@ -642,23 +762,25 @@ export function refreshMarketEntry(options) {
   let phase = 'start';
   try {
     const workdir = worktreeOf(plan, exec, home);
-    const indexPath = plan.source.path ?? MARKET_FILE;
+    const dir = indexPathOf(plan);
     if (publisher === '') throw new MarketIndexError(missingPublisherText(), 'market-owner');
     assertClean(exec, workdir);
     const branch = plan.source.ref ?? currentBranch(exec, workdir);
     base = { ...base, branch };
-    const file = join(workdir, indexPath);
-    if (!existsSync(file)) throw new MarketIndexError(`索引里还没有 ${indexPath} —— 先正常发一版`, 'index-write');
-    const parsed = parseMarketIndexJson(readFileSync(file, 'utf8'));
-    if (!parsed.ok) {
-      throw new MarketIndexError(
-        `${indexPath} 不是 format 1：${parsed.problems.map((one) => one.detail).join('；')}`,
-        'index-write',
-      );
-    }
-    const existing = parsed.index.plugins.find((one) => one.name === manifest.name);
+    syncWorktree(exec, workdir, branch);
+    const index = readWorktreeIndex(workdir, dir);
+    const existing = index.plugins.find((one) => one.name === manifest.name);
     if (existing === undefined) {
       throw new MarketIndexError(`${manifest.name} 还不在索引里 —— 先正常发一版`, 'index-write');
+    }
+    const claim = claimOf(index, {
+      name: manifest.name,
+      publisher,
+      unit,
+      artifactPath: marketArtifactPath(manifest.name),
+    });
+    if (claim.state === 'conflict' || claim.state === 'unit-taken' || claim.state === 'path-taken') {
+      throw new MarketIndexError(claimProblemText(manifest.name, claim, unit), 'market-owner');
     }
     const latest = existing.versions[0]?.version ?? '';
     const meta = entryMetaOf(manifest);
@@ -670,23 +792,14 @@ export function refreshMarketEntry(options) {
     if (isDeepStrictEqual(next, existing)) {
       return { ...base, updated: false, unchanged: true, version: latest, phase: 'done' };
     }
-    writeEntry(workdir, indexPath, next, publisher, unit);
-    let indexSha = commitOf(exec, workdir, `chore(market): refresh ${manifest.name}`, identityOf(manifest));
-    const pushed = pushOf(exec, workdir, branch);
-    if (pushed.status !== 0) {
-      const replayed = resetToRemote(exec, workdir, branch);
-      if (!replayed) {
-        throw new MarketIndexError(`元数据没推上去（本地 commit ${indexSha}）：${tailOf(pushed.stderr)}`, 'index-write');
-      }
-      writeEntry(workdir, indexPath, next, publisher, unit);
-      indexSha = commitOf(exec, workdir, `chore(market): refresh ${manifest.name}`, identityOf(manifest));
-      const retried = pushOf(exec, workdir, branch);
-      if (retried.status !== 0) {
-        throw new MarketIndexError(`元数据没推上去：${tailOf(retried.stderr)}`, 'index-write');
-      }
-    }
-    const head = runGit(exec, workdir, ['rev-parse', 'HEAD']);
-    const headSha = head.status === 0 ? head.stdout.trim() : '';
+    const at = Date.now();
+    const baseSha = revOf(exec, workdir, 'HEAD');
+    const done = replicatePush(exec, workdir, branch, baseSha, () => {
+      writeMetaFile(workdir, dir, next, at);
+      return commitOf(exec, workdir, `chore(market): refresh ${manifest.name}`, identityOf(manifest));
+    });
+    if (!done.ok) throw new MarketIndexError(done.reason, done.code);
+    const headSha = revOf(exec, workdir, 'HEAD');
     const remoteHead = remoteHeadOf(exec, workdir, branch);
     if (headSha === '' || remoteHead !== headSha) {
       phase = 'remote-check';
@@ -695,7 +808,7 @@ export function refreshMarketEntry(options) {
         'git-market-pushed',
       );
     }
-    return { ...base, updated: true, version: latest, commit: indexSha, phase: 'done' };
+    return { ...base, updated: true, version: latest, commit: done.sha, phase: 'done' };
   } catch (error) {
     return {
       ...base,
@@ -733,7 +846,7 @@ function defaultBranchOf(exec, workdir, url, ref) {
 }
 
 export function initializeMarketRepo(options) {
-  const { exec, home, url, dir, ref, indexPath = MARKET_FILE, readme = true } = options;
+  const { exec, home, url, dir, ref, indexPath = MARKET_DIR, readme = true } = options;
   let workdir;
   let remote = String(url ?? '').trim();
   if (dir !== undefined) {
@@ -757,12 +870,13 @@ export function initializeMarketRepo(options) {
     const switched = runGit(exec, workdir, ['checkout', '-B', branch], { allowFailure: true });
     if (switched.status !== 0) throw new MarketIndexError(`建分支 ${branch} 没过：${tailOf(switched.stderr)}`, 'index-init');
   }
-  const created = [];
-  const file = join(workdir, indexPath);
-  if (!existsSync(file)) {
-    mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, MARKET_INDEX_SEED);
-    created.push(indexPath);
+  const created = migrateLegacyIndex(workdir, indexPath);
+  const indexDir = join(workdir, indexPath);
+  const marker = join(indexDir, 'README.md');
+  if (!existsSync(marker)) {
+    mkdirSync(indexDir, { recursive: true });
+    writeFileSync(marker, MARKET_ENTRIES_README_LINES.join('\n'));
+    created.push(`${indexPath}/README.md`);
   }
   const readmeFile = join(workdir, 'README.md');
   if (readme && !existsSync(readmeFile)) {
@@ -792,11 +906,7 @@ export function initializeMarketRepo(options) {
 export function marketVersionExists({ plan, exec, home, name, version }) {
   try {
     const workdir = worktreeOf(plan, exec, home);
-    const file = join(workdir, plan.source.path ?? MARKET_FILE);
-    if (!existsSync(file)) return false;
-    const parsed = parseMarketIndexJson(readFileSync(file, 'utf8'));
-    if (!parsed.ok) return false;
-    const entry = parsed.index.plugins.find((one) => one.name === name);
+    const entry = readWorktreeIndex(workdir, indexPathOf(plan)).plugins.find((one) => one.name === name);
     return entry?.versions.some((one) => one.version === version) === true;
   } catch {
     return false;
@@ -823,4 +933,3 @@ export function verifyMarketArtifact({ plan, exec, home, name, path, commit }) {
   return { path: artifactPath, files };
 }
 
-export { MARKET_FILE };

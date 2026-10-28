@@ -255,7 +255,7 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
     const kind = payload?.problem?.kind;
     if (selectedSource === undefined || selectedSource.kind !== 'git') return null;
     if (kind !== 'git-empty' && kind !== 'git-missing-index') return null;
-    return { path: selectedSource.path ?? 'market.json', empty: kind === 'git-empty' };
+    return { path: selectedSource.path ?? 'market', empty: kind === 'git-empty' };
   }, [payload, selectedSource]);
 
   const defaultBranch = payload?.problem?.branch ?? selectedSource?.ref ?? 'main';

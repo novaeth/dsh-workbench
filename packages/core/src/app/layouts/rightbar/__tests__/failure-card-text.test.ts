@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Translate } from '@dsh-workbench/shared';
 import type { InstallFailure } from '@dsh-workbench/shared';
-import { failureCardOf, ownerLabel, shellPath } from '../failure-card-text';
+import { failureCardOf, ownerLabel, shellPath, updateStuckCardOf } from '../failure-card-text';
 import type { MarketRow } from '../market-row-types';
 import { askAgentText } from '../market-view-text';
 
@@ -26,6 +26,35 @@ function failure(over: Partial<InstallFailure> = {}): InstallFailure {
     ...over,
   };
 }
+
+describe('updateStuckCardOf（更新没换上那张卡）', () => {
+  it('★ 同一张卡：标题说没换上，修法就是那条 dsh plugin 命令，复制后提示重启', () => {
+    const card = updateStuckCardOf(t, {
+      command: "dsh plugin --profile workbench add '@p/x@0.2.0'",
+      from: '0.1.0',
+      latest: '0.2.0',
+    });
+
+    expect(card.title).toBe('panels.market.updateStuck.title');
+    expect(card.fact).toBe('panels.market.updateStuck.factNoChange');
+    expect(card.fix).toBe("dsh plugin --profile workbench add '@p/x@0.2.0'");
+    expect(card.fixLabel).toBe('panels.market.failure.copyFix');
+    expect(card.copiedHint).toBe('panels.market.updateStuck.copiedHint');
+    expect(card.command).toBe('');
+    expect(card.output).toBe('');
+  });
+
+  it('★ 已经有原因那句（stop-profile）→ 事实用那句，不再拼版本号', () => {
+    const card = updateStuckCardOf(t, {
+      command: 'dsh plugin --profile workbench add @p/x',
+      fact: 'panels.market.add.failureStopProfile',
+      from: '0.1.0',
+      latest: '0.2.0',
+    });
+
+    expect(card.fact).toBe('panels.market.add.failureStopProfile');
+  });
+});
 
 describe('failureCardOf（卡片上那三行 + 能照抄的那条）', () => {
   it('属主不对 → 主句说没权限，事实点名是谁的，修法是 chown 回自己', () => {

@@ -1,3 +1,6 @@
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { DshShell } from '@dsh-workbench/shared';
 import type { BundleChange } from '@/kernel/contract/bundle-install';
@@ -22,6 +25,11 @@ function depsOf(input: {
   readonly modules?: () => readonly ProfileModule[];
   readonly shell?: DshShell;
   readonly supply?: SupplyPort;
+  readonly profile?: string;
+  readonly profileName?: string;
+  readonly dshHome?: string;
+  readonly swapWaitMs?: number;
+  readonly swapPollMs?: number;
 }) {
   const manager: BundleManager = {
     registries: async () => null,
@@ -43,6 +51,11 @@ function depsOf(input: {
     installed: input.installed,
     shell: input.shell,
     ...(input.supply === undefined ? {} : { supply: input.supply }),
+    ...(input.profile === undefined ? {} : { profile: input.profile }),
+    ...(input.profileName === undefined ? {} : { profileName: input.profileName }),
+    ...(input.dshHome === undefined ? {} : { dshHome: input.dshHome }),
+    ...(input.swapWaitMs === undefined ? {} : { swapWaitMs: input.swapWaitMs }),
+    ...(input.swapPollMs === undefined ? {} : { swapPollMs: input.swapPollMs }),
     manager,
     routeDeps,
     sweep: async () => undefined,
@@ -67,6 +80,7 @@ describe('模块更新那一跳：跑完重新读盘对账', () => {
     expect(outcome?.change.application).toBe('applied');
     expect(outcome?.change.version).toBe('0.1.1');
     expect(outcome?.module).toMatchObject({ kind: 'module', version: '0.1.1' });
+    expect(outcome?.remedy).toBeUndefined();
   });
 
   it('★ 版本没动 → failed + no-change（界面不许再回「更新」按钮）', async () => {
@@ -75,11 +89,74 @@ describe('模块更新那一跳：跑完重新读盘对账', () => {
       depsOf({
         installed: () => ({ kind: 'module', pkg: PKG, unit: 'mod', version: '0.1.0' }),
         install: async () => change(),
+        profile: 'workbench',
       }),
     );
 
     expect(outcome?.change.application).toBe('failed');
     expect(outcome?.change.errorCode).toBe('no-change');
+    expect(outcome?.remedy?.command).toContain('dsh plugin --profile workbench add');
+    expect(outcome?.remedy?.command).toContain(PKG);
+  });
+
+  it('★ 进程内卸不掉（stop-profile）→ 自己从外部换一份，回 restart-required（不让用户去终端）', async () => {
+    let version = '0.1.0';
+    const dir = mkdtempSync(join(tmpdir(), 'wb-swap-'));
+    const marker = join(dir, 'self-update.json');
+    const outcome = await updateModuleBundle(
+      'mod',
+      depsOf({
+        installed: () => ({ kind: 'module', pkg: PKG, unit: 'mod', version }),
+        install: async () => change({ application: 'failed', stage: 'remove', errorCode: 'stop-profile' }),
+        dshHome: dir,
+        profileName: 'workbench',
+        swapWaitMs: 3000,
+        swapPollMs: 1,
+        supply: {
+          startSelfUpdate: () => {
+            version = '0.1.1';
+            writeFileSync(
+              marker,
+              JSON.stringify({ pkg: PKG, profile: 'workbench', from: '0.1.0', to: '0.1.1', state: 'ok', version: '0.1.1' }),
+            );
+            return { started: true, paths: { dir, script: '', marker, log: '' }, forward: '' };
+          },
+        } as unknown as SupplyPort,
+      }),
+    );
+
+    expect(outcome?.change.application).toBe('restart-required');
+    expect(outcome?.change.version).toBe('0.1.1');
+    expect(outcome?.module).toMatchObject({ kind: 'module', version: '0.1.1' });
+    expect(outcome?.remedy).toBeUndefined();
+  });
+
+  it('★ 外部那一步没把版本换掉 → 回落成失败 + 给命令（不假装成功）', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'wb-swap-'));
+    const marker = join(dir, 'self-update.json');
+    const outcome = await updateModuleBundle(
+      'mod',
+      depsOf({
+        installed: () => ({ kind: 'module', pkg: PKG, unit: 'mod', version: '0.1.0' }),
+        install: async () => change({ application: 'failed', stage: 'remove', errorCode: 'stop-profile' }),
+        dshHome: dir,
+        profileName: 'workbench',
+        swapWaitMs: 200,
+        swapPollMs: 5,
+        supply: {
+          startSelfUpdate: () => {
+            writeFileSync(
+              marker,
+              JSON.stringify({ pkg: PKG, profile: 'workbench', from: '0.1.0', to: '0.1.1', state: 'failed', version: '0.1.0' }),
+            );
+            return { started: true, paths: { dir, script: '', marker, log: '' }, forward: '' };
+          },
+        } as unknown as SupplyPort,
+      }),
+    );
+
+    expect(outcome?.change.application).toBe('failed');
+    expect(outcome?.remedy?.command).toContain('dsh plugin --profile workbench add');
   });
 
   it('本地那份不给升；不在花名册里回 null', async () => {

@@ -5,6 +5,7 @@ import { Spinner } from '@dsh-workbench/shared';
 import { SHARED_STATE_KEY, sharedActions, type SharedRow } from './market-rows';
 import type { MarketFailure } from './market-row-types';
 import { FailureCard } from './FailureCard';
+import { failureCardOf } from './failure-card-text';
 import { marketSectionIcon } from './market-section-icon';
 import { packageIcon, sharedRowKind } from './market-row-icon';
 import { ACTION_LABEL_KEY, PROGRESS_KEY, type Pending } from './market-view-text';
@@ -96,7 +97,7 @@ function SharedLine({
         <div className={styles.marketFailure}>{failure.message}</div>
       ) : (
         <div className={styles.marketFailureSeat}>
-          <FailureCard t={t} failure={failure.failure} onRecheck={onRecheck} rechecking={rechecking} />
+          <FailureCard t={t} model={failureCardOf(failure.failure, t)} onRecheck={onRecheck} rechecking={rechecking} />
         </div>
       )}
     </li>

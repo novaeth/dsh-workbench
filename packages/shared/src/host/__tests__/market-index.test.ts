@@ -2,14 +2,23 @@ import { describe, expect, it } from 'vitest';
 import type { MarketIndex, MarketIndexEntry } from '../../contract/protocol/market-index.js';
 import { claimOf, claimOfEntry, entryOwnerOf, entryUnitOf, marketArtifactPath, samePublisher } from '../market-index-claim.js';
 import {
+  assembleMarketIndex,
+  collectMarketEntryFiles,
   filterMarketIndex,
+  marketEntryFilesOf,
+  marketEntryPath,
   marketInstallTarget,
+  marketMetaPath,
   marketSourceKey,
+  parseMarketEntryDoc,
   parseMarketIndex,
   parseMarketIndexJson,
   parseSourceConfig,
   upsertMarketEntry,
 } from '../market-index.js';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 function entry(change: Partial<MarketIndexEntry> = {}): MarketIndexEntry {
   return {
@@ -341,5 +350,110 @@ describe('索引源与安装目标', () => {
     expect(
       parseSourceConfig({ id: 'team', label: '团队', kind: 'git', url: 'ssh://git:token@git.company.com/wb/market.git' }).ok,
     ).toBe(false);
+  });
+});
+
+describe('条目文件：一个版本一个文件', () => {
+  const versionDoc = (version: string, timestamp: number, title: string) => ({
+    name: '@scope/module-x',
+    version,
+    source: { type: 'npm' },
+    publishTimestamp: timestamp,
+    title: { zh: title },
+  });
+
+  it('路径按包名分层，meta 文件带毫秒时间戳', () => {
+    expect(marketEntryPath('market', '@scope/module-x', '0.1.0')).toBe('market/@scope/module-x/0.1.0.json');
+    expect(marketMetaPath('market', '@scope/module-x', 1_760_000_000_123)).toBe(
+      'market/@scope/module-x/meta-1760000000123.json',
+    );
+    expect(marketEntryPath('market', 'plain', '1.0.0')).toBe('market/plain/1.0.0.json');
+  });
+
+  it('包名/版本号不合法就不给路径（防止写出目录外）', () => {
+    expect(() => marketEntryPath('market', '../escape', '1.0.0')).toThrow();
+    expect(() => marketEntryPath('market', 'ok', '../1.0.0')).toThrow();
+  });
+
+  it('单条文档能解析，坏文档整条拒', () => {
+    const good = parseMarketEntryDoc(versionDoc('0.1.0', 1_760_000_000, '探针'));
+    expect(good.ok).toBe(true);
+    if (!good.ok) return;
+    expect(good.doc.name).toBe('@scope/module-x');
+    const bad = parseMarketEntryDoc({ name: 'Bad Name', version: '0.1.0', source: { type: 'npm' } });
+    expect(bad.ok).toBe(false);
+    const noSource = parseMarketEntryDoc({ name: '@scope/x', version: '0.1.0' });
+    expect(noSource.ok).toBe(false);
+  });
+
+  it('组装：版本全收并按 SemVer 降序，元数据取最新那份', () => {
+    const files = [
+      { path: 'market/@scope/module-x/0.1.0.json', text: JSON.stringify(versionDoc('0.1.0', 1_760_000_000, '旧标题')) },
+      { path: 'market/@scope/module-x/0.2.0.json', text: JSON.stringify(versionDoc('0.2.0', 1_760_000_100, '新标题')) },
+      { path: 'market/@scope/module-x/meta-1760000200000.json', text: JSON.stringify({
+        name: '@scope/module-x',
+        publishTimestamp: 1_760_000_200,
+        title: { zh: '最新标题' },
+      }) },
+    ];
+    const assembled = assembleMarketIndex(files);
+    expect(assembled.ok).toBe(true);
+    if (!assembled.ok) return;
+    const entry = assembled.index.plugins[0];
+    expect(entry?.versions.map((one) => one.version)).toEqual(['0.2.0', '0.1.0']);
+    expect(entry?.title?.zh).toBe('最新标题');
+  });
+
+  it('组装：同一个版本出现两次就整份拒（那是真重复发布）', () => {
+    const assembled = assembleMarketIndex([
+      { path: 'a/0.1.0.json', text: JSON.stringify(versionDoc('0.1.0', 1_760_000_000, '甲')) },
+      { path: 'b/0.1.0.json', text: JSON.stringify(versionDoc('0.1.0', 1_760_000_100, '乙')) },
+    ]);
+    expect(assembled.ok).toBe(false);
+    if (assembled.ok) return;
+    expect(assembled.problems.some((one) => one.kind === 'duplicate-version')).toBe(true);
+  });
+
+  it('从目录读只收 .json，README 不当条目', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'wb-entry-'));
+    try {
+      mkdirSync(join(dir, '@scope/module-x'), { recursive: true });
+      writeFileSync(join(dir, 'README.md'), 'index');
+      writeFileSync(join(dir, '@scope/module-x', '0.1.0.json'), JSON.stringify(versionDoc('0.1.0', 1_760_000_000, '探针')));
+      const files = collectMarketEntryFiles(dir);
+      expect(files.map((one) => one.path)).toEqual(['@scope/module-x/0.1.0.json']);
+      const assembled = assembleMarketIndex(files);
+      expect(assembled.ok).toBe(true);
+      if (!assembled.ok) return;
+      expect(assembled.index.plugins[0]?.name).toBe('@scope/module-x');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('迁移：一份 format 1 能拆成条目文件，再组装回来一模一样', () => {
+    const legacy: MarketIndex = {
+      format: 1,
+      plugins: [
+        {
+          name: '@scope/module-x',
+          owner: '甲',
+          metadata: { workbench: true, unit: 'x' },
+          versions: [
+            { version: '0.2.0', source: { type: 'npm' }, publishTimestamp: 1_760_000_100 },
+            { version: '0.1.0', source: { type: 'npm' }, publishTimestamp: 1_760_000_000 },
+          ],
+        },
+      ],
+    };
+    const files = marketEntryFilesOf(legacy, 'market');
+    expect(files.map((one) => one.path)).toEqual([
+      'market/@scope/module-x/0.2.0.json',
+      'market/@scope/module-x/0.1.0.json',
+    ]);
+    const assembled = assembleMarketIndex(files);
+    expect(assembled.ok).toBe(true);
+    if (!assembled.ok) return;
+    expect(assembled.index.plugins).toEqual(legacy.plugins);
   });
 });

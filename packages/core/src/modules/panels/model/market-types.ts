@@ -40,6 +40,7 @@ export interface BundleInstallOutcome {
   readonly supply: BundleSupply;
   readonly plugin?: BundleInstalledPlugin;
   readonly restored?: string;
+  readonly remedy?: { readonly command: string };
 }
 
 export interface BundleRemoveOutcome {

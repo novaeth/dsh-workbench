@@ -15,7 +15,7 @@ export function publishClaimDenyOf(claim: MarketClaim | undefined, name: string)
     return (
       `市场里 ${name} 已经有主了（${claim.owner}）—— 同一个名字不能换人发。` +
       '换一个带团队 scope 的包名；你就是原来的作者（只是换了机器或署名），用 author 参数带上原来的署名；' +
-      '确实是接手，让索引维护者改 market.json 里这一条的 owner。'
+      '确实是接手，让索引维护者改 market/<包名>/ 条目文件里的 owner。'
     );
   }
   return undefined;

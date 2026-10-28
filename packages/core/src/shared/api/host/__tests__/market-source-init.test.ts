@@ -44,7 +44,7 @@ function fakeShell(reply: (command: string) => { exitCode: number; stdout?: stri
 }
 
 describe('createMarketSourceInitializer', () => {
-  it('空仓库按仓库默认分支建索引、写 market.json + README、推首个 commit', async () => {
+  it('空仓库按仓库默认分支建索引、写 market/README.md + README、推首个 commit', async () => {
     const root = tempRoot();
     const store = createMarketSourcesStore({ root });
     await store.apply({ action: 'save', source: gitSource() });
@@ -61,12 +61,12 @@ describe('createMarketSourceInitializer', () => {
     expect(result.branch).toBe('trunk');
     expect(result.commit).toBe(COMMIT);
     expect(result.changed).toBe(true);
-    expect(result.created).toEqual(['market.json', 'README.md']);
+    expect(result.created).toEqual(['market/README.md', 'README.md']);
     expect(result.source.ref).toBe('trunk');
     expect(result.source.policy).toBe('artifacts-in-repo');
     expect(store.read().sources[0]?.ref).toBe('trunk');
     const worktree = join(root, 'market-index', marketSourceKey(result.source), 'worktree');
-    expect(existsSync(join(worktree, 'market.json'))).toBe(true);
+    expect(existsSync(join(worktree, 'market', 'README.md'))).toBe(true);
     expect(existsSync(join(worktree, 'README.md'))).toBe(true);
     expect(fake.calls.filter((line) => line.includes('push')).length).toBe(1);
     rmSync(root, { recursive: true, force: true });
@@ -133,13 +133,45 @@ describe('createMarketSourceInitializer', () => {
     rmSync(root, { recursive: true, force: true });
   });
 
+  it('仓库里已有老 market.json：初始化时拆成条目文件并删掉它', async () => {
+    const root = tempRoot();
+    const store = createMarketSourcesStore({ root });
+    await store.apply({ action: 'save', source: gitSource() });
+    const worktree = join(root, 'market-index', marketSourceKey(gitSource()), 'worktree');
+    mkdirSync(join(worktree, '.git'), { recursive: true });
+    writeFileSync(
+      join(worktree, 'market.json'),
+      JSON.stringify({
+        format: 1,
+        plugins: [
+          { name: '@scope/x', owner: '甲', versions: [{ version: '0.1.0', source: { type: 'npm' } }] },
+        ],
+      }),
+    );
+    const fake = fakeShell((command) => {
+      if (command.includes('status')) return { exitCode: 0 };
+      if (command.includes('--verify')) return { exitCode: 0 };
+      if (command.includes('--abbrev-ref')) return { exitCode: 0, stdout: 'main\n' };
+      if (command.includes('rev-parse')) return { exitCode: 0, stdout: `${COMMIT}\n` };
+      return { exitCode: 0 };
+    });
+    const init = createMarketSourceInitializer({ root, store, shell: fake.shell });
+    const result = await init({ id: 'team' });
+    expect(result.changed).toBe(true);
+    const moved = join(root, 'market-index', marketSourceKey(result.source), 'worktree');
+    expect(existsSync(join(moved, 'market.json'))).toBe(false);
+    expect(existsSync(join(moved, 'market', '@scope', 'x', '0.1.0.json'))).toBe(true);
+    rmSync(root, { recursive: true, force: true });
+  });
+
   it('只补可发布印章：已有索引文件时不提交、不推送', async () => {
     const root = tempRoot();
     const store = createMarketSourcesStore({ root });
     await store.apply({ action: 'save', source: gitSource() });
     const worktree = join(root, 'market-index', marketSourceKey(gitSource()), 'worktree');
     mkdirSync(join(worktree, '.git'), { recursive: true });
-    writeFileSync(join(worktree, 'market.json'), '{"format":1,"plugins":[]}');
+    mkdirSync(join(worktree, 'market'), { recursive: true });
+    writeFileSync(join(worktree, 'market', 'README.md'), 'index\n');
     const fake = fakeShell((command) => {
       if (command.includes('status')) return { exitCode: 0 };
       if (command.includes('--verify')) return { exitCode: 0 };
@@ -171,7 +203,8 @@ describe('createMarketSourceInitializer', () => {
     await store.apply({ action: 'save', source: other });
     const worktree = join(root, 'market-index', marketSourceKey(other), 'worktree');
     mkdirSync(join(worktree, '.git'), { recursive: true });
-    writeFileSync(join(worktree, 'market.json'), '{"format":1,"plugins":[]}');
+    mkdirSync(join(worktree, 'market'), { recursive: true });
+    writeFileSync(join(worktree, 'market', 'README.md'), 'index\n');
     const fake = fakeShell((command) => {
       if (command.includes('status')) return { exitCode: 0 };
       if (command.includes('--verify')) return { exitCode: 0 };
@@ -202,7 +235,7 @@ describe('createMarketSourceInitializer', () => {
       return { exitCode: 0 };
     });
     const init = createMarketSourceInitializer({ root, store, shell: fake.shell });
-    await expect(init({ id: 'team', stampOnly: true })).rejects.toThrow(/还没有 market.json/);
+    await expect(init({ id: 'team', stampOnly: true })).rejects.toThrow(/还没有 market\//);
     expect(fake.calls.some((line) => line.includes('commit') || line.includes('push'))).toBe(false);
     expect(store.read().sources[0]?.policy).toBeUndefined();
     rmSync(root, { recursive: true, force: true });

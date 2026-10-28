@@ -232,9 +232,10 @@ const FAILURE_KEYS: Readonly<Record<string, string>> = {
   'incompatible-version': 'panels.market.add.failureGeneric',
   'not-bundle': 'panels.market.add.failureGeneric',
   'invalid-spec': 'panels.market.add.failureGeneric',
-  'bundle-in-use': 'panels.market.add.failureGeneric',
+  'bundle-in-use': 'panels.market.add.failureStopProfile',
   'not-removable': 'panels.market.add.failureGeneric',
-  'stop-profile': 'panels.market.add.failureGeneric',
+  'stop-profile': 'panels.market.add.failureStopProfile',
+  cancelled: 'panels.market.add.failureCancelled',
   'stale-approval': 'panels.market.add.failureGeneric',
 };
 

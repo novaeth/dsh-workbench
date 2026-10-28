@@ -5,8 +5,13 @@ import { pluginKeptOf, pluginKeptText, type PluginKept, type PluginReferences } 
 import type { PluginLedger } from './plugin-ledger';
 
 export interface EnvDropper {
-  usersOf(plugin: string, except?: string): string[];
-  drop(unit: string, needs: readonly Need[] | undefined, before: UnitCapability): Promise<string[]>;
+  usersOf(plugin: string, except?: string, roster?: readonly UnitManifest[]): string[];
+  drop(
+    unit: string,
+    needs: readonly Need[] | undefined,
+    before: UnitCapability,
+    roster?: readonly UnitManifest[],
+  ): Promise<string[]>;
 }
 
 function stateOf(before: UnitCapability, kind: NeedState['kind'], name: string): NeedState | undefined {
@@ -28,8 +33,8 @@ export function createEnvDropper(options: {
     return options.references?.() ?? { trustworthy: false, unreadable: [] };
   }
 
-  function usersOf(plugin: string, except?: string): string[] {
-    return catalog()
+  function usersOf(plugin: string, except?: string, roster?: readonly UnitManifest[]): string[] {
+    return (roster ?? catalog())
       .filter(
         (item) =>
           item.id !== except &&
@@ -39,8 +44,8 @@ export function createEnvDropper(options: {
       .map((item) => item.id);
   }
 
-  function libUsersOf(name: string, unit: string): string[] {
-    return catalog()
+  function libUsersOf(name: string, unit: string, roster: readonly UnitManifest[]): string[] {
+    return roster
       .filter(
         (item) =>
           item.id !== unit &&
@@ -53,10 +58,11 @@ export function createEnvDropper(options: {
   return {
     usersOf,
 
-    async drop(unit, needs, before) {
+    async drop(unit, needs, before, roster) {
       const kept = new Set<string>();
+      const known = roster ?? catalog();
       const index = buildSupplyIndex(
-        catalog()
+        known
           .filter((item) => options.isReleased?.(item.id) !== true)
           .map((item) => ({ id: item.id, needs: needsOf(item) })),
         { env: process.env },
@@ -71,7 +77,7 @@ export function createEnvDropper(options: {
       const unknown = !before.needs.some((state) => state.kind === 'extension');
 
       for (const need of extensions) {
-        const users = usersOf(need.name, unit);
+        const users = usersOf(need.name, unit, known);
         const held = ledger?.heldAsPlugin(need.name) !== undefined;
         const retention = pluginRetentionOf({
           held,
@@ -95,7 +101,7 @@ export function createEnvDropper(options: {
       }
 
       for (const need of libs) {
-        const keepers = libUsersOf(need.name, unit);
+        const keepers = libUsersOf(need.name, unit, known);
         if (keepers.length > 0) {
           for (const id of keepers) kept.add(id);
           continue;

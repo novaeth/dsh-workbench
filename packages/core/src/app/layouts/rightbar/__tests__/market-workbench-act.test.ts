@@ -189,6 +189,41 @@ describe('工作台自己那一行的更新：只走三拍，不额外加话', (
     expect(seen.failed.at(-1)).toEqual({ id: 'hello', message: 'panels.market.updateNoChange' });
   });
 
+  it('★ dsh 不肯卸掉正在用的旧版 → 不许说成「版本没变」，要把终端命令一起给出来', async () => {
+    const { seen, seats } = seatsOf();
+    const command = "dsh plugin --profile workbench add '@p/hello@0.9.0'";
+    const act = marketActOf({
+      t,
+      mocked: false,
+      rowOf: () => row('hello'),
+      seats,
+      send: async () => ({
+        ok: true,
+        value: {
+          change: { application: 'failed', stage: 'remove', changed: false, target: 'x', errorCode: 'stop-profile' },
+          module: { kind: 'module', pkg: '@p/hello', version: '0.8.0' },
+          remedy: { command },
+        },
+      }),
+      onChanged: () => undefined,
+    });
+
+    await act('hello', 'update-bundle');
+
+    expect(seen.pending.at(-1)).toBeNull();
+    expect(seen.failed.at(-1)).toMatchObject({
+      id: 'hello',
+      message: 'panels.market.failed',
+      card: {
+        title: 'panels.market.updateStuck.title',
+        fact: 'panels.market.add.failureStopProfile',
+        fix: command,
+        fixLabel: 'panels.market.failure.copyFix',
+        copiedHint: 'panels.market.updateStuck.copiedHint',
+      },
+    });
+  });
+
   it('★ 新版装丢了、旧版回滚成功 → 红字说清「已装回」，而不是假装更新成功', async () => {
     const { seen, seats } = seatsOf();
     const act = marketActOf({

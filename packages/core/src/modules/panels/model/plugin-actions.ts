@@ -57,7 +57,7 @@ export function pluginSweptText(pkg: string): string {
 export interface PluginActions {
   update(pkg: string): Promise<PluginUpdateOutcome>;
   uninstall(pkg: string): Promise<PluginUninstallOutcome>;
-  sweep(): Promise<readonly string[]>;
+  sweep(claimedBy?: (plugin: string) => readonly string[]): Promise<readonly string[]>;
 }
 
 export function createPluginActions(options: {
@@ -98,11 +98,15 @@ export function createPluginActions(options: {
     | { readonly act: 'remove'; readonly plugin: string }
     | { readonly act: 'keep'; readonly kept: PluginKept; readonly plugin?: string };
 
-  function decide(entry: PluginLedgerEntry, held: boolean): PluginDecision {
+  function decide(
+    entry: PluginLedgerEntry,
+    held: boolean,
+    claimedBy?: (plugin: string) => readonly string[],
+  ): PluginDecision {
     const plugin = pluginNameOf(entry);
     if (plugin === undefined) return { act: 'keep', kept: { kind: 'unnamed' } };
     const refs = referencesOf();
-    const by = options.claimedBy?.(plugin) ?? [];
+    const by = claimedBy?.(plugin) ?? options.claimedBy?.(plugin) ?? [];
     const retention = pluginRetentionOf({ held, claimedBy: by, trustworthy: refs.trustworthy });
     if (retention === 'remove') return { act: 'remove', plugin };
     return { act: 'keep', kept: pluginKeptOf(retention, { by, unreadable: refs.unreadable }), plugin };
@@ -158,12 +162,12 @@ export function createPluginActions(options: {
       return { removed: true, name: decision.plugin };
     },
 
-    async sweep() {
+    async sweep(claimedBy) {
       if (ledger === undefined) return [];
       const removed: string[] = [];
       for (const entry of ledger.all()) {
         if (entry.releasedAt === undefined) continue;
-        const decision = decide(entry, false);
+        const decision = decide(entry, false, claimedBy);
         if (decision.act === 'keep') continue;
         try {
           await removeFiles(decision.plugin);

@@ -2,8 +2,7 @@ import { createElement as h, useCallback, useState } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import { Button, StateDot, TerminalBlock, writeClipboard } from '@deepseek-ai/dsh-client-ui-primitives';
 import type { TerminalBlockLabels } from '@deepseek-ai/dsh-client-ui-primitives';
-import { failureCardOf } from './failure-card-text';
-import type { InstallFailure } from '@dsh-workbench/shared';
+import type { FailureCardModel } from './failure-card-text';
 import styles from './FailureCard.module.css';
 
 const COPIED_MS = 1200;
@@ -29,16 +28,16 @@ function terminalLabels(t: Translate): TerminalBlockLabels {
 
 export function FailureCard({
   t,
-  failure,
+  model,
   onRecheck,
   rechecking,
 }: {
   readonly t: Translate;
-  readonly failure: InstallFailure;
+  readonly model: FailureCardModel;
   readonly onRecheck: () => void;
   readonly rechecking: boolean;
 }) {
-  const model = failureCardOf(failure, t);
+  const hasOutput = model.command !== '' || model.output !== '';
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -64,12 +63,14 @@ export function FailureCard({
         <Button type="button" size="sm" variant="ghost" disabled={rechecking} onClick={onRecheck}>
           {t('panels.market.failure.recheck')}
         </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(!open)}>
-          {open ? t('panels.market.failure.hideOutput') : t('panels.market.failure.showOutput')}
-        </Button>
+        {hasOutput ? (
+          <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(!open)}>
+            {open ? t('panels.market.failure.hideOutput') : t('panels.market.failure.showOutput')}
+          </Button>
+        ) : null}
       </div>
       {copied ? <p className={styles.hint}>{model.copiedHint}</p> : null}
-      {open ? (
+      {open && hasOutput ? (
         <TerminalBlock
           command={model.command}
           output={model.output}

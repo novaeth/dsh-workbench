@@ -1,4 +1,5 @@
 export const MARKET_INDEX_FORMAT = 1;
+export const MARKET_INDEX_DIR = 'market';
 export const MARKET_INDEX_PATH = 'market.json';
 export const MARKET_DISCOVER_ROUTE = 'panels/market-discover';
 export const MARKET_DOC_ROUTE = 'panels/market-doc';
@@ -127,11 +128,13 @@ export type MarketIndexProblemKind =
   | 'format'
   | 'plugins'
   | 'plugin'
+  | 'entry'
   | 'name'
   | 'duplicate-name'
   | 'versions'
   | 'version'
   | 'version-order'
+  | 'duplicate-version'
   | 'source'
   | 'git-commit'
   | 'timestamp'

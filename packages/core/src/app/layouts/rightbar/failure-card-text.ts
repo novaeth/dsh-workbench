@@ -20,6 +20,33 @@ const TITLE_KEY: Readonly<Record<InstallFailure['kind'], string>> = {
 
 const ASK_AGENT_KEY = 'panels.market.failure.askAgent';
 
+export function updateStuckCardOf(
+  t: Translate,
+  input: {
+    readonly command: string;
+    readonly fact?: string | undefined;
+    readonly from?: string | undefined;
+    readonly latest?: string | undefined;
+  },
+): FailureCardModel {
+  const unknown = t('panels.market.updateUnknownVersion');
+  return {
+    title: t('panels.market.updateStuck.title'),
+    fact:
+      input.fact ??
+      t('panels.market.updateStuck.factNoChange', {
+        from: input.from ?? unknown,
+        latest: input.latest ?? unknown,
+      }),
+    fixLabel: t('panels.market.failure.copyFix'),
+    fix: input.command,
+    copiedHint: t('panels.market.updateStuck.copiedHint'),
+    command: '',
+    output: '',
+    exitCode: null,
+  };
+}
+
 export function shellPath(path: string): string {
   return /^[\w./@%+-]+$/.test(path) ? path : `'${path.replaceAll("'", "'\\''")}'`;
 }

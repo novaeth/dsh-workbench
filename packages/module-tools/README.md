@@ -17,10 +17,10 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 维护者确认要真发时跑 `pnpm exec dsh-wb-module release`：全门禁（build / check / design / typecheck / test / selfcheck）、
 验收必须全勾、预检（登录 / license / git 远端）、按 `--target` 发到团队源 / 公网 npm / 安装包 / git，
 最后从出口侧核包（`--dry-run` 只预览，`--verify` 只核已发布的包）。配了可写 git 索引源时，
-发完还会更新 `market.json`（`--index auto|none|<目录|git 地址>`，`artifacts-in-repo` 连产物一起入库，
+发完还会写索引条目（`--index auto|none|<目录|git 地址>`，`artifacts-in-repo` 连产物一起入库，
 `catalog-only` 只更索引）；索引没更上不影响包已发布这件事，结果里会如实写。
 发布可选 `--index-source <id>` 指定发到哪个索引源；不指定时用唯一可发布的源，有多个可发布源会要求指定。
-空仓库先跑 `dsh-wb-module market-init <git 地址>`：生成 `market.json` 与 README 并推首个 commit
+空仓库先跑 `dsh-wb-module market-init <git 地址>`：生成索引目录 `market/` 与 README 并推首个 commit
 （用仓库声明的默认分支，读不到时用 `--ref` 指定）。在工作台里配了可写索引源之后，
 `release` 默认出口就是 `market`：产物与索引一起进那个仓库。
 发布过程中每一步都写进 `~/.dsh/workbench/releases/<unit>.json`；中断后带 `--resume` 接着发
@@ -33,7 +33,7 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 模块的 `package.json` 可用 `dsh.workbench.market` 声明 `category` 与 `labels`（字符串数组）；
 不写就不带分类和标签，索引里只留 `metadata.workbench: true` 这条身份标记。
 要换署名时带 `--author "姓名 <邮箱>"`（或只给姓名）：它写回 `package.json`，索引、产物与提交都用它，
-`--refresh` 时也一样。一个包名归第一次发布的人（`market.json` 里的 `owner`）：换署名发同名会被拒，
+`--refresh` 时也一样。一个包名归第一次发布的人（条目文件里的 `owner`）：换署名发同名会被拒，
 `--refresh` 也一样 —— 真要换人，先改那一条的 `owner`。
 同一个市场里，一个模块 id（`dsh.workbench.unit`）只能被一个条目使用；产物目录按包名走
 （`packages/<包名>/`）：换一个包名沿用旧 unit、或两个条目撞同一个 id / 目录，都会被拒。
@@ -45,7 +45,7 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 | 命令 | 作用 |
 |---|---|
 | `dsh-wb-module init <unit> [--dir <目录>] [--template minimal\|diy] [--description "一句话"]` | 建模块骨架 |
-| `dsh-wb-module market-init <git 地址\|目录> [--ref <分支>] [--path <索引路径>]` | 初始化市场索引仓库：写 `market.json` + README，推首个 commit |
+| `dsh-wb-module market-init <git 地址\|目录> [--ref <分支>] [--path <索引路径>]` | 初始化市场索引仓库：写 `market/` + README，推首个 commit |
 | `dsh-wb-module build` | 出 `dist/host.js`（单文件 ESM）与 `client.js`（套 loader 壳） |
 | `dsh-wb-module check [--only <判据>]` | 十三条判据；`--only` 单跑，也当查询口用；`--list [--json\|--markdown]` 只列判据元数据 |
 | `dsh-wb-module lint [--fix]` | 用模块自己那份 `eslint.config.mjs`；`--fix` 写回文件 |

@@ -5,6 +5,7 @@ import type { MarketFailure, MarketRow } from './market-row-types';
 import { marketRowTitle, type MarketRowAction } from './market-rows';
 import { changeFailure, changeOf } from './market-change';
 import { updateVerdictOf, updateVerdictText, type UpdatedModule } from './market-update-verdict';
+import { updateStuckCardOf } from './failure-card-text';
 import { holdOf, type HeldRow, type Pending } from './market-view-text';
 import { REMOVAL_ACTIONS, awaitsReadBack, swapUntil } from './market-settle';
 
@@ -40,6 +41,11 @@ function moduleOf(value: unknown): UpdatedModule | undefined {
 function restoredOf(value: unknown): string | undefined {
   const restored = recordOf(value)?.restored;
   return typeof restored === 'string' && restored !== '' ? restored : undefined;
+}
+
+function remedyOf(value: unknown): { readonly command: string } | undefined {
+  const command = recordOf(recordOf(value)?.remedy)?.command;
+  return typeof command === 'string' && command !== '' ? { command } : undefined;
 }
 
 export interface MarketActSeats {
@@ -140,6 +146,7 @@ export function marketActOf(options: MarketActOptions): (id: string, action: Mar
       return;
     }
     const change: BundleChange | undefined = changeOf(value);
+    const remedy = remedyOf(value);
     const verdict = updateVerdictOf({
       action,
       change,
@@ -152,11 +159,22 @@ export function marketActOf(options: MarketActOptions): (id: string, action: Mar
       ...(next.version === undefined ? {} : { from: next.version }),
       ...(next.latest === undefined ? {} : { latest: next.latest }),
     });
+    const cardOf = (fact?: string) =>
+      remedy === undefined || (verdict.kind !== 'no-change' && verdict.kind !== 'failed')
+        ? {}
+        : {
+            card: updateStuckCardOf(t, {
+              command: remedy.command,
+              ...(fact === undefined ? {} : { fact }),
+              ...(next.version === undefined ? {} : { from: next.version }),
+              ...(next.latest === undefined ? {} : { latest: next.latest }),
+            }),
+          };
     onChanged({ force: true });
     if (failure !== undefined) {
       seats.setPending(null);
       seats.setHeld(undefined);
-      seats.setFailed({ id, message: failure });
+      seats.setFailed({ id, message: failure, ...cardOf() });
       return;
     }
     const until = swapUntil(action, change?.application, next.latest);
@@ -173,6 +191,8 @@ export function marketActOf(options: MarketActOptions): (id: string, action: Mar
     );
     seats.setHeld(readBack ? undefined : holdOf(next, change?.application));
     const reason = changeFailure(change, t);
-    if (reason !== undefined) seats.setFailed({ id, message: t('panels.market.failed', { reason }) });
+    if (reason !== undefined) {
+      seats.setFailed({ id, message: t('panels.market.failed', { reason }), ...cardOf(reason) });
+    }
   };
 }

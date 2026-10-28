@@ -51,7 +51,7 @@ describe('发布审批：版本单独一行，仓库 / 分支 / 两个 commit �
   const market = {
     url: 'https://git.example.com/wb/market.git',
     ref: 'main',
-    indexPath: 'market.json',
+    indexPath: 'market',
     artifactPath: 'packages/probe',
     files: ['dist', 'client.js'],
     nextVersion: '0.0.2',
@@ -76,8 +76,8 @@ describe('发布审批：版本单独一行，仓库 / 分支 / 两个 commit �
       ['仓库', market.url],
       ['分支', 'main'],
       ['打包文件', 'packages/probe · dist · client.js'],
-      ['索引', 'market.json'],
-      ['提交', '打包文件 + market.json 两次提交，一次推送'],
+      ['索引', 'market'],
+      ['提交', '打包文件 + 条目文件两次提交，一次推送'],
     ]);
   });
 

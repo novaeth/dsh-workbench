@@ -73,7 +73,7 @@ const MARKET_INIT_HELP = `
   market-init <git 地址|目录> [--ref <分支>] [--path <索引路径>] [--no-readme] [--json]
 
 空仓库：用仓库自己声明的默认分支，读不到时用 --ref 指定（github.com 兜底 main）。
-已有 commit 的仓库：只补 market.json / README.md，不改已有文件。`;
+已有 commit 的仓库：只补索引目录 / README.md，不改已有文件。`;
 
 const CHANGELOG_HELP = `
 用法：
@@ -86,7 +86,7 @@ const COMMANDS = {
   build: '出 dist/host.js（单文件 ESM）与 client.js（套 loader 壳）',
   check: '十三条判据；--only 单跑，也当查询口用；--list 只列判据元数据',
   init: '建模块骨架（--dir / --template minimal|diy / --description）',
-  'market-init': '初始化市场索引仓库（写 market.json + README，推首个 commit）',
+  'market-init': '初始化市场索引仓库（写 market/ 与 README，推首个 commit）',
   design: '设计底稿：init 填 / check 查空格 / render 生成 README / accept 打勾',
   publish: '发货前清单：门禁 + files + npm pack（只 dry run）',
   release: '真发布：全门禁 + 验收闸 + 预检接管 + 发到出口 + 发后核包 + 更新市场索引（中断可 --resume）',

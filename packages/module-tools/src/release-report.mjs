@@ -71,7 +71,7 @@ export function human(out, summary) {
         `（${market.branch === undefined ? '默认分支' : market.branch}）`,
     );
     out(`  产物：${String(market.path ?? '').replace(/^\/*/, '')} · commit ${shortSha(market.commit)}`);
-    out('  提交：产物与 market.json 两个 commit 都已推上去');
+    out('  提交：产物与索引条目两个 commit 都已推上去');
     if (summary.changes.length > 0) out(`  改了：${summary.changes.join('；')}`);
     if (summary.files !== undefined) out(`  包内容：${summary.files.join(' · ')}`);
     out(`  安装：${summary.install}`);

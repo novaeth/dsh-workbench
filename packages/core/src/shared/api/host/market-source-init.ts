@@ -1,12 +1,13 @@
-import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { DshShell } from '@dsh-workbench/shared';
 import type { MarketSourceConfig } from '@dsh-workbench/shared/contract/protocol/market-index';
-import { MARKET_INDEX_PATH } from '@dsh-workbench/shared/contract/protocol/market-index';
+import { MARKET_INDEX_DIR } from '@dsh-workbench/shared/contract/protocol/market-index';
 import {
+  MARKET_ENTRIES_README_LINES,
   MARKET_INDEX_README_LINES,
-  MARKET_INDEX_SEED,
   gitUrlOk,
+  marketEntryFilesOfLegacy,
   marketBranchOk,
   marketSourceKey,
   quoteShellArg,
@@ -115,18 +116,33 @@ export function createMarketSourceInitializer(options: MarketSourceInitOptions):
       if (created.exitCode !== 0) throw new Error(`建分支 ${branch} 没过：${tailLines(created.stderr, 4)}`);
     }
 
-    const indexPath = (source.path ?? MARKET_INDEX_PATH).replace(/^\/+/, '') || MARKET_INDEX_PATH;
-    const indexFile = join(workdir, indexPath);
+    const indexPath = ((source.path ?? MARKET_INDEX_DIR).replace(/^\/+/, '') || MARKET_INDEX_DIR).replace(/\/+$/, '');
+    const indexDir = join(workdir, indexPath);
+    const indexMarker = join(indexDir, 'README.md');
     const stampOnly = request.stampOnly === true;
-    if (stampOnly && !existsSync(indexFile)) {
-      throw new Error(`仓库里还没有 ${indexPath} —— 先选中这个源，按发现页的提示把它初始化成索引`);
+    if (stampOnly && !existsSync(indexDir)) {
+      throw new Error(`仓库里还没有 ${indexPath}/ —— 先选中这个源，按发现页的提示把它初始化成索引`);
     }
     const written: string[] = [];
     if (!stampOnly) {
-      if (!existsSync(indexFile)) {
-        mkdirSync(dirname(indexFile), { recursive: true });
-        writeFileSync(indexFile, MARKET_INDEX_SEED);
-        written.push(indexPath);
+      const legacyFile = join(workdir, 'market.json');
+      if (indexPath !== 'market.json' && existsSync(legacyFile)) {
+        const migrated = marketEntryFilesOfLegacy(readFileSync(legacyFile, 'utf8'), indexPath);
+        if (migrated !== undefined) {
+          for (const file of migrated) {
+            const target = join(workdir, ...file.path.split('/'));
+            mkdirSync(dirname(target), { recursive: true });
+            writeFileSync(target, file.text);
+            written.push(file.path);
+          }
+          rmSync(legacyFile);
+          written.push('market.json');
+        }
+      }
+      if (!existsSync(indexMarker)) {
+        mkdirSync(indexDir, { recursive: true });
+        writeFileSync(indexMarker, MARKET_ENTRIES_README_LINES.join('\n'));
+        written.push(`${indexPath}/README.md`);
       }
       const readmeFile = join(workdir, 'README.md');
       if (!existsSync(readmeFile)) {

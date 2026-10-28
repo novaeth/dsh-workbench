@@ -24,6 +24,7 @@ import { marketRowKind, packageIcon } from './market-row-icon';
 import type { MarketSectionIcon } from './market-section-icon';
 import { ACTION_LABEL_KEY, PROGRESS_KEY, askAgentText, type Pending } from './market-view-text';
 import { FailureCard } from './FailureCard';
+import { failureCardOf } from './failure-card-text';
 import { AskAgentButton } from './AskAgentButton';
 import styles from '../market/MarketPage.module.css';
 
@@ -155,6 +156,30 @@ function MarketLineStatus({
   );
 }
 
+function MarketFailureBlock({
+  t,
+  failure,
+  onRecheck,
+  rechecking,
+}: {
+  readonly t: Translate;
+  readonly failure: MarketFailure | null;
+  readonly onRecheck: () => void;
+  readonly rechecking: boolean;
+}) {
+  if (failure === null) return null;
+  const model =
+    failure.card ?? (failure.failure === undefined ? undefined : failureCardOf(failure.failure, t));
+  if (model !== undefined) {
+    return (
+      <div className={styles.marketFailureSeat}>
+        <FailureCard t={t} model={model} onRecheck={onRecheck} rechecking={rechecking} />
+      </div>
+    );
+  }
+  return <div className={styles.marketFailure}>{failure.message}</div>;
+}
+
 function MarketLine({
   t,
   row,
@@ -278,13 +303,7 @@ function MarketLine({
         )}
       </div>
 
-      {failure === null ? null : failure.failure === undefined ? (
-        <div className={styles.marketFailure}>{failure.message}</div>
-      ) : (
-        <div className={styles.marketFailureSeat}>
-          <FailureCard t={t} failure={failure.failure} onRecheck={onRecheck} rechecking={rechecking} />
-        </div>
-      )}
+      <MarketFailureBlock t={t} failure={failure} onRecheck={onRecheck} rechecking={rechecking} />
       <MarketLineDialogs
         t={t}
         migrationOpen={migrationOpen}

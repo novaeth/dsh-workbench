@@ -10,6 +10,7 @@ export interface UpdatedModule {
 
 export type UpdateVerdict =
   | { readonly kind: 'ok' }
+  | { readonly kind: 'failed' }
   | { readonly kind: 'no-change' }
   | { readonly kind: 'gone'; readonly restored?: string }
   | { readonly kind: 'behind'; readonly installed: string };
@@ -31,6 +32,10 @@ export function updateVerdictOf(input: {
     return { kind: 'gone', ...(input.restored === undefined ? {} : { restored: input.restored }) };
   }
   const installed = input.module?.version;
+  const refused =
+    (input.change?.application === 'failed' || input.change?.application === 'cancelled') &&
+    input.change?.errorCode !== 'no-change';
+  if (refused) return { kind: 'failed' };
   if (input.change?.errorCode === 'no-change') return { kind: 'no-change' };
   if (installed === undefined) return { kind: 'ok' };
   if (input.clicked !== undefined && installed === input.clicked) return { kind: 'no-change' };

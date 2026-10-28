@@ -1,3 +1,4 @@
+import { basename } from 'node:path';
 import type { DshShell } from '@dsh-workbench/shared';
 import type { Need, UnitManifest } from '@dsh-workbench/shared';
 import { INSTALL_TIMEOUT_MS, needsOf as needsOfManifest } from '@dsh-workbench/shared/host';
@@ -406,7 +407,8 @@ export function createMarketService(options: {
       const manager = requireBundles();
       const module = installed?.(pkg) ?? { kind: 'unknown', pkg };
       const unit = module.kind === 'module' ? module.unit : undefined;
-      const manifest = unit === undefined ? undefined : catalog().find((item) => item.id === unit);
+      const roster = catalog();
+      const manifest = unit === undefined ? undefined : roster.find((item) => item.id === unit);
       const before = unit === undefined ? undefined : await capabilityOf(unit, true);
       const change = await removeDshBundle({
         manager,
@@ -419,8 +421,8 @@ export function createMarketService(options: {
       const keptFor =
         manifest === undefined || before === undefined
           ? []
-          : await envDropper.drop(unit, needsOfManifest(manifest), before);
-      await plugins.sweep();
+          : await envDropper.drop(unit, needsOfManifest(manifest), before, roster);
+      await plugins.sweep((plugin) => envDropper.usersOf(plugin, unit, roster));
       onUninstalled?.(unit);
       return { change, keptFor };
     },
@@ -431,15 +433,19 @@ export function createMarketService(options: {
 
     async updateBundle(unit) {
       const manager = requireBundles();
+      const home = dshHome?.();
+      const profile = profileName?.() ?? (profileDir === undefined || profileDir === null ? undefined : basename(profileDir));
       return updateModuleBundle(unit, {
         supply,
         modules,
         installed,
         shell,
         manager,
+        ...(profile === undefined ? {} : { profile, profileName: profile }),
+        ...(home === undefined ? {} : { dshHome: home }),
         routeDeps: routeDeps(manager),
         sweep: async () => {
-          await plugins.sweep();
+          await plugins.sweep((plugin) => envDropper.usersOf(plugin, undefined, catalog()));
         },
         refreshSupply: async (id) => {
           await service.update(id);

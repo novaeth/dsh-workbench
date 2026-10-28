@@ -2,6 +2,8 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { assembleMarketIndex, collectMarketEntryFiles } from '@dsh-workbench/shared/host';
+
 import { NeedsUser, ReleaseError, ResumableError, runRelease } from '../../../src/release.mjs';
 
 const FILES = [
@@ -82,6 +84,18 @@ function probeOf({ checked = true, manifest = packageOf(), changelog = CHANGELOG
   writeFileSync(join(dir, 'cordis.patch.yml'), '- id: probe\n');
   if (changelog !== undefined) writeFileSync(join(dir, 'CHANGELOG.md'), changelog);
   return dir;
+}
+
+function readIndex(repo) {
+  const root = join(repo, 'market');
+  if (!existsSync(root)) return readIndex(repo);
+  const assembled = assembleMarketIndex(collectMarketEntryFiles(root));
+  if (!assembled.ok) throw new Error(`索引组装不过：${JSON.stringify(assembled.problems)}`);
+  return JSON.parse(JSON.stringify(assembled.index));
+}
+
+function indexExists(repo) {
+  return existsSync(join(repo, 'market')) || existsSync(join(repo, 'market.json'));
 }
 
 function homeOf() {
@@ -730,7 +744,7 @@ export const checks = [
         });
         if (result.target !== 'market') throw new Error(`没默认走 market：${result.target}`);
         if (!existsSync(join(repo, 'packages', '@demo', 'probe', 'package.json'))) throw new Error('产物没进仓库');
-        if (!existsSync(join(repo, 'market.json'))) throw new Error('索引没写');
+        if (!indexExists(repo)) throw new Error('索引没写');
         if (!result.install.includes('&path:/packages/@demo/probe')) throw new Error(`安装 spec 不对：${result.install}`);
         if (hasCall(fake.calls, 'npm', 'publish')) throw new Error('market 不该 publish');
         if (fake.calls.filter((one) => one.command === 'git' && one.argv.includes('push')).length !== 2) {
@@ -948,7 +962,7 @@ export const checks = [
         }
         const shipped = JSON.parse(readFileSync(join(repo, 'packages', '@demo', 'probe', 'package.json'), 'utf8'));
         if (shipped.author !== 'Probe <probe@example.com>') throw new Error(`产物里的 author 不对：${shipped.author}`);
-        const index = JSON.parse(readFileSync(join(repo, 'market.json'), 'utf8'));
+        const index = readIndex(repo);
         if (index.plugins[0]?.author !== 'Probe <probe@example.com>') throw new Error('索引里没写作者');
         if (!existsSync(join(repo, 'packages', '@demo', 'probe', 'CHANGELOG.md'))) throw new Error('更新日志没随产物发布');
         report(title, true);
@@ -987,7 +1001,7 @@ export const checks = [
             throw new Error(`commit 没带作者署名：${line}`);
           }
         }
-        const index = JSON.parse(readFileSync(join(repo, 'market.json'), 'utf8'));
+        const index = readIndex(repo);
         if (index.plugins[0]?.author !== '陈康') throw new Error(`索引作者不对：${String(index.plugins[0]?.author)}`);
         report(title, true);
       } catch (error) {
@@ -1023,7 +1037,7 @@ export const checks = [
         if (manifest.author !== '陈康 <kang@example.com>') throw new Error(`manifest 没换：${manifest.author}`);
         const shipped = JSON.parse(readFileSync(join(repo, 'packages', '@demo', 'probe', 'package.json'), 'utf8'));
         if (shipped.author !== '陈康 <kang@example.com>') throw new Error(`产物里没换：${shipped.author}`);
-        const index = JSON.parse(readFileSync(join(repo, 'market.json'), 'utf8'));
+        const index = readIndex(repo);
         if (index.plugins[0]?.author !== '陈康 <kang@example.com>') throw new Error(`索引里没换：${String(index.plugins[0]?.author)}`);
         const commits = fake.calls.filter((one) => one.command === 'git' && one.argv.includes('commit'));
         if (commits.length < 2) throw new Error(`产物与索引该各提交一次，实际 ${String(commits.length)} 次`);
@@ -1071,7 +1085,7 @@ export const checks = [
           out: () => {},
           err: () => {},
         });
-        const index = JSON.parse(readFileSync(join(repo, 'market.json'), 'utf8'));
+        const index = readIndex(repo);
         if (index.plugins[0]?.title?.zh !== '探针' || index.plugins[0]?.title?.en !== 'Probe') {
           throw new Error(`索引标题不对：${JSON.stringify(index.plugins[0]?.title)}`);
         }
@@ -1118,7 +1132,7 @@ export const checks = [
         if (result.refresh !== true || result.refreshed !== true) {
           throw new Error(`没标记成刷新：${JSON.stringify({ refresh: result.refresh, refreshed: result.refreshed })}`);
         }
-        const index = JSON.parse(readFileSync(join(repo, 'market.json'), 'utf8'));
+        const index = readIndex(repo);
         const entry = index.plugins[0];
         if (entry.title?.zh !== '新名') throw new Error(`标题没刷：${JSON.stringify(entry.title)}`);
         if (entry.versions.length !== 1 || entry.versions[0].version !== '0.1.0') {
@@ -1179,7 +1193,7 @@ export const checks = [
         if (!error.message.includes('已经有主')) throw new Error(`拒的理由不对：${error.message}`);
         const shipped = JSON.parse(readFileSync(join(repo, 'packages', '@demo', 'probe', 'package.json'), 'utf8'));
         if (shipped.version !== '0.1.0') throw new Error(`别人的产物被动了：${shipped.version}`);
-        const index = JSON.parse(readFileSync(join(repo, 'market.json'), 'utf8'));
+        const index = readIndex(repo);
         const entry = index.plugins[0];
         if (entry.owner !== '甲 <jia@example.com>') throw new Error(`owner 被换了：${String(entry.owner)}`);
         if (entry.versions.length !== 1 || entry.versions[0].version !== '0.1.0') {
@@ -1225,7 +1239,7 @@ export const checks = [
           err: () => {},
         });
         if (result.version !== '0.1.1') throw new Error(`版本不对：${String(result.version)}`);
-        const index = JSON.parse(readFileSync(join(repo, 'market.json'), 'utf8'));
+        const index = readIndex(repo);
         const entry = index.plugins[0];
         if (entry.owner !== '陈康') throw new Error(`owner 跟着署名漂了：${String(entry.owner)}`);
         if (!entry.versions.some((one) => one.version === '0.1.1')) {
@@ -1264,7 +1278,7 @@ export const checks = [
         );
         if (!(error instanceof ReleaseError)) throw new Error(`没拦住：${error?.message ?? error}`);
         if (!error.message.includes('名字要有主人')) throw new Error(`拒的理由不对：${error.message}`);
-        if (existsSync(join(repo, 'packages')) || existsSync(join(repo, 'market.json'))) {
+        if (existsSync(join(repo, 'packages')) || indexExists(repo)) {
           throw new Error('没署名却往仓库里写了东西');
         }
         report(title, true);
@@ -1310,7 +1324,7 @@ export const checks = [
         );
         if (!(error instanceof ReleaseError)) throw new Error(`没拦住：${error?.message ?? error}`);
         if (!error.message.includes('已经有主')) throw new Error(`拒的理由不对：${error.message}`);
-        const index = JSON.parse(readFileSync(join(repo, 'market.json'), 'utf8'));
+        const index = readIndex(repo);
         const entry = index.plugins[0];
         if (entry.owner !== '甲 <jia@example.com>') throw new Error(`owner 被换了：${String(entry.owner)}`);
         if (entry.author !== '甲 <jia@example.com>') throw new Error(`署名被换了：${String(entry.author)}`);
@@ -1362,7 +1376,7 @@ export const checks = [
           throw new Error('旧产物被删了');
         }
         if (existsSync(join(repo, 'packages', '@demo', 'other'))) throw new Error('新包名也写了产物');
-        const index = JSON.parse(readFileSync(join(repo, 'market.json'), 'utf8'));
+        const index = readIndex(repo);
         if (index.plugins.length !== 1 || index.plugins[0].name !== '@demo/probe') {
           throw new Error(`索引被动了：${JSON.stringify(index.plugins.map((one) => one.name))}`);
         }

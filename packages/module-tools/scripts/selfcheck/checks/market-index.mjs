@@ -2,11 +2,12 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { assembleMarketIndex, collectMarketEntryFiles, marketVersionDocOf } from '@dsh-workbench/shared/host';
+
 import {
   MarketIndexError,
   indexEntryOf,
   initializeMarketRepo,
-  mergeIndexText,
   resolveIndexPlan,
   sanitizeManifest,
   updateMarketIndex,
@@ -49,6 +50,7 @@ function fail(stderr = '') {
 function fakeExec(results = {}) {
   const calls = [];
   const pushes = [...(results.pushes ?? [])];
+  const state = { remoteHead: results.remoteHead ?? results.commit ?? COMMIT };
   const exec = (command, argv, options = {}) => {
     calls.push({ command, argv, options });
     if (command !== 'git') return ok();
@@ -60,8 +62,13 @@ function fakeExec(results = {}) {
     if (verb === 'rev-parse' && rest[0] === '--verify') return results.hasHead === false ? fail('fatal: Needed a single revision') : ok(`${results.commit ?? COMMIT}\n`);
     if (verb === 'rev-parse' && rest[0] === '--abbrev-ref') return ok('main\n');
     if (verb === 'rev-parse' && rest[0] === 'HEAD') return ok(`${results.commit ?? COMMIT}\n`);
-    if (verb === 'push') return pushes.length === 0 ? (results.push ?? ok()) : pushes.shift();
-    if (verb === 'ls-remote') return ok(`${results.remoteHead ?? results.commit ?? COMMIT}\trefs/heads/main\n`);
+    if (verb === 'rev-parse' && rest[0] === 'origin/main') return ok(`${state.remoteHead}\n`);
+    if (verb === 'push') {
+      const outcome = pushes.length === 0 ? (results.push ?? ok()) : pushes.shift();
+      if (outcome.status === 0 && results.remoteAfterPush !== undefined) state.remoteHead = results.remoteAfterPush;
+      return outcome;
+    }
+    if (verb === 'ls-remote') return ok(`${state.remoteHead}\trefs/heads/main\n`);
     if (verb === 'fetch') return ok();
     if (verb === 'reset') return ok();
     return ok();
@@ -87,7 +94,11 @@ function marketDir(text) {
 }
 
 function indexTextOf(dir) {
-  return readFileSync(join(dir, 'market.json'), 'utf8');
+  const root = join(dir, 'market');
+  if (!existsSync(root)) return readFileSync(join(dir, 'market.json'), 'utf8');
+  const assembled = assembleMarketIndex(collectMarketEntryFiles(root));
+  if (!assembled.ok) throw new Error(`索引组装不过：${JSON.stringify(assembled.problems)}`);
+  return `${JSON.stringify(assembled.index, null, 2)}\n`;
 }
 
 function entryOfText(text, name = MANIFEST.name) {
@@ -107,17 +118,18 @@ export const checks = [
           source: { type: 'npm', registry: 'https://npm.demo.test/' },
           at: 1760000000000,
         });
-        const merged = mergeIndexText('', first);
-        if (!merged.ok) throw new Error(`空索引合不过：${JSON.stringify(merged.problems)}`);
         const second = indexEntryOf({
           manifest: MANIFEST,
           version: '0.2.0',
           source: { type: 'npm', registry: 'https://npm.demo.test/' },
           at: 1760000100000,
         });
-        const again = mergeIndexText(merged.text, second);
-        if (!again.ok) throw new Error(`第二版合不过：${JSON.stringify(again.problems)}`);
-        const entry = entryOfText(again.text);
+        const assembled = assembleMarketIndex([
+          { path: 'market/probe/0.1.0.json', text: JSON.stringify(marketVersionDocOf(first, first.versions[0])) },
+          { path: 'market/probe/0.2.0.json', text: JSON.stringify(marketVersionDocOf(second, second.versions[0])) },
+        ]);
+        if (!assembled.ok) throw new Error(`两版合不过：${JSON.stringify(assembled.problems)}`);
+        const entry = assembled.index.plugins[0];
         if (entry.versions.length !== 2) throw new Error(`版本数不对：${entry.versions.length}`);
         if (entry.versions[0].version !== '0.2.0') throw new Error('版本没按降序排');
         if (entry.metadata?.workbench !== true) throw new Error('缺 workbench 身份标记');
@@ -441,9 +453,9 @@ export const checks = [
     },
   },
   {
-    title: 'market-init：空仓库建分支、写 market.json + README、推首个 commit',
+    title: 'market-init：空仓库建分支、写索引目录 + README、推首个 commit',
     async run(_ctx, report) {
-      const title = 'market-init：空仓库建分支、写 market.json + README、推首个 commit';
+      const title = 'market-init：空仓库建分支、写索引目录 + README、推首个 commit';
       const dir = mkdtempSync(join(tmpdir(), 'wb-market-init-'));
       mkdirSync(join(dir, '.git'));
       try {
@@ -452,7 +464,7 @@ export const checks = [
         if (result.changed !== true) throw new Error('没建索引');
         if (result.firstBranch !== true) throw new Error('没标出首个分支');
         if (result.branch !== 'main') throw new Error(`空仓库没按 main 建：${result.branch}`);
-        if (!existsSync(join(dir, 'market.json'))) throw new Error('缺 market.json');
+        if (!existsSync(join(dir, 'market', 'README.md'))) throw new Error('缺 market/README.md');
         if (!existsSync(join(dir, 'README.md'))) throw new Error('缺 README.md');
         const readme = readFileSync(join(dir, 'README.md'), 'utf8');
         if (!readme.includes('# 模块市场索引')) throw new Error('README 内容不对');
@@ -469,12 +481,42 @@ export const checks = [
     },
   },
   {
+    title: 'market-init：仓库里已有老 market.json 就顺便迁移成条目文件',
+    async run(_ctx, report) {
+      const title = 'market-init：仓库里已有老 market.json 就顺便迁移成条目文件';
+      const dir = mkdtempSync(join(tmpdir(), 'wb-market-init-'));
+      mkdirSync(join(dir, '.git'));
+      writeFileSync(
+        join(dir, 'market.json'),
+        `${JSON.stringify({
+          format: 1,
+          plugins: [
+            { name: '@demo/old', owner: 'demo', versions: [{ version: '0.1.0', source: { type: 'npm' } }] },
+          ],
+        })}\n`,
+      );
+      try {
+        const fake = fakeExec({ hasHead: true, url: 'https://github.com/demo/market.git' });
+        const result = initializeMarketRepo({ exec: fake.exec, home: tmpdir(), dir });
+        if (result.changed !== true) throw new Error('迁移没算作改动');
+        if (existsSync(join(dir, 'market.json'))) throw new Error('老 market.json 没删');
+        if (!existsSync(join(dir, 'market', '@demo', 'old', '0.1.0.json'))) throw new Error('条目没迁出来');
+        report(title, true);
+      } catch (error) {
+        report(title, false, error.message.slice(0, 200));
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    },
+  },
+  {
     title: 'market-init：已有内容只补缺、不覆盖 README、无改动不推',
     async run(_ctx, report) {
       const title = 'market-init：已有内容只补缺、不覆盖 README、无改动不推';
       const dir = mkdtempSync(join(tmpdir(), 'wb-market-init-'));
       mkdirSync(join(dir, '.git'));
-      writeFileSync(join(dir, 'market.json'), '{"format":1,"plugins":[]}\n');
+      mkdirSync(join(dir, 'market'));
+      writeFileSync(join(dir, 'market', 'README.md'), 'custom index readme\n');
       writeFileSync(join(dir, 'README.md'), 'custom readme\n');
       try {
         const fake = fakeExec({ hasHead: true, url: 'https://github.com/demo/market.git' });
@@ -509,7 +551,7 @@ export const checks = [
         if (!(error instanceof MarketIndexError) || !String(error.message).includes('--ref')) {
           throw new Error('没要 --ref');
         }
-        if (existsSync(join(dir, 'market.json'))) throw new Error('报错前就写了文件');
+        if (existsSync(join(dir, 'market'))) throw new Error('报错前就写了文件');
         report(title, true);
       } catch (error) {
         report(title, false, error.message.slice(0, 200));
@@ -565,4 +607,99 @@ export const checks = [
       }
     },
   },
+  {
+    title: 'market-index：远端先走一步（非快进）自动同步重放，不惊动用户',
+    async run(_ctx, report) {
+      const title = 'market-index：远端先走一步（非快进）自动同步重放，不惊动用户';
+      const root = moduleDir();
+      const repo = marketDir();
+      try {
+        const fake = fakeExec({
+          pushes: [
+            fail('! [rejected] main -> main (non-fast-forward)'),
+            fail('! [rejected] main -> main (non-fast-forward)'),
+            ok(),
+            ok(),
+          ],
+          remoteHead: 'b'.repeat(40),
+          remoteAfterPush: COMMIT,
+        });
+        const plan = resolveIndexPlan({ args: ['--index', repo], home: tmpdir(), exec: fake.exec });
+        const market = updateMarketIndex({
+          plan,
+          root,
+          manifest: MANIFEST,
+          unit: 'probe',
+          version: '0.1.0',
+          publish: {},
+          exec: fake.exec,
+          home: tmpdir(),
+          now: () => 1760000000000,
+        });
+        if (market.updated !== true) throw new Error(`没更新：${String(market.reason)}`);
+        if (!existsSync(join(repo, 'market', '@demo', 'market-probe', '0.1.0.json'))) throw new Error('条目文件没写');
+        if (existsSync(join(repo, 'market.json'))) throw new Error('还在写 market.json');
+        report(title, true);
+      } catch (error) {
+        report(title, false, error.message.slice(0, 200));
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+        rmSync(repo, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    title: 'market-index：老 market.json 自动迁移成条目文件，历史版本一条不丢',
+    async run(_ctx, report) {
+      const title = 'market-index：老 market.json 自动迁移成条目文件，历史版本一条不丢';
+      const root = moduleDir();
+      const legacy = `${JSON.stringify({
+        format: 1,
+        plugins: [
+          {
+            name: '@demo/market-probe',
+            owner: 'demo',
+            author: 'demo',
+            metadata: { workbench: true, unit: 'probe' },
+            versions: [
+              { version: '0.1.0', source: { type: 'npm', registry: 'https://npm.demo.test/' }, publishTimestamp: 1760000000 },
+            ],
+          },
+        ],
+      })}\n`;
+      const repo = marketDir(legacy);
+      try {
+        const fake = fakeExec();
+        const plan = resolveIndexPlan({ args: ['--index', repo], home: tmpdir(), exec: fake.exec });
+        const market = updateMarketIndex({
+          plan,
+          root,
+          manifest: { ...MANIFEST, version: '0.2.0' },
+          unit: 'probe',
+          version: '0.2.0',
+          publish: {},
+          exec: fake.exec,
+          home: tmpdir(),
+          now: () => 1760000200000,
+        });
+        if (market.updated !== true) throw new Error(`没更新：${String(market.reason)}`);
+        if (existsSync(join(repo, 'market.json'))) throw new Error('迁移后还留着 market.json');
+        const assembled = assembleMarketIndex(collectMarketEntryFiles(join(repo, 'market')));
+        if (!assembled.ok) throw new Error('迁移后索引组装不过');
+        const entry = assembled.index.plugins[0];
+        if (entry.versions.length !== 2) throw new Error(`历史版本丢了：${String(entry.versions.length)}`);
+        if (entry.versions[0].version !== '0.2.0') throw new Error('新版本没在最前');
+        if (entry.versions[1].version !== '0.1.0') throw new Error('老版本没保住');
+        if (entry.versions[1].source.type !== 'npm') throw new Error('老版本的 source 被改');
+        if (entry.owner !== 'demo') throw new Error(`owner 漂了：${String(entry.owner)}`);
+        report(title, true);
+      } catch (error) {
+        report(title, false, error.message.slice(0, 200));
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+        rmSync(repo, { recursive: true, force: true });
+      }
+    },
+  },
+
 ];

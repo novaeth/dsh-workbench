@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { libNeedOf } from '@dsh-workbench/shared/testing';
 import type { NeedState, UnitManifest } from '@dsh-workbench/shared';
 import type { BundleChange } from '@/kernel/contract/bundle-install';
 import type { BundleManager } from '@dsh-workbench/shared/host';
@@ -252,6 +253,66 @@ describe('市场卸模块包：先记下它要什么，卸成功再按引用计�
     });
     const outcome = await market.removeBundle('@a/b');
     expect(outcome.keptFor).toEqual(['demo-other']);
+    expect(fake.commands()).toEqual([]);
+  });
+
+  it('★ 卸一个模块会整份 profile 重载（旧册子清空）—— 共用的插件不能跟着没', async () => {
+    const fake = createFakeShell([{ stdout: '' }]);
+    let live: readonly UnitManifest[] = [unit('issues'), unit('demo-other')];
+    const market = createMarketService({
+      manifests: live,
+      manifestsNow: () => live,
+      probe: async () => capability('ok'),
+      shell: fake.shell,
+      references: () => ({ trustworthy: true, unreadable: [] }),
+      bundles: bundlesOf({
+        remove: async () => {
+          live = [];
+          return change({ stage: 'remove' });
+        },
+      }),
+      installed: () => isModule('issues'),
+      isReleased: () => false,
+    });
+
+    const outcome = await market.removeBundle('@dsh-workbench/module-issues');
+
+    expect(outcome.keptFor).toEqual(['demo-other']);
+    expect(fake.commands()).toEqual([]);
+  });
+
+  it('★ 同上，共用的 lib 也不能跟着没（npm 装在共享 prefix 的那份）', async () => {
+    const fake = createFakeShell([{ stdout: '' }]);
+    const LIB = libNeedOf('opencli-workflow', {
+      purpose: '编排',
+      sources: [{ kind: 'npm', registryEnv: 'DSH_WB_TEST_REGISTRY', registryDefault: 'https://r.example/' }],
+    });
+    const libUnit = (id: string): UnitManifest => ({
+      id,
+      titleKey: `${id}.mine`, card: { order: 10 },
+      tools: [],
+      host: { inject: [] },
+      needs: [LIB],
+    });
+    let live: readonly UnitManifest[] = [libUnit('cmdb'), libUnit('argo')];
+    const market = createMarketService({
+      manifests: live,
+      manifestsNow: () => live,
+      probe: async () => capability('ok'),
+      shell: fake.shell,
+      bundles: bundlesOf({
+        remove: async () => {
+          live = [];
+          return change({ stage: 'remove' });
+        },
+      }),
+      installed: () => isModule('cmdb'),
+      isReleased: () => false,
+    });
+
+    const outcome = await market.removeBundle('@dsh-workbench/module-issues');
+
+    expect(outcome.keptFor).toEqual(['argo']);
     expect(fake.commands()).toEqual([]);
   });
 

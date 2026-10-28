@@ -120,28 +120,64 @@ describe('createMarketIndexReader', () => {
     rmSync(root, { recursive: true, force: true });
   });
 
-  it('git 源走 bare clone + show，记下 commit', async () => {
+  it('git 源走 bare clone + ls-tree + 逐条目 show，记下 commit', async () => {
     const root = tempRoot();
     const commit = 'a'.repeat(40);
+    const doc = {
+      name: '@scope/module-x',
+      version: '0.1.0',
+      source: { type: 'npm' },
+      publishTimestamp: 1_760_000_000,
+      metadata: { labels: ['workbench'] },
+    };
     const fake = fakeShell((command) => {
       if (command.includes('git clone')) return { exitCode: 0 };
-      if (command.includes(' git show ') || command.includes('git -C')) {
-        if (command.includes('rev-parse')) return { exitCode: 0, stdout: `${commit}\n` };
-        if (command.includes(' fetch ')) return { exitCode: 0 };
-        return { exitCode: 0, stdout: JSON.stringify(INDEX) };
+      if (command.includes('ls-tree')) {
+        return {
+          exitCode: 0,
+          stdout: `100644 blob ${'c'.repeat(40)}\tmarket/@scope/module-x/0.1.0.json\n100644 blob ${'d'.repeat(40)}\tmarket/README.md\n`,
+        };
       }
-      return { exitCode: 0 };
+      if (command.includes('rev-parse')) return { exitCode: 0, stdout: `${commit}\n` };
+      if (command.includes(' fetch ')) return { exitCode: 0 };
+      return { exitCode: 0, stdout: JSON.stringify(doc) };
     });
     const reader = createMarketIndexReader({ root, shell: fake.shell, now: () => 1000 });
     const outcome = await reader.read(gitSource());
     expect(outcome.ok).toBe(true);
     if (!outcome.ok) return;
     expect(outcome.commit).toBe(commit);
+    expect(outcome.index.plugins[0]?.name).toBe('@scope/module-x');
+    expect(outcome.index.plugins[0]?.versions).toEqual([
+      { version: '0.1.0', source: { type: 'npm' }, publishTimestamp: 1_760_000_000 },
+    ]);
     expect(fake.calls[0]).toContain("git clone --bare --depth 1 --branch 'main'");
     expect(fake.calls.every((line) => line.includes('GIT_TERMINAL_PROMPT=0'))).toBe(true);
     expect(fake.calls.every((line) => line.includes('GIT_ASKPASS='))).toBe(true);
     expect(fake.calls.every((line) => line.includes('SSH_ASKPASS_REQUIRE=never'))).toBe(true);
-    expect(fake.calls.some((line) => line.includes('show HEAD:') && line.includes('market.json'))).toBe(true);
+    expect(fake.calls.some((line) => line.includes('ls-tree') && line.includes(commit))).toBe(true);
+    expect(
+      fake.calls.some((line) => line.includes('show') && line.includes('market/@scope/module-x/0.1.0.json')),
+    ).toBe(true);
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it('老仓库只有 market.json（没有条目目录）时按单文件读，不报缺索引', async () => {
+    const root = tempRoot();
+    const commit = 'e'.repeat(40);
+    const fake = fakeShell((command) => {
+      if (command.includes('git clone')) return { exitCode: 0 };
+      if (command.includes('ls-tree')) return { exitCode: 0, stdout: '' };
+      if (command.includes('rev-parse')) return { exitCode: 0, stdout: `${commit}\n` };
+      if (command.includes('show')) return { exitCode: 0, stdout: JSON.stringify(INDEX) };
+      return { exitCode: 0 };
+    });
+    const reader = createMarketIndexReader({ root, shell: fake.shell, now: () => 1000 });
+    const outcome = await reader.read(gitSource());
+    expect(outcome.ok).toBe(true);
+    if (!outcome.ok) return;
+    expect(outcome.index.plugins[0]?.name).toBe('@scope/module-x');
+    expect(fake.calls.some((line) => line.includes('show') && line.includes('market.json'))).toBe(true);
     rmSync(root, { recursive: true, force: true });
   });
 
@@ -162,13 +198,14 @@ describe('createMarketIndexReader', () => {
     rmSync(root, { recursive: true, force: true });
   });
 
-  it('仓库有提交但没有 market.json 时报 git-missing-index，不当成格式错误', async () => {
+  it('仓库有提交但既没有条目目录也没有 market.json 时报 git-missing-index', async () => {
     const root = tempRoot();
     const commit = 'b'.repeat(40);
     const fake = fakeShell((command) => {
       if (command.includes('git clone')) return { exitCode: 0 };
       if (command.includes('symbolic-ref')) return { exitCode: 0, stdout: 'main\n' };
       if (command.includes('rev-parse')) return { exitCode: 0, stdout: `${commit}\n` };
+      if (command.includes('ls-tree')) return { exitCode: 0, stdout: '' };
       if (command.includes('show')) {
         return { exitCode: 1, stderr: "fatal: path 'market.json' does not exist in 'HEAD'" };
       }

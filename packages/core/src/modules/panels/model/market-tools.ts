@@ -99,9 +99,7 @@ function failureText(change: BundleChange): string {
   }
   const surface = hostSurface();
   return REMOVE_BLOCKED.has(code)
-    ? `旧版卸不掉，而这一版 dsh 又不许就地覆盖装 —— 让用户${surface.restartHint}，或者${
-        surface.deployment === 'desktop' ? '从 Desktop 的插件页更新' : '从终端更新'
-      }`
+    ? `旧版卸不掉（dsh 不肯就地覆盖正在用的模块），自动从外部换也没成 —— 让用户从终端跑 dsh plugin --profile <名字> add <包>@<版本>，跑完${surface.restartHint}`
     : code;
 }
 
@@ -267,6 +265,17 @@ export function registerMarketTools(
     async execute(raw: unknown) {
       const id = await idOrList(raw, MODULES_UNINSTALL_TOOL);
       const outcome = await market.uninstall(id);
+      const change = outcome.change;
+      if (change !== undefined && change.application !== 'applied') {
+        const code = change.errorCode ?? change.application;
+        return {
+          module: outcome.entry,
+          text:
+            `没卸下来：${id} 还在这份 profile 里（${code}）—— 这一版 dsh 不肯卸正在加载的模块。` +
+            `让用户从终端跑 dsh plugin --profile <profile> remove ${id} 的包，跑完重启一次工作台；` +
+            '别再调这个工具重试。',
+        };
+      }
       const kept =
         outcome.keptFor.length === 0
           ? ''
@@ -420,7 +429,7 @@ export function registerMarketTools(
         branch: result.branch,
         commit: result.commit,
         changed: true,
-        text: `已把「${source.label}」设为可发布（${source.url}，分支 ${result.branch}）—— 仓库本身没动。之后发布可以落到它的 ${source.path ?? 'market.json'}。`,
+        text: `已把「${source.label}」设为可发布（${source.url}，分支 ${result.branch}）—— 仓库本身没动。之后发布可以落到它的 ${source.path ?? 'market'}/。`,
       };
     },
   };

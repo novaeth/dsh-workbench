@@ -8,7 +8,14 @@ import type {
   MarketIndex,
   MarketSourceConfig,
 } from '@dsh-workbench/shared/contract/protocol/market-index';
-import { gitUrlOk, httpUrlProblem, marketSourceKey, parseMarketIndexJson } from '@dsh-workbench/shared/host';
+import { MARKET_INDEX_DIR, MARKET_INDEX_PATH } from '@dsh-workbench/shared/contract/protocol/market-index';
+import {
+  assembleMarketIndex,
+  gitUrlOk,
+  httpUrlProblem,
+  marketSourceKey,
+  parseMarketIndexJson,
+} from '@dsh-workbench/shared/host';
 import { quoteShellArg, runShell } from '@dsh-workbench/shared/host';
 import { gitNoPromptPrefix, withoutAskpassNoise } from './git-exec.js';
 
@@ -234,7 +241,7 @@ export function createMarketIndexReader(options: MarketIndexReaderOptions): Mark
       return { ok: false, problem: { kind: 'git-missing', detail: '没有 git 执行缝' } };
     }
     const repo = repoOf(options.root, source);
-    const path = (source.path ?? 'market.json').replace(/^\/+/, '');
+    const path = ((source.path ?? MARKET_INDEX_DIR).replace(/^\/+/, '') || MARKET_INDEX_DIR).replace(/\/+$/, '');
     const ref = (source.ref ?? '').trim();
     let revision = 'FETCH_HEAD';
     mkdirSync(directoryOf(options.root, source), { recursive: true });
@@ -261,33 +268,96 @@ export function createMarketIndexReader(options: MarketIndexReaderOptions): Mark
         repo,
       );
     }
-    const shown = await run(`git -C ${quoteShellArg(repo)} show ${revision}:${quoteShellArg(path)}`);
-    if (!shown.ok) {
-      if (shown.problem.kind === 'git-file') {
-        return withBranch(
-          { ok: false, problem: { kind: 'git-missing-index', detail: `索引文件 ${path} 不在仓库里` } },
-          repo,
-        );
-      }
-      return shown;
-    }
     const head = await run(`git -C ${quoteShellArg(repo)} rev-parse ${revision}`);
     if (!head.ok) return head;
     const commit = head.stdout.trim();
     if (!/^[0-9a-f]{40}$/.test(commit)) {
       return { ok: false, problem: { kind: 'git-file', detail: `读到的 commit 不是 40 位：${commit}` } };
     }
-    const parsed = parseMarketIndexJson(shown.stdout);
-    if (!parsed.ok) {
-      return {
-        ok: false,
-        problem: { kind: 'format', detail: parsed.problems.map((one) => one.detail).join('；') },
-      };
+    const listed = await run(`git -C ${quoteShellArg(repo)} ls-tree -r ${quoteShellArg(commit)} -- ${quoteShellArg(path)}`);
+    if (!listed.ok) {
+      if (listed.problem.kind === 'git-file') {
+        return withBranch(
+          { ok: false, problem: { kind: 'git-missing-index', detail: `索引 ${path} 不在仓库里` } },
+          repo,
+        );
+      }
+      return listed;
     }
-    const fetchedAt = now();
-    await writeFileAtomic(indexFileOf(options.root, source), shown.stdout);
-    await writeMeta(metaFileOf(options.root, source), { fetchedAt, commit });
-    return { ok: true, index: parsed.index, fetchedAt, commit };
+    const rows = listed.stdout
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line !== '')
+      .flatMap((line) => {
+        const [meta, file] = line.split('\t');
+        const type = (meta ?? '').split(' ')[1] ?? '';
+        return file === undefined ? [] : [{ type, file }];
+      });
+    const legacy = rows.find((one) => one.type === 'blob' && one.file === path);
+    const entries = rows.filter(
+      (one) => one.type === 'blob' && one.file !== path && one.file.startsWith(`${path}/`) && one.file.endsWith('.json'),
+    );
+    const finish = async (index: MarketIndex, text: string): Promise<IndexRead> => {
+      const fetchedAt = now();
+      await writeFileAtomic(indexFileOf(options.root, source), text);
+      await writeMeta(metaFileOf(options.root, source), { fetchedAt, commit });
+      return { ok: true, index, fetchedAt, commit };
+    };
+    const readLegacy = async (file: string): Promise<IndexRead | undefined> => {
+      const shown = await run(`git -C ${quoteShellArg(repo)} show ${quoteShellArg(commit)}:${quoteShellArg(file)}`);
+      if (!shown.ok) return undefined;
+      const parsed = parseMarketIndexJson(shown.stdout);
+      if (!parsed.ok) {
+        return {
+          ok: false,
+          problem: { kind: 'format', detail: parsed.problems.map((one) => one.detail).join('；') },
+        };
+      }
+      return finish(parsed.index, shown.stdout);
+    };
+    if (legacy !== undefined) {
+      const outcome = await readLegacy(path);
+      if (outcome !== undefined) return outcome;
+    }
+    if (entries.length > 0) {
+      const parts: { path: string; text: string }[] = [];
+      let failed: IndexRead | undefined;
+      const queue = [...entries];
+      const worker = async (): Promise<void> => {
+        for (;;) {
+          const next = queue.shift();
+          if (next === undefined || failed !== undefined) return;
+          const shown = await run(
+            `git -C ${quoteShellArg(repo)} show ${quoteShellArg(commit)}:${quoteShellArg(next.file)}`,
+          );
+          if (!shown.ok) {
+            failed = shown;
+            return;
+          }
+          parts.push({ path: next.file, text: shown.stdout });
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(6, entries.length) }, () => worker()));
+      if (failed !== undefined) return failed;
+      const assembled = assembleMarketIndex(parts);
+      if (!assembled.ok) {
+        return {
+          ok: false,
+          problem: { kind: 'format', detail: assembled.problems.map((one) => one.detail).join('；') },
+        };
+      }
+      return finish(assembled.index, `${JSON.stringify(assembled.index, null, 2)}\n`);
+    }
+    if (listed.stdout.trim() !== '') {
+      const empty = { format: 1 as const, plugins: [] };
+      return finish(empty, `${JSON.stringify(empty, null, 2)}\n`);
+    }
+    const legacyText = await readLegacy(MARKET_INDEX_PATH);
+    if (legacyText !== undefined) return legacyText;
+    return withBranch(
+      { ok: false, problem: { kind: 'git-missing-index', detail: `索引 ${path} 不在仓库里` } },
+      repo,
+    );
   }
 
   async function read(source: MarketSourceConfig, callOptions: { readonly force?: boolean } = {}): Promise<IndexRead> {

@@ -136,7 +136,7 @@ describe('workbench_diy_publish · 预览', () => {
         market: {
           url: 'https://git.example.com/wb/market.git',
           ref: 'main',
-          indexPath: 'market.json',
+          indexPath: 'market',
           artifactPath: 'packages/@dsh-workbench/module-demo',
           files: ['package.json'],
         },
@@ -448,7 +448,7 @@ describe('workbench_diy_publish · 审批', () => {
       market: {
         url: 'https://git.example.com/wb/market.git',
         ref: 'main',
-        indexPath: 'market.json',
+        indexPath: 'market',
         artifactPath: 'packages/demo',
         files: ['package.json'],
       },
@@ -469,7 +469,7 @@ describe('workbench_diy_publish · 审批', () => {
       market: {
         url: 'https://git.example.com/wb/market.git',
         ref: 'main',
-        indexPath: 'market.json',
+        indexPath: 'market',
         artifactPath: 'packages/demo',
         files: ['package.json'],
       },
@@ -526,7 +526,7 @@ describe('workbench_diy_publish · 审批', () => {
       market: {
         url: 'https://git.example.com/wb/market.git',
         ref: 'main',
-        indexPath: 'market.json',
+        indexPath: 'market',
         artifactPath: 'packages/demo',
         files: ['package.json'],
       },
@@ -546,7 +546,7 @@ describe('workbench_diy_publish · 审批', () => {
       market: {
         url: 'https://git.example.com/wb/market.git',
         ref: 'main',
-        indexPath: 'market.json',
+        indexPath: 'market',
         artifactPath: 'packages/@demo/probe',
         files: ['package.json'],
       },
@@ -566,7 +566,7 @@ describe('workbench_diy_publish · 审批', () => {
       market: {
         url: 'https://git.example.com/wb/market.git',
         ref: 'main',
-        indexPath: 'market.json',
+        indexPath: 'market',
         artifactPath: 'packages/demo',
         files: ['package.json'],
       },
@@ -584,7 +584,7 @@ describe('workbench_diy_publish · 审批', () => {
       market: {
         url: 'https://git.example.com/wb/market.git',
         ref: 'main',
-        indexPath: 'market.json',
+        indexPath: 'market',
         artifactPath: 'packages/demo',
         files: ['package.json'],
       },

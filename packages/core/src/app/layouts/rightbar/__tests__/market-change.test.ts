@@ -31,7 +31,8 @@ describe('changeFailure：没落下就说为什么（别静默当作成功）', 
   });
 
   it('★ failed + 已知原因码 → 给那句人能照做的话（不是把码原样丢给用户）', () => {
-    expect(changeFailure(change({ errorCode: 'bundle-in-use' }), t)).toBe('panels.market.add.failureGeneric');
+    expect(changeFailure(change({ errorCode: 'bundle-in-use' }), t)).toBe('panels.market.add.failureStopProfile');
+    expect(changeFailure(change({ errorCode: 'stop-profile' }), t)).toBe('panels.market.add.failureStopProfile');
     expect(
       changeFailure(change({ packageResult: { exitCode: 1, output: '', truncated: false, logPath: '', kind: 'network' } }), t),
     ).toBe('panels.market.add.failureNetwork');

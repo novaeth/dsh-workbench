@@ -10,14 +10,16 @@ import type {
   PublishChangelog,
   PublishPreview,
 } from '@dsh-workbench/shared/contract/protocol/market-index';
-import { MARKET_INDEX_PATH } from '@dsh-workbench/shared/contract/protocol/market-index';
+import { MARKET_INDEX_DIR } from '@dsh-workbench/shared/contract/protocol/market-index';
 import {
   CHANGELOG_FILE,
+  assembleMarketIndex,
   CHANGELOG_KINDS,
   changelogDate,
   changelogHasEntry,
   changelogSectionOf,
   claimOf,
+  collectMarketEntryFiles,
   marketArtifactPath,
   marketSourceKey,
   parseMarketIndexJson,
@@ -54,16 +56,16 @@ function selectedGitSource(): MarketSourceConfig | undefined {
 const EMPTY_INDEX: MarketIndex = { format: 1, plugins: [] };
 
 function publishedIndexOf(source: MarketSourceConfig): MarketIndex | undefined {
-  const file = join(
-    workbenchRoot(),
-    'market-index',
-    marketSourceKey(source),
-    'worktree',
-    source.path ?? MARKET_INDEX_PATH,
-  );
-  if (!existsSync(file)) return undefined;
+  const root = join(workbenchRoot(), 'market-index', marketSourceKey(source), 'worktree');
   try {
-    const parsed = parseMarketIndexJson(readFileSync(file, 'utf8'));
+    const files = collectMarketEntryFiles(join(root, source.path ?? MARKET_INDEX_DIR));
+    if (files.length > 0) {
+      const assembled = assembleMarketIndex(files);
+      return assembled.ok ? assembled.index : undefined;
+    }
+    const legacy = join(root, 'market.json');
+    if (!existsSync(legacy)) return undefined;
+    const parsed = parseMarketIndexJson(readFileSync(legacy, 'utf8'));
     return parsed.ok ? parsed.index : undefined;
   } catch {
     return undefined;
@@ -114,7 +116,7 @@ function marketOf(dir: string, name: string, version: string): MarketPreview | u
     market: {
       url: source.url,
       ...(source.ref === undefined ? {} : { ref: source.ref }),
-      indexPath: source.path ?? MARKET_INDEX_PATH,
+      indexPath: source.path ?? MARKET_INDEX_DIR,
       artifactPath: marketArtifactPath(name),
       files: ARTIFACTS.filter((one) => existsSync(join(dir, one))),
       ...(nextVersion === undefined ? {} : { nextVersion }),
