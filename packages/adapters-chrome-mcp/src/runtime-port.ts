@@ -16,7 +16,6 @@ export function mcpCapabilities(): RuntimeCapabilities {
     console: false,
     pluginMarket: false,
     browserBridge: false,
-    libs: false,
   };
 }
 

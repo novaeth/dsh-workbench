@@ -12,7 +12,6 @@ describe('能力缺省时插件市场入口怎么判', () => {
         console: false,
         pluginMarket: false,
         browserBridge: true,
-        libs: false,
       }),
     ).toBe(false);
   });
@@ -23,7 +22,6 @@ describe('能力缺省时插件市场入口怎么判', () => {
         console: true,
         pluginMarket: true,
         browserBridge: true,
-        libs: true,
       }),
     ).toBe(true);
   });

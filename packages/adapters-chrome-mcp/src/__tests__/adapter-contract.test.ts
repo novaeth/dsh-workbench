@@ -20,7 +20,6 @@ describe('适配器契约（Chrome MCP 集合）', () => {
       console: false,
       pluginMarket: false,
       browserBridge: false,
-      libs: false,
     });
   });
 

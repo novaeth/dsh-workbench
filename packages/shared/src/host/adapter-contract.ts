@@ -2,7 +2,7 @@ import type { DshHostContext } from '../api/dsh.js';
 import type { AdapterSet } from './adapters.js';
 import { validateAdapterSet } from './adapter-set.js';
 
-const CAPABILITY_KEYS = ['console', 'pluginMarket', 'browserBridge', 'libs'] as const;
+const CAPABILITY_KEYS = ['console', 'pluginMarket', 'browserBridge'] as const;
 const DATA_METHODS = ['read', 'request', 'requestMany', 'submit'] as const;
 
 function isNonEmptyString(value: unknown): boolean {

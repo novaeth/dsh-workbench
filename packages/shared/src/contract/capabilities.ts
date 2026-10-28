@@ -2,7 +2,6 @@ export interface RuntimeCapabilities {
   readonly console: boolean;
   readonly pluginMarket: boolean;
   readonly browserBridge: boolean;
-  readonly libs: boolean;
 }
 
 export interface RuntimeTerms {

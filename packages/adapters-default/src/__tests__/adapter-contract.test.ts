@@ -16,7 +16,6 @@ describe('适配器契约（默认集合）', () => {
       console: true,
       pluginMarket: true,
       browserBridge: true,
-      libs: true,
     });
   });
 });

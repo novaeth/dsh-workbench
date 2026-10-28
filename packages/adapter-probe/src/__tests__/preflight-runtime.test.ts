@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { createPreflight } from '../preflight.js';
 
-const NO_CLI = { console: false, pluginMarket: false, browserBridge: false, libs: false };
+const NO_CLI = { console: false, pluginMarket: false, browserBridge: false };
 
 describe('没有命令行的适配器：预检里换成它自己的自检', () => {
   it('适配器给了 check → 单独一条「运行时」，标签用它给的名字', async () => {

@@ -119,7 +119,6 @@ export function fakeAdapterSet(overrides: Partial<AdapterSet> = {}): AdapterSet 
       console: false,
       pluginMarket: false,
       browserBridge: false,
-      libs: false,
     }),
     plugins,
     actions,

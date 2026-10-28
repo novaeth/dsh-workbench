@@ -46,7 +46,6 @@ export function createRuntimePort(): RuntimePort {
         console: true,
         pluginMarket: true,
         browserBridge: true,
-        libs: true,
       };
     },
 

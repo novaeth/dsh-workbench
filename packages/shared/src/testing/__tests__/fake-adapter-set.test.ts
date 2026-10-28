@@ -14,7 +14,6 @@ describe('假集合：证明协议是闭合的', () => {
       console: false,
       pluginMarket: false,
       browserBridge: false,
-      libs: false,
     });
   });
 
@@ -23,7 +22,6 @@ describe('假集合：证明协议是闭合的', () => {
       console: true,
       pluginMarket: false,
       browserBridge: false,
-      libs: false,
     }) } });
     expect(set.runtime.capabilities(ctx).console).toBe(true);
   });

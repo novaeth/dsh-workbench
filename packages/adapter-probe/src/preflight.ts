@@ -182,7 +182,7 @@ export function createPreflight(options: {
   runtimeLabel?: string | undefined;
 }): Preflight {
   const { shell, command = 'opencli', logger } = options;
-  const capabilities = options.capabilities ?? { console: true, pluginMarket: true, browserBridge: true, libs: true };
+  const capabilities = options.capabilities ?? { console: true, pluginMarket: true, browserBridge: true };
   const withConsole = capabilities.console;
   const withBridge = capabilities.browserBridge;
   const installCommand = options.installCommand ?? OPENCLI_INSTALL_COMMAND;
