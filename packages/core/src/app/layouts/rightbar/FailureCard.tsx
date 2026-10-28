@@ -1,6 +1,6 @@
 import { createElement as h, useCallback, useState } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
-import { Button, TerminalBlock, writeClipboard } from '@deepseek-ai/dsh-client-ui-primitives';
+import { Button, StateDot, TerminalBlock, writeClipboard } from '@deepseek-ai/dsh-client-ui-primitives';
 import type { TerminalBlockLabels } from '@deepseek-ai/dsh-client-ui-primitives';
 import { failureCardOf } from './failure-card-text';
 import type { InstallFailure } from '@dsh-workbench/shared';
@@ -51,11 +51,14 @@ export function FailureCard({
   }, [model.fix]);
 
   return (
-    <div className={styles.card}>
-      <div className={styles.title}>{model.title}</div>
-      <div className={styles.fact}>{model.fact}</div>
+    <div className={styles.block}>
+      <div className={styles.head}>
+        <StateDot state="error" size={8} />
+        <span className={styles.title}>{model.title}</span>
+      </div>
+      <p className={styles.fact}>{model.fact}</p>
       <div className={styles.actions}>
-        <Button type="button" size="sm" variant="outline" onClick={onCopy}>
+        <Button type="button" size="sm" variant="ghost" onClick={onCopy}>
           {copied ? t('panels.market.failure.copied') : model.fixLabel}
         </Button>
         <Button type="button" size="sm" variant="ghost" disabled={rechecking} onClick={onRecheck}>
@@ -65,7 +68,7 @@ export function FailureCard({
           {open ? t('panels.market.failure.hideOutput') : t('panels.market.failure.showOutput')}
         </Button>
       </div>
-      {copied ? <div className={styles.hint}>{model.copiedHint}</div> : null}
+      {copied ? <p className={styles.hint}>{model.copiedHint}</p> : null}
       {open ? (
         <TerminalBlock
           command={model.command}

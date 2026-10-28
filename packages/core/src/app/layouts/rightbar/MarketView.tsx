@@ -401,7 +401,7 @@ export function MarketView({
   const { busy: checkingShown } = useVisibleBusy(freshness.checking, MIN_BUSY_MS);
   const recheck = () => {
     setFailed(null);
-    onChanged({ force: true });
+    if (mock === undefined) onChanged({ force: true });
   };
   const check = (
     <MarketCheck
