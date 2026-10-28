@@ -3,6 +3,8 @@ import type { Translate } from '@dsh-workbench/shared';
 import { Button } from '@deepseek-ai/dsh-client-ui-primitives';
 import { Spinner } from '@dsh-workbench/shared';
 import { SHARED_STATE_KEY, sharedActions, type SharedRow } from './market-rows';
+import type { MarketFailure } from './market-row-types';
+import { FailureCard } from './FailureCard';
 import { marketSectionIcon } from './market-section-icon';
 import { packageIcon, sharedRowKind } from './market-row-icon';
 import { ACTION_LABEL_KEY, PROGRESS_KEY, type Pending } from './market-view-text';
@@ -15,12 +17,16 @@ function SharedLine({
   pending,
   failure,
   onAct,
+  onRecheck,
+  rechecking,
 }: {
   t: Translate;
   row: SharedRow;
   pending: Pending | null;
-  failure: string | null;
+  failure: MarketFailure | null;
   onAct: (action: MarketRowAction) => void;
+  onRecheck: () => void;
+  rechecking: boolean;
 }) {
   const running = pending !== null && pending.id === row.id ? pending : null;
   const locked = pending !== null;
@@ -86,7 +92,13 @@ function SharedLine({
         )}
       </div>
 
-      {failure === null ? null : <div className={styles.marketFailure}>{failure}</div>}
+      {failure === null ? null : failure.failure === undefined ? (
+        <div className={styles.marketFailure}>{failure.message}</div>
+      ) : (
+        <div className={styles.marketFailureSeat}>
+          <FailureCard t={t} failure={failure.failure} onRecheck={onRecheck} rechecking={rechecking} />
+        </div>
+      )}
     </li>
   );
 }
@@ -97,12 +109,16 @@ export function SharedSection({
   pending,
   failureOf,
   act,
+  onRecheck,
+  rechecking,
 }: {
   readonly t: Translate;
   readonly rows: readonly SharedRow[];
   readonly pending: Pending | null;
-  readonly failureOf: (id: string) => string | null;
+  readonly failureOf: (id: string) => MarketFailure | null;
   readonly act: (id: string, action: MarketRowAction) => Promise<void>;
+  readonly onRecheck: () => void;
+  readonly rechecking: boolean;
 }) {
   if (rows.length === 0) return null;
   return (
@@ -123,6 +139,8 @@ export function SharedSection({
             pending={pending}
             failure={failureOf(row.id)}
             onAct={(action) => void act(row.id, action)}
+            onRecheck={onRecheck}
+            rechecking={rechecking}
           />
         ))}
       </ul>

@@ -34,6 +34,7 @@ import type { MarketNameMap, TitleResolve } from './market-names';
 import { workbenchRow } from './market-workbench-row';
 import { RiskConfirmation } from '@deepseek-ai/dsh-client-ui-primitives';
 import type { MarketMock } from './market-mock';
+import type { MarketFailure } from './market-row-types';
 import type { ModuleUpdateMap } from './market-rows';
 import type { WorkbenchSelfUpdate, WorkbenchVersion } from '@/kernel/contract/bundle-install';
 import { MarketChecking, MarketEmpty } from './MarketStates';
@@ -131,6 +132,8 @@ function MarketBody({
   setDefault,
   boardBusy,
   check,
+  onRecheck,
+  rechecking,
 }: {
   readonly t: Translate;
   readonly self: MarketRow | undefined;
@@ -139,15 +142,17 @@ function MarketBody({
   readonly installedList: readonly MarketRow[];
   readonly shared: readonly SharedRow[];
   readonly pending: Pending | null;
-  readonly failed: { readonly id: string; readonly message: string } | null;
+  readonly failed: MarketFailure | null;
   readonly notice: string | null;
   readonly act: (id: string, action: MarketRowAction) => Promise<void>;
   readonly onConfirming: (id: string | null) => void;
   readonly setDefault: (id: string, next: boolean) => Promise<void>;
   readonly boardBusy: boolean;
   readonly check: ReactNode;
+  readonly onRecheck: () => void;
+  readonly rechecking: boolean;
 }) {
-  const failureOf = (id: string): string | null => (failed?.id === id ? failed.message : null);
+  const failureOf = (id: string): MarketFailure | null => (failed?.id === id ? failed : null);
   const foot = marketFootVisible(shown, installedList);
   const sections = marketSections(
     marketOrder([...shown, ...installedList], (row) => marketRowTitle(row, t)),
@@ -167,6 +172,8 @@ function MarketBody({
         act={act}
         confirmActions={CONFIRM_UNINSTALL}
         onConfirming={onConfirming}
+        onRecheck={onRecheck}
+        rechecking={rechecking}
       />
       {self === undefined ? null : (
         <div className={styles.marketSelfDivider} aria-hidden="true" />
@@ -185,6 +192,8 @@ function MarketBody({
         act={act}
         confirmActions={CONFIRM_UNINSTALL}
         onConfirming={onConfirming}
+        onRecheck={onRecheck}
+        rechecking={rechecking}
       />
       {pendingSection === undefined ? null : (
         <MarketSection
@@ -199,6 +208,8 @@ function MarketBody({
           act={act}
           confirmActions={CONFIRM_UNINSTALL}
           onConfirming={onConfirming}
+          onRecheck={onRecheck}
+          rechecking={rechecking}
         />
       )}
       <MarketSection
@@ -214,11 +225,21 @@ function MarketBody({
         act={act}
         confirmActions={CONFIRM_UNINSTALL}
         onConfirming={onConfirming}
+        onRecheck={onRecheck}
+        rechecking={rechecking}
       />
 
       {foot ? <PanelFoot size="md" text={t('panels.market.foot')} /> : null}
 
-      <SharedSection t={t} rows={shared} pending={pending} failureOf={failureOf} act={act} />
+      <SharedSection
+        t={t}
+        rows={shared}
+        pending={pending}
+        failureOf={failureOf}
+        act={act}
+        onRecheck={onRecheck}
+        rechecking={rechecking}
+      />
     </>
   );
 }
@@ -238,7 +259,7 @@ function useMarketScene(input: {
   readonly defaults: readonly string[];
   readonly changed: Readonly<Record<string, number>>;
   readonly pending: Pending | null;
-  readonly failed: { readonly id: string } | null;
+  readonly failed: MarketFailure | null;
 }): {
   readonly names: MarketNameMap;
   readonly catalog: readonly UnitManifest[];
@@ -378,6 +399,10 @@ export function MarketView({
   const nothing =
     shown.length === 0 && self === undefined && installedList.length === 0 && pluginList.length === 0;
   const { busy: checkingShown } = useVisibleBusy(freshness.checking, MIN_BUSY_MS);
+  const recheck = () => {
+    setFailed(null);
+    onChanged({ force: true });
+  };
   const check = (
     <MarketCheck
       t={t}
@@ -414,6 +439,8 @@ export function MarketView({
         setDefault={setDefault}
         boardBusy={boardBusy}
         check={check}
+        onRecheck={recheck}
+        rechecking={checkingShown}
       />
 
       <UninstallConfirm

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { InstallFailure } from '@dsh-workbench/shared';
 import { writeOutcomeOf, writeRoute } from '../write-outcome';
 
 describe('writeRoute', () => {
@@ -51,6 +52,32 @@ describe('writeOutcomeOf', () => {
       message: 'Inventory 登录态失效了',
       helpUrl: 'https://inventory.example.test/login',
     });
+  });
+
+  it('★ 装失败的现场一路带到界面（卡片靠它给修法，不靠那句 npm 原文）', () => {
+    const failure: InstallFailure = {
+      kind: 'permission',
+      command: 'npm i --prefix /x foo@1',
+      exitCode: 1,
+      output: 'EACCES',
+      current: { uid: 502, gid: 20 },
+      fix: { kind: 'chmod', path: '/x' },
+    };
+    const outcome = writeOutcomeOf(
+      { ok: false, error: { code: 'install-failed', message: '没有写入权限', failure } },
+      '网络不通',
+    );
+
+    expect(outcome).toEqual({ ok: false, message: '没有写入权限', failure });
+  });
+
+  it('形状不对的 failure 丢掉，不让界面拿半个对象去渲染', () => {
+    const outcome = writeOutcomeOf(
+      { ok: false, error: { code: 'x', message: '不行', failure: { kind: 'permission' } } } as never,
+      '网络不通',
+    );
+
+    expect(outcome).toEqual({ ok: false, message: '不行' });
   });
 
   it('没有 detail 就不给那个字段（别塞一个 undefined 进类型里）', () => {

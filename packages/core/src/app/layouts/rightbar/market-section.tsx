@@ -10,7 +10,7 @@ import {
   StateDot,
   Switch,
 } from '@deepseek-ai/dsh-client-ui-primitives';
-import type { MarketRow } from './market-row-types';
+import type { MarketFailure, MarketRow } from './market-row-types';
 import {
   MARKET_DOT,
   MARKET_STATE_KEY,
@@ -22,6 +22,7 @@ import {
 import { marketRowKind, packageIcon } from './market-row-icon';
 import type { MarketSectionIcon } from './market-section-icon';
 import { ACTION_LABEL_KEY, PROGRESS_KEY, type Pending } from './market-view-text';
+import { FailureCard } from './FailureCard';
 import styles from '../market/MarketPage.module.css';
 
 const dangerActions: readonly MarketRowAction[] = ['uninstall', 'remove-bundle', 'uninstall-plugin'];
@@ -160,14 +161,18 @@ function MarketLine({
   onAct,
   onDefault,
   boardBusy,
+  onRecheck,
+  rechecking,
 }: {
   t: Translate;
   row: MarketRow;
   pending: Pending | null;
-  failure: string | null;
+  failure: MarketFailure | null;
   onAct: (action: MarketRowAction) => void;
   onDefault?: ((next: boolean) => void) | undefined;
   boardBusy?: boolean | undefined;
+  onRecheck: () => void;
+  rechecking: boolean;
 }) {
   const running = pending !== null && pending.id === row.id ? pending : null;
   const locked = pending !== null;
@@ -263,7 +268,13 @@ function MarketLine({
         )}
       </div>
 
-      {failure === null ? null : <div className={styles.marketFailure}>{failure}</div>}
+      {failure === null ? null : failure.failure === undefined ? (
+        <div className={styles.marketFailure}>{failure.message}</div>
+      ) : (
+        <div className={styles.marketFailureSeat}>
+          <FailureCard t={t} failure={failure.failure} onRecheck={onRecheck} rechecking={rechecking} />
+        </div>
+      )}
       <MarketLineDialogs
         t={t}
         migrationOpen={migrationOpen}
@@ -297,13 +308,15 @@ export function MarketSection({
   boardBusy,
   headAction,
   keepHead,
+  onRecheck,
+  rechecking,
 }: {
   readonly t: Translate;
   readonly titleKey?: string;
   readonly icon?: MarketSectionIcon;
   readonly rows: readonly MarketRow[];
   readonly pending: Pending | null;
-  readonly failureOf: (id: string) => string | null;
+  readonly failureOf: (id: string) => MarketFailure | null;
   readonly act: (id: string, action: MarketRowAction) => Promise<void>;
   readonly onDefault?: ((id: string, next: boolean) => void) | undefined;
   readonly boardBusy?: boolean | undefined;
@@ -311,6 +324,8 @@ export function MarketSection({
   readonly onConfirming: (id: string | null) => void;
   readonly headAction?: ReactNode;
   readonly keepHead?: boolean;
+  readonly onRecheck: () => void;
+  readonly rechecking: boolean;
 }) {
   if (rows.length === 0 && keepHead !== true) return null;
   return (
@@ -341,6 +356,8 @@ export function MarketSection({
               }
               onDefault={(next) => onDefault?.(row.id, next)}
               boardBusy={boardBusy}
+              onRecheck={onRecheck}
+              rechecking={rechecking}
             />
           ))}
         </ul>

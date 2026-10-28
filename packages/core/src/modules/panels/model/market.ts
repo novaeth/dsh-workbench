@@ -8,7 +8,9 @@ import type { RegistryNotebook } from '@dsh-workbench/shared/host';
 import type { UnitCapability } from '@dsh-workbench/shared/host';
 import { requireSupply, type SupplyPort, type UnitMountDeps } from '@dsh-workbench/shared/host';
 import { runShell } from '@dsh-workbench/shared/host';
-import { quoteShellArg, tailLines } from '@dsh-workbench/shared/host';
+import { quoteShellArg } from '@dsh-workbench/shared/host';
+import { diagnoseInstallFailure, installWriteProblem, isolatedRoot } from '@dsh-workbench/shared/host';
+import { installError } from './market-install-error';
 import {
   affectedUnitsOf,
   findDependency,
@@ -147,10 +149,18 @@ export function createMarketService(options: {
     if (shell === undefined) {
       throw new Error('没有执行缝（shell 服务不可用），装 / 卸做不了。');
     }
+    const blocked = installWriteProblem({ command: line, fallback: isolatedRoot() });
+    if (blocked !== undefined) throw installError(blocked);
     const result = await runShell(shell, line, { timeoutMs: INSTALL_TIMEOUT_MS });
     if (result.exitCode !== 0 && !optional) {
-      const tail = tailLines(result.stderr || result.stdout, 6);
-      throw new Error(`命令失败（退出码 ${result.exitCode}）${tail === '' ? '' : `：${tail}`}`);
+      throw installError(
+        diagnoseInstallFailure({
+          command: line,
+          exitCode: result.exitCode,
+          output: result.stderr || result.stdout,
+          fallback: isolatedRoot(),
+        }),
+      );
     }
   }
 

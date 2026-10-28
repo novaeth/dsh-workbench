@@ -1,7 +1,7 @@
 import { marketInstallTarget } from '@dsh-workbench/shared';
 import type { Translate, WriteOutcome } from '@dsh-workbench/shared';
 import type { BundleChange } from '@/kernel/contract/bundle-install';
-import type { MarketRow } from './market-row-types';
+import type { MarketFailure, MarketRow } from './market-row-types';
 import { marketRowTitle, type MarketRowAction } from './market-rows';
 import { changeFailure, changeOf } from './market-change';
 import { updateVerdictOf, updateVerdictText, type UpdatedModule } from './market-update-verdict';
@@ -46,7 +46,7 @@ export interface MarketActSeats {
   readonly setPending: (next: Pending | null) => void;
   readonly setHeld: (next: HeldRow | undefined) => void;
   readonly setConfirming: (next: string | null) => void;
-  readonly setFailed: (next: { readonly id: string; readonly message: string } | null) => void;
+  readonly setFailed: (next: MarketFailure | null) => void;
   readonly setNotice: (next: string | null) => void;
 }
 
@@ -114,7 +114,11 @@ export function marketActOf(options: MarketActOptions): (id: string, action: Mar
       onChanged({ force: true });
       seats.setPending(null);
       seats.setHeld(undefined);
-      seats.setFailed({ id, message: t('panels.market.failed', { reason: outcome.message }) });
+      seats.setFailed({
+        id,
+        message: t('panels.market.failed', { reason: outcome.message }),
+        ...(outcome.failure === undefined ? {} : { failure: outcome.failure }),
+      });
       return;
     }
     const value = outcome.value;

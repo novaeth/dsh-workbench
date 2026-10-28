@@ -1,4 +1,5 @@
 import { API_PREFIX } from '../config/constants.js';
+import type { InstallFailure } from '../contract/command.js';
 
 /**
  * 宿主读口 / 写口回的错误：code 给判据分档，message 给人看，helpUrl 有就去点。
@@ -9,6 +10,7 @@ export interface ApiError {
   readonly detail?: string;
   readonly hint?: string;
   readonly helpUrl?: string;
+  readonly failure?: InstallFailure;
 }
 
 /**

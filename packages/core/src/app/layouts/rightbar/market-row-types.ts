@@ -1,5 +1,12 @@
 import type { ModuleUpdateBlock } from '@/kernel/contract/bundle-install';
 import type { MarketInstalledModule } from '@/kernel/contract/market-index';
+import type { InstallFailure } from '@dsh-workbench/shared';
+
+export interface MarketFailure {
+  readonly id: string;
+  readonly message: string;
+  readonly failure?: InstallFailure;
+}
 
 export type MarketRowAction =
   | 'install'

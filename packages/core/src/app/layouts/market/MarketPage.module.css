@@ -217,6 +217,11 @@
   overflow-wrap: anywhere;
 }
 
+.marketFailureSeat {
+  grid-column: 2 / -1;
+  min-width: 0;
+}
+
 .marketEmpty {
   padding: var(--wb-len-18) var(--wb-len-16);
   text-align: center;

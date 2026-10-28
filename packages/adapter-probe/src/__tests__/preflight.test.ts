@@ -54,6 +54,23 @@ describe('createPreflight', () => {
     expect(snapshot.steps[0]?.command).toBe(OPENCLI_INSTALL_COMMAND);
   });
 
+  it('某一拍自己抛了 → 收成 failed 那一屏，不把 run 的 promise 甩出去（否则宿主会当致命错误退出）', async () => {
+    const fake = createFakeShell([{ stdout: '1.8.8\n' }, { stdout: GOOD_BRIDGE_REPORT }]);
+    const preflight = createPreflight({
+      shell: fake.shell,
+      probeDiy: () => {
+        throw new Error('读套件声明的热身命令时炸了');
+      },
+    });
+
+    const snapshot = await preflight.run();
+
+    expect(snapshot.phase).toBe('failed');
+    expect(snapshot.error).toContain('热身命令');
+    expect(snapshot.failure).toBe('unknown');
+    expect(preflight.snapshot().phase).toBe('failed');
+  });
+
   it('装完仍然调不动（PATH 没生效）→ 也算失败，不假放行', async () => {
     const { preflight } = build(
       [

@@ -455,9 +455,16 @@ export function createPreflight(options: {
     if (running !== null) return running;
     if (runOptions.hard !== true && freshReady()) return current;
 
-    const inflight = doRun();
+    const inflight = doRun().catch((error: unknown) =>
+      set({
+        phase: 'failed',
+        error: error instanceof Error ? error.message : String(error),
+        failure: 'unknown',
+        guidance: 'install',
+      }),
+    );
     running = inflight;
-    await inflight.catch(() => undefined);
+    await inflight;
     running = null;
     return inflight;
   }

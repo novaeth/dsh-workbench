@@ -2,6 +2,7 @@ import type { InstalledWorkbenchModule } from './market-rows';
 import type { InstalledPlugin } from '@/shared/api/installed-plugins';
 import type { UnitManifest } from '@dsh-workbench/shared';
 import type { MarketRowAction, ModuleUpdateMap } from './market-rows';
+import type { MarketFailure } from './market-row-types';
 import type { CapabilityMap } from '@/shared/hooks/use-capabilities';
 import type { MarketState } from './market-rows';
 import type { WorkbenchSelfUpdate, WorkbenchVersion } from '@/kernel/contract/bundle-install';
@@ -45,6 +46,6 @@ export interface MarketMock {
   readonly plugins?: readonly InstalledPlugin[];
   readonly loaded?: boolean;
   readonly confirming?: string;
-  readonly failure?: { readonly id: string; readonly message: string };
+  readonly failure?: MarketFailure;
   readonly expect: MarketMockExpect;
 }

@@ -320,6 +320,29 @@ describe('registerProvision（机器供给：POST /workbench/api/provision）', 
     expect(JSON.parse(res.body).error.code).toBe('workbench/no-unit');
   });
 
+  it('★ 装失败的现场要跟着错误回给客户端（不然界面只剩一句 npm 原文）', async () => {
+    const failure = {
+      kind: 'permission',
+      command: 'npm i --prefix /x foo@1',
+      exitCode: 1,
+      output: 'EACCES',
+      path: '/x',
+      current: { uid: 502, gid: 20 },
+      fix: { kind: 'chmod', path: '/x' },
+    };
+    const route = harness(() => {
+      throw new WorkbenchDataError('install-failed', '没有写入权限', { failure });
+    });
+
+    const { req, res } = exchange({ action: 'install', unit: 'cmdb' });
+    await route?.handler(req, res);
+
+    expect(JSON.parse(res.body)).toMatchObject({
+      ok: false,
+      error: { code: 'install-failed', message: '没有写入权限', failure },
+    });
+  });
+
   it('处理器抛错 → 200 + { ok:false, error }（与数据层错误同一口径）', async () => {
     const route = harness(() => {
       throw new Error('装失败了');
