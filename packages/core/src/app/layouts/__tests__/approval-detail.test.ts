@@ -52,7 +52,7 @@ describe('发布审批：版本单独一行，仓库 / 分支 / 两个 commit �
     url: 'https://git.example.com/wb/market.git',
     ref: 'main',
     indexPath: 'market',
-    artifactPath: 'packages/probe',
+    artifactPath: 'artifacts/probe',
     files: ['dist', 'client.js'],
     nextVersion: '0.0.2',
   };
@@ -75,7 +75,7 @@ describe('发布审批：版本单独一行，仓库 / 分支 / 两个 commit �
       ['作者', '未署名'],
       ['仓库', market.url],
       ['分支', 'main'],
-      ['打包文件', 'packages/probe · dist · client.js'],
+      ['打包文件', 'artifacts/probe · dist · client.js'],
       ['索引', 'market'],
       ['提交', '打包文件 + 条目文件两次提交，一次推送'],
     ]);

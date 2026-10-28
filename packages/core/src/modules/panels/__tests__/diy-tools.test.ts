@@ -56,7 +56,7 @@ describe('workbench_diy · status（入口：我手上有什么）', () => {
           url: 'https://git.example.com/wb/market.git',
           ref: 'main',
           indexPath: 'market',
-          artifactPath: 'packages/demo',
+          artifactPath: 'artifacts/demo',
           files: ['package.json'],
           nextVersion: '0.1.1',
         },

@@ -1,4 +1,5 @@
 import type { MarketClaim, MarketIndex, MarketIndexEntry } from '../contract/protocol/market-index.js';
+import { MARKET_ARTIFACTS_DIR } from '../contract/protocol/market-index.js';
 
 export interface PublisherIdentity {
   readonly name: string;
@@ -51,6 +52,14 @@ export interface MarketClaimInput {
 
 export function marketArtifactPath(name: string): string {
   return `packages/${name}`;
+}
+
+export function marketArtifactRoot(name: string): string {
+  return `${MARKET_ARTIFACTS_DIR}/${name}`;
+}
+
+export function marketArtifactPathFor(name: string, version: string): string {
+  return `${MARKET_ARTIFACTS_DIR}/${name}/${version}`;
 }
 
 export function entryUnitOf(entry: MarketIndexEntry): string | undefined {

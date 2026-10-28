@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -262,7 +262,7 @@ export const checks = [
           now: () => 1760000000000,
         });
         if (market.updated !== true) throw new Error(`没更新：${market.reason}`);
-        const dir = join(repo, 'packages', '@demo', 'market-probe');
+        const dir = join(repo, 'artifacts', '@demo', 'market-probe', '0.1.0');
         for (const file of ['dist/host.js', 'client.js', 'cordis.patch.yml', 'README.md', 'package.json']) {
           if (!existsSync(join(dir, file))) throw new Error(`产物缺 ${file}`);
         }
@@ -273,7 +273,11 @@ export const checks = [
         const entry = entryOfText(indexTextOf(repo));
         if (entry.versions[0].source.type !== 'git') throw new Error('source 不是 git');
         if (entry.versions[0].source.commit !== COMMIT) throw new Error('commit 不是 40 位 SHA');
-        if (entry.versions[0].source.path !== 'packages/@demo/market-probe') throw new Error('path 不对');
+        if (entry.versions[0].source.path !== 'artifacts/@demo/market-probe/0.1.0') throw new Error('path 不对');
+        const metaFiles = readdirSync(join(repo, 'market', '@demo', 'market-probe')).filter((one) => one.startsWith('meta-'));
+        if (metaFiles.length !== 1) throw new Error(`应该有一个 meta 文件，实际 ${metaFiles.length}`);
+        const metaDoc = JSON.parse(readFileSync(join(repo, 'market', '@demo', 'market-probe', metaFiles[0]), 'utf8'));
+        if (metaDoc.epoch !== 1) throw new Error(`meta epoch 不对：${String(metaDoc.epoch)}`);
         if (entry.metadata?.unit !== 'probe') throw new Error(`unit 没写进条目：${JSON.stringify(entry.metadata)}`);
         const commits = fake.calls.filter((one) => one.argv.includes('commit')).length;
         if (commits !== 2) throw new Error(`应该两个 commit，实际 ${commits}`);

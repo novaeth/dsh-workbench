@@ -437,7 +437,14 @@ export function parseMarketEntryDoc(raw: unknown): MarketEntryDocParse {
     if (timestamp === undefined) {
       return { ok: false, problems: [problem('timestamp', '元数据文件要有 publishTimestamp', 'entry')] };
     }
-    return { ok: true, doc: { ...fields, publishTimestamp: timestamp as number } };
+    const epoch = record['epoch'];
+    if (epoch !== undefined && (!Number.isInteger(epoch) || (epoch as number) < 0)) {
+      return { ok: false, problems: [problem('timestamp', 'epoch 必须是非负整数', 'entry')] };
+    }
+    return {
+      ok: true,
+      doc: { ...fields, publishTimestamp: timestamp as number, ...(epoch === undefined ? {} : { epoch: epoch as number }) },
+    };
   }
   if (!isValidVersion(version)) {
     return { ok: false, problems: [problem('version', `版本号不是合法 SemVer：${JSON.stringify(version)}`, 'entry')] };
@@ -467,8 +474,9 @@ export function marketEntryPath(dir: string, name: string, version: string): str
   return `${indexPathBase(dir)}/${name}/${version}.json`;
 }
 
-export function marketMetaPath(dir: string, name: string, at: number): string {
+export function marketMetaPath(dir: string, name: string, epoch: number, suffix: string): string {
   if (!NPM_NAME.test(name)) throw new Error(`不是合法包名：${JSON.stringify(name)}`);
-  if (!Number.isInteger(at) || at < 0) throw new Error(`时间戳不合法：${String(at)}`);
-  return `${indexPathBase(dir)}/${name}/meta-${String(at)}.json`;
+  if (!Number.isInteger(epoch) || epoch < 0) throw new Error(`epoch 不合法：${String(epoch)}`);
+  if (!/^[a-z0-9]{4,16}$/u.test(suffix)) throw new Error(`后缀不合法：${suffix}`);
+  return `${indexPathBase(dir)}/${name}/meta-${String(epoch)}-${suffix}.json`;
 }

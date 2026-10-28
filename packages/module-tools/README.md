@@ -33,10 +33,11 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 模块的 `package.json` 可用 `dsh.workbench.market` 声明 `category` 与 `labels`（字符串数组）；
 不写就不带分类和标签，索引里只留 `metadata.workbench: true` 这条身份标记。
 要换署名时带 `--author "姓名 <邮箱>"`（或只给姓名）：它写回 `package.json`，索引、产物与提交都用它，
-`--refresh` 时也一样。一个包名归第一次发布的人（条目文件里的 `owner`）：换署名发同名会被拒，
+`--refresh` 时也一样。**发布本身不改市集里的标题 / 署名 / 说明**：这些元数据只由 `--refresh`（或显式 `--author`）写，
+避免一台还没更新的机器发新版时把别人刚改的元数据盖回去。一个包名归第一次发布的人（条目文件里的 `owner`）：换署名发同名会被拒，
 `--refresh` 也一样 —— 真要换人，先改那一条的 `owner`。
 同一个市场里，一个模块 id（`dsh.workbench.unit`）只能被一个条目使用；产物目录按包名走
-（`packages/<包名>/`）：换一个包名沿用旧 unit、或两个条目撞同一个 id / 目录，都会被拒。
+（`artifacts/<包名>/`）：换一个包名沿用旧 unit、或两个条目撞同一个 id / 目录，都会被拒。
 
 骨架自带脚本，日常不用记长命令：`build` · `typecheck` · `test` · `selfcheck` · `check` · `lint` · `design`。
 

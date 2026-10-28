@@ -24,6 +24,7 @@ export interface MarketVersionDoc {
 
 export interface MarketMetaDoc {
   readonly name: string;
+  readonly epoch?: number;
   readonly publishTimestamp: number;
   readonly title?: MarketLocalizedText;
   readonly description?: MarketLocalizedText;

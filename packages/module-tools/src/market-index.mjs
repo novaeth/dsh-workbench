@@ -1,4 +1,5 @@
-import { cpSync, copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
+import { cpSync, copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 
@@ -10,6 +11,8 @@ import {
   collectMarketEntryFiles,
   gitUrlOk,
   marketArtifactPath,
+  marketArtifactPathFor,
+  marketArtifactRoot,
   marketEntryFilesOfLegacy,
   marketEntryPath,
   marketMetaDocOf,
@@ -115,7 +118,7 @@ export function claimProblemText(name, claim, unit) {
   }
   if (claim.state === 'path-taken') {
     return (
-      `市场仓库里的 ${marketArtifactPath(name)} 已经被 ${claim.entry} 占了 —— 一个产物目录只能放一个包。` +
+      `市场仓库里的 ${marketArtifactRoot(name)} 已经被 ${claim.entry} 占了 —— 一个产物目录只能放一个包。` +
       '换一个包名再发；那个条目如果已经废弃，让索引维护者先处理掉。'
     );
   }
@@ -196,9 +199,27 @@ function writeEntryFile(workdir, dir, entry, version) {
   return rel;
 }
 
+function metaEpochOf(workdir, dir, name) {
+  const root = join(workdir, dir, name);
+  if (!existsSync(root)) return 0;
+  let epoch = 0;
+  for (const item of readdirSync(root)) {
+    if (!item.startsWith('meta-') || !item.endsWith('.json')) continue;
+    try {
+      const doc = JSON.parse(readFileSync(join(root, item), 'utf8'));
+      if (typeof doc.epoch === 'number' && doc.epoch > epoch) epoch = doc.epoch;
+    } catch {
+      continue;
+    }
+  }
+  return epoch;
+}
+
 function writeMetaFile(workdir, dir, entry, at) {
-  const doc = marketMetaDocOf(entry, Math.floor(at / 1000));
-  const rel = marketMetaPath(dir, entry.name, at);
+  const epoch = metaEpochOf(workdir, dir, entry.name) + 1;
+  const suffix = randomBytes(3).toString('hex');
+  const doc = marketMetaDocOf(entry, epoch, Math.floor(at / 1000));
+  const rel = marketMetaPath(dir, entry.name, epoch, suffix);
   const file = join(workdir, ...rel.split('/'));
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, `${JSON.stringify(doc, null, 2)}\n`);
@@ -569,11 +590,11 @@ function remoteHeadOf(exec, workdir, branch) {
   return line.split(/\s+/)[0] ?? '';
 }
 
-function copyArtifacts(root, workdir, name, manifest) {
+function copyArtifacts(root, workdir, name, version, manifest) {
   if (!SAFE_PACKAGE_NAME.test(name)) {
     throw new MarketIndexError(`包名不是合法 npm 名，没法当产物目录：${JSON.stringify(name)}`, 'index-write');
   }
-  const path = marketArtifactPath(name);
+  const path = marketArtifactPathFor(name, version);
   const dest = join(workdir, path);
   rmSync(dest, { recursive: true, force: true });
   mkdirSync(dest, { recursive: true });
@@ -612,8 +633,24 @@ export function marketClaim({ plan, exec, home, name, unit, publisher }) {
     name,
     publisher,
     unit,
-    artifactPath: marketArtifactPath(name),
+    artifactPath: marketArtifactRoot(name),
   });
+}
+
+const META_KEYS = ['title', 'description', 'author', 'owner', 'homepage', 'icon', 'metadata'];
+
+function withCurrentMeta(entry, current, update) {
+  if (current === undefined) return entry;
+  const next = { ...entry };
+  if (!update) {
+    for (const key of META_KEYS) {
+      if (key === 'owner') continue;
+      if (current[key] === undefined) delete next[key];
+      else next[key] = current[key];
+    }
+  }
+  if (current.owner !== undefined) next.owner = current.owner;
+  return next;
 }
 
 export function updateMarketIndex(options) {
@@ -640,7 +677,7 @@ export function updateMarketIndex(options) {
       if (plan.source.localPath === undefined) {
         const fetched = runGit(exec, workdir, ['fetch', 'origin', branch], { allowFailure: true });
         if (fetched.status === 0) runGit(exec, workdir, ['reset', '--hard', `origin/${branch}`], { allowFailure: true });
-        runGit(exec, workdir, ['clean', '-fd', '--', marketArtifactPath(manifest.name), dir], {
+        runGit(exec, workdir, ['clean', '-fd', '--', marketArtifactPathFor(manifest.name, version), dir], {
           allowFailure: true,
         });
       }
@@ -669,7 +706,7 @@ export function updateMarketIndex(options) {
       publisher,
       unit,
       version,
-      artifactPath: marketArtifactPath(manifest.name),
+      artifactPath: marketArtifactRoot(manifest.name),
     };
     ensureClaimFree(workdir, dir, claimInput);
     ensureVersionFree(workdir, dir, claimInput);
@@ -682,7 +719,7 @@ export function updateMarketIndex(options) {
       const done = replicatePush(exec, workdir, branch, baseSha, () => {
         ensureClaimFree(workdir, dir, claimInput);
         migrateLegacyIndex(workdir, dir);
-        artifactPath = copyArtifacts(root, workdir, manifest.name, manifest);
+        artifactPath = copyArtifacts(root, workdir, manifest.name, version, manifest);
         report({ phase: 'artifacts-copied' });
         artifactSha = commitOf(exec, workdir, `chore(release): ${entryName}`, identityOf(manifest));
         report({ phase: 'artifacts-committed', artifactCommit: artifactSha });
@@ -709,7 +746,8 @@ export function updateMarketIndex(options) {
       if (plan.policy !== 'artifacts-in-repo') migrateLegacyIndex(workdir, dir);
       ensureClaimFree(workdir, dir, claimInput);
       const current = readWorktreeIndex(workdir, dir).plugins.find((one) => one.name === manifest.name);
-      const written = current?.owner === undefined ? entry : { ...entry, owner: current.owner };
+      const written = withCurrentMeta(entry, current, options.metadata === true);
+      if (current === undefined || options.metadata === true) writeMetaFile(workdir, dir, written, now());
       writeEntryFile(workdir, dir, written, written.versions[0]);
       indexSha = commitOf(exec, workdir, `chore(market): ${entryName}`, identityOf(manifest));
       report({ phase: 'index-committed', indexCommit: indexSha });
@@ -777,7 +815,7 @@ export function refreshMarketEntry(options) {
       name: manifest.name,
       publisher,
       unit,
-      artifactPath: marketArtifactPath(manifest.name),
+      artifactPath: marketArtifactRoot(manifest.name),
     });
     if (claim.state === 'conflict' || claim.state === 'unit-taken' || claim.state === 'path-taken') {
       throw new MarketIndexError(claimProblemText(manifest.name, claim, unit), 'market-owner');

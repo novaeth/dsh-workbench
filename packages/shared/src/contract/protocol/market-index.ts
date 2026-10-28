@@ -1,5 +1,6 @@
 export const MARKET_INDEX_FORMAT = 1;
 export const MARKET_INDEX_DIR = 'market';
+export const MARKET_ARTIFACTS_DIR = 'artifacts';
 export const MARKET_INDEX_PATH = 'market.json';
 export const MARKET_DISCOVER_ROUTE = 'panels/market-discover';
 export const MARKET_DOC_ROUTE = 'panels/market-doc';

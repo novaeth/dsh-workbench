@@ -362,10 +362,10 @@ describe('条目文件：一个版本一个文件', () => {
     title: { zh: title },
   });
 
-  it('路径按包名分层，meta 文件带毫秒时间戳', () => {
+  it('路径按包名分层，meta 文件带 epoch 与随机后缀', () => {
     expect(marketEntryPath('market', '@scope/module-x', '0.1.0')).toBe('market/@scope/module-x/0.1.0.json');
-    expect(marketMetaPath('market', '@scope/module-x', 1_760_000_000_123)).toBe(
-      'market/@scope/module-x/meta-1760000000123.json',
+    expect(marketMetaPath('market', '@scope/module-x', 3, 'a1b2c3')).toBe(
+      'market/@scope/module-x/meta-3-a1b2c3.json',
     );
     expect(marketEntryPath('market', 'plain', '1.0.0')).toBe('market/plain/1.0.0.json');
   });

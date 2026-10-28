@@ -26,15 +26,15 @@ import {
 export const MARKET_ENTRIES_README_LINES: readonly string[] = [
   '# 索引目录',
   '',
-  '一个包一个目录，一个版本一个文件：`market/<包名>/<版本>.json`。发布只新增文件，不改已有条目。',
+  '一个包一个目录，一个版本一个文件：`market/<包名>/<版本>.json`；产物在 `artifacts/<包名>/<版本>/`。',
   '',
-  '`meta-<时间戳>.json` 是只改标题 / 说明时追加的元数据快照，读取时取最新的一份。',
+  '`meta-<epoch>-<随机后缀>.json` 是只改标题 / 署名 / 说明时追加的元数据快照，读取时按 epoch 取最新的一份。',
 ];
 
 export const MARKET_INDEX_README_LINES: readonly string[] = [
   '# 模块市场索引',
   '',
-  '这个仓库给 DeepSeek Harness 工作台当模块市场索引：条目在 `market/<包名>/<版本>.json`，一个版本一个文件。',
+  '这个仓库给 DeepSeek Harness 工作台当模块市场索引：条目在 `market/<包名>/<版本>.json`，产物在 `artifacts/<包名>/<版本>/`。',
   '',
   '## 发布模块',
   '',
@@ -44,8 +44,8 @@ export const MARKET_INDEX_README_LINES: readonly string[] = [
   'dsh-wb-module release --index <本仓库地址> --index-policy artifacts-in-repo',
   '```',
   '',
-  '产物会提交到 `packages/<包名>/`（带 scope 时是 `packages/@scope/名字/`），条目提交到 `market/<包名>/<版本>.json`。',
-  '发布只新增文件、不改已有条目，两台机器同时发也不会冲突。',
+  '产物会提交到 `artifacts/<包名>/<版本>/`，条目提交到 `market/<包名>/<版本>.json`。',
+  '发布只新增文件、不改已有文件，两台机器同时发也不会冲突；老条目的 `packages/<包名>/` 路径继续可用。',
   '',
   '一个包名归第一次发布的人（条目文件里的 `owner`）。换一个署名发同名会被拒；要换人，先把这一条的 `owner` 改成新的人。',
   '同一个市场里，一个模块 id（`metadata.unit`）只能被一个条目使用；另一个包名想用同一个 id / 产物目录也会被拒。',
@@ -104,15 +104,16 @@ export function marketVersionDocOf(entry: MarketIndexEntry, version: MarketIndex
   return { ...docFieldsFromEntry(entry), ...version };
 }
 
-export function marketMetaDocOf(entry: MarketIndexEntry, at: number): MarketMetaDoc {
-  return { ...docFieldsFromEntry(entry), publishTimestamp: at };
+export function marketMetaDocOf(entry: MarketIndexEntry, epoch: number, at: number): MarketMetaDoc {
+  return { ...docFieldsFromEntry(entry), epoch, publishTimestamp: at };
 }
 
 export function assembleMarketIndex(files: readonly MarketEntryFile[]): MarketIndexAssemble {
   const problems: MarketIndexProblem[] = [];
   interface Group {
     versions: Map<string, MarketIndexVersion>;
-    meta: { at: number; path: string; doc: MarketEntryDoc } | undefined;
+    meta: { epoch: number; at: number; path: string; doc: MarketEntryDoc } | undefined;
+    fallback: { at: number; path: string; doc: MarketEntryDoc } | undefined;
   }
   const groups = new Map<string, Group>();
   const ordered = [...files].sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0));
@@ -132,7 +133,8 @@ export function assembleMarketIndex(files: readonly MarketEntryFile[]): MarketIn
       continue;
     }
     const doc = parsed.doc;
-    const group = groups.get(doc.name) ?? { versions: new Map<string, MarketIndexVersion>(), meta: undefined };
+    const group =
+      groups.get(doc.name) ?? { versions: new Map<string, MarketIndexVersion>(), meta: undefined, fallback: undefined };
     const at = doc.publishTimestamp ?? 0;
     if ('version' in doc) {
       if (group.versions.has(doc.version)) {
@@ -144,14 +146,25 @@ export function assembleMarketIndex(files: readonly MarketEntryFile[]): MarketIn
         ...(doc.publishTimestamp === undefined ? {} : { publishTimestamp: doc.publishTimestamp }),
         ...(doc.engines === undefined ? {} : { engines: doc.engines }),
       });
+      const newerFallback =
+        group.fallback === undefined ||
+        at > group.fallback.at ||
+        (at === group.fallback.at && file.path > group.fallback.path);
+      if (newerFallback) group.fallback = { at, path: file.path, doc };
+    } else {
+      const epoch = doc.epoch ?? 0;
+      const newer =
+        group.meta === undefined ||
+        epoch > group.meta.epoch ||
+        (epoch === group.meta.epoch && at > group.meta.at) ||
+        (epoch === group.meta.epoch && at === group.meta.at && file.path > group.meta.path);
+      if (newer) group.meta = { epoch, at, path: file.path, doc };
     }
-    const newer = group.meta === undefined || at > group.meta.at || (at === group.meta.at && file.path > group.meta.path);
-    if (newer) group.meta = { at, path: file.path, doc };
     groups.set(doc.name, group);
   }
   if (problems.length > 0) return { ok: false, problems };
   const plugins: MarketIndexEntry[] = [...groups.entries()].map(([name, group]) => {
-    const meta = group.meta?.doc;
+    const meta = group.meta?.doc ?? group.fallback?.doc;
     return {
       name,
       versions: sortMarketVersions([...group.versions.values()]),

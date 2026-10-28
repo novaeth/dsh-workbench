@@ -383,7 +383,7 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'panels.discover.missingIndex': 'This repository has no {path} yet.',
   'panels.discover.initTitle': 'Initialize this repository as a module market index?',
   'panels.discover.initCta': 'Initialize market index',
-  'panels.discover.initWhat': 'It will write the index directory market/ and README.md on {branch}, commit once, and push. Modules you publish from this workbench will commit their build files under packages/<package-name>/ and their entry under market/<package-name>/<version>.json. The repository stays owned by its owner.',
+  'panels.discover.initWhat': 'It will write the index directory market/ and README.md on {branch}, commit once, and push. Modules you publish from this workbench will commit their build files under artifacts/<package-name>/<version>/ and their entry under market/<package-name>/<version>.json. The repository stays owned by its owner.',
   'panels.discover.initBranch': 'Branch',
   'panels.discover.initBranchHint': 'The index and build files go to this branch; an empty repository gets it created.',
   'panels.discover.initBranchBad': 'Use only letters, digits, dots, underscores, slashes, or dashes in a branch name.',

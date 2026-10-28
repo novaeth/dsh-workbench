@@ -267,7 +267,7 @@ describe('发布预览的只读路由', () => {
               type: 'git',
               url: 'https://git.example.com/wb/market.git',
               commit: 'a'.repeat(40),
-              path: 'packages/@demo/probe',
+              path: 'artifacts/@demo/probe',
             },
           },
         ],

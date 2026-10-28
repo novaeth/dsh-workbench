@@ -20,7 +20,8 @@ import {
   changelogSectionOf,
   claimOf,
   collectMarketEntryFiles,
-  marketArtifactPath,
+  marketArtifactPathFor,
+  marketArtifactRoot,
   marketSourceKey,
   parseMarketIndexJson,
   parseSourceConfig,
@@ -117,7 +118,7 @@ function marketOf(dir: string, name: string, version: string): MarketPreview | u
       url: source.url,
       ...(source.ref === undefined ? {} : { ref: source.ref }),
       indexPath: source.path ?? MARKET_INDEX_DIR,
-      artifactPath: marketArtifactPath(name),
+      artifactPath: marketArtifactPathFor(name, nextVersion ?? version),
       files: ARTIFACTS.filter((one) => existsSync(join(dir, one))),
       ...(nextVersion === undefined ? {} : { nextVersion }),
     },
@@ -253,7 +254,7 @@ export function publishPreviewOf(
           name,
           publisher: author,
           unit,
-          artifactPath: marketArtifactPath(name),
+          artifactPath: marketArtifactRoot(name),
         });
   return {
     name,
