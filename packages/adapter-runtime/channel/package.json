@@ -1,6 +1,6 @@
 {
   "name": "opencli-plugin-workbench",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "private": true,
   "type": "module",
   "description": "DSH 工作台的公共通道：带浏览器登录态的 Node 侧 fetch，只服务 cookie / cookieValue 两种凭据来源",

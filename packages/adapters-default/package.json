@@ -1,6 +1,6 @@
 {
   "name": "@dsh-workbench/adapters-default",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "Default host adapter set installed with @dsh-workbench/core.",
   "type": "module",
   "exports": {
