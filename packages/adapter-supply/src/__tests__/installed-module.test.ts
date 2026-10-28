@@ -124,7 +124,7 @@ describe('profile 里装了哪些工作台模块（unit → 包名，卸载前�
       },
     );
     expect(profileModules(root)).toEqual([
-      { pkg: '@dsh-workbench/module-hello', unit: 'hello', version: '0.1.2', local: false },
+      { pkg: '@dsh-workbench/module-hello', unit: 'hello', version: '0.1.2', local: false, fromRegistry: true },
     ]);
   });
 
@@ -133,7 +133,7 @@ describe('profile 里装了哪些工作台模块（unit → 包名，卸载前�
       '@a/mod': { name: '@a/mod', version: '1.2.0', dsh: { workbench: { unit: 'mod' } } },
     });
     expect(profileModules(root)).toEqual([
-      { pkg: '@a/mod', unit: 'mod', version: '1.2.0', local: false },
+      { pkg: '@a/mod', unit: 'mod', version: '1.2.0', local: false, fromRegistry: true },
     ]);
   });
 
@@ -153,7 +153,7 @@ describe('profile 里装了哪些工作台模块（unit → 包名，卸载前�
       },
     );
     expect(profileModules(root)).toEqual([
-      { pkg: '@dsh-workbench/module-wallet', unit: 'wallet', version: '0.1.0', local: true },
+      { pkg: '@dsh-workbench/module-wallet', unit: 'wallet', version: '0.1.0', local: true, fromRegistry: false },
     ]);
   });
 
@@ -439,3 +439,4 @@ describe('createDeclarationLookup（unit → 声明来源；名单是懒的，�
     expect(createDeclarationLookup(null)('delivery')).toBeUndefined();
   });
 });
+

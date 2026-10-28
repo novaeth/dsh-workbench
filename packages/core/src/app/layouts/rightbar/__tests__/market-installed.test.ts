@@ -66,6 +66,44 @@ describe('市场页的「已装（本机）」那半（module-distribution spec 
     expect(rows[0]?.note).toBeUndefined();
   });
 
+  it('★ 没配来源时行上要说「没检查新版」，别让人以为已经是最新', () => {
+    const rows = installedRows(
+      [{ unit: 'hello', pkg: '@p/hello', installed: '0.1.0', latestUnavailable: 'no-registry' }],
+      [unit('hello')],
+      new Set(),
+    );
+    expect(rows[0]?.note).toEqual({ key: 'panels.market.latestNoRegistry', params: {} });
+    expect(rows[0]?.canUpdate).toBe(false);
+    expect(marketActions(rows[0]!)).toEqual(['remove-bundle']);
+  });
+
+  it('★ 问了但没问成 → 另一句话（和"没配来源"分开说）', () => {
+    const rows = installedRows(
+      [{ unit: 'hello', pkg: '@p/hello', installed: '0.1.0', latestUnavailable: 'probe-failed' }],
+      [unit('hello')],
+      new Set(),
+    );
+    expect(rows[0]?.note).toEqual({ key: 'panels.market.latestProbeFailed', params: {} });
+  });
+
+  it('从 Git 装的本来就没有 registry 版本可比 → 不挂这句（它不是"查不到"）', () => {
+    const rows = installedRows(
+      [{ unit: 'hello', pkg: '@p/hello', installed: '0.1.0', latestUnavailable: 'not-registry' }],
+      [unit('hello')],
+      new Set(),
+    );
+    expect(rows[0]?.note).toBeUndefined();
+  });
+
+  it('本地 link 的不挂这句（行上的「本地」标签已经说明）', () => {
+    const rows = installedRows(
+      [{ unit: 'hello', pkg: '@p/hello', installed: '0.1.0', local: true, latestUnavailable: 'local' }],
+      [unit('hello')],
+      new Set(),
+    );
+    expect(rows[0]?.note).toBeUndefined();
+  });
+
   it('★ 还没载入的，才是真的「还没生效」—— 只有这一类能给那句', () => {
     const rows = installedRows(
       [{ unit: 'fresh', pkg: '@dsh-workbench/module-fresh', installed: '0.1.0' }],

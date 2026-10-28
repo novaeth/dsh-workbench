@@ -17,6 +17,7 @@ import {
   checkingRows,
   installedIdSet,
   installedRows,
+  latestCheckSummary,
   liveManifests,
   marketCatalog,
   marketOrder,
@@ -403,10 +404,12 @@ export function MarketView({
     setFailed(null);
     if (mock === undefined) onChanged({ force: true });
   };
+  const latestCheck = latestCheckSummary(mock?.installed ?? installed);
   const check = (
     <MarketCheck
       t={t}
       checkedAt={updatesCheckedAt}
+      latestCheck={latestCheck}
       checking={checkingShown}
       failed={updatesFailed}
       disabled={pending !== null}

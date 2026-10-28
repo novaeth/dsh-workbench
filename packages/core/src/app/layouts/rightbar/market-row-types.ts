@@ -46,7 +46,9 @@ export interface MarketNote {
     | 'panels.market.moduleRefused'
     | 'panels.market.moduleRestartHint'
     | 'panels.market.pluginAlsoKnownAs'
-    | 'panels.market.pluginBroken';
+    | 'panels.market.pluginBroken'
+    | 'panels.market.latestNoRegistry'
+    | 'panels.market.latestProbeFailed';
   readonly params: Readonly<Record<string, string>>;
   readonly tone?: 'plain' | 'alert';
 }

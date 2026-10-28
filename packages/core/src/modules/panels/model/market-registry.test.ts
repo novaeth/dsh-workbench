@@ -1,7 +1,11 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { BundleChange } from '@/kernel/contract/bundle-install';
 import type { BundleManager } from '@dsh-workbench/shared/host';
 import type { RegistryEntry, RegistryNotebook } from '@dsh-workbench/shared/host';
+import { packageSourceOf } from '@dsh-workbench/shared/host';
 import { rememberInstalledSource, retryAfterRegistryFix } from './market-registry';
 
 function notebook(options: {
@@ -105,6 +109,28 @@ describe('装完之后把源记一行（卸载时 pnpm 得问得到）', () => {
     );
 
     expect(warned.join(' ')).toContain('源失败');
+  });
+
+  it('★ 装完按包记一条来源（版本一起记，检查更新只认它）', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-registry-'));
+    const { book } = notebook({});
+    const { bundles } = manager({});
+
+    try {
+      await rememberInstalledSource(
+        { registries: book, profileDir: dir },
+        bundles,
+        '@a/mod',
+        'https://r.example/',
+        '0.3.1',
+      );
+      expect(packageSourceOf(dir, '@a/mod')).toEqual({ version: '0.3.1', registry: 'https://r.example/' });
+
+      await rememberInstalledSource({ registries: book, profileDir: dir }, bundles, '@a/mod', 'https://r.example/');
+      expect(packageSourceOf(dir, '@a/mod')?.version).toBe('0.3.1');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('没有台账（不做这件事）→ 直接返回', async () => {

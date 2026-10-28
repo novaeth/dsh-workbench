@@ -2,9 +2,11 @@ import type { BundleChange } from '@/kernel/contract/bundle-install';
 import type { BundleManager } from '@dsh-workbench/shared/host';
 import { registryFailure, sameRegistry, scopeOf } from '@dsh-workbench/shared/host';
 import type { RegistryNotebook } from '@dsh-workbench/shared/host';
+import { rememberPackageSource } from '@dsh-workbench/shared/host';
 
 export interface RegistryFixDeps {
   readonly registries?: RegistryNotebook | undefined;
+  readonly profileDir?: string | null | undefined;
   readonly logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
 }
 
@@ -13,15 +15,25 @@ export async function rememberInstalledSource(
   manager: BundleManager,
   pkg: string,
   registry: string | undefined,
+  version?: string | undefined,
 ): Promise<void> {
-  const { registries, logger } = deps;
-  if (registries === undefined || registry === undefined) return;
+  const { registries, profileDir, logger } = deps;
+  const wanted = registry?.trim() ?? '';
+  if (wanted === '') return;
+  if (profileDir !== undefined && profileDir !== null && version !== undefined && version.trim() !== '') {
+    try {
+      rememberPackageSource(profileDir, pkg, { version, registry: wanted });
+    } catch (error) {
+      logger?.warn?.(`[dsh-workbench] 记 ${pkg} 这次的来源失败：${String(error)}`);
+    }
+  }
+  if (registries === undefined) return;
   const scope = scopeOf(pkg);
   if (scope === null) return;
   const known = await manager.registries().catch(() => null);
-  if (known !== null && sameRegistry(known.resolved, registry)) return;
+  if (known !== null && sameRegistry(known.resolved, wanted)) return;
   try {
-    const added = registries.remember([{ scope, registry }]);
+    const added = registries.remember([{ scope, registry: wanted }]);
     if (added.length > 0) {
       logger?.info?.(`[dsh-workbench] 把 ${added.join('、')} 记进 profile 的 .npmrc（卸载只认 pnpm 的配置）`);
     }

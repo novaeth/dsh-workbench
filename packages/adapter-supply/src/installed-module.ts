@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { DshHostContext } from '@dsh-workbench/shared';
-import { declarationProblemsOf, readDeclaration } from '@dsh-workbench/shared/host';
+import { declarationProblemsOf, packageSourceOf, readDeclaration, scopeOf } from '@dsh-workbench/shared/host';
 export interface UnitDeclarationSource {
   readonly pkg: string;
   readonly declaration: unknown;
@@ -45,6 +45,7 @@ export interface ProfileModule {
   readonly version: string;
   readonly registry?: string;
   readonly local?: boolean;
+  readonly fromRegistry?: boolean;
 }
 
 function stringsOf(value: unknown): string[] {
@@ -69,14 +70,17 @@ export function profileModules(profileDir: string | null): readonly ProfileModul
   const found: ProfileModule[] = [];
   for (const pkg of names) {
     const read = readInstalledModule(profileDir, pkg);
-    if (read.kind === 'module')
+    if (read.kind === 'module') {
+      const spec = asText(dependencies[read.pkg]);
       found.push({
         pkg: read.pkg,
         unit: read.unit,
         version: read.version,
         ...(read.registry === undefined ? {} : { registry: read.registry }),
-        local: isLocalDependencySpec(asText(dependencies[read.pkg])),
+        local: isLocalDependencySpec(spec),
+        fromRegistry: isRegistryDependencySpec(spec),
       });
+    }
   }
   return found;
 }
@@ -117,6 +121,50 @@ function registryFromLockfile(profileDir: string, pkg: string): string | undefin
   const cut = tarball.lastIndexOf(`/${pkg}/`);
   if (cut <= 'https://'.length) return undefined;
   return tarball.slice(0, cut);
+}
+
+function unquoted(value: string): string {
+  const quote = value.charAt(0);
+  if (value.length >= 2 && (quote === '"' || quote === "'") && value.endsWith(quote)) {
+    return value.slice(1, -1).trim();
+  }
+  return value;
+}
+
+function registryFromNpmrc(profileDir: string, pkg: string): string | undefined {
+  let text: string;
+  try {
+    text = fs.readFileSync(path.join(profileDir, '.npmrc'), 'utf8');
+  } catch {
+    return undefined;
+  }
+  const scope = scopeOf(pkg);
+  let fallback: string | undefined;
+  for (const line of text.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed === '' || trimmed.startsWith('#') || trimmed.startsWith(';')) continue;
+    const separator = trimmed.indexOf('=');
+    if (separator <= 0) continue;
+    const key = trimmed.slice(0, separator).trim();
+    const value = unquoted(trimmed.slice(separator + 1).trim());
+    if (value === '') continue;
+    if (scope !== null && key === `${scope}:registry`) return value;
+    if (key === 'registry') fallback = value;
+  }
+  return fallback;
+}
+
+function registryOf(
+  profileDir: string,
+  pkg: string,
+  manifest: Readonly<Record<string, unknown>>,
+): string | undefined {
+  const declared = asText(asRecord(manifest.publishConfig)?.registry);
+  if (declared !== '') return declared;
+  const recorded = packageSourceOf(profileDir, pkg);
+  if (recorded !== undefined) return recorded.registry;
+  const locked = registryFromLockfile(profileDir, pkg);
+  return locked === undefined ? registryFromNpmrc(profileDir, pkg) : locked;
 }
 
 export function moduleDeclarationOf(profileDir: string | null, pkg: string): unknown {
@@ -173,14 +221,13 @@ export function readInstalledModule(profileDir: string | null, pkg: string): Ins
   const declared = asRecord(asRecord(record.dsh)?.workbench);
   const unit = declared === undefined ? '' : asText(declared.unit);
   if (unit === '') return { kind: 'not-module', pkg };
-  const declaredRegistry = asText(asRecord(record.publishConfig)?.registry);
-  const registry = declaredRegistry === '' ? registryFromLockfile(profileDir, pkg) : declaredRegistry;
+  const registry = registryOf(profileDir, pkg, record);
   return {
     kind: 'module',
     pkg,
     unit,
     version: asText(record.version),
-    ...(registry === '' ? {} : { registry }),
+    ...(registry === undefined ? {} : { registry }),
   };
 }
 
@@ -204,6 +251,15 @@ export function isLocalDependencySpec(spec: string): boolean {
   );
 }
 
+const NON_REGISTRY_SPEC = /^(?:git\+|git:|github:|gitlab:|bitbucket:|https?:|ssh:|workspace:)/i;
+
+export function isRegistryDependencySpec(spec: string): boolean {
+  const trimmed = spec.trim();
+  if (trimmed === '') return true;
+  if (isLocalDependencySpec(trimmed) || isPackedArtifactSpec(trimmed)) return false;
+  return !NON_REGISTRY_SPEC.test(trimmed);
+}
+
 export interface ProfilePackage {
   readonly pkg: string;
   readonly version: string;
@@ -223,14 +279,13 @@ export function readProfilePackage(profileDir: string | null, pkg: string): Prof
   if (record === undefined) return undefined;
   const version = asText(record.version);
   if (version === '') return undefined;
-  const declaredRegistry = asText(asRecord(record.publishConfig)?.registry);
-  const registry = declaredRegistry === '' ? registryFromLockfile(profileDir, pkg) : declaredRegistry;
+  const registry = registryOf(profileDir, pkg, record);
   const dependencies = asRecord(profileManifestOf(profileDir)?.dependencies) ?? {};
   const local = isLocalDependencySpec(asText(dependencies[pkg]));
   return {
     pkg,
     version,
-    ...(registry === '' ? {} : { registry }),
+    ...(registry === undefined ? {} : { registry }),
     ...(local ? { local: true } : {}),
   };
 }

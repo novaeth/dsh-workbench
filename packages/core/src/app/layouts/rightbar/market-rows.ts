@@ -1,4 +1,4 @@
-import type { ModuleUpdateBlock, ModuleVersion } from '@/kernel/contract/bundle-install';
+import type { LatestUnavailable, ModuleUpdateBlock, ModuleVersion } from '@/kernel/contract/bundle-install';
 import type { MarketInstalledModule } from '@/kernel/contract/market-index';
 import type { NeedState, SupplySource, Translate, UnitManifest, UnitTitle } from '@dsh-workbench/shared';
 import { supplyNeedsOf } from '@dsh-workbench/shared';
@@ -68,6 +68,7 @@ export interface InstalledWorkbenchModule {
   readonly title?: UnitTitle | undefined;
   readonly latest?: string | undefined;
   readonly latestBlocked?: ModuleUpdateBlock | undefined;
+  readonly latestUnavailable?: LatestUnavailable | undefined;
   readonly local?: boolean | undefined;
   readonly refused?: readonly string[] | undefined;
   readonly clientRefused?: readonly string[] | undefined;
@@ -113,6 +114,33 @@ export function installedIdSet(
   return new Set(installed.map((item) => item.unit));
 }
 
+function latestUnavailableNote(
+  unavailable: InstalledWorkbenchModule['latestUnavailable'],
+): MarketNote | undefined {
+  if (unavailable === 'no-registry') return { key: 'panels.market.latestNoRegistry', params: {} };
+  if (unavailable === 'probe-failed') return { key: 'panels.market.latestProbeFailed', params: {} };
+  return undefined;
+}
+
+export interface LatestCheckSummary {
+  readonly checked: number;
+  readonly unknown: number;
+}
+
+export function latestCheckSummary(
+  modules: readonly InstalledWorkbenchModule[] | undefined,
+): LatestCheckSummary {
+  let checked = 0;
+  let unknown = 0;
+  for (const module of modules ?? []) {
+    if (module.latest !== undefined) checked += 1;
+    else if (module.latestUnavailable === 'no-registry' || module.latestUnavailable === 'probe-failed') {
+      unknown += 1;
+    }
+  }
+  return { checked, unknown };
+}
+
 export function installedRows(
   modules: readonly InstalledWorkbenchModule[],
   manifests: readonly UnitManifest[],
@@ -135,6 +163,10 @@ export function installedRows(
     const pending = !loaded && refused.length === 0;
     const titleKey = titles.get(module.unit);
     const remembered = titleKey === undefined ? names?.get(module.unit) : undefined;
+    const note =
+      refused.length > 0
+        ? ({ key: 'panels.market.moduleRefused', params: {} } as const)
+        : latestUnavailableNote(module.latestUnavailable);
     rows.push({
       id: module.unit,
       titleKey: titleKey ?? module.unit,
@@ -145,14 +177,7 @@ export function installedRows(
         : blocked === undefined
           ? {}
           : { hint: updateBlockHintOf(blocked) }),
-      ...(refused.length === 0
-        ? {}
-        : {
-            note: {
-              key: 'panels.market.moduleRefused' as const,
-              params: {},
-            },
-          }),
+      ...(note === undefined ? {} : { note }),
       ...(module.local === true ? { local: true } : {}),
       pkg: module.pkg,
       canInstall: false,

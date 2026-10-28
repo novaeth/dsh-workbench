@@ -25,6 +25,7 @@ export interface ProfileModule {
   readonly version: string;
   readonly registry?: string;
   readonly local?: boolean;
+  readonly fromRegistry?: boolean;
 }
 
 export interface ProfilePackage {
@@ -51,6 +52,7 @@ export interface RegistryEntry {
 export interface RegistryNotebook {
   sources(): readonly RegistryEntry[];
   remember(entries: readonly RegistryEntry[]): readonly string[];
+  swapScope?(scope: string, registry: string): () => void;
 }
 
 export interface SelfUpdatePaths {

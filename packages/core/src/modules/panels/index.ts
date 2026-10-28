@@ -96,6 +96,7 @@ export const panelsHost: UnitOwnedFace = {
       modules: () => supply.profileModules(profileDir),
       workbench: (pkg) => supply.readProfilePackage(profileDir, pkg),
       registries: supply.createRegistryNotebook(profileDir),
+      profileDir,
       ledger,
       references: () => {
         const gaps = supply.declarationGaps(profileDir);

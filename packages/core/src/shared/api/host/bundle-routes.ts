@@ -169,9 +169,11 @@ export function moduleVersionsHandler(
     const fallback = (await manager.registries())?.resolved ?? undefined;
     const modules: ModuleVersion[] = await Promise.all(
       found.map(async (module) => {
-        const registry = module.registry ?? fallback;
+        const local = module.local === true;
+        const fromRegistry = module.fromRegistry !== false;
+        const registry = fromRegistry ? (module.registry ?? fallback) : undefined;
         const latest =
-          shell === undefined || registry === undefined
+          local || !fromRegistry || shell === undefined || registry === undefined
             ? undefined
             : await supply.latestVersion({ shell, name: module.pkg, registry, force });
         const raw = supply.moduleDeclarationOf(dir, module.pkg);
@@ -202,7 +204,17 @@ export function moduleVersionsHandler(
           ...(title === undefined ? {} : { title }),
           ...(latest === undefined ? {} : { latest }),
           ...(latestBlocked === undefined ? {} : { latestBlocked }),
-          ...(module.local === true ? { local: true } : {}),
+          ...(local
+            ? { local: true, latestUnavailable: 'local' as const }
+            : latest !== undefined
+              ? {}
+              : {
+                  latestUnavailable: !fromRegistry
+                    ? ('not-registry' as const)
+                    : registry === undefined
+                      ? ('no-registry' as const)
+                      : ('probe-failed' as const),
+                }),
           ...(refused === undefined ? {} : { refused }),
         };
       }),

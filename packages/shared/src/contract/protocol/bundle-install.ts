@@ -179,6 +179,8 @@ export interface BundleCancellationPayload {
 
 export type ModuleUpdateBlock = 'needs-workbench' | 'incompatible';
 
+export type LatestUnavailable = 'local' | 'no-registry' | 'not-registry' | 'probe-failed';
+
 export interface ModuleVersion {
   readonly unit: string;
   readonly pkg: string;
@@ -186,6 +188,7 @@ export interface ModuleVersion {
   readonly title?: UnitTitle;
   readonly latest?: string;
   readonly latestBlocked?: ModuleUpdateBlock;
+  readonly latestUnavailable?: LatestUnavailable;
   readonly local?: boolean;
   readonly refused?: readonly string[];
   readonly market?: MarketInstalledModule;

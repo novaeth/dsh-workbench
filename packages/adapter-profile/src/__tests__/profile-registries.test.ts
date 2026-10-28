@@ -9,6 +9,7 @@ import {
   mergeRegistryConfig,
   normalizeRegistry,
   registryFailure,
+  replaceScopeRegistry,
   sameRegistry,
   scopeOf,
   sourcesFromLockfile,
@@ -171,5 +172,70 @@ describe('createRegistryNotebook：读 lockfile、写 .npmrc', () => {
     expect(createRegistryNotebook(null).sources()).toEqual([]);
     expect(createRegistryNotebook(null).remember([{ scope: '@a', registry: 'https://r.example.com/' }])).toEqual([]);
     expect(createRegistryNotebook(tempDir()).sources()).toEqual([]);
+  });
+});
+
+describe('replaceScopeRegistry：只动那一个 scope 的行', () => {
+  it('有这一行 → 换值，别的行一个字节不动', () => {
+    const text = 'registry=https://public/\n@a:registry=https://old/\n@b:registry=https://b/\n';
+    expect(replaceScopeRegistry(text, '@a', 'https://new')).toBe(
+      'registry=https://public/\n@a:registry=https://new/\n@b:registry=https://b/\n',
+    );
+  });
+
+  it('没有这一行 → 追加（空文件也成）', () => {
+    expect(replaceScopeRegistry('', '@a', 'https://new')).toBe('@a:registry=https://new/\n');
+  });
+});
+
+describe('swapScope：卸载前临时把 scope 指到这个包自己的源', () => {
+  const fileOf = (dir: string): string => path.join(dir, '.npmrc');
+
+  it('★ 有旧值 → 换成记录里的源；restore 精确换回来，别的行原样', () => {
+    const dir = tempDir();
+    const file = fileOf(dir);
+    const before = '//r/:_authToken=keep\n@a:registry=https://old/\n';
+    fs.writeFileSync(file, before, 'utf8');
+
+    const restore = createRegistryNotebook(dir).swapScope?.('@a', 'https://recorded/');
+    expect(fs.readFileSync(file, 'utf8')).toContain('@a:registry=https://recorded/');
+
+    restore?.();
+    expect(fs.readFileSync(file, 'utf8')).toBe(before);
+  });
+
+  it('★ 原来没有这一行 → restore 把它删掉，不留临时映射', () => {
+    const dir = tempDir();
+    const file = fileOf(dir);
+    fs.writeFileSync(file, '//r/:_authToken=keep\n', 'utf8');
+
+    const restore = createRegistryNotebook(dir).swapScope?.('@a', 'https://recorded/');
+    expect(fs.readFileSync(file, 'utf8')).toContain('@a:registry=https://recorded/');
+
+    restore?.();
+    expect(fs.readFileSync(file, 'utf8')).toBe('//r/:_authToken=keep\n');
+  });
+
+  it('★ 窗口里有人改了这行 → restore 不覆盖人家的改动', () => {
+    const dir = tempDir();
+    const file = fileOf(dir);
+    fs.writeFileSync(file, '@a:registry=https://old/\n', 'utf8');
+
+    const restore = createRegistryNotebook(dir).swapScope?.('@a', 'https://recorded/');
+    fs.writeFileSync(file, '@a:registry=https://someone-else/\n', 'utf8');
+
+    restore?.();
+    expect(fs.readFileSync(file, 'utf8')).toContain('https://someone-else/');
+  });
+
+  it('没有 profile 目录 / 已经是这个源 → 什么都不动', () => {
+    expect(createRegistryNotebook(null).swapScope?.('@a', 'https://r/')?.()).toBeUndefined();
+
+    const dir = tempDir();
+    const file = fileOf(dir);
+    fs.writeFileSync(file, '@a:registry=https://r/\n', 'utf8');
+    const restore = createRegistryNotebook(dir).swapScope?.('@a', 'https://r/');
+    restore?.();
+    expect(fs.readFileSync(file, 'utf8')).toBe('@a:registry=https://r/\n');
   });
 });

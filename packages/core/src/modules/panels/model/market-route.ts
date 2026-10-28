@@ -23,7 +23,12 @@ export interface BundleInstallDeps {
   readonly ledger?: PluginLedger | undefined;
   readonly runAll: (commands: readonly PluginSourceCommand[]) => Promise<void>;
   readonly supplyAfter: (module: InstalledModule, change: BundleChange) => Promise<BundleSupply>;
-  readonly rememberSource: (manager: BundleManager, pkg: string, registry: string | undefined) => Promise<void>;
+  readonly rememberSource: (
+    manager: BundleManager,
+    pkg: string,
+    registry: string | undefined,
+    version?: string | undefined,
+  ) => Promise<void>;
   readonly remove?: ((pkg: string) => Promise<BundleChange>) | undefined;
 }
 
@@ -122,7 +127,14 @@ async function settle(
 ): Promise<BundleInstallOutcome> {
   const pkg = bundleNameOf(change, spec);
   const module = deps.installed?.(pkg) ?? { kind: 'unknown', pkg };
-  await deps.rememberSource(deps.manager, pkg, options?.registry);
+  const registry =
+    options?.registry ?? (module.kind === 'module' ? module.registry : undefined);
+  await deps.rememberSource(
+    deps.manager,
+    pkg,
+    registry,
+    module.kind === 'module' ? module.version : undefined,
+  );
   return { change, module, supply: await deps.supplyAfter(module, change) };
 }
 

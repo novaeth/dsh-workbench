@@ -16,6 +16,7 @@ export interface RegistryEntry {
 export interface RegistryNotebook {
   sources(): readonly RegistryEntry[];
   remember(entries: readonly RegistryEntry[]): readonly string[];
+  swapScope?(scope: string, registry: string): () => void;
 }
 
 export const REGISTRY_MARKER =
@@ -102,6 +103,34 @@ export function mergeRegistryConfig(text: string, entries: readonly RegistryEntr
   return { text: `${base}${marker}${appended.join('\n')}\n`, added };
 }
 
+export function replaceScopeRegistry(text: string, scope: string, registry: string): string {
+  const key = `${scope}:registry`;
+  const value = normalizeRegistry(registry);
+  let found = false;
+  const lines = text.split('\n').map((line) => {
+    if (!line.trim().startsWith(`${key}=`)) return line;
+    found = true;
+    return `${key}=${value}`;
+  });
+  if (found) return lines.join('\n');
+  const base = text === '' ? '' : text.endsWith('\n') ? text : `${text}\n`;
+  return `${base}${key}=${value}\n`;
+}
+
+function readNpmrc(file: string): string {
+  try {
+    return fs.readFileSync(file, 'utf8');
+  } catch {
+    return '';
+  }
+}
+
+function writeNpmrc(file: string, text: string): void {
+  const temp = `${file}.dsh-workbench.tmp`;
+  fs.writeFileSync(temp, text, { mode: 0o600 });
+  fs.renameSync(temp, file);
+}
+
 export function registryFailure(change: BundleChange): boolean {
   if (change.application !== 'failed') return false;
   if (change.packageResult?.kind === 'not-found') return true;
@@ -122,18 +151,35 @@ export function createRegistryNotebook(dir: string | null): RegistryNotebook {
     remember(entries) {
       if (dir === null || entries.length === 0) return [];
       const file = path.join(dir, '.npmrc');
-      let before: string;
-      try {
-        before = fs.readFileSync(file, 'utf8');
-      } catch {
-        before = '';
-      }
-      const merged = mergeRegistryConfig(before, entries);
+      const merged = mergeRegistryConfig(readNpmrc(file), entries);
       if (merged.added.length === 0) return [];
-      const temp = `${file}.dsh-workbench.tmp`;
-      fs.writeFileSync(temp, merged.text, { mode: 0o600 });
-      fs.renameSync(temp, file);
+      writeNpmrc(file, merged.text);
       return merged.added;
+    },
+    swapScope(scope, registry) {
+      if (dir === null || scope.trim() === '' || registry.trim() === '') return () => {};
+      const file = path.join(dir, '.npmrc');
+      const key = `${scope.trim()}:registry`;
+      const value = normalizeRegistry(registry);
+      const before = readNpmrc(file);
+      const previous = before.split('\n').find((line) => line.trim().startsWith(`${key}=`));
+      const after = replaceScopeRegistry(before, scope.trim(), registry);
+      if (after === before) return () => {};
+      writeNpmrc(file, after);
+      return () => {
+        const now = readNpmrc(file);
+        if (now === after) {
+          if (before === '') fs.rmSync(file, { force: true });
+          else writeNpmrc(file, before);
+          return;
+        }
+        if (!now.includes(`${key}=${value}`)) return;
+        const restored =
+          previous === undefined
+            ? now.split('\n').filter((line) => !line.trim().startsWith(`${key}=`)).join('\n')
+            : now.replace(`${key}=${value}`, previous);
+        writeNpmrc(file, restored);
+      };
     },
   };
 }

@@ -21,6 +21,7 @@ import {
 } from './market-dependency';
 import { installRouted, replaceDshBundle, type ReplaceBundleDeps } from './market-route';
 import { updateModuleBundle } from './market-update-bundle';
+import { removeDshBundle } from './market-remove';
 import { supplyUpdateStillBehind } from './market-verify';
 import { updateDependencyRow as runDependencyUpdate } from './market-dependency-update';
 import type { SelfUpdateRequest, SelfUpdateStart } from '@dsh-workbench/shared/host';
@@ -29,7 +30,6 @@ import { createWorkbenchFollowUps, type WorkbenchFollowUpDeps } from './market-f
 import { createEnvDropper } from './market-env';
 import {
   rememberInstalledSource,
-  retryAfterRegistryFix,
   type RegistryFixDeps,
 } from './market-registry';
 import { createPluginActions, type PluginReferences } from './plugin-actions';
@@ -68,6 +68,7 @@ export function createMarketService(options: {
   modules?: (() => readonly ProfileModule[]) | undefined;
   workbench?: ((pkg: string) => ProfilePackage | undefined) | undefined;
   registries?: RegistryNotebook | undefined;
+  profileDir?: string | null | undefined;
   ledger?: PluginLedger | undefined;
   references?: (() => PluginReferences) | undefined;
   dshHome?: (() => string) | undefined;
@@ -92,6 +93,7 @@ export function createMarketService(options: {
     modules,
     workbench,
     registries,
+    profileDir,
     ledger,
     references,
     dshHome,
@@ -257,20 +259,9 @@ export function createMarketService(options: {
 
   const registryFix: RegistryFixDeps = {
     ...(registries === undefined ? {} : { registries }),
+    ...(profileDir === undefined || profileDir === null ? {} : { profileDir }),
     ...(logger === undefined ? {} : { logger }),
   };
-
-  async function removeInstalledBundle(manager: BundleManager, pkg: string): Promise<BundleChange> {
-    const first = await manager.remove(pkg);
-    if (first === null) throw new Error('插件管理器回的卸载结果看不懂。');
-    const settled = await retryAfterRegistryFix(registryFix, manager, pkg, first);
-    if (settled.application !== 'failed' && settled.application !== 'cancelled') return settled;
-    const put = await manager.setEnabled?.(pkg, true);
-    logger?.warn?.(
-      `[dsh-workbench] ${pkg} 没卸成（${settled.errorCode ?? settled.application}）—— 已把它那一行放回名单，别让一次失败留在"装着但关着"`,
-    );
-    return put ?? settled;
-  }
 
   function routeDeps(manager: BundleManager): ReplaceBundleDeps {
     return {
@@ -278,9 +269,11 @@ export function createMarketService(options: {
       command,
       supply,
       runAll,
-      rememberSource: (manager, pkg, registry) => rememberInstalledSource(registryFix, manager, pkg, registry),
+      rememberSource: (manager, pkg, registry, version) =>
+        rememberInstalledSource(registryFix, manager, pkg, registry, version),
       supplyAfter,
-      remove: (pkg) => removeInstalledBundle(manager, pkg),
+      remove: (pkg) =>
+        removeDshBundle({ manager, pkg, profileDir, registryFix, ...(logger === undefined ? {} : { logger }) }),
       ...(shell === undefined ? {} : { shell }),
       ...(installed === undefined ? {} : { installed }),
       ...(ledger === undefined ? {} : { ledger }),
@@ -415,7 +408,13 @@ export function createMarketService(options: {
       const unit = module.kind === 'module' ? module.unit : undefined;
       const manifest = unit === undefined ? undefined : catalog().find((item) => item.id === unit);
       const before = unit === undefined ? undefined : await capabilityOf(unit, true);
-      const change = await removeInstalledBundle(manager, pkg);
+      const change = await removeDshBundle({
+        manager,
+        pkg,
+        profileDir,
+        registryFix,
+        ...(logger === undefined ? {} : { logger }),
+      });
       if (change.application !== 'applied' || unit === undefined) return { change, keptFor: [] };
       const keptFor =
         manifest === undefined || before === undefined

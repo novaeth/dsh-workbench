@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { DshHostContext } from '@dsh-workbench/shared';
+import { rememberPackageSource } from '@dsh-workbench/shared/host';
 import { BUNDLE_REGISTRY_DEFAULT } from '@/kernel/contract/bundle-install';
 import {
   bundleInspectHandler,
@@ -551,6 +552,111 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
       { unit: 'mod', pkg: '@b/mod', installed: '0.1.2' },
       { unit: 'other', pkg: '@b/other', installed: '0.1.2', latest: '9.9.9' },
     ]);
+    cleanup();
+  });
+
+  function bareProfile(spec = '^0.1.2'): { dir: string; cleanup: () => void } {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-versions-bare-'));
+    fs.writeFileSync(
+      path.join(dir, 'package.json'),
+      JSON.stringify({
+        name: 'p',
+        dsh: { profile: { bundles: ['@a/mod'] } },
+        dependencies: { '@a/mod': spec },
+      }),
+      'utf8',
+    );
+    const at = path.join(dir, 'node_modules', '@a', 'mod');
+    fs.mkdirSync(at, { recursive: true });
+    fs.writeFileSync(
+      path.join(at, 'package.json'),
+      JSON.stringify({ name: '@a/mod', version: '0.1.2', dsh: { workbench: { unit: 'mod' } } }),
+      'utf8',
+    );
+    return { dir, cleanup: () => fs.rmSync(dir, { recursive: true, force: true }) };
+  }
+
+  it('★ 包里没写 publishConfig 时按 profile .npmrc 的 scope 映射问源（不然永远没有 latest）', async () => {
+    const { dir, cleanup } = bareProfile();
+    fs.writeFileSync(
+      path.join(dir, '.npmrc'),
+      '# dsh-workbench 写的\n@a:registry=https://private.example/npm/\n',
+      'utf8',
+    );
+    const { shell, commands } = fakeShell({ '@a/mod': '0.2.0' });
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell as never)(
+      new URLSearchParams(),
+    )) as { modules: { latest?: string }[] };
+
+    expect(commands.some((line) => line.includes('@a/mod') && line.includes('https://private.example/npm/'))).toBe(
+      true,
+    );
+    expect(result.modules[0]).toMatchObject({ latest: '0.2.0' });
+    cleanup();
+  });
+
+  it('★ 按包记录的源优先于 .npmrc（同 scope 多源时只认这个包自己的）', async () => {
+    const { dir, cleanup } = bareProfile();
+    rememberPackageSource(dir, '@a/mod', { version: '0.1.2', registry: 'https://recorded.example/' });
+    fs.writeFileSync(path.join(dir, '.npmrc'), '@a:registry=https://scope.example/\n', 'utf8');
+    const { shell, commands } = fakeShell({ '@a/mod': '0.2.0' });
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell as never)(
+      new URLSearchParams(),
+    )) as { modules: { latest?: string }[] };
+
+    expect(commands.some((line) => line.includes('https://recorded.example/'))).toBe(true);
+    expect(commands.some((line) => line.includes('https://scope.example/'))).toBe(false);
+    expect(result.modules[0]).toMatchObject({ latest: '0.2.0' });
+    cleanup();
+  });
+
+  it('★ 源解析不出来 → 说明是没配来源，不是"没有新版"', async () => {
+    const { dir, cleanup } = bareProfile();
+    const { shell, commands } = fakeShell({ '@a/mod': '0.2.0' });
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell as never)(
+      new URLSearchParams(),
+    )) as { modules: { latestUnavailable?: string }[] };
+
+    expect(result.modules[0]).toMatchObject({ latestUnavailable: 'no-registry' });
+    expect(commands).toEqual([]);
+    cleanup();
+  });
+
+  it('★ 问了但没问成 → probe-failed（和"没配来源"分开）', async () => {
+    const { dir, cleanup } = bareProfile();
+    fs.writeFileSync(path.join(dir, '.npmrc'), 'registry=https://down.example/\n', 'utf8');
+    const { shell } = fakeShell({});
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell as never)(
+      new URLSearchParams(),
+    )) as { modules: { latestUnavailable?: string }[] };
+
+    expect(result.modules[0]).toMatchObject({ latestUnavailable: 'probe-failed' });
+    cleanup();
+  });
+
+  it('★ 本地 link 的那份不探源（也不该拿源上的版本劝人"更新"）', async () => {
+    const { dir, cleanup } = bareProfile('link:/Users/x/module');
+    const { shell, commands } = fakeShell({ '@a/mod': '0.2.0' });
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell as never)(
+      new URLSearchParams(),
+    )) as { modules: { latest?: string; latestUnavailable?: string; local?: boolean }[] };
+
+    expect(result.modules[0]).toMatchObject({ local: true, latestUnavailable: 'local' });
+    expect(result.modules[0]?.latest).toBeUndefined();
+    expect(commands).toEqual([]);
+    cleanup();
+  });
+
+  it('★ 从 Git 装的不去问 registry，也不冒充"没配来源"', async () => {
+    const { dir, cleanup } = bareProfile('git+ssh://git@example.com/o/r.git#main&path:/packages/mod');
+    const { shell, commands } = fakeShell({ '@a/mod': '0.2.0' });
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell as never)(
+      new URLSearchParams(),
+    )) as { modules: { latest?: string; latestUnavailable?: string }[] };
+
+    expect(result.modules[0]).toMatchObject({ latestUnavailable: 'not-registry' });
+    expect(result.modules[0]?.latest).toBeUndefined();
+    expect(commands).toEqual([]);
     cleanup();
   });
 });
