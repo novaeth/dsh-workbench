@@ -87,7 +87,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
   mock(
     'installing',
     '安装中（npm 在跑）',
-    '缺 opencli：正在装。右边会**数秒**（静止的圆点看不出在干活）。',
+    '缺命令行：正在装。右边会**数秒**（静止的圆点看不出在干活）。',
     {
       phase: 'installing',
       steps: [{ id: 'cli', status: 'running', action: INSTALL_COMMAND, command: INSTALL_COMMAND }, BRIDGE_PENDING],
