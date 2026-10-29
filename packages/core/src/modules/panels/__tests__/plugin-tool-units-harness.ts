@@ -1,10 +1,7 @@
 import type { DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared';
-import { createHostKit, toolUnits, type ToolScopeContext, type WorkspaceStore } from '@dsh-workbench/shared/host';
+import { createHostKit, toolUnits, type PluginUnitsPort, type ToolScopeContext, type UnitOwnedFace, type WorkspaceStore } from '@dsh-workbench/shared/host';
 import { createFakeShell, createNoopDataReader,
 } from '@dsh-workbench/shared/testing';
-import { createFakeOpencli } from './fake-opencli';
-import { createPluginCatalog } from '@dsh-workbench/adapter-supply';
-import { createPluginUnits } from '@dsh-workbench/adapter-supply';
 import { mountUnits } from '@/kernel/host/mount-units';
 import { createUnitRegistry, type UnitRegistry } from '@/kernel/host/unit-registry';
 import type { PluginLedger } from '../model/plugin-ledger';
@@ -47,7 +44,7 @@ export interface Harness {
   readonly panels: PanelsService;
   readonly tools: Map<string, DshToolDefinition>;
   readonly gate: { deniedTools(context: ToolScopeContext): readonly string[] };
-  readonly manager: ReturnType<typeof createPluginUnits>;
+  readonly manager: PluginUnitsPort;
   readonly problems: string[];
   readonly definitions: () => DshToolDefinition[];
   readonly commands: () => readonly string[];
@@ -141,18 +138,10 @@ export function harnessOf(options: {
       ? { stdout: JSON.stringify(options.pluginRows()) }
       : { stdout: JSON.stringify(options.commands ?? COMMANDS) },
   );
-  const catalog = createPluginCatalog({ shell: fake.shell, command: 'opencli' });
-  const opencli = createFakeOpencli([...(options.opencliReplies ?? [{ ok: true }])]);
-  const moduleTools = new Set(options.moduleTools ?? []);
-
-  const manager = createPluginUnits({
+  const manager = cannedManager({
     registry,
-    catalog,
-    rows: () => panels.listPlugins(null),
-    declared: (plugin) => options.declared?.get(plugin) ?? new Set<string>(),
-    opencliFor: () => opencli.opencli,
-    toolNames: () => moduleTools,
-    logger: { info: () => {}, warn: (message: string) => problems.push(message) },
+    panels,
+    commands: () => (options.commands ?? COMMANDS) as readonly CannedCommand[],
   });
 
   const mounted = panelsHost.mount({
@@ -170,7 +159,7 @@ export function harnessOf(options: {
     panels,
     tools: live,
     commands: () => fake.commands(),
-    opencliCalls: () => opencli.calls,
+    opencliCalls: () => [],
     gate: mounted.gate as { deniedTools(context: ToolScopeContext): readonly string[] },
     manager,
     problems,
@@ -186,5 +175,78 @@ export function harnessOf(options: {
     },
     units: () => registry.all().map((host) => host.unit),
     declaredNotes: () => new Set([...faces.values()].flatMap((item) => [...item.declaredNotes])),
+  };
+}
+
+interface CannedCommand {
+  readonly site: string;
+  readonly name: string;
+  readonly description?: string;
+  readonly access?: string;
+  readonly args?: readonly { readonly name: string; readonly type?: string; readonly help?: string }[];
+}
+
+function faceOf(plugin: string, commands: readonly CannedCommand[]): UnitOwnedFace {
+  const mine = commands.filter((command) => command.site === plugin);
+  const definitions = mine.map((command) => ({
+    name: `${plugin}_${command.name}`,
+    description: command.description ?? command.name,
+    parameters: {
+      type: 'object',
+      properties: Object.fromEntries(
+        (command.args ?? []).map((arg) => [arg.name, { type: arg.type ?? 'string', description: arg.help ?? '' }]),
+      ),
+      additionalProperties: false,
+    },
+  }));
+  return {
+    unit: `plugin:opencli-plugin-${plugin}`,
+    manifest: {
+      id: `plugin:opencli-plugin-${plugin}`,
+      title: { zh: plugin, en: plugin },
+      titleKey: `dsh-workbench.unit.plugin_${plugin}.title`,
+      card: null,
+      tools: mine.map((command) => ({
+        name: `${plugin}_${command.name}`,
+        writes: command.access !== 'read',
+        opencli: { plugin, command: command.name, args: (command.args ?? []).map((arg) => arg.name) },
+      })),
+      host: { inject: [] },
+    } as never,
+    mount(deps) {
+      const tools = deps.ctx.get<DshToolRegistry>('tools');
+      if (tools === undefined) return { routes: {}, registerTools: () => [] };
+      const disposers = definitions.map((definition) =>
+        tools.register({
+          ...definition,
+          output: { type: 'text' },
+          execute: async () => ({ text: JSON.stringify({ ok: true }) }),
+        } as never),
+      );
+      return { routes: {}, registerTools: () => disposers };
+    },
+  };
+}
+
+function cannedManager(options: {
+  readonly registry: UnitRegistry;
+  readonly panels: PanelsService;
+  readonly commands: () => readonly CannedCommand[];
+}): PluginUnitsPort {
+  const report = { ok: true, at: 0, plugins: [], problems: [] };
+  const disposers: (() => void)[] = [];
+  return {
+    async refresh() {
+      for (const row of options.panels.listPlugins(null)) {
+        const plugin = row.name ?? row.pkg.replace(/^opencli-plugin-/, '');
+        disposers.push(options.registry.registerPlugin(faceOf(plugin, options.commands())));
+      }
+      return report;
+    },
+    touch() {},
+    report: () => report,
+    dispose() {
+      for (const off of disposers.splice(0)) off();
+    },
   };
 }

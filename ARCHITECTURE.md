@@ -65,7 +65,7 @@
   （`@dsh-workbench/shared/testing` 的 `fakeAdapterSet()`，或按端口写的 double），看外壳的行为对不对。
 - **适配器侧**：协议是这样写的，实现符不符合 —— `adapterContractGaps` 逐项判契约，自己的单测判行为。
 
-所以外壳里**不许 import 任何 `adapter-*` 包**（S70，error），适配器也不认识外壳的测试。
+所以外壳里**不许 import 任何 `adapter-*` 包**（S70，error，零例外），适配器也不认识外壳的测试。
 
 适配器内部逻辑的测试归它自己的包：怎么解析 `git+https` 源、怎么生成隔离壳脚本、怎么比版本，
 住在 `adapter-supply` / `adapter-probe` 的 `src/**` 里，外壳不重复测 —— 否则换一份适配器，
