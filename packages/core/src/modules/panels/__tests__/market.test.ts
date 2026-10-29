@@ -71,7 +71,8 @@ afterEach(() => {
 describe('createMarketService：目录', () => {
   it('★ 目录不看"有没有依赖要装"：没有 needs 的模块也在目录里', async () => {
     const market = createMarketService({
-      manifests: [unit('issues', 'demo', [GIT]), uiUnit],
+
+      command: 'opencli',      manifests: [unit('issues', 'demo', [GIT]), uiUnit],
       probe: probeWith({ issues: { unit: 'issues', status: 'ok', needs: [okState()] } }),
     });
 
@@ -85,7 +86,8 @@ describe('createMarketService：目录', () => {
 
   it('★ 共用依赖按 need 聚合：两个模块声明同一份 → 一行，usedBy 是那两个', async () => {
     const market = createMarketService({
-      manifests: [unit('issues', 'demo', [GIT]), unit('builds', 'demo', [GIT])],
+
+      command: 'opencli',      manifests: [unit('issues', 'demo', [GIT]), unit('builds', 'demo', [GIT])],
       probe: probeWith({}),
     });
 
@@ -100,7 +102,7 @@ describe('createMarketService：install', () => {
   it('★ 装之前**强探** —— 幂等判断不许拿缓存的旧结论', async () => {
     const probe = probeWith({ issues: { unit: 'issues', status: 'missing', needs: [missingState()] } });
     const fake = createFakeShell([{ stdout: '' }]);
-    const market = createMarketService({ manifests: [unit('issues')], probe, shell: fake.shell });
+    const market = createMarketService({ command: 'opencli', manifests: [unit('issues')], probe, shell: fake.shell });
 
     await market.install('issues');
 
@@ -111,7 +113,8 @@ describe('createMarketService：install', () => {
     const onInstalled = vi.fn();
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [unit('issues')],
+
+      command: 'opencli',      manifests: [unit('issues')],
       probe: probeWith({ issues: { unit: 'issues', status: 'missing', needs: [missingState()] } }),
       shell: fake.shell,
       onInstalled,
@@ -127,7 +130,8 @@ describe('createMarketService：install', () => {
     const onInstalled = vi.fn();
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [unit('issues')],
+
+      command: 'opencli',      manifests: [unit('issues')],
       probe: probeWith({ issues: { unit: 'issues', status: 'ok', needs: [okState()] } }),
       shell: fake.shell,
       onInstalled,
@@ -142,7 +146,8 @@ describe('createMarketService：install', () => {
   it('★ 来源解析不出（env-missing）→ 抛，且**一条命令都不跑**', async () => {
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [unit('issues', 'demo', [{ kind: 'local', env: 'DSH_WORKBENCH_TEST_UNSET' }])],
+
+      command: 'opencli',      manifests: [unit('issues', 'demo', [{ kind: 'local', env: 'DSH_WORKBENCH_TEST_UNSET' }])],
       probe: probeWith({
         issues: {
           unit: 'issues',
@@ -164,7 +169,8 @@ describe('createMarketService：update', () => {
     const fake = createFakeShell([{ stdout: '' }]);
     let first = true;
     const market = createMarketService({
-      manifests: [unit('issues')],
+
+      command: 'opencli',      manifests: [unit('issues')],
       probe: async (id: string): Promise<UnitCapability> => {
         const status = first ? 'outdated' : 'ok';
         first = false;
@@ -187,7 +193,8 @@ describe('createMarketService：update', () => {
   it('★ 更新命令跑完还是旧的样子 → 抛出原因（不许静默）', async () => {
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [unit('issues')],
+
+      command: 'opencli',      manifests: [unit('issues')],
       probe: probeWith({ issues: { unit: 'issues', status: 'outdated', needs: [outdatedState()] } }),
       shell: fake.shell,
     });
@@ -201,7 +208,8 @@ describe('createMarketService：uninstall', () => {
     const onUninstalled = vi.fn();
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [unit('issues'), unit('builds')],
+
+      command: 'opencli',      manifests: [unit('issues'), unit('builds')],
       probe: probeWith({}),
       shell: fake.shell,
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -218,7 +226,8 @@ describe('createMarketService：uninstall', () => {
   it('独一份 → 真的卸掉', async () => {
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [unit('issues')],
+
+      command: 'opencli',      manifests: [unit('issues')],
       probe: probeWith({}),
       shell: fake.shell,
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -233,7 +242,8 @@ describe('createMarketService：uninstall', () => {
   it('★ 别的模块已经放手（released）→ 不算主张者，安装照卸', async () => {
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [unit('issues'), unit('builds')],
+
+      command: 'opencli',      manifests: [unit('issues'), unit('builds')],
       probe: probeWith({}),
       shell: fake.shell,
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -250,7 +260,8 @@ describe('createMarketService：uninstall', () => {
     const fake = createFakeShell([{ stdout: '' }]);
     const logs: string[] = [];
     const market = createMarketService({
-      manifests: [unit('issues')],
+
+      command: 'opencli',      manifests: [unit('issues')],
       probe: probeWith({}),
       shell: fake.shell,
       references: () => ({ trustworthy: false, unreadable: ['@a/mod'] }),

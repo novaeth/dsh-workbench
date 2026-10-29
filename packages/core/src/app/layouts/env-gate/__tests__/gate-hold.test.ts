@@ -12,7 +12,7 @@ function snapshotOf(
 const EXTENSION_MISSING: PreflightSnapshot = snapshotOf('ready', {
   bridgeIssues: ['extension'],
   steps: [
-    { id: 'opencli', status: 'ok', detail: '1.8.8' },
+    { id: 'cli', status: 'ok', detail: '1.8.8' },
     {
       id: 'bridge',
       status: 'warn',
@@ -28,7 +28,7 @@ const BROKEN: PreflightSnapshot = snapshotOf('ready', {
 
 const RECOVERED: PreflightSnapshot = snapshotOf('ready', {
   steps: [
-    { id: 'opencli', status: 'ok', detail: '1.8.8' },
+    { id: 'cli', status: 'ok', detail: '1.8.8' },
     { id: 'bridge', status: 'ok', detail: 'Everything looks good!' },
   ],
 });

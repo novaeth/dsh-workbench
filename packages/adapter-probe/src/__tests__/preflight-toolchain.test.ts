@@ -39,7 +39,7 @@ describe('Desktop 工具链步骤', () => {
     expect(snapshot.phase).toBe('ready');
     expect(snapshot.steps.map((item) => `${item.id}=${item.status}`)).toEqual([
       'toolchain=warn',
-      'opencli=ok',
+      'cli=ok',
       'bridge=ok',
     ]);
     expect(snapshot.steps[0]?.detail).toContain('npm 缺');

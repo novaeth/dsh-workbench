@@ -214,7 +214,7 @@ describe('workbench_modules_*：一个动词一把工具', () => {
 
   it('★ 没有 tools 服务 → 不注册也不抛（降级）', async () => {
     const ctx = { get: () => undefined, logger: { info: () => {}, warn: () => {} } };
-    const market = createMarketService({ manifests: [unit('issues', 'demo')] });
+    const market = createMarketService({ command: 'opencli', manifests: [unit('issues', 'demo')] });
 
     expect(registerMarketTools(ctx as never, market, undefined)).toEqual([]);
   });

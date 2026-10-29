@@ -80,7 +80,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     '第一步在跑（转圈 + 它正在执行的命令），第二步还没轮到（短横）。',
     {
       phase: 'checking',
-      steps: [{ id: 'opencli', status: 'running', action: 'opencli --version' }, BRIDGE_PENDING],
+      steps: [{ id: 'cli', status: 'running', action: 'opencli --version' }, BRIDGE_PENDING],
     },
     { hint: 'checking', command: false },
   ),
@@ -90,7 +90,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     '缺 opencli：正在装。右边会**数秒**（静止的圆点看不出在干活）。',
     {
       phase: 'installing',
-      steps: [{ id: 'opencli', status: 'running', action: INSTALL_COMMAND, command: INSTALL_COMMAND }, BRIDGE_PENDING],
+      steps: [{ id: 'cli', status: 'running', action: INSTALL_COMMAND, command: INSTALL_COMMAND }, BRIDGE_PENDING],
     },
     { hint: 'installing', command: false },
   ),
@@ -101,7 +101,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     {
       phase: 'ready',
       steps: [
-        { id: 'opencli', status: 'ok', detail: '1.8.8' },
+        { id: 'cli', status: 'ok', detail: '1.8.8' },
         { id: 'bridge', status: 'ok', detail: 'Everything looks good!' },
       ],
     },
@@ -114,7 +114,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     {
       phase: 'ready',
       steps: [
-        { id: 'opencli', status: 'ok', detail: '1.8.8' },
+        { id: 'cli', status: 'ok', detail: '1.8.8' },
         { id: 'bridge', status: 'warn', detail: EXTENSION_REPORT },
       ],
       bridgeIssues: ['extension'],
@@ -129,7 +129,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     {
       phase: 'ready',
       steps: [
-        { id: 'opencli', status: 'ok', detail: '1.8.8' },
+        { id: 'cli', status: 'ok', detail: '1.8.8' },
         { id: 'bridge', status: 'warn', detail: DAEMON_REPORT, command: 'opencli daemon restart' },
       ],
       bridgeIssues: ['daemon', 'extension'],
@@ -143,7 +143,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     {
       phase: 'ready',
       steps: [
-        { id: 'opencli', status: 'ok', detail: '1.8.8' },
+        { id: 'cli', status: 'ok', detail: '1.8.8' },
         { id: 'bridge', status: 'warn', detail: PROFILE_REPORT, command: 'opencli profile list' },
       ],
       bridgeIssues: ['profile'],
@@ -157,7 +157,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     {
       phase: 'ready',
       steps: [
-        { id: 'opencli', status: 'ok', detail: '1.8.8' },
+        { id: 'cli', status: 'ok', detail: '1.8.8' },
         { id: 'bridge', status: 'ok', detail: 'Everything looks good!' },
         {
           id: 'diy',
@@ -180,7 +180,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     '失败态：为什么需要它 → 确切命令（可复制）→ 照做能解决的一句人话（EACCES → 换目录 / sudo）。',
     {
       phase: 'failed',
-      steps: [{ id: 'opencli', status: 'failed', detail: 'npm ERR! code EACCES', command: INSTALL_COMMAND }, BRIDGE_PENDING],
+      steps: [{ id: 'cli', status: 'failed', detail: 'npm ERR! code EACCES', command: INSTALL_COMMAND }, BRIDGE_PENDING],
       error: 'npm ERR! code EACCES\nnpm ERR! syscall mkdir\nnpm ERR! path /usr/local/lib/node_modules',
       failure: 'permission',
       guidance: 'install',
@@ -193,7 +193,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     '同一档失败，但人话换成"查代理"那条（EAI_AGAIN / ENOTFOUND）。',
     {
       phase: 'failed',
-      steps: [{ id: 'opencli', status: 'failed', detail: 'npm ERR! code EAI_AGAIN', command: INSTALL_COMMAND }, BRIDGE_PENDING],
+      steps: [{ id: 'cli', status: 'failed', detail: 'npm ERR! code EAI_AGAIN', command: INSTALL_COMMAND }, BRIDGE_PENDING],
       error: 'npm ERR! code EAI_AGAIN\nnpm ERR! network request to https://registry.npmjs.org failed',
       failure: 'network',
       guidance: 'install',
@@ -206,7 +206,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     '认不出失败种类时**不编**建议：只给命令与原文（多一句假建议比少一句更糟）。',
     {
       phase: 'failed',
-      steps: [{ id: 'opencli', status: 'failed', detail: 'something went wrong', command: INSTALL_COMMAND }, BRIDGE_PENDING],
+      steps: [{ id: 'cli', status: 'failed', detail: 'something went wrong', command: INSTALL_COMMAND }, BRIDGE_PENDING],
       error: 'something went wrong',
       failure: 'unknown',
       guidance: 'install',
@@ -219,7 +219,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     '装完了 `--version` 还是不行：**不再让用户装一遍**（PATH / 新终端的事），所以不给命令。',
     {
       phase: 'failed',
-      steps: [{ id: 'opencli', status: 'failed', detail: 'zsh: command not found: opencli', command: INSTALL_COMMAND }, BRIDGE_PENDING],
+      steps: [{ id: 'cli', status: 'failed', detail: 'zsh: command not found: opencli', command: INSTALL_COMMAND }, BRIDGE_PENDING],
       error: 'zsh: command not found: opencli',
       failure: 'missing',
       guidance: 'path',
@@ -232,7 +232,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     '连 shell 都调不动：装也不可能成功。没有"正在执行的动作"、也没有命令 —— 该做的是重启宿主。',
     {
       phase: 'failed',
-      steps: [{ id: 'opencli', status: 'failed', detail: 'Error: spawn /bin/sh ENOENT' }, BRIDGE_PENDING],
+      steps: [{ id: 'cli', status: 'failed', detail: 'Error: spawn /bin/sh ENOENT' }, BRIDGE_PENDING],
       error: 'Error: spawn /bin/sh ENOENT',
       failure: 'unknown',
       guidance: 'shell',

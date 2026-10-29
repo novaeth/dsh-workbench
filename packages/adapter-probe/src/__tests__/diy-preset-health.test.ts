@@ -94,7 +94,7 @@ describe('启动体检把 DIY 那一行接进来', () => {
 
     expect(snapshot.phase).toBe('ready');
     expect(snapshot.steps.map((item) => `${item.id}=${item.status}`)).toEqual([
-      'opencli=ok',
+      'cli=ok',
       'bridge=ok',
       'diy=warn',
     ]);

@@ -172,7 +172,7 @@ describe('GATE_MOCKS', () => {
     const t = (key: string): string => key;
     const snapshot = GATE_MOCKS.find((item) => item.id === 'ready')?.snapshot as never;
     const toolchain = { id: 'toolchain', status: 'ok', detail: 'node v24.21.0 · npm 11.12.1 · pnpm 11.21.0' };
-    const opencli = { id: 'opencli', status: 'ok', detail: '1.8.8' };
+    const opencli = { id: 'cli', status: 'ok', detail: '1.8.8' };
 
     expect(stepDetailText(toolchain as never, snapshot, t)).toBe('env.toolchain.ok');
     expect(stepDetailText(opencli as never, snapshot, t)).toBe('env.runtime.ok');
@@ -184,7 +184,7 @@ describe('GATE_MOCKS', () => {
   it('★ 还在跑的那一行留空：转圈就是它在说"在做"，不叠一行技术细节', () => {
     const t = (key: string): string => key;
     const snapshot = GATE_MOCKS.find((item) => item.id === 'checking')?.snapshot as never;
-    const running = { id: 'opencli', status: 'running' };
+    const running = { id: 'cli', status: 'running' };
 
     expect(stepDetailText(running as never, snapshot, t)).toBe('');
   });

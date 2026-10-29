@@ -60,7 +60,7 @@ export function createMarketService(options: {
   manifestsNow?: (() => readonly UnitManifest[]) | undefined;
   probe?: UnitMountDeps['probe'];
   shell?: DshShell | undefined;
-  command?: string | undefined;
+  command: string;
   onInstalled?: (unit: string) => void;
   onUninstalled?: (unit: string) => void;
   isReleased?: (unit: string) => boolean;
@@ -101,7 +101,7 @@ export function createMarketService(options: {
     profileName,
   } = options;
   const supply = supplyOption ?? requireSupply();
-  const command = options.command ?? 'opencli';
+  const command = options.command;
   const catalog = (): readonly UnitManifest[] => manifestsNow?.() ?? manifests;
 
   function requireEntry(unit: string): UnitManifest {

@@ -148,6 +148,7 @@ export function harness(options: {
   });
   const selfUpdates: SelfUpdateRequest[] = [];
   const market = createMarketService({
+    command: 'opencli',
     manifests: options.manifests,
     probe: async (id: string): Promise<UnitCapability> => {
       const after = fake.commands().length > 0;

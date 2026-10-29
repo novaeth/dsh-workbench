@@ -19,7 +19,7 @@ function stepLabel(step: PreflightStep, t: Translate): string {
   const id: PreflightStepId = step.id;
   if (id === 'toolchain') return t('env.step.toolchain');
   if (id === 'runtime') return step.label ?? t('env.step.adapter');
-  if (id === 'opencli') return t('env.step.runtime');
+  if (id === 'cli') return t('env.step.runtime');
   if (id === 'warm') return t('env.step.warm');
   if (id === 'diy') return t('env.step.diy');
   return t('env.step.bridge');

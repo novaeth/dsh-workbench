@@ -9,7 +9,7 @@ describe('createPreflight', () => {
     const snapshot = await preflight.run();
 
     expect(snapshot.phase).toBe('ready');
-    expect(snapshot.steps.map((item) => `${item.id}=${item.status}`)).toEqual(['opencli=ok', 'bridge=ok']);
+    expect(snapshot.steps.map((item) => `${item.id}=${item.status}`)).toEqual(['cli=ok', 'bridge=ok']);
     expect(snapshot.steps[0]?.detail).toBe('1.8.8');
     expect(fake.calls.map((call) => call.command)).toEqual(['opencli --version', 'opencli doctor']);
   });
@@ -326,7 +326,7 @@ describe('createPreflight', () => {
 
     await preflight.run();
 
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('opencli=ok'));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('cli=ok'));
   });
 });
 

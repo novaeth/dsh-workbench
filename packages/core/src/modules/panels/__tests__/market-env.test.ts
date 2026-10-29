@@ -49,7 +49,8 @@ describe('模块放手（卸掉一个模块）时，它带来的那份安装谁�
   it('★ 别的模块也**放手**了（卸过）→ 那份安装才真的删掉（死角就没了）', async () => {
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [unit('issues', 'demo'), unit('builds', 'demo')],
+
+      command: 'opencli',      manifests: [unit('issues', 'demo'), unit('builds', 'demo')],
       probe: probeOf({ issues: 'ok', builds: 'ok' }),
       shell: fake.shell,
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -75,7 +76,8 @@ describe('模块放手（卸掉一个模块）时，它带来的那份安装谁�
     };
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [twoNeeds, unit('builds', 'demo')],
+
+      command: 'opencli',      manifests: [twoNeeds, unit('builds', 'demo')],
       probe: probeOf({ issues: 'ok', builds: 'ok' }, ['demo', 'deploy']),
       shell: fake.shell,
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -91,7 +93,8 @@ describe('模块放手（卸掉一个模块）时，它带来的那份安装谁�
   it('独占插件 → 真的卸', async () => {
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [unit('issues', 'demo')],
+
+      command: 'opencli',      manifests: [unit('issues', 'demo')],
       probe: probeOf({ issues: 'ok' }),
       shell: fake.shell,
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -106,7 +109,8 @@ describe('模块放手（卸掉一个模块）时，它带来的那份安装谁�
     const fake = createFakeShell([{ stdout: '' }]);
     const logs: string[] = [];
     const market = createMarketService({
-      manifests: [unit('issues', 'demo')],
+
+      command: 'opencli',      manifests: [unit('issues', 'demo')],
       probe: probeOf({ issues: 'ok' }),
       shell: fake.shell,
       references: () => ({ trustworthy: false, unreadable: ['@a/mod'] }),
@@ -128,7 +132,8 @@ describe('模块放手（卸掉一个模块）时，它带来的那份安装谁�
     const fake = createFakeShell([{ stdout: '' }]);
     const logs: string[] = [];
     const market = createMarketService({
-      manifests: [unit('issues', 'demo')],
+
+      command: 'opencli',      manifests: [unit('issues', 'demo')],
       probe: probeOf({ issues: 'ok' }),
       shell: fake.shell,
       ledger,
@@ -153,7 +158,8 @@ describe('模块放手（卸掉一个模块）时，它带来的那份安装谁�
     const fake = createFakeShell([{ stdout: '' }]);
     const logs: string[] = [];
     const market = createMarketService({
-      manifests: [unit('issues', 'demo')],
+
+      command: 'opencli',      manifests: [unit('issues', 'demo')],
       probe: probeOf({ issues: 'ok' }),
       shell: fake.shell,
       ledger,
@@ -338,7 +344,8 @@ describe('自动清的另一个时机：模块更新（它的声明可能变了�
     ledger.release('opencli-plugin-deploy');
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [unit('issues', 'demo')],
+
+      command: 'opencli',      manifests: [unit('issues', 'demo')],
       probe: probeOf({ issues: 'ok' }),
       shell: fake.shell,
       ledger,

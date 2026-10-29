@@ -15,7 +15,7 @@ describe('启动预热站点登录态（ADR-0024）', () => {
 
     const snapshot = await preflight.run();
 
-    expect(snapshot.steps.map((item) => item.id)).toEqual(['opencli', 'bridge']);
+    expect(snapshot.steps.map((item) => item.id)).toEqual(['cli', 'bridge']);
   });
 
   it('★ bridge 通了 → 每个站点跑一条套件声明的读命令（并行），step=ok 且带上站点数', async () => {
@@ -29,7 +29,7 @@ describe('启动预热站点登录态（ADR-0024）', () => {
 
     expect(snapshot.phase).toBe('ready');
     expect(snapshot.steps.map((item) => `${item.id}=${item.status}`)).toEqual([
-      'opencli=ok',
+      'cli=ok',
       'bridge=ok',
       'warm=ok',
     ]);
@@ -97,7 +97,7 @@ describe('启动预热站点登录态（ADR-0024）', () => {
     expect(midflight).toEqual(['running']);
     expect(snapshot.phase).toBe('ready');
     expect(snapshot.steps.map((item) => `${item.id}=${item.status}`)).toEqual([
-      'opencli=ok',
+      'cli=ok',
       'bridge=ok',
       'warm=ok',
     ]);
@@ -153,7 +153,7 @@ describe('启动预热站点登录态（ADR-0024）', () => {
     const snapshot = await preflight.run();
 
     expect(snapshot.steps.map((item) => `${item.id}=${item.status}`)).toEqual([
-      'opencli=ok',
+      'cli=ok',
       'bridge=ok',
       'warm=warn',
     ]);

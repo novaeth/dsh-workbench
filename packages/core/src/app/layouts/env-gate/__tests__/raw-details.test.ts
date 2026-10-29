@@ -17,7 +17,7 @@ describe('「详细输出（排障用）」只在有东西要排的时候出现'
 
   it('还在检测（已有 ok 的 detail、后面的步骤没轮到）：也不摆', () => {
     const checking = snapshotOf('checking', [
-      { id: 'opencli', status: 'ok', detail: '1.8.8' },
+      { id: 'cli', status: 'ok', detail: '1.8.8' },
       { id: 'warm', status: 'running' },
     ]);
 
@@ -35,7 +35,7 @@ describe('「详细输出（排障用）」只在有东西要排的时候出现'
   });
 
   it('整轮 failed 但没有哪一步标 failed（防御）：仍然摆出来', () => {
-    const failed = snapshotOf('failed', [{ id: 'opencli', status: 'running' }]);
+    const failed = snapshotOf('failed', [{ id: 'cli', status: 'running' }]);
 
     expect(showsRawDetails(failed)).toBe(true);
   });

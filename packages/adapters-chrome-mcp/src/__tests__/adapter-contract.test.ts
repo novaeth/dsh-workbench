@@ -50,4 +50,8 @@ describe('适配器契约（Chrome MCP 集合）', () => {
     const command = await data.read({ kind: 'command', adapter: 'opencli', argv: ['--version'] });
     expect(command.ok).toBe(false);
   });
+
+  it('★ 没有命令面：DIY 的 recon 会明说「这个运行时没有可探测的命令面」，不编命令', () => {
+    expect(set().runtime.commandSurface).toBeUndefined();
+  });
 });

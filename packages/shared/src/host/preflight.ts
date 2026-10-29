@@ -1,4 +1,4 @@
-export type PreflightStepId = 'toolchain' | 'opencli' | 'bridge' | 'runtime' | 'diy' | 'warm';
+export type PreflightStepId = 'toolchain' | 'cli' | 'bridge' | 'runtime' | 'diy' | 'warm';
 export type PreflightStepStatus = 'pending' | 'running' | 'ok' | 'warn' | 'failed';
 export type PreflightFailure = 'permission' | 'network' | 'missing' | 'unknown';
 export type PreflightGuidance = 'install' | 'path' | 'shell';

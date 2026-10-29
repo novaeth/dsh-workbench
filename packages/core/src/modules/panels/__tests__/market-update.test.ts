@@ -49,7 +49,8 @@ describe('升模块包（行上的「更新」）：有包就升包，没包就�
     const asked: string[] = [];
     let version = '0.1.0';
     const market = createMarketService({
-      manifests: [],
+
+      command: 'opencli',      manifests: [],
       bundles: bundlesOf({
         install: async (request) => {
           asked.push(request.spec);
@@ -74,7 +75,8 @@ describe('升模块包（行上的「更新」）：有包就升包，没包就�
     let present = true;
     let version = '0.1.0';
     const market = createMarketService({
-      manifests: [],
+
+      command: 'opencli',      manifests: [],
       bundles: bundlesOf({
         install: async (request) => {
           did.push(`install ${request.spec}`);
@@ -109,7 +111,8 @@ describe('升模块包（行上的「更新」）：有包就升包，没包就�
 
   it('★ 跑完版本没动 → 不许回 applied，照实给 no-change（界面拿它说「更新失败」）', async () => {
     const market = createMarketService({
-      manifests: [],
+
+      command: 'opencli',      manifests: [],
       bundles: bundlesOf({
         install: async (request) => change({ bundle: request.spec }),
       }),
@@ -128,7 +131,8 @@ describe('升模块包（行上的「更新」）：有包就升包，没包就�
     const asked: string[] = [];
     let present = true;
     const market = createMarketService({
-      manifests: [],
+
+      command: 'opencli',      manifests: [],
       bundles: bundlesOf({
         install: async (request) => {
           asked.push(request.spec);
@@ -162,7 +166,8 @@ describe('升模块包（行上的「更新」）：有包就升包，没包就�
   it('★ 旧版卸不掉 → 不硬装第二遍，照实把卸载那一步的失败交出去', async () => {
     const did: string[] = [];
     const market = createMarketService({
-      manifests: [],
+
+      command: 'opencli',      manifests: [],
       bundles: bundlesOf({
         install: async () => {
           did.push('install');
@@ -186,7 +191,8 @@ describe('升模块包（行上的「更新」）：有包就升包，没包就�
   it('★ 装得进去（这份 profile 没开热更新）→ 一条卸载都不发', async () => {
     const did: string[] = [];
     const market = createMarketService({
-      manifests: [],
+
+      command: 'opencli',      manifests: [],
       bundles: bundlesOf({
         install: async (request) => {
           did.push(`install ${request.spec}`);
@@ -208,7 +214,8 @@ describe('升模块包（行上的「更新」）：有包就升包，没包就�
 
   it('★ 装了本地那一份（link:）的模块不给升：升它就等于把 link 换成源上那份', async () => {
     const market = createMarketService({
-      manifests: [],
+
+      command: 'opencli',      manifests: [],
       bundles: bundlesOf({
         install: async () => {
           throw new Error('本地那份不该去碰管理器');
@@ -224,7 +231,8 @@ describe('升模块包（行上的「更新」）：有包就升包，没包就�
     const asked: { spec: string; registry?: string | null }[] = [];
     const fake = createFakeShell([{ stdout: '0.1.3' }]);
     const market = createMarketService({
-      manifests: [],
+
+      command: 'opencli',      manifests: [],
       bundles: bundlesOf({
         install: async (request) => {
           asked.push({ spec: request.spec, registry: request.registry });
@@ -254,7 +262,8 @@ describe('升模块包（行上的「更新」）：有包就升包，没包就�
   it('★ 升模块也把它的供给一起升（供给有新版不该留在那儿）', async () => {
     const fake = createFakeShell([{ stdout: '0.1.3' }, { stdout: '' }]);
     const market = createMarketService({
-      manifests: [
+
+      command: 'opencli',      manifests: [
         {
           ...plainUnit,
           id: 'issues',
@@ -308,12 +317,12 @@ describe('升模块包（行上的「更新」）：有包就升包，没包就�
   });
 
   it('没出包的老模块 → 交回 null（由分发走老路：升它的 opencli 供给）', async () => {
-    const market = createMarketService({ manifests: [], bundles: bundlesOf(), modules: () => [] });
+    const market = createMarketService({ command: 'opencli', manifests: [], bundles: bundlesOf(), modules: () => [] });
     expect(await market.updateBundle('issues')).toBeNull();
   });
 
   it('连模块花名册都没有 → 也是 null（不是抛）', async () => {
-    const market = createMarketService({ manifests: [], bundles: bundlesOf() });
+    const market = createMarketService({ command: 'opencli', manifests: [], bundles: bundlesOf() });
     expect(await market.updateBundle('issues')).toBeNull();
   });
 });

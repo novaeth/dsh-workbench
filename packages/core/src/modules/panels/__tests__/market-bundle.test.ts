@@ -82,19 +82,20 @@ const unknown: InstalledModule = { kind: 'unknown', pkg: '@dsh-workbench/module-
 
 describe('市场装模块包：装前装后的护栏与连带供给', () => {
   it('没有插件管理器 → 说不清就别说，直接抛一句人话', async () => {
-    const market = createMarketService({ manifests: [] });
+    const market = createMarketService({ command: 'opencli', manifests: [] });
     await expect(market.installBundle('@a/b')).rejects.toThrow(/没有插件管理器/);
   });
 
   it('管理器回的东西看不懂 → 抛，不编一个"装好了"', async () => {
-    const market = createMarketService({ manifests: [], bundles: bundlesOf({ install: async () => null }) });
+    const market = createMarketService({ command: 'opencli', manifests: [], bundles: bundlesOf({ install: async () => null }) });
     await expect(market.installBundle('@a/b')).rejects.toThrow(/看不懂/);
   });
 
   it('spec / registry / approvedBuilds / requestId 原样透传给管理器', async () => {
     const seen: unknown[] = [];
     const market = createMarketService({
-      manifests: [],
+
+      command: 'opencli',      manifests: [],
       bundles: bundlesOf({
         install: async (request) => {
           seen.push(request);
@@ -116,7 +117,8 @@ describe('市场装模块包：装前装后的护栏与连带供给', () => {
   it('★ 装好一个工作台模块，连带把它声明的 opencli 供给也装上', async () => {
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [unit('issues')],
+
+      command: 'opencli',      manifests: [unit('issues')],
       probe: async () => missingPlugin,
       shell: fake.shell,
       bundles: bundlesOf(),
@@ -131,7 +133,8 @@ describe('市场装模块包：装前装后的护栏与连带供给', () => {
   it('★ 装进来的不是工作台模块 → 说清是 not-a-module（界面据此提示 + 给「移除」）', async () => {
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [unit('issues')],
+
+      command: 'opencli',      manifests: [unit('issues')],
       probe: async () => missingPlugin,
       shell: fake.shell,
       bundles: bundlesOf(),
@@ -145,7 +148,8 @@ describe('市场装模块包：装前装后的护栏与连带供给', () => {
   it('是工作台模块但没声明任何外部供给 → no-needs（不问、不装）', async () => {
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [plainUnit],
+
+      command: 'opencli',      manifests: [plainUnit],
       shell: fake.shell,
       bundles: bundlesOf(),
       installed: () => ({ kind: 'module', pkg: 'x', unit: 'hello', version: '0.1.0' }),
@@ -156,7 +160,8 @@ describe('市场装模块包：装前装后的护栏与连带供给', () => {
 
   it('★ 要重启的那种装法：模块还没进花名册 → pending-restart（别假装它已经能用）', async () => {
     const market = createMarketService({
-      manifests: [],
+
+      command: 'opencli',      manifests: [],
       bundles: bundlesOf({ install: async () => change({ application: 'restart-required' }) }),
       installed: () => isModule('issues'),
     });
@@ -165,7 +170,8 @@ describe('市场装模块包：装前装后的护栏与连带供给', () => {
 
   it('供给装不上 → failed 带原因，不把整个安装说成失败', async () => {
     const market = createMarketService({
-      manifests: [unit('issues')],
+
+      command: 'opencli',      manifests: [unit('issues')],
       probe: async () => missingPlugin,
       shell: undefined,
       bundles: bundlesOf(),
@@ -179,7 +185,8 @@ describe('市场装模块包：装前装后的护栏与连带供给', () => {
   it('管理器没给包名时，按 spec 去掉版本号当包名（@scope/name@1.2.3 → @scope/name）', async () => {
     const asked: string[] = [];
     const market = createMarketService({
-      manifests: [],
+
+      command: 'opencli',      manifests: [],
       bundles: bundlesOf({ install: async () => change({ bundle: undefined }) }),
       installed: (pkg) => {
         asked.push(pkg);
@@ -197,7 +204,8 @@ describe('市场卸模块包：先记下它要什么，卸成功再按引用计�
     const fake = createFakeShell([{ stdout: '' }]);
     const onUninstalled = vi.fn();
     const market = createMarketService({
-      manifests: [unit('issues')],
+
+      command: 'opencli',      manifests: [unit('issues')],
       probe: async () => capability('ok'),
       shell: fake.shell,
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -215,7 +223,8 @@ describe('市场卸模块包：先记下它要什么，卸成功再按引用计�
     const fake = createFakeShell([{ stdout: '' }]);
     const onUninstalled = vi.fn();
     const market = createMarketService({
-      manifests: [unit('issues')],
+
+      command: 'opencli',      manifests: [unit('issues')],
       probe: async () => capability('ok'),
       shell: fake.shell,
       bundles: bundlesOf({ remove: async () => change({ stage: 'remove', application: 'failed' }) }),
@@ -231,7 +240,8 @@ describe('市场卸模块包：先记下它要什么，卸成功再按引用计�
   it('卸的包根本不是工作台模块 → 只卸包，不去猜它的供给', async () => {
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [unit('issues')],
+
+      command: 'opencli',      manifests: [unit('issues')],
       probe: async () => capability('ok'),
       shell: fake.shell,
       bundles: bundlesOf(),
@@ -244,7 +254,8 @@ describe('市场卸模块包：先记下它要什么，卸成功再按引用计�
   it('★ 供给被别的模块共用 → 记进 keptFor，不卸（引用计数照旧）', async () => {
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [unit('issues'), unit('demo-other')],
+
+      command: 'opencli',      manifests: [unit('issues'), unit('demo-other')],
       probe: async () => capability('ok'),
       shell: fake.shell,
       bundles: bundlesOf(),
@@ -260,7 +271,8 @@ describe('市场卸模块包：先记下它要什么，卸成功再按引用计�
     const fake = createFakeShell([{ stdout: '' }]);
     let live: readonly UnitManifest[] = [unit('issues'), unit('demo-other')];
     const market = createMarketService({
-      manifests: live,
+
+      command: 'opencli',      manifests: live,
       manifestsNow: () => live,
       probe: async () => capability('ok'),
       shell: fake.shell,
@@ -296,7 +308,8 @@ describe('市场卸模块包：先记下它要什么，卸成功再按引用计�
     });
     let live: readonly UnitManifest[] = [libUnit('cmdb'), libUnit('argo')];
     const market = createMarketService({
-      manifests: live,
+
+      command: 'opencli',      manifests: live,
       manifestsNow: () => live,
       probe: async () => capability('ok'),
       shell: fake.shell,
@@ -318,7 +331,8 @@ describe('市场卸模块包：先记下它要什么，卸成功再按引用计�
 
   it('取消：照抄管理器的三种取值', async () => {
     const market = createMarketService({
-      manifests: [],
+
+      command: 'opencli',      manifests: [],
       bundles: bundlesOf({ cancel: async () => 'too-late' }),
     });
     expect(await market.cancelInstall('req-1')).toBe('too-late');
@@ -333,7 +347,8 @@ describe('列表那行的「卸载」：已出包的模块走真卸包', () => {
     const onUninstalled = vi.fn();
     const removed: string[] = [];
     const market = createMarketService({
-      manifests: [unit('issues')],
+
+      command: 'opencli',      manifests: [unit('issues')],
       probe: async () => capability('ok'),
       shell: fake.shell,
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -361,7 +376,8 @@ describe('列表那行的「卸载」：已出包的模块走真卸包', () => {
     const fake = createFakeShell([{ stdout: '' }]);
     const onUninstalled = vi.fn();
     const market = createMarketService({
-      manifests: [unit('issues')],
+
+      command: 'opencli',      manifests: [unit('issues')],
       probe: async () => capability('ok'),
       shell: fake.shell,
       bundles: bundlesOf({ remove: async () => change({ stage: 'remove', application: 'failed' }) }),
@@ -382,7 +398,8 @@ describe('列表那行的「卸载」：已出包的模块走真卸包', () => {
     const fake = createFakeShell([{ stdout: '' }]);
     const removed: string[] = [];
     const market = createMarketService({
-      manifests: [unit('issues')],
+
+      command: 'opencli',      manifests: [unit('issues')],
       probe: async () => capability('ok'),
       shell: fake.shell,
       references: () => ({ trustworthy: true, unreadable: [] }),

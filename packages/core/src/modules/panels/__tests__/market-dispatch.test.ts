@@ -91,7 +91,8 @@ describe('市场动作分发（HTTP 通道与 agent 工具共用同一套动作�
   it('按 action 分发：老的 install 照旧走供给安装', async () => {
     const fake = createFakeShell([{ stdout: '' }]);
     const market = createMarketService({
-      manifests: [unit('issues')],
+
+      command: 'opencli',      manifests: [unit('issues')],
       probe: probeOf('missing'),
       shell: fake.shell,
     });
@@ -129,7 +130,8 @@ describe('市场动作分发（HTTP 通道与 agent 工具共用同一套动作�
             : { stdout: '' },
       );
       const market = createMarketService({
-        manifests: [unit('issues')],
+
+      command: 'opencli',        manifests: [unit('issues')],
         probe: probeOf('missing'),
         shell: fake.shell,
         bundles: fakeBundles(),
@@ -180,7 +182,8 @@ describe('市场动作分发（HTTP 通道与 agent 工具共用同一套动作�
 
   it('★ 工作台那条路只认工作台自己那个包名（别的包不许借它进这台机器）', async () => {
     const market = createMarketService({
-      manifests: [],
+
+      command: 'opencli',      manifests: [],
       bundles: fakeBundles(),
       workbench: (pkg) => ({ pkg, version: '0.1.18' }),
       dshHome: () => '/tmp/dsh-home',
@@ -199,9 +202,10 @@ describe('市场动作分发（HTTP 通道与 agent 工具共用同一套动作�
   });
 
   it('★ 读不到 profile 里装的那份 / 读出来是源码目录那份 → 抛一句能照做的（不假装升了）', async () => {
-    const missing = createMarketService({ manifests: [], bundles: fakeBundles(), workbench: () => undefined });
+    const missing = createMarketService({ command: 'opencli', manifests: [], bundles: fakeBundles(), workbench: () => undefined });
     const local = createMarketService({
-      manifests: [],
+
+      command: 'opencli',      manifests: [],
       bundles: fakeBundles(),
       workbench: (pkg) => ({ pkg, version: '0.1.18', local: true }),
     });
@@ -213,7 +217,8 @@ describe('市场动作分发（HTTP 通道与 agent 工具共用同一套动作�
   it('装模块包：registry 与 approvedBuilds 从请求体传到管理器（HTTP 只做形状校验）', async () => {
     const seen: unknown[] = [];
     const market = createMarketService({
-      manifests: [],
+
+      command: 'opencli',      manifests: [],
       bundles: {
         ...fakeBundles(),
         install: async (request) => {

@@ -277,7 +277,7 @@ describe('接线：市场那条路交给路由，且没有插件管理器时还�
     const at = pluginFixture();
     const fake = createFakeShell([{ stdout: '' }]);
     const { manager, install } = bundlesOf();
-    const market = createMarketService({ manifests: [], shell: fake.shell, bundles: manager });
+    const market = createMarketService({ command: 'opencli', manifests: [], shell: fake.shell, bundles: manager });
 
     const outcome = await market.installBundle(at);
 
@@ -287,7 +287,7 @@ describe('接线：市场那条路交给路由，且没有插件管理器时还�
   });
 
   it('★ 没有插件管理器 → 还是先抛那句人话（路由不许把老错误吞掉）', async () => {
-    const market = createMarketService({ manifests: [] });
+    const market = createMarketService({ command: 'opencli', manifests: [] });
 
     await expect(market.installBundle('@a/b')).rejects.toThrow(/没有插件管理器/);
   });

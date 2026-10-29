@@ -16,7 +16,7 @@ import {
 import type { DesktopBrowser } from './browser-wake.js';
 import { bridgeFixCommand } from './browser-wake.js';
 
-export type PreflightStepId = 'toolchain' | 'runtime' | 'opencli' | 'bridge' | 'diy' | 'warm';
+export type PreflightStepId = 'toolchain' | 'runtime' | 'cli' | 'bridge' | 'diy' | 'warm';
 
 export type PreflightStepStatus = 'pending' | 'running' | 'ok' | 'warn' | 'failed';
 
@@ -192,7 +192,7 @@ export function createPreflight(options: {
   const steps = (): PreflightStep[] => [
     ...(options.probeToolchain === undefined ? [] : [step('toolchain')]),
     ...(options.runtimeCheck === undefined ? [] : [step('runtime', options.runtimeLabel)]),
-    ...(withConsole ? [step('opencli')] : []),
+    ...(withConsole ? [step('cli')] : []),
     ...(withBridge ? [step('bridge')] : []),
     ...(options.probeDiy === undefined ? [] : [step('diy')]),
     ...(warmReads().length === 0 ? [] : [step('warm')]),
@@ -381,12 +381,12 @@ export function createPreflight(options: {
 
     const diyStarted = options.probeDiy?.();
     if (withConsole) {
-      patchStep('opencli', { status: 'running', action: `${command} --version` });
+      patchStep('cli', { status: 'running', action: `${command} --version` });
       if (diyStarted !== undefined) patchStep('diy', { status: 'running' });
 
       let version = await probeVersion();
       if (!version.ok && !version.missing) {
-        patchStep('opencli', { status: 'failed', detail: version.detail, action: undefined });
+        patchStep('cli', { status: 'failed', detail: version.detail, action: undefined });
         return set({
           phase: 'failed',
           error: version.detail,
@@ -396,7 +396,7 @@ export function createPreflight(options: {
       }
       if (!version.ok) {
         if (toolchain?.npmMissing === true && installCommand.trim().startsWith('npm ')) {
-          patchStep('opencli', { status: 'failed', detail: '没有 npm：装不了 opencli（只影响 opencli 安装）' });
+          patchStep('cli', { status: 'failed', detail: '没有 npm：装不了 opencli（只影响 opencli 安装）' });
           return set({
             phase: 'failed',
             error: '没有 npm：装不了 opencli（只影响 opencli 安装）',
@@ -405,10 +405,10 @@ export function createPreflight(options: {
           });
         }
         set({ phase: 'installing' });
-        patchStep('opencli', { status: 'running', action: installCommand, command: installCommand });
+        patchStep('cli', { status: 'running', action: installCommand, command: installCommand });
         const installed = await installOpencli();
         if (!installed.ok) {
-          patchStep('opencli', {
+          patchStep('cli', {
             status: 'failed',
             detail: installed.detail,
             command: installCommand,
@@ -420,10 +420,10 @@ export function createPreflight(options: {
             guidance: 'install',
           });
         }
-        patchStep('opencli', { status: 'running', action: `${command} --version` });
+        patchStep('cli', { status: 'running', action: `${command} --version` });
         version = await probeVersion();
         if (!version.ok) {
-          patchStep('opencli', { status: 'failed', detail: version.detail, command: installCommand });
+          patchStep('cli', { status: 'failed', detail: version.detail, command: installCommand });
           return set({
             phase: 'failed',
             error: version.detail,
@@ -432,7 +432,7 @@ export function createPreflight(options: {
           });
         }
       }
-      patchStep('opencli', { status: 'ok', detail: version.detail, action: undefined });
+      patchStep('cli', { status: 'ok', detail: version.detail, action: undefined });
     }
 
     patchStep('bridge', { status: 'running', action: `${command} doctor` });
