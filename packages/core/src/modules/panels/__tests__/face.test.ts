@@ -9,8 +9,10 @@ import { createHostKit, createWorkspaceStore } from '@dsh-workbench/shared/host'
 import { PANELS_FILE, PANELS_MODULE_ID, RELEASED_FILE } from '../model/service';
 import { DIY_DEBUG_TOOLS, DIY_RECORD_TOOLS, DIY_TOOLS, panelsUnit } from '../unit';
 import { WORKBENCH_ADAPTERS } from '@dsh-workbench/shared/host';
-import { testAdapters } from './test-adapters';
+import { testAdaptersWith } from './test-adapters';
 import { panelsHost } from '../index';
+
+const adapters = testAdaptersWith({ root: () => dir, profile: () => profileDir });
 
 let dir = '';
 let profileDir = '';
@@ -64,7 +66,7 @@ function fakeCtx() {
   return {
     provided,
     ctx: {
-      get: (key: string) => (key === WORKBENCH_ADAPTERS ? testAdapters : undefined),
+      get: (key: string) => (key === WORKBENCH_ADAPTERS ? adapters : undefined),
       provide: (name: string) => {
         provided.push(name);
         return () => {};
@@ -110,10 +112,10 @@ describe('panelsHost', () => {
 
   it('★★ 那 35 把 DIY 工具只跟模式走：与工作区无关，选了 workbench-diy 才有', () => {
     const workshop = path.join(dir, 'workbench', 'diy');
-    const ctx = {
+const ctx = {
       get: (name: string) =>
-        name === WORKBENCH_ADAPTERS ? testAdapters :
-        name === WORKBENCH_ADAPTERS ? testAdapters :
+        name === WORKBENCH_ADAPTERS ? adapters :
+        name === WORKBENCH_ADAPTERS ? adapters :
         name === 'dshHomePath' ? (relative: string) => path.join(dir, relative) : undefined,
       provide: () => () => {},
       logger: { info: () => {}, warn: () => {} },
@@ -160,7 +162,7 @@ describe('panelsHost', () => {
     const registered: string[] = [];
     const ctx = {
       get: (name: string) =>
-        name === WORKBENCH_ADAPTERS ? testAdapters :
+        name === WORKBENCH_ADAPTERS ? adapters :
         name === 'tools'
           ? {
               register(definition: { name: string }) {
@@ -201,7 +203,7 @@ describe('panelsHost：装/卸之后面板跟着变', () => {
   function ctxWithShell(shell: unknown) {
     return {
       get: (name: string) =>
-        name === WORKBENCH_ADAPTERS ? testAdapters :
+        name === WORKBENCH_ADAPTERS ? adapters :
         name === 'shell' ? shell : name === 'profileContext' ? { dir: profileDir } : undefined,
       provide: () => () => {},
       logger: { info: () => {}, warn: () => {} },

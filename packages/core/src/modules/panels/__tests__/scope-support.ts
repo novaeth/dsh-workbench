@@ -12,8 +12,10 @@ import { PANELS_FILE, PANELS_MODULE_ID, createPanelsService, type PanelsService 
 import { registerPanelTools } from '../model/tools';
 import { DIY_DEBUG_TOOLS, DIY_RECORD_TOOLS, DIY_TOOLS } from '../unit';
 import { WORKBENCH_ADAPTERS } from '@dsh-workbench/shared/host';
-import { testAdapters } from './test-adapters';
+import { testAdaptersWith } from './test-adapters';
 import { panelsHost } from '../index';
+
+const testAdapters = testAdaptersWith({ root: () => process.cwd(), profile: () => process.cwd() });
 
 export const A = '/w/a';
 export const B = '/w/b';

@@ -5,7 +5,7 @@ import { afterEach, beforeEach } from 'vitest';
 import type { UnitManifest } from '@dsh-workbench/shared';
 import type { PublishPreview } from '@dsh-workbench/shared/contract/protocol/market-index';
 import { WORKBENCH_ADAPTERS, createWorkspaceStore } from '@dsh-workbench/shared/host';
-import { testAdapters } from './test-adapters';
+import { testAdaptersWith } from './test-adapters';
 import {
   DIY_DEBUG_SERVICE,
   DIY_RECORD_SERVICE,
@@ -154,28 +154,13 @@ export function createDiyRig() {
     pluginsPath = plugins;
   }
 
-  function adapters(): typeof testAdapters {
-    if (catalogPath === undefined) return testAdapters;
-    const at = (): string => catalogPath ?? '';
-    return {
-      ...testAdapters,
-      supply: {
-        ...testAdapters.supply,
-        cliCatalogPath: at,
-        ...(pluginsPath === undefined ? {} : { vendorPluginsDir: () => pluginsPath ?? '' }),
-        env: { ...(testAdapters.supply as unknown as { env: Record<string, unknown> }).env, cliCatalogPath: at },
-        modules: {
-          ...(testAdapters.supply as unknown as { modules: Record<string, unknown> }).modules,
-          cliCatalogPath: at,
-          ...(pluginsPath === undefined ? {} : { vendorPluginsDir: () => pluginsPath ?? '' }),
-        },
-      } as typeof testAdapters.supply,
-      modules: {
-        ...testAdapters.modules,
-        cliCatalogPath: at,
-        ...(pluginsPath === undefined ? {} : { vendorPluginsDir: () => pluginsPath ?? '' }),
-      },
-    };
+  function adapters(): ReturnType<typeof testAdaptersWith> {
+    return testAdaptersWith({
+      root: () => root,
+      profile: PROFILE,
+      catalog: () => catalogPath,
+      plugins: () => pluginsPath,
+    });
   }
 
   function harness(

@@ -209,7 +209,7 @@ describe('workbench_diy · recon（先看有没有现成的）', () => {
     const { tool } = rig.harness({});
     await expect(
       tool(DIY_RECON_TOOL)?.execute({ keyword: 'bilibili' }, rig.diyExec()),
-    ).rejects.toThrow('isolatedInstallCommand'.replace('isolatedInstallCommand', 'npm i --prefix'));
+    ).rejects.toThrow('npm i -g opencli');
     vi.unstubAllEnvs();
   });
 });
