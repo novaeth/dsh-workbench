@@ -42,7 +42,12 @@ export function ProjectSwitcher({ items, current, attention, compact = false, on
           defaultWorkspace: t('project.group.defaultWorkspace'),
           workshop: t('project.group.workshop'),
         },
-        { rankOf: (workspace) => attentionListRank(attention.byWorkspace.get(workspace.workspaceId)) },
+        {
+          rankOf: (workspace) => {
+            const own = attention.byWorkspace.get(workspace.workspaceId);
+            return own === undefined ? null : attentionListRank(own);
+          },
+        },
       ),
     [items, attention.byWorkspace, t],
   );

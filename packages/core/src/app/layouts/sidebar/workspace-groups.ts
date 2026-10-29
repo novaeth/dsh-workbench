@@ -16,8 +16,10 @@ export interface WorkspaceSectionPlan<T> {
 }
 
 export interface WorkspaceSectionOptions<T> {
-  readonly rankOf?: ((item: T) => number) | undefined;
+  readonly rankOf?: ((item: T) => number | null) | undefined;
 }
+
+const STATEFUL_SECTION_ORDER: readonly WorkspaceSectionId[] = ['workshop', 'defaultWorkspace', 'workspaces'];
 
 export function workspaceSections<T extends { readonly path: string; readonly title: string }>(
   items: readonly T[],
@@ -34,7 +36,9 @@ export function workspaceSections<T extends { readonly path: string; readonly ti
   }
   const rankOf = options.rankOf;
   const ordered = (rows: readonly T[]): readonly T[] =>
-    rankOf === undefined ? rows : [...rows].sort((left, right) => rankOf(left) - rankOf(right));
+    rankOf === undefined
+      ? rows
+      : [...rows].sort((left, right) => (rankOf(left) ?? Number.POSITIVE_INFINITY) - (rankOf(right) ?? Number.POSITIVE_INFINITY));
   const special = defaults.length > 0 || workshop.length > 0;
   const sections: WorkspaceSectionPlan<T>[] = [];
   if (workspaces.length > 0) {
@@ -46,5 +50,14 @@ export function workspaceSections<T extends { readonly path: string; readonly ti
   if (workshop.length > 0) {
     sections.push({ id: 'workshop', heading: headings.workshop, items: ordered(workshop) });
   }
-  return sections;
+  if (rankOf === undefined) return sections;
+  const sectionRank = (section: WorkspaceSectionPlan<T>): number =>
+    Math.min(...section.items.map((item) => rankOf(item) ?? Number.POSITIVE_INFINITY));
+  const priorityOf = (section: WorkspaceSectionPlan<T>): number => STATEFUL_SECTION_ORDER.indexOf(section.id);
+  const stateful = sections.filter((section) => sectionRank(section) !== Number.POSITIVE_INFINITY);
+  const idle = sections.filter((section) => sectionRank(section) === Number.POSITIVE_INFINITY);
+  const orderedSections = [...stateful].sort(
+    (left, right) => sectionRank(left) - sectionRank(right) || priorityOf(left) - priorityOf(right),
+  );
+  return [...orderedSections, ...idle];
 }

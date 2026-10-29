@@ -12,6 +12,9 @@ const PROJECTS = [
 const DEFAULT = at('/Users/you/Documents/deepseek-harness/default-workspace', 'default-workspace');
 const WORKSHOP = at('/Users/you/.dsh/workbench/diy', '工作台DIY');
 
+const ranker = (ranks: Record<string, number>) => (item: { readonly path: string }): number | null =>
+  ranks[item.path] ?? null;
+
 describe('workspaceSections', () => {
   it('三类各归各的：用户的项目 / dsh 的默认工作区 / 工坊', () => {
     const sections = workspaceSections([...PROJECTS, DEFAULT, WORKSHOP], HEADINGS);
@@ -65,13 +68,8 @@ describe('workspaceSections', () => {
   });
 });
 
-describe('workspaceSections：按「待审批 → 通知 → 在跑 → 无状态」排', () => {
-  const rankOf = (item: { readonly path: string }): number => RANKS[item.path] ?? 3;
-  const RANKS: Record<string, number> = {
-    '/a/approval': 0,
-    '/a/fresh': 1,
-    '/a/running': 2,
-  };
+describe('workspaceSections：组内按「待审批 → 通知 → 在跑 → 无状态」排', () => {
+  const rankOf = ranker({ '/a/approval': 0, '/a/fresh': 1, '/a/running': 2 });
 
   it('★★ 四条状态各一条时，顺序按优先级来（与传进来的顺序无关）', () => {
     const rows = [at('/a/idle', 'idle'), at('/a/running', 'running'), at('/a/fresh', 'fresh'), at('/a/approval', 'approval')];
@@ -88,5 +86,44 @@ describe('workspaceSections：按「待审批 → 通知 → 在跑 → 无状�
   it('不给 rankOf 就原样（老行为一个字不改）', () => {
     const rows = [at('/a/idle', 'idle'), at('/a/approval', 'approval')];
     expect(workspaceSections(rows, HEADINGS)[0]?.items).toEqual(rows);
+  });
+});
+
+describe('workspaceSections：组间档位优先，同档看分类', () => {
+  it('★★ 只有一组有状态：那一组整组到最前，其余照旧', () => {
+    const rows = [...PROJECTS, DEFAULT, WORKSHOP];
+    const sections = workspaceSections(rows, HEADINGS, { rankOf: ranker({ [DEFAULT.path]: 1 }) });
+    expect(sections.map((section) => section.id)).toEqual(['defaultWorkspace', 'workspaces', 'workshop']);
+    expect(sections[1]?.heading).toBe('工作区');
+  });
+
+  it('★★ 组间档位优先：待审批那组压过通知那组', () => {
+    const rows = [...PROJECTS, at('/a/approval', 'approval'), DEFAULT, WORKSHOP];
+    const sections = workspaceSections(rows, HEADINGS, {
+      rankOf: ranker({ '/a/approval': 0, [DEFAULT.path]: 1, [WORKSHOP.path]: 2 }),
+    });
+    expect(sections.map((section) => section.id)).toEqual(['workspaces', 'defaultWorkspace', 'workshop']);
+  });
+
+  it('★★ 同档再看分类：工坊 > 默认工作区 > 工作区', () => {
+    const rows = [...PROJECTS, at('/a/approval', 'approval'), DEFAULT, WORKSHOP];
+    const sections = workspaceSections(rows, HEADINGS, {
+      rankOf: ranker({ '/a/approval': 0, [DEFAULT.path]: 0, [WORKSHOP.path]: 0 }),
+    });
+    expect(sections.map((section) => section.id)).toEqual(['workshop', 'defaultWorkspace', 'workspaces']);
+  });
+
+  it('★ 组内仍按四档排（组间先比档位，再比分类）', () => {
+    const rows = [at('/a/idle', 'idle'), at('/a/approval', 'approval'), DEFAULT, WORKSHOP, at('/a/running', 'running')];
+    const sections = workspaceSections(rows, HEADINGS, {
+      rankOf: ranker({ '/a/approval': 0, '/a/running': 2, [WORKSHOP.path]: 1 }),
+    });
+    expect(sections.map((section) => section.id)).toEqual(['workspaces', 'workshop', 'defaultWorkspace']);
+    expect(sections[0]?.items.map((item) => item.title)).toEqual(['approval', 'running', 'idle']);
+  });
+
+  it('★ 一组都没有状态时，三类的先后照旧（稳定排序，不按名字乱动）', () => {
+    const sections = workspaceSections([WORKSHOP, DEFAULT, ...PROJECTS], HEADINGS, { rankOf: ranker({}) });
+    expect(sections.map((section) => section.id)).toEqual(['workspaces', 'defaultWorkspace', 'workshop']);
   });
 });
