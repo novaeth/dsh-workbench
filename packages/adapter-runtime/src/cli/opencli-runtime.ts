@@ -1,7 +1,7 @@
 import { OPENCLI_PIN } from '@dsh-workbench/shared/host';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
-import { isolatedRoot, libsPrefix, npmCacheDir, toolchainOpencliDir, vendorPrefix } from '../paths.js';
-import { OPENCLI_NPM_PACKAGE } from '../paths.js';
+import { isolatedRoot, libsPrefix, npmCacheDir, toolchainOpencliDir } from '../foundation/paths.js';
+import { OPENCLI_NPM_PACKAGE } from '../foundation/paths.js';
 
 
 
@@ -35,9 +35,9 @@ export function isolatedCommand(): string {
   return `${isolatedRoot()}/bin/${name}`;
 }
 
-export { libsPrefix } from '../paths.js';
+export { libsPrefix } from '../foundation/paths.js';
 
-export { libInstallCommand } from '../install.js';
+export { libInstallCommand } from '../foundation/install.js';
 
 export function libDir(name: string): string {
   return `${libsPrefix()}/node_modules/${name}`;
@@ -56,5 +56,5 @@ export function isolatedPnpmInstallCommand(pnpmCjs: string): string {
   );
 }
 
-export { isolatedHome, isolatedRoot, libsBinDir, npmCacheDir, toolchainOpencliDir, vendorPeerLink, vendorPluginsDir, vendorPrefix } from '../paths.js';
-export { OPENCLI_NPM_PACKAGE } from '../paths.js';
+export { isolatedHome, isolatedRoot, libsBinDir, npmCacheDir, toolchainOpencliDir, vendorPeerLink, vendorPluginsDir, vendorPrefix } from '../foundation/paths.js';
+export { OPENCLI_NPM_PACKAGE } from '../foundation/paths.js';

@@ -19,18 +19,6 @@ export function libInstallCommand(options: {
   return `npm i --prefix ${quoteShellArg(libsPrefix())} ${quoteShellArg(`${need.name}@${spec}`)}${registryFlag} --cache ${quoteShellArg(npmCacheDir())}`;
 }
 
-/**
- * 这个 bin 在这台机器上怎么装：作者写了 `install` 且平台对得上才给出那条命令。
- * `command` 原样照抄；`npm` 装进隔离运行时的共用依赖前缀（那份包里的 bin 会自动上 PATH）。
- * @param need 一条 bin 需要。
- * @param os 宿主平台（由平台适配器给出）。
- * @param env 取 registry 环境变量的地方。
- * @returns 一条能直接粘进终端的命令；没声明或平台不对就是 undefined。
- */
-export function libUninstallCommand(options: { readonly need: LibNeed }): string {
-  return `npm uninstall --prefix ${quoteShellArg(libsPrefix())} ${quoteShellArg(options.need.name)}`;
-}
-
 export function binInstallCommand(
   need: BinNeed,
   os: HostOs,
@@ -55,4 +43,8 @@ export function binInstallCommand(
     },
     env,
   });
+}
+
+export function libUninstallCommand(options: { readonly need: LibNeed }): string {
+  return `npm uninstall --prefix ${quoteShellArg(libsPrefix())} ${quoteShellArg(options.need.name)}`;
 }

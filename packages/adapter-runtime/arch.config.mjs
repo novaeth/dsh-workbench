@@ -2,7 +2,7 @@ import { stackArch } from '../../scripts/arch/stack.mjs';
 
 export default stackArch({
   entry: ['*.ts'],
-  modules: { browser: 2, cli: 2, data: 2, git: 2, libs: 2, command: 2 },
+  modules: { foundation: 1, browser: 2, cli: 2, data: 2, git: 2, libs: 2, command: 2 },
   exceptions: [
     {
       rule: 'P06',

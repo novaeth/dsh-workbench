@@ -11,7 +11,7 @@ import { cliCommandOf } from '@dsh-workbench/shared/host';
 import { cropPngFile, type PngRect } from '@/shared/api/host/png-crop';
 import { asNumber, asRecord, asText, OUTPUT, plainJson } from './diy-context';
 import { surfaceOf } from '@/shared/api/host/runtime-surface';
-import { jsonOf, LOOK_TIMEOUT_MS, runBrowserStep } from './diy-browser';
+import { jsonOf, LOOK_TIMEOUT_MS, runBrowserStep, type LineMaker } from './diy-browser';
 import { ensureDirOf } from '@/shared/api/host/diy-artifacts';
 import { pageAt, type PageHandle } from './diy-page';
 import { UNIT_PROP } from './diy-schema';
@@ -302,6 +302,7 @@ async function viewportOf(page: PageHandle): Promise<{ dpr: number; width: numbe
     page.command,
     ['browser', page.session, 'eval', VIEWPORT_SCRIPT, '--window', 'background'],
     LOOK_TIMEOUT_MS,
+    page.line,
   );
   const parsed = jsonOf(step.stdout);
   return {
@@ -325,12 +326,13 @@ function hostOf(url: string): string {
   }
 }
 
-async function onSiteOnce(shell: DshShell, command: string, site: string): Promise<boolean> {
+async function onSiteOnce(shell: DshShell, command: string, site: string, line?: LineMaker): Promise<boolean> {
   const step = await runBrowserStep(
     shell,
     command,
     ['browser', BROWSER_READ_SESSION, 'get', 'url', '--window', 'background'],
     LOOK_TIMEOUT_MS,
+    line,
   );
   const want = hostOf(site);
   if (want === '' || hostOf(step.stdout.trim()) === want) return false;
@@ -339,6 +341,7 @@ async function onSiteOnce(shell: DshShell, command: string, site: string): Promi
     command,
     ['browser', BROWSER_READ_SESSION, 'open', site, '--window', 'background'],
     LOOK_TIMEOUT_MS,
+    line,
   );
   return true;
 }
@@ -380,12 +383,14 @@ async function runReadTool(
   const requested = asNumber(raw['timeoutMs']);
   const timeoutMs = requested !== undefined && requested > 0 ? requested : DEFAULT_TIMEOUT_MS;
   const argv = stringsOf(raw['args']);
-  const opened = await onSiteOnce(shell, command, site);
+  const line = surfaceOf(ctx)?.background;
+  const opened = await onSiteOnce(shell, command, site, line);
   const step = await runBrowserStep(
     shell,
     command,
     ['browser', BROWSER_READ_SESSION, ...row.verb, ...argv, '--window', 'background'],
     timeoutMs,
+    line,
   );
   const hint = row.tool === DIY_EVAL_TOOL ? loginHintOf(step.stdout, site) : '';
   return {
@@ -439,6 +444,7 @@ async function runBrowserTool(
     page.command,
     ['browser', page.session, ...row.verb, ...finalArgv, '--window', 'background'],
     timeoutMs,
+    page.line,
   );
   const shot: Record<string, unknown> = {};
   if (row.clip === true) {

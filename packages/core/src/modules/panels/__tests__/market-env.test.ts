@@ -126,7 +126,11 @@ describe('模块放手（卸掉一个模块）时，它带来的那份安装谁�
 
   it('★ 用户自己还持着这一份 → 模块放手不碰它（模块放手与用户持有是两件事）', async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-market-held-'));
-    const ledger = createPluginLedger({ store: createWorkspaceStore({ root }), home: '/tmp/wb-home' });
+    const ledger = createPluginLedger({
+      store: createWorkspaceStore({ root }),
+      home: '/tmp/wb-home',
+      pluginFiles: { dir: '/tmp/wb-env-plugins', manifest: 'opencli-plugin.json' },
+    });
     ledger.intend({ package: 'opencli-plugin-demo', registry: 'https://r.example/' });
     ledger.complete('opencli-plugin-demo', 'demo');
     const fake = createFakeShell([{ stdout: '' }]);
@@ -199,7 +203,7 @@ describe('放手那一格自己：谁在用、引用可不可信，两件事一�
     const runs: string[] = [];
     const logs: string[] = [];
     const dropper = createEnvDropper({
-      libUninstallCommand: (need) => `npm uninstall ${need.name}`,
+      libUninstallCommand: (need) => `npm uninstall --prefix '/w/libs' '${need.name}'`,
       catalog: () => options.catalog,
       isReleased: (id) => (options.released ?? []).includes(id),
       ...(options.references === undefined ? {} : { references: () => options.references as never }),
@@ -252,12 +256,16 @@ describe('放手那一格自己：谁在用、引用可不可信，两件事一�
 
   it('★ 用户自己还持着那一份 → 模块放手也不碰它（用户持有是另一条主张）', async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-env-held-'));
-    const ledger = createPluginLedger({ store: createWorkspaceStore({ root }), home: '/tmp/wb-home' });
+    const ledger = createPluginLedger({
+      store: createWorkspaceStore({ root }),
+      home: '/tmp/wb-home',
+      pluginFiles: { dir: '/tmp/wb-env-plugins', manifest: 'opencli-plugin.json' },
+    });
     ledger.intend({ package: 'opencli-plugin-demo', registry: 'https://r.example/' });
     ledger.complete('opencli-plugin-demo', 'demo');
     const runs: string[] = [];
     const dropper = createEnvDropper({
-      libUninstallCommand: (need) => `npm uninstall ${need.name}`,
+      libUninstallCommand: (need) => `npm uninstall --prefix '/w/libs' '${need.name}'`,
       catalog: () => [unit('issues', 'demo')],
       ledger,
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -280,11 +288,15 @@ describe('放手那一格自己：谁在用、引用可不可信，两件事一�
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'opencli-plugin.json'), JSON.stringify({ name: 'demo' }), 'utf8');
     fs.writeFileSync(path.join(dir, 'list.js'), 'x', 'utf8');
-    const ledger = createPluginLedger({ store: createWorkspaceStore({ root }), home: '/tmp/wb-home' });
+    const ledger = createPluginLedger({
+      store: createWorkspaceStore({ root }),
+      home: '/tmp/wb-home',
+      pluginFiles: { dir: path.join(dshHome, 'workbench', 'opencli', 'plugins-npm', 'node_modules'), manifest: 'opencli-plugin.json' },
+    });
     ledger.intend({ package: 'opencli-plugin-demo', registry: 'https://r.example/' });
     const runs: string[] = [];
     const dropper = createEnvDropper({
-      libUninstallCommand: (need) => `npm uninstall ${need.name}`,
+      libUninstallCommand: (need) => `npm uninstall --prefix '/w/libs' '${need.name}'`,
       catalog: () => [unit('issues', 'demo')],
       ledger,
       references: () => ({ trustworthy: true, unreadable: [] }),

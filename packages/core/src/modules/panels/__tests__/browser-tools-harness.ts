@@ -3,7 +3,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared';
-import { DIY_DEBUG_SERVICE, UNITS_SERVICE, createDebugStore } from '@dsh-workbench/shared/host';
+import { DIY_DEBUG_SERVICE, UNITS_SERVICE, WORKBENCH_ADAPTERS, createDebugStore } from '@dsh-workbench/shared/host';
+import { opencliSurface } from './test-adapters';
 import { registerBrowserTools } from '../model/diy-browser-tools';
 import { fakeWorkspace, fakeWorkspaceRegistry } from './fake-workspace-registry';
 
@@ -126,6 +127,9 @@ export function createBrowserRig() {
           return { all: () => [{ unit: 'demo' }], refusals: () => [], failureOf: () => undefined };
         }
         if (key === DIY_DEBUG_SERVICE) return store;
+        if (key === WORKBENCH_ADAPTERS) {
+          return { runtime: { commandSurface: () => opencliSurface } } as never;
+        }
         if (key === 'dshHomePath') return (relative: string) => join(root, relative);
         if (key === 'workspaceRegistry') return fakeWorkspaceRegistry(fakeWorkspace(workshop));
         if (key === 'profileContext') return { dir: profile };

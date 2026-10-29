@@ -7,7 +7,7 @@ import { join, normalize } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { LibNeed } from '@dsh-workbench/shared/host';
 import { WorkbenchDataError } from '@dsh-workbench/shared/host';
-import { libInstallCommand, type NpmSource } from '../install.js';
+import { libInstallCommand, type NpmSource } from '../foundation/install.js';
 import type { LibReader } from '@dsh-workbench/shared/host';
 
 export interface LibReaderOptions {

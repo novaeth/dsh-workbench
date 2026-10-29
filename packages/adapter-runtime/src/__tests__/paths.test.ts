@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isolatedRoot, libsBinDir, npmCacheDir, toolchainOpencliDir, vendorPluginsDir } from '../paths.js';
+import { isolatedRoot, libsBinDir, npmCacheDir, toolchainOpencliDir, vendorPluginsDir } from '../foundation/paths.js';
 
 describe('隔离运行时的路径（opencli 那套布局）', () => {
   it('★ 默认集合的根还是 <workbench>/opencli（老 profile 的插件、工具链、缓存都还找得到）', () => {

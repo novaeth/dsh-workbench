@@ -6,8 +6,9 @@ import { boardFactOf, boardSituation, type BoardFactState, type BoardProbe, type
 import { cliCommandOf } from '@dsh-workbench/shared/host';
 import { artifactsDirOf } from '@/shared/api/host/diy-artifacts';
 import { hostSurface } from '@dsh-workbench/shared/host';
+import { surfaceOf } from '@/shared/api/host/runtime-surface';
 import { asRecord, asText, unitsOf, workspaceOf } from './diy-context';
-import { readyPageOf, type WorkbenchPage } from './diy-browser';
+import { readyPageOf, type LineMaker, type WorkbenchPage } from './diy-browser';
 
 export type BoardState = BoardFactState;
 
@@ -19,6 +20,7 @@ export interface PageHandle {
   readonly shell: DshShell;
   readonly command: string;
   readonly session: string;
+  readonly line?: LineMaker;
   readonly bound: boolean;
   readonly board: BoardState;
   readonly boardPath: string;
@@ -191,6 +193,7 @@ export async function pageAt(
     shell,
     command,
     session,
+    ...(surfaceOf(ctx)?.background === undefined ? {} : { line: surfaceOf(ctx)?.background }),
     bound: handshake.bound,
     board,
     boardPath: handshake.page.board,
