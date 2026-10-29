@@ -5,6 +5,17 @@ import type { HostActions } from '../host/port-types.js';
 import type { PluginSurface } from '../host/port-types.js';
 import { ADAPTER_SET_API_VERSION } from '../host/adapters.js';
 import { readBundleManager } from '../host/bundle-manager.js';
+import {
+  declarationGaps,
+  moduleDeclarationOf,
+  profileDirOf,
+  profileModules,
+  readInstalledModule,
+  readProfilePackage,
+} from '../host/installed-module.js';
+import { isNewerVersion } from '../host/version.js';
+import { refusalReason } from '../host/spec.js';
+import { declarationRefusalOf, pathDeclarationOf } from '../host/local-declaration.js';
 
 export const FAKE_ADAPTER_MARKER = { adapterSet: 'fake' } as const;
 
@@ -38,18 +49,6 @@ const supply: EnvSupplyPort = {
   splitNpmSpec: () => undefined,
 };
 
-interface CtxLike {
-  get?: <T = unknown>(name: string, optional?: boolean) => T | undefined;
-}
-
-function fromCtx<T>(ctx: CtxLike | undefined, name: string): T | undefined {
-  try {
-    return ctx?.get === undefined ? undefined : (ctx.get(name) as T | undefined);
-  } catch {
-    return undefined;
-  }
-}
-
 const modules: ModulePort = {
   isolatedRoot: () => '/tmp/dsh-workbench-fake',
   isolatedHome: () => '/tmp/dsh-workbench-fake/home',
@@ -59,23 +58,20 @@ const modules: ModulePort = {
   vendorPluginsDir: () => '/tmp/dsh-workbench-fake/plugins',
   runtimeInstallCommand: () => 'npm i -g fake-runtime',
   afterLibInstall: () => undefined,
-  profileDirOf: (ctx) => {
-    const context = fromCtx<{ readonly dir?: string }>(ctx as CtxLike, 'profileContext');
-    return typeof context?.dir === 'string' ? context.dir : null;
-  },
-  profileModules: () => [],
-  readInstalledModule: () => ({}) as never,
-  readProfilePackage: () => undefined,
+  profileDirOf: (ctx) => profileDirOf(ctx),
+  profileModules,
+  readInstalledModule,
+  readProfilePackage,
   readBundleManager,
   createRegistryNotebook: () => ({}) as never,
-  declarationGaps: () => undefined,
-  moduleDeclarationOf: () => undefined,
+  declarationGaps,
+  moduleDeclarationOf,
   registryDeclarationOf: async () => undefined,
-  pathDeclarationOf: () => undefined,
-  declarationRefusalOf: () => [],
-  refusalReason: () => 'fake',
+  pathDeclarationOf,
+  declarationRefusalOf,
+  refusalReason,
   packageRouteOf: async () => undefined,
-  isNewerVersion: () => false,
+  isNewerVersion,
   startSelfUpdate: () => ({}) as never,
 };
 

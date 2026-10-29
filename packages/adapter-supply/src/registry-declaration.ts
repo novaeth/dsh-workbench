@@ -1,49 +1,24 @@
-import fs from 'node:fs';
 import { npmCacheDir } from '@dsh-workbench/adapter-runtime';
-import path from 'node:path';
 import type { DshShell } from '@dsh-workbench/shared';
 import {
-  declarationProblemsOf,
   parseJsonLoose,
   quoteShellArg,
   runShell,
   VERSION_CHECK_TIMEOUT_MS,
   VERSION_CHECK_TTL_MS,
 } from '@dsh-workbench/shared/host';
+import {
+  declarationRefusalOf,
+  dshRecordOf,
+  localDirOf,
+  packageManifestOf,
+  packageNameOf,
+  pathDeclarationOf,
+} from '@dsh-workbench/shared/host';
+
+export { declarationRefusalOf, dshRecordOf, localDirOf, packageManifestOf, packageNameOf, pathDeclarationOf };
 
 const cache = new Map<string, { at: number; raw: unknown }>();
-
-function asRecord(value: unknown): Readonly<Record<string, unknown>> | undefined {
-  return typeof value === 'object' && value !== null ? (value as Readonly<Record<string, unknown>>) : undefined;
-}
-
-export function localDirOf(spec: string): string | undefined {
-  const dir = spec.trim().replace(/^(?:file|link):/, '');
-  return path.isAbsolute(dir) ? dir : undefined;
-}
-
-export function packageManifestOf(dir: string): Readonly<Record<string, unknown>> | undefined {
-  try {
-    const parsed: unknown = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'));
-    return asRecord(parsed);
-  } catch {
-    return undefined;
-  }
-}
-
-export function dshRecordOf(dir: string): unknown | undefined {
-  return packageManifestOf(dir)?.dsh;
-}
-
-export function packageNameOf(dir: string): string | undefined {
-  const name = packageManifestOf(dir)?.name;
-  return typeof name === 'string' && name.trim() !== '' ? name.trim() : undefined;
-}
-
-export function pathDeclarationOf(spec: string): unknown | undefined {
-  const dir = localDirOf(spec);
-  return dir === undefined ? undefined : asRecord(dshRecordOf(dir))?.workbench;
-}
 
 export interface RegistryDshLookup {
   readonly readable: boolean;
@@ -82,10 +57,9 @@ export async function registryDeclarationOf(options: {
   force?: boolean;
 }): Promise<unknown | undefined> {
   const found = await registryDshOf(options);
-  return found.readable ? asRecord(found.raw)?.workbench : undefined;
+  return found.readable ? recordOf(found.raw)?.workbench : undefined;
 }
 
-export function declarationRefusalOf(name: string, raw: unknown): readonly string[] {
-  if (raw === undefined) return [];
-  return declarationProblemsOf(name, raw);
+function recordOf(value: unknown): Readonly<Record<string, unknown>> | undefined {
+  return typeof value === 'object' && value !== null ? (value as Readonly<Record<string, unknown>>) : undefined;
 }

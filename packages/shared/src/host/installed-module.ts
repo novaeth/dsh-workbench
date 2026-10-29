@@ -1,25 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { DshHostContext } from '@dsh-workbench/shared';
-import { declarationProblemsOf, packageSourceOf, readDeclaration, scopeOf } from '@dsh-workbench/shared/host';
+import type { DshHostContext } from '../api/dsh.js';
+import { declarationProblemsOf, readDeclaration } from '../contract/unit-declaration.js';
+import { packageSourceOf } from './installed-sources.js';
+import { scopeOf } from './adapter-types.js';
+import { isPackageName } from './spec.js';
+import type { InstalledModule, ProfileModule, ProfilePackage } from './adapter-types.js';
 export interface UnitDeclarationSource {
   readonly pkg: string;
   readonly declaration: unknown;
 }
-
-export type InstalledModule =
-  | {
-      readonly kind: 'module';
-      readonly pkg: string;
-      readonly unit: string;
-      readonly version: string;
-      readonly registry?: string;
-      readonly local?: boolean;
-    }
-  | { readonly kind: 'not-module'; readonly pkg: string }
-  | { readonly kind: 'unknown'; readonly pkg: string };
-
-const PACKAGE_NAME = /^(?:@[a-z0-9][a-z0-9._~-]*\/)?[a-z0-9][a-z0-9._~-]*$/;
 
 function asRecord(value: unknown): Readonly<Record<string, unknown>> | undefined {
   return typeof value === 'object' && value !== null ? (value as Readonly<Record<string, unknown>>) : undefined;
@@ -29,23 +19,10 @@ function asText(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
-export function isPackageName(value: string): boolean {
-  return value.length <= 214 && PACKAGE_NAME.test(value);
-}
-
 export function profileDirOf(ctx: DshHostContext): string | null {
   const profile = ctx.get<{ dir?: unknown }>('profileContext');
   const dir = typeof profile?.dir === 'string' ? profile.dir.trim() : '';
   return dir === '' ? null : dir;
-}
-
-export interface ProfileModule {
-  readonly pkg: string;
-  readonly unit: string;
-  readonly version: string;
-  readonly registry?: string;
-  readonly local?: boolean;
-  readonly fromRegistry?: boolean;
 }
 
 function stringsOf(value: unknown): string[] {
@@ -258,13 +235,6 @@ export function isRegistryDependencySpec(spec: string): boolean {
   if (trimmed === '') return true;
   if (isLocalDependencySpec(trimmed) || isPackedArtifactSpec(trimmed)) return false;
   return !NON_REGISTRY_SPEC.test(trimmed);
-}
-
-export interface ProfilePackage {
-  readonly pkg: string;
-  readonly version: string;
-  readonly registry?: string;
-  readonly local?: boolean;
 }
 
 export function readProfilePackage(profileDir: string | null, pkg: string): ProfilePackage | undefined {

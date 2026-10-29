@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { isPackageName } from './installed-module.js';
+import { isPackageName } from '@dsh-workbench/shared/host';
 import { dshRecordOf, packageManifestOf, packageNameOf } from './registry-declaration.js';
 
 export type PackageKind = 'runtime-plugin' | 'dsh-bundle' | 'both' | 'neither';
