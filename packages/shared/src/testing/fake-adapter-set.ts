@@ -16,6 +16,8 @@ import {
 import { isNewerVersion } from '../host/version.js';
 import { refusalReason } from '../host/spec.js';
 import { declarationRefusalOf, pathDeclarationOf } from '../host/local-declaration.js';
+import { createRegistryLookup } from '../host/registry-declaration.js';
+import { createReleaseProbe } from '../host/release-probe.js';
 
 export const FAKE_ADAPTER_MARKER = { adapterSet: 'fake' } as const;
 
@@ -133,12 +135,26 @@ const actions: HostActions = {
 };
 
 export function fakeAdapterSet(overrides: Partial<AdapterSet> = {}): AdapterSet {
+  const release = createReleaseProbe();
+  const registry = createRegistryLookup();
+  const withRelease: EnvSupplyPort = {
+    ...supply,
+    latestVersion: release.latestVersion,
+    missingReleaseParts: release.missingReleaseParts,
+    probeRelease: release.probeRelease,
+  };
   return {
     apiVersion: ADAPTER_SET_API_VERSION,
     id: 'fake-adapter-set',
     version: '0.0.0',
     data,
-    supply: { ...supply, ...modules, env: supply, modules } as SupplyPort,
+    supply: {
+      ...withRelease,
+      ...modules,
+      env: withRelease,
+      modules,
+      registryDeclarationOf: registry.registryDeclarationOf,
+    } as SupplyPort,
     modules,
     profile,
     probe,

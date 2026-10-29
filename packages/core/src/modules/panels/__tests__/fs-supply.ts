@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { InstalledModule, ProfileModule } from '@dsh-workbench/shared/host';
 import type { SupplyPort } from '@dsh-workbench/shared/host';
+import { createReleaseProbe } from '@dsh-workbench/shared/host';
 
 function readJson(at: string): Record<string, unknown> | undefined {
   try {
@@ -27,6 +28,7 @@ export function fsSupply(options: {
   readonly plugins: () => string | undefined;
   readonly cliDirs?: boolean | undefined;
 }): SupplyPort {
+  const release = createReleaseProbe();
   const profileDirOf = (): string => options.profile();
   const packagesOf = (dir: string): readonly string[] => {
     const manifest = readJson(join(dir, 'package.json'));
@@ -79,10 +81,16 @@ export function fsSupply(options: {
     startSelfUpdate: () => ({}) as never,
     resolvePluginSource: () => ({ ok: false, problem: 'not-declared' }) as never,
     libInstallCommand: () => '',
-    pluginInstallPlan: () => ({ ok: false, problem: 'not-declared' }) as never,
-    latestVersion: async () => undefined,
-    missingReleaseParts: async () => [],
-    probeRelease: async () => undefined,
+    latestVersion: release.latestVersion,
+    missingReleaseParts: release.missingReleaseParts,
+    probeRelease: release.probeRelease,
+    pluginInstallPlan: (plan: { spec: string; command: string }): unknown => ({
+      ok: true,
+      commands: [
+        { line: `npm i --prefix '${join(options.root(), 'workbench', 'opencli', 'plugins-npm')}' '${plan.spec}'` },
+        { line: `'${plan.command}' plugin install '${plan.spec}'` },
+      ],
+    }),
     splitNpmSpec: () => undefined,
   };
   return { ...port, env: port, modules: port } as SupplyPort;

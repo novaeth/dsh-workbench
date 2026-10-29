@@ -64,6 +64,7 @@ export function findDependency(
   manifests: readonly UnitManifest[],
   id: string,
   isReleased?: ((unit: string) => boolean) | undefined,
+  packagePrefix?: string | undefined,
 ): DependencyTarget | undefined {
   const parsed = parseDependencyId(id);
   if (parsed === undefined) return undefined;
@@ -71,7 +72,7 @@ export function findDependency(
   if (declarers.length === 0) return undefined;
   const index = buildSupplyIndex(
     manifests.map((manifest) => ({ id: manifest.id, needs: needsOf(manifest) })),
-    { env: process.env },
+    { env: process.env, ...(packagePrefix === undefined ? {} : { packagePrefix }) },
   );
   const entry =
     parsed.kind === 'extension' || parsed.kind === 'lib' ? index.entryOf(parsed.kind, parsed.name) : undefined;

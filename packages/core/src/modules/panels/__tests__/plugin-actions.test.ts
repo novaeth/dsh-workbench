@@ -6,6 +6,7 @@ import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { createPluginActions } from '../model/plugin-actions';
 import { createPluginLedger, type PluginLedger } from '../model/plugin-ledger';
+import { fsSupply } from './fs-supply';
 
 const HOME = '/tmp/wb-actions/workbench/opencli/home';
 const REGISTRY = 'https://r.example/team/';
@@ -27,7 +28,24 @@ function put(at: string, file: string, body: unknown): void {
 }
 
 function ledgerAt(root: string): PluginLedger {
-  return createPluginLedger({ store: createWorkspaceStore({ root }), home: HOME });
+  const home = process.env['DSH_HOME'] ?? HOME;
+  return createPluginLedger({
+    store: createWorkspaceStore({ root }),
+    home,
+    pluginFiles: {
+      dir: path.join(home, 'workbench', 'opencli', 'plugins-npm', 'node_modules'),
+      manifest: 'opencli-plugin.json',
+    },
+  });
+}
+
+function supplyAt(root: string) {
+  return fsSupply({
+    root: () => root,
+    profile: () => HOME,
+    catalog: () => undefined,
+    plugins: () => path.join(process.env['DSH_HOME'] ?? root, 'workbench', 'opencli', 'plugins-npm', 'node_modules'),
+  });
 }
 
 afterEach(() => {
@@ -41,7 +59,13 @@ describe('用户持有的 opencli 插件：更新与卸载（台账那一笔说�
     ledger.intend({ package: PKG, registry: REGISTRY });
     ledger.complete(PKG, 'inventory');
     const fake = createFakeShell([{ stdout: '1.0.25\n' }, { stdout: '' }, { stdout: '' }]);
-    const actions = createPluginActions({ ledger, shell: fake.shell, command: 'opencli', runAll: async () => {} });
+    const actions = createPluginActions({
+      ledger,
+      shell: fake.shell,
+      command: 'opencli',
+      runAll: async () => {},
+      supply: supplyAt(dirOf('supply')),
+    });
 
     await actions.update(PKG);
 
@@ -62,6 +86,7 @@ describe('用户持有的 opencli 插件：更新与卸载（台账那一笔说�
       runAll: async (commands) => {
         runs.push(commands.map((step) => step.line));
       },
+      supply: supplyAt(dirOf('supply')),
     });
 
     await actions.update(PKG);
@@ -76,7 +101,12 @@ describe('用户持有的 opencli 插件：更新与卸载（台账那一笔说�
   it('本地装的那一笔更新不了，说的是人话（没地方查新版）', async () => {
     const ledger = ledgerAt(dirOf('store'));
     ledger.intend({ package: '/Users/me/my-plugin', local: true });
-    const actions = createPluginActions({ ledger, command: 'opencli', runAll: async () => {} });
+    const actions = createPluginActions({
+      ledger,
+      command: 'opencli',
+      runAll: async () => {},
+      supply: supplyAt(dirOf('supply')),
+    });
 
     await expect(actions.update('/Users/me/my-plugin')).rejects.toThrow('没有地方查新版');
   });
@@ -91,7 +121,13 @@ describe('用户持有的 opencli 插件：更新与卸载（台账那一笔说�
     const ledger = ledgerAt(dirOf('store'));
     ledger.intend({ package: PKG, registry: REGISTRY });
     const fake = createFakeShell([{ stdout: '不是版本号\n' }]);
-    const actions = createPluginActions({ ledger, shell: fake.shell, command: 'opencli', runAll: async () => {} });
+    const actions = createPluginActions({
+      ledger,
+      shell: fake.shell,
+      command: 'opencli',
+      runAll: async () => {},
+      supply: supplyAt(dirOf('supply')),
+    });
 
     await expect(actions.update(PKG)).rejects.toThrow('问不到');
     expect(fake.commands().filter((line) => line.includes('npm i --prefix'))).toEqual([]);
@@ -105,7 +141,12 @@ describe('用户持有的 opencli 插件：更新与卸载（台账那一笔说�
     put(installed, 'list.js', 'x');
     const ledger = ledgerAt(dirOf('store'));
     ledger.intend({ package: PKG, registry: REGISTRY });
-    const actions = createPluginActions({ ledger, command: 'opencli', runAll: async () => {} });
+    const actions = createPluginActions({
+      ledger,
+      command: 'opencli',
+      runAll: async () => {},
+      supply: supplyAt(dirOf('supply')),
+    });
 
     await actions.uninstall(PKG);
 
@@ -119,7 +160,12 @@ describe('用户持有的 opencli 插件：更新与卸载（台账那一笔说�
     const ledger = ledgerAt(dirOf('store'));
     ledger.intend({ package: PKG, registry: REGISTRY });
     ledger.complete(PKG, 'inventory');
-    const actions = createPluginActions({ ledger, command: 'opencli', runAll: async () => {} });
+    const actions = createPluginActions({
+      ledger,
+      command: 'opencli',
+      runAll: async () => {},
+      supply: supplyAt(dirOf('supply')),
+    });
 
     await expect(actions.uninstall('没有这个')).rejects.toThrow(/inventory/);
   });
@@ -371,6 +417,7 @@ describe('插件名：台账没记上就现读一次（名字也是主张的键�
       runAll: async (commands) => {
         runs.push(commands.map((step) => step.line));
       },
+      supply: supplyAt(dirOf('supply')),
     });
 
     const outcome = await actions.uninstall(PKG);
@@ -396,6 +443,7 @@ describe('插件名：台账没记上就现读一次（名字也是主张的键�
       runAll: async (commands) => {
         runs.push(commands.map((step) => step.line));
       },
+      supply: supplyAt(dirOf('supply')),
     });
 
     expect(await actions.uninstall(PKG)).toEqual({ removed: true, name: 'inventory' });
@@ -460,6 +508,7 @@ describe('插件名：台账没记上就现读一次（名字也是主张的键�
       runAll: async () => {
         throw new Error('不该跑命令');
       },
+      supply: supplyAt(dirOf('supply')),
     });
 
     expect(await actions.uninstall(at)).toEqual({

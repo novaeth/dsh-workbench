@@ -195,7 +195,7 @@ export function createMarketService(options: {
   }
 
   function requireDependency(id: string): DependencyTarget {
-    const target = findDependency(catalog(), id, isReleased);
+    const target = findDependency(catalog(), id, isReleased, supply.pluginPackagePrefix?.());
     if (target === undefined) {
       const known = sharedDependencies({ manifests: catalog(), capabilities: new Map() }).map((item) => item.id);
       throw new Error(`市场里没有这份依赖：${id}（可用的：${known.join(', ') || '（空）'}）`);
