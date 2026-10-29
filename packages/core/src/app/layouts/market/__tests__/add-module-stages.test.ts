@@ -46,7 +46,7 @@ describe('添加模块浮层那两屏（插件态）', () => {
   it('★ 插件态在 preview 相位就画出来：说清是 opencli 插件、装完不用重启，插件名一并写上', () => {
     const shown = texts(AddModulePreview({ t, state: stateOf('preview-plugin') })).join('|');
 
-    expect(shown).toContain('opencli-plugin-dashboards');
+    expect(shown).toContain('acme-plugin-dashboards');
     expect(shown).toContain('1.0.16');
     expect(shown).toContain(PREVIEW_TEXT);
     expect(shown).toContain('dashboards');

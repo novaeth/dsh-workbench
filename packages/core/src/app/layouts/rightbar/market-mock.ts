@@ -54,7 +54,7 @@ function installable(manifest: UnitManifest): UnitManifest {
         sources: [
           {
             kind: 'npm',
-            package: 'opencli-plugin-fixture',
+            package: 'acme-plugin-fixture',
             registryEnv: 'WB_FIXTURE_REGISTRY',
             registryDefault: 'https://registry.invalid/',
           },
@@ -327,7 +327,7 @@ export function buildMarketMocks(roster: readonly UnitManifest[]): readonly Mark
       label: '用户装的 opencli 插件：有新版（给更新 / 卸载）',
       manifests: [],
       capabilities: {},
-      plugins: [{ pkg: 'opencli-plugin-inventory', name: 'inventory', installed: '1.0.24', latest: '1.0.25' }],
+      plugins: [{ pkg: 'acme-plugin-inventory', name: 'inventory', installed: '1.0.24', latest: '1.0.25' }],
       expect: { rows: 0, plugins: 1, pluginActions: ['update-plugin', 'uninstall-plugin'] },
     },
     {
@@ -343,7 +343,7 @@ export function buildMarketMocks(roster: readonly UnitManifest[]): readonly Mark
       label: '插件名 ≠ 包名：行上两个都写出来（更新 / 卸载按包名）',
       manifests: [],
       capabilities: {},
-      plugins: [{ pkg: 'opencli-plugin-inventory', name: 'inventory', installed: '1.0.24', latest: '1.0.25' }],
+      plugins: [{ pkg: 'acme-plugin-inventory', name: 'inventory', installed: '1.0.24', latest: '1.0.25' }],
       expect: { rows: 0, plugins: 1, pluginActions: ['update-plugin', 'uninstall-plugin'] },
     },
     {
@@ -351,7 +351,7 @@ export function buildMarketMocks(roster: readonly UnitManifest[]): readonly Mark
       label: '装坏了的那一份（目录在但看不出是个插件）：行上直说，给卸载与指路',
       manifests: [],
       capabilities: {},
-      plugins: [{ pkg: 'opencli-plugin-inventory', name: 'inventory', installed: '1.0.24', broken: true }],
+      plugins: [{ pkg: 'acme-plugin-inventory', name: 'inventory', installed: '1.0.24', broken: true }],
       expect: {
         rows: 0,
         plugins: 1,

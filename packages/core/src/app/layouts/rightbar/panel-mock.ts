@@ -43,8 +43,8 @@ const PLUGIN_MOCK: PanelMock = {
   label: 'opencli 插件行（标出是插件，能开能关）',
   units: [],
   plugins: [
-    plugin('plugin:opencli-plugin-inventory', 'opencli-plugin-inventory', 'inventory', true),
-    plugin('plugin:opencli-plugin-notes', 'opencli-plugin-notes', 'notes', false),
+    plugin('plugin:acme-plugin-inventory', 'acme-plugin-inventory', 'inventory', true),
+    plugin('plugin:acme-plugin-notes', 'acme-plugin-notes', 'notes', false),
   ],
   capabilities: {},
   expect: { rows: 0 },
