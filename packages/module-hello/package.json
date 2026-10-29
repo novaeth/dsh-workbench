@@ -1,6 +1,6 @@
 {
   "name": "@dsh-workbench/module-hello",
-  "version": "1.1.9",
+  "version": "1.1.10",
   "description": "最小示例模块：装上后面板里多一张卡片，用来试装试卸。",
   "type": "module",
   "exports": {
