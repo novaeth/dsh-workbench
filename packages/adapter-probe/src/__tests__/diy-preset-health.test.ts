@@ -1,8 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { brokenRowsOf, createDiyPresetProbe, diyPresetVerdictOf } from '@dsh-workbench/adapter-probe';
-import { createPreflight } from '@dsh-workbench/adapter-probe';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
-import { ALL_OK } from './preflight-cases';
+import { brokenRowsOf, createDiyPresetProbe, diyPresetVerdictOf } from '../index.js';
+import { createPreflight } from '../preflight.js';
+
+const GOOD_BRIDGE_REPORT = [
+  'opencli v1.8.7 doctor (node v24.15.0)',
+  '',
+  '[OK] Daemon: running on port 19825 (v1.8.7)',
+  '[OK] Extension: connected (v1.0.24)',
+  '[OK] Connectivity: connected in 0.0s',
+  '',
+  'Everything looks good!',
+].join('\n');
+
+const ALL_OK = [{ stdout: '1.8.8\n' }, { stdout: GOOD_BRIDGE_REPORT }];
 
 const HEALTHY = [
   { id: 'standard', name: '标准' },
