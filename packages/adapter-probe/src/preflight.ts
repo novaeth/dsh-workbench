@@ -90,6 +90,8 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
 
 export type PreflightBridgeIssue = 'daemon' | 'extension' | 'profile' | 'stale' | 'unknown';
 
+export const BRIDGE_ISSUE_ORDER: readonly PreflightBridgeIssue[] = ['profile', 'stale', 'daemon', 'extension', 'unknown'];
+
 export function readBridgeReport(stdout: string): {
   readonly ok: boolean;
   readonly issues: readonly PreflightBridgeIssue[];
@@ -112,8 +114,7 @@ export function readBridgeReport(stdout: string): {
   if (found.has('profile') || found.has('stale')) found.delete('extension');
   if (found.size === 0) found.add('unknown');
 
-  const order: readonly PreflightBridgeIssue[] = ['profile', 'stale', 'daemon', 'extension', 'unknown'];
-  return { ok: false, issues: order.filter((issue) => found.has(issue)), detail: issuesSection(text) };
+  return { ok: false, issues: BRIDGE_ISSUE_ORDER.filter((issue) => found.has(issue)), detail: issuesSection(text) };
 }
 
 function issuesSection(text: string): string {

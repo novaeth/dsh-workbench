@@ -50,7 +50,5 @@ export function bridgeAdvice(
         : { link: { label: runtimeText(fix.link.label), href: fix.link.href } }),
     };
   }
-  const key = `env.bridge.${issue}`;
-  const text = t(key);
-  return { text: text === key ? t('env.bridge.unknown') : text };
+  return { text: t('env.bridge.unknown') };
 }

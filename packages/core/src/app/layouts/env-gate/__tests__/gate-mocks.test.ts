@@ -142,7 +142,7 @@ describe('GATE_MOCKS', () => {
     for (const issue of ['daemon', 'profile', 'stale', 'unknown'] as const) {
       expect(bridgeAdvice(issue, t, fixes).link, issue).toBeUndefined();
     }
-    expect(bridgeAdvice('daemon', t).text).toBe(zh['env.bridge.daemon']);
+    expect(bridgeAdvice('daemon', t).text).toBe(zh['env.bridge.unknown']);
   });
 
   it('★ 通道坏了时给的是"怎么修"，不是再诊一次（`doctor` 已经诊过了）', () => {

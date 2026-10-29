@@ -2,7 +2,7 @@ export type PreflightStepId = 'toolchain' | 'cli' | 'bridge' | 'runtime' | 'diy'
 export type PreflightStepStatus = 'pending' | 'running' | 'ok' | 'warn' | 'failed';
 export type PreflightFailure = 'permission' | 'network' | 'missing' | 'unknown';
 export type PreflightGuidance = 'install' | 'path' | 'shell';
-export type PreflightBridgeIssue = 'daemon' | 'extension' | 'profile' | 'stale' | 'unknown';
+export type PreflightBridgeIssue = string;
 
 export interface PreflightStep {
   readonly id: PreflightStepId;
