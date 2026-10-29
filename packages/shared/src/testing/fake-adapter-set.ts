@@ -4,6 +4,7 @@ import type { EnvSupplyPort, ModulePort, ProbePort, ProfilePort, RuntimePort, Su
 import type { HostActions } from '../host/port-types.js';
 import type { PluginSurface } from '../host/port-types.js';
 import { ADAPTER_SET_API_VERSION } from '../host/adapters.js';
+import { readBundleManager } from '../host/bundle-manager.js';
 
 export const FAKE_ADAPTER_MARKER = { adapterSet: 'fake' } as const;
 
@@ -37,6 +38,18 @@ const supply: EnvSupplyPort = {
   splitNpmSpec: () => undefined,
 };
 
+interface CtxLike {
+  get?: <T = unknown>(name: string, optional?: boolean) => T | undefined;
+}
+
+function fromCtx<T>(ctx: CtxLike | undefined, name: string): T | undefined {
+  try {
+    return ctx?.get === undefined ? undefined : (ctx.get(name) as T | undefined);
+  } catch {
+    return undefined;
+  }
+}
+
 const modules: ModulePort = {
   isolatedRoot: () => '/tmp/dsh-workbench-fake',
   isolatedHome: () => '/tmp/dsh-workbench-fake/home',
@@ -46,11 +59,14 @@ const modules: ModulePort = {
   vendorPluginsDir: () => '/tmp/dsh-workbench-fake/plugins',
   runtimeInstallCommand: () => 'npm i -g fake-runtime',
   afterLibInstall: () => undefined,
-  profileDirOf: () => null,
+  profileDirOf: (ctx) => {
+    const context = fromCtx<{ readonly dir?: string }>(ctx as CtxLike, 'profileContext');
+    return typeof context?.dir === 'string' ? context.dir : null;
+  },
   profileModules: () => [],
   readInstalledModule: () => ({}) as never,
   readProfilePackage: () => undefined,
-  readBundleManager: () => undefined,
+  readBundleManager,
   createRegistryNotebook: () => ({}) as never,
   declarationGaps: () => undefined,
   moduleDeclarationOf: () => undefined,

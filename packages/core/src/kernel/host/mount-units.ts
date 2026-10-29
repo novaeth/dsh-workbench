@@ -332,7 +332,9 @@ export function mountUnits(
     ok: false as const,
     error: { code: 'invalid-request' as const, message: '没有注入 DataReader：模块只能走 deps.data 读数据' },
   });
-  const hostKit = createHostKit({ libInstallCommand: adaptersOf(deps.ctx).supply.libInstallCommand });
+  const hostKit = createHostKit({
+    libInstallCommand: (options) => adaptersOf(deps.ctx).supply.libInstallCommand(options),
+  });
   const data: DataReader = deps.data ?? {
     read: missingData,
     request: missingData,

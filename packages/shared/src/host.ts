@@ -19,6 +19,7 @@ export * from './lib/git-address.js';
 export * from './api/blocker-table.js';
 export * from './contract/unit-declaration.js';
 export * from './host/board-fact.js';
+export * from './host/bundle-manager.js';
 export * from './host/context-ref.js';
 export * from './host/diy-debug.js';
 export * from './host/diy-record.js';

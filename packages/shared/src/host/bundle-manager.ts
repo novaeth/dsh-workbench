@@ -1,13 +1,12 @@
-import type { DshHostContext } from '@dsh-workbench/shared';
-import { RESTART_REASONS } from '@dsh-workbench/shared/contract/protocol/bundle-install';
+import type { DshHostContext } from '../api/dsh.js';
+import { RESTART_REASONS } from '../contract/protocol/bundle-install.js';
+import type { BundleManager } from './adapter-types.js';
 import type {
-  BundleCancellation,
   BundleChange,
   BundleInspection,
-  BundleInstallRequest,
   BundleRegistries,
   BundleRegistry,
-} from '@dsh-workbench/shared/contract/protocol/bundle-install';
+} from '../contract/protocol/bundle-install.js';
 
 const MANAGER_SERVICE = 'pluginManager';
 
@@ -18,15 +17,6 @@ interface PluginManagerFace {
   removeBundle?(name: string): Promise<unknown>;
   setBundleEnabled?(name: string, enabled: boolean): Promise<unknown>;
   cancelInstall?(requestId: string): Promise<unknown>;
-}
-
-export interface BundleManager {
-  registries(): Promise<BundleRegistries | null>;
-  inspect(spec: string, registry?: BundleRegistry): Promise<BundleInspection | null>;
-  install(request: BundleInstallRequest): Promise<BundleChange | null>;
-  remove(name: string): Promise<BundleChange | null>;
-  setEnabled?(name: string, enabled: boolean): Promise<BundleChange | null>;
-  cancel(requestId: string): Promise<BundleCancellation | null>;
 }
 
 const APPLICATIONS = ['applied', 'restart-required', 'overridden', 'failed', 'cancelled'] as const;

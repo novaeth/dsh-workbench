@@ -13,7 +13,6 @@ import {
   pluginInstallPlan,
   profileDirOf,
   profileModules,
-  readBundleManager,
   readInstalledModule,
   readProfilePackage,
   refusalReason,
@@ -21,6 +20,7 @@ import {
   resolvePluginSource,
   splitNpmSpec,
 } from '@dsh-workbench/adapter-supply';
+import { readBundleManager } from '@dsh-workbench/shared/host';
 
 export function createSupplyPort(): SupplyPort {
   const port = {
@@ -29,10 +29,10 @@ export function createSupplyPort(): SupplyPort {
     afterLibInstall: () => undefined,
     profileDirOf,
     profileModules,
+    readBundleManager,
     readInstalledModule,
     readProfilePackage,
-    readBundleManager,
-    createRegistryNotebook,
+      createRegistryNotebook,
     declarationGaps,
     moduleDeclarationOf,
     registryDeclarationOf,

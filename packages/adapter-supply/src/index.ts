@@ -8,5 +8,6 @@ export * from './plugin-units.js';
 export * from './plugin-tools.js';
 export * from './dsh-plugins.js';
 export * from './plugin-catalog.js';
-export * from './bundle-manager.js';
 export * from './plugin-source.js';
+export { readBundleManager } from '@dsh-workbench/shared/host';
+export type { BundleManager } from '@dsh-workbench/shared/host';
