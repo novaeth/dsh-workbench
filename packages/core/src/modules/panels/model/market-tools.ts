@@ -10,6 +10,7 @@ import type { InstalledModule } from '@dsh-workbench/shared/host';
 import type { BundleSupply, MarketEntry, MarketService } from './market';
 import type { SharedDependency } from './market-dependency';
 import { pluginKeptText, type PluginUninstallOutcome } from './plugin-actions';
+import { pluginTermOf } from '@/shared/api/host/plugin-term';
 import { marketSourcesTool } from './market-sources-tool';
 import {
   MODULES_INSTALL_BUNDLE_TOOL,
@@ -108,6 +109,7 @@ function describeInstall(
   module: InstalledModule,
   supply: BundleSupply,
   change: BundleChange,
+  plugin: string,
 ): string {
   const verdict =
     change.application === 'applied'
@@ -118,9 +120,9 @@ function describeInstall(
   const who = module.kind === 'module' ? `${module.unit}（${module.pkg}）` : module.pkg;
   const tail =
     supply.state === 'installed'
-      ? '；它要的 opencli 插件也装上了'
+      ? `；它要的${plugin}也装上了`
       : supply.state === 'pending-restart'
-        ? '；重启后再装它要的 opencli 插件'
+        ? `；重启后再装它要的${plugin}`
         : supply.state === 'not-a-module'
           ? '；但它不是工作台模块（没有 dsh.workbench 声明，不会出现在面板上）'
           : supply.state === 'failed'
@@ -153,8 +155,8 @@ function textArg(raw: unknown, key: string): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-function describePluginUninstall(pkg: string, outcome: PluginUninstallOutcome): string {
-  if (outcome.removed) return `已卸载 opencli 插件 ${pkg}：没人再用它，文件也删了。`;
+function describePluginUninstall(pkg: string, outcome: PluginUninstallOutcome, plugin: string): string {
+  if (outcome.removed) return `已卸载 ${plugin} ${pkg}：没人再用它，文件也删了。`;
   return `已从「你装的插件」里去掉 ${pkg}。${outcome.kept === undefined ? '' : pluginKeptText(outcome.kept)}`;
 }
 
@@ -231,7 +233,7 @@ export function registerMarketTools(
 
   const listTool: DshToolDefinition = {
     name: MODULES_LIST_TOOL,
-    description: '看模块市场与已装：每个模块装没装、可用不可用、要哪些 opencli 插件；还有共用依赖（只有升级）。',
+    description: `看模块市场与已装：每个模块装没装、可用不可用、要哪些${pluginTermOf(ctx)}；还有共用依赖（只有升级）。`,
     parameters: noParams,
     output: OUTPUT,
     async execute() {
@@ -242,13 +244,13 @@ export function registerMarketTools(
 
   const installTool = moduleSupplyTool({
     name: MODULES_INSTALL_TOOL,
-    description: '按模块 id 装它声明的那份外部供给（opencli 插件与库），不换模块包本身。',
+    description: `按模块 id 装它声明的那份外部供给（${pluginTermOf(ctx)}与库），不换模块包本身。`,
     install: true,
   });
 
   const updateTool = moduleSupplyTool({
     name: MODULES_UPDATE_TOOL,
-    description: '按模块 id 升它声明的那份外部供给（opencli 插件与库），不换模块包本身。',
+    description: `按模块 id 升它声明的那份外部供给（${pluginTermOf(ctx)}与库），不换模块包本身。`,
     install: false,
   });
 
@@ -310,7 +312,7 @@ export function registerMarketTools(
         change: outcome.change,
         module: outcome.module,
         supply: outcome.supply,
-        text: describeInstall(spec, outcome.module, outcome.supply, outcome.change),
+        text: describeInstall(spec, outcome.module, outcome.supply, outcome.change, pluginTermOf(ctx)),
       };
     },
   };
@@ -369,7 +371,7 @@ export function registerMarketTools(
           removed: outcome.removed,
           ...(outcome.name === undefined ? {} : { name: outcome.name }),
           ...(outcome.kept === undefined ? {} : { kept: outcome.kept }),
-          text: `${describePluginUninstall(plugin, outcome)}${users === '' ? '' : `${users}。`}`,
+          text: `${describePluginUninstall(plugin, outcome, pluginTermOf(ctx))}${users === '' ? '' : `${users}。`}`,
         };
       },
     };

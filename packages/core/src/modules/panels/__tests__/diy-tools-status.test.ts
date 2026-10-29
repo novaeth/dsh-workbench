@@ -204,7 +204,18 @@ describe('workbench_diy · recon（先看有没有现成的）', () => {
     ).rejects.toThrow('别问用户');
   });
 
+  it('★ 这个运行时没有可探测的命令面：直接说走 eval/find，不吐别人的命令行', async () => {
+    rig.setCatalog(catalog, pluginsDir);
+    rig.setSurface(null);
+    const { tool } = rig.harness({});
+    await expect(
+      tool(DIY_RECON_TOOL)?.execute({ keyword: 'bilibili' }, rig.diyExec()),
+    ).rejects.toThrow('没有可探测的命令面');
+    vi.unstubAllEnvs();
+  });
+
   it('目录读不到（隔离运行时没装好）：给出那条能照做的安装命令', async () => {
+    rig.setSurface(undefined);
     rig.setCatalog(path.join(catalogDir, 'nope.json'), pluginsDir);
     const { tool } = rig.harness({});
     await expect(

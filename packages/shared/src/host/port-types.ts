@@ -171,10 +171,19 @@ export interface RuntimeCheck {
   readonly detail: string;
 }
 
+export interface RuntimeCommandSurface {
+  readonly name: string;
+  readonly pluginPrefix: string;
+  invoke(site: string, command?: string): string;
+  help(site: string): string;
+  readonly authorHint?: string;
+}
+
 export interface RuntimePort {
   packageRoot(moduleUrl: string): string;
   capabilities(ctx: DshHostContext): RuntimeCapabilities;
   profile?(ctx: DshHostContext): RuntimeProfile;
+  commandSurface?(ctx: DshHostContext): RuntimeCommandSurface | undefined;
   check?(ctx: DshHostContext): Promise<RuntimeCheck>;
   commands(ctx: DshHostContext): Readonly<Record<string, string>>;
   runners(ctx: DshHostContext, data: DataReader): Readonly<Record<string, LibRunner>>;

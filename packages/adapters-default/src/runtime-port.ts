@@ -109,6 +109,17 @@ export function createRuntimePort(): RuntimePort {
       };
     },
 
+    commandSurface() {
+      return {
+        name: 'opencli',
+        pluginPrefix: 'opencli-plugin-',
+        invoke: (site: string, command?: string) =>
+          command === undefined || command === '' ? `opencli ${site}` : `opencli ${site} ${command}`,
+        help: (site: string) => `opencli ${site} --help`,
+        authorHint: 'opencli skills read opencli-adapter-author',
+      };
+    },
+
     commands(ctx) {
       return { opencli: opencliCommandOf(ctx).command };
     },

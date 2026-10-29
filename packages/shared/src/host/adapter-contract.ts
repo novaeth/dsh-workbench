@@ -40,6 +40,24 @@ export function adapterContractGaps(set: AdapterSet, ctx: DshHostContext): reado
     }
   }
 
+  if (typeof set.runtime.commandSurface === 'function') {
+    const surface = set.runtime.commandSurface(ctx);
+    if (surface !== undefined) {
+      if (!isNonEmptyString(surface.name)) gaps.push('runtime.commandSurface().name 不是非空字符串');
+      if (!isNonEmptyString(surface.pluginPrefix)) {
+        gaps.push('runtime.commandSurface().pluginPrefix 不是非空字符串');
+      }
+      if (typeof surface.invoke !== 'function') gaps.push('runtime.commandSurface().invoke 不是函数');
+      else if (!isNonEmptyString(surface.invoke('site', 'command'))) {
+        gaps.push('runtime.commandSurface().invoke(site, command) 拼不出非空命令行');
+      }
+      if (typeof surface.help !== 'function') gaps.push('runtime.commandSurface().help 不是函数');
+      else if (!isNonEmptyString(surface.help('site'))) {
+        gaps.push('runtime.commandSurface().help(site) 拼不出非空提示');
+      }
+    }
+  }
+
   const health = set.runtime.health(ctx);
   const commands = set.runtime.commands(ctx);
   for (const [name, status] of Object.entries(health)) {

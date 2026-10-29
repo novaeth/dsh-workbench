@@ -86,6 +86,12 @@ const runtimePreset = (capabilities: RuntimePort['capabilities'] extends never ?
     installHint: { zh: '无', en: 'nothing to install' },
     diagnose: {},
   }),
+  commandSurface: () => ({
+    name: 'fake',
+    pluginPrefix: 'fake-plugin-',
+    invoke: (site: string, command?: string) => (command === undefined ? `fake ${site}` : `fake ${site} ${command}`),
+    help: (site: string) => `fake ${site} --help`,
+  }),
   commands: () => ({}),
   runners: () => ({}),
   health: () => ({}),

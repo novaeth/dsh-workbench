@@ -29,6 +29,14 @@ export interface ReconSite {
   readonly commands: readonly ReconCommand[];
 }
 
+export interface ReconSurface {
+  readonly name: string;
+  readonly pluginPrefix: string;
+  invoke(site: string, command?: string): string;
+  help(site: string): string;
+  readonly authorHint?: string;
+}
+
 export interface ReconPlugin {
   readonly name: string;
   readonly commands: readonly string[];
@@ -46,7 +54,6 @@ const SITE_LIMIT = 6;
 const COMMAND_LIMIT = 12;
 const SHOWN_LIMIT = 6;
 const ARG_LIMIT = 6;
-const PLUGIN_PREFIX = 'opencli-plugin-';
 const PREVIEW_ARGS = ['yes', 'dryrun', 'confirm'];
 
 function text(value: unknown): string {
@@ -77,9 +84,9 @@ function argsOf(value: unknown): readonly ReconArg[] {
   return out;
 }
 
-export function invocableOf(command: ReconCommand): string {
+export function invocableOf(command: ReconCommand, surface: ReconSurface): string {
   if (command.site === '') return command.command;
-  return command.name === '' ? `opencli ${command.site}` : `opencli ${command.site} ${command.name}`;
+  return surface.invoke(command.site, command.name === '' ? undefined : command.name);
 }
 
 export function manifestCommandsOf(raw: string): readonly ReconCommand[] {
@@ -119,10 +126,10 @@ export function manifestCommandsOf(raw: string): readonly ReconCommand[] {
   return commands;
 }
 
-export function pluginNamesOf(entries: readonly string[]): readonly string[] {
+export function pluginNamesOf(entries: readonly string[], prefix: string): readonly string[] {
   return entries
-    .filter((one) => one.startsWith(PLUGIN_PREFIX))
-    .map((one) => one.slice(PLUGIN_PREFIX.length))
+    .filter((one) => one.startsWith(prefix))
+    .map((one) => one.slice(prefix.length))
     .filter((one) => one !== '')
     .sort();
 }
@@ -173,6 +180,7 @@ export function reconOf(
   commands: readonly ReconCommand[],
   plugins: readonly ReconPlugin[],
   keywords: readonly string[],
+  surface: ReconSurface,
 ): ReconAnswer {
   const keyword = keywords[0] ?? '';
   const best = new Map<string, { readonly command: ReconCommand; readonly score: number }>();
@@ -221,33 +229,34 @@ export function reconOf(
   });
 
   const base: ReconAnswer = { keyword, sites, plugins: matched, next: '', text: '' };
-  const next = nextOf(base);
+  const next = nextOf(base, surface);
   const withNext: ReconAnswer = { ...base, next };
-  return { ...withNext, text: textOf(withNext) };
+  return { ...withNext, text: textOf(withNext, surface) };
 }
 
-export function nextOf(answer: ReconAnswer): string {
+export function nextOf(answer: ReconAnswer, surface: ReconSurface): string {
   const site = answer.sites[0];
   if (site !== undefined) {
     const read = site.commands.find((one) => one.access !== 'write');
     const pick = read ?? site.commands[0];
-    if (pick === undefined) return `opencli ${site.site} --help 看全部命令`;
+    if (pick === undefined) return `${surface.help(site.site)} 看全部命令`;
     if (read === undefined) {
       return (
-        `这台机器上只匹配到写命令：${invocableOf(pick)} —— ` +
+        `这台机器上只匹配到写命令：${invocableOf(pick, surface)} —— ` +
         '先 `--help` 看入参；带 `--dryRun` / `--yes` 的先用预览档；' +
         '没有预览档的不许试写（那一次就是真的）。写取证的完整口径见 WRITES.md。'
       );
     }
-    const call = pick.example === '' ? invocableOf(pick) : pick.example;
+    const call = pick.example === '' ? invocableOf(pick, surface) : pick.example;
     return `直接复用：${call}（这台机器上就能跑，不用装、不用点头）`;
   }
   const plugin = answer.plugins[0];
   if (plugin !== undefined) {
-    return `这台机器另装的插件 ${plugin.name} 里有匹配：opencli ${plugin.name} --help 看全部命令`;
+    return `这台机器另装的插件 ${plugin.name} 里有匹配：${surface.help(plugin.name)} 看全部命令`;
   }
+  const author = surface.authorHint === undefined ? '' : `① 给这个站点写 adapter：${surface.authorHint}；`;
   return (
-    '这台机器上没有现成的 —— 两条路：① 给这个站点写 adapter：opencli skills read opencli-adapter-author；' +
+    `这台机器上没有现成的 —— 两条路：${author}` +
     '② 只读一次：workbench_diy_eval / _find 带 read=<地址>（在 workbench-read 上跑，借用户已登录的那扇窗）'
   );
 }
@@ -267,10 +276,10 @@ function labelOf(command: ReconCommand): string {
   return command.preview ? '写（可预览）' : '写（无预览档，一次就是真的）';
 }
 
-export function textOf(answer: ReconAnswer): string {
+export function textOf(answer: ReconAnswer, surface: ReconSurface): string {
   const lines: string[] = [];
   if (answer.sites.length > 0) {
-    lines.push(`opencli 自带这 ${String(answer.sites.length)} 组能力（不用装、不用点头）：`);
+    lines.push(`${surface.name} 自带这 ${String(answer.sites.length)} 组能力（不用装、不用点头）：`);
     for (const site of answer.sites) {
       const where = site.domain === '' ? '' : `（${site.domain}）`;
       const chrome = site.browser ? '要用你的 Chrome 登录' : '不用浏览器';
@@ -278,13 +287,13 @@ export function textOf(answer: ReconAnswer): string {
       for (const command of site.commands.slice(0, SHOWN_LIMIT)) {
         const what = command.description === '' ? '' : ` —— ${command.description.slice(0, 60)}`;
         const args = command.access === 'write' && command.args.length > 0 ? ` ｜ 入参：${signatureOf(command.args)}` : '';
-        lines.push(`    ${labelOf(command)} ${invocableOf(command)}${what}${args}`);
+        lines.push(`    ${labelOf(command)} ${invocableOf(command, surface)}${what}${args}`);
       }
       const rest = site.commands.length - SHOWN_LIMIT;
       if (rest > 0) {
         const writes = site.commands.slice(SHOWN_LIMIT).filter((one) => one.access === 'write').length;
         const tail = writes === 0 ? '' : `（其中写 ${String(writes)} 条）`;
-        lines.push(`    … 还有 ${String(rest)} 条${tail}：opencli ${site.site} --help`);
+        lines.push(`    … 还有 ${String(rest)} 条${tail}：${surface.help(site.site)}`);
       }
     }
   }

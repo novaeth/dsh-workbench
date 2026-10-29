@@ -24,9 +24,9 @@ export function reconCatalogOf(path: string): readonly ReconCommand[] | undefine
   }
 }
 
-export function installedPluginsOf(dir: string): readonly ReconPlugin[] {
-  return pluginNamesOf(filesOf(dir)).map((name) => ({
+export function installedPluginsOf(dir: string, prefix: string): readonly ReconPlugin[] {
+  return pluginNamesOf(filesOf(dir), prefix).map((name) => ({
     name,
-    commands: pluginCommandsOf(filesOf(join(dir, `opencli-plugin-${name}`))),
+    commands: pluginCommandsOf(filesOf(join(dir, `${prefix}${name}`))),
   }));
 }

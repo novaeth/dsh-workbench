@@ -6,6 +6,7 @@ import type { UnitManifest } from '@dsh-workbench/shared';
 import type { PublishPreview } from '@dsh-workbench/shared/contract/protocol/market-index';
 import { WORKBENCH_ADAPTERS, createWorkspaceStore } from '@dsh-workbench/shared/host';
 import { testAdaptersWith } from './test-adapters';
+import type { RuntimeCommandSurface } from '@dsh-workbench/shared/host';
 import {
   DIY_DEBUG_SERVICE,
   DIY_RECORD_SERVICE,
@@ -149,9 +150,15 @@ export function createDiyRig() {
   let catalogPath: string | undefined;
   let pluginsPath: string | undefined;
 
+  let surfaceOverride: RuntimeCommandSurface | null | undefined;
+
   function setCatalog(at: string | undefined, plugins?: string): void {
     catalogPath = at;
     pluginsPath = plugins;
+  }
+
+  function setSurface(surface: RuntimeCommandSurface | null | undefined): void {
+    surfaceOverride = surface;
   }
 
   function adapters(): ReturnType<typeof testAdaptersWith> {
@@ -160,6 +167,7 @@ export function createDiyRig() {
       profile: PROFILE,
       catalog: () => catalogPath,
       plugins: () => pluginsPath,
+      ...(surfaceOverride === undefined ? {} : { surface: surfaceOverride }),
     });
   }
 
@@ -288,5 +296,6 @@ export function createDiyRig() {
     fakeShell,
     harness,
     setCatalog,
+    setSurface,
   };
 }

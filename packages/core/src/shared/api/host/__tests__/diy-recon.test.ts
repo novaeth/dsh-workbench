@@ -10,7 +10,16 @@ import {
   scoreOf,
   type ReconCommand,
   type ReconPlugin,
+  type ReconSurface,
 } from '../diy-recon';
+
+const SURFACE: ReconSurface = {
+  name: 'opencli',
+  pluginPrefix: 'opencli-plugin-',
+  invoke: (site, command) => (command === undefined ? `opencli ${site}` : `opencli ${site} ${command}`),
+  help: (site) => `opencli ${site} --help`,
+  authorHint: 'opencli skills read opencli-adapter-author',
+};
 
 const MANIFEST = JSON.stringify([
   {
@@ -135,7 +144,7 @@ describe('读那份自带目录', () => {
   });
 
   it('插件目录：名字去掉前缀、命令取 .js 去掉 index/_ 开头', () => {
-    expect(pluginNamesOf(['opencli-plugin-inventory', 'dayjs', 'opencli-plugin-demo'])).toEqual([
+    expect(pluginNamesOf(['opencli-plugin-inventory', 'dayjs', 'opencli-plugin-demo'], 'opencli-plugin-')).toEqual([
       'demo',
       'inventory',
     ]);
@@ -182,7 +191,7 @@ describe('侦察结果', () => {
   const commands = manifestCommandsOf(MANIFEST);
 
   it('按站点归组，只读排在写前面，并给出可直接照抄的那条命令', () => {
-    const answer = reconOf(commands, [], ['bilibili']);
+    const answer = reconOf(commands, [], ['bilibili'], SURFACE);
     expect(answer.sites).toHaveLength(1);
     expect(answer.sites[0]?.site).toBe('bilibili');
     expect(answer.sites[0]?.commands.map((one) => one.name)).toEqual(['search', 'danmaku']);
@@ -195,7 +204,7 @@ describe('侦察结果', () => {
   });
 
   it('用域名当关键词也能认出来（用户给的可能是个网址）', () => {
-    const answer = reconOf(commands, [], keywordsOf('', 'https://www.arxiv.org/abs/1'));
+    const answer = reconOf(commands, [], keywordsOf('', 'https://www.arxiv.org/abs/1'), SURFACE);
     expect(answer.sites.map((one) => one.site)).toEqual(['arxiv']);
     expect(answer.sites[0]?.browser).toBe(false);
     expect(answer.next).toContain('不用装');
@@ -203,7 +212,7 @@ describe('侦察结果', () => {
 
   it('自带里没有、但本机装了插件 → 指向已装的插件', () => {
     const plugins: readonly ReconPlugin[] = [{ name: 'inventory', commands: ['envs', 'builds'] }];
-    const answer = reconOf([], plugins, ['inventory']);
+    const answer = reconOf([], plugins, ['inventory'], SURFACE);
     expect(answer.sites).toEqual([]);
     expect(answer.plugins.map((one) => one.name)).toEqual(['inventory']);
     expect(answer.next).toContain('opencli inventory --help');
@@ -212,7 +221,7 @@ describe('侦察结果', () => {
   });
 
   it('什么都没有 → 老实说没有，并把两条路给出来', () => {
-    const answer = reconOf([], [], ['某内部系统']);
+    const answer = reconOf([], [], ['某内部系统'], SURFACE);
     expect(answer.sites).toEqual([]);
     expect(answer.plugins).toEqual([]);
     expect(answer.text).toContain('没匹配到');
@@ -220,7 +229,7 @@ describe('侦察结果', () => {
     expect(answer.text).toContain('opencli-adapter-author');
     expect(answer.text).toContain('read=<地址>');
     expect(answer.next).toContain('read=<地址>');
-    expect(nextOf(answer)).toBe(answer.next);
+    expect(nextOf(answer, SURFACE)).toBe(answer.next);
   });
 
   it('同一站点最多列 12 条、最多 6 个站点（别把整份目录倒给用户）', () => {
@@ -230,7 +239,7 @@ describe('侦察结果', () => {
     const sites = Array.from({ length: 9 }, (_, index) =>
       command({ command: `s${String(index)}/c`, site: `s${String(index)}`, name: 'c' }),
     );
-    const answer = reconOf([...many, ...sites], [], ['many', 's']);
+    const answer = reconOf([...many, ...sites], [], ['many', 's'], SURFACE);
     expect(answer.sites.length).toBeLessThanOrEqual(6);
     expect(answer.sites.find((one) => one.site === 'many')?.commands.length).toBeLessThanOrEqual(12);
     expect(answer.text).toContain('还有 6 条');
@@ -241,30 +250,30 @@ describe('写通道的取证面', () => {
   const commands = manifestCommandsOf(MANIFEST);
 
   it('★ 文本给能照抄的空格形式，不给斜杠形式（opencli 12306/login 是条不存在的命令）', () => {
-    const answer = reconOf(commands, [], ['bilibili']);
+    const answer = reconOf(commands, [], ['bilibili'], SURFACE);
     expect(answer.text).toContain('opencli bilibili danmaku');
     expect(answer.text).not.toContain('opencli bilibili/');
     expect(answer.next).not.toContain('opencli bilibili/');
   });
 
   it('★ 写命令标出预览档并附入参签名；没有预览档的就直说"一次就是真的"', () => {
-    const withPreview = reconOf(commands, [], ['bilibili']);
+    const withPreview = reconOf(commands, [], ['bilibili'], SURFACE);
     expect(withPreview.text).toContain('写（可预览）');
     expect(withPreview.text).toContain('入参：--text --dryRun=false');
-    const noPreview = reconOf(commands, [], ['inventory']);
+    const noPreview = reconOf(commands, [], ['inventory'], SURFACE);
     expect(noPreview.text).toContain('写（无预览档，一次就是真的）');
     expect(noPreview.text).toContain('入参：--env_name --release_mode=1');
   });
 
   it('★ 只匹配到写命令时，「直接复用」换成写通道的指引', () => {
-    const answer = reconOf(commands, [], ['inventory']);
+    const answer = reconOf(commands, [], ['inventory'], SURFACE);
     expect(answer.next).toContain('opencli inventory publish');
     expect(answer.next).toContain('--dryRun');
     expect(answer.next).toContain('不许试写');
   });
 
   it('★ 有读命令时仍优先给读那条（读不用排队、也不用点头）', () => {
-    const answer = reconOf(commands, [], ['bilibili']);
+    const answer = reconOf(commands, [], ['bilibili'], SURFACE);
     expect(answer.next).toContain('opencli bilibili search -f yaml');
   });
 
@@ -277,7 +286,7 @@ describe('写通道的取证面', () => {
         access: index >= 6 ? 'write' : 'read',
       }),
     );
-    const answer = reconOf(many, [], ['many']);
+    const answer = reconOf(many, [], ['many'], SURFACE);
     expect(answer.text).toContain('… 还有 2 条（其中写 2 条）：opencli many --help');
   });
 });

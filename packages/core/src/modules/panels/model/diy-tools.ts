@@ -18,10 +18,15 @@ export function browserBridgeOn(ctx: DshHostContext): boolean {
   if (adapters === undefined) return true;
   return adapters.runtime.capabilities(ctx).browserBridge;
 }
+
+export function surfaceOf(ctx: DshHostContext): ReconSurface | undefined {
+  const adapters = ctx.get<AdapterSet>(WORKBENCH_ADAPTERS, false);
+  return adapters?.runtime.commandSurface?.(ctx);
+}
 import { registerSpecTool } from './diy-spec';
 import { registerPublishTool } from './diy-publish';
 import type { UnitRegistry } from '@/kernel/host/unit-registry';
-import { keywordsOf, reconOf } from '@/shared/api/host/diy-recon';
+import { keywordsOf, reconOf, type ReconSurface } from '@/shared/api/host/diy-recon';
 import { installedPluginsOf, reconCatalogOf } from '@/shared/api/host/diy-recon-fs';
 import { healthOf, publishStatusOf, renderPanel, renderStatus, statusOf, type ModuleStatus } from './diy-report';
 import type { PublishPreview } from '@dsh-workbench/shared/contract/protocol/market-index';
@@ -154,10 +159,13 @@ export function registerDiyTools(
     },
   };
 
+  const surface = surfaceOf(ctx);
   const reconTool: DshToolDefinition = {
     name: DIY_RECON_TOOL,
     description:
-      '先查 opencli 有没有现成的（自带 adapter / 本机插件）—— opencli 是什么自己查，别问用户。',
+      surface === undefined
+        ? '这个运行时的命令面探测不了：直接走 workbench_diy_eval / _find 读一次。'
+        : `先查 ${surface.name} 有没有现成的（自带 adapter / 本机插件）—— ${surface.name} 是什么自己查，别问用户。`,
     parameters: {
       type: 'object',
       properties: {
@@ -173,20 +181,27 @@ export function registerDiyTools(
     output: OUTPUT,
     async execute(raw: unknown, _exec: DshToolRunContext) {
       const args = asRecord(raw);
+      const surface = surfaceOf(ctx);
+      if (surface === undefined) {
+        throw new Error(
+          '这个运行时没有可探测的命令面 —— recon 用不了；换 workbench_diy_eval / _find 直接读一次：' +
+            '带 read=<地址>，在 workbench-read 上跑，借用户已登录的那扇窗。',
+        );
+      }
       const keywords = keywordsOf(asText(args['keyword']), asText(args['url']));
       if (keywords.length === 0) {
         throw new Error(
-          'recon 要一个关键词（站点名 / 系统名 / 域名都行）：先拿它去 opencli 自带的那份目录里找有没有现成的能力，' +
-            '别一上来就自己写 adapter；用户不知道 opencli 是什么，这一步别问用户。',
+          `recon 要一个关键词（站点名 / 系统名 / 域名都行）：先拿它去 ${surface.name} 自带的那份目录里找有没有现成的能力，` +
+            '别一上来就自己写 adapter；用户不知道它有这条命令面，这一步别问用户。',
         );
       }
       const catalog = reconCatalogOf(supply.cliCatalogPath());
       if (catalog === undefined) {
         throw new Error(
-          `读不到 opencli 那份目录（${supply.cliCatalogPath()}）—— 隔离运行时还没装好；照做：${supply.runtimeInstallCommand()}`,
+          `读不到 ${surface.name} 那份目录（${supply.cliCatalogPath()}）—— 隔离运行时还没装好；照做：${supply.runtimeInstallCommand()}`,
         );
       }
-      const answer = reconOf(catalog, installedPluginsOf(supply.vendorPluginsDir()), keywords);
+      const answer = reconOf(catalog, installedPluginsOf(supply.vendorPluginsDir(), surface.pluginPrefix), keywords, surface);
       return plainJson({ ok: true, ...answer });
     },
   };

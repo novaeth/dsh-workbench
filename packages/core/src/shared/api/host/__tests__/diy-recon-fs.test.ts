@@ -47,12 +47,12 @@ describe('看这台机器装了哪些插件', () => {
     mkdirSync(join(dir, 'dayjs'));
     writeFileSync(join(dir, 'dayjs', 'index.js'), '');
 
-    const plugins = installedPluginsOf(dir);
+    const plugins = installedPluginsOf(dir, 'opencli-plugin-');
     expect(plugins.map((one) => one.name)).toEqual(['inventory']);
     expect(plugins[0]?.commands).toEqual(['envs']);
   });
 
   it('目录不存在就回空数组（这台机器还没装任何插件）', () => {
-    expect(installedPluginsOf(join(tmpdir(), 'definitely-not-here'))).toEqual([]);
+    expect(installedPluginsOf(join(tmpdir(), 'definitely-not-here'), 'opencli-plugin-')).toEqual([]);
   });
 });
