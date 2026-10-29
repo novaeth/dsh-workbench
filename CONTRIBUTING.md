@@ -48,7 +48,8 @@ Tests in `packages/core` describe **what the adapter protocol promises**, never 
 current adapter implements it. Use `fakeAdapterSet()` from `@dsh-workbench/shared/testing`
 (or a double written against the port) and keep `@dsh-workbench/adapter-*` imports out of
 `packages/core` entirely — S70 enforces this. Tests for adapter internals belong to the
-adapter package that owns them.
+adapter package that owns them. Test files live in a `__tests__/` folder next to the code
+they cover — never scattered next to it (S73).
 
 ## Before you open a pull request
 
