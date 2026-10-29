@@ -92,6 +92,6 @@ describe('面板配置那一屏的行：模块 + 插件行', () => {
       }
     }
     expect(dictionaries.zh['panels.groupBoardless']).toBe('无看板模块');
-    expect(dictionaries.zh['panels.groupPlugins']).toBe('opencli 插件');
+    expect(dictionaries.zh['panels.groupPlugins']).toBe('插件');
   });
 });

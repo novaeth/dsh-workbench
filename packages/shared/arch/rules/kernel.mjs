@@ -80,4 +80,35 @@ const kernelHasNoVendorFields = createRule({
   },
 });
 
-export const kernelRules = [kernelKeepsAdaptersOut, kernelHasNoVendorFields];
+const RUNTIME_IN_TEXT = /['"`][^'"`]*opencli[^'"`]*['"`]/i;
+
+const copyNamesNoRuntime = createRule({
+  id: 'C75',
+  domain: 'copy',
+  level: 'L3',
+  severity: 'error',
+  title: '默认字典不点名运行时',
+  hint: '文案走 RuntimeProfile 的 terms / diagnose / bridge，字典只放运行时中立的话；点名了就会在换适配器后说错话。',
+  run(ctx) {
+    const findings = [];
+    for (const record of ctx.records) {
+      if (!record.rel.startsWith('src/i18n/')) continue;
+      const source = ctx.sourceOf(record.rel);
+      if (source === undefined) continue;
+      const lines = source.split('\n');
+      for (let index = 0; index < lines.length; index += 1) {
+        if (!RUNTIME_IN_TEXT.test(lines[index])) continue;
+        findings.push({
+          rule: 'C75',
+          file: record.rel,
+          line: index + 1,
+          text: `字典里点名了运行时：${lines[index].trim().slice(0, 80)}`,
+          hint: '改成运行时中立的话，具体名称由适配器的 profile 提供',
+        });
+      }
+    }
+    return findings;
+  },
+});
+
+export const kernelRules = [kernelKeepsAdaptersOut, kernelHasNoVendorFields, copyNamesNoRuntime];

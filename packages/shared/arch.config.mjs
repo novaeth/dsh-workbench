@@ -62,7 +62,7 @@ export default {
       capabilities: STACK_CAPABILITIES,
     }),
     i18n(noneI18nKit()),
-    { enable: ['S70', 'S71', 'S72'] },
+    { enable: ['S70', 'S71', 'S72', 'C75'] },
   ],
   overrides: {
     include: ['src/**'],
