@@ -402,15 +402,15 @@ const shellBranchesOnRuntimeId = createRule({
   },
 });
 
-const ADAPTER_IMPORT = /from\s+['"]@dsh-workbench\/adapters-default\b/;
+const ADAPTER_IMPORT = /from\s+['"]@dsh-workbench\/(?:adapters-default|adapter-[a-z0-9-]+)\b/;
 
 const shellTestsUseFakeSet = createRule({
   id: 'S70',
   domain: 'structure',
   level: 'L2',
   severity: 'error',
-  title: '外壳的测试不许依赖默认集合',
-  hint: '外壳只认协议：测试要适配器行为就用 shared/testing 的 fakeAdapterSet 或就地写 double（不许 import 任何 adapter-* 包）；适配器内部逻辑的测试归它自己那个包。',
+  title: '外壳的测试也不许 import 适配器包',
+  hint: '外壳只认协议：要适配器行为就用 shared/testing 的 fakeAdapterSet 或就地按端口写 double；适配器内部逻辑的测试归它自己那个包。',
   run(ctx) {
     const findings = [];
     for (const record of ctx.records) {

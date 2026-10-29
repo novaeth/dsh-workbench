@@ -174,6 +174,21 @@ export default {
     ],
     exceptions: [
       {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/plugin-tool-units-harness.ts',
+        reason:
+          '现状：这几个文件测的是「面板宿主怎么把插件命令挂成工具」，走的是适配器供给面的合成实现（'
+          + 'createPluginCatalog / createPluginUnits）。按 ADR-0092 该拆成两半：合成与 schema 的断言归 adapter-supply'
+          + '（已在那儿新建了 plugin-units.test.ts），外壳只留「单元到了 → 工具挂上、门禁收窄」的断言。'
+          + '拆分没做完之前先登记，规则仍是 error、新文件加不进来。',
+      },
+      {
+        rule: 'S70',
+        glob: 'src/modules/panels/__tests__/plugin-tool-units.test.ts',
+        reason:
+          '同上：与 plugin-tool-units-harness.ts 成对，拆分成两半后这两条例外一起删。',
+      },
+      {
         rule: 'S16',
         glob: '**/*.{test,spec}.{ts,tsx,mts,cts,js,mjs,cjs}',
         reason:
