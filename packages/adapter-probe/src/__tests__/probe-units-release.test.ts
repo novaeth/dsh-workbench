@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { probeUnitCommands } from '../index.js';
-import { resetReleaseCache } from '@dsh-workbench/adapter-profile';
+import { resetReleaseCache } from '../release-port.js';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 
 afterEach(() => {

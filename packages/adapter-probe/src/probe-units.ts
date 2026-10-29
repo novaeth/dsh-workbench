@@ -19,7 +19,7 @@ import {
   type UnitCapability,
 } from '@dsh-workbench/shared/host';
 import { npmRegistryOf } from '@dsh-workbench/adapter-supply';
-import { probeRelease } from '@dsh-workbench/adapter-profile';
+import { probeRelease } from './release-port.js';
 import { createTimedMemo } from './probe-cache.js';
 import { probeLibs } from './probe-libs.js';
 import { aggregate, binStateOf, envStateOf, extensionStateOf } from './probe-verdict.js';

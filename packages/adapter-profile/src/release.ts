@@ -1,43 +1,44 @@
 import type { DshShell } from '@dsh-workbench/shared';
 import type { PluginRelease } from '@dsh-workbench/shared';
-import {
-  createReleaseProbe,
-  parseLedgerVersion,
-} from '@dsh-workbench/shared/host';
-import { npmCacheDir, vendorPrefix } from '@dsh-workbench/adapter-runtime';
-
-const probe = createReleaseProbe();
+import { createReleaseProbe, parseLedgerVersion } from '@dsh-workbench/shared/host';
 
 export { parseLedgerVersion };
-export function resetReleaseCache(): void {
-  probe.reset();
-}
 export { compareVersions, isNewerVersion } from '@dsh-workbench/shared/host';
 
-export async function latestVersion(options: {
-  shell: DshShell;
-  name: string;
-  registry: string;
-  force?: boolean;
-}): Promise<string | undefined> {
-  return probe.latestVersion({ ...options, cacheDir: npmCacheDir() });
+export interface ReleasePort {
+  latestVersion(options: {
+    readonly shell: DshShell;
+    readonly name: string;
+    readonly registry: string;
+    readonly force?: boolean;
+  }): Promise<string | undefined>;
+  missingReleaseParts(options: {
+    readonly shell: DshShell;
+    readonly name: string;
+    readonly registry: string;
+    readonly version: string;
+    readonly force?: boolean;
+  }): Promise<readonly string[]>;
+  probeRelease(options: {
+    readonly shell: DshShell;
+    readonly package: string;
+    readonly registry?: string | undefined;
+    readonly force?: boolean;
+  }): Promise<PluginRelease | undefined>;
+  reset(): void;
 }
 
-export async function missingReleaseParts(options: {
-  shell: DshShell;
-  name: string;
-  registry: string;
-  version: string;
-  force?: boolean;
-}): Promise<readonly string[]> {
-  return probe.missingReleaseParts({ ...options, cacheDir: npmCacheDir() });
-}
-
-export async function probeRelease(options: {
-  shell: DshShell;
-  package: string;
-  registry?: string | undefined;
-  force?: boolean;
-}): Promise<PluginRelease | undefined> {
-  return probe.probeRelease({ ...options, cacheDir: npmCacheDir(), prefix: vendorPrefix() });
+export function createReleasePort(options: {
+  readonly cacheDir: string;
+  readonly prefix: string;
+}): ReleasePort {
+  const probe = createReleaseProbe();
+  return {
+    latestVersion: (call) => probe.latestVersion({ ...call, cacheDir: options.cacheDir }),
+    missingReleaseParts: (call) => probe.missingReleaseParts({ ...call, cacheDir: options.cacheDir }),
+    probeRelease: (call) => probe.probeRelease({ ...call, cacheDir: options.cacheDir, prefix: options.prefix }),
+    reset: () => {
+      probe.reset();
+    },
+  };
 }

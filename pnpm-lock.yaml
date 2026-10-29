@@ -109,9 +109,6 @@ importers:
 
   packages/adapter-profile:
     dependencies:
-      '@dsh-workbench/adapter-runtime':
-        specifier: workspace:*
-        version: link:../adapter-runtime
       '@dsh-workbench/shared':
         specifier: workspace:*
         version: link:../shared

@@ -6,7 +6,8 @@ import { libInstallCommand } from '@dsh-workbench/adapter-runtime';
 import { needIdOf, npmSourceOf } from '@dsh-workbench/shared/host';
 import { libDir } from '@dsh-workbench/adapter-runtime';
 import { npmRegistryOf } from '@dsh-workbench/adapter-supply';
-import { isNewerVersion, latestVersion, resetReleaseCache } from '@dsh-workbench/adapter-profile';
+import { isNewerVersion } from '@dsh-workbench/adapter-profile';
+import { latestVersion, resetReleaseCache } from './release-port.js';
 import { checkVersionRange } from './version-range.js';
 
 export function installedLibVersion(name: string): string | undefined {

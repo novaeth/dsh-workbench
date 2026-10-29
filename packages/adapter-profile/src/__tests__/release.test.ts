@@ -1,14 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { PLUGIN_ID, RELEASE_PACKAGES } from '@dsh-workbench/shared/host';
 import { createFakeShell, type ShellCall, type ShellReply } from '@dsh-workbench/shared/testing';
-import {
-  isNewerVersion,
-  latestVersion,
-  missingReleaseParts,
-  parseLedgerVersion,
-  probeRelease,
-  resetReleaseCache,
-} from '../index.js';
+import { createReleasePort, isNewerVersion, parseLedgerVersion } from '../index.js';
+
+const release = createReleasePort({ cacheDir: '/tmp/wb-release-cache', prefix: '/tmp/wb-release-prefix' });
+const { latestVersion, missingReleaseParts, probeRelease } = release;
+const resetReleaseCache = release.reset;
 
 afterEach(() => {
   resetReleaseCache();
