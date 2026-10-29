@@ -1,35 +1,35 @@
 import type { BinNeed, LibNeed, SupplyPort } from '@dsh-workbench/shared/host';
 import type { HostOs } from '@dsh-workbench/shared';
 import type { SelfUpdateRequest } from '@dsh-workbench/shared/host';
-import type { NpmSource } from '@dsh-workbench/shared/host';
 import {
   binInstallCommand,
-  libInstallCommand,
-  libUninstallCommand,
-  readBundleManager,
-  refusalReason,
-  runtimeLayoutOf,
-} from '@dsh-workbench/shared/host';
-import { createRegistryNotebook, isNewerVersion, latestVersion, missingReleaseParts, probeRelease } from '@dsh-workbench/adapter-profile';
-import {
+  createRegistryLookup,
+  createReleaseProbe,
   declarationGaps,
   declarationRefusalOf,
+  isNewerVersion,
+  libInstallCommand,
+  libUninstallCommand,
   moduleDeclarationOf,
-  packageRouteOf,
   pathDeclarationOf,
-  pluginInstallPlan,
   profileDirOf,
   profileModules,
+  readBundleManager,
   readInstalledModule,
   readProfilePackage,
-  registryDeclarationOf,
-  resolvePluginSource,
+  refusalReason,
+  runtimeLayoutOf,
   splitNpmSpec,
-} from '@dsh-workbench/adapter-supply';
+} from '@dsh-workbench/shared/host';
+import type { NpmSource } from '@dsh-workbench/shared/host';
 
 export const CHROME_MCP_RUNTIME_ID = 'chrome-mcp';
 
 const layout = runtimeLayoutOf(CHROME_MCP_RUNTIME_ID);
+const release = createReleaseProbe();
+const registry = createRegistryLookup();
+
+const NO_PLUGINS = { ok: false, problem: 'not-declared' } as const;
 
 export function createSupplyPort(): SupplyPort {
   const port = {
@@ -42,23 +42,27 @@ export function createSupplyPort(): SupplyPort {
     refusalReason,
     readInstalledModule,
     readProfilePackage,
-    createRegistryNotebook,
+    createRegistryNotebook: (_dir: string | null) => ({
+      sources: () => [],
+      remember: () => [],
+    }),
     declarationGaps,
     moduleDeclarationOf,
-    registryDeclarationOf,
+    registryDeclarationOf: registry.registryDeclarationOf,
     pathDeclarationOf,
     declarationRefusalOf,
-    latestVersion,
-    missingReleaseParts,
+    latestVersion: release.latestVersion,
+    missingReleaseParts: release.missingReleaseParts,
+    probeRelease: release.probeRelease,
     isNewerVersion,
-    pluginInstallPlan,
-    packageRouteOf,
-    probeRelease,
-    resolvePluginSource,
+    resolvePluginSource: () => NO_PLUGINS,
+    pluginInstallPlan: () => NO_PLUGINS,
+    packageRouteOf: async () => undefined,
     splitNpmSpec,
     libInstallCommand: (options: { need: LibNeed; source: NpmSource; version?: string; env?: NodeJS.ProcessEnv }) =>
       libInstallCommand({ ...options, prefix: layout.libsPrefix }),
-    libUninstallCommand: (options: { need: LibNeed }) => libUninstallCommand({ need: options.need, prefix: layout.libsPrefix }),
+    libUninstallCommand: (options: { need: LibNeed }) =>
+      libUninstallCommand({ need: options.need, prefix: layout.libsPrefix }),
     binInstallCommand: (need: BinNeed, os: HostOs, env?: NodeJS.ProcessEnv) =>
       binInstallCommand(need, os, env ?? process.env, layout.libsPrefix),
     startSelfUpdate: (request: SelfUpdateRequest) => ({

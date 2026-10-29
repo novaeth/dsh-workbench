@@ -3,7 +3,7 @@ export * from './package-route.js';
 export * from './plugin-login-hint.js';
 export * from './plugin-units.js';
 export * from './plugin-tools.js';
-export * from './dsh-plugins.js';
+export { dshPluginsHandler, readDshPlugins } from '@dsh-workbench/shared/host';
 export * from './plugin-catalog.js';
 export * from './plugin-source.js';
 export { OPENCLI_MANIFEST_FILE } from '@dsh-workbench/adapter-runtime';

@@ -14,8 +14,6 @@
     "dist"
   ],
   "dependencies": {
-    "@dsh-workbench/adapter-profile": "workspace:*",
-    "@dsh-workbench/adapter-supply": "workspace:*",
     "@dsh-workbench/shared": "workspace:*",
     "execa": "^10.2.0"
   },

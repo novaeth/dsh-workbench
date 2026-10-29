@@ -2,8 +2,8 @@ import type { DshHostContext } from '@dsh-workbench/shared';
 import type { AdapterSet } from '@dsh-workbench/shared/host';
 import { ADAPTER_SET_API_VERSION, runningVersionOf } from '@dsh-workbench/shared/host';
 
-import { createHostActions } from '@dsh-workbench/adapter-profile';
-import { dshPluginsHandler, profileDirOf } from '@dsh-workbench/adapter-supply';
+import { createHostActions } from '@dsh-workbench/shared/host';
+import { dshPluginsHandler, profileDirOf } from '@dsh-workbench/shared/host';
 import { createMcpClient } from './mcp-client.js';
 import { createMcpDataReader } from './data-reader.js';
 import { createPluginSurface } from './plugin-surface.js';

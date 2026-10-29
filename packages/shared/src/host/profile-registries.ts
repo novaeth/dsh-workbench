@@ -1,42 +1,9 @@
+import type { RegistryEntry, RegistryNotebook } from './adapter-types.js';
+import { normalizeRegistry, sameRegistry, scopeOf } from './adapter-types.js';
 import fs from 'node:fs';
 import path from 'node:path';
-export interface BundleChange {
-  readonly pkg?: string;
-  readonly registry?: string;
-  readonly application?: string;
-  readonly packageResult?: { readonly kind?: string; readonly output?: string };
-  readonly errorDetail?: string;
-}
-
-export interface RegistryEntry {
-  readonly scope: string;
-  readonly registry: string;
-}
-
-export interface RegistryNotebook {
-  sources(): readonly RegistryEntry[];
-  remember(entries: readonly RegistryEntry[]): readonly string[];
-  swapScope?(scope: string, registry: string): () => void;
-}
-
 export const REGISTRY_MARKER =
   '# dsh-workbench 写的：这一行的包只在这个源上（dsh 卸载没有源参数，pnpm 得问得到）';
-
-export function scopeOf(pkg: string): string | null {
-  const slash = pkg.indexOf('/');
-  return pkg.startsWith('@') && slash > 1 ? pkg.slice(0, slash) : null;
-}
-
-export function normalizeRegistry(url: string): string {
-  const trimmed = url.trim();
-  return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
-}
-
-export function sameRegistry(a: string | null | undefined, b: string | null | undefined): boolean {
-  if (a === null || a === undefined || b === null || b === undefined) return false;
-  if (a.trim() === '' || b.trim() === '') return false;
-  return normalizeRegistry(a) === normalizeRegistry(b);
-}
 
 function registryRootOf(name: string, tarball: string): string | null {
   const at = tarball.indexOf(`/${name}/-/`);
@@ -129,13 +96,6 @@ function writeNpmrc(file: string, text: string): void {
   const temp = `${file}.dsh-workbench.tmp`;
   fs.writeFileSync(temp, text, { mode: 0o600 });
   fs.renameSync(temp, file);
-}
-
-export function registryFailure(change: BundleChange): boolean {
-  if (change.application !== 'failed') return false;
-  if (change.packageResult?.kind === 'not-found') return true;
-  const output = change.packageResult?.output ?? change.errorDetail ?? '';
-  return /ERR_PNPM_[A-Z_]*FETCH/.test(output);
 }
 
 export function createRegistryNotebook(dir: string | null): RegistryNotebook {

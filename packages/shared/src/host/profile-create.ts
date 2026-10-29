@@ -1,18 +1,16 @@
 import { existsSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
-import { execa } from 'execa';
-import type { PostResource, RouteHandler } from '@dsh-workbench/shared/host';
-import { quoteShellArg } from '@dsh-workbench/shared/host';
+import type { PostResource, RouteHandler } from './http.js';
+import { quoteShellArg } from './shell-text.js';
 import type {
   ProfileCreateApplied,
   ProfileCreateProfile,
   ProfileCreateSnapshot,
-} from '@dsh-workbench/shared/contract/protocol/profile-create';
-import { PROFILE_CREATE_RESOURCE } from '@dsh-workbench/shared/contract/protocol/profile-create';
+} from '../contract/protocol/profile-create.js';
+import { PROFILE_CREATE_RESOURCE } from '../contract/protocol/profile-create.js';
 
 const PROFILE_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 const BUNDLE = '@dsh-workbench/core';
-const SETUP_TIMEOUT_MS = 10 * 60 * 1000;
 
 export interface ProfileCreateDeps {
   readonly home: string;
@@ -56,34 +54,6 @@ function inside(base: string, path: string): boolean {
   return target === root ? false : target.startsWith(`${root}${sep}`);
 }
 
-async function defaultRunSetup(
-  packageRoot: string,
-  env: Readonly<Record<string, string>>,
-): Promise<{ ok: boolean; log: string }> {
-  const bin = join(packageRoot, 'bin', 'dsh-workbench');
-  let log = '';
-  const collect = (chunk: Buffer): void => {
-    log = `${log}${chunk.toString('utf8')}`.slice(-20_000);
-  };
-  try {
-    const child = execa('bash', [bin, 'setup'], {
-      cwd: packageRoot,
-      env: { ...process.env, ...env },
-      stdio: ['ignore', 'pipe', 'pipe'],
-      timeout: SETUP_TIMEOUT_MS,
-      reject: false,
-      windowsHide: true,
-    });
-    child.stdout?.on('data', collect);
-    child.stderr?.on('data', collect);
-    const result = await child;
-    if (result.timedOut) return { ok: false, log: `${log}\n创建超时` };
-    return { ok: result.exitCode === 0, log };
-  } catch (error) {
-    return { ok: false, log: `${log}\n${error instanceof Error ? error.message : String(error)}` };
-  }
-}
-
 export async function profileCreateApply(
   deps: ProfileCreateDeps,
   payload: unknown,
@@ -111,7 +81,10 @@ export async function profileCreateApply(
     WB_CLONE: '1',
     WB_COPY_SETTINGS: flags.settings ? '1' : '0',
   };
-  const setup = deps.runSetup ?? ((next) => defaultRunSetup(deps.packageRoot, next));
+  const setup = deps.runSetup;
+  if (setup === undefined) {
+    return { ok: false, text: '这台机器上没有装工作台的脚本入口，建不了新的工作台。' };
+  }
   const cleanup = (): void => {
     try {
       if (inside(profilesDir, join(profilesDir, profile))) rmSync(join(profilesDir, profile), { recursive: true, force: true });

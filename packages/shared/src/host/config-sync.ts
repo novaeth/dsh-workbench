@@ -1,8 +1,8 @@
 import { existsSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { PostResource, RouteHandler } from '@dsh-workbench/shared/host';
-import type { ConfigSyncProfile, ConfigSyncRow, ConfigSyncSnapshot } from '@dsh-workbench/shared/contract/protocol/config-sync';
-import { CONFIG_SYNC_RESOURCE } from '@dsh-workbench/shared/contract/protocol/config-sync';
+import type { PostResource, RouteHandler } from './http.js';
+import type { ConfigSyncProfile, ConfigSyncRow, ConfigSyncSnapshot } from '../contract/protocol/config-sync.js';
+import { CONFIG_SYNC_RESOURCE } from '../contract/protocol/config-sync.js';
 
 export interface PatchBlock {
   readonly key: string;

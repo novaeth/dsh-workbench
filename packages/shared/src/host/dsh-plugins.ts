@@ -1,6 +1,6 @@
-import type { DshHostContext } from '@dsh-workbench/shared';
-import type { RouteHandler } from '@dsh-workbench/shared/host';
-import type { DshPluginRow, DshPluginsSnapshot } from '@dsh-workbench/shared/contract/protocol/dsh-plugins';
+import type { DshHostContext } from '../api/dsh.js';
+import type { RouteHandler } from './http.js';
+import type { DshPluginRow, DshPluginsSnapshot } from '../contract/protocol/dsh-plugins.js';
 
 const MANAGER_SERVICE = 'pluginManager';
 

@@ -29,6 +29,21 @@ export * from './host/package-content.js';
 export * from './host/package-route.js';
 export * from './host/lib-install.js';
 export * from './host/module-root.js';
+export * from './host/dsh-plugins.js';
+export * from './host/profile-registries.js';
+export * from './host/host-actions.js';
+export {
+  configSyncAction,
+  configSyncApply,
+  configSyncHandler,
+  configSyncSnapshot,
+  mergeBlocks,
+  normalizeBlock,
+  readPatchBlocks,
+  syncRows,
+  type ConfigSyncDeps,
+} from './host/config-sync.js';
+export * from './host/profile-create.js';
 export * from './host/context-ref.js';
 export * from './host/diy-debug.js';
 export * from './host/diy-record.js';
