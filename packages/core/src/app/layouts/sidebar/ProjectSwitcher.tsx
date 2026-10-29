@@ -1,6 +1,6 @@
 import { Fragment, createElement as h, useMemo, useState } from 'react';
 import type { ReactNode, SelectFieldOption, Translate, WorkspaceView } from '@dsh-workbench/shared';
-import type { Attention } from '@/modules/sessions';
+import { attentionListRank, type Attention } from '@/modules/sessions';
 import styles from './ProjectSwitcher.module.css';
 import { SelectField, cx } from '@dsh-workbench/shared';
 import {
@@ -35,12 +35,16 @@ export function ProjectSwitcher({ items, current, attention, compact = false, on
   const byId = useMemo(() => new Map(items.map((workspace) => [workspace.workspaceId, workspace])), [items]);
   const sections = useMemo(
     () =>
-      workspaceSections(items, {
-        workspaces: t('project.group.workspaces'),
-        defaultWorkspace: t('project.group.defaultWorkspace'),
-        workshop: t('project.group.workshop'),
-      }),
-    [items, t],
+      workspaceSections(
+        items,
+        {
+          workspaces: t('project.group.workspaces'),
+          defaultWorkspace: t('project.group.defaultWorkspace'),
+          workshop: t('project.group.workshop'),
+        },
+        { rankOf: (workspace) => attentionListRank(attention.byWorkspace.get(workspace.workspaceId)) },
+      ),
+    [items, attention.byWorkspace, t],
   );
   const options = useMemo(
     () =>

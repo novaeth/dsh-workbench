@@ -15,9 +15,14 @@ export interface WorkspaceSectionPlan<T> {
   readonly items: readonly T[];
 }
 
+export interface WorkspaceSectionOptions<T> {
+  readonly rankOf?: ((item: T) => number) | undefined;
+}
+
 export function workspaceSections<T extends { readonly path: string; readonly title: string }>(
   items: readonly T[],
   headings: WorkspaceHeadings,
+  options: WorkspaceSectionOptions<T> = {},
 ): readonly WorkspaceSectionPlan<T>[] {
   const workspaces: T[] = [];
   const defaults: T[] = [];
@@ -27,20 +32,19 @@ export function workspaceSections<T extends { readonly path: string; readonly ti
     else if (item.title === DEFAULT_WORKSPACE_TITLE) defaults.push(item);
     else workspaces.push(item);
   }
+  const rankOf = options.rankOf;
+  const ordered = (rows: readonly T[]): readonly T[] =>
+    rankOf === undefined ? rows : [...rows].sort((left, right) => rankOf(left) - rankOf(right));
   const special = defaults.length > 0 || workshop.length > 0;
   const sections: WorkspaceSectionPlan<T>[] = [];
   if (workspaces.length > 0) {
-    sections.push({
-      id: 'workspaces',
-      heading: special ? headings.workspaces : null,
-      items: workspaces,
-    });
+    sections.push({ id: 'workspaces', heading: special ? headings.workspaces : null, items: ordered(workspaces) });
   }
   if (defaults.length > 0) {
-    sections.push({ id: 'defaultWorkspace', heading: headings.defaultWorkspace, items: defaults });
+    sections.push({ id: 'defaultWorkspace', heading: headings.defaultWorkspace, items: ordered(defaults) });
   }
   if (workshop.length > 0) {
-    sections.push({ id: 'workshop', heading: headings.workshop, items: workshop });
+    sections.push({ id: 'workshop', heading: headings.workshop, items: ordered(workshop) });
   }
   return sections;
 }

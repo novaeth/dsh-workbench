@@ -13,6 +13,7 @@ export {
 export { scrollEdgesOf, type ScrollEdges } from './model/scroll-edges';
 export {
   attentionLabel,
+  attentionListRank,
   attentionOf,
   attentionOfSession,
   attentionSessionIdOf,

@@ -9,6 +9,7 @@ import type {
 } from '@dsh-workbench/shared';
 import {
   attentionLabel,
+  attentionListRank,
   attentionOf,
   attentionOfSession,
   attentionSessionIdOf,
@@ -471,5 +472,22 @@ describe('attentionLabel 与 attentionWordLabel', () => {
     expect(attentionWordLabel({ severity: 'warning', count: 1 }, t)).toBe('project.attention.state.warning');
     expect(attentionWordLabel({ severity: 'ongoing', count: 2 }, t)).toBe('project.attention.state.running');
     expect(attentionWordLabel({ severity: 'done', count: 1 }, t)).toBe('project.attention.state.done');
+  });
+});
+
+describe('attentionListRank：列表里的先后（待审批 → 通知 → 在跑 → 无状态）', () => {
+  it('★★ 四档各归各的位次', () => {
+    expect(attentionListRank({ severity: 'warning', count: 1 })).toBe(0);
+    expect(attentionListRank({ severity: 'done', count: 1 })).toBe(1);
+    expect(attentionListRank({ severity: 'ongoing', count: 1 })).toBe(2);
+    expect(attentionListRank(null)).toBe(3);
+    expect(attentionListRank(undefined)).toBe(3);
+  });
+
+  it('★ 待审批永远排最前（这是要人现在就看的那一档）', () => {
+    const ranks = (['ongoing', 'done', 'warning'] as const).map((severity) =>
+      attentionListRank({ severity, count: 1 }),
+    );
+    expect(Math.min(...ranks)).toBe(attentionListRank({ severity: 'warning', count: 1 }));
   });
 });

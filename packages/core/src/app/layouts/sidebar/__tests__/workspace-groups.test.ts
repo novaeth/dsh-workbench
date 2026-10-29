@@ -64,3 +64,29 @@ describe('workspaceSections', () => {
     expect(workspaceSections([], HEADINGS)).toEqual([]);
   });
 });
+
+describe('workspaceSections：按「待审批 → 通知 → 在跑 → 无状态」排', () => {
+  const rankOf = (item: { readonly path: string }): number => RANKS[item.path] ?? 3;
+  const RANKS: Record<string, number> = {
+    '/a/approval': 0,
+    '/a/fresh': 1,
+    '/a/running': 2,
+  };
+
+  it('★★ 四条状态各一条时，顺序按优先级来（与传进来的顺序无关）', () => {
+    const rows = [at('/a/idle', 'idle'), at('/a/running', 'running'), at('/a/fresh', 'fresh'), at('/a/approval', 'approval')];
+    const sections = workspaceSections(rows, HEADINGS, { rankOf });
+    expect(sections[0]?.items.map((item) => item.title)).toEqual(['approval', 'fresh', 'running', 'idle']);
+  });
+
+  it('★ 同一档里保持传进来的先后（稳定排序，不按名字乱动）', () => {
+    const rows = [at('/a/b', 'b'), at('/a/a', 'a'), at('/c/c', 'c')];
+    const sections = workspaceSections(rows, HEADINGS, { rankOf });
+    expect(sections[0]?.items.map((item) => item.title)).toEqual(['b', 'a', 'c']);
+  });
+
+  it('不给 rankOf 就原样（老行为一个字不改）', () => {
+    const rows = [at('/a/idle', 'idle'), at('/a/approval', 'approval')];
+    expect(workspaceSections(rows, HEADINGS)[0]?.items).toEqual(rows);
+  });
+});

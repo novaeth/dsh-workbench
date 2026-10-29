@@ -49,6 +49,12 @@ export interface AttentionInput {
 
 const RANK: Record<AttentionSeverity, number> = { warning: 2, done: 1, ongoing: 0 };
 
+const LIST_ORDER: Record<AttentionSeverity, number> = { warning: 0, done: 1, ongoing: 2 };
+
+export function attentionListRank(attention: WorkspaceAttention | null | undefined): number {
+  return attention === null || attention === undefined ? 3 : LIST_ORDER[attention.severity];
+}
+
 const SENTENCES: Record<AttentionSeverity, { readonly one: string; readonly other: string }> = {
   warning: { one: 'project.attention.warning.one', other: 'project.attention.warning.other' },
   ongoing: { one: 'project.attention.running.one', other: 'project.attention.running.other' },
