@@ -237,12 +237,12 @@ const PLUGIN_UNIT: UnitManifest = {
     {
       name: 'inventory_build',
       writes: true,
-      opencli: { plugin: 'inventory', command: 'build', args: ['enterprise', 'wait'] },
+      runtime: { plugin: 'inventory', command: 'build', args: ['enterprise', 'wait'] },
     },
     {
       name: 'inventory_builds',
       writes: false,
-      opencli: { plugin: 'inventory', command: 'builds', args: ['job'] },
+      runtime: { plugin: 'inventory', command: 'builds', args: ['job'] },
     },
   ],
   host: { inject: [] },

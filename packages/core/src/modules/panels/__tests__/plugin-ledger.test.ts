@@ -20,9 +20,9 @@ function fileOf(): string {
   return path.join(root, '_machine', 'panels', PLUGIN_LEDGER_FILE);
 }
 
-function rawOf(): { entries: readonly { opencliHome: string; package: string }[] } {
+function rawOf(): { entries: readonly { home: string; package: string }[] } {
   return JSON.parse(fs.readFileSync(fileOf(), 'utf8')) as {
-    entries: readonly { opencliHome: string; package: string }[];
+    entries: readonly { home: string; package: string }[];
   };
 }
 
@@ -43,7 +43,7 @@ describe('opencli 插件台账：机器级配置那一套（_machine/panels/plug
     expect(fs.existsSync(fileOf())).toBe(true);
     const [entry] = ledger.list();
     expect(entry).toMatchObject({
-      opencliHome: HOME_A,
+      home: HOME_A,
       package: 'opencli-plugin-inventory',
       registry: 'https://r.example/team/',
     });
@@ -66,7 +66,7 @@ describe('opencli 插件台账：机器级配置那一套（_machine/panels/plug
     expect(a.read('opencli-plugin-inventory')).toBeUndefined();
     expect(b.read('opencli-plugin-inventory')?.registry).toBe('https://other.example/');
     expect(rawOf().entries).toEqual([
-      expect.objectContaining({ opencliHome: HOME_B, package: 'opencli-plugin-inventory' }),
+      expect.objectContaining({ home: HOME_B, package: 'opencli-plugin-inventory' }),
     ]);
   });
 
@@ -99,8 +99,8 @@ describe('opencli 插件台账：机器级配置那一套（_machine/panels/plug
       fileOf(),
       JSON.stringify({
         entries: [
-          { opencliHome: HOME_A, package: 'good', installedAt: '2026-10-14T00:00:00.000Z' },
-          { opencliHome: HOME_A, package: 'no-time' },
+          { home: HOME_A, package: 'good', installedAt: '2026-10-14T00:00:00.000Z' },
+          { home: HOME_A, package: 'no-time' },
           { package: 'no-home', installedAt: '2026-10-14T00:00:00.000Z' },
           'nonsense',
           null,

@@ -218,7 +218,7 @@ function faceOf(
     tools: unit.tools.map((tool) => ({
       name: tool.name,
       writes: pluginToolWrites(tool.command),
-      opencli: {
+      runtime: {
         plugin: unit.plugin,
         command: tool.command.name,
         args: tool.command.args.map((arg) => arg.name),

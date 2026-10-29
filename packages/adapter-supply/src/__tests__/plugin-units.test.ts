@@ -35,7 +35,7 @@ const COMMANDS = [
 
 type Face = {
   unit: string;
-  manifest: { id: string; tools: readonly { name: string; writes: boolean; opencli: { plugin: string; command: string; args: readonly string[] } }[] };
+  manifest: { id: string; tools: readonly { name: string; writes: boolean; runtime: { plugin: string; command: string; args: readonly string[] } }[] };
   mount(deps: unknown): { registerTools?: () => readonly unknown[]; routes?: unknown };
 };
 
@@ -90,7 +90,7 @@ describe('插件命令合成为工具：协议要求的那几条行为', () => {
     expect(manifest?.tools.map((tool) => tool.name).sort()).toEqual(['inventory_build', 'inventory_builds']);
     expect(manifest?.tools.find((tool) => tool.name === 'inventory_build')?.writes).toBe(true);
     expect(manifest?.tools.find((tool) => tool.name === 'inventory_builds')?.writes).toBe(false);
-    expect(manifest?.tools.find((tool) => tool.name === 'inventory_build')?.opencli).toEqual({
+    expect(manifest?.tools.find((tool) => tool.name === 'inventory_build')?.runtime).toEqual({
       plugin: 'inventory',
       command: 'build',
       args: ['enterprise'],

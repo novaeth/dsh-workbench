@@ -64,7 +64,7 @@ export function createPluginLedger(options: {
       const registry = intent.registry?.trim() ?? '';
       save(
         withPluginEntry(all(), {
-          opencliHome: home,
+          home,
           package: intent.package,
           installedAt: new Date().toISOString(),
           ...(registry === '' ? {} : { registry }),

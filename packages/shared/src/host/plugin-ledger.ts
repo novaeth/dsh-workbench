@@ -3,7 +3,7 @@ import type { ModuleStore } from './workspace-store.js';
 export const PLUGIN_LEDGER_FILE = 'plugins.json';
 
 export interface PluginLedgerEntry {
-  readonly opencliHome: string;
+  readonly home: string;
   readonly package: string;
   readonly name?: string;
   readonly registry?: string;
@@ -13,10 +13,10 @@ export interface PluginLedgerEntry {
 }
 
 export function ledgerKeyOf(entry: {
-  readonly opencliHome: string;
+  readonly home: string;
   readonly package: string;
 }): string {
-  return `${entry.opencliHome}\u0000${entry.package}`;
+  return `${entry.home}\u0000${entry.package}`;
 }
 
 function textOf(value: unknown): string | undefined {
@@ -28,15 +28,15 @@ function textOf(value: unknown): string | undefined {
 function entryOf(value: unknown): PluginLedgerEntry | undefined {
   if (typeof value !== 'object' || value === null) return undefined;
   const box = value as Readonly<Record<string, unknown>>;
-  const opencliHome = textOf(box['opencliHome']);
+  const home = textOf(box['home']) ?? textOf(box['opencliHome']);
   const pkg = textOf(box['package']);
   const installedAt = textOf(box['installedAt']);
-  if (opencliHome === undefined || pkg === undefined || installedAt === undefined) return undefined;
+  if (home === undefined || pkg === undefined || installedAt === undefined) return undefined;
   const name = textOf(box['name']);
   const registry = textOf(box['registry']);
   const releasedAt = textOf(box['releasedAt']);
   return {
-    opencliHome,
+    home,
     package: pkg,
     installedAt,
     ...(name === undefined ? {} : { name }),
@@ -74,9 +74,9 @@ export function writePluginLedger(store: ModuleStore, entries: readonly PluginLe
 
 export function pluginEntriesOfHome(
   entries: readonly PluginLedgerEntry[],
-  opencliHome: string,
+  home: string,
 ): PluginLedgerEntry[] {
-  return entries.filter((entry) => entry.opencliHome === opencliHome);
+  return entries.filter((entry) => entry.home === home);
 }
 
 export function isHeldEntry(entry: PluginLedgerEntry): boolean {
@@ -85,30 +85,30 @@ export function isHeldEntry(entry: PluginLedgerEntry): boolean {
 
 export function heldEntriesOfHome(
   entries: readonly PluginLedgerEntry[],
-  opencliHome: string,
+  home: string,
 ): PluginLedgerEntry[] {
-  return pluginEntriesOfHome(entries, opencliHome).filter(isHeldEntry);
+  return pluginEntriesOfHome(entries, home).filter(isHeldEntry);
 }
 
 export function heldEntryOfPlugin(
   entries: readonly PluginLedgerEntry[],
-  opencliHome: string,
+  home: string,
   plugin: string,
 ): PluginLedgerEntry | undefined {
   const key = plugin.trim();
   if (key === '') return undefined;
-  return heldEntriesOfHome(entries, opencliHome).find(
+  return heldEntriesOfHome(entries, home).find(
     (entry) => entry.name === key || entry.package === key,
   );
 }
 
 export function withReleasedEntry(
   entries: readonly PluginLedgerEntry[],
-  opencliHome: string,
+  home: string,
   pkg: string,
   releasedAt: string,
 ): PluginLedgerEntry[] {
-  const entry = pluginEntryOf(entries, opencliHome, pkg);
+  const entry = pluginEntryOf(entries, home, pkg);
   if (entry === undefined || entry.releasedAt !== undefined) return [...entries];
   return withPluginEntry(entries, { ...entry, releasedAt });
 }
@@ -127,10 +127,10 @@ export function pluginRetentionOf(options: {
 
 export function pluginEntryOf(
   entries: readonly PluginLedgerEntry[],
-  opencliHome: string,
+  home: string,
   pkg: string,
 ): PluginLedgerEntry | undefined {
-  const key = ledgerKeyOf({ opencliHome, package: pkg });
+  const key = ledgerKeyOf({ home, package: pkg });
   return entries.find((entry) => ledgerKeyOf(entry) === key);
 }
 
@@ -144,9 +144,9 @@ export function withPluginEntry(
 
 export function withoutPluginEntry(
   entries: readonly PluginLedgerEntry[],
-  opencliHome: string,
+  home: string,
   pkg: string,
 ): PluginLedgerEntry[] {
-  const key = ledgerKeyOf({ opencliHome, package: pkg });
+  const key = ledgerKeyOf({ home, package: pkg });
   return entries.filter((entry) => ledgerKeyOf(entry) !== key);
 }

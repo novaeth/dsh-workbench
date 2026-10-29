@@ -180,10 +180,10 @@ describe('healthHandler', () => {
   it('★ 运行时状态按名字放进 runtimes（外壳不再拼 opencli 这个键）', () => {
     const { ctx } = fakeCtx();
     const payload = healthHandler(ctx, {
-      opencli: { command: '/x/opencli', source: 'isolated', isolated: '/x/opencli' },
+      runtime: { command: '/x/opencli', source: 'isolated', isolated: '/x/opencli' },
     })(new URLSearchParams()) as Record<string, unknown>;
     expect(payload.runtimes).toEqual({
-      opencli: { command: '/x/opencli', source: 'isolated', isolated: '/x/opencli' },
+      runtime: { command: '/x/opencli', source: 'isolated', isolated: '/x/opencli' },
     });
     expect(payload.opencli).toBeUndefined();
   });

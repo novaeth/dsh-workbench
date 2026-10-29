@@ -13,7 +13,7 @@ const HOME = '/h/workbench/opencli/home';
 
 function entry(over: Partial<PluginLedgerEntry> = {}): PluginLedgerEntry {
   return {
-    opencliHome: HOME,
+    home: HOME,
     package: 'opencli-plugin-inventory',
     installedAt: '2026-10-14T00:00:00.000Z',
     ...over,
@@ -44,11 +44,11 @@ describe('台账条目的「放手」那一笔', () => {
   });
 
   it('另一个 home 的那一笔不受影响（隔离 wrapper 会换 home）', () => {
-    const other = entry({ opencliHome: '/h/global/opencli/home' });
+    const other = entry({ home: '/h/global/opencli/home' });
     const released = withReleasedEntry([entry(), other], HOME, 'opencli-plugin-inventory', '2026-10-15T00:00:00.000Z');
 
-    expect(released.find((item) => item.opencliHome !== HOME)?.releasedAt).toBeUndefined();
-    expect(heldEntriesOfHome(released, other.opencliHome)).toHaveLength(1);
+    expect(released.find((item) => item.home !== HOME)?.releasedAt).toBeUndefined();
+    expect(heldEntriesOfHome(released, other.home)).toHaveLength(1);
   });
 
   it('★ 按插件名找"用户持着的"那一份：插件名与包名两边都认（§3.4 那条映射）', () => {
@@ -67,8 +67,8 @@ describe('台账条目的「放手」那一笔', () => {
   });
 
   it('键还是「home + 包名」（同一份文件里两个 home 不互相撒谎）', () => {
-    expect(ledgerKeyOf({ opencliHome: '/a', package: 'x' })).not.toBe(
-      ledgerKeyOf({ opencliHome: '/b', package: 'x' }),
+    expect(ledgerKeyOf({ home: '/a', package: 'x' })).not.toBe(
+      ledgerKeyOf({ home: '/b', package: 'x' }),
     );
   });
 });
@@ -90,5 +90,18 @@ describe('物理去留：由谁主张说话（动作与结果分层那条）', (
 
   it('★ 引用可信 + 没人主张 → 这才是唯一敢删的那一格', () => {
     expect(pluginRetentionOf({ held: false, claimedBy: [], trustworthy: true })).toBe('remove');
+  });
+});
+
+describe('落盘字段改名后的老台账', () => {
+  it('★ 老文件里的 opencliHome 还认（改名不动数据）', () => {
+    const entries = parsePluginLedger({
+      entries: [
+        { opencliHome: '/dsh/home-a', package: 'demo', installedAt: '2026-10-14T00:00:00.000Z' },
+        { home: '/dsh/home-b', package: 'other', installedAt: '2026-10-14T00:00:00.000Z' },
+      ],
+    });
+
+    expect(entries.map((entry) => entry.home)).toEqual(['/dsh/home-a', '/dsh/home-b']);
   });
 });

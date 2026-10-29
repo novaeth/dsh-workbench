@@ -25,9 +25,9 @@ export interface UnitCard {
 }
 
 /**
- * 合成工具背后那条 opencli 命令：插件名与命令名都是 opencli 那边的原名，`args` 是命令自己声明的参数名（按声明顺序）。
+ * 合成工具背后那条运行时命令：插件名与命令名都是运行时那边的原名，`args` 是命令自己声明的参数名（按声明顺序）。
  */
-export interface UnitToolOpencli {
+export interface UnitToolRuntime {
   readonly plugin: string;
   readonly command: string;
   readonly args: readonly string[];
@@ -35,12 +35,12 @@ export interface UnitToolOpencli {
 
 /**
  * 一条工具在清单里的样子：全名加会不会写；审批按 writes 认领。
- * `opencli` 只有「按已装插件合成」的单元写，手写模块的工具没有这一格。
+ * `runtime` 只有「按已装插件合成」的单元写，手写模块的工具没有这一格。
  */
 export interface UnitTool {
   readonly name: string;
   readonly writes: boolean;
-  readonly opencli?: UnitToolOpencli;
+  readonly runtime?: UnitToolRuntime;
 }
 
 /**

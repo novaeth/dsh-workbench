@@ -209,7 +209,7 @@ function faceOf(plugin: string, commands: readonly CannedCommand[]): UnitOwnedFa
       tools: mine.map((command) => ({
         name: `${plugin}_${command.name}`,
         writes: command.access !== 'read',
-        opencli: { plugin, command: command.name, args: (command.args ?? []).map((arg) => arg.name) },
+        runtime: { plugin, command: command.name, args: (command.args ?? []).map((arg) => arg.name) },
       })),
       host: { inject: [] },
     } as never,

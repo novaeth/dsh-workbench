@@ -1,5 +1,5 @@
 import { Fragment, createElement as h, useEffect, useState } from 'react';
-import type { ApprovalInput, ReactNode, Translate, UnitManifest, UnitToolOpencli } from '@dsh-workbench/shared';
+import type { ApprovalInput, ReactNode, Translate, UnitManifest, UnitToolRuntime } from '@dsh-workbench/shared';
 import { APPROVAL_NOTE_ARG, ApprovalPlan } from '@dsh-workbench/shared';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import type { MarketSourcesPayload, PublishChangelog, PublishPreview } from '@/kernel/contract/market-index';
@@ -327,12 +327,12 @@ function MarketSourceApprovalSeat({
 
 export function pluginToolIndexOf(
   manifests: readonly UnitManifest[],
-): ReadonlyMap<string, UnitToolOpencli> {
-  const index = new Map<string, UnitToolOpencli>();
+): ReadonlyMap<string, UnitToolRuntime> {
+  const index = new Map<string, UnitToolRuntime>();
   for (const manifest of manifests) {
     for (const tool of manifest.tools) {
-      if (tool.opencli === undefined) continue;
-      index.set(tool.name, tool.opencli);
+      if (tool.runtime === undefined) continue;
+      index.set(tool.name, tool.runtime);
     }
   }
   return index;
@@ -346,7 +346,7 @@ function argText(value: unknown): string {
 }
 
 export function pluginApprovalRows(
-  origin: UnitToolOpencli,
+  origin: UnitToolRuntime,
   args: Readonly<Record<string, unknown>>,
   t: Translate,
 ): readonly ApprovalRow[] {
@@ -392,7 +392,7 @@ function stopApprovalRows(
 export function shellApprovalPlan(
   input: ApprovalInput,
   t: Translate,
-  pluginTools?: ReadonlyMap<string, UnitToolOpencli> | undefined,
+  pluginTools?: ReadonlyMap<string, UnitToolRuntime> | undefined,
 ): ApprovalPlanView | undefined {
   const origin = pluginTools?.get(input.tool);
   if (origin !== undefined) return { rows: pluginApprovalRows(origin, input.args, t) };
@@ -411,7 +411,7 @@ export function shellApprovalPlan(
 export function shellApprovalDetail(
   input: ApprovalInput,
   t: Translate,
-  pluginTools?: ReadonlyMap<string, UnitToolOpencli> | undefined,
+  pluginTools?: ReadonlyMap<string, UnitToolRuntime> | undefined,
 ): ReactNode {
   if (input.tool === DIY_PUBLISH_TOOL) return h(PublishApprovalSeat, { args: input.args, t });
   if (input.tool === MARKET_ENABLE_TOOL || input.tool === MARKET_DISABLE_TOOL) {

@@ -127,7 +127,7 @@ const PLUGIN_UNIT: UnitManifest = {
     {
       name: PLUGIN_TOOL,
       writes: true,
-      opencli: { plugin: 'inventory', command: 'build', args: ['enterprise'] },
+      runtime: { plugin: 'inventory', command: 'build', args: ['enterprise'] },
     },
   ],
   host: { inject: [] },

@@ -22,7 +22,7 @@ describe('外壳读口路由：一张表交出去，不让 app/host.ts 继续长
     const routes = createHostRoutes({
       ctx,
       facts: createFactLog(),
-      runtimes: { opencli: { command: 'opencli', source: 'path', isolated: null } },
+      runtimes: { runtime: { command: 'opencli', source: 'path', isolated: null } },
       running: undefined,
       profile,
     });
@@ -36,7 +36,7 @@ describe('外壳读口路由：一张表交出去，不让 app/host.ts 继续长
     const routes = createHostRoutes({
       ctx,
       facts: createFactLog(),
-      runtimes: { opencli: { command: 'opencli', source: 'path', isolated: null } },
+      runtimes: { runtime: { command: 'opencli', source: 'path', isolated: null } },
       running: undefined,
       profile,
     });
