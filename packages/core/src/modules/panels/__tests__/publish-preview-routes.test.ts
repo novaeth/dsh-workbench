@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { marketSourceKey } from '@dsh-workbench/shared/host';
 import type { MarketIndexEntry, PublishPreview } from '@/kernel/contract/market-index';
 import { MARKET_PUBLISH_PREVIEW_ROUTE } from '@/kernel/contract/market-index';
+import type { GitRunner } from '@/shared/api/host/git-process';
 import { localGitIdentityOf } from '@/shared/api/host/diy-publish-preview';
 import { publishPreviewRoutes } from '../model/publish-preview-routes';
 
@@ -116,32 +117,22 @@ describe('发布预览的只读路由', () => {
   });
 
   it('本机 git 身份：读 git config 的 name / email，缺 email 就只给姓名', async () => {
-    const shell = (outputs: readonly string[]): unknown => {
+    const runner = (outputs: readonly string[]): GitRunner => {
       let index = 0;
-      return {
-        resolve: (request: unknown) => request,
-        async execute() {
-          const text = outputs[index] ?? '';
-          index += 1;
-          return {
-            result: async () => ({
-              exitCode: 0,
-              timedOut: false,
-              aborted: false,
-              stdout: { text, truncated: false },
-              stderr: { text: '', truncated: false },
-            }),
-          };
-        },
+      return async () => {
+        const text = outputs[index] ?? '';
+        index += 1;
+        return { exitCode: 0, stdout: text, stderr: '', timedOut: false };
       };
     };
 
-    expect(await localGitIdentityOf(shell(['陈康\n', 'kang@example.com\n']) as never, '/w/demo')).toBe(
+    expect(await localGitIdentityOf('/w/demo', runner(['陈康\n', 'kang@example.com\n']))).toBe(
       '陈康 <kang@example.com>',
     );
-    expect(await localGitIdentityOf(shell(['陈康\n', '']) as never, '/w/demo')).toBe('陈康');
-    expect(await localGitIdentityOf(shell(['', '']) as never, '/w/demo')).toBeUndefined();
-    expect(await localGitIdentityOf(undefined, '/w/demo')).toBeUndefined();
+    expect(await localGitIdentityOf('/w/demo', runner(['陈康\n', '']))).toBe('陈康');
+    expect(await localGitIdentityOf('/w/demo', runner(['', '']))).toBeUndefined();
+    const failed: GitRunner = async () => ({ exitCode: 1, stdout: '', stderr: 'no git', timedOut: false });
+    expect(await localGitIdentityOf('/w/demo', failed)).toBeUndefined();
   });
 
   it('带 changelog 参数就预览将要写进去的那一段（pending），这一版已有就预览已落盘那段', async () => {

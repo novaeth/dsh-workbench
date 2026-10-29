@@ -11,6 +11,11 @@ import type {
 
 dayjs.extend(localizedFormat);
 
+export function localeNow(): string {
+  if (typeof document === 'undefined') return 'zh';
+  return document.documentElement.lang || navigator.language || 'zh';
+}
+
 export type DiscoverSort = 'default' | 'published';
 
 export const DISCOVER_PAGE_SIZE = 50;

@@ -16,8 +16,15 @@ import {
   DiscoverUninitialized,
 } from './discover-states';
 import { useDiscover } from './use-discover';
+import type { DiscoverController } from './use-discover';
 import { sourceLabelsOf, unfiltered } from './discover-view';
 import styles from './MarketPage.module.css';
+
+function readFailureOf(d: DiscoverController, t: Translate, failed: boolean): string | null {
+  if (d.loading || !failed) return null;
+  if (d.problem?.kind === 'sandbox') return d.problem.detail.trim() === '' ? t('panels.discover.sandbox') : d.problem.detail;
+  return d.payload?.state === 'invalid' ? t('panels.discover.invalid') : t('panels.discover.unreadable');
+}
 
 export interface DiscoverPanelProps {
   readonly t: Translate;
@@ -81,12 +88,7 @@ export function DiscoverPanel({ t, active, onInstalled, onShowInstalled }: Disco
     body = <DiscoverNoSource t={t} onAdd={() => d.setManageOpen(true)} />;
   } else {
     const failed = d.payload.state === 'invalid' || d.payload.state === 'unreadable';
-    const readFailed =
-      !d.loading && failed
-        ? d.payload.state === 'invalid'
-          ? t('panels.discover.invalid')
-          : t('panels.discover.unreadable')
-        : null;
+    const readFailed = readFailureOf(d, t, failed);
     const uninitialized = d.loading ? null : d.uninitialized;
     const retrying = d.loading && failed;
     const emptyText = unfiltered({ query: d.query, category: d.category, labels: d.selectedLabels })

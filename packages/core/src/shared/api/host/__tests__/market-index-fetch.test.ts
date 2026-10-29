@@ -2,8 +2,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { DshShell } from '@dsh-workbench/shared';
 import type { MarketSourceConfig } from '@dsh-workbench/shared/contract/protocol/market-index';
+import type { GitRunner } from '../git-process';
 import { createMarketIndexReader } from '../market-index-fetch';
 import { createMarketSourcesStore } from '../market-sources-store';
 
@@ -38,29 +38,24 @@ function responseOf(text: string, status = 200): Response {
   } as unknown as Response;
 }
 
-function fakeShell(reply: (command: string) => { exitCode: number; stdout?: string; stderr?: string }) {
-  const calls: string[] = [];
-  const shell = {
-    resolve(request: { command: string }) {
-      calls.push(request.command);
-      return { command: request.command };
-    },
-    async execute(spec: { command: string }) {
-      const outcome = reply(spec.command);
-      return {
-        async result() {
-          return {
-            exitCode: outcome.exitCode,
-            timedOut: false,
-            aborted: false,
-            stdout: { text: outcome.stdout ?? '', truncated: false },
-            stderr: { text: outcome.stderr ?? '', truncated: false },
-          };
-        },
-      };
-    },
-  } as unknown as DshShell;
-  return { shell, calls };
+interface GitCall {
+  readonly args: readonly string[];
+  readonly cwd?: string;
+}
+
+function fakeGit(reply: (args: readonly string[]) => { exitCode: number; stdout?: string; stderr?: string }) {
+  const calls: GitCall[] = [];
+  const runGit: GitRunner = async (args, options = {}) => {
+    calls.push({ args, ...(options.cwd === undefined ? {} : { cwd: options.cwd }) });
+    const outcome = reply(args);
+    return {
+      exitCode: outcome.exitCode,
+      stdout: outcome.stdout ?? '',
+      stderr: outcome.stderr ?? '',
+      timedOut: false,
+    };
+  };
+  return { runGit, calls };
 }
 
 describe('createMarketIndexReader', () => {
@@ -128,19 +123,19 @@ describe('createMarketIndexReader', () => {
       metadata: { labels: ['workbench'] },
       versions: [{ version: '0.1.0', source: { type: 'npm' }, publishTimestamp: 1_760_000_000 }],
     };
-    const fake = fakeShell((command) => {
-      if (command.includes('git clone')) return { exitCode: 0 };
-      if (command.includes('ls-tree')) {
+    const fake = fakeGit((args) => {
+      if (args[0] === 'clone') return { exitCode: 0 };
+      if (args[0] === 'ls-tree') {
         return {
           exitCode: 0,
           stdout: `100644 blob ${'c'.repeat(40)}\tmarket/@scope/module-x.json\n100644 blob ${'d'.repeat(40)}\tmarket/README.md\n`,
         };
       }
-      if (command.includes('rev-parse')) return { exitCode: 0, stdout: `${commit}\n` };
-      if (command.includes(' fetch ')) return { exitCode: 0 };
+      if (args[0] === 'rev-parse') return { exitCode: 0, stdout: `${commit}\n` };
+      if (args[0] === 'fetch') return { exitCode: 0 };
       return { exitCode: 0, stdout: JSON.stringify(doc) };
     });
-    const reader = createMarketIndexReader({ root, shell: fake.shell, now: () => 1000 });
+    const reader = createMarketIndexReader({ root, runGit: fake.runGit, now: () => 1000 });
     const outcome = await reader.read(gitSource());
     expect(outcome.ok).toBe(true);
     if (!outcome.ok) return;
@@ -149,45 +144,70 @@ describe('createMarketIndexReader', () => {
     expect(outcome.index.plugins[0]?.versions).toEqual([
       { version: '0.1.0', source: { type: 'npm' }, publishTimestamp: 1_760_000_000 },
     ]);
-    expect(fake.calls[0]).toContain("git clone --bare --depth 1 --branch 'main'");
-    expect(fake.calls.every((line) => line.includes('GIT_TERMINAL_PROMPT=0'))).toBe(true);
-    expect(fake.calls.every((line) => line.includes('GIT_ASKPASS='))).toBe(true);
-    expect(fake.calls.every((line) => line.includes('SSH_ASKPASS_REQUIRE=never'))).toBe(true);
-    expect(fake.calls.some((line) => line.includes('ls-tree') && line.includes(commit))).toBe(true);
+    expect(fake.calls[0]?.args.slice(0, 6)).toEqual(['clone', '--bare', '--depth', '1', '--branch', 'main']);
+    expect(fake.calls[0]?.args[6]).toBe('https://git.company.com/wb/market.git');
+    expect(fake.calls[0]?.args[7]).toContain('repo.git');
+    expect(fake.calls.some((one) => one.args[0] === 'ls-tree' && one.args.includes(commit))).toBe(true);
     expect(
-      fake.calls.some((line) => line.includes('show') && line.includes('market/@scope/module-x.json')),
+      fake.calls.some(
+        (one) => one.args[0] === 'show' && one.args[1] === `${commit}:market/@scope/module-x.json`,
+      ),
     ).toBe(true);
+    expect(fake.calls.every((one) => one.args[0] === 'clone' || one.cwd !== undefined)).toBe(true);
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it('git 写不进缓存时单独报 sandbox，而不是网络错误', async () => {
+    const root = tempRoot();
+    const fake = fakeGit((args) => {
+      if (args[0] === 'clone') {
+        return {
+          exitCode: 128,
+          stderr:
+            "Cloning into bare repository 'repo.git'...\nfatal: could not create work tree dir: Operation not permitted",
+        };
+      }
+      return { exitCode: 0 };
+    });
+    const reader = createMarketIndexReader({ root, runGit: fake.runGit, now: () => 1000 });
+    const outcome = await reader.read(gitSource());
+    expect(outcome.ok).toBe(false);
+    if (outcome.ok) return;
+    expect(outcome.problem.kind).toBe('sandbox');
+    expect(outcome.problem.detail).toContain('可写根');
     rmSync(root, { recursive: true, force: true });
   });
 
   it('老仓库只有 market.json（没有条目目录）时按单文件读，不报缺索引', async () => {
     const root = tempRoot();
     const commit = 'e'.repeat(40);
-    const fake = fakeShell((command) => {
-      if (command.includes('git clone')) return { exitCode: 0 };
-      if (command.includes('ls-tree')) return { exitCode: 0, stdout: '' };
-      if (command.includes('rev-parse')) return { exitCode: 0, stdout: `${commit}\n` };
-      if (command.includes('show')) return { exitCode: 0, stdout: JSON.stringify(INDEX) };
+    const fake = fakeGit((args) => {
+      if (args[0] === 'clone') return { exitCode: 0 };
+      if (args[0] === 'ls-tree') return { exitCode: 0, stdout: '' };
+      if (args[0] === 'rev-parse') return { exitCode: 0, stdout: `${commit}\n` };
+      if (args[0] === 'show') return { exitCode: 0, stdout: JSON.stringify(INDEX) };
       return { exitCode: 0 };
     });
-    const reader = createMarketIndexReader({ root, shell: fake.shell, now: () => 1000 });
+    const reader = createMarketIndexReader({ root, runGit: fake.runGit, now: () => 1000 });
     const outcome = await reader.read(gitSource());
     expect(outcome.ok).toBe(true);
     if (!outcome.ok) return;
     expect(outcome.index.plugins[0]?.name).toBe('@scope/module-x');
-    expect(fake.calls.some((line) => line.includes('show') && line.includes('market.json'))).toBe(true);
+    expect(fake.calls.some((one) => one.args[0] === 'show' && one.args[1] === `${commit}:market.json`)).toBe(true);
     rmSync(root, { recursive: true, force: true });
   });
 
   it('空仓库报 git-empty，并带上仓库默认分支', async () => {
     const root = tempRoot();
-    const fake = fakeShell((command) => {
-      if (command.includes('git clone')) return { exitCode: 0 };
-      if (command.includes('symbolic-ref')) return { exitCode: 0, stdout: 'trunk\n' };
-      if (command.includes('rev-parse')) return { exitCode: 128, stderr: 'fatal: Needed a single revision' };
+    const fake = fakeGit((args) => {
+      if (args[0] === 'clone') return { exitCode: 0 };
+      if (args[0] === 'symbolic-ref') return { exitCode: 0, stdout: 'trunk\n' };
+      if (args[0] === 'rev-parse' && args[1] === '--verify') {
+        return { exitCode: 128, stderr: 'fatal: Needed a single revision' };
+      }
       return { exitCode: 0 };
     });
-    const reader = createMarketIndexReader({ root, shell: fake.shell, now: () => 1000 });
+    const reader = createMarketIndexReader({ root, runGit: fake.runGit, now: () => 1000 });
     const outcome = await reader.read(gitSource());
     expect(outcome.ok).toBe(false);
     if (outcome.ok) return;
@@ -199,17 +219,17 @@ describe('createMarketIndexReader', () => {
   it('仓库有提交但既没有条目目录也没有 market.json 时报 git-missing-index', async () => {
     const root = tempRoot();
     const commit = 'b'.repeat(40);
-    const fake = fakeShell((command) => {
-      if (command.includes('git clone')) return { exitCode: 0 };
-      if (command.includes('symbolic-ref')) return { exitCode: 0, stdout: 'main\n' };
-      if (command.includes('rev-parse')) return { exitCode: 0, stdout: `${commit}\n` };
-      if (command.includes('ls-tree')) return { exitCode: 0, stdout: '' };
-      if (command.includes('show')) {
+    const fake = fakeGit((args) => {
+      if (args[0] === 'clone') return { exitCode: 0 };
+      if (args[0] === 'symbolic-ref') return { exitCode: 0, stdout: 'main\n' };
+      if (args[0] === 'rev-parse') return { exitCode: 0, stdout: `${commit}\n` };
+      if (args[0] === 'ls-tree') return { exitCode: 0, stdout: '' };
+      if (args[0] === 'show') {
         return { exitCode: 1, stderr: "fatal: path 'market.json' does not exist in 'HEAD'" };
       }
       return { exitCode: 0 };
     });
-    const reader = createMarketIndexReader({ root, shell: fake.shell, now: () => 1000 });
+    const reader = createMarketIndexReader({ root, runGit: fake.runGit, now: () => 1000 });
     const outcome = await reader.read(gitSource());
     expect(outcome.ok).toBe(false);
     if (outcome.ok) return;
@@ -218,9 +238,12 @@ describe('createMarketIndexReader', () => {
     rmSync(root, { recursive: true, force: true });
   });
 
-  it('没有 git 执行缝时单独报 git-missing', async () => {
+  it('git 跑不起来时报 git-missing', async () => {
     const root = tempRoot();
-    const reader = createMarketIndexReader({ root });
+    const runGit: GitRunner = async () => {
+      throw new Error('spawn git ENOENT');
+    };
+    const reader = createMarketIndexReader({ root, runGit, now: () => 1000 });
     const outcome = await reader.read(gitSource());
     expect(outcome.ok).toBe(false);
     if (outcome.ok) return;

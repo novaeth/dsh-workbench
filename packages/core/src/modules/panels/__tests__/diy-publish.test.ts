@@ -5,6 +5,7 @@ import { marketSourceKey } from '@dsh-workbench/shared/host';
 import type { MarketSourceConfig } from '@/kernel/contract/market-index';
 import { panelsApprovalFor } from '../model/approval';
 import { PUBLISH_TIMEOUT_MS, registerPublishTool } from '../model/diy-publish';
+import type { GitRunner } from '@/shared/api/host/git-process';
 import { inferredAuthorOf, publishPreviewOf } from '@/shared/api/host/diy-publish-preview';
 import { DIY_PUBLISH_TOOL } from '../unit';
 import { createDiyRig } from './diy-harness';
@@ -317,24 +318,13 @@ describe('workbench_diy_publish · 没写作者时推断署名', () => {
     setAuthor(rig.scaffold('two'), '乙 <b@example.com>');
     const outputs = ['陈康\n', 'kang@example.com\n'];
     let index = 0;
-    const shell = {
-      resolve: (request: unknown) => request,
-      async execute() {
-        const text = outputs[index] ?? '';
-        index += 1;
-        return {
-          result: async () => ({
-            exitCode: 0,
-            timedOut: false,
-            aborted: false,
-            stdout: { text, truncated: false },
-            stderr: { text: '', truncated: false },
-          }),
-        };
-      },
+    const runGit: GitRunner = async () => {
+      const text = outputs[index] ?? '';
+      index += 1;
+      return { exitCode: 0, stdout: text, stderr: '', timedOut: false };
     };
 
-    expect(await withHome(() => inferredAuthorOf(rig.WORKSHOP(), 'demo', shell as never))).toBe(
+    expect(await withHome(() => inferredAuthorOf(rig.WORKSHOP(), 'demo', runGit))).toBe(
       '陈康 <kang@example.com>',
     );
   });

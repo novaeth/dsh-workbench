@@ -147,3 +147,9 @@ _Avoid_: 环境、env
 自更新日志，`workbench` profile 是 `~/.dsh/workbench`。它**不**装会话与项目。
 凭据（`~/.dsh/.credentials.yaml`）跟所有 profile **有意共享**。
 _Avoid_: 数据根（会跟共用的 `~/.dsh` 混）、沙箱、sandbox
+
+**执行缝（shell seam）**：dsh 的 `shell` 服务（`ctx.get('shell')` → `resolve` / `execute`），
+`runShell` 是它外面那层薄适配。命令从这儿跑，就带上 dsh 的**文件沙箱**、超时与输出截断；
+插件发起的调用没有会话，按**部署策略**判可写根。它管的是「替 agent 跑的命令」，不是
+「插件自己的状态」—— 后者在进程内写（ADR-0093）。
+_Avoid_: 接缝（那是两侧各自的入口）、bash 工具（agent 的入口，最终也走它）、沙箱（那是缝后面的判定）

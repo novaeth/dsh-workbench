@@ -1,56 +1,55 @@
 import { describe, expect, it } from 'vitest';
-import type { DshShell } from '@dsh-workbench/shared';
+import type { GitRunner } from '../git-process';
 import { probeGitAddress, classifyGitProbe } from '../git-probe';
 
-function shellOf(result: { exitCode: number | null; stderr?: string; stdout?: string; timedOut?: boolean }): {
-  readonly shell: DshShell;
-  readonly calls: string[];
+function gitOf(result: { exitCode: number | null; stderr?: string; stdout?: string; timedOut?: boolean }): {
+  readonly runGit: GitRunner;
+  readonly calls: (readonly string[])[];
 } {
-  const calls: string[] = [];
-  const shell = {
-    resolve(spec: { command: string }) {
-      calls.push(spec.command);
-      return spec;
-    },
-    async execute() {
-      return {
-        result: async () => ({
-          exitCode: result.exitCode,
-          timedOut: result.timedOut === true,
-          aborted: false,
-          stdout: { text: result.stdout ?? '', truncated: false },
-          stderr: { text: result.stderr ?? '', truncated: false },
-        }),
-      };
-    },
-  } as unknown as DshShell;
-  return { shell, calls };
+  const calls: (readonly string[])[] = [];
+  const runGit: GitRunner = async (args) => {
+    calls.push(args);
+    return {
+      exitCode: result.exitCode,
+      timedOut: result.timedOut === true,
+      stdout: result.stdout ?? '',
+      stderr: result.stderr ?? '',
+    };
+  };
+  return { runGit, calls };
 }
 
 describe('装之前的 git 体检', () => {
-  it('通了只回 ok，并且全程禁掉问人', async () => {
-    const fake = shellOf({ exitCode: 0 });
-    await expect(probeGitAddress(fake.shell, 'ssh://git@host/a/b.git')).resolves.toEqual({ status: 'ok' });
-    const line = fake.calls[0] ?? '';
-    expect(line).toContain('git');
-    expect(line).toContain('ls-remote');
-    expect(line).toContain('GIT_TERMINAL_PROMPT=0');
-    expect(line).toContain('GIT_ASKPASS=');
+  it('通了只回 ok，参数里没有问人的口子', async () => {
+    const fake = gitOf({ exitCode: 0 });
+    await expect(probeGitAddress('ssh://git@host/a/b.git', { runGit: fake.runGit })).resolves.toEqual({
+      status: 'ok',
+    });
+    expect(fake.calls[0]).toEqual(['ls-remote', 'ssh://git@host/a/b.git', 'HEAD']);
   });
 
   it('缺凭据归成 auth，并留一句 stderr 给人看', async () => {
-    const fake = shellOf({
+    const fake = gitOf({
       exitCode: 128,
       stderr: "fatal: could not read Username for 'https://host': terminal prompts disabled\n",
     });
-    const outcome = await probeGitAddress(fake.shell, 'https://host/a/b.git');
+    const outcome = await probeGitAddress('https://host/a/b.git', { runGit: fake.runGit });
     expect(outcome.status).toBe('auth');
     expect(outcome.detail).toContain('terminal prompts disabled');
   });
 
   it('连不上和要凭证分得开', async () => {
-    const fake = shellOf({ exitCode: 128, stderr: 'ssh: Could not resolve hostname nope\n' });
-    await expect(probeGitAddress(fake.shell, 'ssh://git@nope/a/b.git')).resolves.toMatchObject({
+    const fake = gitOf({ exitCode: 128, stderr: 'ssh: Could not resolve hostname nope\n' });
+    await expect(probeGitAddress('ssh://git@nope/a/b.git', { runGit: fake.runGit })).resolves.toMatchObject({
+      status: 'unreachable',
+    });
+  });
+
+  it('git 跑不起来也算连不上，不抛给界面', async () => {
+    const runGit: GitRunner = async () => {
+      throw new Error('spawn git ENOENT');
+    };
+    await expect(probeGitAddress('https://host/a/b.git', { runGit })).resolves.toMatchObject({
       status: 'unreachable',
     });
   });

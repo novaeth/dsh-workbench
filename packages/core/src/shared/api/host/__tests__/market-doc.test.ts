@@ -2,8 +2,8 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { DshShell } from '@dsh-workbench/shared';
 import type { MarketSourceConfig } from '@dsh-workbench/shared/contract/protocol/market-index';
+import type { GitRunner } from '../git-process';
 import { createMarketDocReader } from '../market-doc';
 
 const COMMIT = 'a'.repeat(40);
@@ -12,29 +12,24 @@ function gitSource(): MarketSourceConfig {
   return { id: 'team', label: '团队', kind: 'git', url: 'https://git.company.com/wb/market.git' };
 }
 
-function fakeShell(reply: (command: string) => { exitCode: number; stdout?: string; stderr?: string }) {
-  const calls: string[] = [];
-  const shell = {
-    resolve(request: { command: string }) {
-      calls.push(request.command);
-      return { command: request.command };
-    },
-    async execute(spec: { command: string }) {
-      const outcome = reply(spec.command);
-      return {
-        async result() {
-          return {
-            exitCode: outcome.exitCode,
-            timedOut: false,
-            aborted: false,
-            stdout: { text: outcome.stdout ?? '', truncated: false },
-            stderr: { text: outcome.stderr ?? '', truncated: false },
-          };
-        },
-      };
-    },
-  } as unknown as DshShell;
-  return { shell, calls };
+interface GitCall {
+  readonly args: readonly string[];
+  readonly cwd?: string;
+}
+
+function fakeGit(reply: (args: readonly string[]) => { exitCode: number; stdout?: string; stderr?: string }) {
+  const calls: GitCall[] = [];
+  const runGit: GitRunner = async (args, options = {}) => {
+    calls.push({ args, ...(options.cwd === undefined ? {} : { cwd: options.cwd }) });
+    const outcome = reply(args);
+    return {
+      exitCode: outcome.exitCode,
+      stdout: outcome.stdout ?? '',
+      stderr: outcome.stderr ?? '',
+      timedOut: false,
+    };
+  };
+  return { runGit, calls };
 }
 
 function responseOf(body: unknown, status = 200): Response {
@@ -48,14 +43,14 @@ function responseOf(body: unknown, status = 200): Response {
 describe('createMarketDocReader：git 源从索引仓库的产物目录里读', () => {
   it('读 <commit>:<path>/CHANGELOG.md，并按 commit + 路径缓存', async () => {
     const root = mkdtempSync(join(tmpdir(), 'wb-market-doc-'));
-    const fake = fakeShell((command) => {
-      expect(command).toContain('repo.git');
-      expect(command).toContain(`${COMMIT}:`);
-      expect(command).toContain('CHANGELOG.md');
+    const fake = fakeGit((args) => {
+      expect(args[0]).toBe('show');
+      expect(args[1]).toContain(`${COMMIT}:`);
+      expect(args[1]).toContain('CHANGELOG.md');
       return { exitCode: 0, stdout: '### ✨ 新增\n\n- 一条\n' };
     });
     try {
-      const reader = createMarketDocReader({ root, shell: fake.shell });
+      const reader = createMarketDocReader({ root, runGit: fake.runGit });
       const target = {
         name: '@demo/probe',
         version: '0.1.0',
@@ -64,7 +59,8 @@ describe('createMarketDocReader：git 源从索引仓库的产物目录里读', 
       const first = await reader.read(gitSource(), target, 'changelog');
       expect(first).toEqual({ ok: true, kind: 'changelog', version: '0.1.0', text: '### ✨ 新增\n\n- 一条\n' });
       await reader.read(gitSource(), target, 'changelog');
-      expect(fake.calls.filter((one) => one.includes('show '))).toHaveLength(1);
+      expect(fake.calls.filter((one) => one.args[0] === 'show')).toHaveLength(1);
+      expect(fake.calls[0]?.cwd).toContain('repo.git');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -73,22 +69,22 @@ describe('createMarketDocReader：git 源从索引仓库的产物目录里读', 
   it('★ 本地浅克隆里没有那个产物 commit（发布刚推上去）→ 按 commit 取回来再读，不把整页判成没有内容', async () => {
     const root = mkdtempSync(join(tmpdir(), 'wb-market-doc-'));
     let fetched = false;
-    const fake = fakeShell((command) => {
-      if (command.includes('show ')) {
+    const fake = fakeGit((args) => {
+      if (args[0] === 'show') {
         if (!fetched) {
           return { exitCode: 128, stderr: `fatal: path 'packages/probe/README.md' does not exist in '${COMMIT}'` };
         }
         return { exitCode: 0, stdout: '# 说明\n' };
       }
-      if (command.includes('cat-file -e')) return { exitCode: fetched ? 0 : 1 };
-      if (command.includes('fetch --depth 1 origin')) {
+      if (args[0] === 'cat-file') return { exitCode: fetched ? 0 : 1 };
+      if (args[0] === 'fetch') {
         fetched = true;
         return { exitCode: 0 };
       }
-      return { exitCode: 1, stderr: `unexpected: ${command}` };
+      return { exitCode: 1, stderr: `unexpected: ${args.join(' ')}` };
     });
     try {
-      const reader = createMarketDocReader({ root, shell: fake.shell });
+      const reader = createMarketDocReader({ root, runGit: fake.runGit });
       const target = {
         name: '@demo/probe',
         version: '0.1.0',
@@ -101,8 +97,8 @@ describe('createMarketDocReader：git 源从索引仓库的产物目录里读', 
         version: '0.1.0',
         text: '# 说明\n',
       });
-      expect(fake.calls.filter((one) => one.includes('fetch --depth 1 origin'))).toHaveLength(1);
-      expect(fake.calls.join('\n')).toContain(COMMIT);
+      expect(fake.calls.filter((one) => one.args[0] === 'fetch')).toHaveLength(1);
+      expect(fake.calls.map((one) => one.args.join(' ')).join('\n')).toContain(COMMIT);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -110,25 +106,25 @@ describe('createMarketDocReader：git 源从索引仓库的产物目录里读', 
 
   it('产物里没有这个文件 → missing；读不到仓库 → unavailable', async () => {
     const root = mkdtempSync(join(tmpdir(), 'wb-market-doc-'));
-    const missing = fakeShell(() => ({
+    const missing = fakeGit(() => ({
       exitCode: 1,
       stderr: `fatal: path 'packages/probe/README.md' does not exist in '${COMMIT}'`,
     }));
-    const broken = fakeShell(() => ({ exitCode: 1, stderr: 'fatal: not a git repository' }));
+    const broken = fakeGit(() => ({ exitCode: 1, stderr: 'fatal: not a git repository' }));
     try {
       const target = {
         name: '@demo/probe',
         version: '0.1.0',
         source: { type: 'git' as const, url: gitSource().url, commit: COMMIT, path: 'packages/probe' },
       };
-      const reader = createMarketDocReader({ root, shell: missing.shell });
+      const reader = createMarketDocReader({ root, runGit: missing.runGit });
       expect(await reader.read(gitSource(), target, 'readme')).toEqual({
         ok: false,
         kind: 'readme',
         version: '0.1.0',
         reason: 'missing',
       });
-      const other = createMarketDocReader({ root, shell: broken.shell });
+      const other = createMarketDocReader({ root, runGit: broken.runGit });
       const failed = await other.read(gitSource(), target, 'changelog');
       expect(failed.ok).toBe(false);
       if (failed.ok) return;
@@ -141,7 +137,7 @@ describe('createMarketDocReader：git 源从索引仓库的产物目录里读', 
   it('读失败不记进缓存：下一次还会再试一次（浅克隆/网络这类毛病能自己好，不用重启）', async () => {
     const root = mkdtempSync(join(tmpdir(), 'wb-market-doc-'));
     let attempt = 0;
-    const flaky = fakeShell(() => {
+    const flaky = fakeGit(() => {
       attempt += 1;
       return attempt <= 3
         ? { exitCode: 128, stderr: 'fatal: not a git repository' }
@@ -153,7 +149,7 @@ describe('createMarketDocReader：git 源从索引仓库的产物目录里读', 
         version: '0.1.0',
         source: { type: 'git' as const, url: gitSource().url, commit: COMMIT, path: 'packages/probe' },
       };
-      const reader = createMarketDocReader({ root, shell: flaky.shell });
+      const reader = createMarketDocReader({ root, runGit: flaky.runGit });
       const first = await reader.read(gitSource(), target, 'readme');
       expect(first.ok).toBe(false);
       expect(await reader.read(gitSource(), target, 'readme')).toEqual({

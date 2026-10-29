@@ -15,6 +15,7 @@ import * as diyTools from './checks/diy-tools.mjs';
 import * as gateChain from './checks/gate-chain.mjs';
 import * as kernelShape from './checks/kernel-shape.mjs';
 import * as platform from './checks/platform.mjs';
+import * as marketSeam from './checks/market-seam.mjs';
 
 const MODULES = [
   host,
@@ -34,6 +35,7 @@ const MODULES = [
   gateChain,
   kernelShape,
   platform,
+  marketSeam,
 ];
 
 const results = [];

@@ -19,6 +19,7 @@ import {
   DISCOVER_PAGE_SIZE,
   displayTitleOf,
   filterEntries,
+  localeNow,
   sortEntries,
   sourceFromUrl,
   visibleEntries,
@@ -28,11 +29,6 @@ import {
 interface InstallTarget {
   readonly entry: DiscoverEntry;
   readonly version: DiscoverVersionRow;
-}
-
-function localeNow(): string {
-  if (typeof document === 'undefined') return 'zh';
-  return document.documentElement.lang || navigator.language || 'zh';
 }
 
 const SHIPPED: readonly string[] = ['applied', 'restart-required', 'overridden'];
@@ -240,8 +236,10 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
   const detailEntry = useMemo(() => entries.find((entry) => entry.name === detail) ?? null, [entries, detail]);
   const problem = useMemo(() => {
     if (payload?.problem === undefined || payload.selected === null) return null;
-    return { id: payload.selected, kind: payload.problem.kind, detail: payload.problem.detail ?? '' };
-  }, [payload]);
+    const detail =
+      payload.problem.detail ?? (payload.problem.kind === 'sandbox' ? t('panels.discover.sandbox') : '');
+    return { id: payload.selected, kind: payload.problem.kind, detail };
+  }, [payload, t]);
 
   const selectedSource = useMemo(
     () =>

@@ -1,12 +1,13 @@
 import { join } from 'node:path';
-import type { DshShell } from '@dsh-workbench/shared';
 import type {
   DiscoverDoc,
   DiscoverDocKind,
   MarketIndexSource,
   MarketSourceConfig,
 } from '@dsh-workbench/shared/contract/protocol/market-index';
-import { marketSourceKey, quoteShellArg, runShell } from '@dsh-workbench/shared/host';
+import { marketSourceKey } from '@dsh-workbench/shared/host';
+import type { GitRunner } from './git-process.js';
+import { runGitProcess } from './git-process.js';
 
 export interface MarketDocTarget {
   readonly name: string;
@@ -20,7 +21,7 @@ export interface MarketDocReader {
 
 export interface MarketDocReaderOptions {
   readonly root: string;
-  readonly shell?: DshShell | undefined;
+  readonly runGit?: GitRunner | undefined;
   readonly fetchImpl?: ((url: string, init: RequestInit) => Promise<Response>) | undefined;
   readonly timeoutMs?: number | undefined;
   readonly maxBytes?: number | undefined;
@@ -54,6 +55,7 @@ export function createMarketDocReader(options: MarketDocReaderOptions): MarketDo
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES;
   const fetchImpl = options.fetchImpl ?? globalThis.fetch;
+  const runGit = options.runGit ?? runGitProcess;
   const cache = new Map<string, DiscoverDoc>();
 
   function fail(kind: DiscoverDocKind, version: string, reason: 'missing' | 'unavailable', detail?: string): DiscoverDoc {
@@ -72,32 +74,21 @@ export function createMarketDocReader(options: MarketDocReaderOptions): MarketDo
   ): Promise<DiscoverDoc> {
     const git = target.source;
     if (git.type !== 'git') return fail(kind, target.version, 'missing');
-    const shell = options.shell;
-    if (shell === undefined) return fail(kind, target.version, 'unavailable', '没有 git 执行缝');
     const key = `${git.commit}|${git.path ?? ''}|${kind}`;
     const cached = cache.get(key);
     if (cached !== undefined) return cached;
     const directory = (git.path ?? '').replace(/^\/+|\/+$/g, '');
     const file = directory === '' ? FILES[kind] : `${directory}/${FILES[kind]}`;
     const repo = join(options.root, 'market-index', marketSourceKey(source), 'repo.git');
-    const show = () =>
-      runShell(shell, `git -C ${quoteShellArg(repo)} show ${git.commit}:${quoteShellArg(file)}`, { timeoutMs });
+    const show = () => runGit(['show', `${git.commit}:${file}`], { cwd: repo, timeoutMs, maxBytes });
     const hasCommit = async (): Promise<boolean> => {
-      const checked = await runShell(
-        shell,
-        `git -C ${quoteShellArg(repo)} cat-file -e ${quoteShellArg(`${git.commit}^{commit}`)}`,
-        { timeoutMs },
-      );
+      const checked = await runGit(['cat-file', '-e', `${git.commit}^{commit}`], { cwd: repo, timeoutMs });
       return checked.exitCode === 0;
     };
     try {
       let result = await show();
       if (result.exitCode !== 0 && !(await hasCommit())) {
-        const fetched = await runShell(
-          shell,
-          `git -C ${quoteShellArg(repo)} fetch --depth 1 origin ${git.commit}`,
-          { timeoutMs },
-        );
+        const fetched = await runGit(['fetch', '--depth', '1', 'origin', git.commit], { cwd: repo, timeoutMs });
         if (fetched.exitCode === 0) result = await show();
       }
       if (result.exitCode !== 0) {

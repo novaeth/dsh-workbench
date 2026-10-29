@@ -768,12 +768,13 @@
 }
 
 .discoverError {
-  display: inline-flex;
-  align-items: center;
+  display: flex;
+  align-items: flex-start;
   gap: var(--wb-len-6);
   margin: 0;
   font: var(--dsw-font-xs-13);
   color: var(--dsw-alias-state-error-primary);
+  white-space: pre-line;
 }
 
 .discoverFailure {

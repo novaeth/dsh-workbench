@@ -377,6 +377,7 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'panels.discover.noSourceHint': 'Add a module market index (http address or git repository) to browse and install its modules here',
   'panels.discover.sourcesFailed': 'Could not read the index sources.',
   'panels.discover.unreadable': 'Could not read this index.',
+  'panels.discover.sandbox': 'Blocked by the system: this profile does not allow the workbench to write its own cache directory.',
   'panels.discover.sourceAuth': 'This index source could not be read: this machine has no git credentials for it. Set up credentials (or switch the source to its SSH address), then refresh.',
   'panels.discover.invalid': 'This index is not in a valid format.',
   'panels.discover.emptyRepo': 'This repository has no commits yet.',

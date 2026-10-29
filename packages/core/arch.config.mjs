@@ -294,6 +294,14 @@ export default {
           '整棵排除 ⇒ **发布产物里没有它们**。',
       },
       {
+        rule: 'H08',
+        glob: 'src/app/layouts/env-gate/gate-mock.ts',
+        reason:
+          'H08 的私网正则把版本号 `npm@10.9.4` 当成 `10.x.x.x` 地址：这一行是启动页夹具照抄的界面文案' +
+          '（"装本地 npm@10.9.4"），不是地址，这份文件里没有任何内网地址。改夹具去迁就正则就等于' +
+          '让夹具不再像真界面 —— 那是它唯一的用处。',
+      },
+      {
         rule: 'H09',
         glob: 'src/shared/hooks/mock-mode.ts',
         reason:

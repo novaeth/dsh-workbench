@@ -374,6 +374,7 @@ export const zh = {
   'panels.discover.noSourceHint': '添加一个模块市场索引（http 地址或 git 仓库），即可在这里浏览和安装其中的模块',
   'panels.discover.sourcesFailed': '无法读取索引源',
   'panels.discover.unreadable': '无法读取此索引',
+  'panels.discover.sandbox': '被系统拦住了：这个 profile 的可写根盖不住工作台的缓存目录',
   'panels.discover.sourceAuth': '这个索引源读不了：本机没有它的 git 凭据。配好凭据（或在源里改用 SSH 地址），再点右上角的刷新。',
   'panels.discover.invalid': '此索引的格式无效',
   'panels.discover.emptyRepo': '这个仓库还没有任何提交',

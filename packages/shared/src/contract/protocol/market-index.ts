@@ -198,6 +198,7 @@ export interface DiscoverProblem {
     | 'git-file'
     | 'git-empty'
     | 'git-missing-index'
+    | 'sandbox'
     | 'format'
     | 'timeout'
     | 'unknown';

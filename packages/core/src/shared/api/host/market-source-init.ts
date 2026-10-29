@@ -1,6 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import type { DshShell } from '@dsh-workbench/shared';
 import type { MarketSourceConfig } from '@dsh-workbench/shared/contract/protocol/market-index';
 import { MARKET_INDEX_DIR } from '@dsh-workbench/shared/contract/protocol/market-index';
 import {
@@ -10,10 +9,10 @@ import {
   marketEntryFilesOfLegacy,
   marketBranchOk,
   marketSourceKey,
-  quoteShellArg,
-  runShell,
   tailLines,
 } from '@dsh-workbench/shared/host';
+import type { GitRunner } from './git-process';
+import { runGitProcess } from './git-process';
 import type { MarketSourcesStore } from './market-sources-store';
 
 export interface MarketSourceInitRequest {
@@ -35,15 +34,27 @@ export type MarketSourceInitializer = (request: MarketSourceInitRequest) => Prom
 export interface MarketSourceInitOptions {
   readonly root: string;
   readonly store: MarketSourcesStore;
-  readonly shell?: DshShell | undefined;
+  readonly runGit?: GitRunner | undefined;
   readonly timeoutMs?: number | undefined;
 }
 
 const DEFAULT_TIMEOUT_MS = 120 * 1000;
 const CACHE_FILES = ['repo.git', 'index.json', 'meta.json'];
 
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+const SANDBOX_TEXT = '被系统拦住了：这个 profile 的可写根盖不住工作台的缓存目录';
+
+function sandboxBlocked(text: string): boolean {
+  const lower = text.toLowerCase();
+  return lower.includes('operation not permitted') || /\beperm\b/.test(lower);
+}
+
 export function createMarketSourceInitializer(options: MarketSourceInitOptions): MarketSourceInitializer {
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const runGit = options.runGit ?? runGitProcess;
 
   function forget(source: MarketSourceConfig, next: MarketSourceConfig): void {
     const base = join(options.root, 'market-index');
@@ -64,8 +75,6 @@ export function createMarketSourceInitializer(options: MarketSourceInitOptions):
   }
 
   return async (request) => {
-    const shell = options.shell;
-    if (shell === undefined) throw new Error('这台机器上没有 shell 服务，初始化不了索引仓库');
     const source = options.store.read().sources.find((one) => one.id === request.id);
     if (source === undefined) throw new Error('这个索引源已经不在了 —— 刷新后再试');
     if (source.kind !== 'git') throw new Error('只有 git 仓库能初始化成市场索引');
@@ -73,17 +82,20 @@ export function createMarketSourceInitializer(options: MarketSourceInitOptions):
     const asked = (request.ref ?? '').trim();
     if (asked !== '' && !marketBranchOk(asked)) throw new Error(`分支名不合格：${asked}`);
 
-    const git = (argv: readonly string[], workdir?: string) =>
-      runShell(shell, ['git', argv[0], ...argv.slice(1).map((one) => quoteShellArg(one))].join(' '), {
-        ...(workdir === undefined ? {} : { workdir }),
-        timeoutMs,
-      });
+    const git = async (args: readonly string[], workdir?: string) => {
+      try {
+        return await runGit(args, { ...(workdir === undefined ? {} : { cwd: workdir }), timeoutMs });
+      } catch (error) {
+        throw new Error(`git 跑不起来：${messageOf(error)}`, { cause: error });
+      }
+    };
     const workdir = join(options.root, 'market-index', marketSourceKey(source), 'worktree');
     mkdirSync(dirname(workdir), { recursive: true });
     if (!existsSync(join(workdir, '.git'))) {
       const cloned = await git(['clone', source.url, workdir]);
       if (cloned.exitCode !== 0) {
         rmSync(workdir, { recursive: true, force: true });
+        if (sandboxBlocked(cloned.stderr)) throw new Error(SANDBOX_TEXT);
         throw new Error(`索引仓库克隆不下来：${tailLines(cloned.stderr || cloned.stdout, 4)}`);
       }
     }

@@ -126,18 +126,15 @@ export const panelsHost: UnitOwnedFace = {
 
     const marketRoot = workbenchRoot();
     const marketSources = createMarketSourcesStore({ root: marketRoot, ...(logger === undefined ? {} : { logger }) });
-    const marketIndex = createMarketIndexReader({ root: marketRoot, shell, ...(logger === undefined ? {} : { logger }) });
-    const marketDocs = createMarketDocReader({ root: marketRoot, shell, ...(logger === undefined ? {} : { logger }) });
-    const marketInit = createMarketSourceInitializer({
-      root: marketRoot,
-      store: marketSources,
-      ...(shell === undefined ? {} : { shell }),
-    });
+    const marketIndex = createMarketIndexReader({ root: marketRoot, ...(logger === undefined ? {} : { logger }) });
+    const marketDocs = createMarketDocReader({ root: marketRoot, ...(logger === undefined ? {} : { logger }) });
+    const marketInit = createMarketSourceInitializer({ root: marketRoot, store: marketSources });
     const discover = createMarketDiscover({
       store: marketSources,
       reader: marketIndex,
       docs: marketDocs,
       modules: () => supply.profileModules(profileDir),
+      ...(profileDir === null ? {} : { profilePath: profileDir }),
       defaultRegistry: async () => {
         try {
           return (await bundles?.registries())?.resolved ?? undefined;
@@ -165,16 +162,11 @@ export const panelsHost: UnitOwnedFace = {
             dependencyOf: dependencyReader(profileDir),
             isNewer: supply.isNewerVersion,
             preferred: (host) => marketSources.read().transports?.[host],
-            ...(shell === undefined
-              ? {}
-              : {
-                  probe: (url: string) =>
-                    probeGitAddressCached(shell, url, { timeoutMs: 4000 }).then((one) => one.status),
-                }),
+            probe: (url: string) => probeGitAddressCached(url, { timeoutMs: 4000 }).then((one) => one.status),
           }),
         })),
         ...publishPreviewRoutes(workshopPathOf(ctx), (unit) =>
-          inferredAuthorOf(workshopPathOf(ctx), unit, shell),
+          inferredAuthorOf(workshopPathOf(ctx), unit),
         ),
       },
       registerTools: () => [
@@ -190,7 +182,7 @@ export const panelsHost: UnitOwnedFace = {
           panels,
           debug,
           (unit) => publishPreviewOf(workshopPathOf(ctx), unit),
-          (unit) => inferredAuthorOf(workshopPathOf(ctx), unit, shell),
+          (unit) => inferredAuthorOf(workshopPathOf(ctx), unit),
         ),
         ...registerRecordTools(ctx, record),
         ...registerLongTaskTools(ctx, longTaskRuns),

@@ -9,6 +9,7 @@ import type {
   DiscoverFilter,
   DiscoverInstallState,
   DiscoverPayload,
+  DiscoverProblem,
   DiscoverSourceRow,
   DiscoverVersionRow,
   MarketIndex,
@@ -42,6 +43,7 @@ export interface MarketDiscoverOptions {
   readonly docs: MarketDocReader;
   readonly modules: () => readonly ProfileModule[];
   readonly defaultRegistry: () => Promise<string | undefined>;
+  readonly profilePath?: string | undefined;
   readonly shell?: DshShell | undefined;
   readonly shellVersion?: string | undefined;
   readonly fetchImpl?: ((url: string, init: RequestInit) => Promise<Response>) | undefined;
@@ -49,6 +51,22 @@ export interface MarketDiscoverOptions {
   readonly peerTtlMs?: number | undefined;
   readonly timeoutMs?: number | undefined;
   readonly logger?: { warn?(message: string): void } | undefined;
+}
+
+const SANDBOX_BLOCK = [
+  '- id: sandbox-policy',
+  '  config:',
+  "    mode: !!js process.env.DSH_PERMISSION_MODE ?? 'workspace-write'",
+  "    workspaceRoot: !!js dshHomePath('workbench')",
+].join('\n');
+
+function explainProblem(problem: DiscoverProblem, profilePath: string | undefined): DiscoverProblem {
+  if (problem.kind !== 'sandbox' || profilePath === undefined || profilePath === '') return problem;
+  const file = join(profilePath, 'cordis.patch.yml');
+  return {
+    ...problem,
+    detail: `被系统拦住了：这个 profile 的可写根盖不住工作台的缓存目录。\n退出 dsh 后，把下面这段加进 ${file}，再启动：\n${SANDBOX_BLOCK}`,
+  };
 }
 
 const DEFAULT_PEER_TTL_MS = 10 * 60 * 1000;
@@ -239,13 +257,13 @@ export function createMarketDiscover(options: MarketDiscoverOptions): MarketDisc
           sources: rows,
           selected: source.id,
           entries: [],
-          problem: read.problem,
+          problem: explainProblem(read.problem, options.profilePath),
         };
       }
       return {
         ...(await payloadOf(source, read.cached.index, rows, source.id, filter, read.cached.fetchedAt, read.cached.commit)),
         stale: true,
-        problem: read.problem,
+        problem: explainProblem(read.problem, options.profilePath),
       };
     }
     return payloadOf(source, read.index, rows, source.id, filter, read.fetchedAt, read.commit);

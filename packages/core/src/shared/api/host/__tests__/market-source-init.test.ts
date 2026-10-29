@@ -2,9 +2,9 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { DshShell } from '@dsh-workbench/shared';
 import type { MarketSourceConfig } from '@dsh-workbench/shared/contract/protocol/market-index';
 import { marketSourceKey } from '@dsh-workbench/shared/host';
+import type { GitRunner } from '../git-process';
 import { createMarketSourceInitializer } from '../market-source-init';
 import { createMarketSourcesStore } from '../market-sources-store';
 
@@ -18,29 +18,24 @@ function gitSource(): MarketSourceConfig {
   return { id: 'team', label: '市场', kind: 'git', url: 'https://git.example.com/team/market.git' };
 }
 
-function fakeShell(reply: (command: string) => { exitCode: number; stdout?: string; stderr?: string }) {
-  const calls: string[] = [];
-  const shell = {
-    resolve(request: { command: string }) {
-      calls.push(request.command);
-      return { command: request.command };
-    },
-    async execute(spec: { command: string }) {
-      const outcome = reply(spec.command);
-      return {
-        async result() {
-          return {
-            exitCode: outcome.exitCode,
-            timedOut: false,
-            aborted: false,
-            stdout: { text: outcome.stdout ?? '', truncated: false },
-            stderr: { text: outcome.stderr ?? '', truncated: false },
-          };
-        },
-      };
-    },
-  } as unknown as DshShell;
-  return { shell, calls };
+interface GitCall {
+  readonly args: readonly string[];
+  readonly cwd?: string;
+}
+
+function fakeGit(reply: (args: readonly string[]) => { exitCode: number; stdout?: string; stderr?: string }) {
+  const calls: GitCall[] = [];
+  const runGit: GitRunner = async (args, options = {}) => {
+    calls.push({ args, ...(options.cwd === undefined ? {} : { cwd: options.cwd }) });
+    const outcome = reply(args);
+    return {
+      exitCode: outcome.exitCode,
+      stdout: outcome.stdout ?? '',
+      stderr: outcome.stderr ?? '',
+      timedOut: false,
+    };
+  };
+  return { runGit, calls };
 }
 
 describe('createMarketSourceInitializer', () => {
@@ -48,15 +43,17 @@ describe('createMarketSourceInitializer', () => {
     const root = tempRoot();
     const store = createMarketSourcesStore({ root });
     await store.apply({ action: 'save', source: gitSource() });
-    const fake = fakeShell((command) => {
-      if (command.includes('git clone')) return { exitCode: 0 };
-      if (command.includes('--verify')) return { exitCode: 128, stderr: 'fatal: Needed a single revision' };
-      if (command.includes('symbolic-ref')) return { exitCode: 0, stdout: 'trunk\n' };
-      if (command.includes('status')) return { exitCode: 0 };
-      if (command.includes('rev-parse')) return { exitCode: 0, stdout: `${COMMIT}\n` };
+    const fake = fakeGit((args) => {
+      if (args[0] === 'clone') return { exitCode: 0 };
+      if (args[0] === 'rev-parse' && args[1] === '--verify') {
+        return { exitCode: 128, stderr: 'fatal: Needed a single revision' };
+      }
+      if (args[0] === 'symbolic-ref') return { exitCode: 0, stdout: 'trunk\n' };
+      if (args[0] === 'status') return { exitCode: 0 };
+      if (args[0] === 'rev-parse') return { exitCode: 0, stdout: `${COMMIT}\n` };
       return { exitCode: 0 };
     });
-    const init = createMarketSourceInitializer({ root, store, shell: fake.shell });
+    const init = createMarketSourceInitializer({ root, store, runGit: fake.runGit });
     const result = await init({ id: 'team' });
     expect(result.branch).toBe('trunk');
     expect(result.commit).toBe(COMMIT);
@@ -68,7 +65,8 @@ describe('createMarketSourceInitializer', () => {
     const worktree = join(root, 'market-index', marketSourceKey(result.source), 'worktree');
     expect(existsSync(join(worktree, 'market', 'README.md'))).toBe(true);
     expect(existsSync(join(worktree, 'README.md'))).toBe(true);
-    expect(fake.calls.filter((line) => line.includes('push')).length).toBe(1);
+    expect(fake.calls.filter((one) => one.args[0] === 'push').length).toBe(1);
+    expect(fake.calls.every((one) => one.args[0] === 'clone' || one.cwd !== undefined)).toBe(true);
     rmSync(root, { recursive: true, force: true });
   });
 
@@ -79,18 +77,18 @@ describe('createMarketSourceInitializer', () => {
     const oldKey = marketSourceKey(gitSource());
     mkdirSync(join(root, 'market-index', oldKey, 'repo.git'), { recursive: true });
     writeFileSync(join(root, 'market-index', oldKey, 'index.json'), '{"format":1,"plugins":[]}');
-    const fake = fakeShell((command) => {
-      if (command.includes('git clone')) return { exitCode: 0 };
-      if (command.includes('--verify')) return { exitCode: 0 };
-      if (command.includes('--abbrev-ref')) return { exitCode: 0, stdout: 'master\n' };
-      if (command.includes('status')) return { exitCode: 0 };
-      if (command.includes('rev-parse')) return { exitCode: 0, stdout: `${COMMIT}\n` };
+    const fake = fakeGit((args) => {
+      if (args[0] === 'clone') return { exitCode: 0 };
+      if (args[0] === 'rev-parse' && args[1] === '--verify') return { exitCode: 0 };
+      if (args[0] === 'rev-parse' && args[1] === '--abbrev-ref') return { exitCode: 0, stdout: 'master\n' };
+      if (args[0] === 'status') return { exitCode: 0 };
+      if (args[0] === 'rev-parse') return { exitCode: 0, stdout: `${COMMIT}\n` };
       return { exitCode: 0 };
     });
-    const init = createMarketSourceInitializer({ root, store, shell: fake.shell });
+    const init = createMarketSourceInitializer({ root, store, runGit: fake.runGit });
     const result = await init({ id: 'team', ref: 'main' });
     expect(result.branch).toBe('main');
-    expect(fake.calls.some((line) => line.includes('checkout') && line.includes('main'))).toBe(true);
+    expect(fake.calls.some((one) => one.args[0] === 'checkout' && one.args.includes('main'))).toBe(true);
     expect(existsSync(join(root, 'market-index', oldKey))).toBe(false);
     rmSync(root, { recursive: true, force: true });
   });
@@ -99,12 +97,12 @@ describe('createMarketSourceInitializer', () => {
     const root = tempRoot();
     const store = createMarketSourcesStore({ root });
     await store.apply({ action: 'save', source: gitSource() });
-    const fake = fakeShell((command) => {
-      if (command.includes('git clone')) return { exitCode: 0 };
-      if (command.includes('status')) return { exitCode: 0, stdout: ' M market.json\n' };
+    const fake = fakeGit((args) => {
+      if (args[0] === 'clone') return { exitCode: 0 };
+      if (args[0] === 'status') return { exitCode: 0, stdout: ' M market.json\n' };
       return { exitCode: 0 };
     });
-    const init = createMarketSourceInitializer({ root, store, shell: fake.shell });
+    const init = createMarketSourceInitializer({ root, store, runGit: fake.runGit });
     await expect(init({ id: 'team' })).rejects.toThrow(/未提交改动/);
     rmSync(root, { recursive: true, force: true });
   });
@@ -113,8 +111,8 @@ describe('createMarketSourceInitializer', () => {
     const root = tempRoot();
     const store = createMarketSourcesStore({ root });
     await store.apply({ action: 'save', source: gitSource() });
-    const fake = fakeShell(() => ({ exitCode: 0 }));
-    const init = createMarketSourceInitializer({ root, store, shell: fake.shell });
+    const fake = fakeGit(() => ({ exitCode: 0 }));
+    const init = createMarketSourceInitializer({ root, store, runGit: fake.runGit });
     await expect(init({ id: 'team', ref: 'bad name' })).rejects.toThrow(/分支名/);
     expect(fake.calls).toEqual([]);
     rmSync(root, { recursive: true, force: true });
@@ -127,9 +125,24 @@ describe('createMarketSourceInitializer', () => {
       action: 'save',
       source: { id: 'web', label: 'web', kind: 'http', url: 'https://example.com/market.json' },
     });
-    const fake = fakeShell(() => ({ exitCode: 0 }));
-    const init = createMarketSourceInitializer({ root, store, shell: fake.shell });
+    const fake = fakeGit(() => ({ exitCode: 0 }));
+    const init = createMarketSourceInitializer({ root, store, runGit: fake.runGit });
     await expect(init({ id: 'web' })).rejects.toThrow(/git/);
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it('克隆被系统拦住时说「被系统拦住了」，不再贴 git 原文', async () => {
+    const root = tempRoot();
+    const store = createMarketSourcesStore({ root });
+    await store.apply({ action: 'save', source: gitSource() });
+    const fake = fakeGit((args) => {
+      if (args[0] === 'clone') {
+        return { exitCode: 128, stderr: "fatal: could not create work tree dir: Operation not permitted" };
+      }
+      return { exitCode: 0 };
+    });
+    const init = createMarketSourceInitializer({ root, store, runGit: fake.runGit });
+    await expect(init({ id: 'team' })).rejects.toThrow(/被系统拦住了/);
     rmSync(root, { recursive: true, force: true });
   });
 
@@ -148,14 +161,14 @@ describe('createMarketSourceInitializer', () => {
         ],
       }),
     );
-    const fake = fakeShell((command) => {
-      if (command.includes('status')) return { exitCode: 0 };
-      if (command.includes('--verify')) return { exitCode: 0 };
-      if (command.includes('--abbrev-ref')) return { exitCode: 0, stdout: 'main\n' };
-      if (command.includes('rev-parse')) return { exitCode: 0, stdout: `${COMMIT}\n` };
+    const fake = fakeGit((args) => {
+      if (args[0] === 'status') return { exitCode: 0 };
+      if (args[0] === 'rev-parse' && args[1] === '--verify') return { exitCode: 0 };
+      if (args[0] === 'rev-parse' && args[1] === '--abbrev-ref') return { exitCode: 0, stdout: 'main\n' };
+      if (args[0] === 'rev-parse') return { exitCode: 0, stdout: `${COMMIT}\n` };
       return { exitCode: 0 };
     });
-    const init = createMarketSourceInitializer({ root, store, shell: fake.shell });
+    const init = createMarketSourceInitializer({ root, store, runGit: fake.runGit });
     const result = await init({ id: 'team' });
     expect(result.changed).toBe(true);
     const moved = join(root, 'market-index', marketSourceKey(result.source), 'worktree');
@@ -172,20 +185,20 @@ describe('createMarketSourceInitializer', () => {
     mkdirSync(join(worktree, '.git'), { recursive: true });
     mkdirSync(join(worktree, 'market'), { recursive: true });
     writeFileSync(join(worktree, 'market', 'README.md'), 'index\n');
-    const fake = fakeShell((command) => {
-      if (command.includes('status')) return { exitCode: 0 };
-      if (command.includes('--verify')) return { exitCode: 0 };
-      if (command.includes('--abbrev-ref')) return { exitCode: 0, stdout: 'main\n' };
-      if (command.includes('rev-parse')) return { exitCode: 0, stdout: `${COMMIT}\n` };
+    const fake = fakeGit((args) => {
+      if (args[0] === 'status') return { exitCode: 0 };
+      if (args[0] === 'rev-parse' && args[1] === '--verify') return { exitCode: 0 };
+      if (args[0] === 'rev-parse' && args[1] === '--abbrev-ref') return { exitCode: 0, stdout: 'main\n' };
+      if (args[0] === 'rev-parse') return { exitCode: 0, stdout: `${COMMIT}\n` };
       return { exitCode: 0 };
     });
-    const init = createMarketSourceInitializer({ root, store, shell: fake.shell });
+    const init = createMarketSourceInitializer({ root, store, runGit: fake.runGit });
     const result = await init({ id: 'team', stampOnly: true });
     expect(result.source.policy).toBe('artifacts-in-repo');
     expect(result.source.ref).toBe('main');
     expect(result.created).toEqual([]);
     expect(result.changed).toBe(false);
-    expect(fake.calls.some((line) => line.includes('commit') || line.includes('push'))).toBe(false);
+    expect(fake.calls.some((one) => one.args[0] === 'commit' || one.args[0] === 'push')).toBe(false);
     expect(store.read().sources[0]?.policy).toBe('artifacts-in-repo');
     rmSync(root, { recursive: true, force: true });
   });
@@ -205,14 +218,14 @@ describe('createMarketSourceInitializer', () => {
     mkdirSync(join(worktree, '.git'), { recursive: true });
     mkdirSync(join(worktree, 'market'), { recursive: true });
     writeFileSync(join(worktree, 'market', 'README.md'), 'index\n');
-    const fake = fakeShell((command) => {
-      if (command.includes('status')) return { exitCode: 0 };
-      if (command.includes('--verify')) return { exitCode: 0 };
-      if (command.includes('--abbrev-ref')) return { exitCode: 0, stdout: 'main\n' };
-      if (command.includes('rev-parse')) return { exitCode: 0, stdout: `${COMMIT}\n` };
+    const fake = fakeGit((args) => {
+      if (args[0] === 'status') return { exitCode: 0 };
+      if (args[0] === 'rev-parse' && args[1] === '--verify') return { exitCode: 0 };
+      if (args[0] === 'rev-parse' && args[1] === '--abbrev-ref') return { exitCode: 0, stdout: 'main\n' };
+      if (args[0] === 'rev-parse') return { exitCode: 0, stdout: `${COMMIT}\n` };
       return { exitCode: 0 };
     });
-    const init = createMarketSourceInitializer({ root, store, shell: fake.shell });
+    const init = createMarketSourceInitializer({ root, store, runGit: fake.runGit });
 
     const result = await init({ id: 'other', stampOnly: true });
 
@@ -228,15 +241,15 @@ describe('createMarketSourceInitializer', () => {
     await store.apply({ action: 'save', source: gitSource() });
     const worktree = join(root, 'market-index', marketSourceKey(gitSource()), 'worktree');
     mkdirSync(join(worktree, '.git'), { recursive: true });
-    const fake = fakeShell((command) => {
-      if (command.includes('status')) return { exitCode: 0 };
-      if (command.includes('--verify')) return { exitCode: 0 };
-      if (command.includes('--abbrev-ref')) return { exitCode: 0, stdout: 'main\n' };
+    const fake = fakeGit((args) => {
+      if (args[0] === 'status') return { exitCode: 0 };
+      if (args[0] === 'rev-parse' && args[1] === '--verify') return { exitCode: 0 };
+      if (args[0] === 'rev-parse' && args[1] === '--abbrev-ref') return { exitCode: 0, stdout: 'main\n' };
       return { exitCode: 0 };
     });
-    const init = createMarketSourceInitializer({ root, store, shell: fake.shell });
+    const init = createMarketSourceInitializer({ root, store, runGit: fake.runGit });
     await expect(init({ id: 'team', stampOnly: true })).rejects.toThrow(/还没有 market\//);
-    expect(fake.calls.some((line) => line.includes('commit') || line.includes('push'))).toBe(false);
+    expect(fake.calls.some((one) => one.args[0] === 'commit' || one.args[0] === 'push')).toBe(false);
     expect(store.read().sources[0]?.policy).toBeUndefined();
     rmSync(root, { recursive: true, force: true });
   });

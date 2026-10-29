@@ -223,3 +223,37 @@ describe('模块文档', () => {
     expect(doc.reason).toBe('unavailable');
   });
 });
+
+describe('发现域 · 沙箱拦住时给得出怎么修', () => {
+  it('★ 读索引被沙箱拦住：错误里带上要补的文件与那一段', async () => {
+    const sources = [SOURCE];
+    const store: MarketSourcesStore = {
+      read: () => ({ sources, selected: SOURCE.id }),
+      apply: async () => ({ sources, selected: SOURCE.id }),
+      rememberTransport: async () => undefined,
+    };
+    const reader: MarketIndexReader = {
+      read: async () => ({ ok: false, problem: { kind: 'sandbox', detail: 'x' } }),
+      cached: () => undefined,
+      pathOf: () => '/tmp/none',
+    };
+    const docs: MarketDocReader = {
+      read: async (_source, target, kind) => ({ ok: true, kind, version: target.version, text: '' }),
+    };
+    const discover = createMarketDiscover({
+      store,
+      reader,
+      docs,
+      modules: () => [],
+      defaultRegistry: async () => undefined,
+      profilePath: '/home/u/.dsh/profiles/desktop',
+    });
+
+    const payload = await discover.snapshot();
+
+    expect(payload.state).toBe('unreadable');
+    expect(payload.problem?.kind).toBe('sandbox');
+    expect(payload.problem?.detail).toContain('/home/u/.dsh/profiles/desktop/cordis.patch.yml');
+    expect(payload.problem?.detail).toContain("workspaceRoot: !!js dshHomePath('workbench')");
+  });
+});

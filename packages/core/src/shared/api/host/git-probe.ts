@@ -1,7 +1,8 @@
-import type { DshShell } from '@dsh-workbench/shared';
 import type { GitProbePayload, GitProbeStatus } from '@/kernel/contract/market-index';
-import { quoteShellArg, runShell, tailLines } from '@dsh-workbench/shared/host';
-import { gitNoPromptPrefix, withoutAskpassNoise } from './git-exec.js';
+import { tailLines } from '@dsh-workbench/shared/host';
+import { withoutAskpassNoise } from './git-exec.js';
+import type { GitRunner } from './git-process.js';
+import { runGitProcess } from './git-process.js';
 
 const PROBE_TIMEOUT_MS = 10 * 1000;
 
@@ -13,21 +14,16 @@ export function classifyGitProbe(stderr: string, timedOut: boolean): GitProbeSta
   return AUTH_TEXT.test(stderr.toLowerCase()) ? 'auth' : 'unreachable';
 }
 
-export async function probeGitAddress(
-  shell: DshShell,
-  url: string,
-  options: { readonly timeoutMs?: number } = {},
-): Promise<GitProbePayload> {
-  const line = [
-    gitNoPromptPrefix(),
-    quoteShellArg('git'),
-    quoteShellArg('ls-remote'),
-    quoteShellArg(url),
-    quoteShellArg('HEAD'),
-  ].join(' ');
+export interface GitProbeOptions {
+  readonly timeoutMs?: number;
+  readonly runGit?: GitRunner;
+}
+
+export async function probeGitAddress(url: string, options: GitProbeOptions = {}): Promise<GitProbePayload> {
+  const runGit = options.runGit ?? runGitProcess;
   let result;
   try {
-    result = await runShell(shell, line, { timeoutMs: options.timeoutMs ?? PROBE_TIMEOUT_MS });
+    result = await runGit(['ls-remote', url, 'HEAD'], { timeoutMs: options.timeoutMs ?? PROBE_TIMEOUT_MS });
   } catch (error) {
     return { status: 'unreachable', detail: error instanceof Error ? error.message : String(error) };
   }
@@ -43,13 +39,12 @@ const PROBE_CACHE_MS = 60 * 1000;
 const probeCache = new Map<string, { readonly at: number; readonly payload: GitProbePayload }>();
 
 export async function probeGitAddressCached(
-  shell: DshShell,
   url: string,
-  options: { readonly timeoutMs?: number } = {},
+  options: GitProbeOptions = {},
 ): Promise<GitProbePayload> {
   const hit = probeCache.get(url);
   if (hit !== undefined && Date.now() - hit.at < PROBE_CACHE_MS) return hit.payload;
-  const payload = await probeGitAddress(shell, url, options);
+  const payload = await probeGitAddress(url, options);
   probeCache.set(url, { at: Date.now(), payload });
   return payload;
 }

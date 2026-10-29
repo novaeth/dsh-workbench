@@ -1,7 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { DshShell } from '@dsh-workbench/shared';
 import type {
   MarketIndex,
   MarketIndexEntry,
@@ -26,11 +25,11 @@ import {
   parseMarketIndexJson,
   parseSourceConfig,
   planChangelog,
-  quoteShellArg,
-  runShell,
   workbenchRoot,
 } from '@dsh-workbench/shared/host';
 import type { ChangelogKind } from '@dsh-workbench/shared/host';
+import type { GitRunner } from './git-process';
+import { runGitProcess } from './git-process';
 import { modulesIn } from './diy-modules';
 
 const ARTIFACTS = ['dist', 'client.js', 'cordis.patch.yml', 'README.md', 'CHANGELOG.md', 'package.json'];
@@ -168,36 +167,40 @@ function siblingAuthorOf(root: string, unit: string): string | undefined {
 }
 
 export async function localGitIdentityOf(
-  shell: DshShell | undefined,
   dir: string,
+  runGit: GitRunner = runGitProcess,
 ): Promise<string | undefined> {
-  if (shell === undefined) return undefined;
-  const read = async (argv: string): Promise<string> => {
-    const result = await runShell(shell, `git -C ${quoteShellArg(dir)} ${argv}`, { workdir: dir });
-    return result.exitCode === 0 ? result.stdout.trim() : '';
+  const read = async (args: readonly string[]): Promise<string> => {
+    try {
+      const result = await runGit(args, { cwd: dir });
+      return result.exitCode === 0 ? result.stdout.trim() : '';
+    } catch {
+      return '';
+    }
   };
-  const name = await read(`config ${quoteShellArg('user.name')}`);
+  const name = await read(['config', 'user.name']);
   if (name === '') return undefined;
-  const email = await read(`config ${quoteShellArg('user.email')}`);
+  const email = await read(['config', 'user.email']);
   return email === '' ? name : `${name} <${email}>`;
 }
 
 export async function lastCommitAuthorOf(
-  shell: DshShell | undefined,
   dir: string,
+  runGit: GitRunner = runGitProcess,
 ): Promise<string | undefined> {
-  if (shell === undefined) return undefined;
-  const result = await runShell(shell, `git -C ${quoteShellArg(dir)} log -1 --format=${quoteShellArg('%an <%ae>')}`, {
-    workdir: dir,
-  });
-  const author = result.exitCode === 0 ? result.stdout.trim() : '';
-  return author === '' ? undefined : author;
+  try {
+    const result = await runGit(['log', '-1', '--format=%an <%ae>'], { cwd: dir });
+    const author = result.exitCode === 0 ? result.stdout.trim() : '';
+    return author === '' ? undefined : author;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function inferredAuthorOf(
   root: string | null | undefined,
   unit: string,
-  shell: DshShell | undefined,
+  runGit: GitRunner = runGitProcess,
 ): Promise<string | undefined> {
   const fact = moduleFactOf(root, unit);
   if (fact === null) return undefined;
@@ -209,9 +212,9 @@ export async function inferredAuthorOf(
   }
   const sibling = root === null || root === undefined ? undefined : siblingAuthorOf(root, unit);
   if (sibling !== undefined) return sibling;
-  const local = await localGitIdentityOf(shell, fact.dir);
+  const local = await localGitIdentityOf(fact.dir, runGit);
   if (local !== undefined) return local;
-  return lastCommitAuthorOf(shell, fact.dir);
+  return lastCommitAuthorOf(fact.dir, runGit);
 }
 
 export function publishPreviewOf(

@@ -1,7 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import writeFileAtomic from 'write-file-atomic';
-import type { DshShell } from '@dsh-workbench/shared';
 import type {
   DiscoverProblem,
   IndexSourceSpec,
@@ -16,8 +15,9 @@ import {
   marketSourceKey,
   parseMarketIndexJson,
 } from '@dsh-workbench/shared/host';
-import { quoteShellArg, runShell } from '@dsh-workbench/shared/host';
-import { gitNoPromptPrefix, withoutAskpassNoise } from './git-exec.js';
+import { withoutAskpassNoise } from './git-exec.js';
+import type { GitRunner } from './git-process.js';
+import { runGitProcess } from './git-process.js';
 
 export interface CachedIndex {
   readonly index: MarketIndex;
@@ -46,7 +46,7 @@ export interface MarketIndexReader {
 
 export interface MarketIndexReaderOptions {
   readonly root: string;
-  readonly shell?: DshShell | undefined;
+  readonly runGit?: GitRunner | undefined;
   readonly fetchImpl?: ((url: string, init: RequestInit) => Promise<Response>) | undefined;
   readonly now?: (() => number) | undefined;
   readonly ttlMs?: number | undefined;
@@ -136,6 +136,9 @@ function tail(text: string): string {
 function classifyGitError(stderr: string, timedOut: boolean): DiscoverProblem {
   if (timedOut) return { kind: 'timeout', detail: 'git 拉取超时' };
   const text = stderr.toLowerCase();
+  if (text.includes('operation not permitted') || /\beperm\b/.test(text)) {
+    return { kind: 'sandbox', detail: '被系统拦住了：这个 profile 的可写根盖不住工作台的缓存目录' };
+  }
   if (/couldn'?t find remote ref\s+["']?head/.test(text) || /could not find remote ref\s+["']?head/.test(text)) {
     return { kind: 'git-empty', detail: '仓库还没有任何提交' };
   }
@@ -157,6 +160,7 @@ export function createMarketIndexReader(options: MarketIndexReaderOptions): Mark
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES;
   const fetchImpl = options.fetchImpl ?? globalThis.fetch;
+  const runGit = options.runGit ?? runGitProcess;
   const inFlight = new Map<string, Promise<IndexRead>>();
 
   async function readHttp(source: MarketSourceConfig): Promise<IndexRead> {
@@ -201,11 +205,13 @@ export function createMarketIndexReader(options: MarketIndexReaderOptions): Mark
 
   type RunResult = { ok: true; stdout: string } | { ok: false; problem: DiscoverProblem; stderr?: string };
 
-  async function run(line: string): Promise<RunResult> {
-    const shell = options.shell;
-    if (shell === undefined) return { ok: false, problem: { kind: 'git-missing', detail: '没有执行缝，读不了 git 索引' } };
+  async function run(args: readonly string[], cwd?: string): Promise<RunResult> {
     try {
-      const result = await runShell(shell, `${gitNoPromptPrefix()} ${line}`, { timeoutMs });
+      const result = await runGit(args, {
+        ...(cwd === undefined ? {} : { cwd }),
+        timeoutMs,
+        maxBytes,
+      });
       if (result.exitCode !== 0) {
         return { ok: false, problem: classifyGitError(result.stderr, result.timedOut), stderr: result.stderr };
       }
@@ -220,7 +226,7 @@ export function createMarketIndexReader(options: MarketIndexReaderOptions): Mark
   }
 
   async function branchOf(repo: string): Promise<string | undefined> {
-    const result = await run(`git -C ${quoteShellArg(repo)} symbolic-ref --short HEAD`);
+    const result = await run(['symbolic-ref', '--short', 'HEAD'], repo);
     const branch = result.ok ? result.stdout.trim() : '';
     return branch === '' ? undefined : branch;
   }
@@ -237,44 +243,44 @@ export function createMarketIndexReader(options: MarketIndexReaderOptions): Mark
   async function readGit(source: MarketSourceConfig): Promise<IndexRead> {
     const bad = gitProblemOf(source);
     if (bad !== undefined) return { ok: false, problem: bad };
-    if (options.shell === undefined) {
-      return { ok: false, problem: { kind: 'git-missing', detail: '没有 git 执行缝' } };
-    }
     const repo = repoOf(options.root, source);
     const path = ((source.path ?? MARKET_INDEX_DIR).replace(/^\/+/, '') || MARKET_INDEX_DIR).replace(/\/+$/, '');
     const ref = (source.ref ?? '').trim();
     let revision = 'FETCH_HEAD';
     mkdirSync(directoryOf(options.root, source), { recursive: true });
     if (!existsSync(repo)) {
-      const branch = ref === '' ? '' : `--branch ${quoteShellArg(ref)} `;
-      const cloned = await run(
-        `git clone --bare --depth 1 ${branch}${quoteShellArg(source.url)} ${quoteShellArg(repo)}`,
-      );
+      const cloned = await run([
+        'clone',
+        '--bare',
+        '--depth',
+        '1',
+        ...(ref === '' ? [] : ['--branch', ref]),
+        source.url,
+        repo,
+      ]);
       if (!cloned.ok) {
         rmSync(repo, { recursive: true, force: true });
         return cloned;
       }
       revision = 'HEAD';
     } else {
-      const fetched = await run(
-        `git -C ${quoteShellArg(repo)} fetch --depth 1 origin ${quoteShellArg(ref === '' ? 'HEAD' : ref)}`,
-      );
+      const fetched = await run(['fetch', '--depth', '1', 'origin', ref === '' ? 'HEAD' : ref], repo);
       if (!fetched.ok) return withBranch(fetched, repo);
     }
-    const exists = await run(`git -C ${quoteShellArg(repo)} rev-parse --verify HEAD`);
+    const exists = await run(['rev-parse', '--verify', 'HEAD'], repo);
     if (!exists.ok) {
       return withBranch(
         { ok: false, problem: { kind: 'git-empty', detail: '仓库还没有任何提交' } },
         repo,
       );
     }
-    const head = await run(`git -C ${quoteShellArg(repo)} rev-parse ${revision}`);
+    const head = await run(['rev-parse', revision], repo);
     if (!head.ok) return head;
     const commit = head.stdout.trim();
     if (!/^[0-9a-f]{40}$/.test(commit)) {
       return { ok: false, problem: { kind: 'git-file', detail: `读到的 commit 不是 40 位：${commit}` } };
     }
-    const listed = await run(`git -C ${quoteShellArg(repo)} ls-tree -r ${quoteShellArg(commit)} -- ${quoteShellArg(path)}`);
+    const listed = await run(['ls-tree', '-r', commit, '--', path], repo);
     if (!listed.ok) {
       if (listed.problem.kind === 'git-file') {
         return withBranch(
@@ -304,7 +310,7 @@ export function createMarketIndexReader(options: MarketIndexReaderOptions): Mark
       return { ok: true, index, fetchedAt, commit };
     };
     const readLegacy = async (file: string): Promise<IndexRead | undefined> => {
-      const shown = await run(`git -C ${quoteShellArg(repo)} show ${quoteShellArg(commit)}:${quoteShellArg(file)}`);
+      const shown = await run(['show', `${commit}:${file}`], repo);
       if (!shown.ok) return undefined;
       const parsed = parseMarketIndexJson(shown.stdout);
       if (!parsed.ok) {
@@ -327,9 +333,7 @@ export function createMarketIndexReader(options: MarketIndexReaderOptions): Mark
         for (;;) {
           const next = queue.shift();
           if (next === undefined || failed !== undefined) return;
-          const shown = await run(
-            `git -C ${quoteShellArg(repo)} show ${quoteShellArg(commit)}:${quoteShellArg(next.file)}`,
-          );
+          const shown = await run(['show', `${commit}:${next.file}`], repo);
           if (!shown.ok) {
             failed = shown;
             return;

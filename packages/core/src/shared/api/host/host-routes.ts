@@ -31,7 +31,7 @@ export function createHostRoutes(input: {
     [DSH_PLUGINS_ROUTE]: profile.dshPlugins(ctx),
     [BUNDLE_REGISTRIES_ROUTE]: bundleRegistriesHandler(ctx),
     [BUNDLE_INSPECT_ROUTE]: bundleInspectHandler(ctx),
-    [MARKET_GIT_PROBE_ROUTE]: gitProbeHandler(ctx),
+    [MARKET_GIT_PROBE_ROUTE]: gitProbeHandler(),
     [MODULE_VERSIONS_ROUTE]: moduleVersionsHandler(
       ctx,
       ctx.get<DshShell>('shell'),
