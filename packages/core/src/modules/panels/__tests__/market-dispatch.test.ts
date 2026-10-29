@@ -11,7 +11,7 @@ import type { UnitCapability } from '@dsh-workbench/shared/host';
 import { createMarketService } from '../model/market';
 import { dispatchMarket } from '../model/market-dispatch';
 import { createPluginLedger } from '../model/plugin-ledger';
-import { selfUpdatePaths } from '@dsh-workbench/adapter-probe';
+import { selfUpdatePathsOf } from './market-tools-harness';
 
 function unit(id: string): UnitManifest {
   return {
@@ -146,7 +146,7 @@ describe('市场动作分发（HTTP 通道与 agent 工具共用同一套动作�
         }),
         selfUpdate: (request) => ({
           started: true,
-          paths: selfUpdatePaths(request.dshHome),
+          paths: selfUpdatePathsOf(request.dshHome),
           forward: '',
         }),
       });
@@ -185,7 +185,7 @@ describe('市场动作分发（HTTP 通道与 agent 工具共用同一套动作�
       workbench: (pkg) => ({ pkg, version: '0.1.18' }),
       dshHome: () => '/tmp/dsh-home',
       profileName: () => 'workbench',
-      selfUpdate: (request) => ({ started: true, paths: selfUpdatePaths(request.dshHome), forward: '' }),
+      selfUpdate: (request) => ({ started: true, paths: selfUpdatePathsOf(request.dshHome), forward: '' }),
     });
 
     await expect(dispatchMarket(market, { action: 'update-workbench', name: 'left-pad' })).rejects.toThrow(

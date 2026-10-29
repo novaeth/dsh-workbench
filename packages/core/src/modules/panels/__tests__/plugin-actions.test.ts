@@ -4,7 +4,6 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
-import { resetReleaseCache } from '@dsh-workbench/adapter-profile';
 import { createPluginActions } from '../model/plugin-actions';
 import { createPluginLedger, type PluginLedger } from '../model/plugin-ledger';
 
@@ -33,7 +32,6 @@ function ledgerAt(root: string): PluginLedger {
 
 afterEach(() => {
   vi.unstubAllEnvs();
-  resetReleaseCache();
   for (const root of roots.splice(0)) fs.rmSync(root, { recursive: true, force: true });
 });
 

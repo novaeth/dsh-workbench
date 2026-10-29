@@ -4,7 +4,6 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
-import { resetReleaseCache } from '@dsh-workbench/adapter-profile';
 import { INSTALLED_PLUGINS_ROUTE } from '@/shared/api/installed-plugins';
 import { installedPlugins, pluginRoutes } from '../model/plugin-section';
 import { createPluginLedger } from '../model/plugin-ledger';
@@ -39,13 +38,11 @@ function shellOf(installed: string, latest: string) {
 beforeEach(() => {
   root = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-section-'));
   dsh = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-section-dsh-'));
-  resetReleaseCache();
   vi.stubEnv('DSH_HOME', dsh);
 });
 
 afterEach(() => {
   vi.unstubAllEnvs();
-  resetReleaseCache();
   fs.rmSync(root, { recursive: true, force: true });
   fs.rmSync(dsh, { recursive: true, force: true });
 });

@@ -10,7 +10,7 @@ import type { SupplySource, UnitManifest } from '@dsh-workbench/shared';
 import { extensionNeedOf, libNeedOf, needStateOf } from '@dsh-workbench/shared/testing';
 import { createMarketService } from '../model/market';
 import { resolvePluginSource } from '@dsh-workbench/adapter-supply';
-import { selfUpdatePaths } from '@dsh-workbench/adapter-probe';
+
 import { quoteShellArg } from '@dsh-workbench/shared/host';
 import type { SelfUpdateRequest } from '@dsh-workbench/shared/host';
 import { createPluginLedger, type PluginLedger } from '../model/plugin-ledger';
@@ -166,7 +166,7 @@ export function harness(options: {
     profileName: () => (options.profileName === undefined ? 'workbench' : options.profileName),
     selfUpdate: (request) => {
       selfUpdates.push(request);
-      return { started: true, paths: selfUpdatePaths(request.dshHome), forward: '' };
+      return { started: true, paths: selfUpdatePathsOf(request.dshHome), forward: '' };
     },
   });
   return {
@@ -204,4 +204,19 @@ export async function call(
     throw new Error(`工具没注册：${name}（注册了：${h.registered.map((one) => one.name).join(', ')}）`);
   }
   return (await tool.execute(args)) as Record<string, unknown>;
+}
+
+export function selfUpdatePathsOf(dshHome: string): {
+  dir: string;
+  script: string;
+  marker: string;
+  log: string;
+} {
+  const dir = path.join(dshHome, 'workbench');
+  return {
+    dir,
+    script: path.join(dir, 'self-update.sh'),
+    marker: path.join(dir, 'self-update.json'),
+    log: path.join(dir, 'self-update.log'),
+  };
 }

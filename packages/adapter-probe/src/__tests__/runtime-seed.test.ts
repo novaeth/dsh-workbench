@@ -12,7 +12,7 @@ import { delimiter, join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DshHostContext } from '@dsh-workbench/shared';
-import { coversWritableRoot, isInstalledCopy, opencliWrapperScript, packageRootOf, prependPath, runDetached, runtimeSeedPaths, runtimeSeedRootOf, seedRuntimeFiles, warnUnwritableRoot, workshopSeedPlan } from '@dsh-workbench/adapter-probe';
+import { coversWritableRoot, isInstalledCopy, opencliWrapperScript, packageRootOf, prependPath, runDetached, runtimeSeedPaths, runtimeSeedRootOf, seedRuntimeFiles, warnUnwritableRoot, workshopSeedPlan } from '../index.js';
 
 const roots: string[] = [];
 

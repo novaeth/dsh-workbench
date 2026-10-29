@@ -7,9 +7,8 @@ import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import type { BundleChange, BundleInstallRequest } from '@/kernel/contract/bundle-install';
 import type { BundleManager } from '@dsh-workbench/shared/host';
-import { refusalReason } from '@dsh-workbench/adapter-supply';
+import { refusalReason } from '@dsh-workbench/shared/host';
 import { OPENCLI_MANIFEST_FILE } from '@dsh-workbench/shared/host';
-import { resetPackageRouteCache } from '@dsh-workbench/adapter-supply';
 import { createMarketService } from '../model/market';
 import { bundleNameOf, installRouted, type BundleInstallDeps } from '../model/market-route';
 import type { BundleInstallOutcome } from '../model/market-types';
@@ -150,7 +149,6 @@ function ledgerAt(home: string): PluginLedger {
 }
 
 beforeEach(() => {
-  resetPackageRouteCache();
 });
 
 afterEach(() => {

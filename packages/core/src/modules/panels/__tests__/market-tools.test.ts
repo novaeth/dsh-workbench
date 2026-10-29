@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { InstalledModule } from '@dsh-workbench/shared/host';
-import { resetReleaseCache } from '@dsh-workbench/adapter-profile';
 import { createMarketService } from '../model/market';
 import { registerMarketTools } from '../model/market-tools';
 import { panelsUnit } from '../unit';
@@ -24,7 +23,6 @@ function expectLossless(value: unknown): void {
 }
 
 beforeEach(() => {
-  resetReleaseCache();
 });
 
 afterEach(cleanupRoots);

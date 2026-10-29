@@ -4,7 +4,6 @@ import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { DshHostContext } from '@dsh-workbench/shared';
 import { OPENCLI_MANIFEST_FILE } from '@dsh-workbench/shared/host';
-import { resetPackageRouteCache } from '@dsh-workbench/adapter-supply';
 import { bundleInspectHandler } from './bundle-routes';
 
 function fakeContext(manager: unknown, shell?: unknown): DshHostContext {
@@ -95,7 +94,6 @@ describe('装机预检：dsh 拒了也自己按内容再判一次（插件那条
   }
 
   beforeEach(() => {
-    resetPackageRouteCache();
   });
 
   it('★ 拒了 + 按内容判成 opencli 插件 → 回插件态（不是 dsh 那句 not-a-bundle）', async () => {

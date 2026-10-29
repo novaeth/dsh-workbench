@@ -1,4 +1,14 @@
-import type { Opencli, OpencliResult } from '@dsh-workbench/adapter-runtime';
+interface OpencliResult {
+  readonly value: unknown;
+  readonly at: number;
+}
+
+interface Opencli {
+  json(
+    args: readonly string[],
+    options?: { readonly key?: string; readonly workdir?: string; readonly session?: string; readonly refresh?: boolean },
+  ): Promise<OpencliResult>;
+}
 
 export interface OpencliCall {
   args: readonly string[];

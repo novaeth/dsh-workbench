@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { resolvePluginSource } from '@dsh-workbench/adapter-supply';
+import { resolvePluginSource } from '../plugin-source.js';
 
 const DSH_HOME = "/tmp/dshhome";
 const ROOT = `${DSH_HOME}/workbench/opencli`;

@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { resetReleaseCache } from '@dsh-workbench/adapter-profile';
 import { call, fakeBundles, harness } from './market-tools-harness';
 import { updateWorkbenchOnce } from '../model/market-workbench-update';
 import type { SelfUpdateRequest } from '@dsh-workbench/shared/host';
@@ -7,7 +6,6 @@ import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { MODULES_UPDATE_WORKBENCH_TOOL } from '../unit';
 
 beforeEach(() => {
-  resetReleaseCache();
 });
 
 describe('workbench_modules_update_workbench（工作台自己那一份）', () => {

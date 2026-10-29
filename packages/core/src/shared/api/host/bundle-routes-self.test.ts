@@ -6,10 +6,8 @@ import type { DshHostContext, DshShell } from '@dsh-workbench/shared';
 import { PLUGIN_ID, RELEASE_PACKAGES } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { moduleVersionsHandler, resetHoldLog } from './bundle-routes';
-import { resetReleaseCache } from '@dsh-workbench/adapter-profile';
 
 beforeEach(() => {
-  resetReleaseCache();
   resetHoldLog();
 });
 

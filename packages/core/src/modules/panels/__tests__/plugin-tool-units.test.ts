@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createWorkspaceStore, type WorkspaceStore } from '@dsh-workbench/shared/host';
-import { isolatedHome } from '@dsh-workbench/adapter-runtime';
+import { isolatedHome } from '@dsh-workbench/shared/host';
 import { APPROVAL_NOTE_ARG, approvalFor } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { createFakeOpencli } from './fake-opencli';

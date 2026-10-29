@@ -1,4 +1,11 @@
-import { vi } from 'vitest';
+import { beforeEach, vi } from 'vitest';
+
+beforeEach(async () => {
+  const profile = await vi.importActual<typeof import('@dsh-workbench/adapter-profile')>('@dsh-workbench/adapter-profile');
+  profile.resetReleaseCache();
+  const supply = await vi.importActual<typeof import('@dsh-workbench/adapter-supply')>('@dsh-workbench/adapter-supply');
+  supply.resetPackageRouteCache();
+});
 
 vi.mock('@dsh-workbench/shared/host', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@dsh-workbench/shared/host')>();
