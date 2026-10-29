@@ -12,7 +12,6 @@ import {
   rmSync,
 } from 'node:fs';
 import { delimiter, dirname, join, sep } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type { DshHomePath, DshHostContext } from '@dsh-workbench/shared';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
 import { ensureToolchain, localNpmCache, provisionLocalPnpmSync } from './toolchain.js';
@@ -93,10 +92,6 @@ export function wrapperRootOf(fallbackRoot: string): string {
   } catch {
     return fallbackRoot;
   }
-}
-
-export function packageRootOf(moduleUrl: string): string {
-  return dirname(dirname(dirname(fileURLToPath(moduleUrl))));
 }
 
 export function isInstalledCopy(packageRoot: string): boolean {

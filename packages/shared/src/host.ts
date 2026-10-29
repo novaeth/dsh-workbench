@@ -27,6 +27,8 @@ export * from './host/release-probe.js';
 export * from './host/package-kind.js';
 export * from './host/package-content.js';
 export * from './host/package-route.js';
+export * from './host/lib-install.js';
+export * from './host/module-root.js';
 export * from './host/context-ref.js';
 export * from './host/diy-debug.js';
 export * from './host/diy-record.js';

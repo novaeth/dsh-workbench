@@ -1,9 +1,16 @@
-import type { SupplyPort } from '@dsh-workbench/shared/host';
-import { isolatedRoot } from '@dsh-workbench/adapter-runtime';
-
-import { isolatedHome, libInstallCommand, libUninstallCommand } from '@dsh-workbench/adapter-runtime';
+import type { BinNeed, LibNeed, SupplyPort } from '@dsh-workbench/shared/host';
+import type { HostOs } from '@dsh-workbench/shared';
+import type { SelfUpdateRequest } from '@dsh-workbench/shared/host';
+import type { NpmSource } from '@dsh-workbench/shared/host';
+import {
+  binInstallCommand,
+  libInstallCommand,
+  libUninstallCommand,
+  readBundleManager,
+  refusalReason,
+  runtimeLayoutOf,
+} from '@dsh-workbench/shared/host';
 import { createRegistryNotebook, isNewerVersion, latestVersion, missingReleaseParts, probeRelease } from '@dsh-workbench/adapter-profile';
-import { startSelfUpdate } from '@dsh-workbench/adapter-probe';
 import {
   declarationGaps,
   declarationRefusalOf,
@@ -19,12 +26,15 @@ import {
   resolvePluginSource,
   splitNpmSpec,
 } from '@dsh-workbench/adapter-supply';
-import { readBundleManager, refusalReason } from '@dsh-workbench/shared/host';
+
+export const CHROME_MCP_RUNTIME_ID = 'chrome-mcp';
+
+const layout = runtimeLayoutOf(CHROME_MCP_RUNTIME_ID);
 
 export function createSupplyPort(): SupplyPort {
   const port = {
-    isolatedRoot,
-    isolatedHome,
+    isolatedRoot: () => layout.root,
+    isolatedHome: () => layout.home,
     afterLibInstall: () => undefined,
     profileDirOf,
     profileModules,
@@ -32,13 +42,13 @@ export function createSupplyPort(): SupplyPort {
     refusalReason,
     readInstalledModule,
     readProfilePackage,
-      createRegistryNotebook,
+    createRegistryNotebook,
     declarationGaps,
     moduleDeclarationOf,
     registryDeclarationOf,
     pathDeclarationOf,
     declarationRefusalOf,
-      latestVersion,
+    latestVersion,
     missingReleaseParts,
     isNewerVersion,
     pluginInstallPlan,
@@ -46,9 +56,21 @@ export function createSupplyPort(): SupplyPort {
     probeRelease,
     resolvePluginSource,
     splitNpmSpec,
-    libInstallCommand,
-    libUninstallCommand,
-    startSelfUpdate,
+    libInstallCommand: (options: { need: LibNeed; source: NpmSource; version?: string; env?: NodeJS.ProcessEnv }) =>
+      libInstallCommand({ ...options, prefix: layout.libsPrefix }),
+    libUninstallCommand: (options: { need: LibNeed }) => libUninstallCommand({ need: options.need, prefix: layout.libsPrefix }),
+    binInstallCommand: (need: BinNeed, os: HostOs, env?: NodeJS.ProcessEnv) =>
+      binInstallCommand(need, os, env ?? process.env, layout.libsPrefix),
+    startSelfUpdate: (request: SelfUpdateRequest) => ({
+      started: false,
+      paths: {
+        dir: `${request.dshHome}/self-update`,
+        script: '',
+        marker: '',
+        log: '',
+      },
+      forward: '',
+    }),
   };
   return { ...port, env: port, modules: port };
 }

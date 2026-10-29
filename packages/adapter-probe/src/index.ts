@@ -14,3 +14,4 @@ export * from './install.js';
 export * from './self-update.js';
 export { createProbePort } from './probe-port.js';
 export { createSupplyPort } from './supply-port.js';
+export { packageRootOf } from '@dsh-workbench/shared/host';

@@ -2,12 +2,12 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { DshHostContext } from '@dsh-workbench/shared';
 import type { RuntimePort } from '@dsh-workbench/shared/host';
+import { packageRootOf } from '@dsh-workbench/shared/host';
 import { backgroundLine, libsBinDir } from '@dsh-workbench/adapter-runtime';
 
 import { ensureLibsOpencliPeer, opencliCommandOf, opencliRunnerOf } from '@dsh-workbench/adapter-runtime';
 import {
   isInstalledCopy,
-  packageRootOf,
   prependPath,
   runDetached,
   runtimeSeedPaths,

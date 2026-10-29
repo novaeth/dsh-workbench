@@ -178,15 +178,9 @@ importers:
 
   packages/adapters-chrome-mcp:
     dependencies:
-      '@dsh-workbench/adapter-probe':
-        specifier: workspace:*
-        version: link:../adapter-probe
       '@dsh-workbench/adapter-profile':
         specifier: workspace:*
         version: link:../adapter-profile
-      '@dsh-workbench/adapter-runtime':
-        specifier: workspace:*
-        version: link:../adapter-runtime
       '@dsh-workbench/adapter-supply':
         specifier: workspace:*
         version: link:../adapter-supply

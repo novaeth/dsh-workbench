@@ -1,6 +1,6 @@
 import type { RuntimeCapabilities, RuntimePort, RuntimeProfile } from '@dsh-workbench/shared/host';
 import { createMcpClient, type McpClientOptions } from './mcp-client.js';
-import { packageRootOf } from '@dsh-workbench/adapter-probe';
+import { packageRootOf } from '@dsh-workbench/shared/host';
 
 export const CHROME_MCP_RUNTIME = 'chrome-mcp';
 export const CHROME_MCP_INSTALL = 'npx -y chrome-devtools-mcp@latest';

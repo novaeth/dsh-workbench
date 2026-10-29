@@ -1,7 +1,7 @@
 import type { DshHostContext } from '@dsh-workbench/shared';
 import type { AdapterSet } from '@dsh-workbench/shared/host';
 import { ADAPTER_SET_API_VERSION, runningVersionOf } from '@dsh-workbench/shared/host';
-import { createProbePort, readSelfUpdateView } from '@dsh-workbench/adapter-probe';
+
 import { createHostActions } from '@dsh-workbench/adapter-profile';
 import { dshPluginsHandler, profileDirOf } from '@dsh-workbench/adapter-supply';
 import { createMcpClient } from './mcp-client.js';
@@ -36,9 +36,13 @@ export function createAdapterSet(ctx: DshHostContext, options: McpAdapterSetOpti
     profile: {
       dirOf: profileDirOf,
       dshPlugins: dshPluginsHandler,
-      selfUpdateView: readSelfUpdateView,
+      selfUpdateView: () => undefined,
     },
-    probe: createProbePort(),
+    probe: {
+      probeUnits: async () => [],
+      registerPreflight: () => undefined,
+      declaredPluginCommands: () => new Map(),
+    },
     runtime: createRuntimePort(),
     plugins: createPluginSurface(),
     actions: createHostActions(),
