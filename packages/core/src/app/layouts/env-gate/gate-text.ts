@@ -22,6 +22,19 @@ export function stepDetailText(step: PreflightStep, snapshot: PreflightSnapshot,
   return '';
 }
 
+export function gateHintOf(snapshot: PreflightSnapshot, t: Translate): string {
+  if (snapshot.phase === 'failed') return t('env.failed');
+  if (snapshot.phase === 'installing') {
+    const toolchain = snapshot.steps.some((step) => step.id === 'toolchain' && step.status === 'running');
+    return toolchain ? t('env.installingToolchain') : t('env.installing');
+  }
+  if (snapshot.phase === 'ready') {
+    if ((snapshot.bridgeIssues?.length ?? 0) > 0) return t('env.bridge.hold');
+    if (snapshot.diyGap !== undefined) return t('env.diy.hold');
+  }
+  return t('env.checking');
+}
+
 export function showsRawDetails(snapshot: PreflightSnapshot): boolean {
   if (snapshot.phase === 'failed') return true;
   return snapshot.steps.some((step) => step.status === 'warn' || step.status === 'failed');

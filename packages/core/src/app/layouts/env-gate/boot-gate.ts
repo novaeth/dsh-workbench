@@ -7,7 +7,7 @@ import { apiGet } from '@dsh-workbench/shared';
 import { LOCALE_NS } from '@dsh-workbench/shared';
 import { devSurface } from '@/shared/dev-surface';
 import { runtimeProfileValue } from '@/shared/hooks/use-runtime-capabilities';
-import { bridgeAdvice, showsRawAll, stepDetailText } from './gate-text';
+import { bridgeAdvice, gateHintOf, showsRawAll, stepDetailText } from './gate-text';
 import { createGateDeadline } from './gate-deadline';
 import { el, spinnerIcon, svgIcon } from './gate-dom';
 
@@ -186,15 +186,16 @@ export function createBootGate(
 
   let closed = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  let installingSince: number | null = null;
+  let waitingSince: number | null = null;
   let ticker: ReturnType<typeof setInterval> | undefined;
 
   function startElapsed(): void {
-    if (installingSince === null) installingSince = Date.now();
+    if (waitingSince === null) waitingSince = Date.now();
     if (ticker !== undefined) return;
     const paint = (): void => {
-      const seconds = Math.max(0, Math.round((Date.now() - (installingSince ?? Date.now())) / 1000));
+      const seconds = Math.max(0, Math.floor((Date.now() - (waitingSince ?? Date.now())) / 1000));
       elapsed.textContent = t('env.elapsed', { seconds });
+      progressRow.hidden = seconds < 1;
     };
     paint();
     ticker = setInterval(paint, 500);
@@ -203,8 +204,9 @@ export function createBootGate(
   function stopElapsed(): void {
     if (ticker !== undefined) clearInterval(ticker);
     ticker = undefined;
-    installingSince = null;
+    waitingSince = null;
     elapsed.textContent = '';
+    progressRow.hidden = true;
   }
   let cancelled = false;
   const forcePlan = createForcePlan();
@@ -247,16 +249,7 @@ export function createBootGate(
 
   function render(snapshot: PreflightSnapshot): void {
     wakeNote.hidden = true;
-    hint.textContent =
-      snapshot.phase === 'installing'
-        ? t('env.installing')
-        : snapshot.phase === 'failed'
-          ? t('env.failed')
-          : gateActionOf(snapshot) === 'hold'
-            ? (snapshot.bridgeIssues?.length ?? 0) > 0
-              ? t('env.bridge.hold')
-              : t('env.diy.hold')
-            : t('env.checking');
+    hint.textContent = gateHintOf(snapshot, t);
 
     const items = snapshot.steps.map((step) => {
       const row = ensureRow(step);
@@ -286,8 +279,8 @@ export function createBootGate(
     });
     rawAllBody.textContent = rawLines.join('\n');
 
-    progressRow.hidden = snapshot.phase !== 'installing';
-    if (snapshot.phase === 'installing') startElapsed();
+    const waiting = snapshot.phase !== 'ready' && snapshot.phase !== 'failed';
+    if (waiting) startElapsed();
     else stopElapsed();
 
     const failed = snapshot.phase === 'failed';

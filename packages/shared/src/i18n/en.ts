@@ -574,6 +574,7 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'env.title': 'Preparing the workbench',
   'env.checking': 'Getting the runtime ready…',
   'env.installing': 'Installing background tools — the first run takes a moment…',
+  'env.installingToolchain': 'Installing the workbench’s own npm / pnpm — the first run downloads them, so it can take a while.',
   'env.failed': 'One step away',
   'env.elapsed': 'Waiting {seconds}s',
   'env.stepFailed.install': 'install failed',

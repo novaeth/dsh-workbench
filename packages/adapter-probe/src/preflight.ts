@@ -329,6 +329,7 @@ export function createPreflight(options: {
             pnpmProblem: true,
           }));
     if (toolchain !== undefined && toolchain.ok && toolchain.npmMissing && options.provisionNpm !== undefined) {
+      set({ phase: 'installing' });
       patchStep('toolchain', { status: 'running', action: `装本地 npm@${LOCAL_NPM_VERSION}` });
       const provisioned = await options.provisionNpm().catch((error: unknown) => ({
         ok: false,
@@ -342,6 +343,7 @@ export function createPreflight(options: {
       }
     }
     if (toolchain !== undefined && toolchain.ok && toolchain.pnpmProblem && options.provisionPnpm !== undefined) {
+      set({ phase: 'installing' });
       patchStep('toolchain', { status: 'running', action: `装本地 pnpm@${LOCAL_PNPM_VERSION}` });
       const provisioned = await options.provisionPnpm().catch((error: unknown) => ({
         ok: false,
@@ -355,6 +357,7 @@ export function createPreflight(options: {
       }
     }
     if (toolchain !== undefined) {
+      set({ phase: 'checking' });
       patchStep('toolchain', {
         status: toolchain.ok ? (toolchain.npmMissing || toolchain.pnpmProblem ? 'warn' : 'ok') : 'failed',
         detail: toolchain.detail,

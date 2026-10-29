@@ -570,6 +570,7 @@ export const zh = {
   'env.title': '准备工作台',
   'env.checking': '正在准备运行环境…',
   'env.installing': '正在安装后台工具，第一次会慢一点…',
+  'env.installingToolchain': '正在装工作台自己那份 npm / pnpm —— 第一次要下载，慢一点正常。',
   'env.failed': '还差一步就能用了',
   'env.elapsed': '已等待 {seconds} 秒',
   'env.stepFailed.install': '装不上',

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { zh } from '@dsh-workbench/shared';
 import { gateActionOf } from '../boot-gate';
-import { bridgeAdvice, stepDetailText } from '../gate-text';
+import { bridgeAdvice, gateHintOf, stepDetailText } from '../gate-text';
 import { GATE_MOCKS } from '../gate-mock';
 
 const t = ((key: string) => (zh as Record<string, string>)[key] ?? key) as never;
@@ -16,19 +16,26 @@ describe('GATE_MOCKS', () => {
     for (const item of GATE_MOCKS) expect(item.note.trim(), item.id).not.toBe('');
   });
 
-  it('★ phase 与"界面该说哪句"对上（checking / installing / failed / hold）', () => {
-    for (const item of GATE_MOCKS) {
-      const { phase } = item.snapshot;
-      const expected =
-        phase === 'installing'
-          ? 'installing'
-          : phase === 'failed'
-            ? 'failed'
-            : gateActionOf(item.snapshot) === 'hold'
-              ? 'hold'
-              : 'checking';
+  it('★ 顶上那句与这一帧对上（检查 / 在装什么 / 失败 / 按住）', () => {
+    const HINT_KEY = {
+      checking: 'env.checking',
+      installing: 'env.installing',
+      installingToolchain: 'env.installingToolchain',
+      failed: 'env.failed',
+    } as const;
+    const zhText = (key: string): string => (zh as Record<string, string>)[key] ?? key;
 
-      expect(expected, item.id).toBe(item.expect.hint);
+    for (const item of GATE_MOCKS) {
+      const holding = item.snapshot.phase === 'ready' && gateActionOf(item.snapshot) === 'hold';
+      expect(item.expect.hint === 'hold', item.id).toBe(holding);
+      const expected =
+        item.expect.hint === 'hold'
+          ? (item.snapshot.bridgeIssues?.length ?? 0) > 0
+            ? 'env.bridge.hold'
+            : 'env.diy.hold'
+          : HINT_KEY[item.expect.hint];
+
+      expect(gateHintOf(item.snapshot, t), item.id).toBe(zhText(expected));
     }
   });
 

@@ -4,7 +4,7 @@ import type { PreflightBridgeIssue, PreflightGuidance, PreflightSnapshot } from 
 const INSTALL_COMMAND = "npm i --prefix '/Users/you/.dsh/workbench/opencli/toolchain' @jackwener/opencli@1.8.8";
 
 export interface GateMockExpect {
-  readonly hint: 'checking' | 'installing' | 'failed' | 'hold';
+  readonly hint: 'checking' | 'installing' | 'installingToolchain' | 'failed' | 'hold';
   readonly guidance?: PreflightGuidance;
   readonly command: boolean;
   readonly bridgeIssues?: readonly PreflightBridgeIssue[];
@@ -93,6 +93,20 @@ export const GATE_MOCKS: readonly GateMock[] = [
       steps: [{ id: 'cli', status: 'running', action: INSTALL_COMMAND, command: INSTALL_COMMAND }, BRIDGE_PENDING],
     },
     { hint: 'installing', command: false },
+  ),
+  mock(
+    'toolchain-installing',
+    '运行环境在装',
+    'Desktop 上 npm / pnpm 不对时，这一行会自己装：顶上那句换成"在装 npm / pnpm"，底下照旧数秒 —— 几分钟的下载不该看起来像卡死。',
+    {
+      phase: 'installing',
+      steps: [
+        { id: 'toolchain', status: 'running', action: '装本地 npm@10.9.4' },
+        { id: 'cli', status: 'pending' },
+        BRIDGE_PENDING,
+      ],
+    },
+    { hint: 'installingToolchain', command: false },
   ),
   mock(
     'ready',
