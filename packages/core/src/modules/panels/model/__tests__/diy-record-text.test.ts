@@ -141,10 +141,10 @@ describe('录制交接：清单一条都不删、原文按 key 取（纯函数�
     expect(none).not.toContain('图 ');
 
     const failed = renderRecordRead(
-      facts({ rows, shots: [{ n: 1, at: 1, path: '/w/diy/shots/rec-shot-demo-1.png', error: 'opencli 报了个错' }] }),
+      facts({ rows, shots: [{ n: 1, at: 1, path: '/w/diy/shots/rec-shot-demo-1.png', error: '运行时报了个错' }] }),
     );
     expect(failed).toContain('一张图没落下来');
-    expect(failed).toContain('opencli 报了个错');
+    expect(failed).toContain('运行时报了个错');
     expect(failed).not.toContain('图 1 张');
   });
 
@@ -308,7 +308,7 @@ describe('录制交接：清单一条都不删、原文按 key 取（纯函数�
       note: '',
     });
     expect(cut).toContain('这里截到 10');
-    expect(cut).toContain('字符（opencli 没给 body_full_size');
+    expect(cut).toContain('字符（没给 body_full_size');
     expect(cut).toContain('出参（response body）：没有');
 
     const miss = renderRecordDetail({

@@ -176,6 +176,7 @@ export interface RuntimeCommandSurface {
   readonly pluginPrefix: string;
   invoke(site: string, command?: string): string;
   help(site: string): string;
+  browser?(verb: readonly string[]): string;
   readonly authorHint?: string;
 }
 

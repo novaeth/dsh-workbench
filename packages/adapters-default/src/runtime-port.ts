@@ -116,6 +116,7 @@ export function createRuntimePort(): RuntimePort {
         invoke: (site: string, command?: string) =>
           command === undefined || command === '' ? `opencli ${site}` : `opencli ${site} ${command}`,
         help: (site: string) => `opencli ${site} --help`,
+        browser: (verb: readonly string[]) => `opencli browser ${verb.join(' ')}`,
         authorHint: 'opencli skills read opencli-adapter-author',
       };
     },

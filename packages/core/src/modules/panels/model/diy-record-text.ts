@@ -284,12 +284,12 @@ export function renderRecordRead(input: RecordReadFacts): string {
   }
   if (input.dropped > 0) lines.push(`（缓冲区满了，最早丢了 ${String(input.dropped)} 条）`);
   if (input.captureRound === 'fail') {
-    lines.push('（会话捕获最近一轮没跑成（opencli 那条报了错）—— 这一场可能只有页面钩子。）');
+    lines.push('（会话捕获最近一轮没跑成 —— 这一场可能只有页面钩子。）');
   } else if (input.captureRound === '') {
     lines.push('（会话捕获还没回过一轮 —— 再等一拍再看，别急着下"没抓到"的结论。）');
   }
   if (input.capturedLines === 0 && !input.capturedTruncated) {
-    lines.push('（opencli 那条会话捕获一条都没落 —— 这次只有页面钩子。请求体抓不到时请他打开 DevTools 把那次请求复制成 curl）');
+    lines.push('（会话捕获一条都没落 —— 这次只有页面钩子。请求体抓不到时请他打开 DevTools 把那次请求复制成 curl）');
   }
   if (input.nav) lines.push('（这一段里那一页导航过 —— 浮条重新注入过，导航前的那几条可能不在）');
   return lines.join('\n');
@@ -322,7 +322,7 @@ function clip(text: string, maxBytes: number): { readonly text: string; readonly
 }
 
 function sizeLabel(size: number, exact: boolean): string {
-  return exact ? `${String(size)} 字节` : `${String(size)} 字符（opencli 没给 body_full_size，按字符数算）`;
+  return exact ? `${String(size)} 字节` : `${String(size)} 字符（没给 body_full_size，按字符数算）`;
 }
 
 export function renderRecordDetail(input: RecordDetailFacts): string {

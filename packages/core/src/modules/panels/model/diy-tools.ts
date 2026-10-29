@@ -19,14 +19,11 @@ export function browserBridgeOn(ctx: DshHostContext): boolean {
   return adapters.runtime.capabilities(ctx).browserBridge;
 }
 
-export function surfaceOf(ctx: DshHostContext): ReconSurface | undefined {
-  const adapters = ctx.get<AdapterSet>(WORKBENCH_ADAPTERS, false);
-  return adapters?.runtime.commandSurface?.(ctx);
-}
 import { registerSpecTool } from './diy-spec';
 import { registerPublishTool } from './diy-publish';
 import type { UnitRegistry } from '@/kernel/host/unit-registry';
-import { keywordsOf, reconOf, type ReconSurface } from '@/shared/api/host/diy-recon';
+import { keywordsOf, reconOf } from '@/shared/api/host/diy-recon';
+import { surfaceOf } from '@/shared/api/host/runtime-surface';
 import { installedPluginsOf, reconCatalogOf } from '@/shared/api/host/diy-recon-fs';
 import { healthOf, publishStatusOf, renderPanel, renderStatus, statusOf, type ModuleStatus } from './diy-report';
 import type { PublishPreview } from '@dsh-workbench/shared/contract/protocol/market-index';

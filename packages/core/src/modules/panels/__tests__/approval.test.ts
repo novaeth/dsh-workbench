@@ -175,7 +175,7 @@ describe('装 / 升 / 卸模块与插件：八把写工具，各自说清目标'
     });
 
     expect(update).toContain('更新');
-    expect(update).toContain('opencli 插件');
+    expect(update).toContain('插件');
     expect(update).toContain('opencli-plugin-inventory');
     expect(uninstall).toContain('卸载');
     expect(uninstall).toContain('inventory');
@@ -326,8 +326,8 @@ describe('文案口径：说清是工作台的动作、目标是哪个模块 / �
     [MODULES_UNINSTALL_TOOL]: '模块',
     [MODULES_INSTALL_BUNDLE_TOOL]: '模块',
     [MODULES_UPDATE_DEPENDENCY_TOOL]: '共用依赖',
-    [MODULES_UPDATE_PLUGIN_TOOL]: 'opencli 插件',
-    [MODULES_UNINSTALL_PLUGIN_TOOL]: 'opencli 插件',
+    [MODULES_UPDATE_PLUGIN_TOOL]: '插件',
+    [MODULES_UNINSTALL_PLUGIN_TOOL]: '插件',
     [MODULES_UPDATE_WORKBENCH_TOOL]: '工作台本身',
     [DIY_RECORD_PREPARE_TOOL]: '录制',
     [DIY_PUBLISH_TOOL]: '模块',
@@ -461,7 +461,7 @@ describe('文案口径：说清是工作台的动作、目标是哪个模块 / �
 
     expect(zh({ name: MODULES_INSTALL_TOOL, arguments: { id: 'inventory' } })).toContain('工作台 [inventory] 模块');
     expect(zh({ name: MODULES_UPDATE_PLUGIN_TOOL, arguments: { plugin: 'inventory' } })).toContain(
-      '工作台 [inventory] opencli 插件',
+      '工作台 [inventory] 插件',
     );
     expect(zh({ name: PANELS_FOLLOW_TOOL, arguments: { id: 'inventory' } })).toContain('工作台 [inventory] 模块这一行');
   });

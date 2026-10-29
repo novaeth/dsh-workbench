@@ -84,7 +84,7 @@ export async function startRecordCapture(
   session: string,
   file: string,
 ): Promise<boolean> {
-  const bin = command === '' ? 'opencli' : command;
+  const bin = command === '' ? 'runtime' : command;
   const arm = backgroundLine(bin, ['browser', session, 'network', '--follow', '--all', '--window', 'background']);
   const snap = backgroundLine(bin, ['browser', session, 'network', '--all', '--raw', '--window', 'background']);
   const line = [

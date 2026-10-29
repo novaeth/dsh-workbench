@@ -122,7 +122,7 @@ export function desktopPageText(page?: WorkbenchPage): string {
       ? ''
       : `现在绑到的是 ${page.title || '(没有标题)'} ${page.url}。`;
   return (
-    'Desktop 的屏调试不可用：工作台页在 Electron 窗口里（dsh-app://app/），opencli 的浏览器扩展只能看 Chrome 标签 —— ' +
+    'Desktop 的屏调试不可用：工作台页在 Electron 窗口里（dsh-app://app/），运行时的浏览器扩展只能看 Chrome 标签 —— ' +
     '不带 read 的看 / 动 / 网络 / 日志没有可绑的目标（这不是扩展没连上：' +
     '扩展连上了，只是它看不到 Electron 窗口）。' +
     bound +
@@ -165,7 +165,7 @@ export async function pageAt(
   if (!handshake.ok && !handshake.bound) {
     throw new Error(
       `连不上浏览器：${handshake.reason}。` +
-        `先让用户把工作台那一页切到前台（只有第一次要这样）；还不行就跑 opencli doctor 看扩展连没连上。`,
+        `先让用户把工作台那一页切到前台（只有第一次要这样）；还不行就跑一次运行时自检（doctor）看扩展连没连上。`,
     );
   }
   if (!handshake.ok && options.requireWorkbench !== false) {

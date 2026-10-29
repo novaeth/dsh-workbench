@@ -180,7 +180,7 @@ export async function installRouted(deps: BundleInstallDeps): Promise<BundleInst
     throw error;
   }
   deps.ledger?.complete(pkg, installedPluginName(spec, pkg));
-  deps.logger?.info?.(`[dsh-workbench] 把 ${pkg} 装进了 opencli 的插件区`);
+  deps.logger?.info?.(`[dsh-workbench] 把 ${pkg} 装进了运行时的插件区`);
   return outcomeOf(
     deps,
     pkg,

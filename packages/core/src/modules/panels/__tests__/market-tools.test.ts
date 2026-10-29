@@ -143,7 +143,7 @@ describe('workbench_modules_*：一个动词一把工具', () => {
     const payload = await call(h, MODULES_UPDATE_PLUGIN_TOOL, { plugin: 'inventory' });
 
     expect(h.fake.commands().some((line) => line.includes("npm view 'opencli-plugin-inventory'"))).toBe(true);
-    expect(String(payload.text)).toContain('已更新 opencli 插件 inventory');
+    expect(String(payload.text)).toContain('已更新插件 inventory');
   });
 
   it('★ update 也是"升它声明的供给"，不是换包', async () => {

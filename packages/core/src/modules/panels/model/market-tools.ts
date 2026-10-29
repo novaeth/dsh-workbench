@@ -347,7 +347,7 @@ export function registerMarketTools(
       parameters: {
         type: 'object',
         properties: {
-          plugin: { type: 'string', description: 'opencli 插件的包名或插件名（如 inventory）。' },
+          plugin: { type: 'string', description: `${pluginTermOf(ctx)}的包名或插件名（如 inventory）。` },
         },
         required: ['plugin'],
         additionalProperties: false,
@@ -357,13 +357,13 @@ export function registerMarketTools(
         const plugin = textArg(raw, 'plugin');
         if (plugin === '') {
           throw new Error(
-            `${spec.name} 需要一个 plugin：opencli 插件的包名或插件名 —— 就是市场「已安装 opencli 插件」那一段里的名字。`,
+            `${spec.name} 需要一个 plugin：${pluginTermOf(ctx)}的包名或插件名 —— 就是市场「已安装插件」那一段里的名字。`,
           );
         }
         if (spec.update) {
           const updated = await market.updatePlugin(plugin);
           const users = usersOf((await market.list()).shared, [updated.name, plugin]);
-          return { text: `已更新 opencli 插件 ${plugin}${users === '' ? '。' : `；${users}。`}` };
+          return { text: `已更新${pluginTermOf(ctx)} ${plugin}${users === '' ? '。' : `；${users}。`}` };
         }
         const outcome = await market.uninstallPlugin(plugin);
         const users = usersOf((await market.list()).shared, [outcome.name, plugin]);
@@ -379,13 +379,13 @@ export function registerMarketTools(
 
   const updatePluginTool = pluginTool({
     name: MODULES_UPDATE_PLUGIN_TOOL,
-    description: '更新用户装的 opencli 插件（按包名或插件名）；老插件跑不动了先试它。',
+    description: `更新用户装的${pluginTermOf(ctx)}（按包名或插件名）；老插件跑不动了先试它。`,
     update: true,
   });
 
   const uninstallPluginTool = pluginTool({
     name: MODULES_UNINSTALL_PLUGIN_TOOL,
-    description: '卸用户装的 opencli 插件：没人再用它时文件也删；还有模块用着就只从名单去掉。',
+    description: `卸用户装的${pluginTermOf(ctx)}：没人再用它时文件也删；还有模块用着就只从名单去掉。`,
     update: false,
   });
 

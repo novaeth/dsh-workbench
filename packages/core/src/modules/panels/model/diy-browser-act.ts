@@ -20,14 +20,14 @@ export async function actBrowser(
 }
 
 export function actErrorOf(step: ActStep): string {
-  if (step.timedOut) return `opencli 没在 ${String(Math.round(ACT_TIMEOUT_MS / 1000))} 秒内回来`;
+  if (step.timedOut) return `运行时没在 ${String(Math.round(ACT_TIMEOUT_MS / 1000))} 秒内回来`;
   const error = step.payload?.['error'];
   if (typeof error === 'object' && error !== null) {
     const message = textOf((error as Record<string, unknown>)['message']);
     if (message !== '') return message;
   }
   if (step.ok) return '';
-  return step.stderr || step.stdout || 'opencli 报了个错';
+  return step.stderr || step.stdout || '运行时报了个错';
 }
 
 export const SWEEP_TIMEOUT_MS = 4000;

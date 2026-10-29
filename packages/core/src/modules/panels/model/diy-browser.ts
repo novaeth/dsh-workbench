@@ -63,7 +63,7 @@ export async function bindCurrentTab(shell: DshShell, command: string, session: 
   const error = parsed['error'];
   if (typeof error === 'object' && error !== null) {
     const message = textOf((error as Record<string, unknown>)['message']);
-    return { ok: false, url: '', title: '', reason: message === '' ? 'opencli 报了个错' : message };
+    return { ok: false, url: '', title: '', reason: message === '' ? '运行时报了个错' : message };
   }
   return { ok: true, url: textOf(parsed['url']), title: textOf(parsed['title']), reason: '' };
 }

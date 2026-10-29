@@ -91,6 +91,7 @@ const runtimePreset = (capabilities: RuntimePort['capabilities'] extends never ?
     pluginPrefix: 'fake-plugin-',
     invoke: (site: string, command?: string) => (command === undefined ? `fake ${site}` : `fake ${site} ${command}`),
     help: (site: string) => `fake ${site} --help`,
+    browser: (verb: readonly string[]) => `fake browser ${verb.join(' ')}`,
   }),
   commands: () => ({}),
   runners: () => ({}),

@@ -79,7 +79,7 @@ describe('actBrowser：把子命令原样挂到 opencli browser <会话> 上', (
 describe('actErrorOf：四档话术，先超时、再 opencli 的 error 信封', () => {
   it('★★ 超时那句带秒数', () => {
     expect(actErrorOf(step(undefined, { ok: false, timedOut: true }))).toBe(
-      `opencli 没在 ${String(ACT_TIMEOUT_MS / 1000)} 秒内回来`,
+      `运行时没在 ${String(ACT_TIMEOUT_MS / 1000)} 秒内回来`,
     );
   });
 
@@ -95,7 +95,7 @@ describe('actErrorOf：四档话术，先超时、再 opencli 的 error 信封',
     expect(actErrorOf(step({ ok: true }))).toBe('');
     expect(actErrorOf(step(undefined, { ok: false, stderr: 'boom' }))).toBe('boom');
     expect(actErrorOf(step(undefined, { ok: false, stdout: 'out' }))).toBe('out');
-    expect(actErrorOf(step(undefined, { ok: false }))).toBe('opencli 报了个错');
+    expect(actErrorOf(step(undefined, { ok: false }))).toBe('运行时报了个错');
   });
 });
 

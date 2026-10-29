@@ -60,8 +60,8 @@ function workbenchModule(id: string | undefined): Pair {
 
 function workbenchPlugin(id: string | undefined): Pair {
   return missing(id)
-    ? { zh: '工作台的 opencli 插件', en: 'a workbench opencli plugin' }
-    : { zh: `工作台${pad(`[${id}]`)}opencli 插件`, en: `the workbench [${id}] opencli plugin` };
+    ? { zh: '工作台的插件', en: 'a workbench plugin' }
+    : { zh: `工作台${pad(`[${id}]`)}插件`, en: `the workbench [${id}] plugin` };
 }
 
 function workbenchDependency(id: string | undefined): Pair {
@@ -331,7 +331,7 @@ function approvalVerdict(call: ApprovalCall, marketSource?: MarketSourceLookup):
       const verb = install ? '装' : '升';
       const verbEn = install ? 'installs' : 'upgrades';
       return askOf(
-        `${call.name} ${id ?? ''} changes the opencli plugins and libraries a workbench module declares`,
+        `${call.name} ${id ?? ''} changes the plugins and libraries a workbench module declares`,
         pair(
           `会${verb}${workbenchModule(id).zh}要的插件与库，不换模块包本身，允许吗？`,
           `it ${verbEn} the plugins the ${workbenchModule(id).en} declares, without replacing its package. Allow?`,
@@ -367,7 +367,7 @@ function approvalVerdict(call: ApprovalCall, marketSource?: MarketSourceLookup):
     case MODULES_UPDATE_PLUGIN_TOOL: {
       const target = workbenchPlugin(plugin);
       return askOf(
-        `${MODULES_UPDATE_PLUGIN_TOOL} ${plugin ?? ''} updates an opencli plugin on this machine`,
+        `${MODULES_UPDATE_PLUGIN_TOOL} ${plugin ?? ''} updates a plugin on this machine`,
         pair(`会更新${target.zh}，允许吗？`, `it updates ${target.en}. Allow?`),
         pair(`agent 想更新${target.zh}，允许吗？`, `The agent wants to update ${target.en}. Allow?`),
       );
@@ -375,7 +375,7 @@ function approvalVerdict(call: ApprovalCall, marketSource?: MarketSourceLookup):
     case MODULES_UNINSTALL_PLUGIN_TOOL: {
       const target = workbenchPlugin(plugin);
       return askOf(
-        `${MODULES_UNINSTALL_PLUGIN_TOOL} ${plugin ?? ''} uninstalls an opencli plugin on this machine`,
+        `${MODULES_UNINSTALL_PLUGIN_TOOL} ${plugin ?? ''} uninstalls a plugin on this machine`,
         pair(`会卸载${target.zh}，允许吗？`, `it uninstalls ${target.en}. Allow?`),
         pair(`agent 想卸载${target.zh}，允许吗？`, `The agent wants to uninstall ${target.en}. Allow?`),
       );

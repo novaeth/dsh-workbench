@@ -150,7 +150,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
           captureFile,
           size: page.calls.length,
           talk,
-          text: capture ? talk : `${talk}（opencli 那条捕获没起来 —— 这次只有页面钩子）`,
+          text: capture ? talk : `${talk}（捕获那条没起来 —— 这次只有页面钩子）`,
         });
       } catch (error) {
         await releaseQuietly({ shell, command, session: BROWSER_RECORD_SESSION, url, captureFile });
@@ -449,7 +449,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
             ? `原文留在 ${lastFile}（下一场 prepare 会清掉它）—— 要再看某一条用 ${DIY_RECORD_DETAIL_TOOL}（给 unit + key；同一个 key 跨轮会重名，再带上清单里那行的 at 就钉住了）。`
             : '没留下原文（这一场的捕获文件是空的或没起来）—— 要哪一条就让用户从 DevTools 复制 curl。',
           bundle.capture.round === 'fail'
-            ? '（会话捕获最近一轮没跑成（opencli 那条报了错）—— 这一场可能只有页面钩子。）'
+            ? '（会话捕获最近一轮没跑成 —— 这一场可能只有页面钩子。）'
             : '',
           cleaned.tab ? '录制窗那个标签收掉了。' : '那个标签没关掉（用户自己关一下）。',
           cleaned.capture ? '' : '捕获那条没停干净（最多 15 分钟自己收工）。',

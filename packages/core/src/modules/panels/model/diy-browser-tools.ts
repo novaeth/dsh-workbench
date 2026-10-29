@@ -10,6 +10,7 @@ import { dirname, join } from 'node:path';
 import { cliCommandOf } from '@dsh-workbench/shared/host';
 import { cropPngFile, type PngRect } from '@/shared/api/host/png-crop';
 import { asNumber, asRecord, asText, OUTPUT, plainJson } from './diy-context';
+import { surfaceOf } from '@/shared/api/host/runtime-surface';
 import { jsonOf, LOOK_TIMEOUT_MS, runBrowserStep } from './diy-browser';
 import { ensureDirOf } from '@/shared/api/host/diy-artifacts';
 import { pageAt, type PageHandle } from './diy-page';
@@ -163,101 +164,101 @@ export const BROWSER_TOOLS: readonly BrowserToolRow[] = [
     tool: DIY_STATE_TOOL,
     verb: ['state'],
     description: '这一页有什么：URL / 标题 / 可点的元素与索引。',
-    argsHelp: 'opencli browser state 的参数（如 --source ax）。',
+    argsHelp: '`{cmd}` state 的参数（如 --source ax）。',
   },
   {
     tool: DIY_HTML_TOOL,
     verb: ['get', 'html'],
     description: '取 DOM：默认整页 HTML，--as json 给 {tag,attrs,text,children} 树。',
-    argsHelp: 'opencli browser get html 的参数（--selector / --as json / --depth / --children-max / --text-max）。',
+    argsHelp: '`{cmd}` get html 的参数（--selector / --as json / --depth / --children-max / --text-max）。',
     css: { kind: 'flag', flag: '--selector' },
   },
   {
     tool: DIY_FIND_TOOL,
     verb: ['find'],
     description: '按 CSS 或语义找元素，回 {matches_n, entries[]}（ref 只在那一次快照里有效）。',
-    argsHelp: 'opencli browser find 的参数（--css / --role / --name / --testid / --limit / --text-max）。',
+    argsHelp: '`{cmd}` find 的参数（--css / --role / --name / --testid / --limit / --text-max）。',
     css: { kind: 'flag', flag: '--css' },
   },
   {
     tool: DIY_CLICK_TOOL,
     verb: ['click'],
     description: '点一个元素。',
-    argsHelp: 'opencli browser click 的参数（选择器 / --role / --name / --nth）。',
+    argsHelp: '`{cmd}` click 的参数（选择器 / --role / --name / --nth）。',
     css: { kind: 'positional', at: 0 },
   },
   {
     tool: DIY_HOVER_TOOL,
     verb: ['hover'],
     description: '把鼠标移到元素上。',
-    argsHelp: 'opencli browser hover 的参数（选择器 / --role / --name）。',
+    argsHelp: '`{cmd}` hover 的参数（选择器 / --role / --name）。',
     css: { kind: 'positional', at: 0 },
   },
   {
     tool: DIY_TYPE_TOOL,
     verb: ['type'],
     description: '点一下再敲字。',
-    argsHelp: 'opencli browser type 的参数（选择器在前，然后是字）。',
+    argsHelp: '`{cmd}` type 的参数（选择器在前，然后是字）。',
     css: { kind: 'positional', at: 0 },
   },
   {
     tool: DIY_FILL_TOOL,
     verb: ['fill'],
     description: '直接把值设进去。',
-    argsHelp: 'opencli browser fill 的参数（选择器在前，然后是值）。',
+    argsHelp: '`{cmd}` fill 的参数（选择器在前，然后是值）。',
     css: { kind: 'positional', at: 0 },
   },
   {
     tool: DIY_KEYS_TOOL,
     verb: ['keys'],
     description: '给焦点发按键。',
-    argsHelp: 'opencli browser keys 的参数（如 Enter / Meta+K）。',
+    argsHelp: '`{cmd}` keys 的参数（如 Enter / Meta+K）。',
   },
   {
     tool: DIY_SCROLL_TOOL,
     verb: ['scroll'],
     description: '滚一屏。',
-    argsHelp: 'opencli browser scroll 的参数（up|down / --amount）。',
+    argsHelp: '`{cmd}` scroll 的参数（up|down / --amount）。',
   },
   {
     tool: DIY_WAIT_TOOL,
     verb: ['wait'],
     description: '等一件事：选择器 / 文字 / 时间 / XHR / 下载。',
-    argsHelp: 'opencli browser wait 的参数（selector|text|time|xhr|download + --timeout）。',
+    argsHelp: '`{cmd}` wait 的参数（selector|text|time|xhr|download + --timeout）。',
     css: { kind: 'positional', at: 1, onlyWhenFirst: 'selector' },
   },
   {
     tool: DIY_EVAL_TOOL,
     verb: ['eval'],
     description: '在页面里跑一段 JS（return 什么就回什么）。',
-    argsHelp: 'opencli browser eval 的参数：一段 JS（in=card 时可用注入的 root）。',
+    argsHelp: '`{cmd}` eval 的参数：一段 JS（in=card 时可用注入的 root）。',
     evalInCard: true,
   },
   {
     tool: DIY_SCREENSHOT_TOOL,
     verb: ['screenshot'],
     description: '拍一张图（写文件；clip 给 CSS px 就只裁那一块）。',
-    argsHelp: 'opencli browser screenshot 的参数：文件路径在前，然后 --full-page / --width / --height / --annotate。',
+    argsHelp: '`{cmd}` screenshot 的参数：文件路径在前，然后 --full-page / --width / --height / --annotate。',
     clip: true,
   },
   {
     tool: DIY_NETWORK_TOOL,
     verb: ['network'],
     description: '看网络：捕获到的请求形状（URL / 方法 / key）；body 取不到，要 body 用 _eval 里 fetch 打一条。',
-    argsHelp: 'opencli browser network 的参数（--since / --until / --detail / --filter / --all / --raw / --follow）。',
+    argsHelp: '`{cmd}` network 的参数（--since / --until / --detail / --filter / --all / --raw / --follow）。',
   },
   {
     tool: DIY_DIALOG_TOOL,
     verb: ['dialog'],
     description: '处理 JS 弹窗。',
-    argsHelp: 'opencli browser dialog 的参数（accept | dismiss）。',
+    argsHelp: '`{cmd}` dialog 的参数（accept | dismiss）。',
   },
 ];
 
-function parametersOf(row: BrowserToolRow): Record<string, unknown> {
+function parametersOf(row: BrowserToolRow, command: string): Record<string, unknown> {
   const properties: Record<string, unknown> = {
     unit: UNIT_PROP,
-    args: { type: 'array', items: { type: 'string' }, description: row.argsHelp },
+    args: { type: 'array', items: { type: 'string' }, description: row.argsHelp.replace('{cmd}', command) },
     timeoutMs: { type: 'number', description: '超时毫秒（默认 30000）。' },
     read: {
       type: 'string',
@@ -474,11 +475,13 @@ async function runBrowserTool(
 }
 
 export function registerBrowserTools(ctx: DshHostContext, tools: DshToolRegistry): readonly (() => void)[] {
+  const surface = surfaceOf(ctx);
+  const commandOf = (row: BrowserToolRow): string => surface?.browser?.(row.verb) ?? `browser ${row.verb.join(' ')}`;
   return BROWSER_TOOLS.map((row) => {
     const definition: DshToolDefinition = {
       name: row.tool,
       description: row.description,
-      parameters: parametersOf(row),
+      parameters: parametersOf(row, commandOf(row)),
       output: OUTPUT,
       execute: async (raw: unknown, exec: DshToolRunContext) => plainJson(await runBrowserTool(row, ctx, raw, exec)),
     };

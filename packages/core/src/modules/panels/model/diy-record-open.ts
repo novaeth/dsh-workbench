@@ -48,8 +48,8 @@ export async function openRecordPage(input: {
       ok: false,
       at: '',
       why:
-        `开不了录制窗：${opened.stderr || opened.stdout || 'opencli 报了个错'}。` +
-        '先让用户把工作台那一页切到前台（第一次要这样），或跑 opencli doctor 看扩展连没连上。',
+        `开不了录制窗：${opened.stderr || opened.stdout || '运行时那边报了个错'}。` +
+        '先让用户把工作台那一页切到前台（第一次要这样），或跑一次运行时自检（doctor）看扩展连没连上。',
     };
   }
   await settleOf(input);
@@ -70,7 +70,7 @@ export async function openRecordPage(input: {
       at,
       why:
         `那一页没开起来（现在开的是 ${at === '' ? '一张空白页' : at}）—— 再看一眼 Chrome 里那扇录制窗，` +
-        '或跑 opencli doctor 看扩展连没连上。',
+        '或跑一次运行时自检（doctor）看扩展连没连上。',
     };
   }
   return { ok: true, at, why: '' };
