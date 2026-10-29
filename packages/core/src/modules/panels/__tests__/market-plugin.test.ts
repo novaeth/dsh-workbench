@@ -5,7 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 const PLUGIN_MANIFEST_FILE = 'opencli-plugin.json';
 import type { BundleChange, BundleInstallRequest } from '@/kernel/contract/bundle-install';
-import type { BundleManager } from '@dsh-workbench/shared/host';
+import type { BundleManager, SupplyPort } from '@dsh-workbench/shared/host';
+import { createPackageRouter } from '@dsh-workbench/shared/host';
 import { installRouted, type BundleInstallDeps } from '../model/market-route';
 import { createPluginLedger, type PluginLedger } from '../model/plugin-ledger';
 
@@ -59,6 +60,20 @@ function ledgerAt(root: string): PluginLedger {
   });
 }
 
+function pluginSupply(): SupplyPort {
+  const router = createPackageRouter({ manifestFile: 'opencli-plugin.json' });
+  return {
+    isolatedRoot: () => '/tmp/wb-plugin-runtime',
+    isolatedHome: () => '/tmp/wb-plugin-home',
+    modules: { isolatedRoot: () => '/tmp/wb-plugin-runtime', isolatedHome: () => '/tmp/wb-plugin-home' },
+    packageRouteOf: router.packageRouteOf,
+    pluginInstallPlan: (plan: { spec: string; command: string }) => ({
+      ok: true,
+      commands: [{ line: `'${plan.command}' plugin install '${plan.spec}'` }],
+    }),
+  } as unknown as SupplyPort;
+}
+
 function rig(options: {
   readonly spec: string;
   readonly root: string;
@@ -70,6 +85,7 @@ function rig(options: {
   const deps: BundleInstallDeps = {
     spec: options.spec,
     command: 'opencli',
+    supply: pluginSupply(),
     manager: managerOf(),
     ledger,
     runAll: async (steps) => {

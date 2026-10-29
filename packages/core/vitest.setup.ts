@@ -1,42 +1,54 @@
 import { beforeEach, vi } from 'vitest';
+import { fakeAdapterSet } from '@dsh-workbench/shared/testing';
 
-beforeEach(async () => {
-  const profile = await vi.importActual<typeof import('@dsh-workbench/adapter-profile')>('@dsh-workbench/adapter-profile');
-  profile.resetReleaseCache();
-  const supply = await vi.importActual<typeof import('@dsh-workbench/adapter-supply')>('@dsh-workbench/adapter-supply');
-  supply.resetPackageRouteCache();
+type Set = ReturnType<typeof fakeAdapterSet>;
+
+let fallback = fakeAdapterSet() as unknown as Set;
+
+beforeEach(() => {
+  fallback = fakeAdapterSet() as unknown as Set;
 });
+
+function withFallback(got: Set): Set {
+  const merged = { ...fallback, ...got } as Record<string, unknown>;
+  for (const key of ['supply', 'modules', 'profile', 'probe', 'runtime', 'plugins', 'actions', 'data']) {
+    if (merged[key] === undefined) merged[key] = (fallback as unknown as Record<string, unknown>)[key];
+  }
+  const partial = got as unknown as Record<string, unknown>;
+  if (partial['supply'] === undefined && partial['modules'] !== undefined) {
+    merged['supply'] = { ...fallback.supply, ...(partial['modules'] as object) };
+  } else if (partial['supply'] !== undefined && partial['modules'] === undefined) {
+    merged['modules'] = fallback.modules;
+  }
+  return merged as unknown as Set;
+}
 
 vi.mock('@dsh-workbench/shared/host', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@dsh-workbench/shared/host')>();
-  const defaultAdapters = await vi.importActual<typeof import('@dsh-workbench/adapters-default')>('@dsh-workbench/adapters-default');
-  let cached: ReturnType<typeof defaultAdapters.createAdapterSet> | undefined;
-  const getAdapters = () => {
-    cached ??= {
-      ...defaultAdapters.createAdapterSet({ get: () => undefined } as never),
-      data: { read: async () => ({ ok: false, error: { code: 'invalid-request', message: '测试没有注入 DataReader' } }) },
-    };
-    return cached;
-  };
-  const provided = (ctx?: { get?: (key: string, optional?: boolean) => unknown }): ReturnType<typeof getAdapters> => {
-    let got: ReturnType<typeof getAdapters> | undefined;
-    try {
-      got = ctx?.get?.('workbenchAdapters', false) as ReturnType<typeof getAdapters> | undefined;
-    } catch {
-      got = undefined;
-    }
-    return got !== undefined && got.supply?.env !== undefined && got.modules !== undefined ? got : getAdapters();
+  const provided = (ctx?: { get?: (key: string, optional?: boolean) => unknown }): Set => {
+    const got = (() => {
+      try {
+        return ctx?.get?.('workbenchAdapters', false) as Set | undefined;
+      } catch {
+        return undefined;
+      }
+    })();
+    if (got === undefined) return fallback;
+    return withFallback(got);
   };
   const supply = (ctx?: { get?: (key: string, optional?: boolean) => unknown }) => {
-    const adapters = provided(ctx);
-    return { ...adapters.supply, ...adapters.modules, env: adapters.supply, modules: adapters.modules };
+    const adapters = provided(ctx) as unknown as { supply: Set['supply']; modules: Set['modules'] };
+    return { ...adapters.modules, ...adapters.supply, env: adapters.supply, modules: adapters.modules };
   };
   return {
     ...actual,
-    adaptersOf: () => getAdapters(),
+    adaptersOf: (ctx?: never) => provided(ctx),
     supplyPortOf: (ctx?: never) => supply(ctx),
-    profilePortOf: (ctx?: never) => provided(ctx).profile,
-    cliCommandOf: () => 'opencli',
+    profilePortOf: (ctx?: never) => (provided(ctx) as unknown as { profile: unknown }).profile,
+    cliCommandOf: (ctx?: { get?: (key: string, optional?: boolean) => unknown }) => {
+      const runtime = (provided(ctx) as unknown as { runtime: { commandSurface?: (c?: unknown) => { name?: string } | undefined } }).runtime;
+      return runtime.commandSurface?.(ctx)?.name ?? 'runtime';
+    },
     requireSupply: (ctx?: never) => supply(ctx),
   };
 });

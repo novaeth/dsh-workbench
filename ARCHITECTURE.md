@@ -292,6 +292,7 @@ packages/core/src/
 | `lib:app/layouts` | `src/app/layouts/**` | 6 | — | — | — |
 | `lib:app/units` | `src/app/units/**` | 7 | — | — | — |
 | `lib:dev` | `src/dev/**` | 9 | — | — | — |
+| `core:test-setup` | `vitest.setup.ts` | 99 | — | — | — |
 <!-- arch-guard:end roles -->
 
 ### 3.2.1 层栈

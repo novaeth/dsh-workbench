@@ -8,6 +8,8 @@ import type { BundleManager } from '@dsh-workbench/shared/host';
 import type { InstalledModule, ProfileModule, ProfilePackage } from '@dsh-workbench/shared/host';
 import type { SupplySource, UnitManifest } from '@dsh-workbench/shared';
 import { extensionNeedOf, libNeedOf, needStateOf } from '@dsh-workbench/shared/testing';
+import type { SupplyPort } from '@dsh-workbench/shared/host';
+import { createReleaseProbe } from '@dsh-workbench/shared/host';
 import { createMarketService } from '../model/market';
 
 import { quoteShellArg } from '@dsh-workbench/shared/host';
@@ -147,7 +149,26 @@ export function harness(options: {
       : { stdout: '' };
   });
   const selfUpdates: SelfUpdateRequest[] = [];
+  const release = createReleaseProbe();
+  const supply = {
+    afterLibInstall: () => undefined,
+    latestVersion: release.latestVersion,
+    missingReleaseParts: release.missingReleaseParts,
+    probeRelease: release.probeRelease,
+    isolatedRoot: () => '/tmp/wb-harness-runtime',
+    isolatedHome: () => '/tmp/wb-harness-home',
+    modules: { isolatedRoot: () => '/tmp/wb-harness-runtime', isolatedHome: () => '/tmp/wb-harness-home' },
+    packageRouteOf: async () => undefined,
+    pluginInstallPlan: (plan: { spec: string; command: string }) => ({
+      ok: true,
+      commands: [
+        { line: `npm i --prefix '/tmp/wb-harness-plugins' '${plan.spec}'` },
+        { line: `'${plan.command}' plugin install '${plan.spec}'` },
+      ],
+    }),
+  } as unknown as SupplyPort;
   const market = createMarketService({
+    supply,
     command: 'opencli',
     manifests: options.manifests,
     probe: async (id: string): Promise<UnitCapability> => {

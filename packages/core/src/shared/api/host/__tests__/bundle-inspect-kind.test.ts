@@ -3,12 +3,23 @@ import os from 'node:os';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { DshHostContext } from '@dsh-workbench/shared';
-import {  } from '@dsh-workbench/shared/host';
+import type { SupplyPort } from '@dsh-workbench/shared/host';
+import { createPackageRouter, splitNpmSpec } from '@dsh-workbench/shared/host';
 const PLUGIN_MANIFEST_FILE = 'opencli-plugin.json';
 import { bundleInspectHandler } from '../bundle-routes';
 
+function opencliSupply(): SupplyPort {
+  const router = createPackageRouter({ manifestFile: PLUGIN_MANIFEST_FILE });
+  return {
+    pluginManifestFile: () => PLUGIN_MANIFEST_FILE,
+    splitNpmSpec,
+    packageRouteOf: router.packageRouteOf,
+    modules: { isolatedRoot: () => '/tmp/wb-inspect-runtime', isolatedHome: () => '/tmp/wb-inspect-home' },
+  } as unknown as SupplyPort;
+}
+
 function fakeContext(manager: unknown, shell?: unknown): DshHostContext {
-  const known: Record<string, unknown> = { pluginManager: manager };
+  const known: Record<string, unknown> = { pluginManager: manager, workbenchAdapters: { supply: opencliSupply() } };
   if (shell !== undefined) known.shell = shell;
   return { get: (name: string) => known[name] } as unknown as DshHostContext;
 }

@@ -11,7 +11,31 @@ import type { UnitCapability } from '@dsh-workbench/shared/host';
 import { createMarketService } from '../model/market';
 import { dispatchMarket } from '../model/market-dispatch';
 import { createPluginLedger } from '../model/plugin-ledger';
+import type { SupplyPort } from '@dsh-workbench/shared/host';
+import { createPackageRouter, createReleaseProbe } from '@dsh-workbench/shared/host';
 import { selfUpdatePathsOf } from './market-tools-harness';
+
+function pluginSupply(): SupplyPort {
+  const release = createReleaseProbe();
+  const router = createPackageRouter({ manifestFile: 'opencli-plugin.json' });
+  return {
+    afterLibInstall: () => undefined,
+    latestVersion: release.latestVersion,
+    missingReleaseParts: release.missingReleaseParts,
+    probeRelease: release.probeRelease,
+    isolatedRoot: () => '/tmp/wb-dispatch-runtime',
+    isolatedHome: () => '/tmp/wb-dispatch-home',
+    modules: { isolatedRoot: () => '/tmp/wb-dispatch-runtime', isolatedHome: () => '/tmp/wb-dispatch-home' },
+    packageRouteOf: router.packageRouteOf,
+    pluginInstallPlan: (plan: { spec: string; command: string }) => ({
+      ok: true,
+      commands: [
+        { line: `npm i --prefix '/tmp/wb-dispatch-plugins' '${plan.spec}'` },
+        { line: `'${plan.command}' plugin install '${plan.spec}'` },
+      ],
+    }),
+  } as unknown as SupplyPort;
+}
 
 function unit(id: string): UnitManifest {
   return {
@@ -130,7 +154,7 @@ describe('市场动作分发（HTTP 通道与 agent 工具共用同一套动作�
             : { stdout: '' },
       );
       const market = createMarketService({
-
+        supply: pluginSupply(),
       command: 'opencli',        manifests: [unit('issues')],
         probe: probeOf('missing'),
         shell: fake.shell,

@@ -409,13 +409,13 @@ const shellTestsUseFakeSet = createRule({
   domain: 'structure',
   level: 'L2',
   severity: 'error',
-  title: '外壳的测试也不许 import 适配器包',
+  title: '外壳的测试（含测试基建）也不许 import 适配器包',
   hint: '外壳只认协议：要适配器行为就用 shared/testing 的 fakeAdapterSet 或就地按端口写 double；适配器内部逻辑的测试归它自己那个包。',
   run(ctx) {
     const findings = [];
     for (const record of ctx.records) {
       const rel = record.rel;
-      const isTest = /\.test\.(ts|tsx)$/.test(rel) || rel.includes('__tests__/');
+      const isTest = /\.test\.(ts|tsx)$/.test(rel) || rel.includes('__tests__/') || rel === 'vitest.setup.ts';
       if (!isTest) continue;
       const source = ctx.sourceOf(rel) ?? '';
       source.split('\n').forEach((line, index) => {

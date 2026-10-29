@@ -149,7 +149,9 @@ export default {
   ],
   overrides: {
 
-    include: ['src/**'],
+    include: ['src/**', 'vitest.setup.ts'],
+
+    addRoles: [{ id: 'core:test-setup', pattern: 'vitest.setup.ts', layer: 99, exclusive: true }],
 
     customRules: [...unitRules, ...kernelRules],
 
