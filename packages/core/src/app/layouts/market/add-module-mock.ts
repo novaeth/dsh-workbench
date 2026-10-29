@@ -54,7 +54,7 @@ export const ADD_MODULE_MOCKS: readonly AddModuleMock[] = [
   refused('not-found'),
   refused('not-a-package'),
   refused('not-a-bundle'),
-  refused('not-a-module-or-plugin', '这个包既不是工作台的模块，也不是 opencli 的插件，装了也用不上'),
+  refused('not-a-module-or-plugin', '这个包既不是工作台的模块，也不是运行时的插件，装了也用不上'),
   refused('network', 'getaddrinfo ENOTFOUND registry.example.com'),
   refused('unknown', 'pnpm 的返回码是 1'),
   {
@@ -85,7 +85,7 @@ export const ADD_MODULE_MOCKS: readonly AddModuleMock[] = [
   },
   {
     id: 'preview-plugin',
-    label: '预览（opencli 插件）',
+    label: '预览（插件）',
     phase: 'preview',
     spec: 'acme-plugin-dashboards',
     preview: {
@@ -135,7 +135,7 @@ export const ADD_MODULE_MOCKS: readonly AddModuleMock[] = [
   { id: 'done-applied', label: '装好了（已生效）', phase: 'result', spec: '@dsh-workbench/module-hello', outcome: outcome({}) },
   {
     id: 'done-plugin',
-    label: '装好了（opencli 插件）',
+    label: '装好了（插件）',
     phase: 'result',
     spec: 'acme-plugin-inventory',
     outcome: {

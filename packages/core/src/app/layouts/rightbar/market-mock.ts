@@ -324,7 +324,7 @@ export function buildMarketMocks(roster: readonly UnitManifest[]): readonly Mark
     },
     {
       id: 'plugin-outdated',
-      label: '用户装的 opencli 插件：有新版（给更新 / 卸载）',
+      label: '用户装的插件：有新版（给更新 / 卸载）',
       manifests: [],
       capabilities: {},
       plugins: [{ pkg: 'acme-plugin-inventory', name: 'inventory', installed: '1.0.24', latest: '1.0.25' }],
@@ -332,7 +332,7 @@ export function buildMarketMocks(roster: readonly UnitManifest[]): readonly Mark
     },
     {
       id: 'plugin-local',
-      label: '本地目录装的 opencli 插件：没有版本源，只给卸载',
+      label: '本地目录装的插件：没有版本源，只给卸载',
       manifests: [],
       capabilities: {},
       plugins: [{ pkg: '/Users/me/my-local-plugin', name: 'my-local-plugin', local: true }],

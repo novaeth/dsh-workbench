@@ -40,7 +40,7 @@ function plugin(id: string, pkg: string, title: string, shown: boolean): PanelPl
 
 const PLUGIN_MOCK: PanelMock = {
   id: 'plugin',
-  label: 'opencli 插件行（标出是插件，能开能关）',
+  label: '插件行（标出是插件，能开能关）',
   units: [],
   plugins: [
     plugin('plugin:acme-plugin-inventory', 'acme-plugin-inventory', 'inventory', true),
