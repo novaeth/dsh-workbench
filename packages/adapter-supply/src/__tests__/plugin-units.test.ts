@@ -134,3 +134,28 @@ describe('插件命令合成为工具：协议要求的那几条行为', () => {
     expect(report.problems.length).toBeGreaterThan(0);
   });
 });
+
+describe('报告与保留名', () => {
+  it('报告里照实说：这个插件几条命令、合成了几把、占多少字、工具名是什么', async () => {
+    const { manager } = unitsOf({ plugins: [{ name: 'inventory', version: '1.0.25', commands: ['builds', 'build'] }] });
+
+    const report = await manager.refresh();
+
+    const row = report.plugins.find((item) => item.plugin === 'inventory');
+    expect(row?.commands).toBe(2);
+    expect(row?.synthesized).toBe(2);
+    expect(row?.tools).toEqual(['inventory_builds', 'inventory_build']);
+  });
+
+  it('run_code 是保留名 ⇒ 这条不合成，并报出来', async () => {
+    const { manager, faces, problems } = unitsOf({
+      plugins: [{ name: 'run', version: '1.0.0', commands: ['code'] }],
+      commands: [{ site: 'run', name: 'code', description: '跑一段', access: 'read', browser: false, args: [] }],
+    });
+
+    await manager.refresh();
+
+    expect(faces.every((face) => face.manifest.tools.every((tool) => tool.name !== 'run_code'))).toBe(true);
+    expect(problems.join('\n')).toContain('run_code');
+  });
+});
