@@ -272,6 +272,10 @@ describe('seedRuntimeFiles', () => {
     const pkg = fakePackageRoot(root);
     const workbench = join(root, '.dsh', 'workbench');
     const paths = runtimeSeedPaths(workbench);
+    const stale = join(paths.opencliRoot, 'toolchain');
+    mkdirSync(stale, { recursive: true });
+    writeFileSync(join(stale, 'package.json'), '{"dependencies":{"opencli-workflow":"^1.1.23"}}', 'utf8');
+    writeFileSync(join(stale, 'pnpm-workspace.yaml'), 'allowBuilds: {}\n', 'utf8');
 
     const done = seedRuntimeFiles({ root: workbench, home: join(root, '.dsh'), packageRoot: pkg });
 
@@ -281,6 +285,7 @@ describe('seedRuntimeFiles', () => {
     expect(existsSync(paths.opencliHome)).toBe(true);
     expect(existsSync(paths.workshopPackages)).toBe(true);
     expect(readFileSync(paths.opencliBin, 'utf8')).toBe(opencliWrapperScript(pkg, join(root, '.dsh')));
+    expect(existsSync(join(stale, 'pnpm-workspace.yaml'))).toBe(false);
     expect(JSON.parse(readFileSync(join(paths.opencliRoot, 'toolchain', 'package.json'), 'utf8'))).toEqual({
       name: 'dsh-workbench-toolchain',
       private: true,
@@ -327,11 +332,6 @@ describe('seedRuntimeFiles', () => {
 
     expect(seedRuntimeFiles({ root: workbench, home: join(root, '.dsh'), packageRoot: pkg })).toContain(paths.opencliBin);
     expect(readFileSync(paths.opencliBin, 'utf8')).toBe(opencliWrapperScript(pkg, join(root, '.dsh')));
-    expect(JSON.parse(readFileSync(join(paths.opencliRoot, 'toolchain', 'package.json'), 'utf8'))).toEqual({
-      name: 'dsh-workbench-toolchain',
-      private: true,
-      dependencies: { '@jackwener/opencli': expect.any(String) },
-    });
   });
 
   it('工作台根根本建不出来（被文件占着 / 没权限）时只留一句话', () => {
