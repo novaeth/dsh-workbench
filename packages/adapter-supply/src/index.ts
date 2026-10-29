@@ -1,15 +1,20 @@
 export * from './registry-declaration.js';
 export * from './package-route.js';
 export * from './plugin-login-hint.js';
-export * from './package-kind.js';
-export * from './package-content.js';
 export * from './plugin-units.js';
 export * from './plugin-tools.js';
 export * from './dsh-plugins.js';
 export * from './plugin-catalog.js';
 export * from './plugin-source.js';
+export { OPENCLI_MANIFEST_FILE } from '@dsh-workbench/adapter-runtime';
 export {
   createDeclarationLookup,
+  dshMarkersOf,
+  isCommandFile,
+  pluginManifestOf,
+  splitNpmSpec,
+  verdictOf,
+  withPackageDir,
   declarationGaps,
   declaredPluginCommands,
   isLocalDependencySpec,

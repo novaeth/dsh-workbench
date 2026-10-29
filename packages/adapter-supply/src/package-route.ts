@@ -1,33 +1,18 @@
-import type { DshShell, SupplySource } from '@dsh-workbench/shared';
-import { VERSION_CHECK_TTL_MS } from '@dsh-workbench/shared/host';
-import { resolvePluginSource, type ResolvedPluginSource } from './plugin-source.js';
-import { dshMarkersOf, splitNpmSpec, verdictOf, type PackageVerdict } from './package-kind.js';
-import { withPackageDir } from './package-content.js';
-import { localDirOf, registryDshOf } from './registry-declaration.js';
-
-export type PackageRouteKind = 'runtime-plugin' | 'dsh-bundle' | 'neither';
-
-export interface PackageRoute {
-  readonly kind: PackageRouteKind;
-  readonly pkg?: string;
-  readonly pluginName?: string;
-}
+import type { DshShell, ResolvedPluginSource, SupplySource } from '@dsh-workbench/shared';
+import type { PackageRoute } from '@dsh-workbench/shared/host';
+import { createPackageRouter, localDirOf, splitNpmSpec } from '@dsh-workbench/shared/host';
+import { npmCacheDir, OPENCLI_MANIFEST_FILE } from '@dsh-workbench/adapter-runtime';
+import { registryDshOf } from './registry-declaration.js';
+import { resolvePluginSource } from './plugin-source.js';
 
 export const LOCAL_PLUGIN_ENV = 'DSH_WB_OPENCLI_PLUGIN_PATH';
 export const PLUGIN_REGISTRY_ENV = 'DSH_WB_OPENCLI_PLUGIN_REGISTRY';
 
-const cache = new Map<string, { at: number; route: PackageRoute | null }>();
-
-function routeOfVerdict(verdict: PackageVerdict, fallback?: string): PackageRoute {
-  const pkg = verdict.pkg ?? fallback;
-  if (verdict.kind === 'neither') return { kind: 'neither', ...(pkg === undefined ? {} : { pkg }) };
-  if (verdict.kind === 'dsh-bundle' || verdict.kind === 'both') return { kind: 'dsh-bundle' };
-  return {
-    kind: 'runtime-plugin',
-    ...(pkg === undefined ? {} : { pkg }),
-    ...(verdict.pluginName === undefined ? {} : { pluginName: verdict.pluginName }),
-  };
-}
+const router = createPackageRouter({
+  manifestFile: OPENCLI_MANIFEST_FILE,
+  cacheDir: npmCacheDir(),
+  dshLookup: (options) => registryDshOf(options),
+});
 
 export async function packageRouteOf(options: {
   readonly spec: string;
@@ -35,38 +20,11 @@ export async function packageRouteOf(options: {
   readonly registry?: string | undefined;
   readonly force?: boolean;
 }): Promise<PackageRoute | undefined> {
-  const local = localDirOf(options.spec);
-  if (local !== undefined) {
-    const verdict = verdictOf(local);
-    return verdict === undefined ? undefined : routeOfVerdict(verdict, splitNpmSpec(options.spec)?.name);
-  }
-
-  const ref = splitNpmSpec(options.spec);
-  if (ref === undefined) return undefined;
-  const shell = options.shell;
-  const registry = options.registry;
-  if (shell === undefined || registry === undefined) return undefined;
-
-  const key = `${registry}|${options.spec}`;
-  const hit = cache.get(key);
-  if (options.force !== true && hit !== undefined && Date.now() - hit.at < VERSION_CHECK_TTL_MS) {
-    return hit.route ?? undefined;
-  }
-
-  const found = await registryDshOf({ shell, name: options.spec, registry });
-  let route: PackageRoute | undefined;
-  if (found.readable && dshMarkersOf(found.raw)) {
-    route = { kind: 'dsh-bundle' };
-  } else {
-    const verdict = await withPackageDir({ shell, spec: options.spec, registry }, (dir) => verdictOf(dir));
-    route = verdict === undefined ? undefined : routeOfVerdict(verdict, ref.name);
-  }
-  cache.set(key, { at: Date.now(), route: route ?? null });
-  return route;
+  return router.packageRouteOf(options);
 }
 
 export function resetPackageRouteCache(): void {
-  cache.clear();
+  router.reset();
 }
 
 export function pluginInstallPlan(options: {

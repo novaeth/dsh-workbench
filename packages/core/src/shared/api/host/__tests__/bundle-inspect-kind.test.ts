@@ -4,7 +4,7 @@ import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { DshHostContext } from '@dsh-workbench/shared';
 import {  } from '@dsh-workbench/shared/host';
-const OPENCLI_MANIFEST_FILE = 'opencli-plugin.json';
+const PLUGIN_MANIFEST_FILE = 'opencli-plugin.json';
 import { bundleInspectHandler } from '../bundle-routes';
 
 function fakeContext(manager: unknown, shell?: unknown): DshHostContext {
@@ -100,7 +100,7 @@ describe('装机预检：dsh 拒了也自己按内容再判一次（插件那条
   it('★ 拒了 + 按内容判成 opencli 插件 → 回插件态（不是 dsh 那句 not-a-bundle）', async () => {
     const { dir, cleanup } = fixtureDir({
       'package.json': { name: 'opencli-plugin-dashboards', version: '1.0.16' },
-      [OPENCLI_MANIFEST_FILE]: { name: 'dashboards' },
+      [PLUGIN_MANIFEST_FILE]: { name: 'dashboards' },
       'commands.js': 'x',
     });
     try {
@@ -180,7 +180,7 @@ describe('装机预检：dsh 拒了也自己按内容再判一次（插件那条
   it('★ 只在"拒了"那一支插一脚：dsh 认了的照旧按 dsh 走（不抢它的结论）', async () => {
     const { dir, cleanup } = fixtureDir({
       'package.json': { name: 'both-a', dsh: { bundle: {} } },
-      [OPENCLI_MANIFEST_FILE]: { name: 'botha' },
+      [PLUGIN_MANIFEST_FILE]: { name: 'botha' },
       'commands.js': 'x',
     });
     try {

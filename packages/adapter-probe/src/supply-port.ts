@@ -16,19 +16,19 @@ import {
   profileModules,
   readInstalledModule,
   readProfilePackage,
-  refusalReason,
   registryDeclarationOf,
   resolvePluginSource,
   splitNpmSpec,
 } from '@dsh-workbench/adapter-supply';
-import { readBundleManager } from '@dsh-workbench/shared/host';
+import { readBundleManager, refusalReason } from '@dsh-workbench/shared/host';
+import { OPENCLI_MANIFEST_FILE } from '@dsh-workbench/adapter-runtime';
 
 export function createSupplyPort(): SupplyPort {
   const port = {
     isolatedRoot,
     isolatedHome,
     pluginPackagePrefix: () => 'opencli-plugin-',
-    pluginManifestFile: () => 'opencli-plugin.json',
+    pluginManifestFile: () => OPENCLI_MANIFEST_FILE,
     cliCatalogPath,
     vendorPluginsDir,
     runtimeInstallCommand: opencliInstallCommand,
@@ -39,6 +39,7 @@ export function createSupplyPort(): SupplyPort {
     profileDirOf,
     profileModules,
     readBundleManager,
+    refusalReason,
     readInstalledModule,
     readProfilePackage,
       createRegistryNotebook,
@@ -47,8 +48,7 @@ export function createSupplyPort(): SupplyPort {
     registryDeclarationOf,
     pathDeclarationOf,
     declarationRefusalOf,
-    refusalReason,
-    latestVersion,
+      latestVersion,
     missingReleaseParts,
     isNewerVersion,
     pluginInstallPlan,

@@ -1,11 +1,17 @@
 import fs from 'node:fs';
-import { npmCacheDir } from '@dsh-workbench/adapter-runtime';
 import os from 'node:os';
 import path from 'node:path';
-import type { DshShell } from '@dsh-workbench/shared';
-import { INSTALL_TIMEOUT_MS, parseJsonLoose, quoteShellArg, runShell } from '@dsh-workbench/shared/host';
+import type { DshShell } from '../api/dsh.js';
+import { INSTALL_TIMEOUT_MS } from '../config/constants.js';
+import { parseJsonLoose } from '../lib/text.js';
+import { quoteShellArg } from './shell-text.js';
+import { runShell } from './shell.js';
 import { splitNpmSpec } from './package-kind.js';
-import { localDirOf } from './registry-declaration.js';
+import { localDirOf } from './local-declaration.js';
+
+function cacheFlag(cacheDir: string | undefined): string {
+  return cacheDir === undefined ? '' : ` --cache ${quoteShellArg(cacheDir)}`;
+}
 
 function packedFileFrom(stdout: string, root: string): string | undefined {
   const parsed = parseJsonLoose(stdout);
@@ -27,7 +33,12 @@ function packedFileFrom(stdout: string, root: string): string | undefined {
 }
 
 export async function withPackageDir<T>(
-  options: { readonly shell?: DshShell | undefined; readonly spec: string; readonly registry?: string | undefined },
+  options: {
+    readonly shell?: DshShell | undefined;
+    readonly spec: string;
+    readonly registry?: string | undefined;
+    readonly cacheDir?: string | undefined;
+  },
   visit: (dir: string) => T,
 ): Promise<T | undefined> {
   const local = localDirOf(options.spec);
@@ -46,7 +57,7 @@ export async function withPackageDir<T>(
     const at = options.registry === undefined ? '' : ` --registry ${quoteShellArg(options.registry)}`;
     const packed = await runShell(
       shell,
-      `npm pack ${quoteShellArg(options.spec)} --ignore-scripts --json --pack-destination ${quoteShellArg(root)} --cache ${quoteShellArg(npmCacheDir())}${at}`,
+      `npm pack ${quoteShellArg(options.spec)} --ignore-scripts --json --pack-destination ${quoteShellArg(root)}${cacheFlag(options.cacheDir)}${at}`,
       { timeoutMs: INSTALL_TIMEOUT_MS },
     ).catch(() => undefined);
     if (packed === undefined || packed.exitCode !== 0) return undefined;

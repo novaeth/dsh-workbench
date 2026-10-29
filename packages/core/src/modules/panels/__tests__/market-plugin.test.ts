@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
-const OPENCLI_MANIFEST_FILE = 'opencli-plugin.json';
+const PLUGIN_MANIFEST_FILE = 'opencli-plugin.json';
 import type { BundleChange, BundleInstallRequest } from '@/kernel/contract/bundle-install';
 import type { BundleManager } from '@dsh-workbench/shared/host';
 import { installRouted, type BundleInstallDeps } from '../model/market-route';
@@ -30,7 +30,7 @@ function put(at: string, file: string, body: unknown): void {
 function pluginFixture(): string {
   const at = dirOf('plugin-a');
   put(at, 'package.json', { name: PKG, version: '1.0.0' });
-  put(at, OPENCLI_MANIFEST_FILE, { name: 'plugina' });
+  put(at, PLUGIN_MANIFEST_FILE, { name: 'plugina' });
   put(at, 'list.js', 'x');
   return at;
 }
@@ -55,7 +55,7 @@ function ledgerAt(root: string): PluginLedger {
   return createPluginLedger({
     store: createWorkspaceStore({ root }),
     home: HOME,
-    pluginFiles: { dir: path.join(HOME, '..', 'plugins-npm', 'node_modules'), manifest: OPENCLI_MANIFEST_FILE },
+    pluginFiles: { dir: path.join(HOME, '..', 'plugins-npm', 'node_modules'), manifest: PLUGIN_MANIFEST_FILE },
   });
 }
 

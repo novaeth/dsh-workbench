@@ -17,6 +17,7 @@ import { isNewerVersion } from '../host/version.js';
 import { refusalReason } from '../host/spec.js';
 import { declarationRefusalOf, pathDeclarationOf } from '../host/local-declaration.js';
 import { createRegistryLookup } from '../host/registry-declaration.js';
+import { createPackageRouter } from '../host/package-route.js';
 import { createReleaseProbe } from '../host/release-probe.js';
 
 export const FAKE_ADAPTER_MARKER = { adapterSet: 'fake' } as const;
@@ -137,6 +138,7 @@ const actions: HostActions = {
 export function fakeAdapterSet(overrides: Partial<AdapterSet> = {}): AdapterSet {
   const release = createReleaseProbe();
   const registry = createRegistryLookup();
+  const router = createPackageRouter({ manifestFile: 'fake-plugin.json', dshLookup: registry.registryDshOf });
   const withRelease: EnvSupplyPort = {
     ...supply,
     latestVersion: release.latestVersion,
@@ -154,6 +156,7 @@ export function fakeAdapterSet(overrides: Partial<AdapterSet> = {}): AdapterSet 
       env: withRelease,
       modules,
       registryDeclarationOf: registry.registryDeclarationOf,
+      packageRouteOf: router.packageRouteOf,
     } as SupplyPort,
     modules,
     profile,

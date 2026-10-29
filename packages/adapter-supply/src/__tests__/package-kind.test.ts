@@ -36,11 +36,11 @@ describe('按内容认一个包：opencli 插件与工作台模块', () => {
   it('★ 真判据：可解析的 opencli-plugin.json + 顶层至少一个命令文件 → opencli 插件', () => {
     const at = pluginDir();
 
-    expect(verdictOf(at)).toEqual({ kind: 'runtime-plugin', pkg: '@t/plugin-a', pluginName: 'plugina' });
+    expect(verdictOf(at, OPENCLI_MANIFEST_FILE)).toEqual({ kind: 'runtime-plugin', pkg: '@t/plugin-a', pluginName: 'plugina' });
   });
 
   it('★ manifest 里没写 name → 还是插件，只是没有显示名', () => {
-    expect(verdictOf(pluginDir('plugin-b', { version: '1.0.0' }))).toEqual({
+    expect(verdictOf(pluginDir('plugin-b', { version: '1.0.0' }), OPENCLI_MANIFEST_FILE)).toEqual({
       kind: 'runtime-plugin',
       pkg: '@t/plugin-b',
     });
@@ -52,8 +52,8 @@ describe('按内容认一个包：opencli 插件与工作台模块', () => {
     const workbench = dirOf('dsh-workbench');
     put(workbench, 'package.json', { name: '@t/module-a', dsh: { workbench: { unit: 'a' } } });
 
-    expect(verdictOf(bundle)).toEqual({ kind: 'dsh-bundle', pkg: '@t/plain-bundle' });
-    expect(verdictOf(workbench)).toEqual({ kind: 'dsh-bundle', pkg: '@t/module-a' });
+    expect(verdictOf(bundle, OPENCLI_MANIFEST_FILE)).toEqual({ kind: 'dsh-bundle', pkg: '@t/plain-bundle' });
+    expect(verdictOf(workbench, OPENCLI_MANIFEST_FILE)).toEqual({ kind: 'dsh-bundle', pkg: '@t/module-a' });
   });
 
   it('★ 两样都有 → both（路由那一侧按 dsh 走，不许装两遍）', () => {
@@ -62,14 +62,14 @@ describe('按内容认一个包：opencli 插件与工作台模块', () => {
     put(at, OPENCLI_MANIFEST_FILE, { name: 'botha' });
     put(at, 'list.js', 'export const list = 1;\n');
 
-    expect(verdictOf(at)).toEqual({ kind: 'both', pkg: '@t/both-a', pluginName: 'botha' });
+    expect(verdictOf(at, OPENCLI_MANIFEST_FILE)).toEqual({ kind: 'both', pkg: '@t/both-a', pluginName: 'botha' });
   });
 
   it('★ 两样都没有（但 package.json 读得到）→ neither', () => {
     const at = dirOf('plain');
     put(at, 'package.json', { name: '@t/plain' });
 
-    expect(verdictOf(at)).toEqual({ kind: 'neither', pkg: '@t/plain' });
+    expect(verdictOf(at, OPENCLI_MANIFEST_FILE)).toEqual({ kind: 'neither', pkg: '@t/plain' });
   });
 
   it('★ 不算命令文件的那些：.d.ts / .test.ts / .d.js 都填不满"至少一个命令文件"', () => {
@@ -85,7 +85,7 @@ describe('按内容认一个包：opencli 插件与工作台模块', () => {
     put(at, OPENCLI_MANIFEST_FILE, { name: 'onlytypes' });
     put(at, 'index.d.ts', 'export declare const x: number;\n');
 
-    expect(verdictOf(at)).toEqual({ kind: 'neither', pkg: '@t/only-types' });
+    expect(verdictOf(at, OPENCLI_MANIFEST_FILE)).toEqual({ kind: 'neither', pkg: '@t/only-types' });
   });
 
   it('★ manifest 解不开 / 是数组 / 是个字符串 → 不是插件（解不开就当没有）', () => {
@@ -95,7 +95,7 @@ describe('按内容认一个包：opencli 插件与工作台模块', () => {
       put(at, OPENCLI_MANIFEST_FILE, manifest);
       put(at, 'list.js', 'export const list = 1;\n');
 
-      expect(verdictOf(at)).toEqual({ kind: 'neither', pkg: '@t/no-manifest' });
+      expect(verdictOf(at, OPENCLI_MANIFEST_FILE)).toEqual({ kind: 'neither', pkg: '@t/no-manifest' });
     }
   });
 
@@ -104,7 +104,7 @@ describe('按内容认一个包：opencli 插件与工作台模块', () => {
     put(at, 'package.json', { name: '@t/no-manifest' });
     put(at, 'list.js', 'export const list = 1;\n');
 
-    expect(verdictOf(at)).toEqual({ kind: 'neither', pkg: '@t/no-manifest' });
+    expect(verdictOf(at, OPENCLI_MANIFEST_FILE)).toEqual({ kind: 'neither', pkg: '@t/no-manifest' });
   });
 
   it('★ package.json 不在 / 解不开 → 判不了（不是"都不是"：ADR-0038 那条 fail-open 不许变成拒因）', () => {
@@ -113,8 +113,8 @@ describe('按内容认一个包：opencli 插件与工作台模块', () => {
     const broken = dirOf('broken-package-json');
     put(broken, 'package.json', '{ not json');
 
-    expect(verdictOf(missing)).toBeUndefined();
-    expect(verdictOf(broken)).toBeUndefined();
+    expect(verdictOf(missing, OPENCLI_MANIFEST_FILE)).toBeUndefined();
+    expect(verdictOf(broken, OPENCLI_MANIFEST_FILE)).toBeUndefined();
   });
 
   it('★ 反例（spec §1.8）：只有传递依赖叫 opencli-plugin-* 的目录 → 不是插件', () => {
@@ -124,7 +124,7 @@ describe('按内容认一个包：opencli 插件与工作台模块', () => {
     put(at, 'node_modules/opencli-plugin-demo/opencli-plugin.json', { name: 'demo' });
     put(at, 'node_modules/opencli-plugin-demo/list.js', 'export const list = 1;\n');
 
-    expect(verdictOf(at)).toEqual({ kind: 'neither', pkg: 'opencli-workflow' });
+    expect(verdictOf(at, OPENCLI_MANIFEST_FILE)).toEqual({ kind: 'neither', pkg: 'opencli-workflow' });
   });
 
   it('★ 反例（同一条的另一面）：判据只看这一层的目录 —— 那个嵌套目录自己是插件', () => {
@@ -134,7 +134,7 @@ describe('按内容认一个包：opencli 插件与工作台模块', () => {
     put(at, 'node_modules/opencli-plugin-demo/opencli-plugin.json', { name: 'demo' });
     put(at, 'node_modules/opencli-plugin-demo/list.js', 'export const list = 1;\n');
 
-    expect(verdictOf(path.join(at, 'node_modules/opencli-plugin-demo'))).toEqual({
+    expect(verdictOf(path.join(at, 'node_modules/opencli-plugin-demo'), OPENCLI_MANIFEST_FILE)).toEqual({
       kind: 'runtime-plugin',
       pkg: 'opencli-plugin-demo',
       pluginName: 'demo',

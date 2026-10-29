@@ -4,10 +4,10 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DshShell } from '@dsh-workbench/shared';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
-const OPENCLI_MANIFEST_FILE = 'opencli-plugin.json';
+const PLUGIN_MANIFEST_FILE = 'opencli-plugin.json';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import type { BundleChange, BundleInstallRequest } from '@/kernel/contract/bundle-install';
-import type { BundleManager } from '@dsh-workbench/shared/host';
+import type { BundleManager, SupplyPort } from '@dsh-workbench/shared/host';
 import { refusalReason } from '@dsh-workbench/shared/host';
 import { createMarketService } from '../model/market';
 import { bundleNameOf, installRouted, type BundleInstallDeps } from '../model/market-route';
@@ -31,10 +31,31 @@ function put(at: string, file: string, body: unknown): void {
   fs.writeFileSync(target, typeof body === 'string' ? body : JSON.stringify(body), 'utf8');
 }
 
+function pluginSupply(
+  route: (options: { spec: string }) => unknown,
+  style: 'plugin-only' | 'npm-then-plugin' = 'plugin-only',
+): SupplyPort {
+  return {
+    env: { isolatedRoot: () => '/tmp/wb-route-runtime', isolatedHome: () => '/tmp/wb-route-home' },
+    packageRouteOf: async (options: { spec: string }) => route(options) as never,
+    pluginInstallPlan: (plan: { spec: string; command: string }) => ({
+      ok: true,
+      commands:
+        style === 'plugin-only'
+          ? [{ line: `'${plan.command}' plugin install '${plan.spec}'` }]
+          : [
+              { line: `npm i --prefix '/tmp/wb-route-plugins' '${plan.spec}'` },
+              { line: `'${plan.command}' plugin install '${plan.spec}'` },
+            ],
+    }),
+    modules: { isolatedRoot: () => '/tmp/wb-route-runtime', isolatedHome: () => '/tmp/wb-route-home' },
+  } as unknown as SupplyPort;
+}
+
 function pluginFixture(): string {
   const at = dirOf('plugin-a');
   put(at, 'package.json', { name: '@t/plugin-a', version: '1.0.0' });
-  put(at, OPENCLI_MANIFEST_FILE, { name: 'plugina' });
+  put(at, PLUGIN_MANIFEST_FILE, { name: 'plugina' });
   put(at, 'list.js', 'x');
   return at;
 }
@@ -42,7 +63,7 @@ function pluginFixture(): string {
 function bothFixture(): string {
   const at = dirOf('both-a');
   put(at, 'package.json', { name: '@t/both-a', dsh: { bundle: {} } });
-  put(at, OPENCLI_MANIFEST_FILE, { name: 'botha' });
+  put(at, PLUGIN_MANIFEST_FILE, { name: 'botha' });
   put(at, 'list.js', 'x');
   return at;
 }
@@ -121,6 +142,7 @@ function rig(options: {
   readonly shell?: DshShell | undefined;
   readonly registry?: string | undefined;
   readonly ledger?: PluginLedger | undefined;
+  readonly supply?: SupplyPort | undefined;
 }): { deps: BundleInstallDeps; install: ReturnType<typeof vi.fn>; commands: string[] } {
   const commands: string[] = [];
   const { manager, install } = bundlesOf();
@@ -140,6 +162,7 @@ function rig(options: {
       ...(options.shell === undefined ? {} : { shell: options.shell }),
       ...(options.registry === undefined ? {} : { registry: options.registry }),
       ...(options.ledger === undefined ? {} : { ledger: options.ledger }),
+      ...(options.supply === undefined ? {} : { supply: options.supply }),
     },
   };
 }
@@ -158,7 +181,7 @@ afterEach(() => {
 describe('添加一个 spec：按内容判它是什么，再决定走哪条路', () => {
   it('★ 判成 opencli 插件 → 走我们自己的安装器，dsh 的安装管理器一次也不叫', async () => {
     const at = pluginFixture();
-    const { deps, install, commands } = rig({ spec: at });
+    const { deps, install, commands } = rig({ spec: at, supply: pluginSupply(() => ({ kind: 'runtime-plugin', pkg: '@t/plugin-a', pluginName: 'plugina' })) });
 
     const outcome: BundleInstallOutcome = await installRouted(deps);
 
@@ -199,7 +222,13 @@ describe('添加一个 spec：按内容判它是什么，再决定走哪条路',
   it('★ 源上的包判成插件 → 走 plugin-source 的 npm 分支（装进 plugins-npm 再让 opencli 认它）', async () => {
     const { shell } = packingShell('{}');
     const ledger = ledgerAt('/tmp/wb-route-home/workbench/opencli/home');
-    const { deps, install, commands } = rig({ spec: '@t/demo@1.0.0', shell, registry: REGISTRY, ledger });
+    const { deps, install, commands } = rig({
+      spec: '@t/demo@1.0.0',
+      shell,
+      registry: REGISTRY,
+      ledger,
+      supply: pluginSupply(() => ({ kind: 'runtime-plugin', pkg: '@t/demo', pluginName: 'demo' }), 'npm-then-plugin'),
+    });
 
     const outcome = await installRouted(deps);
 
@@ -277,7 +306,13 @@ describe('接线：市场那条路交给路由，且没有插件管理器时还�
     const at = pluginFixture();
     const fake = createFakeShell([{ stdout: '' }]);
     const { manager, install } = bundlesOf();
-    const market = createMarketService({ command: 'opencli', manifests: [], shell: fake.shell, bundles: manager });
+    const market = createMarketService({
+      command: 'opencli',
+      manifests: [],
+      shell: fake.shell,
+      bundles: manager,
+      supply: pluginSupply(() => ({ kind: 'runtime-plugin', pkg: '@t/plugin-a', pluginName: 'plugina' })),
+    });
 
     const outcome = await market.installBundle(at);
 

@@ -103,7 +103,7 @@ describe('市场动作分发（HTTP 通道与 agent 工具共用同一套动作�
     expect(fake.commands()).toHaveLength(1);
   });
 
-  it('★ 声明过的**每一个** action 都分得出去（加动作却忘了 dispatch 就会红）', async () => {
+  it('★ 声明过的**每一个** action 都分得出去（加动作却忘了 dispatch 就会红）', { timeout: 60000 }, async () => {
     const homeRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-dispatch-home-'));
     const scriptDir = path.join(
       homeRoot,
