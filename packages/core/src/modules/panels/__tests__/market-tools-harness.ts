@@ -9,7 +9,6 @@ import type { InstalledModule, ProfileModule, ProfilePackage } from '@dsh-workbe
 import type { SupplySource, UnitManifest } from '@dsh-workbench/shared';
 import { extensionNeedOf, libNeedOf, needStateOf } from '@dsh-workbench/shared/testing';
 import { createMarketService } from '../model/market';
-import { resolvePluginSource } from '@dsh-workbench/adapter-supply';
 
 import { quoteShellArg } from '@dsh-workbench/shared/host';
 import type { SelfUpdateRequest } from '@dsh-workbench/shared/host';
@@ -49,11 +48,11 @@ export function libUnit(id: string, libName: string): UnitManifest {
 }
 
 function installLineOf(sources: readonly SupplySource[] | undefined, name: string): string {
-  for (const source of sources ?? []) {
-    const resolved = resolvePluginSource(source, process.env, { command: 'opencli', plugin: name });
-    if (resolved.ok) return resolved.line;
-  }
-  return `${quoteShellArg('opencli')} plugin install <${name}源>`;
+  const source = sources?.[0];
+  if (source === undefined) return `${quoteShellArg('opencli')} plugin install <${name}源>`;
+  const spec =
+    source.kind === 'git' ? source.url : source.kind === 'local' ? (source.path ?? name) : (source.package ?? name);
+  return `${quoteShellArg('opencli')} plugin install ${quoteShellArg(spec)}`;
 }
 
 const probeOf =

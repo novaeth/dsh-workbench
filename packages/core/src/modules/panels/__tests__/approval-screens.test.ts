@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import type { Translate, UnitManifest } from '@dsh-workbench/shared';
 import { zh } from '@dsh-workbench/shared';
 import { approvalFor, type ApprovalCall } from '@dsh-workbench/shared/host';
-import { pluginApprovalFor, type PluginCommand } from '@dsh-workbench/adapter-supply';
 import { pluginToolIndexOf, shellApprovalPlan, type ApprovalPlanView } from '@/app/layouts/approval-detail';
 import { panelsApprovalFor } from '../model/approval';
 import { ASK_TOOLS, WRITE_CALLS, stopRuns } from './approval-samples';
@@ -81,6 +80,24 @@ async function screenOf(tool: string): Promise<readonly string[]> {
 
 const PLUGIN_TOOL = 'inventory_build';
 
+interface PluginCommand {
+  readonly plugin: string;
+  readonly name: string;
+  readonly description: string;
+  readonly access: 'read' | 'write' | 'unknown';
+  readonly browser: boolean;
+  readonly siteSession: string;
+  readonly args: readonly {
+    readonly name: string;
+    readonly type: string;
+    readonly required: boolean;
+    readonly positional: boolean;
+    readonly valueRequired: boolean;
+    readonly choices: readonly string[];
+    readonly help: string;
+  }[];
+}
+
 const PLUGIN_COMMAND: PluginCommand = {
   plugin: 'inventory',
   name: 'build',
@@ -121,7 +138,19 @@ async function pluginScreen(): Promise<readonly string[]> {
   const call: ApprovalCall = { name: PLUGIN_TOOL, arguments: args };
   const decision = await approvalFor(call, {
     writes: true,
-    policy: pluginApprovalFor(PLUGIN_COMMAND),
+    policy: (() => {
+      const question = {
+        zh: `agent 想执行工作台 [${PLUGIN_COMMAND.plugin}] opencli 插件的 [${PLUGIN_COMMAND.name}] 命令，允许吗？`,
+        en: `The agent wants to run the [${PLUGIN_COMMAND.name}] command of the workbench opencli plugin [${PLUGIN_COMMAND.plugin}]. Allow?`,
+      };
+      return {
+        kind: 'ask' as const,
+        reason: `${PLUGIN_COMMAND.plugin} ${PLUGIN_COMMAND.name} 在 opencli 里标着 write`,
+        question,
+        fallback: question,
+        noteInDetail: true,
+      };
+    }),
     declaredNote: true,
   });
   const title = decision?.kind === 'ask' ? decision.displayReason.zh : '（不问）';
