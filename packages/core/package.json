@@ -1,6 +1,6 @@
 {
   "name": "@dsh-workbench/core",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "description": "个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。",
   "type": "module",
   "icon": "./icon.svg",
