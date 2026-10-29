@@ -57,6 +57,23 @@
 它跟默认集合跑**同一份** `check:adapter-contract`；要切它，只改 profile 里的一行 `adapterSet`，
 `packages/core/src` 一行都不用动 —— 工具在 `scripts/dev/adapter-set-switch.mjs`（带 `--restore`）。
 
+### 测试的边界：按协议写，不按实现写
+
+两侧各自对着协议，互不认识：
+
+- **外壳侧**：协议说适配器会这样表现，外壳就按这个预期调它。测试给一份“符合协议预期”的适配器
+  （`@dsh-workbench/shared/testing` 的 `fakeAdapterSet()`，或按端口写的 double），看外壳的行为对不对。
+- **适配器侧**：协议是这样写的，实现符不符合 —— `adapterContractGaps` 逐项判契约，自己的单测判行为。
+
+所以外壳里**不许 import 任何 `adapter-*` 包**（S70，error），适配器也不认识外壳的测试。
+
+适配器内部逻辑的测试归它自己的包：怎么解析 `git+https` 源、怎么生成隔离壳脚本、怎么比版本，
+住在 `adapter-supply` / `adapter-probe` 的 `src/**` 里，外壳不重复测 —— 否则换一份适配器，
+外壳的测试就在测一份不存在的实现。
+
+`shared/testing` 是协议侧的夹具层；`vitest.setup.ts` 的中央 mock 最终也只用假集合
+（现在还在用真默认集合，这是正在还的债，见 ADR-0092）。
+
 模块和 core 的关系有六个实际接触点：
 
 | 接触点 | 谁发起 | 发生什么 |

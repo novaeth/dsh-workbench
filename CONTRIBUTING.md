@@ -42,6 +42,14 @@ submodule. Public builds and the gate do not need it. With access, run
 `git submodule update --init`. The full command list is in
 [`AGENTS.md`](AGENTS.md) and [`packages/core/README.md`](packages/core/README.md).
 
+## Writing tests
+
+Tests in `packages/core` describe **what the adapter protocol promises**, never how the
+current adapter implements it. Use `fakeAdapterSet()` from `@dsh-workbench/shared/testing`
+(or a double written against the port) and keep `@dsh-workbench/adapter-*` imports out of
+`packages/core` entirely — S70 enforces this. Tests for adapter internals belong to the
+adapter package that owns them.
+
 ## Before you open a pull request
 
 - Keep the change to one concern. A refactor and a behaviour change in one PR
