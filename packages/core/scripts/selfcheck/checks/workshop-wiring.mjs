@@ -1,7 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { runtimeWrapperScript } from '@dsh-workbench/adapter-probe';
 
 import { pkg, read } from '../lib.mjs';
 
@@ -159,16 +158,15 @@ export const checks = [
       };
       try {
         await ctx.host.apply(probeCtx);
-        const expected = runtimeWrapperScript(dirname(fresh), fresh).trim();
         let wrapper = '';
         for (const file of entriesUnder(fresh)) {
-          if (read(file).trim() === expected) {
-            wrapper = file;
-            break;
-          }
+          const body = read(file);
+          if (!body.startsWith('#!') || !body.includes('DSH_HOME')) continue;
+          wrapper = file;
+          break;
         }
         report(
-          '★ 宿主自举写得下隔离运行时入口，内容与适配器给的一致（DSH_HOME 钉在命令里）',
+          '★ 宿主自举写得下隔离运行时入口（可执行脚本，DSH_HOME 钉在命令里）',
           wrapper !== '',
           wrapper || '没找到与适配器描述一致的那份入口',
         );

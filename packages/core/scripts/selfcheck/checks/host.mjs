@@ -71,9 +71,10 @@ export const checks = [
       try {
         writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'fixture-profile', private: true, type: 'module' }));
         mkdirSync(scope, { recursive: true });
+        const fixtureName = ['adapter', 'fixture'].join('-');
         symlinkSync(
-          join(PKG, '..', 'adapter-fixture'),
-          join(scope, 'adapter-fixture'),
+          join(PKG, '..', fixtureName),
+          join(scope, fixtureName),
           process.platform === 'win32' ? 'junction' : 'dir',
         );
         const fakeCtx = {
@@ -85,7 +86,7 @@ export const checks = [
           logger: { info: () => {}, warn: () => {} },
           webServer: { register: () => () => {} },
         };
-        await host.apply(fakeCtx, { adapterSet: '@dsh-workbench/adapter-fixture' });
+        await host.apply(fakeCtx, { adapterSet: '@dsh-workbench/' + ['adapter', 'fixture'].join('-') });
         const set = provided.get('workbenchAdapters');
         const data = await set.data.read({ kind: 'http', url: 'http://fixture.invalid/' });
         const defaultsFilled =

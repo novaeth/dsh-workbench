@@ -92,16 +92,28 @@ function moduleShell(): Plugin {
 
 const nodeBuiltins = [...builtinModules, ...builtinModules.map((name) => `node:${name}`)];
 
+const BUNDLED_WORKSPACE_DEPS = new Set(['@dsh-workbench/shared']);
+
+const workspaceRuntimeDeps = (): readonly string[] => {
+  try {
+    const manifest = JSON.parse(readFileSync(join(PKG_ROOT, 'package.json'), 'utf8')) as {
+      dependencies?: Record<string, string>;
+    };
+    return Object.keys(manifest.dependencies ?? {}).filter(
+      (name) => name.startsWith('@dsh-workbench/') && !BUNDLED_WORKSPACE_DEPS.has(name),
+    );
+  } catch {
+    return [];
+  }
+};
+
 const hostRuntimeDeps = [
   'dayjs',
   'execa',
   'which',
   'proper-lockfile',
   'write-file-atomic',
-  '@dsh-workbench/adapters-default',
-  '@dsh-workbench/adapter-runtime',
-  '@dsh-workbench/adapter-supply',
-  '@dsh-workbench/adapter-profile',
+  ...workspaceRuntimeDeps(),
 ];
 
 function hostConfig() {
