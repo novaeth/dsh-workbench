@@ -524,7 +524,7 @@ fi
 # 且那句 pnpm 前缀每次都要写对）。这里给一个**与 cwd 无关**的同名入口，启动器把它
 # 挂进 PATH —— 于是"在工坊里"和"在别的目录里"都叫得动同一个工具链。
 #
-# 转发脚本而不是软链：同 `bin/opencli-isolated` 那条坑 —— pnpm publish 之后包里的脚本没有 x 位，
+# 转发脚本而不是软链：同运行时包装那条坑 —— pnpm publish 之后包里的脚本没有 x 位，
 # 软链过去一执行就是 Permission denied。x 位由 chmod 当场给。
 # ⚠️ 先 rm -f：旧版本留下的软链还在时，`>` 会顺着软链把真脚本覆盖掉。
 ENTRY_DIR="$WORKBENCH_HOME/bin"

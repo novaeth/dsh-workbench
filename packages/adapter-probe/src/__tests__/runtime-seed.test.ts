@@ -8,7 +8,8 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { delimiter, join } from 'node:path';
+import { delimiter, dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DshHostContext } from '@dsh-workbench/shared';
@@ -129,11 +130,12 @@ describe('isInstalledCopy', () => {
 });
 
 describe('opencliWrapperScript', () => {
-  it('是一份 sh 脚本，exec 到自己那份 bin/opencli-isolated.mjs（隔离靠它换 HOME）', () => {
+  it('是一份 sh 脚本，exec 到运行时适配器那份 bin/opencli-isolated.mjs（隔离靠它换 HOME）', () => {
     const script = opencliWrapperScript('/pkg', '/home/.dsh');
+    const expected = fileURLToPath(new URL('../../../adapter-runtime/bin/opencli-isolated.mjs', import.meta.url));
     expect(script.startsWith('#!/bin/sh\n')).toBe(true);
     expect(script).toContain("export DSH_HOME='/home/.dsh'");
-    expect(script).toContain("exec node '/pkg/bin/opencli-isolated.mjs' \"$@\"");
+    expect(script).toContain(`exec node '${expected}' \"$@\"`);
   });
 
   it('把 DSH_HOME 钉在命令里：执行缝不继承它，不钉就会去写用户真正的 ~/.dsh（实测踩过）', () => {
@@ -142,7 +144,8 @@ describe('opencliWrapperScript', () => {
 
   it('路径里有空格也不散架（单引号包住，执行缝里不会被拆成两个词）', () => {
     const script = opencliWrapperScript('/Volumes/my disk/pkg', '/Volumes/my disk/dsh');
-    expect(script).toContain("'/Volumes/my disk/pkg/bin/opencli-isolated.mjs'");
+    const expected = fileURLToPath(new URL('../../../adapter-runtime/bin/opencli-isolated.mjs', import.meta.url));
+    expect(script).toContain(`'${expected}'`);
     expect(script).toContain("DSH_HOME='/Volumes/my disk/dsh'");
   });
 
@@ -272,11 +275,17 @@ describe('seedRuntimeFiles', () => {
 
     const done = seedRuntimeFiles({ root: workbench, home: join(root, '.dsh'), packageRoot: pkg });
 
-    expect(done).toEqual([paths.opencliBin]);
+    expect(done).toContain(paths.opencliBin);
+    expect(done).toContain(join(paths.opencliRoot, 'toolchain', 'package.json'));
     expect(existsSync(paths.entryDir)).toBe(true);
     expect(existsSync(paths.opencliHome)).toBe(true);
     expect(existsSync(paths.workshopPackages)).toBe(true);
     expect(readFileSync(paths.opencliBin, 'utf8')).toBe(opencliWrapperScript(pkg, join(root, '.dsh')));
+    expect(JSON.parse(readFileSync(join(paths.opencliRoot, 'toolchain', 'package.json'), 'utf8'))).toEqual({
+      name: 'dsh-workbench-toolchain',
+      private: true,
+      dependencies: { '@jackwener/opencli': expect.any(String) },
+    });
     expect(statSync(paths.opencliBin).mode & 0o777).toBe(0o755);
   });
 
@@ -293,7 +302,8 @@ describe('seedRuntimeFiles', () => {
       platform: 'win32',
     });
 
-    expect(done).toEqual([paths.opencliBin]);
+    expect(done).toContain(paths.opencliBin);
+    expect(done).toContain(join(paths.opencliRoot, 'toolchain', 'package.json'));
     expect(paths.opencliBin.endsWith('opencli.cmd')).toBe(true);
     expect(readFileSync(paths.opencliBin, 'utf8').startsWith('@echo off\r\n')).toBe(true);
   });
@@ -317,6 +327,11 @@ describe('seedRuntimeFiles', () => {
 
     expect(seedRuntimeFiles({ root: workbench, home: join(root, '.dsh'), packageRoot: pkg })).toContain(paths.opencliBin);
     expect(readFileSync(paths.opencliBin, 'utf8')).toBe(opencliWrapperScript(pkg, join(root, '.dsh')));
+    expect(JSON.parse(readFileSync(join(paths.opencliRoot, 'toolchain', 'package.json'), 'utf8'))).toEqual({
+      name: 'dsh-workbench-toolchain',
+      private: true,
+      dependencies: { '@jackwener/opencli': expect.any(String) },
+    });
   });
 
   it('工作台根根本建不出来（被文件占着 / 没权限）时只留一句话', () => {

@@ -118,17 +118,17 @@ export const checks = [
     },
   },
   {
-    title: '★ 指引有"数据从哪来"那一节：预装的 opencli 探 → 固化成一条读 → 三态',
+    title: '★ 指引有"数据从哪来"那一节：预装的运行时探 → 固化成一条读 → 三态',
     run(_ctx, report) {
       const datasourceMd = skillFile('DATASOURCE.md');
       report(
-        '★ 指引有"数据从哪来"那一节：预装的 opencli 探 → 固化成一条读 → 三态',
-        datasourceMd.includes('opencli') &&
+        '★ 指引有"数据从哪来"那一节：预装的运行时探 → 固化成一条读 → 三态',
+        datasourceMd.includes('运行时') &&
           datasourceMd.includes('预装') &&
           datasourceMd.includes('侦察兵') &&
           datasourceMd.includes('固化进模块') &&
           datasourceMd.includes('没登录'),
-        `opencli ${datasourceMd.includes('opencli')} / 预装 ${datasourceMd.includes('预装')} / 固化 ${datasourceMd.includes('固化进模块')} / 三态 ${datasourceMd.includes('没登录')}`,
+        `运行时 ${datasourceMd.includes('运行时')} / 预装 ${datasourceMd.includes('预装')} / 固化 ${datasourceMd.includes('固化进模块')} / 三态 ${datasourceMd.includes('没登录')}`,
       );
     },
   },
@@ -138,11 +138,11 @@ export const checks = [
       const writesMd = skillFile('WRITES.md');
       report(
         '★ 指引有"写通道"那一节：现成写命令 → 入参/出参来源 → 没有预览档的不许试',
-        writesMd.includes('opencli') &&
+        writesMd.includes('运行时') &&
           writesMd.includes('预览') &&
           writesMd.includes('工程域') &&
           writesMd.includes('回读'),
-        `opencli ${writesMd.includes('opencli')} / 预览 ${writesMd.includes('预览')} / 工程域 ${writesMd.includes('工程域')} / 回读 ${writesMd.includes('回读')}`,
+        `运行时 ${writesMd.includes('运行时')} / 预览 ${writesMd.includes('预览')} / 工程域 ${writesMd.includes('工程域')} / 回读 ${writesMd.includes('回读')}`,
       );
     },
   },

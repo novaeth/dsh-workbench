@@ -1,8 +1,9 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { runtimeWrapperScript } from '@dsh-workbench/adapter-probe';
 
-import { PKG, pkg, read } from '../lib.mjs';
+import { pkg, read } from '../lib.mjs';
 
 const bundlePatch = () =>
   read(pkg('cordis.patch.yml'))
@@ -52,16 +53,6 @@ export const checks = [
       report(
         '★ 启动器每次启动都建工坊目录（chokidar 对不存在的根收不到事件）',
         /mkdir -p[^\n]*(?:WORKBENCH_HOME|workbench)\/diy\/packages/.test(launcher()),
-      );
-    },
-  },
-  {
-    title: '★ 启动器写的隔离入口也把 DSH_HOME 钉在命令里',
-    run(_ctx, report) {
-
-      report(
-        '★ 启动器写的隔离入口也把 DSH_HOME 钉在命令里',
-        /exec env DSH_HOME=%q bash %q/.test(launcher()),
       );
     },
   },
@@ -146,7 +137,7 @@ export const checks = [
   },
   {
 
-    title: '★ 宿主自举的行为探针（隔离 opencli 入口 / 工坊入口 / 不装依赖 / PATH）',
+    title: '★ 宿主自举的行为探针（运行时入口 / 工坊入口 / 不装依赖 / PATH）',
     async run(ctx, report) {
       const fresh = execFileSync('bash', ['-c', 'mktemp -d'], { encoding: 'utf8' }).trim();
       const pathBefore = process.env.PATH;
@@ -168,13 +159,18 @@ export const checks = [
       };
       try {
         await ctx.host.apply(probeCtx);
-        const wrapper = join(fresh, 'workbench', 'opencli', 'bin', 'opencli');
-        const body = existsSync(wrapper) ? read(wrapper) : '';
-        const selfScript = join(PKG, 'bin', 'opencli-isolated');
+        const expected = runtimeWrapperScript(dirname(fresh), fresh).trim();
+        let wrapper = '';
+        for (const file of entriesUnder(fresh)) {
+          if (read(file).trim() === expected) {
+            wrapper = file;
+            break;
+          }
+        }
         report(
-          '★ 宿主自举写得下隔离 opencli 入口，指向**本包**那份，且把 DSH_HOME 钉在命令里',
-          body.includes(selfScript) && body.includes(`DSH_HOME='${fresh}'`),
-          body.trim() || wrapper,
+          '★ 宿主自举写得下隔离运行时入口，内容与适配器给的一致（DSH_HOME 钉在命令里）',
+          wrapper !== '',
+          wrapper || '没找到与适配器描述一致的那份入口',
         );
 
         const entry = join(fresh, 'workbench', 'bin', 'dsh-wb-module');
@@ -199,9 +195,9 @@ export const checks = [
         );
         const pathHead = (process.env.PATH ?? '').split(':').slice(0, 3);
         report(
-          '★ 自举把 workbench/bin 与隔离运行的 opencli/bin 一起前插进 PATH（子进程按名字找到同一份）',
+          '★ 自举把 workbench/bin 与运行时自己的 bin 一起前插进 PATH（子进程按名字找到同一份）',
           pathHead.includes(join(fresh, 'workbench', 'bin')) &&
-            pathHead.includes(join(fresh, 'workbench', 'opencli', 'bin')),
+            pathHead.includes(dirname(wrapper)),
           pathHead.join(':'),
         );
       } finally {
@@ -211,3 +207,13 @@ export const checks = [
     },
   },
 ];
+
+function entriesUnder(dir) {
+  const out = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...entriesUnder(path));
+    else if (entry.isFile()) out.push(path);
+  }
+  return out;
+}

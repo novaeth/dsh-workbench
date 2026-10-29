@@ -15,6 +15,18 @@ export function toolchainOpencliDir(): string {
 
 export const OPENCLI_CATALOG_ENV = 'DSH_WB_OPENCLI_CATALOG';
 
+export function toolchainManifestOf(): string {
+  return `${JSON.stringify(
+    {
+      name: 'dsh-workbench-toolchain',
+      private: true,
+      dependencies: { [OPENCLI_NPM_PACKAGE]: OPENCLI_PIN },
+    },
+    null,
+    2,
+  )}\n`;
+}
+
 export function cliCatalogPath(): string {
   const override = process.env[OPENCLI_CATALOG_ENV]?.trim();
   return override === undefined || override === ''

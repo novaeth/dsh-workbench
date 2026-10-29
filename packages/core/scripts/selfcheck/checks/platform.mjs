@@ -10,8 +10,6 @@ const ADAPTERS = [
   'adapters/probe/runtime-seed.ts',
   'shared/api/platform/client.ts',
   'shared/api/platform/contract.ts',
-  'adapters/opencli/shell-text.ts',
-  'adapters/opencli/opencli-runtime.ts',
   'host/platform.ts',
   'host/shell-text.ts',
 ];

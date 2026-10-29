@@ -1,8 +1,39 @@
 import { execFileSync } from 'node:child_process';
+import { readdirSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
 
-import { pkg, read } from '../lib.mjs';
+import { PKG, pkg, read } from '../lib.mjs';
+
+const RUNTIME_WORDS = /opencli/i;
 
 export const checks = [
+  {
+    title: '★ 随包的启动 / 安装脚本不点名运行时（文案与入口都跟着适配器走）',
+    run(_ctx, report) {
+      const dirs = [pkg('bin'), pkg('scripts')];
+      const hits = [];
+      const walk = (dir) => {
+        for (const name of readdirSync(dir)) {
+          const path = join(dir, name);
+          if (statSync(path).isDirectory()) {
+            walk(path);
+            continue;
+          }
+          if (path.includes('/selfcheck/')) continue;
+          const source = read(path);
+          if (!RUNTIME_WORDS.test(source)) continue;
+          const line = source.split('\n').findIndex((one) => RUNTIME_WORDS.test(one)) + 1;
+          hits.push(`${relative(PKG, path)}:${String(line)}`);
+        }
+      };
+      for (const dir of dirs) walk(dir);
+      report(
+        '★ 随包的启动 / 安装脚本不点名运行时（文案与入口都跟着适配器走）',
+        hits.length === 0,
+        hits.length === 0 ? '0 处' : hits.slice(0, 5).join('、'),
+      );
+    },
+  },
   {
     title:
       '★ 随包脚本不靠 x 位（pnpm publish 只给 bin 字段那条 755；直接执行 = 别人机器上 Permission denied）',
@@ -10,14 +41,12 @@ export const checks = [
       const launcher = read(pkg('bin/dsh-workbench'));
       const seedViaBash = launcher.includes('bash "$REPO_DIR/scripts/seed-profile.sh"');
       const noDirectSeed = !/^\s*"\$REPO_DIR\/scripts\/seed-profile\.sh"/m.test(launcher);
-      const opencliIsShim = launcher.includes('exec env DSH_HOME=%q bash %q');
-      const noOpencliSymlink = !/ln -sfn[^\n]*opencli-isolated/.test(launcher);
-      const passed = seedViaBash && noDirectSeed && opencliIsShim && noOpencliSymlink;
+      const passed = seedViaBash && noDirectSeed;
       report(
         '★ 随包脚本不靠 x 位（pnpm publish 只给 bin 字段那条 755；直接执行 = 别人机器上 Permission denied）',
         passed,
         passed
-          ? 'seed-profile.sh 经 bash 呼、opencli 稳定路径是自写转发脚本（并把 DSH_HOME 钉住）'
+          ? 'seed-profile.sh 经 bash 呼；运行时的隔离包装不归启动器写（随适配器出货、由宿主自举落盘）'
           : '有随包脚本是按可执行位调用的',
       );
     },

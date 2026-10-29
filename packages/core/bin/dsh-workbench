@@ -13,7 +13,7 @@
 #
 # 与 `dsh web` 并存：不同的 profile、不同的 node_modules、不同的端口、独立的进程。
 # 会话 / 项目 / 附件跟 `dsh web` 和 Desktop 共用一份（都在 $DSH_HOME 下），
-# 只有设置与插件分家；运行时的 opencli、工坊、模块市场仍按 profile 各一份。
+# 只有设置与插件分家；运行时自己的那棵树、工坊、模块市场仍按 profile 各一份。
 #
 # ── 这份脚本有两种身份，它自己分得清 ──────────────────────────────────────
 #   · **仓库副本**（这个包落在一个 git 工作树里）：开发用。bundle 以 link 方式装本目录，
@@ -114,14 +114,14 @@ fi
 export WORKBENCH_PROFILE="$PROFILE"
 export WB_CLONE="${WB_CLONE:-0}"
 PROFILE_DIR="$DSH_HOME/profiles/$PROFILE"
-# 每个 profile 一份自己的**运行时**根（opencli 隔离运行时、工坊、模块市场）；
+# 每个 profile 一份自己的**运行时**根（隔离运行时、工坊、模块市场）；
 # 会话 / 项目 / 附件不在这里 —— 它们跟 `dsh web` / Desktop 共用 $DSH_HOME。
 WORKBENCH_HOME="${DSH_WORKBENCH_HOME:-$DSH_HOME/$PROFILE}"
 export DSH_WORKBENCH_HOME="$WORKBENCH_HOME"
 
 # 本包的真实位置。**不能**直接 `dirname "$0"/..`：npx 是经 `node_modules/.bin/dsh-workbench`
 # 这条软链调进来的，那样算出来会停在 `node_modules`（实测），于是下面
-# `$REPO_DIR/bin/opencli-isolated` 与 `$REPO_DIR/profile/*` 全指着不存在的地方
+# `$REPO_DIR/bin`、`$REPO_DIR/profile/*` 全指着不存在的地方
 # —— 症状是隔离运行时那条软链变成死链、启动体检一直说"没装好"。
 # 所以先把软链解析到底，再取它的上一级。
 SELF="${BASH_SOURCE[0]}"
@@ -218,7 +218,7 @@ pkg_version() {
 run_setup() {
   # ⚠️ 用 `bash` 呼，不靠文件的 x 位：pnpm publish（release.mjs 走 `pnpm -r publish`）
   # 只给 `package.json#bin` 点名的那一个文件 755，其余在 tarball 里一律 644
-  # （实测 pnpm pack 的产物：bin/dsh-workbench 是 755，bin/opencli-isolated 与
+  # （实测 pnpm pack 的产物：bin/dsh-workbench 是 755，随包出去的其它脚本与
   #  scripts/seed-profile.sh 都是 644；npm pack 会保留 x 位，所以这是 pnpm 独有的坑）。
   # 症状是「本机怎么跑都行、别人机器上 Permission denied」——因为 git 里有 x 位，
   # 只有装出来的副本会丢。
@@ -271,13 +271,11 @@ run_setup() {
 
 （全局装过就用 dsh-workbench；npx 就用 npx @dsh-workbench/core；本仓开发用 ./packages/core/bin/dsh-workbench。）
 
-首次打开会走启动体检，它会自己把 opencli 的隔离运行时装好。还有一步要你动手：
-在浏览器里装一次 OpenCLI 扩展（Chrome / Edge / Brave / Chromium / Vivaldi 都行）：
+首次打开会走启动体检：它按当前运行时自己把隔离环境装好，缺什么、怎么装都在那一屏上，
+必要时还会给一条能直接照抄到终端的命令。
 
-  https://chromewebstore.google.com/detail/opencli/ildkmabpimmkaediidaifkhjpohdnifk
-
-装完确认已启用、浏览器保持开着；启动后如果「浏览器连接」还没连上，回「准备工作台」那一屏点「重试」。
-面板读的是你浏览器里的登录状态；不装也能进工作台，只是要靠登录状态的面板取不到数据。
+浏览器那边同理 —— 要不要扩展、装哪个、装完怎么确认，都由运行时自己的说明给出；
+面板读的是你浏览器里的登录状态，没连上也能进工作台，只是靠登录状态取数的面板会空着。
 EOF
 }
 
@@ -409,7 +407,7 @@ PATCH_ARGS=()
 
 # ── 声明工作台运行时的**可写根**（执行缝的沙箱只放行 process.cwd()）──────────
 #
-# 工作台自己要跑命令：启动体检自动装 opencli、模块市场装/升插件、查源上新版。
+# 工作台自己要跑命令：启动体检自动装运行时、模块市场装/升插件、查源上新版。
 # 这些命令走 dsh 的执行缝，而那条缝带**文件沙箱**；插件发起的调用**没有会话**，
 # 回落到部署策略，出厂值是 `workspaceRoot: process.cwd()` —— 安装目标
 # `$DSH_HOME/workbench/...` 不在启动目录下，被拒写（EPERM），"自动装"死在第一步，
@@ -425,18 +423,6 @@ if [ -f "$SANDBOX_PATCH" ]; then
 else
   echo "dsh-workbench: 提醒 —— 找不到 ${SANDBOX_PATCH}，这次不声明可写根（自动装会失败）。" >&2
 fi
-
-# 把 opencli 指到**隔离运行时**：所有 opencli 调用（探测、取数、装/卸插件）都走它，
-# 于是装/卸插件不碰用户本机的 ~/.opencli。
-#
-# 为什么隔离要用 HOME（而不是 OPENCLI_CONFIG_DIR）：opencli 的**插件目录只认 HOME**
-# —— 见 bin/opencli-isolated 开头的说明。
-#
-# 建一个**稳定路径**的软链：别处（包括给用户"复制这条命令"的文案）都能用
-# $WORKBENCH_HOME/opencli/bin/opencli 引用它，不必知道本目录在哪 ——
-# 而且从那里跑出来同样是隔离的。指向 profile 里那份，别指 npx 缓存（会回收）。
-OPENCLI_ROOT="$WORKBENCH_HOME/opencli"
-mkdir -p "$OPENCLI_ROOT/bin" "$OPENCLI_ROOT/home"
 
 # DIY 工坊的目录必须**每次启动都在**：`cordis.patch.yml` 的 hmr 行把它列成一个监听根
 # （工坊里的模块是被 link 进 profile 的仓外目录，Node 解析到的是工坊里的真路径，
@@ -466,28 +452,8 @@ fi
 # （上面那次 `entry` 已经跑过它）。为什么收成一处：启动器与宿主自举都跑那个脚本，从前两处
 # 各写一遍（这里一段 bash + 宿主 TS 的 `linkSkills`），目标虽一致，却是**同一件事两个实现** ——
 # 哪天只有一边改了源或判据就会互相改指，而软链指到哪 skill 发现都**不报错**。
-# 稳定路径不直接软链到随包脚本：同上面那条 —— pnpm publish 之后
-# `bin/opencli-isolated` 是 644，软链过去一执行就是 Permission denied
-# （症状：启动体检永远说"隔离运行时没装好"，而它其实是没权限跑）。
-# 所以这里写一个**我们自己拥有**的转发脚本，x 位由 chmod 当场给。
-# ⚠️ 先 rm -f：旧版本留下的软链还在时，`>` 会顺着软链把真脚本覆盖掉。
-# ⚠️ DSH_HOME 必须**钉在命令里**：执行缝不继承它，而 bin/opencli-isolated 用
-# `${DSH_HOME:-$HOME/.dsh}` 推根 —— 不钉的话，DSH_HOME 不是默认值的机器上，
-# 隔离运行时会被认成用户真家目录那一份（实测：同一条路上的 seed-workshop.sh
-# 就是这样把入口写进了 ~/.dsh，见 ADR-0037 的"执行缝不继承 DSH_HOME"）。
-rm -f "$OPENCLI_ROOT/bin/opencli"
-printf '#!/bin/sh\nexec env DSH_HOME=%q bash %q "$@"\n' "$DSH_HOME" "$DSH_WORKBENCH_ROOT/bin/opencli-isolated" \
-  >"$OPENCLI_ROOT/bin/opencli"
-chmod +x "$OPENCLI_ROOT/bin/opencli"
-export DSH_WORKBENCH_OPENCLI="$OPENCLI_ROOT/bin/opencli"
-
-# 软提醒：隔离运行时没装的话，启动体检会**自己装**（沙箱已放行工作台运行时，
-# 见上面那层 SANDBOX_PATCH）；这条只是提前说一声，免得盯着全屏 loading 猜。
-if [ ! -x "$OPENCLI_ROOT/toolchain/node_modules/.bin/opencli" ]; then
-  echo "dsh-workbench: opencli 的隔离运行时还没装好 —— 启动体检会自己装，" >&2
-  echo "  装不上时它会给一条能直接照抄到终端的命令。" >&2
-fi
-
+# 运行时的**稳定入口**不在这里建：它属于适配器（隔离包装随适配器出货），
+# 由宿主自举在每次启动时写到自己的隔离根里 —— 写口只有那一处。
 # ⚠️ 顺序有讲究：`--patch` 是 **dsh 本体**的选项，必须排在 `--port`（应用参数）**之前** ——
 # 参数一旦进了应用的透传区（第一个应用自己的选项开始），后面的都直接交给应用，
 # `--patch` 会被应用当成未知选项（实测：`--port` 在前时报 `unknown option '--patch'`）。

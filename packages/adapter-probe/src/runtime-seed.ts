@@ -1,5 +1,7 @@
 import type { spawn } from 'node:child_process';
 import { execa } from 'execa';
+import { toolchainManifestOf } from '@dsh-workbench/adapter-runtime';
+import { createRequire } from 'node:module';
 import writeFileAtomic from 'write-file-atomic';
 import {
   chmodSync,
@@ -85,6 +87,14 @@ export function warnUnwritableRoot(ctx: DshHostContext): void {
   );
 }
 
+export function wrapperRootOf(fallbackRoot: string): string {
+  try {
+    return dirname(createRequire(import.meta.url).resolve('@dsh-workbench/adapter-runtime/package.json'));
+  } catch {
+    return fallbackRoot;
+  }
+}
+
 export function packageRootOf(moduleUrl: string): string {
   return dirname(dirname(dirname(fileURLToPath(moduleUrl))));
 }
@@ -98,12 +108,14 @@ export function opencliWrapperScript(
   home: string,
   platform: NodeJS.Platform = process.platform,
 ): string {
-  const script = join(packageRoot, 'bin', 'opencli-isolated.mjs');
+  const script = join(wrapperRootOf(packageRoot), 'bin', 'opencli-isolated.mjs');
   if (platform === 'win32') {
     return `@echo off\r\nset "DSH_HOME=${home}"\r\nnode "${script}" %*\r\n`;
   }
   return `#!/bin/sh\nexport DSH_HOME=${quoteShellArg(home)}\nexec node ${quoteShellArg(script)} "$@"\n`;
 }
+
+export const runtimeWrapperScript = opencliWrapperScript;
 
 export interface SeedCommand {
   readonly file: string;
@@ -208,6 +220,13 @@ export function seedRuntimeFiles(options: RuntimeSeedOptions): readonly string[]
     for (const dir of [paths.entryDir, paths.opencliBinDir, paths.opencliHome, paths.workshopPackages]) {
       mkdirSync(dir, { recursive: true });
     }
+    const manifest = join(paths.opencliRoot, 'toolchain', 'package.json');
+    mkdirSync(dirname(manifest), { recursive: true });
+    if (readText(manifest) !== toolchainManifestOf()) {
+      writeFileAtomic.sync(manifest, toolchainManifestOf(), 'utf8');
+      done.push(manifest);
+    }
+    rmSync(join(paths.opencliRoot, 'toolchain', 'pnpm-workspace.yaml'), { force: true });
     const wanted = opencliWrapperScript(options.packageRoot, options.home, platform);
     if (readText(paths.opencliBin) !== wanted) {
       rmSync(paths.opencliBin, { force: true });

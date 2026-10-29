@@ -7,11 +7,13 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
-    "channel"
+    "channel",
+    "bin"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
