@@ -51,7 +51,7 @@ export default {
       tokenDir: 'src/shared/styles/tokens',
       paletteFile: 'src/shared/styles/tokens/palette.css',
       staticPrefix: '--wb-static-',
-      vendorDir: 'src/shared/styles/vendor',
+      vendorDir: '',
       themeFile: '',
 
       valueWhitelists: [
@@ -284,24 +284,6 @@ export default {
           '把它们整棵排除 ⇒ **发布产物里没有它们**。',
       },
       {
-        rule: 'S66',
-        glob: 'src/app/layouts/env-gate/gate-mock.ts',
-        reason:
-          '**开发者调试夹具照抄 opencli 的报告原文**（只在开发构建里有；`doctor` 的输出）—— 里面那个 ' +
-          '`Issues:` 是 CLI 自己的分节标题（"问题"的意思），不是我们的套件 id。特意照抄而不是改编：' +
-          '这份夹具要能回答"界面拿到真报告时是什么样"，把 CLI 的原文改写掉就白验了。这批文件只经 ' +
-          '`@/shared/dev-surface/install` 接缝被引用，发布构建（`WB_RELEASE=1` → `src/dev/surface.stub.ts`）把它们' +
-          '整棵排除 ⇒ **发布产物里没有它们**。',
-      },
-      {
-        rule: 'H08',
-        glob: 'src/app/layouts/env-gate/gate-mock.ts',
-        reason:
-          'H08 的私网正则把版本号 `npm@10.9.4` 当成 `10.x.x.x` 地址：这一行是启动页夹具照抄的界面文案' +
-          '（"装本地 npm@10.9.4"），不是地址，这份文件里没有任何内网地址。改夹具去迁就正则就等于' +
-          '让夹具不再像真界面 —— 那是它唯一的用处。',
-      },
-      {
         rule: 'H09',
         glob: 'src/shared/hooks/mock-mode.ts',
         reason:
@@ -322,12 +304,6 @@ export default {
       {
         rule: 'P06',
         glob: '**/*.test.ts',
-        reason:
-          '测试夹具要真起子进程、真写状态文件才能验证行为本身；产品代码里起进程只走 execa、直写状态只走 write-file-atomic。',
-      },
-      {
-        rule: 'P06',
-        glob: '**/__tests__/**',
         reason:
           '测试夹具要真起子进程、真写状态文件才能验证行为本身；产品代码里起进程只走 execa、直写状态只走 write-file-atomic。',
       },

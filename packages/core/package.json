@@ -96,7 +96,7 @@
     }
   },
   "devDependencies": {
-    "@arch-guard/core": "^0.11.1",
+    "@arch-guard/core": "^0.11.2",
     "@deepseek-ai/dsh-client-ui-primitives": "0.2.1-rc.2",
     "@types/node": "^24.19.0",
     "@types/proper-lockfile": "^4.1.4",
@@ -114,14 +114,14 @@
     "access": "public"
   },
   "dependencies": {
+    "@dsh-workbench/adapters-default": "workspace:*",
     "@dsh-workbench/shared": "workspace:*",
     "dayjs": "^1.11.23",
     "execa": "^10.2.0",
     "prompts": "^2.4.2",
     "proper-lockfile": "^4.1.2",
     "which": "^7.0.0",
-    "write-file-atomic": "^8.0.0",
-    "@dsh-workbench/adapters-default": "workspace:*"
+    "write-file-atomic": "^8.0.0"
   },
   "license": "MIT",
   "repository": {

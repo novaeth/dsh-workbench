@@ -77,19 +77,7 @@ export function stackArch(options = {}) {
         { id: 'lib:tests-dir', pattern: `${src}/**/__tests__/**`, layer: 99, exclusive: true },
         ...roles,
       ],
-      exceptions: [
-        {
-          rule: 'S11',
-          glob: `${src}/index.ts`,
-          reason: '包的公开面就是这一份 barrel：package.json 的 exports 指向它，只做导出、不放逻辑。',
-        },
-        {
-          rule: 'S11',
-          glob: `${src}/**/index.ts`,
-          reason: '子模块的公开面同样是 barrel：模块之间只从各自的 index 对外，不是随手加的转发层。',
-        },
-        ...exceptions,
-      ],
+      exceptions: [...exceptions],
       ...overrides,
     },
   };
