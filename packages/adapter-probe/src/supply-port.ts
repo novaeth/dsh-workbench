@@ -2,7 +2,8 @@ import type { SupplyPort } from '@dsh-workbench/shared/host';
 import { cliCatalogPath, ensureLibsBinOnPath, ensureLibsOpencliPeer, isolatedHome, libInstallCommand, vendorPluginsDir } from '@dsh-workbench/adapter-runtime';
 import { isolatedRoot } from '@dsh-workbench/shared/host';
 import { createRegistryNotebook, isNewerVersion, latestVersion, missingReleaseParts, probeRelease } from '@dsh-workbench/adapter-profile';
-import { opencliInstallCommand, startSelfUpdate } from '@dsh-workbench/adapter-probe';
+import { opencliInstallCommand } from './install.js';
+import { startSelfUpdate } from './self-update.js';
 import {
   declarationGaps,
   declarationRefusalOf,

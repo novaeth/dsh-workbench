@@ -174,15 +174,6 @@ export default {
     ],
     exceptions: [
       {
-        rule: 'S70',
-        glob: 'src/modules/panels/__tests__/test-adapters.ts',
-        reason:
-          '这是模块级测试的适配器装配点，不是某个单元的测试：DIY / 面板那批用例要的是「能读真实 profile、'
-          + '能认真实安装状态」的一整套供给实现（装没装、清单解得开解不开、目录还在不在都读盘），'
-          + '换成假集合会把被测对象本身去掉。要换成按需拼装，得先让 adapters-default 的 createSupplyPort 能独立成包'
-          + '（它与 probe/runtime 互相依赖，现在拆不开），所以先留这一条，规则仍是 error。',
-      },
-      {
         rule: 'S16',
         glob: '**/*.{test,spec}.{ts,tsx,mts,cts,js,mjs,cjs}',
         reason:

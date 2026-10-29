@@ -16,6 +16,6 @@ export const DEFAULT_ADAPTERS: readonly AdapterDescriptor[] = Object.freeze([
   Object.freeze({ id: 'probe', runtime: 'host' }),
   Object.freeze({ id: 'data', runtime: 'host' }),
 ]);
-export { createSupplyPort } from './supply-port.js';
+export { createSupplyPort } from '@dsh-workbench/adapter-probe';
 
 export { createAdapterSet, DEFAULT_ADAPTER_SET_ID } from './adapter-set.js';
