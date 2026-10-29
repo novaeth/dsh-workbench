@@ -77,8 +77,13 @@ const runtimePreset = (capabilities: RuntimePort['capabilities'] extends never ?
   capabilities: () => capabilities,
   profile: () => ({
     label: 'fake',
-    terms: { plugin: '插件', pluginOf: '的插件', pluginThing: '插件', pluginArea: '插件区' },
-    installHint: '无',
+    terms: {
+      plugin: { zh: '插件', en: 'plugin' },
+      pluginOf: { zh: '的插件', en: 'a plugin of' },
+      pluginThing: { zh: '插件', en: 'a plugin' },
+      pluginArea: { zh: '插件区', en: 'the plugin area' },
+    },
+    installHint: { zh: '无', en: 'nothing to install' },
     diagnose: {},
   }),
   commands: () => ({}),

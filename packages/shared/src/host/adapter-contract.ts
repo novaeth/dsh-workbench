@@ -30,9 +30,14 @@ export function adapterContractGaps(set: AdapterSet, ctx: DshHostContext): reado
     const profile = set.runtime.profile(ctx);
     if (!isNonEmptyString(profile?.label)) gaps.push('runtime.profile().label 不是非空字符串');
     for (const key of ['plugin', 'pluginOf', 'pluginThing', 'pluginArea'] as const) {
-      if (!isNonEmptyString(profile?.terms?.[key])) gaps.push(`runtime.profile().terms.${key} 不是非空字符串`);
+      const text = profile?.terms?.[key];
+      if (!isNonEmptyString(text?.zh) || !isNonEmptyString(text?.en)) {
+        gaps.push(`runtime.profile().terms.${key} 要给 zh / en 两份非空文案`);
+      }
     }
-    if (!isNonEmptyString(profile?.installHint)) gaps.push('runtime.profile().installHint 不是非空字符串');
+    if (!isNonEmptyString(profile?.installHint?.zh) || !isNonEmptyString(profile?.installHint?.en)) {
+      gaps.push('runtime.profile().installHint 要给 zh / en 两份非空文案');
+    }
   }
 
   const health = set.runtime.health(ctx);

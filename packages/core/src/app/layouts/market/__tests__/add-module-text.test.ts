@@ -140,7 +140,7 @@ describe('添加模块浮层：文案与来源选项（按 dsh 插件页的骨�
 
     for (const text of seen) {
       for (const word of banned) expect(text, `${word} in ${text}`).not.toContain(word);
-      expect(text).toContain('opencli');
+      expect(text).toContain(zh['runtime.pluginOf']);
     }
   });
 

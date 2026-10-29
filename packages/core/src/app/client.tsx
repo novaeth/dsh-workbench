@@ -25,6 +25,7 @@ import { Tip } from '@/shared/components/Tip';
 import { Rightbar } from '@/app/layouts/rightbar/Rightbar';
 import { installContextChips } from '@/shared/api/context-chips';
 import { installWorkbenchStyles } from '@/app/layouts/workbench-styles';
+import { setRuntimeTextResolver } from '@/shared/hooks/locale-text';
 import { currentSessionId, workspaceOfSession } from '@/modules/sessions';
 import type { DshSessionsService, DshSidebarRight } from '@dsh-workbench/shared';
 import { createRightbarStore, type RightbarColumn, type RightbarState } from '@/app/layouts/rightbar/store';
@@ -148,6 +149,7 @@ export function apply(ctx: DshClientContext): void {
 }
 
 function mount(ctx: DshClientContext): void {
+  setRuntimeTextResolver((text) => ctx.locale.resolveText?.({ zh: text.zh, en: text.en }) ?? text.zh);
   const loadUnitManifests = createUnitManifestLoader();
   const units = createClientUnitRegistry({ onUnknownUnit: () => loadUnitManifests(units) });
   ctx.provide(UNITS_SERVICE, {

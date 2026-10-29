@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { zh } from '@dsh-workbench/shared';
 import { gateActionOf } from '../boot-gate';
-import { bridgeAdvice, OPENCLI_EXTENSION_URL, stepDetailText } from '../gate-text';
+import { bridgeAdvice, stepDetailText } from '../gate-text';
 import { GATE_MOCKS } from '../gate-mock';
+
+const t = ((key: string) => (zh as Record<string, string>)[key] ?? key) as never;
 
 describe('GATE_MOCKS', () => {
   it('id、按钮字、那句人话都不重复且不为空', () => {
@@ -118,20 +121,28 @@ describe('GATE_MOCKS', () => {
       const issues = item.snapshot.bridgeIssues ?? [];
       expect(issues.length, item.id).toBeGreaterThan(0);
       expect(issues, item.id).toEqual(item.expect.bridgeIssues);
-      for (const issue of issues) expect(bridgeAdvice(issue).textKey, `${item.id}/${issue}`).toMatch(/^env\.bridge\./);
+      for (const issue of issues) expect(bridgeAdvice(issue, t).text.length, `${item.id}/${issue}`).toBeGreaterThan(0);
       expect(bridge.detail ?? '', item.id).not.toBe('');
     }
   });
 
-  it('★ 「扩展没连上」给的是应用商店链接（点一下装完），不是「加载已解压」那三步', () => {
-    const extension = bridgeAdvice('extension');
+  it('★ 档案给了修法就用档案的（连不上的那一步，话和链接都跟着运行时走）', () => {
+    const fixes = {
+      extension: {
+        text: { zh: '扩展没连上', en: 'extension not connected' },
+        link: { label: { zh: '去装', en: 'install' }, href: 'https://example.com/extension' },
+      },
+    };
 
-    expect(extension.link?.href).toBe(OPENCLI_EXTENSION_URL);
-    expect(extension.link?.href).toMatch(/^https:\/\/chromewebstore\.google\.com\//);
-    expect(extension.link?.labelKey).toBe('env.bridge.extensionLink');
+    const extension = bridgeAdvice('extension', t, fixes);
+
+    expect(extension.text).toBe('扩展没连上');
+    expect(extension.link?.href).toBe('https://example.com/extension');
+    expect(extension.link?.label).toBe('去装');
     for (const issue of ['daemon', 'profile', 'stale', 'unknown'] as const) {
-      expect(bridgeAdvice(issue).link, issue).toBeUndefined();
+      expect(bridgeAdvice(issue, t, fixes).link, issue).toBeUndefined();
     }
+    expect(bridgeAdvice('daemon', t).text).toBe(zh['env.bridge.daemon']);
   });
 
   it('★ 通道坏了时给的是"怎么修"，不是再诊一次（`doctor` 已经诊过了）', () => {

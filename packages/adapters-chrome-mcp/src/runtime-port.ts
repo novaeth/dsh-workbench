@@ -23,16 +23,28 @@ export function mcpProfile(): RuntimeProfile {
   return {
     label: 'Chrome MCP',
     terms: {
-      plugin: 'Chrome MCP 扩展',
-      pluginOf: 'Chrome MCP 的扩展',
-      pluginThing: 'Chrome MCP 扩展',
-      pluginArea: 'Chrome MCP 的扩展区',
+      plugin: { zh: 'Chrome MCP 扩展', en: 'Chrome MCP extension' },
+      pluginOf: { zh: 'Chrome MCP 的扩展', en: 'a Chrome MCP extension' },
+      pluginThing: { zh: 'Chrome MCP 扩展', en: 'a Chrome MCP extension' },
+      pluginArea: { zh: 'Chrome MCP 的扩展区', en: 'the Chrome MCP extension area' },
     },
-    installHint: `确认 MCP server 起得来：${CHROME_MCP_INSTALL}`,
+    installHint: {
+      zh: `确认 MCP server 起得来：${CHROME_MCP_INSTALL}`,
+      en: `Make sure the MCP server starts: ${CHROME_MCP_INSTALL}`,
+    },
     diagnose: {
-      exec: `这个适配器没有命令行；确认 MCP server 起得来：${CHROME_MCP_INSTALL}`,
-      login: '在 Chrome 里打开调试端口，再让 MCP server 连上。',
-      bridge: 'Chrome 没连上：先开浏览器，再重连 MCP server。',
+      exec: {
+        zh: `这个适配器没有命令行；确认 MCP server 起得来：${CHROME_MCP_INSTALL}`,
+        en: `This adapter has no CLI; make sure the MCP server starts: ${CHROME_MCP_INSTALL}`,
+      },
+      login: {
+        zh: '在 Chrome 里打开调试端口，再让 MCP server 连上。',
+        en: 'Open the debugging port in Chrome, then let the MCP server connect.',
+      },
+      bridge: {
+        zh: 'Chrome 没连上：先开浏览器，再重连 MCP server。',
+        en: 'Chrome is not connected: start the browser first, then reconnect the MCP server.',
+      },
     },
   };
 }

@@ -1,5 +1,7 @@
 import type { Translate } from '@dsh-workbench/shared';
 import type { PreflightBridgeIssue, PreflightGuidance, PreflightSnapshot, PreflightStep } from '@dsh-workbench/shared/host';
+import type { RuntimeProfile } from '@dsh-workbench/shared';
+import { runtimeText } from '@/shared/hooks/locale-text';
 
 export function failedStepText(guidance: PreflightGuidance | undefined, t: Translate): string {
   if (guidance === 'path') return t('env.stepFailed.path');
@@ -29,23 +31,26 @@ export function showsRawAll(snapshot: PreflightSnapshot, panelShown: boolean): b
   return !panelShown && showsRawDetails(snapshot);
 }
 
-export const OPENCLI_EXTENSION_URL =
-  'https://chromewebstore.google.com/detail/opencli/ildkmabpimmkaediidaifkhjpohdnifk';
-
 export interface BridgeAdvice {
-  readonly textKey: string;
-  readonly link?: { readonly labelKey: string; readonly href: string };
+  readonly text: string;
+  readonly link?: { readonly label: string; readonly href: string };
 }
 
-export function bridgeAdvice(issue: PreflightBridgeIssue): BridgeAdvice {
-  if (issue === 'daemon') return { textKey: 'env.bridge.daemon' };
-  if (issue === 'extension') {
+export function bridgeAdvice(
+  issue: PreflightBridgeIssue,
+  t: Translate,
+  fixes?: RuntimeProfile['bridge'],
+): BridgeAdvice {
+  const fix = fixes?.[issue];
+  if (fix !== undefined) {
     return {
-      textKey: 'env.bridge.extension',
-      link: { labelKey: 'env.bridge.extensionLink', href: OPENCLI_EXTENSION_URL },
+      text: runtimeText(fix.text),
+      ...(fix.link === undefined
+        ? {}
+        : { link: { label: runtimeText(fix.link.label), href: fix.link.href } }),
     };
   }
-  if (issue === 'profile') return { textKey: 'env.bridge.profile' };
-  if (issue === 'stale') return { textKey: 'env.bridge.stale' };
-  return { textKey: 'env.bridge.unknown' };
+  const key = `env.bridge.${issue}`;
+  const text = t(key);
+  return { text: text === key ? t('env.bridge.unknown') : text };
 }

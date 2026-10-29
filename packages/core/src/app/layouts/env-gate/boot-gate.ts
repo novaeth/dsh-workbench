@@ -6,6 +6,7 @@ import { WAKE_BROWSER_ROUTE, type WakeBrowserReply } from '@/kernel/contract/pre
 import { apiGet } from '@dsh-workbench/shared';
 import { LOCALE_NS } from '@dsh-workbench/shared';
 import { devSurface } from '@/shared/dev-surface';
+import { runtimeProfileValue } from '@/shared/hooks/use-runtime-capabilities';
 import { bridgeAdvice, showsRawAll, stepDetailText } from './gate-text';
 import { createGateDeadline } from './gate-deadline';
 import { el, spinnerIcon, svgIcon } from './gate-dom';
@@ -326,12 +327,12 @@ export function createBootGate(
         bridgeIssues.length === 0 ? ['unknown'] : bridgeIssues;
       bridgeLines.replaceChildren(
         ...listed.map((issue) => {
-          const advice = bridgeAdvice(issue);
-          const item = el('li', styles.bridgeLine, t(advice.textKey));
+          const advice = bridgeAdvice(issue, t, runtimeProfileValue()?.bridge);
+          const item = el('li', styles.bridgeLine, advice.text);
           if (advice.link !== undefined) {
             const link = document.createElement('a');
             link.className = styles.link;
-            link.textContent = t(advice.link.labelKey);
+            link.textContent = advice.link.label;
             link.href = advice.link.href;
             link.target = '_blank';
             link.rel = 'noreferrer noopener';

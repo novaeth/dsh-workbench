@@ -53,16 +53,58 @@ export function createRuntimePort(): RuntimePort {
       return {
         label: 'opencli',
         terms: {
-          plugin: 'opencli 插件',
-          pluginOf: 'opencli 的插件',
-          pluginThing: 'opencli 插件',
-          pluginArea: 'opencli 的插件区',
+          plugin: { zh: 'opencli 插件', en: 'opencli plugin' },
+          pluginOf: { zh: 'opencli 的插件', en: 'an opencli plugin' },
+          pluginThing: { zh: 'opencli 插件', en: 'an opencli plugin' },
+          pluginArea: { zh: 'opencli 的插件区', en: 'the opencli plugin area' },
         },
-        installHint: '确认 opencli 已经装好、在终端里能直接运行（which opencli）。',
+        installHint: {
+          zh: '确认 opencli 已经装好、在终端里能直接运行（which opencli）。',
+          en: 'Make sure opencli is installed and runs from your terminal (which opencli).',
+        },
         diagnose: {
-          exec: '确认 opencli 已经装好、在终端里能直接运行（which opencli）。',
-          login: '在工作台的浏览器桥里登录一次；登录态会一直留着。',
-          bridge: '后台浏览器没起来，重试一次通常就好。',
+          exec: {
+            zh: '确认 opencli 已经装好、在终端里能直接运行（which opencli）。',
+            en: 'Make sure opencli is installed and runs from your terminal (which opencli).',
+          },
+          login: {
+            zh: '在工作台的浏览器桥里登录一次；登录态会一直留着。',
+            en: 'Sign in once through the workbench browser bridge; the session stays.',
+          },
+          bridge: {
+            zh: '后台浏览器没起来，重试一次通常就好。',
+            en: 'The background browser is not up; a retry usually fixes it.',
+          },
+        },
+        bridge: {
+          daemon: {
+            text: {
+              zh: '后台服务没起来：正常它会自己起，先在终端跑下面这条命令。',
+              en: 'The opencli daemon is not running. It usually starts by itself — run the command below in your terminal first.',
+            },
+          },
+          extension: {
+            text: {
+              zh: '浏览器扩展没连上：确认浏览器开着、扩展已启用；没装就从商店装一次（装完回来点「重试」）。',
+              en: 'The opencli browser extension is not connected. Make sure the browser is running and the extension is enabled; install it once from the store if needed (then hit Retry here).',
+            },
+            link: {
+              label: { zh: '去 Chrome 应用商店装扩展', en: 'Get the extension in the Chrome Web Store' },
+              href: 'https://chromewebstore.google.com/detail/opencli/ildkmabpimmkaediidaifkhjpohdnifk',
+            },
+          },
+          profile: {
+            text: {
+              zh: '连上了多个浏览器账号，但没选默认的那个：先看有哪些（下面这条命令），再选一个。',
+              en: 'Several browser accounts are connected but none is the default: list them (command below), then pick one.',
+            },
+          },
+          stale: {
+            text: {
+              zh: '默认的浏览器账号已经失效（它记的是上一次的扩展实例）：重新选一个。',
+              en: 'The default browser account is stale (it names an extension instance that no longer exists): pick one again.',
+            },
+          },
         },
       };
     },

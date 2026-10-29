@@ -62,7 +62,7 @@ describe('添加模块浮层那两屏（插件态）', () => {
   it('★ 装完的插件那一屏只说装上了，不劝人重启（插件不需要重启）', () => {
     const shown = texts(AddModuleResult({ t, state: stateOf('done-plugin') })).join('|');
 
-    expect(shown).toContain('装上了：opencli 插件');
+    expect(shown).toContain(`装上了：${zh['runtime.plugin']}`);
     expect(shown).not.toContain(zh['panels.market.add.doneRestart']);
     expect(shown).not.toContain(zh['panels.market.add.restart']);
   });
