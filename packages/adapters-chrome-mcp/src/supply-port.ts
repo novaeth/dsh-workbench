@@ -1,6 +1,6 @@
 import type { SupplyPort } from '@dsh-workbench/shared/host';
 import { isolatedRoot } from '@dsh-workbench/shared/host';
-import { cliCatalogPath, isolatedHome, libInstallCommand, vendorPluginsDir } from '@dsh-workbench/adapter-runtime';
+import { isolatedHome, libInstallCommand } from '@dsh-workbench/adapter-runtime';
 import { createRegistryNotebook, isNewerVersion, latestVersion, missingReleaseParts, probeRelease } from '@dsh-workbench/adapter-profile';
 import { startSelfUpdate } from '@dsh-workbench/adapter-probe';
 import {
@@ -20,15 +20,11 @@ import {
   resolvePluginSource,
   splitNpmSpec,
 } from '@dsh-workbench/adapter-supply';
-import { CHROME_MCP_INSTALL } from './runtime-port.js';
 
 export function createSupplyPort(): SupplyPort {
   const port = {
     isolatedRoot,
     isolatedHome,
-    cliCatalogPath,
-    vendorPluginsDir,
-    runtimeInstallCommand: () => CHROME_MCP_INSTALL,
     afterLibInstall: () => undefined,
     profileDirOf,
     profileModules,

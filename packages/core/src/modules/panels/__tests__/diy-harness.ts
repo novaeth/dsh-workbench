@@ -151,6 +151,14 @@ export function createDiyRig() {
   let pluginsPath: string | undefined;
 
   let surfaceOverride: RuntimeCommandSurface | null | undefined;
+  let cliDirs = true;
+
+  beforeEach(() => {
+    surfaceOverride = undefined;
+    cliDirs = true;
+    catalogPath = undefined;
+    pluginsPath = undefined;
+  });
 
   function setCatalog(at: string | undefined, plugins?: string): void {
     catalogPath = at;
@@ -161,6 +169,10 @@ export function createDiyRig() {
     surfaceOverride = surface;
   }
 
+  function setCliDirs(on: boolean): void {
+    cliDirs = on;
+  }
+
   function adapters(): ReturnType<typeof testAdaptersWith> {
     return testAdaptersWith({
       root: () => root,
@@ -168,6 +180,7 @@ export function createDiyRig() {
       catalog: () => catalogPath,
       plugins: () => pluginsPath,
       ...(surfaceOverride === undefined ? {} : { surface: surfaceOverride }),
+      cliDirs,
     });
   }
 
@@ -297,5 +310,6 @@ export function createDiyRig() {
     harness,
     setCatalog,
     setSurface,
+    setCliDirs,
   };
 }

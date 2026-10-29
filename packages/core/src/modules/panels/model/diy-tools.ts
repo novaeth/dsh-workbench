@@ -192,13 +192,21 @@ export function registerDiyTools(
             '别一上来就自己写 adapter；用户不知道它有这条命令面，这一步别问用户。',
         );
       }
-      const catalog = reconCatalogOf(supply.cliCatalogPath());
-      if (catalog === undefined) {
+      const catalogPath = supply.cliCatalogPath?.();
+      if (catalogPath === undefined) {
         throw new Error(
-          `读不到 ${surface.name} 那份目录（${supply.cliCatalogPath()}）—— 隔离运行时还没装好；照做：${supply.runtimeInstallCommand()}`,
+          `这个运行时没有命令目录 —— ${surface.name} 那边只给命令面、不给目录；` +
+            '改用 workbench_diy_find 按站点问它能做什么。',
         );
       }
-      const answer = reconOf(catalog, installedPluginsOf(supply.vendorPluginsDir(), surface.pluginPrefix), keywords, surface);
+      const catalog = reconCatalogOf(catalogPath);
+      if (catalog === undefined) {
+        const hint = supply.runtimeInstallCommand?.() ?? '先把隔离运行时装好';
+        throw new Error(`读不到 ${surface.name} 那份目录（${catalogPath}）—— 隔离运行时还没装好；照做：${hint}`);
+      }
+      const pluginsDir = supply.vendorPluginsDir?.();
+      const installed = pluginsDir === undefined ? [] : installedPluginsOf(pluginsDir, surface.pluginPrefix);
+      const answer = reconOf(catalog, installed, keywords, surface);
       return plainJson({ ok: true, ...answer });
     },
   };

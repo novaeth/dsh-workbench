@@ -9,6 +9,11 @@ function isNonEmptyString(value: unknown): boolean {
   return typeof value === 'string' && value.trim() !== '';
 }
 
+const CLI_DIR_METHODS = [
+  ['cliCatalogPath', 'cliCatalogPath'],
+  ['vendorPluginsDir', 'vendorPluginsDir'],
+] as const;
+
 export function adapterContractGaps(set: AdapterSet, ctx: DshHostContext): readonly string[] {
   const gaps: string[] = [];
   const validated = validateAdapterSet(set, '契约');
@@ -74,7 +79,13 @@ export function adapterContractGaps(set: AdapterSet, ctx: DshHostContext): reado
   }
 
   if (!isNonEmptyString(set.modules.isolatedRoot())) gaps.push('modules.isolatedRoot() 不是非空字符串');
-  if (!isNonEmptyString(set.modules.runtimeInstallCommand())) gaps.push('modules.runtimeInstallCommand() 不是非空字符串');
+  if (set.modules.runtimeInstallCommand !== undefined && !isNonEmptyString(set.modules.runtimeInstallCommand())) {
+    gaps.push('modules.runtimeInstallCommand() 给了但不是非空字符串');
+  }
+  for (const [name, method] of CLI_DIR_METHODS) {
+    const given = set.modules[method];
+    if (given !== undefined && !isNonEmptyString(given())) gaps.push(`modules.${method}() 给了但不是非空字符串（${name}）`);
+  }
   if (typeof set.probe.probeUnits !== 'function') gaps.push('probe.probeUnits 不是函数');
   if (typeof set.probe.registerPreflight !== 'function') gaps.push('probe.registerPreflight 不是函数');
 

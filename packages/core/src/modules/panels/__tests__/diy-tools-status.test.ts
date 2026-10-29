@@ -214,6 +214,14 @@ describe('workbench_diy · recon（先看有没有现成的）', () => {
     vi.unstubAllEnvs();
   });
 
+  it('★ 命令面在、但没有命令目录（纯 API 的运行时）：说清改走 find，不硬编别人的路径', async () => {
+    rig.setCliDirs(false);
+    const { tool } = rig.harness({});
+    await expect(
+      tool(DIY_RECON_TOOL)?.execute({ keyword: 'bilibili' }, rig.diyExec()),
+    ).rejects.toThrow('这个运行时没有命令目录');
+  });
+
   it('目录读不到（隔离运行时没装好）：给出那条能照做的安装命令', async () => {
     rig.setSurface(undefined);
     rig.setCatalog(path.join(catalogDir, 'nope.json'), pluginsDir);

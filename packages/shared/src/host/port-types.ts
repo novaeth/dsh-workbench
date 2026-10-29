@@ -99,9 +99,9 @@ export interface EnvSupplyPort {
 export interface ModulePort {
   isolatedRoot(): string;
   isolatedHome(): string;
-  cliCatalogPath(): string;
-  vendorPluginsDir(): string;
-  runtimeInstallCommand(): string;
+  cliCatalogPath?(): string;
+  vendorPluginsDir?(): string;
+  runtimeInstallCommand?(): string;
   afterLibInstall(): void;
   profileDirOf(ctx: DshHostContext): string | null;
   profileModules(dir: string | null): readonly ProfileModule[];

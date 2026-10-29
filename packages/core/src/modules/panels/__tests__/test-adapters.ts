@@ -18,6 +18,7 @@ export function testAdaptersWith(paths: {
   readonly catalog?: () => string | undefined;
   readonly plugins?: () => string | undefined;
   readonly surface?: RuntimeCommandSurface | null;
+  readonly cliDirs?: boolean | undefined;
 }): WorkbenchAdapters {
   const surface = paths.surface === undefined ? opencliSurface : paths.surface;
   const supply = fsSupply({
@@ -25,6 +26,7 @@ export function testAdaptersWith(paths: {
     profile: paths.profile,
     catalog: paths.catalog ?? (() => undefined),
     plugins: paths.plugins ?? (() => undefined),
+    ...(paths.cliDirs === undefined ? {} : { cliDirs: paths.cliDirs }),
   });
   return {
     ...base,

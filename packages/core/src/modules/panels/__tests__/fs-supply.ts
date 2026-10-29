@@ -25,6 +25,7 @@ export function fsSupply(options: {
   readonly profile: () => string;
   readonly catalog: () => string | undefined;
   readonly plugins: () => string | undefined;
+  readonly cliDirs?: boolean | undefined;
 }): SupplyPort {
   const profileDirOf = (): string => options.profile();
   const packagesOf = (dir: string): readonly string[] => {
@@ -35,9 +36,13 @@ export function fsSupply(options: {
   const port = {
     isolatedRoot: () => join(options.root(), 'workbench', 'opencli'),
     isolatedHome: () => join(options.root(), 'workbench', 'opencli', 'home'),
-    cliCatalogPath: () => options.catalog() ?? join(options.root(), 'workbench', 'opencli', 'catalog.json'),
-    vendorPluginsDir: () => options.plugins() ?? join(options.root(), 'workbench', 'opencli', 'plugins'),
-    runtimeInstallCommand: () => 'npm i -g opencli',
+    ...(options.cliDirs === false
+      ? {}
+      : {
+          cliCatalogPath: () => options.catalog() ?? join(options.root(), 'workbench', 'opencli', 'catalog.json'),
+          vendorPluginsDir: () => options.plugins() ?? join(options.root(), 'workbench', 'opencli', 'plugins'),
+          runtimeInstallCommand: () => 'npm i -g opencli',
+        }),
     afterLibInstall: () => undefined,
     profileDirOf,
     profileModules: (dir: string | null): readonly ProfileModule[] => {

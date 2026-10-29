@@ -8,6 +8,9 @@ export function supplyPortOf(ctx: DshHostContext): SupplyPort {
   const set = adaptersOf(ctx);
   const env = set.supply;
   const modules = set.modules;
+  const cliCatalogPath = modules.cliCatalogPath;
+  const vendorPluginsDir = modules.vendorPluginsDir;
+  const runtimeInstallCommand = modules.runtimeInstallCommand;
   return {
     env,
     modules,
@@ -20,9 +23,9 @@ export function supplyPortOf(ctx: DshHostContext): SupplyPort {
     splitNpmSpec: (spec) => env.splitNpmSpec(spec),
     isolatedRoot: () => modules.isolatedRoot(),
     isolatedHome: () => modules.isolatedHome(),
-    cliCatalogPath: () => modules.cliCatalogPath(),
-    vendorPluginsDir: () => modules.vendorPluginsDir(),
-    runtimeInstallCommand: () => modules.runtimeInstallCommand(),
+    ...(cliCatalogPath === undefined ? {} : { cliCatalogPath: () => cliCatalogPath() }),
+    ...(vendorPluginsDir === undefined ? {} : { vendorPluginsDir: () => vendorPluginsDir() }),
+    ...(runtimeInstallCommand === undefined ? {} : { runtimeInstallCommand: () => runtimeInstallCommand() }),
     afterLibInstall: () => modules.afterLibInstall(),
     profileDirOf: (context) => modules.profileDirOf(context),
     profileModules: (dir) => modules.profileModules(dir),
