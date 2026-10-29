@@ -69,7 +69,7 @@ export interface BinNeed extends NeedCommon {
 }
 
 /**
- * 某个运行时上要有一个扩展（opencli 的插件就是这种），并且要提供这些命令。
+ * 某个运行时上要有一个扩展（运行时自己的插件就是这种），并且要提供这些命令。
  */
 export interface ExtensionNeed extends NeedCommon {
   readonly kind: 'extension';
@@ -82,8 +82,8 @@ export interface ExtensionNeed extends NeedCommon {
 
 /**
  * 要在隔离运行时里有一个共用依赖包。
- * `runs` 写它自己会起哪些运行时的命令（如 `["opencli"]`）—— 写了外壳就把那份执行器注入进去
- * （库侧约定 `setOpencliRunner`）；不写就按它自己在 PATH 上找。
+ * `runs` 写它自己会起哪个运行时的命令 —— 写了外壳就把那份执行器注入进去
+ * （库侧约定 `set<Runtime>Runner`）；不写就按它自己在 PATH 上找。
  */
 export interface LibNeed extends NeedCommon {
   readonly kind: 'lib';
@@ -294,7 +294,7 @@ function perKindProblemsOf(
   if (raw['docs'] !== undefined && text(raw['docs']) === '') errors.push(`${at}.docs 是空串`);
   if (kind === 'lib') errors.push(...libRunsProblemsOf(raw['runs'], at));
   if (kind === 'extension') {
-    if (text(raw['runtime']) === '') errors.push(`${at}.runtime 没写 —— 扩展属于哪个运行时（如 opencli）`);
+    if (text(raw['runtime']) === '') errors.push(`${at}.runtime 没写 —— 扩展属于哪个运行时`);
     if (text(raw['name']) === '') errors.push(`${at}.name 没写`);
     if (raw['commands'] !== undefined) {
       if (!Array.isArray(raw['commands'])) errors.push(`${at}.commands 要是数组`);

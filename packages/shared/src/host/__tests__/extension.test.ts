@@ -32,7 +32,7 @@ describe('extensionCallerOf', () => {
     await expect(caller.json(['issue-statuses'])).rejects.toMatchObject({
       code: 'cli-unclassified',
       message: expect.stringContaining('workbench_modules_update（id=coding-issues）'),
-      hint: expect.stringContaining('opencli coding issue-statuses --help'),
+      hint: expect.stringContaining('coding issue-statuses --help'),
       detail: "error: unknown command 'issue-statuses'",
     });
   });

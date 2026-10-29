@@ -12,7 +12,6 @@ import {
   mergeEntryLabels,
   resolveIndexPlan,
   sanitizeManifest,
-  setManifestLabels,
   updateMarketIndex,
 } from '../../../src/market-index.mjs';
 
@@ -733,12 +732,8 @@ export const checks = [
         if (mergeEntryLabels(entry, ['旧标签']) !== entry) throw new Error('标签没变还生成了新对象');
         if (mergeEntryLabels(entry, undefined) !== entry) throw new Error('没带标签时不该动条目');
 
-        const manifest = { dsh: { workbench: { unit: 'probe', card: { order: 3 } } } };
-        setManifestLabels(manifest, ['发布编排']);
-        if (labelsOfManifest(manifest).join(',') !== '发布编排') throw new Error('标签没写回 manifest');
-        if (manifest.dsh.workbench.unit !== 'probe' || manifest.dsh.workbench.card.order !== 3) {
-          throw new Error('写标签时把别的字段改了');
-        }
+        const legacy = { dsh: { workbench: { unit: 'probe', market: { labels: ['老标签'] } } } };
+        if (labelsOfManifest(legacy).join(',') !== '老标签') throw new Error('老清单里的标签读不出来');
         report(title, true);
       } catch (error) {
         report(title, false, error.message.slice(0, 200));

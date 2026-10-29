@@ -151,7 +151,7 @@ export function harnessOf(options: {
     ownedUnits: () => [],
     store: options.store,
     data: createNoopDataReader(),
-    ...createHostKit(),
+    ...createHostKit({ libInstallCommand: (options) => `npm i ${options.need.name}` }),
   });
 
   return {

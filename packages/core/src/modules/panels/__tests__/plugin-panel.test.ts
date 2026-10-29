@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { UnitManifest } from '@dsh-workbench/shared';
 import { createHostKit, createWorkspaceStore, type WorkspaceStore } from '@dsh-workbench/shared/host';
-import { isolatedHome } from '@dsh-workbench/shared/host';
+import { runtimeLayoutOf } from '@dsh-workbench/shared/host';
 import { createNoopDataReader,
 } from '@dsh-workbench/shared/testing';
 import { pluginPanelId, resolvePluginPanels } from '../model/config';
@@ -63,7 +63,12 @@ beforeEach(() => {
   home = temp();
   process.env['DSH_HOME'] = home;
   store = createWorkspaceStore({ root });
-  ledger = createPluginLedger({ store, home: isolatedHome() });
+  const layout = runtimeLayoutOf('opencli');
+  ledger = createPluginLedger({
+    store,
+    home: layout.home,
+    pluginFiles: { dir: layout.vendorPluginsDir, manifest: 'opencli-plugin.json' },
+  });
 });
 
 afterEach(() => {
@@ -206,7 +211,7 @@ function mountHost(manifests: readonly UnitManifest[] = []) {
     ownedUnits: () => [],
     store,
     data: createNoopDataReader(),
-    ...createHostKit(),
+    ...createHostKit({ libInstallCommand: (options) => `npm i ${options.need.name}` }),
   });
   const dispose = mounted.registerTools?.() ?? [];
   for (const off of dispose) off();

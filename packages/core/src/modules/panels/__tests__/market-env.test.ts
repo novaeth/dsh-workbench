@@ -199,6 +199,7 @@ describe('放手那一格自己：谁在用、引用可不可信，两件事一�
     const runs: string[] = [];
     const logs: string[] = [];
     const dropper = createEnvDropper({
+      libUninstallCommand: (need) => `npm uninstall ${need.name}`,
       catalog: () => options.catalog,
       isReleased: (id) => (options.released ?? []).includes(id),
       ...(options.references === undefined ? {} : { references: () => options.references as never }),
@@ -256,6 +257,7 @@ describe('放手那一格自己：谁在用、引用可不可信，两件事一�
     ledger.complete('opencli-plugin-demo', 'demo');
     const runs: string[] = [];
     const dropper = createEnvDropper({
+      libUninstallCommand: (need) => `npm uninstall ${need.name}`,
       catalog: () => [unit('issues', 'demo')],
       ledger,
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -282,6 +284,7 @@ describe('放手那一格自己：谁在用、引用可不可信，两件事一�
     ledger.intend({ package: 'opencli-plugin-demo', registry: 'https://r.example/' });
     const runs: string[] = [];
     const dropper = createEnvDropper({
+      libUninstallCommand: (need) => `npm uninstall ${need.name}`,
       catalog: () => [unit('issues', 'demo')],
       ledger,
       references: () => ({ trustworthy: true, unreadable: [] }),

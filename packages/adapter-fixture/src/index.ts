@@ -22,6 +22,7 @@ const data: DataReader = {
 const supply: EnvSupplyPort = {
   resolvePluginSource: () => ({ ok: false, problem: 'not-declared' }),
   libInstallCommand: () => '',
+  libUninstallCommand: () => '',
   pluginInstallPlan: () => ({ ok: false, problem: 'not-declared' }),
   latestVersion: async () => undefined,
   missingReleaseParts: async () => [],

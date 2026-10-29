@@ -1,6 +1,5 @@
 import type { DshShell } from '../api/dsh.js';
 import { GIT_TIMEOUT_MS } from '../config/constants.js';
-import { quoteShellArg } from './shell-text.js';
 
 export interface ShellResult {
   readonly exitCode: number | null;
@@ -40,12 +39,4 @@ export async function runShell(
     stderr: result.stderr.text,
     truncated: result.stdout.truncated || result.stderr.truncated,
   };
-}
-
-export function backgroundPrefix(): readonly string[] {
-  return [quoteShellArg('env'), quoteShellArg('OPENCLI_WINDOW=background')];
-}
-
-export function backgroundLine(command: string, argv: readonly string[]): string {
-  return [...backgroundPrefix(), quoteShellArg(command), ...argv.map(quoteShellArg)].join(' ');
 }

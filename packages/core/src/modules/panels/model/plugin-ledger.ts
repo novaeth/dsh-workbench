@@ -11,7 +11,7 @@ import {
   writePluginLedger,
 } from '@dsh-workbench/shared/host';
 import { PANELS_MODULE_ID } from './service';
-import { pluginNameOf } from './plugin-name';
+import { pluginNameOf, type PluginFiles } from './plugin-name';
 
 export interface PluginLedgerIntent {
   readonly package: string;
@@ -21,6 +21,7 @@ export interface PluginLedgerIntent {
 
 export interface PluginLedger {
   readonly home: string;
+  readonly pluginFiles?: PluginFiles | undefined;
   list(): readonly PluginLedgerEntry[];
   all(): readonly PluginLedgerEntry[];
   read(pkg: string): PluginLedgerEntry | undefined;
@@ -35,6 +36,7 @@ export interface PluginLedger {
 export function createPluginLedger(options: {
   readonly store: WorkspaceStore;
   readonly home: string;
+  readonly pluginFiles?: PluginFiles | undefined;
 }): PluginLedger {
   const folder: ModuleStore = options.store.machine(PANELS_MODULE_ID);
   const home = options.home;
@@ -43,6 +45,7 @@ export function createPluginLedger(options: {
 
   return {
     home,
+    ...(options.pluginFiles === undefined ? {} : { pluginFiles: options.pluginFiles }),
     list: () => heldEntriesOfHome(all(), home),
     all: () => pluginEntriesOfHome(all(), home),
     read: (pkg) => {
@@ -58,7 +61,7 @@ export function createPluginLedger(options: {
       if (key === '') return undefined;
       const known = heldEntryOfPlugin(all(), home, key);
       if (known !== undefined) return known;
-      return heldEntriesOfHome(all(), home).find((entry) => pluginNameOf(entry) === key);
+      return heldEntriesOfHome(all(), home).find((entry) => pluginNameOf(entry, options.pluginFiles) === key);
     },
     intend(intent) {
       const registry = intent.registry?.trim() ?? '';

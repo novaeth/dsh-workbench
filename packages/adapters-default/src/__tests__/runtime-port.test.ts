@@ -1,7 +1,7 @@
 import { delimiter } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { runtimeSeedPaths } from '@dsh-workbench/adapter-probe';
-import { libsBinDir } from '@dsh-workbench/shared/host';
+import { libsBinDir } from '@dsh-workbench/adapter-runtime';
 import { prependRuntimePath, runtimePathDirs } from '../runtime-port.js';
 
 describe('运行时上 PATH：顺序就是优先级', () => {

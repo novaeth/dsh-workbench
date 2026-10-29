@@ -153,6 +153,7 @@ async function loadCapabilities(options: {
   const { shell, runtimeCommands, units, force } = options;
   const index = buildSupplyIndex(units.map((unit) => ({ id: unit.unit, needs: unit.needs })), {
     env: process.env,
+    packagePrefix: 'opencli-plugin-',
   });
 
   const binNames = [

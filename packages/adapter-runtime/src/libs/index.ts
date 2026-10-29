@@ -6,9 +6,9 @@ import { homedir } from 'node:os';
 import { join, normalize } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { LibNeed } from '@dsh-workbench/shared/host';
-import { libInstallCommand, WorkbenchDataError } from '@dsh-workbench/shared/host';
+import { WorkbenchDataError } from '@dsh-workbench/shared/host';
+import { libInstallCommand, type NpmSource } from '../install.js';
 import type { LibReader } from '@dsh-workbench/shared/host';
-import type { NpmSource } from '@dsh-workbench/shared/host';
 
 export interface LibReaderOptions {
   readonly roots?: readonly string[] | undefined;

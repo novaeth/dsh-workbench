@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createWorkspaceStore, type WorkspaceStore } from '@dsh-workbench/shared/host';
-import { isolatedHome } from '@dsh-workbench/shared/host';
+import { runtimeLayoutOf } from '@dsh-workbench/shared/host';
 import { pluginPanelId } from '../model/config';
 import { createPluginLedger, type PluginLedger } from '../model/plugin-ledger';
 import { harnessOf, deny } from './plugin-tool-units-harness';
@@ -32,7 +32,7 @@ beforeEach(() => {
   root = temp();
   process.env['DSH_HOME'] = temp();
   store = createWorkspaceStore({ root });
-  ledger = createPluginLedger({ store, home: isolatedHome() });
+  ledger = createPluginLedger({ store, home: runtimeLayoutOf('opencli').home });
 });
 
 afterEach(() => {

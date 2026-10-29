@@ -2,7 +2,7 @@ import type { DshShell } from '@dsh-workbench/shared';
 import { pluginRetentionOf, quoteShellArg, type PluginLedgerEntry } from '@dsh-workbench/shared/host';
 import { requireSupply, type PluginSourceCommand, type SupplyPort } from '@dsh-workbench/shared/host';
 import { sourceProblemText } from './market-dependency';
-import { pluginNameOf } from './plugin-name';
+import { pluginNameOf, type PluginFiles } from './plugin-name';
 import type { PluginLedger } from './plugin-ledger';
 
 export type PluginKept =
@@ -72,6 +72,11 @@ export function createPluginActions(options: {
 }): PluginActions {
   const { ledger, shell, command, runAll, logger } = options;
   const supply = options.supply ?? requireSupply();
+  const pluginFilesOf = (): PluginFiles | undefined => {
+    const dir = supply.vendorPluginsDir?.();
+    const manifest = supply.pluginManifestFile?.();
+    return dir === undefined || manifest === undefined ? undefined : { dir, manifest };
+  };
 
   function requireLedger(): PluginLedger {
     if (ledger === undefined) throw new Error('这个市场没有台账（插件记录），用户装的插件动不了。');
@@ -103,7 +108,7 @@ export function createPluginActions(options: {
     held: boolean,
     claimedBy?: (plugin: string) => readonly string[],
   ): PluginDecision {
-    const plugin = pluginNameOf(entry);
+    const plugin = pluginNameOf(entry, pluginFilesOf());
     if (plugin === undefined) return { act: 'keep', kept: { kind: 'unnamed' } };
     const refs = referencesOf();
     const by = claimedBy?.(plugin) ?? options.claimedBy?.(plugin) ?? [];
@@ -140,7 +145,7 @@ export function createPluginActions(options: {
       if (!plan.ok) throw new Error(sourceProblemText(plan.problem, plan.env));
       await runAll(plan.commands);
       logger?.info?.(`[dsh-workbench] 把 ${entry.package} 更新到 ${latest}`);
-      return { name: pluginNameOf(entry) ?? entry.name ?? entry.package };
+      return { name: pluginNameOf(entry, pluginFilesOf()) ?? entry.name ?? entry.package };
     },
 
     async uninstall(pkg) {

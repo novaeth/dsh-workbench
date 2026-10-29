@@ -8,6 +8,7 @@ export interface SupplyDeclaration {
 
 export interface SupplyIndexOptions {
   readonly env?: Readonly<Record<string, string | undefined>>;
+  readonly packagePrefix?: string | undefined;
 }
 
 export interface SupplyEntry {
@@ -61,8 +62,8 @@ function text(value: string | undefined): string {
   return value === undefined ? '' : value.trim();
 }
 
-function conventionPackage(name: string): string {
-  return `opencli-plugin-${name}`;
+function conventionPackage(name: string, prefix: string): string {
+  return `${prefix}${name}`;
 }
 
 function nativeSourcePackage(source: SupplySource): string {
@@ -71,13 +72,13 @@ function nativeSourcePackage(source: SupplySource): string {
   return `local:${text(source.env) || text(source.path)}`;
 }
 
-function packageOf(need: ExtensionNeed | LibNeed): string {
+function packageOf(need: ExtensionNeed | LibNeed, prefix: string): string {
   if (need.kind === 'lib') return text(need.name);
   const first = need.sources?.[0];
-  if (first === undefined) return conventionPackage(need.name);
+  if (first === undefined) return conventionPackage(need.name, prefix);
   if (first.kind === 'npm') {
     const pkg = text(first.package);
-    return pkg === '' ? conventionPackage(need.name) : pkg;
+    return pkg === '' ? conventionPackage(need.name, prefix) : pkg;
   }
   return nativeSourcePackage(first);
 }
@@ -180,6 +181,7 @@ export function buildSupplyIndex(
   options: SupplyIndexOptions = {},
 ): SupplyIndex {
   const env = options.env ?? {};
+  const prefix = options.packagePrefix ?? '';
   const entries = new Map<string, MutableEntry>();
   const byName = new Map<string, MutableEntry>();
   const conflicts: SupplyConflict[] = [];
@@ -206,7 +208,7 @@ export function buildSupplyIndex(
   for (const declaration of declarations) {
     for (const need of declaration.needs ?? []) {
       if (need.kind !== 'extension' && need.kind !== 'lib') continue;
-      const pkg = packageOf(need);
+      const pkg = packageOf(need, prefix);
       const entry = ensure(need.kind, pkg);
       if (!entry.names.includes(need.name)) entry.names.push(need.name);
       if (need.kind === 'extension') {

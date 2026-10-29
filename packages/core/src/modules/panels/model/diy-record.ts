@@ -1,7 +1,7 @@
 import type { DshHostContext, DshShell } from '@dsh-workbench/shared';
 import type { RecordState, RecordStore } from '@dsh-workbench/shared/host';
 import { quoteShellArg, runShell, shotDueOf } from '@dsh-workbench/shared/host';
-import { backgroundLine } from '@dsh-workbench/shared/host';
+import { plainLine, type LineMaker } from './diy-browser';
 import { BROWSER_RECORD_SESSION } from '@dsh-workbench/shared/host';
 
 import { dirname, join } from 'node:path';
@@ -83,10 +83,11 @@ export async function startRecordCapture(
   command: string,
   session: string,
   file: string,
+  makeLine: LineMaker = plainLine,
 ): Promise<boolean> {
   const bin = command === '' ? 'runtime' : command;
-  const arm = backgroundLine(bin, ['browser', session, 'network', '--follow', '--all', '--window', 'background']);
-  const snap = backgroundLine(bin, ['browser', session, 'network', '--all', '--raw', '--window', 'background']);
+  const arm = makeLine(bin, ['browser', session, 'network', '--follow', '--all', '--window', 'background']);
+  const snap = makeLine(bin, ['browser', session, 'network', '--all', '--raw', '--window', 'background']);
   const line = [
     `f=${quoteShellArg(file)}`,
     `r=${quoteShellArg(`${file}.round`)}`,

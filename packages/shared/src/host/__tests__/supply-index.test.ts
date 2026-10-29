@@ -51,7 +51,7 @@ describe('供给索引：一个包只有一个来源', () => {
     const index = buildSupplyIndex([
       manifest('a', [extension('coding', [npm('opencli-plugin-coding')])]),
       manifest('b', [extension('coding')]),
-    ]);
+    ], { packagePrefix: 'opencli-plugin-' });
 
     expect(index.conflicts.map((item) => item.kind)).toEqual(['source-mismatch']);
     expect(index.entryOf('extension', 'coding')?.conflicted).toBe(true);
@@ -152,7 +152,7 @@ describe('供给索引：一个包只有一个来源', () => {
   });
 
   it('没写 sources 的 extension 按约定落包名，进索引但不代装', () => {
-    const index = buildSupplyIndex([manifest('a', [extension('coding')])]);
+    const index = buildSupplyIndex([manifest('a', [extension('coding')])], { packagePrefix: 'opencli-plugin-' });
 
     expect(index.entryOf('extension', 'coding')?.package).toBe('opencli-plugin-coding');
     expect(index.sourcesOf('extension', 'coding')).toEqual([]);

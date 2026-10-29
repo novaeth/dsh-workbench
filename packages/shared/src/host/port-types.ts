@@ -89,6 +89,7 @@ export interface EnvSupplyPort {
     readonly source: Extract<SupplySource, { kind: 'npm' }>;
     readonly version?: string | undefined;
   }): string;
+  libUninstallCommand(options: { readonly need: LibNeed }): string;
   pluginInstallPlan(options: SupplyPluginInstallOptions): ResolvedPluginSource;
   latestVersion(options: SupplyLatestOptions): Promise<string | undefined>;
   missingReleaseParts(options: SupplyMissingPartsOptions): Promise<readonly string[]>;
@@ -99,6 +100,8 @@ export interface EnvSupplyPort {
 export interface ModulePort {
   isolatedRoot(): string;
   isolatedHome(): string;
+  pluginPackagePrefix?(): string;
+  pluginManifestFile?(): string;
   cliCatalogPath?(): string;
   vendorPluginsDir?(): string;
   runtimeInstallCommand?(): string;
@@ -177,6 +180,7 @@ export interface RuntimeCommandSurface {
   invoke(site: string, command?: string): string;
   help(site: string): string;
   browser?(verb: readonly string[]): string;
+  background?(command: string, argv: readonly string[]): string;
   readonly authorHint?: string;
 }
 

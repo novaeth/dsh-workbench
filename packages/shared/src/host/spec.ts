@@ -28,5 +28,5 @@ export function localDirOf(spec: string): string | undefined {
 }
 
 export function refusalReason(): string {
-  return '这个包既不是工作台的模块，也不是 opencli 的插件，装了也用不上';
+  return '这个包既不是工作台的模块，也不是运行时的插件，装了也用不上';
 }

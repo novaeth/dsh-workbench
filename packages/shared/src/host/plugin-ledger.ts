@@ -25,10 +25,17 @@ function textOf(value: unknown): string | undefined {
   return trimmed === '' ? undefined : trimmed;
 }
 
+function legacyHomeOf(box: Readonly<Record<string, unknown>>): unknown {
+  for (const [key, value] of Object.entries(box)) {
+    if (key !== 'home' && key.toLowerCase().endsWith('home')) return value;
+  }
+  return undefined;
+}
+
 function entryOf(value: unknown): PluginLedgerEntry | undefined {
   if (typeof value !== 'object' || value === null) return undefined;
   const box = value as Readonly<Record<string, unknown>>;
-  const home = textOf(box['home']) ?? textOf(box['opencliHome']);
+  const home = textOf(box['home']) ?? textOf(legacyHomeOf(box));
   const pkg = textOf(box['package']);
   const installedAt = textOf(box['installedAt']);
   if (home === undefined || pkg === undefined || installedAt === undefined) return undefined;

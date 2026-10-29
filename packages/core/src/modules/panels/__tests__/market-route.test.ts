@@ -4,11 +4,11 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DshShell } from '@dsh-workbench/shared';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
+const OPENCLI_MANIFEST_FILE = 'opencli-plugin.json';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import type { BundleChange, BundleInstallRequest } from '@/kernel/contract/bundle-install';
 import type { BundleManager } from '@dsh-workbench/shared/host';
 import { refusalReason } from '@dsh-workbench/shared/host';
-import { OPENCLI_MANIFEST_FILE } from '@dsh-workbench/shared/host';
 import { createMarketService } from '../model/market';
 import { bundleNameOf, installRouted, type BundleInstallDeps } from '../model/market-route';
 import type { BundleInstallOutcome } from '../model/market-types';
@@ -246,7 +246,7 @@ describe('添加一个 spec：按内容判它是什么，再决定走哪条路',
     const text = refusalReason();
 
     for (const word of banned) expect(text, word).not.toContain(word);
-    expect(text).toContain('opencli');
+    expect(text).toContain('运行时');
   });
 });
 

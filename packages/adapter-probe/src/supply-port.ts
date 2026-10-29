@@ -1,6 +1,7 @@
 import type { SupplyPort } from '@dsh-workbench/shared/host';
-import { cliCatalogPath, ensureLibsBinOnPath, ensureLibsOpencliPeer, isolatedHome, libInstallCommand, vendorPluginsDir } from '@dsh-workbench/adapter-runtime';
-import { isolatedRoot } from '@dsh-workbench/shared/host';
+import { cliCatalogPath, ensureLibsBinOnPath, ensureLibsOpencliPeer, isolatedHome, libInstallCommand, libUninstallCommand, vendorPluginsDir } from '@dsh-workbench/adapter-runtime';
+import { isolatedRoot } from '@dsh-workbench/adapter-runtime';
+
 import { createRegistryNotebook, isNewerVersion, latestVersion, missingReleaseParts, probeRelease } from '@dsh-workbench/adapter-profile';
 import { opencliInstallCommand } from './install.js';
 import { startSelfUpdate } from './self-update.js';
@@ -26,6 +27,8 @@ export function createSupplyPort(): SupplyPort {
   const port = {
     isolatedRoot,
     isolatedHome,
+    pluginPackagePrefix: () => 'opencli-plugin-',
+    pluginManifestFile: () => 'opencli-plugin.json',
     cliCatalogPath,
     vendorPluginsDir,
     runtimeInstallCommand: opencliInstallCommand,
@@ -54,6 +57,7 @@ export function createSupplyPort(): SupplyPort {
     resolvePluginSource,
     splitNpmSpec,
     libInstallCommand,
+    libUninstallCommand,
     startSelfUpdate,
   };
   return { ...port, env: port, modules: port };

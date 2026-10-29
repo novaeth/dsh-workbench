@@ -1,5 +1,5 @@
+import type { EnvSupplyPort } from './port-types.js';
 import { createFlowHost, type FlowHost } from './flow/kit.js';
-import { libInstallCommand } from './lib-install.js';
 import { sessionIdOf, sessionWorkspace } from './tool-kit.js';
 
 /**
@@ -9,18 +9,18 @@ export interface HostKit {
   readonly flow: FlowHost;
   readonly sessionIdOf: typeof sessionIdOf;
   readonly sessionWorkspace: typeof sessionWorkspace;
-  readonly libInstallCommand: typeof libInstallCommand;
+  readonly libInstallCommand: EnvSupplyPort['libInstallCommand'];
 }
 
 /**
  * 建一份宿主 kit；每个挂载点一份，没有模块级状态。
  * @returns flow / sessionIdOf / sessionWorkspace / libInstallCommand。
  */
-export function createHostKit(): HostKit {
+export function createHostKit(parts: { readonly libInstallCommand: EnvSupplyPort['libInstallCommand'] }): HostKit {
   return {
     flow: createFlowHost(),
     sessionIdOf,
     sessionWorkspace,
-    libInstallCommand,
+    libInstallCommand: parts.libInstallCommand,
   };
 }

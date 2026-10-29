@@ -1,6 +1,6 @@
 import type { DshShell } from '@dsh-workbench/shared';
+import { quoteShellArg } from '@dsh-workbench/shared/host';
 import { runShell } from '@dsh-workbench/shared/host';
-import { backgroundLine } from '@dsh-workbench/shared/host';
 import { PAGE_PROBE } from './diy-scripts';
 
 export const LOOK_TIMEOUT_MS = 30000;
@@ -14,13 +14,20 @@ export interface BrowserStep {
   readonly truncated: boolean;
 }
 
+export type LineMaker = (command: string, argv: readonly string[]) => string;
+
+export function plainLine(command: string, argv: readonly string[]): string {
+  return [command, ...argv].map(quoteShellArg).join(' ');
+}
+
 export async function runBrowserStep(
   shell: DshShell,
   command: string,
   argv: readonly string[],
   timeoutMs = LOOK_TIMEOUT_MS,
+  line: LineMaker = plainLine,
 ): Promise<BrowserStep> {
-  const result = await runShell(shell, backgroundLine(command, argv), { timeoutMs });
+  const result = await runShell(shell, line(command, argv), { timeoutMs });
   return {
     ok: result.exitCode === 0 && !result.timedOut,
     stdout: result.stdout.trim(),
@@ -54,8 +61,14 @@ export interface BoundTab {
   readonly reason: string;
 }
 
-export async function bindCurrentTab(shell: DshShell, command: string, session: string): Promise<BoundTab> {
-  const step = await runBrowserStep(shell, command, ['browser', session, 'bind', '--window', 'background']);
+export async function bindCurrentTab(
+  shell: DshShell,
+  command: string,
+  session: string,
+  timeoutMs?: number,
+  line?: LineMaker,
+): Promise<BoundTab> {
+  const step = await runBrowserStep(shell, command, ['browser', session, 'bind', '--window', 'background'], timeoutMs, line);
   const parsed = jsonOf(step.stdout);
   if (parsed === undefined) {
     return { ok: false, url: '', title: '', reason: step.timedOut ? '没在 30 秒内返回' : step.stderr || step.stdout };

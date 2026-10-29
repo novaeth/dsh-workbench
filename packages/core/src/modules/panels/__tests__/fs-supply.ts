@@ -34,6 +34,9 @@ export function fsSupply(options: {
     return deps === undefined || deps === null ? [] : Object.keys(deps as Record<string, string>);
   };
   const port = {
+    libUninstallCommand: (options: { need: { name: string } }) => `npm uninstall ${options.need.name}`,
+    pluginPackagePrefix: () => 'opencli-plugin-',
+    pluginManifestFile: () => 'opencli-plugin.json',
     isolatedRoot: () => join(options.root(), 'workbench', 'opencli'),
     isolatedHome: () => join(options.root(), 'workbench', 'opencli', 'home'),
     ...(options.cliDirs === false

@@ -13,7 +13,11 @@ let root = '';
 const roots: string[] = [];
 
 function ledgerAt(home: string) {
-  return createPluginLedger({ store: createWorkspaceStore({ root }), home });
+  return createPluginLedger({
+    store: createWorkspaceStore({ root }),
+    home,
+    pluginFiles: { dir: path.join(home, '..', 'plugins-npm', 'node_modules'), manifest: 'opencli-plugin.json' },
+  });
 }
 
 function fileOf(): string {
@@ -158,7 +162,14 @@ describe('opencli 插件台账：机器级配置那一套（_machine/panels/plug
     fs.writeFileSync(path.join(dir, 'opencli-plugin.json'), JSON.stringify({ name: 'inventory' }), 'utf8');
     fs.writeFileSync(path.join(dir, 'list.js'), 'x', 'utf8');
 
-    const ledger = ledgerAt(HOME_A);
+    const ledger = createPluginLedger({
+      store: createWorkspaceStore({ root }),
+      home: HOME_A,
+      pluginFiles: {
+        dir: path.join(home, 'workbench', 'opencli', 'plugins-npm', 'node_modules'),
+        manifest: 'opencli-plugin.json',
+      },
+    });
     ledger.intend({ package: 'opencli-plugin-inventory', registry: 'https://r.example/' });
 
     expect(ledger.read('opencli-plugin-inventory')?.name).toBeUndefined();

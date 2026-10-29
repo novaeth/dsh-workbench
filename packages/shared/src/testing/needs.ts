@@ -21,7 +21,7 @@ export const fakeNpmSource: SupplySource = {
 export function extensionNeedOf(name: string, extra: Partial<ExtensionNeed> = {}): ExtensionNeed {
   return {
     kind: 'extension',
-    runtime: 'opencli',
+    runtime: 'fake-runtime',
     name,
     commands: [`${name}-read`],
     purpose: '测试',

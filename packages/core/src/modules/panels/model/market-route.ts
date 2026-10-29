@@ -6,7 +6,7 @@ import type { InstalledModule } from '@dsh-workbench/shared/host';
 import { refusalReason, splitNpmSpec } from '@dsh-workbench/shared/host';
 import { requireSupply, localDirOf, type SupplyPort } from '@dsh-workbench/shared/host';
 import { sourceProblemText } from './market-dependency';
-import { pluginNameOf } from './plugin-name';
+import { pluginNameOf, type PluginFiles } from './plugin-name';
 import type { PluginLedger } from './plugin-ledger';
 import type { BundleInstallOptions, BundleInstallOutcome, BundleSupply } from './market-types';
 
@@ -51,9 +51,9 @@ export function bundleNameOf(change: BundleChange, spec: string): string {
   return version > 0 ? spec.slice(0, version) : spec;
 }
 
-function installedPluginName(spec: string, pkg: string): string | undefined {
+function installedPluginName(spec: string, pkg: string, files: PluginFiles | undefined): string | undefined {
   const local = localDirOf(spec);
-  return pluginNameOf(local === undefined ? { package: pkg } : { package: local, local: true });
+  return pluginNameOf(local === undefined ? { package: pkg } : { package: local, local: true }, files);
 }
 
 function outcomeOf(
@@ -179,7 +179,7 @@ export async function installRouted(deps: BundleInstallDeps): Promise<BundleInst
     deps.ledger?.drop(pkg);
     throw error;
   }
-  deps.ledger?.complete(pkg, installedPluginName(spec, pkg));
+  deps.ledger?.complete(pkg, installedPluginName(spec, pkg, deps.ledger.pluginFiles));
   deps.logger?.info?.(`[dsh-workbench] 把 ${pkg} 装进了运行时的插件区`);
   return outcomeOf(
     deps,

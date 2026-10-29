@@ -1,6 +1,5 @@
 import type { Need, NeedState, UnitCapability, UnitManifest } from '@dsh-workbench/shared/host';
 import { buildSupplyIndex, needsOf, pluginRetentionOf, quoteShellArg } from '@dsh-workbench/shared/host';
-import { libsPrefix } from '@dsh-workbench/shared/host';
 import { pluginKeptOf, pluginKeptText, type PluginKept, type PluginReferences } from './plugin-actions';
 import type { PluginLedger } from './plugin-ledger';
 
@@ -25,9 +24,11 @@ export function createEnvDropper(options: {
   readonly references?: (() => PluginReferences) | undefined;
   readonly command: string;
   readonly run: (line: string, optional?: boolean) => Promise<void>;
+  readonly libUninstallCommand: (need: Need) => string;
+  readonly pluginPackagePrefix?: string | undefined;
   readonly logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
 }): EnvDropper {
-  const { catalog, isReleased, ledger, command, run, logger } = options;
+  const { catalog, isReleased, ledger, command, run, logger, libUninstallCommand, pluginPackagePrefix } = options;
 
   function referencesOf(): PluginReferences {
     return options.references?.() ?? { trustworthy: false, unreadable: [] };
@@ -65,7 +66,7 @@ export function createEnvDropper(options: {
         known
           .filter((item) => options.isReleased?.(item.id) !== true)
           .map((item) => ({ id: item.id, needs: needsOf(item) })),
-        { env: process.env },
+        { env: process.env, ...(pluginPackagePrefix === undefined ? {} : { packagePrefix: pluginPackagePrefix }) },
       );
       const extensions = (needs ?? []).filter((need) => need.kind === 'extension');
       const libs = (needs ?? []).filter((need) => need.kind === 'lib');
@@ -112,7 +113,7 @@ export function createEnvDropper(options: {
         if (index.entryOf('lib', need.name)?.conflicted === true) {
           logger?.warn?.(`[dsh-workbench] ${need.name} 的来源声明有冲突，按库名卸`);
         }
-        await run(`npm uninstall --prefix ${quoteShellArg(libsPrefix())} ${quoteShellArg(need.name)}`, true);
+        await run(libUninstallCommand(need), true);
       }
 
       return [...kept];

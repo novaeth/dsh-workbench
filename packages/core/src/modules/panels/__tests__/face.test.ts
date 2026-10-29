@@ -45,7 +45,7 @@ function mount(options: {
     ownedUnits: () => [panelsUnit.id],
     store: store(),
     data: createNoopDataReader(),
-    ...createHostKit(),
+    ...createHostKit({ libInstallCommand: (options) => `npm i ${options.need.name}` }),
     ...(options.installable === undefined ? {} : { installable: options.installable }),
     ...(options.probe === undefined ? {} : { probe: options.probe }),
   });

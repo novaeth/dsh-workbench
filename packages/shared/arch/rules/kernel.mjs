@@ -81,6 +81,7 @@ const kernelHasNoVendorFields = createRule({
 });
 
 const RUNTIME_IN_TEXT = /['"`][^'"`]*opencli[^'"`]*['"`]/i;
+const RUNTIME_WORD = /opencli/i;
 
 const copyNamesNoRuntime = createRule({
   id: 'C75',
@@ -111,4 +112,34 @@ const copyNamesNoRuntime = createRule({
   },
 });
 
-export const kernelRules = [kernelKeepsAdaptersOut, kernelHasNoVendorFields, copyNamesNoRuntime];
+const hostStaysGeneric = createRule({
+  id: 'S76',
+  domain: 'structure',
+  level: 'L3',
+  severity: 'error',
+  title: '宿主与契约里不出现某个运行时的名字',
+  hint: '具体运行时的路径、清单名、命令名都由适配器给；shared 只留算法与端口。',
+  run(ctx) {
+    const findings = [];
+    for (const record of ctx.records) {
+      if (!record.rel.startsWith('src/host/') && !record.rel.startsWith('src/contract/')) continue;
+      if (record.rel.includes('__tests__/')) continue;
+      const source = ctx.sourceOf(record.rel);
+      if (source === undefined) continue;
+      const lines = source.split('\n');
+      for (let index = 0; index < lines.length; index += 1) {
+        if (!RUNTIME_WORD.test(lines[index])) continue;
+        findings.push({
+          rule: 'S76',
+          file: record.rel,
+          line: index + 1,
+          text: `点名了运行时：${lines[index].trim().slice(0, 80)}`,
+          hint: '把它交给适配器：路径走 RuntimeLayout、清单名走端口、文案走 RuntimeProfile',
+        });
+      }
+    }
+    return findings;
+  },
+});
+
+export const kernelRules = [kernelKeepsAdaptersOut, kernelHasNoVendorFields, copyNamesNoRuntime, hostStaysGeneric];

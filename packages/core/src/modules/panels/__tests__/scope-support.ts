@@ -96,7 +96,7 @@ export function gate(
     ownedUnits: () => owned,
     store: createWorkspaceStore({ root }),
     data: createNoopDataReader(),
-    ...createHostKit(),
+    ...createHostKit({ libInstallCommand: (options) => `npm i ${options.need.name}` }),
   });
 }
 

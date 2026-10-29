@@ -6,7 +6,7 @@ import type {
   DshToolRunContext,
 } from '@dsh-workbench/shared';
 import { runShell } from '@dsh-workbench/shared/host';
-import { backgroundLine } from '@dsh-workbench/shared/host';
+import { plainLine } from './diy-browser';
 import { cliCommandOf } from '@dsh-workbench/shared/host';
 import { asNumber, asRecord, asText, OUTPUT, plainJson } from './diy-context';
 import { surfaceOf } from '@/shared/api/host/runtime-surface';
@@ -50,7 +50,7 @@ export function specTool(ctx: DshHostContext): DshToolDefinition {
       if (shell === undefined) throw new Error('这台机器上没有 shell 服务，问不了命令的形状');
       const asked = asNumber(args['timeoutMs']);
       const timeoutMs = asked !== undefined && asked > 0 ? asked : SPEC_TIMEOUT_MS;
-      const result = await runShell(shell, backgroundLine(cliCommandOf(ctx), argv), { timeoutMs });
+      const result = await runShell(shell, (surfaceOf(ctx)?.background ?? plainLine)(cliCommandOf(ctx), argv), { timeoutMs });
       const spec = jsonOf(result.stdout);
       return plainJson({
         ok: result.exitCode === 0 && !result.timedOut,

@@ -1,6 +1,7 @@
 import type { SupplyPort } from '@dsh-workbench/shared/host';
-import { isolatedRoot } from '@dsh-workbench/shared/host';
-import { isolatedHome, libInstallCommand } from '@dsh-workbench/adapter-runtime';
+import { isolatedRoot } from '@dsh-workbench/adapter-runtime';
+
+import { isolatedHome, libInstallCommand, libUninstallCommand } from '@dsh-workbench/adapter-runtime';
 import { createRegistryNotebook, isNewerVersion, latestVersion, missingReleaseParts, probeRelease } from '@dsh-workbench/adapter-profile';
 import { startSelfUpdate } from '@dsh-workbench/adapter-probe';
 import {
@@ -47,6 +48,7 @@ export function createSupplyPort(): SupplyPort {
     resolvePluginSource,
     splitNpmSpec,
     libInstallCommand,
+    libUninstallCommand,
     startSelfUpdate,
   };
   return { ...port, env: port, modules: port };

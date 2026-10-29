@@ -308,24 +308,10 @@ function recordOf(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value) ? value : {};
 }
 
-function recordFieldOf(container, key) {
-  const value = container[key];
-  if (value !== null && typeof value === 'object' && !Array.isArray(value)) return value;
-  const next = {};
-  container[key] = next;
-  return next;
-}
-
 export function labelsOfManifest(manifest) {
   const dsh = recordOf(recordOf(manifest).dsh);
   const workbench = recordOf(dsh.workbench);
   return textListOf(recordOf(workbench.market).labels);
-}
-
-export function setManifestLabels(manifest, labels) {
-  if (labels.length === 0) return;
-  const market = recordFieldOf(recordFieldOf(recordFieldOf(manifest, 'dsh'), 'workbench'), 'market');
-  market.labels = [...labels];
 }
 
 export function mergeEntryLabels(entry, labels) {

@@ -29,7 +29,7 @@ export async function installedPlugins(options: {
             ...(release.latest === undefined ? {} : { latest: release.latest }),
           }),
       ...(entry.local === true ? { local: true } : {}),
-      ...(pluginOnDisk(entry) ? {} : { broken: true }),
+      ...(pluginOnDisk(entry, ledger.pluginFiles) ? {} : { broken: true }),
     });
   }
   return rows;

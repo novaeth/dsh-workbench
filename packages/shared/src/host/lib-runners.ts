@@ -17,7 +17,7 @@ function setterNameOf(runtime: string): string {
 }
 
 /**
- * 给声明了 `runs` 的 lib 注入「跑这个运行时」的执行器：库侧按约定暴露 `setOpencliRunner`
+ * 给声明了 `runs` 的 lib 注入「跑这个运行时」的执行器：库侧按约定暴露 `set<Runtime>Runner`
  * （运行时名字首字母大写 + `Runner`），外壳在每次 `load` 之后把执行器交给它。
  *
  * 没暴露的（版本旧）就保持它自己的行为（按 PATH 找），只记一条 warn；不熟悉的运行时同样只 warn。

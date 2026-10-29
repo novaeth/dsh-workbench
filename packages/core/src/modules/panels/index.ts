@@ -47,7 +47,15 @@ export const panelsHost: UnitOwnedFace = {
   manifest: panelsUnit,
   mount({ ctx, logger, manifests, ownedUnits, installable, probe, store, values, longTaskRuns }) {
     const supply = supplyPortOf(ctx);
-    const ledger = createPluginLedger({ store, home: supply.isolatedHome() });
+    const pluginDir = supply.vendorPluginsDir?.();
+    const pluginManifest = supply.pluginManifestFile?.();
+    const ledger = createPluginLedger({
+      store,
+      home: supply.isolatedHome(),
+      ...(pluginDir === undefined || pluginManifest === undefined
+        ? {}
+        : { pluginFiles: { dir: pluginDir, manifest: pluginManifest } }),
+    });
     const panels = createPanelsService({
       manifests,
       store,

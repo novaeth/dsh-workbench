@@ -1445,9 +1445,9 @@ export const checks = [
     },
   },
   {
-    title: 'release：--label 写回 package.json，标签跟着进索引条目（最多两个）',
+    title: 'release：--label 只进索引条目，package.json 一个字节不动（最多两个）',
     async run(_ctx, report) {
-      const title = 'release：--label 写回 package.json，标签跟着进索引条目（最多两个）';
+      const title = 'release：--label 只进索引条目，package.json 一个字节不动（最多两个）';
       const dir = probeOf({ manifest: packageOf({ author: 'Probe <probe@example.com>' }) });
       const repo = mkdtempSync(join(tmpdir(), 'wb-rel-label-'));
       const home = homeOf();
@@ -1462,11 +1462,10 @@ export const checks = [
           err: () => {},
         });
         const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
-        const written = manifest.dsh?.workbench?.market?.labels;
-        if (!Array.isArray(written) || written.join(',') !== '发布编排,构建状态') {
-          throw new Error(`标签没写回 package.json：${JSON.stringify(written)}`);
+        if (manifest.dsh?.workbench?.market !== undefined) {
+          throw new Error(`标签写进了 package.json（协议不认 market 这个键）：${JSON.stringify(manifest.dsh.workbench.market)}`);
         }
-        if (manifest.dsh?.workbench?.unit !== 'probe') throw new Error('写标签时把 unit 改了');
+        if (manifest.dsh?.workbench?.unit !== 'probe') throw new Error('发布把 unit 改了');
         const entry = readIndex(repo).plugins[0];
         if (entry.metadata?.labels?.join(',') !== '发布编排,构建状态') {
           throw new Error(`标签没进索引：${JSON.stringify(entry.metadata)}`);

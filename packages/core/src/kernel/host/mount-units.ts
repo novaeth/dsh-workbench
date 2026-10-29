@@ -4,7 +4,7 @@ import { runsRouteOf, stopRouteOf } from '@dsh-workbench/shared/host';
 import { APPROVAL_NOTE_ARG } from '@dsh-workbench/shared/host';
 import type { UnitManifest } from '@dsh-workbench/shared/host';
 import { param, type RouteTable } from '@dsh-workbench/shared/host';
-import { createHostKit, createLongTaskHost } from '@dsh-workbench/shared/host';
+import { adaptersOf, createHostKit, createLongTaskHost } from '@dsh-workbench/shared/host';
 import type {
   ContextRenderer,
   LongTaskBase,
@@ -332,7 +332,7 @@ export function mountUnits(
     ok: false as const,
     error: { code: 'invalid-request' as const, message: '没有注入 DataReader：模块只能走 deps.data 读数据' },
   });
-  const hostKit = createHostKit();
+  const hostKit = createHostKit({ libInstallCommand: adaptersOf(deps.ctx).supply.libInstallCommand });
   const data: DataReader = deps.data ?? {
     read: missingData,
     request: missingData,

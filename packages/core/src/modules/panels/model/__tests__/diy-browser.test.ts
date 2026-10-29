@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { DshShell } from '@dsh-workbench/shared';
 import { bindCurrentTab, jsonOf, readyPageOf, runBrowserStep, writeShotsDir } from '../diy-browser';
+import { quoteShellArg } from '@dsh-workbench/shared/host';
+
+const backgroundLine = (command: string, argv: readonly string[]): string =>
+  [quoteShellArg('env'), quoteShellArg('OPENCLI_WINDOW=background'), quoteShellArg(command), ...argv.map(quoteShellArg)].join(' ');
 import { cardSelectorOf } from '../diy-scripts';
 
 interface Step {
@@ -39,15 +43,13 @@ function fakeShell(steps: readonly Step[]) {
 describe('跑一条 opencli：argv 原样挂上背景前缀，结果原样回来', () => {
   it('★★ 每个参数各自引号，会话与子命令一个不改', async () => {
     const rig = fakeShell([{ stdout: 'ok' }]);
-    const step = await runBrowserStep(rig.shell, 'opencli', [
-      'browser',
-      'workbench',
-      'state',
-      '--source',
-      'ax',
-      '--window',
-      'background',
-    ]);
+    const step = await runBrowserStep(
+      rig.shell,
+      'opencli',
+      ['browser', 'workbench', 'state', '--source', 'ax', '--window', 'background'],
+      undefined,
+      backgroundLine,
+    );
 
     expect(rig.lines[0]).toBe(
       "'env' 'OPENCLI_WINDOW=background' 'opencli' 'browser' 'workbench' 'state' '--source' 'ax' '--window' 'background'",
@@ -61,7 +63,7 @@ describe('跑一条 opencli：argv 原样挂上背景前缀，结果原样回来
     const slow = fakeShell([{ timedOut: true, exitCode: null }]);
     const cut = fakeShell([{ stdout: 'x', truncated: true }]);
 
-    expect(await runBrowserStep(failed.shell, 'opencli', ['browser', 'workbench', 'state'])).toMatchObject({
+    expect(await runBrowserStep(failed.shell, 'opencli', ['browser', 'workbench', 'state'], undefined, backgroundLine)).toMatchObject({
       ok: false,
       exitCode: 3,
       timedOut: false,
@@ -69,11 +71,11 @@ describe('跑一条 opencli：argv 原样挂上背景前缀，结果原样回来
       stdout: 'out',
       stderr: 'boom',
     });
-    expect(await runBrowserStep(slow.shell, 'opencli', ['browser', 'workbench', 'state'])).toMatchObject({
+    expect(await runBrowserStep(slow.shell, 'opencli', ['browser', 'workbench', 'state'], undefined, backgroundLine)).toMatchObject({
       ok: false,
       timedOut: true,
     });
-    expect(await runBrowserStep(cut.shell, 'opencli', ['browser', 'workbench', 'state'])).toMatchObject({
+    expect(await runBrowserStep(cut.shell, 'opencli', ['browser', 'workbench', 'state'], undefined, backgroundLine)).toMatchObject({
       ok: true,
       truncated: true,
     });
@@ -91,7 +93,7 @@ describe('抠 JSON 与那一页的握手', () => {
 
   it('★ 连不上/不是工作台都有话说（不给用户看一句空错）', async () => {
     const bad = fakeShell([{ stdout: JSON.stringify({ error: { code: 'no-extension', message: '扩展没连上' } }) }]);
-    const bound = await bindCurrentTab(bad.shell, 'opencli', 'workbench');
+    const bound = await bindCurrentTab(bad.shell, 'opencli', 'workbench', undefined, backgroundLine);
 
     expect(bound.ok).toBe(false);
     expect(bound.reason).toContain('扩展没连上');

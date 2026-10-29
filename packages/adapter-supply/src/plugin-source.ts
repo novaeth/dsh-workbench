@@ -4,14 +4,9 @@ import type {
   PluginSourceOptions,
   ResolvedPluginSource,
 } from '@dsh-workbench/shared';
-import {
-  npmCacheDir,
-  npmRegistryOf,
-  quoteShellArg,
-  toolchainOpencliDir,
-  vendorPeerLink,
-  vendorPrefix,
-} from '@dsh-workbench/shared/host';
+import { npmRegistryOf, quoteShellArg } from '@dsh-workbench/shared/host';
+import { npmCacheDir, toolchainOpencliDir, vendorPeerLink, vendorPrefix } from '@dsh-workbench/adapter-runtime';
+
 
 export type {
   PluginSourceCommand,

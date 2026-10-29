@@ -1,4 +1,3 @@
-import { vendorPluginsDir } from '@dsh-workbench/shared/host';
 import { pluginAt } from '@dsh-workbench/shared/host';
 
 export interface PluginEntryRef {
@@ -7,16 +6,24 @@ export interface PluginEntryRef {
   readonly name?: string | undefined;
 }
 
-export function pluginDirOf(entry: PluginEntryRef): string {
-  return entry.local === true ? entry.package : `${vendorPluginsDir()}/${entry.package}`;
+export interface PluginFiles {
+  readonly dir?: string | undefined;
+  readonly manifest?: string | undefined;
 }
 
-export function pluginOnDisk(entry: PluginEntryRef): boolean {
-  return pluginAt(pluginDirOf(entry)) !== undefined;
+export function pluginDirOf(entry: PluginEntryRef, files: PluginFiles | undefined): string {
+  if (entry.local === true || files?.dir === undefined) return entry.package;
+  return `${files.dir}/${entry.package}`;
 }
 
-export function pluginNameOf(entry: PluginEntryRef): string | undefined {
+export function pluginOnDisk(entry: PluginEntryRef, files: PluginFiles | undefined): boolean {
+  return pluginAt(pluginDirOf(entry, files), files?.manifest ?? '') !== undefined;
+}
+
+export function pluginNameOf(entry: PluginEntryRef, files: PluginFiles | undefined): string | undefined {
   if (entry.name !== undefined) return entry.name;
-  const name = pluginAt(pluginDirOf(entry))?.name?.trim() ?? '';
+  const manifest = files?.manifest;
+  if (manifest === undefined) return undefined;
+  const name = pluginAt(pluginDirOf(entry, files), manifest)?.name?.trim() ?? '';
   return name === '' ? undefined : name;
 }

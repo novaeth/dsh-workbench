@@ -2,7 +2,8 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { DshHostContext } from '@dsh-workbench/shared';
 import type { RuntimePort } from '@dsh-workbench/shared/host';
-import { libsBinDir } from '@dsh-workbench/shared/host';
+import { backgroundLine, libsBinDir } from '@dsh-workbench/adapter-runtime';
+
 import { ensureLibsOpencliPeer, opencliCommandOf, opencliRunnerOf } from '@dsh-workbench/adapter-runtime';
 import {
   isInstalledCopy,
@@ -117,6 +118,7 @@ export function createRuntimePort(): RuntimePort {
           command === undefined || command === '' ? `opencli ${site}` : `opencli ${site} ${command}`,
         help: (site: string) => `opencli ${site} --help`,
         browser: (verb: readonly string[]) => `opencli browser ${verb.join(' ')}`,
+        background: (command: string, argv: readonly string[]) => backgroundLine(command, argv),
         authorHint: 'opencli skills read opencli-adapter-author',
       };
     },

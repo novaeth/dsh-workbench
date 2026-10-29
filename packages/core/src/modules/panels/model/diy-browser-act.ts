@@ -1,6 +1,6 @@
 import type { DshShell } from '@dsh-workbench/shared';
 import { quoteShellArg, runShell } from '@dsh-workbench/shared/host';
-import { jsonOf, runBrowserStep, textOf, type BrowserStep } from './diy-browser';
+import { jsonOf, runBrowserStep, type LineMaker, textOf, type BrowserStep } from './diy-browser';
 
 export const ACT_TIMEOUT_MS = 15000;
 
@@ -14,8 +14,9 @@ export async function actBrowser(
   session: string,
   argv: readonly string[],
   timeoutMs = ACT_TIMEOUT_MS,
+  line?: LineMaker,
 ): Promise<ActStep> {
-  const step = await runBrowserStep(shell, command, ['browser', session, ...argv, '--window', 'background'], timeoutMs);
+  const step = await runBrowserStep(shell, command, ['browser', session, ...argv, '--window', 'background'], timeoutMs, line);
   return { ...step, payload: jsonOf(step.stdout) };
 }
 

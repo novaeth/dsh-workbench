@@ -4,7 +4,7 @@ import type { Need, UnitManifest } from '@dsh-workbench/shared';
 import { INSTALL_TIMEOUT_MS, needsOf as needsOfManifest } from '@dsh-workbench/shared/host';
 import type { BundleChange } from '@/kernel/contract/bundle-install';
 import type { BundleManager } from '@dsh-workbench/shared/host';
-import type { InstalledModule, ProfileModule, ProfilePackage } from '@dsh-workbench/shared/host';
+import type { InstalledModule, LibNeed, ProfileModule, ProfilePackage } from '@dsh-workbench/shared/host';
 import type { RegistryNotebook } from '@dsh-workbench/shared/host';
 import type { UnitCapability } from '@dsh-workbench/shared/host';
 import { requireSupply, type SupplyPort, type UnitMountDeps } from '@dsh-workbench/shared/host';
@@ -225,6 +225,7 @@ export function createMarketService(options: {
     ...(references === undefined ? {} : { references }),
     command,
     run,
+    libUninstallCommand: (need) => supply.libUninstallCommand({ need: need as LibNeed }),
     ...(logger === undefined ? {} : { logger }),
   });
 

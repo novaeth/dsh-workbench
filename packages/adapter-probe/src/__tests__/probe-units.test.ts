@@ -10,7 +10,7 @@ afterEach(() => {
   resetProbeCache();
 });
 
-const RUNTIMES = { opencli: 'opencli' } as const;
+const RUNTIMES = { 'fake-runtime': 'opencli' } as const;
 const listOf = (commands: string[], name = 'demo') => ({ stdout: JSON.stringify([{ name, commands }]) });
 const stateOf = (capability: { needs: readonly NeedState[] }, kind: string, name: string) =>
   capability.needs.find((need) => need.kind === kind && need.name === name);

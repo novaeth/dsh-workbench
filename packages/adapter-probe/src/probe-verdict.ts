@@ -8,7 +8,8 @@ import type {
   SupplySource,
   UnitCapability,
 } from '@dsh-workbench/shared/host';
-import { binInstallCommand, needIdOf, quoteShellArg } from '@dsh-workbench/shared/host';
+import { binInstallCommand } from '@dsh-workbench/adapter-runtime';
+import { needIdOf, quoteShellArg } from '@dsh-workbench/shared/host';
 import { resolvePluginSource } from '@dsh-workbench/adapter-supply';
 import { isNewerVersion } from '@dsh-workbench/adapter-profile';
 import { currentHostOs } from './platform.js';

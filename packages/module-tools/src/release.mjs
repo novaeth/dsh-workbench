@@ -59,7 +59,6 @@ import {
   missingPublisherText,
   refreshMarketEntry,
   resolveIndexPlan,
-  setManifestLabels,
   updateMarketIndex,
   verifyMarketArtifact,
 } from './market-index.mjs';
@@ -322,13 +321,8 @@ export async function runRelease({
     return summary;
   }
   const labels = askedLabels;
-  const labelsKept = labels.length === 0 || isDeepStrictEqual(labelsOfManifest(manifest), labels);
-  const labelsChange = verify || labelsKept ? undefined : `标签 ← ${labels.join(' · ')}`;
-  if (!labelsKept && !verify && !dryRun) {
-    setManifestLabels(manifest, labels);
-    writeManifest(root, manifest);
-  }
   const labelsForIndex = labels.length > 0 ? labels : labelsOfManifest(manifest);
+  const labelsChange = verify || labels.length === 0 ? undefined : `标签 ← ${labels.join(' · ')}`;
   const explicitApplied = explicitAuthor !== undefined && !verify && !dryRun;
   if (explicitApplied) {
     manifest.author = explicitAuthor;

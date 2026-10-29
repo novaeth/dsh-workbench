@@ -1,7 +1,7 @@
-import type { BinNeed, LibNeed, SupplySource } from '../contract/needs.js';
-import type { HostOs } from '../contract/protocol/platform.js';
-import { npmRegistryOf } from './npm-registry.js';
-import { quoteShellArg } from './shell-text.js';
+import type { BinNeed, LibNeed, SupplySource } from '@dsh-workbench/shared';
+import type { HostOs } from '@dsh-workbench/shared';
+import { npmRegistryOf } from '@dsh-workbench/shared/host';
+import { quoteShellArg } from '@dsh-workbench/shared/host';
 import { libsPrefix, npmCacheDir } from './paths.js';
 
 export type NpmSource = Extract<SupplySource, { kind: 'npm' }>;
@@ -27,6 +27,10 @@ export function libInstallCommand(options: {
  * @param env 取 registry 环境变量的地方。
  * @returns 一条能直接粘进终端的命令；没声明或平台不对就是 undefined。
  */
+export function libUninstallCommand(options: { readonly need: LibNeed }): string {
+  return `npm uninstall --prefix ${quoteShellArg(libsPrefix())} ${quoteShellArg(options.need.name)}`;
+}
+
 export function binInstallCommand(
   need: BinNeed,
   os: HostOs,

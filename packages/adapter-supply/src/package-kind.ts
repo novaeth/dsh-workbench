@@ -16,9 +16,8 @@ export interface NpmRef {
   readonly version?: string;
 }
 
-import { OPENCLI_MANIFEST_FILE } from '@dsh-workbench/shared/host';
 
-export { OPENCLI_MANIFEST_FILE };
+export const OPENCLI_MANIFEST_FILE = 'opencli-plugin.json';
 
 const VERSION = /^[a-zA-Z0-9][a-zA-Z0-9._+-]*$/;
 

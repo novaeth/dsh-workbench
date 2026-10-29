@@ -70,7 +70,6 @@ export * from './host/plugin.js';
 export * from './host/spec.js';
 export type { PluginSourceCommand, PluginSourceOptions, ResolvedPluginSource } from './contract/plugin-source.js';
 export * from './host/npm-registry.js';
-export * from './host/lib-install.js';
 export * from './host/supply-index.js';
 export * from './host/patch.js';
 export * from './host/adapters.js';

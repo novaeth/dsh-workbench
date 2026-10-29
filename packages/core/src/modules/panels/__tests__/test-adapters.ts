@@ -1,4 +1,5 @@
 import type { RuntimeCommandSurface, WorkbenchAdapters } from '@dsh-workbench/shared/host';
+import { quoteShellArg } from '@dsh-workbench/shared/host';
 import { createFakeDataReader, fakeAdapterSet } from '@dsh-workbench/shared/testing';
 import { fsSupply } from './fs-supply';
 
@@ -10,6 +11,8 @@ export const opencliSurface: RuntimeCommandSurface = {
   invoke: (site, command) => (command === undefined || command === '' ? `opencli ${site}` : `opencli ${site} ${command}`),
   help: (site) => `opencli ${site} --help`,
   authorHint: 'opencli skills read opencli-adapter-author',
+  background: (command, argv) =>
+    [quoteShellArg('env'), quoteShellArg('OPENCLI_WINDOW=background'), quoteShellArg(command), ...argv.map(quoteShellArg)].join(' '),
 };
 
 export function testAdaptersWith(paths: {

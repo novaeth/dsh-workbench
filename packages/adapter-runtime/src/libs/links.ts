@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, symlinkSync } from 'node:fs';
 import { delimiter, dirname } from 'node:path';
-import { OPENCLI_NPM_PACKAGE, libsBinDir, libsPrefix, toolchainOpencliDir } from '@dsh-workbench/shared/host';
+import { OPENCLI_NPM_PACKAGE, libsBinDir, libsPrefix, toolchainOpencliDir } from '../paths.js';
+
 
 export function ensureLibsBinOnPath(env: NodeJS.ProcessEnv = process.env): boolean {
   const dir = libsBinDir();

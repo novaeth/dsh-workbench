@@ -23,7 +23,11 @@ function putPlugin(name: string, pkg: string = PKG): void {
 }
 
 function rig() {
-  const ledger = createPluginLedger({ store: createWorkspaceStore({ root }), home: HOME });
+  const ledger = createPluginLedger({
+    store: createWorkspaceStore({ root }),
+    home: HOME,
+    pluginFiles: { dir: '/tmp/wb-section/workbench/opencli/plugins-npm/node_modules', manifest: 'opencli-plugin.json' },
+  });
   return ledger;
 }
 

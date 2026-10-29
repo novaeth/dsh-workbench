@@ -35,7 +35,7 @@ export function extensionCallerOf(
       const command = [need.name, ...args].join(' ');
       const advice =
         code === 'cli-unclassified'
-          ? `这条命令（${command}）在这份 ${need.name} 插件里可能不存在（插件版本旧就会缺）：用 workbench_modules_update（id=${callerOptions.suiteId ?? need.name}）升级，或在面板的模块状态里点更新，再重试。终端确认：opencli ${need.name} ${args[0] ?? ''} --help`
+          ? `这条命令（${command}）在这份 ${need.name} 插件里可能不存在（插件版本旧就会缺）：用 workbench_modules_update（id=${callerOptions.suiteId ?? need.name}）升级，或在面板的模块状态里点更新，再重试。终端确认：${need.name} ${args[0] ?? ''} --help`
           : undefined;
       const hint =
         advice === undefined

@@ -31,7 +31,7 @@ export const DIY_RECORD_ACT_PATH = `${DIY_RECORD_PATH}/act`;
 /** 面板运行态的路由前缀，挂在外壳 API 下：上报口用它，拒报回 report-refused。 */
 export const PANEL_STATE_PREFIX = `${API_PREFIX}/${PANEL_STATE_PATH}`;
 
-/** 钉住的 opencli 插件版本：`opencli-runtime` 按它校验、取那一份。 */
+/** 钉住的运行时版本：隔离运行时按它校验、取那一份。 */
 export const OPENCLI_PIN = "1.8.8";
 
 /** 缺陷看板套件的 dsh 服务名（`workbenchIssues`）：套件照它登记自己那份服务。 */
@@ -55,13 +55,13 @@ export const DIY_RECORD_SERVICE = "workbenchDiyRecord";
 /** 会话投影服务的 dsh 服务名（`sessionProjections`）：宿主经 `stateOf(session, 'agentPreset')` 读那一档。 */
 export const SESSION_PROJECTIONS_SERVICE = "sessionProjections";
 
-/** 面板清单一次取回的行数上限（条）：外部模块拿它当 opencli `--pageSize`。 */
+/** 面板清单一次取回的行数上限（条）：外部模块拿它当分页参数。 */
 export const PANEL_LIST_LIMIT = 50;
 
-/** 单次 opencli 调用的默认超时（毫秒）；调用点没传 `timeoutMs` 时按它算。 */
+/** 单次运行时调用的默认超时（毫秒）；调用点没传 `timeoutMs` 时按它算。 */
 export const OPENCLI_TIMEOUT_MS = 120_000;
 
-/** 同时最多几条 opencli 在跑（条）：`opencli.ts` 超出就排队。 */
+/** 同时最多几条运行时调用在跑（条）：超出就排队。 */
 export const OPENCLI_MAX_CONCURRENT = 4;
 
 /** 启动预热站点那一跳的超时（毫秒）；超时按未热对待，不挡面板。 */
