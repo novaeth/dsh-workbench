@@ -493,6 +493,36 @@ const testsLiveInFolders = {
   },
 };
 
+
+const shellNamesNoRuntime = {
+  id: 'S74',
+  title: '外壳的文案里不点名运行时（话与命令面都跟着适配器走）',
+  level: 'L3',
+  domain: 'copy',
+  severity: 'error',
+  run(ctx) {
+    const findings = [];
+    for (const record of ctx.records) {
+      if (record.rel.includes('__tests__/')) continue;
+      if (/-mock\.tsx?$/.test(record.rel)) continue;
+      const source = ctx.sourceOf(record.rel);
+      if (source === undefined) continue;
+      const lines = source.split('\n');
+      for (let index = 0; index < lines.length; index += 1) {
+        if (!/['"`][^'"`]*opencli[^'"`]*['"`]/i.test(lines[index])) continue;
+        findings.push({
+          rule: 'S74',
+          file: record.rel,
+          line: index + 1,
+          text: `外壳的文案里点名了运行时：${lines[index].trim().slice(0, 80)}`,
+          hint: '文案走 RuntimeProfile.terms / diagnose / bridge，命令走 runtime.commandSurface；协议字段名另计。',
+        });
+      }
+    }
+    return findings;
+  },
+};
+
 export const unitRules = [
   shellOnlyFaces,
   suitesAreIsolated,
@@ -507,5 +537,6 @@ export const unitRules = [
   shellTestsUseFakeSet,
   sizeFamilyHasNoLiterals,
   testsLiveInFolders,
+  shellNamesNoRuntime,
 ];
 

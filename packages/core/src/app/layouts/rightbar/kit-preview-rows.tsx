@@ -22,7 +22,6 @@ import {
   IconBrandMark,
   IconModuleMark,
   IconNpm,
-  IconOpencli,
   IconPanelScreen,
 } from '@dsh-workbench/shared';
 import {
@@ -234,7 +233,7 @@ export function IconSection() {
     { label: 'IconModuleMark', node: <IconModuleMark size={20} /> },
     { label: 'IconModules', node: <IconModules size={16} /> },
     { label: 'IconPanelScreen', node: <IconPanelScreen size={16} /> },
-    { label: 'IconOpencli', node: <IconOpencli size={16} /> },
+    { label: 'IconModuleMark', node: <IconModuleMark size={16} /> },
     { label: 'IconNpm', node: <IconNpm size={16} /> },
   ];
   return (
