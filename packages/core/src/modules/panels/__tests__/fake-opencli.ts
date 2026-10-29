@@ -1,4 +1,4 @@
-import type { Opencli, OpencliResult } from '@dsh-workbench/adapters-default';
+import type { Opencli, OpencliResult } from '@dsh-workbench/adapter-runtime';
 
 export interface OpencliCall {
   args: readonly string[];

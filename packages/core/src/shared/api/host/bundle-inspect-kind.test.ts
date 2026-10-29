@@ -3,8 +3,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { DshHostContext } from '@dsh-workbench/shared';
-import { OPENCLI_MANIFEST_FILE } from '@dsh-workbench/adapters-default';
-import { resetPackageRouteCache } from '@dsh-workbench/adapters-default';
+import { OPENCLI_MANIFEST_FILE } from '@dsh-workbench/shared/host';
+import { resetPackageRouteCache } from '@dsh-workbench/adapter-supply';
 import { bundleInspectHandler } from './bundle-routes';
 
 function fakeContext(manager: unknown, shell?: unknown): DshHostContext {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { resetReleaseCache } from '@dsh-workbench/adapters-default';
+import { resetReleaseCache } from '@dsh-workbench/adapter-profile';
 import { call, fakeBundles, harness } from './market-tools-harness';
 import { updateWorkbenchOnce } from '../model/market-workbench-update';
 import type { SelfUpdateRequest } from '@dsh-workbench/shared/host';

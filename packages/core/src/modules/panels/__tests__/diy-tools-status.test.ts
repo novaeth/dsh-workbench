@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createDiyRig } from './diy-harness';
 import { DIY_RECON_TOOL, DIY_STATUS_TOOL, DIY_SHOW_TOOL } from '../unit';
-import { OPENCLI_CATALOG_ENV } from '@dsh-workbench/adapters-default';
 
 const rig = createDiyRig();
 
@@ -147,6 +146,8 @@ describe('workbench_diy · open', () => {
 describe('workbench_diy · recon（先看有没有现成的）', () => {
   const catalogDir = fs.mkdtempSync(path.join(process.env['TMPDIR'] ?? '/tmp', 'diy-catalog-'));
   const catalog = path.join(catalogDir, 'cli-manifest.json');
+  const pluginsDir = path.join(catalogDir, 'no-plugins');
+  fs.mkdirSync(pluginsDir, { recursive: true });
   fs.writeFileSync(
     catalog,
     JSON.stringify([
@@ -166,7 +167,7 @@ describe('workbench_diy · recon（先看有没有现成的）', () => {
   afterAll(() => fs.rmSync(catalogDir, { recursive: true, force: true }));
 
   it('给关键词：回现成的 adapter + 命令 + 要不要 Chrome，并说清不用装', async () => {
-    vi.stubEnv(OPENCLI_CATALOG_ENV, catalog);
+    rig.setCatalog(catalog, pluginsDir);
     const { tool } = rig.harness({});
     const out = (await tool(DIY_RECON_TOOL)?.execute({ keyword: 'bilibili' },
       rig.diyExec(),
@@ -181,7 +182,7 @@ describe('workbench_diy · recon（先看有没有现成的）', () => {
   });
 
   it('用网址也能找（取域名），没有现成的就老实给两条路', async () => {
-    vi.stubEnv(OPENCLI_CATALOG_ENV, catalog);
+    rig.setCatalog(catalog, pluginsDir);
     const { tool } = rig.harness({});
     const hit = (await tool(DIY_RECON_TOOL)?.execute({ url: 'https://www.bilibili.com/video/BV1' },
       rig.diyExec(),
@@ -204,7 +205,7 @@ describe('workbench_diy · recon（先看有没有现成的）', () => {
   });
 
   it('目录读不到（隔离运行时没装好）：给出那条能照做的安装命令', async () => {
-    vi.stubEnv(OPENCLI_CATALOG_ENV, path.join(catalogDir, 'nope.json'));
+    rig.setCatalog(path.join(catalogDir, 'nope.json'), pluginsDir);
     const { tool } = rig.harness({});
     await expect(
       tool(DIY_RECON_TOOL)?.execute({ keyword: 'bilibili' }, rig.diyExec()),

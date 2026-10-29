@@ -11,16 +11,25 @@ vi.mock('@dsh-workbench/shared/host', async (importOriginal) => {
     };
     return cached;
   };
-  const supply = () => {
-    const adapters = getAdapters();
+  const provided = (ctx?: { get?: (key: string, optional?: boolean) => unknown }): ReturnType<typeof getAdapters> => {
+    let got: ReturnType<typeof getAdapters> | undefined;
+    try {
+      got = ctx?.get?.('workbenchAdapters', false) as ReturnType<typeof getAdapters> | undefined;
+    } catch {
+      got = undefined;
+    }
+    return got !== undefined && got.supply?.env !== undefined && got.modules !== undefined ? got : getAdapters();
+  };
+  const supply = (ctx?: { get?: (key: string, optional?: boolean) => unknown }) => {
+    const adapters = provided(ctx);
     return { ...adapters.supply, ...adapters.modules, env: adapters.supply, modules: adapters.modules };
   };
   return {
     ...actual,
     adaptersOf: () => getAdapters(),
-    supplyPortOf: supply,
-    profilePortOf: () => getAdapters().profile,
+    supplyPortOf: (ctx?: never) => supply(ctx),
+    profilePortOf: (ctx?: never) => provided(ctx).profile,
     cliCommandOf: () => 'opencli',
-    requireSupply: supply,
+    requireSupply: (ctx?: never) => supply(ctx),
   };
 });

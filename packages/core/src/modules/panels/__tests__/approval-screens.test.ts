@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { Translate, UnitManifest } from '@dsh-workbench/shared';
 import { zh } from '@dsh-workbench/shared';
 import { approvalFor, type ApprovalCall } from '@dsh-workbench/shared/host';
-import { pluginApprovalFor, type PluginCommand } from '@dsh-workbench/adapters-default';
+import { pluginApprovalFor, type PluginCommand } from '@dsh-workbench/adapter-supply';
 import { pluginToolIndexOf, shellApprovalPlan, type ApprovalPlanView } from '@/app/layouts/approval-detail';
 import { panelsApprovalFor } from '../model/approval';
 import { ASK_TOOLS, WRITE_CALLS, stopRuns } from './approval-samples';

@@ -98,6 +98,10 @@
   "devDependencies": {
     "@arch-guard/core": "^0.11.1",
     "@deepseek-ai/dsh-client-ui-primitives": "0.2.1-rc.2",
+    "@dsh-workbench/adapter-probe": "workspace:*",
+    "@dsh-workbench/adapter-profile": "workspace:*",
+    "@dsh-workbench/adapter-runtime": "workspace:*",
+    "@dsh-workbench/adapter-supply": "workspace:*",
     "@types/node": "^24.19.0",
     "@types/proper-lockfile": "^4.1.4",
     "@types/react": "^19.3.0",

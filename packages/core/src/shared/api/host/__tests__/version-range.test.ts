@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkVersionRange } from '@dsh-workbench/adapters-default';
+import { checkVersionRange } from '@dsh-workbench/adapter-probe';
 
 describe('checkVersionRange', () => {
   it('留空 / 空白 → 任意版本都满足（清单不写 = 跟源走）', () => {

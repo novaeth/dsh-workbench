@@ -5,8 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 import type { BundleChange, BundleInstallRequest } from '@/kernel/contract/bundle-install';
 import type { BundleManager } from '@dsh-workbench/shared/host';
-import { OPENCLI_MANIFEST_FILE } from '@dsh-workbench/adapters-default';
-import { resetPackageRouteCache } from '@dsh-workbench/adapters-default';
+import { OPENCLI_MANIFEST_FILE } from '@dsh-workbench/shared/host';
+import { resetPackageRouteCache } from '@dsh-workbench/adapter-supply';
 import { installRouted, type BundleInstallDeps } from '../model/market-route';
 import { createPluginLedger, type PluginLedger } from '../model/plugin-ledger';
 

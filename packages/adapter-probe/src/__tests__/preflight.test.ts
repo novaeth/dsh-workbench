@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { OPENCLI_INSTALL_COMMAND, classifyFailure, createPreflight } from '../index.js';
+import { classifyFailure, createPreflight, opencliInstallCommandDefault } from '../index.js';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { ALL_OK, BROKEN_BRIDGE, EXTENSION_ONLY_BRIDGE, GOOD_BRIDGE_REPORT, build } from './preflight-fixtures';
 
@@ -24,7 +24,7 @@ describe('createPreflight', () => {
       async () => {
         const during = preflight.snapshot();
         expect(during.phase).toBe('installing');
-        expect(during.steps[0]?.action).toBe(OPENCLI_INSTALL_COMMAND);
+        expect(during.steps[0]?.action).toBe(opencliInstallCommandDefault());
         return { ok: true, detail: 'added 1 package' };
       },
     );
@@ -51,7 +51,7 @@ describe('createPreflight', () => {
     expect(snapshot.phase).toBe('failed');
     expect(snapshot.error).toContain('EACCES');
     expect(snapshot.steps[0]?.status).toBe('failed');
-    expect(snapshot.steps[0]?.command).toBe(OPENCLI_INSTALL_COMMAND);
+    expect(snapshot.steps[0]?.command).toBe(opencliInstallCommandDefault());
   });
 
   it('某一拍自己抛了 → 收成 failed 那一屏，不把 run 的 promise 甩出去（否则宿主会当致命错误退出）', async () => {

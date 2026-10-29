@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { UnitManifest } from '@dsh-workbench/shared';
 import { createHostKit, createWorkspaceStore, type WorkspaceStore } from '@dsh-workbench/shared/host';
-import { isolatedHome } from '@dsh-workbench/adapters-default';
+import { isolatedHome } from '@dsh-workbench/adapter-runtime';
 import { createNoopDataReader,
 } from '@dsh-workbench/shared/testing';
 import { pluginPanelId, resolvePluginPanels } from '../model/config';

@@ -402,15 +402,15 @@ const shellBranchesOnRuntimeId = createRule({
   },
 });
 
-const ADAPTER_IMPORT = /from\s+['"]@dsh-workbench\/(?:adapters-default|adapter-[a-z0-9-]+)/;
+const ADAPTER_IMPORT = /from\s+['"]@dsh-workbench\/adapters-default\b/;
 
 const shellTestsUseFakeSet = createRule({
   id: 'S70',
   domain: 'structure',
   level: 'L2',
   severity: 'error',
-  title: '外壳的测试也不许依赖默认实现',
-  hint: '测试是「协议够不够用」的试金石：要一整套适配器就用 shared/testing 的 fakeAdapterSet；只是某个单元的 helper，就从所属的 adapter-* 包取（单元包进 devDependencies）。',
+  title: '外壳的测试不许依赖默认集合',
+  hint: '测试是「协议够不够用」的试金石：要一整套适配器就用 shared/testing 的 fakeAdapterSet；某个单元的 helper 从它所属的 adapter-* 包取（单包进 devDependencies）—— 这两条都行，唯独别 import 默认集合（那是部署时选的那份）。',
   run(ctx) {
     const findings = [];
     for (const record of ctx.records) {

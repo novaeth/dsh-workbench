@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  brokenRowsOf,
-  createDiyPresetProbe,
-  diyPresetVerdictOf,
-} from '@dsh-workbench/adapters-default';
-import { createPreflight } from '@dsh-workbench/adapters-default';
+import { brokenRowsOf, createDiyPresetProbe, diyPresetVerdictOf } from '@dsh-workbench/adapter-probe';
+import { createPreflight } from '@dsh-workbench/adapter-probe';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { ALL_OK } from './preflight-cases';
 

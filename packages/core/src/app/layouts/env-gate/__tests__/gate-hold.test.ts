@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PreflightBridgeIssue, PreflightSnapshot } from '@dsh-workbench/shared/host';
-import { createPreflight } from '@dsh-workbench/adapters-default';
+import { createPreflight } from '@dsh-workbench/adapter-probe';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { BROKEN_BRIDGE, GOOD_BRIDGE_REPORT } from '@/shared/api/host/__tests__/preflight-cases';
 import { gateActionOf } from '../boot-gate';

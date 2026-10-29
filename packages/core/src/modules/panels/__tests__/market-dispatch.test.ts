@@ -11,7 +11,7 @@ import type { UnitCapability } from '@dsh-workbench/shared/host';
 import { createMarketService } from '../model/market';
 import { dispatchMarket } from '../model/market-dispatch';
 import { createPluginLedger } from '../model/plugin-ledger';
-import { selfUpdatePaths } from '@dsh-workbench/adapters-default';
+import { selfUpdatePaths } from '@dsh-workbench/adapter-probe';
 
 function unit(id: string): UnitManifest {
   return {

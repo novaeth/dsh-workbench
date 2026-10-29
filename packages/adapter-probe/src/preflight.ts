@@ -146,7 +146,9 @@ export interface Preflight {
   snapshot(): PreflightSnapshot;
 }
 
-export const OPENCLI_INSTALL_COMMAND = opencliInstallCommand();
+export function opencliInstallCommandDefault(): string {
+  return opencliInstallCommand();
+}
 
 const WARMABLE_BRIDGE_ISSUES: readonly PreflightBridgeIssue[] = ['daemon', 'stale'];
 
@@ -185,7 +187,7 @@ export function createPreflight(options: {
   const capabilities = options.capabilities ?? { console: true, pluginMarket: true, browserBridge: true };
   const withConsole = capabilities.console;
   const withBridge = capabilities.browserBridge;
-  const installCommand = options.installCommand ?? OPENCLI_INSTALL_COMMAND;
+  const installCommand = options.installCommand ?? opencliInstallCommandDefault();
   const warmReads = (): readonly (readonly string[])[] => options.warmReads?.() ?? [];
   const steps = (): PreflightStep[] => [
     ...(options.probeToolchain === undefined ? [] : [step('toolchain')]),

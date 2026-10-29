@@ -1,4 +1,4 @@
-import { createPreflight } from '@dsh-workbench/adapters-default';
+import { createPreflight } from '@dsh-workbench/adapter-probe';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 
 export const GOOD_BRIDGE_REPORT = [

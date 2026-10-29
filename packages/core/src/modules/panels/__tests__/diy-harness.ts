@@ -146,6 +146,38 @@ export function createDiyRig() {
     return { shell: shell as never, commands };
   }
 
+  let catalogPath: string | undefined;
+  let pluginsPath: string | undefined;
+
+  function setCatalog(at: string | undefined, plugins?: string): void {
+    catalogPath = at;
+    pluginsPath = plugins;
+  }
+
+  function adapters(): typeof testAdapters {
+    if (catalogPath === undefined) return testAdapters;
+    const at = (): string => catalogPath ?? '';
+    return {
+      ...testAdapters,
+      supply: {
+        ...testAdapters.supply,
+        cliCatalogPath: at,
+        ...(pluginsPath === undefined ? {} : { vendorPluginsDir: () => pluginsPath ?? '' }),
+        env: { ...(testAdapters.supply as unknown as { env: Record<string, unknown> }).env, cliCatalogPath: at },
+        modules: {
+          ...(testAdapters.supply as unknown as { modules: Record<string, unknown> }).modules,
+          cliCatalogPath: at,
+          ...(pluginsPath === undefined ? {} : { vendorPluginsDir: () => pluginsPath ?? '' }),
+        },
+      } as typeof testAdapters.supply,
+      modules: {
+        ...testAdapters.modules,
+        cliCatalogPath: at,
+        ...(pluginsPath === undefined ? {} : { vendorPluginsDir: () => pluginsPath ?? '' }),
+      },
+    };
+  }
+
   function harness(
     options: {
       manifests?: UnitManifest[];
@@ -208,7 +240,7 @@ export function createDiyRig() {
             },
           };
         }
-        if (key === WORKBENCH_ADAPTERS) return testAdapters;
+        if (key === WORKBENCH_ADAPTERS) return adapters();
         if (key === UNITS_SERVICE) return registry;
         if (key === PANEL_STATE_SERVICE) return panelState;
         if (key === DIY_DEBUG_SERVICE) return debug;
@@ -270,5 +302,6 @@ export function createDiyRig() {
     NORMAL_EXEC,
     fakeShell,
     harness,
+    setCatalog,
   };
 }

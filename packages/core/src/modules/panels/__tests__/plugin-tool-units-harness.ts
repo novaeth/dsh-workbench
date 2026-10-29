@@ -3,8 +3,8 @@ import { createHostKit, toolUnits, type ToolScopeContext, type WorkspaceStore } 
 import { createFakeShell, createNoopDataReader,
 } from '@dsh-workbench/shared/testing';
 import { createFakeOpencli } from './fake-opencli';
-import { createPluginCatalog } from '@dsh-workbench/adapters-default';
-import { createPluginUnits } from '@dsh-workbench/adapters-default';
+import { createPluginCatalog } from '@dsh-workbench/adapter-supply';
+import { createPluginUnits } from '@dsh-workbench/adapter-supply';
 import { mountUnits } from '@/kernel/host/mount-units';
 import { createUnitRegistry, type UnitRegistry } from '@/kernel/host/unit-registry';
 import type { PluginLedger } from '../model/plugin-ledger';

@@ -9,7 +9,8 @@ import type { InstalledModule, ProfileModule, ProfilePackage } from '@dsh-workbe
 import type { SupplySource, UnitManifest } from '@dsh-workbench/shared';
 import { extensionNeedOf, libNeedOf, needStateOf } from '@dsh-workbench/shared/testing';
 import { createMarketService } from '../model/market';
-import { resolvePluginSource, selfUpdatePaths } from '@dsh-workbench/adapters-default';
+import { resolvePluginSource } from '@dsh-workbench/adapter-supply';
+import { selfUpdatePaths } from '@dsh-workbench/adapter-probe';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
 import type { SelfUpdateRequest } from '@dsh-workbench/shared/host';
 import { createPluginLedger, type PluginLedger } from '../model/plugin-ledger';

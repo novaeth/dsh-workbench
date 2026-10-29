@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
-import { resetReleaseCache } from '@dsh-workbench/adapters-default';
+import { resetReleaseCache } from '@dsh-workbench/adapter-profile';
 import { INSTALLED_PLUGINS_ROUTE } from '@/shared/api/installed-plugins';
 import { installedPlugins, pluginRoutes } from '../model/plugin-section';
 import { createPluginLedger } from '../model/plugin-ledger';
