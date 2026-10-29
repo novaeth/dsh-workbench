@@ -56,7 +56,6 @@ export interface SelectFieldProps {
   readonly selection?: 'check' | 'fill' | undefined;
   readonly variant?: 'ghost' | 'boxed' | undefined;
   readonly iconOnly?: boolean | undefined;
-  readonly revealId?: string | undefined;
   readonly ariaLabel?: string | undefined;
   readonly title?: string | undefined;
   readonly id?: string | undefined;
@@ -76,39 +75,13 @@ function triggerClassOf(variantClass: string | undefined, iconOnly: boolean): st
   return mergeClass('wb-selectTrigger', variantClass, iconOnly ? 'wb-selectIconOnly' : undefined);
 }
 
-function itemOf(option: SelectFieldOption, revealId: string | undefined): MenuItem {
-  const mark = option.value === revealId;
-  if (!mark) {
-    return {
-      id: option.value,
-      label: option.label,
-      ...(option.icon === undefined ? {} : { icon: option.icon }),
-      ...(option.disabled === true ? { disabled: true } : {}),
-    };
-  }
-  const revealed = (node: ReactNode): ReactNode => (
-    <span className="wb-selectReveal" data-wb-select-reveal="">
-      {node}
-    </span>
-  );
+function itemOf(option: SelectFieldOption): MenuItem {
   return {
     id: option.value,
-    label: option.icon === undefined ? revealed(option.label) : option.label,
-    ...(option.icon === undefined ? {} : { icon: revealed(option.icon) }),
+    label: option.label,
+    ...(option.icon === undefined ? {} : { icon: option.icon }),
     ...(option.disabled === true ? { disabled: true } : {}),
   };
-}
-
-function revealNode(): HTMLElement | null {
-  const found = document.querySelector('[data-wb-select-reveal]');
-  return found instanceof HTMLElement ? found : null;
-}
-
-function useRevealOnOpen(open: boolean, revealId: string | undefined): void {
-  useEffect(() => {
-    if (!open || revealId === undefined) return;
-    revealNode()?.scrollIntoView({ block: 'nearest' });
-  }, [open, revealId]);
 }
 
 function selectValueNode(
@@ -251,11 +224,10 @@ export function stepSelectCursor(
   return (cursor + step + shown.length) % shown.length;
 }
 
-/** 把候选排成 `Menu` 要的条目表：按 `group` 插分组标题；一项都没有时退回 `emptyText` 那一行（不给就是空表）。`revealId` 是开列表时要滚进可视区的那个 value。 */
+/** 把候选排成 `Menu` 要的条目表：按 `group` 插分组标题；一项都没有时退回 `emptyText` 那一行（不给就是空表）。 */
 export function selectEntries(
   shown: readonly SelectFieldOption[],
   emptyText: string | undefined,
-  revealId?: string | undefined,
 ): readonly MenuEntry[] {
   if (shown.length === 0) {
     return emptyText === undefined ? [] : [{ type: 'label', id: EMPTY_ID, text: emptyText }];
@@ -267,7 +239,7 @@ export function selectEntries(
       out.push({ type: 'label', id: `__wb-select-group-${String(out.length)}`, text: option.group });
       group = option.group;
     }
-    out.push(itemOf(option, revealId));
+    out.push(itemOf(option));
   }
   return out;
 }
@@ -372,7 +344,6 @@ export function SelectField(props: SelectFieldProps) {
     selection = 'fill',
     variant = 'boxed',
     iconOnly = false,
-    revealId,
     ariaLabel,
     title,
     id,
@@ -383,7 +354,6 @@ export function SelectField(props: SelectFieldProps) {
   const state = useSelectState(props);
   const current = options.find((option) => option.value === value);
 
-  useRevealOnOpen(state.open, revealId);
   const variantClass = variant === 'ghost' ? 'wb-selectGhost' : undefined;
   const triggerClass = triggerClassOf(variantClass, iconOnly);
 
@@ -471,7 +441,7 @@ export function SelectField(props: SelectFieldProps) {
       anchor,
       selection,
       selectedId: selectCursorValue(state.shown, state.cursor) ?? undefined,
-      items: selectEntries(state.shown, state.empty, revealId),
+      items: selectEntries(state.shown, state.empty),
       footer:
         footer === undefined
           ? undefined

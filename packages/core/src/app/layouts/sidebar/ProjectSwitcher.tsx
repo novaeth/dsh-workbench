@@ -62,10 +62,6 @@ export function ProjectSwitcher({ items, current, attention, compact = false, on
       }),
     [sections, currentId, hoverId, t, attention.byWorkspace],
   );
-  const revealId = useMemo(
-    () => options.find((option) => attention.byWorkspace.has(option.value))?.value,
-    [options, attention.byWorkspace],
-  );
   const valueNodes = useMemo(() => {
     const out = new Map<string, ReactNode>();
     for (const workspace of items) {
@@ -115,7 +111,6 @@ export function ProjectSwitcher({ items, current, attention, compact = false, on
         variant="ghost"
         iconOnly={compact}
         search={!compact}
-        revealId={revealId}
         ariaLabel={t('project.label')}
         searchLabel={t('project.search.label')}
         searchPlaceholder={t('project.search.placeholder')}

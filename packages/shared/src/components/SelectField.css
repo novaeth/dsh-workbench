@@ -70,12 +70,6 @@
   justify-content: center;
 }
 
-.wb-selectReveal {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .wb-selectIconOnly .wb-selectIcon {
   width: 100%;
   height: 100%;

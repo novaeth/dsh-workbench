@@ -54,10 +54,6 @@ function elementsOf(root: unknown): readonly AnyElement[] {
   return collect(root);
 }
 
-function marked(nodes: readonly AnyElement[]): boolean {
-  return nodes.some((one) => one.props?.['data-wb-select-reveal'] === '');
-}
-
 function menuOf(root: unknown): AnyElement {
   const menu = elementsOf(root).find((one) => one.type === Menu);
   if (menu === undefined) throw new Error('没有渲染出 Menu');
@@ -274,32 +270,6 @@ describe('SelectField：工作区那套下拉的公共形状', () => {
       true,
     );
     expect(defaultSelectFilter(option, 'nope')).toBe(false);
-  });
-
-  it('★ revealId：只给那一行的图标裹上标记（开列表时靠它滚进可视区），别行一个字节不变', () => {
-    const items = selectEntries(
-      [
-        { value: 'a', label: '甲', icon: <span>甲</span> },
-        { value: 'b', label: '乙', icon: <span>乙</span> },
-      ],
-      undefined,
-      'b',
-    );
-    const iconOf = (id: string): unknown =>
-      (items.find((one) => (one as { id?: string }).id === id) as { icon?: unknown } | undefined)?.icon;
-
-    expect(marked(elementsOf(iconOf('a')))).toBe(false);
-    expect(marked(elementsOf(iconOf('b')))).toBe(true);
-  });
-
-  it('★ revealId 撞上没有图标的行：退而标记它的文字（标记只落一处）', () => {
-    const items = selectEntries([{ value: 'a', label: '甲' }], undefined, 'a');
-    const row = items.find((one) => (one as { id?: string }).id === 'a') as
-      | { label?: unknown; icon?: unknown }
-      | undefined;
-
-    expect(row?.icon).toBeUndefined();
-    expect(marked(elementsOf(row?.label))).toBe(true);
   });
 
   it('条目构造：图标与禁用照传，分组标题只在换组时出现一次', () => {
