@@ -8,7 +8,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { delimiter, dirname, join } from 'node:path';
+import { delimiter, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -135,7 +135,7 @@ describe('opencliWrapperScript', () => {
     const expected = fileURLToPath(new URL('../../../adapter-runtime/bin/opencli-isolated.mjs', import.meta.url));
     expect(script.startsWith('#!/bin/sh\n')).toBe(true);
     expect(script).toContain("export DSH_HOME='/home/.dsh'");
-    expect(script).toContain(`exec node '${expected}' \"$@\"`);
+    expect(script).toContain(`exec node '${expected}' "$@"`);
   });
 
   it('把 DSH_HOME 钉在命令里：执行缝不继承它，不钉就会去写用户真正的 ~/.dsh（实测踩过）', () => {
