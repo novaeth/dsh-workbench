@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Translate } from '@dsh-workbench/shared';
-import { MarketBody } from '../MarketView';
+import { MarketBody } from '../market-body';
 
 const t = ((key: string) => key) as Translate;
 

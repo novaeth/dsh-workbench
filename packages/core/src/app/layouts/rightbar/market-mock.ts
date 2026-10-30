@@ -163,7 +163,7 @@ export function buildMarketMocks(roster: readonly UnitManifest[]): readonly Mark
       label: '模块包有新版（行上给「更新」，装了要重启）',
       manifests: [mine],
       capabilities: probe(id, 'ok', { plugins: [{ name: 'fixture', status: 'ok', missing: [] }] }),
-      updates: { [id]: { installed: '0.1.2', latest: '0.2.0' } },
+      updates: { [id]: { installed: '0.1.2', latest: '0.2.0', pkg: '@dsh-workbench/module-one', spec: '^0.1.2', registry: 'https://registry.npmjs.org/' } },
       expect: {
         rows: 1,
         state: 'outdated',
@@ -327,7 +327,7 @@ export function buildMarketMocks(roster: readonly UnitManifest[]): readonly Mark
       label: '用户装的插件：有新版（给更新 / 卸载）',
       manifests: [],
       capabilities: {},
-      plugins: [{ pkg: 'acme-plugin-inventory', name: 'inventory', installed: '1.0.24', latest: '1.0.25' }],
+      plugins: [{ pkg: 'acme-plugin-inventory', name: 'inventory', installed: '1.0.24', latest: '1.0.25', registry: 'https://r.example/team/', installedAt: '2026-09-30T08:00:00.000Z' }],
       expect: { rows: 0, plugins: 1, pluginActions: ['update-plugin', 'uninstall-plugin'] },
     },
     {
@@ -335,7 +335,7 @@ export function buildMarketMocks(roster: readonly UnitManifest[]): readonly Mark
       label: '本地目录装的插件：没有版本源，只给卸载',
       manifests: [],
       capabilities: {},
-      plugins: [{ pkg: '/Users/me/my-local-plugin', name: 'my-local-plugin', local: true }],
+      plugins: [{ pkg: '/Users/me/my-local-plugin', name: 'my-local-plugin', local: true, installedAt: '2026-09-30T08:00:00.000Z' }],
       expect: { rows: 0, plugins: 1, pluginActions: ['uninstall-plugin'], pluginNote: false },
     },
     {
@@ -343,7 +343,7 @@ export function buildMarketMocks(roster: readonly UnitManifest[]): readonly Mark
       label: '插件名 ≠ 包名：行上两个都写出来（更新 / 卸载按包名）',
       manifests: [],
       capabilities: {},
-      plugins: [{ pkg: 'acme-plugin-inventory', name: 'inventory', installed: '1.0.24', latest: '1.0.25' }],
+      plugins: [{ pkg: 'acme-plugin-inventory', name: 'inventory', installed: '1.0.24', latest: '1.0.25', registry: 'https://r.example/team/', installedAt: '2026-09-30T08:00:00.000Z' }],
       expect: { rows: 0, plugins: 1, pluginActions: ['update-plugin', 'uninstall-plugin'] },
     },
     {
@@ -351,7 +351,7 @@ export function buildMarketMocks(roster: readonly UnitManifest[]): readonly Mark
       label: '装坏了的那一份（目录在但看不出是个插件）：行上直说，给卸载与指路',
       manifests: [],
       capabilities: {},
-      plugins: [{ pkg: 'acme-plugin-inventory', name: 'inventory', installed: '1.0.24', broken: true }],
+      plugins: [{ pkg: 'acme-plugin-inventory', name: 'inventory', installed: '1.0.24', broken: true, registry: 'https://r.example/team/', installedAt: '2026-09-30T08:00:00.000Z' }],
       expect: {
         rows: 0,
         plugins: 1,

@@ -29,6 +29,8 @@ export async function installedPlugins(options: {
             ...(release.latest === undefined ? {} : { latest: release.latest }),
           }),
       ...(entry.local === true ? { local: true } : {}),
+      ...(entry.registry === undefined ? {} : { registry: entry.registry }),
+      ...(entry.installedAt === undefined ? {} : { installedAt: entry.installedAt }),
       ...(pluginOnDisk(entry, ledger.pluginFiles) ? {} : { broken: true }),
     });
   }

@@ -148,8 +148,8 @@ describe('两屏的分工：市场管机器级默认、面板管本工作区', (
   });
 
   it('★ 每一段都要把"默认启用"这两颗传下去（漏一段 = 那段的拨钮点了没反应）', () => {
-    const view = readFileSync(new URL('../MarketView.tsx', import.meta.url), 'utf8');
-    const blocks = view
+    const body = readFileSync(new URL('../market-body.tsx', import.meta.url), 'utf8');
+    const blocks = body
       .split('<MarketSection')
       .slice(1)
       .map((part) => part.split('/>')[0] ?? '');
@@ -185,6 +185,7 @@ describe('市场页头：动作在飞，页头与列表里的钮一起禁用', (
   it('★ 行里在装/在更新/在卸 → 页头那颗全局刷新、两段区块头那颗与「添加模块」都不许点（不然就是在同一条通道上叠第二笔）', () => {
     const page = readFileSync(new URL('../../market/panel.tsx', import.meta.url), 'utf8');
     const view = read('MarketView.tsx');
+    const body = read('market-body.tsx');
     const header = readFileSync(new URL('../../market/market-header.tsx', import.meta.url), 'utf8');
     const check = readFileSync(new URL('../../market/market-check.tsx', import.meta.url), 'utf8');
     const transient = read('market-transient-state.ts');
@@ -195,8 +196,8 @@ describe('市场页头：动作在飞，页头与列表里的钮一起禁用', (
     expect(page).toContain('modulesCheck={modulesCheck}');
     expect(page).toContain('pluginsCheck={pluginsCheck}');
     expect(page).toContain('onPending={setActing}');
-    expect(view).toContain('headAction={checks.modules}');
-    expect(view).toContain('headAction={checks.plugins}');
+    expect(body).toContain('headAction={checks.modules}');
+    expect(body).toContain('headAction={checks.plugins}');
     expect(view).toContain('disabled: pending !== null');
     expect(check).toContain('variant="ghost"');
     expect(check).not.toContain('updatesCount');

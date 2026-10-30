@@ -7,6 +7,8 @@ export interface InstalledPlugin {
   readonly latest?: string;
   readonly local?: boolean;
   readonly broken?: boolean;
+  readonly registry?: string;
+  readonly installedAt?: string;
 }
 
 export interface InstalledPluginsPayload {

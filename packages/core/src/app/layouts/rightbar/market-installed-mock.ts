@@ -19,6 +19,14 @@ export function installedMocks(input: {
       label: '没有环境依赖的模块（供给是基座命令那种）：市场里有它这一行',
       manifests: [found],
       capabilities: probe(id, 'ok'),
+      updates: {
+        [id]: {
+          installed: '0.1.2',
+          pkg: '@dsh-workbench/module-one',
+          spec: '^0.1.2',
+          registry: 'https://registry.npmjs.org/',
+        },
+      },
       installed: [{ unit: id, pkg: '@dsh-workbench/module-one', installed: '0.1.2' }],
       expect: {
         rows: 1,

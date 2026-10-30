@@ -39,5 +39,7 @@ export function workbenchRow(version: WorkbenchVersion | null | undefined): Mark
     ...(followUp === undefined ? {} : { followUp }),
     ...(followUpState ? { hint: 'panels.market.migrationHint' as const } : {}),
     pkg: version.pkg,
+    ...(version.spec === undefined ? {} : { spec: version.spec }),
+    ...(version.registry === undefined ? {} : { registry: version.registry }),
   };
 }

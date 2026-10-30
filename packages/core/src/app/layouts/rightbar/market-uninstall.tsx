@@ -63,9 +63,9 @@ export function UninstallConfirm({
           id,
           target?.plugin === true
             ? 'uninstall-plugin'
-            : target?.pkg === undefined
-              ? 'uninstall'
-              : 'remove-bundle',
+            : target?.removeViaBundle === true
+              ? 'remove-bundle'
+              : 'uninstall',
         );
       }}
     />

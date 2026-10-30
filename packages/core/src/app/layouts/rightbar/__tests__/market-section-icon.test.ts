@@ -23,7 +23,7 @@ describe('市场每段的类型图标', () => {
   });
 
   it('★ 有段头的都配了图标、没段头的那一条（工作台自己）不配（哪天漏配就红）', () => {
-    const view = readFileSync(new URL('../MarketView.tsx', import.meta.url), 'utf8');
+    const view = readFileSync(new URL('../market-body.tsx', import.meta.url), 'utf8');
     const blocks = view
       .split('<MarketSection')
       .slice(1)

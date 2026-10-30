@@ -68,6 +68,9 @@ export interface ModuleUpdate {
   readonly local?: boolean;
   readonly blocked?: ModuleUpdateBlock;
   readonly market?: MarketInstalledModule;
+  readonly pkg?: string;
+  readonly spec?: string;
+  readonly registry?: string;
 }
 
 export interface MarketFollowUp {
@@ -98,4 +101,8 @@ export interface MarketRow {
   readonly defaultChanged?: number;
   readonly broken?: boolean;
   readonly followUp?: MarketFollowUp;
+  readonly spec?: string;
+  readonly registry?: string;
+  readonly installedAt?: string;
+  readonly removeViaBundle?: boolean;
 }

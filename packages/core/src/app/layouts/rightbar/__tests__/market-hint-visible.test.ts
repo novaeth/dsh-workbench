@@ -74,7 +74,7 @@ describe('左栏入口那枚标签：与市场页读同一份模块版本', () =
         { unit: 'a', pkg: 'pkg-a', installed: '1.0.0' },
         { unit: 'b', pkg: 'pkg-b', installed: '1.0.0', latest: '1.0.1' },
       ]),
-    ).toEqual({ a: { installed: '1.0.0' }, b: { installed: '1.0.0', latest: '1.0.1' } });
+    ).toEqual({ a: { installed: '1.0.0', pkg: 'pkg-a' }, b: { installed: '1.0.0', latest: '1.0.1', pkg: 'pkg-b' } });
   });
 
   it('★ 本机那份（link:）不问源：就算源上有新版，也不写 latest、也不让标签亮', () => {
@@ -82,7 +82,7 @@ describe('左栏入口那枚标签：与市场页读同一份模块版本', () =
       { unit: 'hello', pkg: 'pkg-hello', installed: '0.1.8', latest: '0.1.9', local: true },
     ]);
 
-    expect(updates).toEqual({ hello: { installed: '0.1.8', local: true } });
+    expect(updates).toEqual({ hello: { installed: '0.1.8', local: true, pkg: 'pkg-hello' } });
     expect(
       marketHintOf({
         manifests: [MANIFEST],
@@ -104,7 +104,7 @@ describe('左栏入口那枚标签：与市场页读同一份模块版本', () =
     ] as const;
 
     expect(marketUpdatesOf(modules)).toEqual({
-      hello: { installed: '0.1.8', latest: '0.2.0', blocked: 'needs-workbench' },
+      hello: { installed: '0.1.8', latest: '0.2.0', blocked: 'needs-workbench', pkg: 'pkg-hello' },
     });
     expect(marketHintOf({ manifests: [MANIFEST], capabilities: OK, modules })).toBeNull();
   });

@@ -61,8 +61,15 @@ describe('「已安装 opencli 插件」那一段的数据：台账说了算', (
 
     const rows = await installedPlugins({ ledger, shell: fake.shell });
 
-    expect(rows).toEqual([
-      { pkg: PKG, name: 'inventory', installed: '1.0.24', latest: '1.0.25' },
+    expect(rows).toMatchObject([
+      {
+        pkg: PKG,
+        name: 'inventory',
+        installed: '1.0.24',
+        latest: '1.0.25',
+        registry: REGISTRY,
+        installedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
+      },
     ]);
     expect(fake.commands().some((line) => line.includes(`npm view '${PKG}' version --registry '${REGISTRY}'`))).toBe(
       true,
@@ -105,7 +112,7 @@ describe('「已安装 opencli 插件」那一段的数据：台账说了算', (
 
     const rows = await installedPlugins({ ledger, shell: fake.shell });
 
-    expect(rows).toEqual([{ pkg: at, local: true }]);
+    expect(rows).toMatchObject([{ pkg: at, local: true, installedAt: expect.any(String) }]);
     expect(fake.commands()).toEqual([]);
   });
 

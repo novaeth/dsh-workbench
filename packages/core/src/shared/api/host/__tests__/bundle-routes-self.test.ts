@@ -99,6 +99,8 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
       pkg: CORE,
       installed: '0.1.18',
       latest: '0.1.19',
+      spec: '^0.1.18',
+      registry: 'https://self.example/',
     });
     cleanup();
   });
@@ -121,8 +123,18 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
       workbench?: Record<string, unknown>;
     };
 
-    expect(first.workbench).toEqual({ pkg: CORE, installed: '0.1.18' });
-    expect(second.workbench).toEqual({ pkg: CORE, installed: '0.1.18' });
+    expect(first.workbench).toEqual({
+      pkg: CORE,
+      installed: '0.1.18',
+      spec: '^0.1.18',
+      registry: 'https://self.example/',
+    });
+    expect(second.workbench).toEqual({
+      pkg: CORE,
+      installed: '0.1.18',
+      spec: '^0.1.18',
+      registry: 'https://self.example/',
+    });
     expect(after).toBe(1);
     expect(warned).toHaveLength(1);
     expect(warned.join(' ')).toContain(SHARED);
@@ -148,8 +160,19 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
       workbench?: Record<string, unknown>;
     };
 
-    expect(before.workbench).toEqual({ pkg: CORE, installed: '0.1.18' });
-    expect(after.workbench).toEqual({ pkg: CORE, installed: '0.1.18', latest: '0.1.19' });
+    expect(before.workbench).toEqual({
+      pkg: CORE,
+      installed: '0.1.18',
+      spec: '^0.1.18',
+      registry: 'https://self.example/',
+    });
+    expect(after.workbench).toEqual({
+      pkg: CORE,
+      installed: '0.1.18',
+      latest: '0.1.19',
+      spec: '^0.1.18',
+      registry: 'https://self.example/',
+    });
     cleanup();
   });
 
@@ -162,7 +185,12 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
     )) as { workbench?: Record<string, unknown> };
 
     expect(commands().filter((line) => line.includes('npm view'))).toHaveLength(1);
-    expect(result.workbench).toEqual({ pkg: CORE, installed: '0.1.19' });
+    expect(result.workbench).toEqual({
+      pkg: CORE,
+      installed: '0.1.19',
+      spec: '^0.1.18',
+      registry: 'https://self.example/',
+    });
     cleanup();
   });
 
@@ -174,13 +202,25 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
       new URLSearchParams(),
     )) as { workbench?: Record<string, unknown> };
 
-    expect(same.workbench).toEqual({ pkg: CORE, installed: '0.1.19', running: '0.1.19' });
+    expect(same.workbench).toEqual({
+      pkg: CORE,
+      installed: '0.1.19',
+      running: '0.1.19',
+      spec: '^0.1.18',
+      registry: 'https://self.example/',
+    });
 
     const swapped = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell, '0.1.18')(
       new URLSearchParams(),
     )) as { workbench?: Record<string, unknown> };
 
-    expect(swapped.workbench).toEqual({ pkg: CORE, installed: '0.1.19', running: '0.1.18' });
+    expect(swapped.workbench).toEqual({
+      pkg: CORE,
+      installed: '0.1.19',
+      running: '0.1.18',
+      spec: '^0.1.18',
+      registry: 'https://self.example/',
+    });
     cleanup();
   });
 
@@ -192,7 +232,12 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
       new URLSearchParams(),
     )) as { workbench?: Record<string, unknown> };
 
-    expect(Object.keys(result.workbench ?? {}).sort()).toEqual(['installed', 'pkg']);
+    expect(Object.keys(result.workbench ?? {}).sort()).toEqual([
+      'installed',
+      'pkg',
+      'registry',
+      'spec',
+    ]);
     cleanup();
   });
 
@@ -204,7 +249,12 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
       new URLSearchParams(),
     )) as { workbench?: Record<string, unknown> };
 
-    expect(result.workbench).toEqual({ pkg: CORE, installed: '0.1.18', local: true });
+    expect(result.workbench).toEqual({
+      pkg: CORE,
+      installed: '0.1.18',
+      local: true,
+      spec: 'link:/Users/x/dsh-workbench/packages/core',
+    });
     expect(commands().filter((line) => line.includes('npm view'))).toEqual([]);
     cleanup();
   });

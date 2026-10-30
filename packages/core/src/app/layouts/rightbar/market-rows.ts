@@ -74,6 +74,8 @@ export interface InstalledWorkbenchModule {
   readonly refused?: readonly string[] | undefined;
   readonly clientRefused?: readonly string[] | undefined;
   readonly market?: MarketInstalledModule | undefined;
+  readonly spec?: string | undefined;
+  readonly registry?: string | undefined;
 }
 
 export function withClientRefusals(
@@ -185,6 +187,9 @@ export function installedRows(
       ...(note === undefined ? {} : { note }),
       ...(module.local === true ? { local: true } : {}),
       pkg: module.pkg,
+      ...(module.spec === undefined ? {} : { spec: module.spec }),
+      ...(module.registry === undefined ? {} : { registry: module.registry }),
+      removeViaBundle: true,
       canInstall: false,
       canUpdate: outdated && blocked === undefined,
       canUninstall: true,
@@ -196,6 +201,9 @@ export function installedRows(
               latest,
               ...(blocked === undefined ? {} : { blocked }),
               ...(module.market === undefined ? {} : { market: module.market }),
+              pkg: module.pkg,
+              ...(module.spec === undefined ? {} : { spec: module.spec }),
+              ...(module.registry === undefined ? {} : { registry: module.registry }),
             },
           }
         : {}),
@@ -240,7 +248,7 @@ export function marketActions(row: MarketRow): MarketRowAction[] {
           ])
         : []),
     ...(row.canUninstall
-      ? ([row.pkg === undefined ? 'uninstall' : 'remove-bundle'] as const)
+      ? ([row.removeViaBundle === true ? 'remove-bundle' : 'uninstall'] as const)
       : []),
   ];
 }
@@ -371,6 +379,9 @@ export function marketUpdatesOf(
         : { blocked: module.latestBlocked }),
       ...(local ? { local: true } : {}),
       ...(local || module.market === undefined ? {} : { market: module.market }),
+      pkg: module.pkg,
+      ...(module.spec === undefined ? {} : { spec: module.spec }),
+      ...(module.registry === undefined ? {} : { registry: module.registry }),
     };
   }
   return next;
@@ -444,6 +455,9 @@ export function marketRows(
             latest: entry.latest,
             ...(entry.blocked === undefined ? {} : { blocked: entry.blocked }),
             ...(entry.market === undefined ? {} : { market: entry.market }),
+            ...(entry.pkg === undefined ? {} : { pkg: entry.pkg }),
+            ...(entry.spec === undefined ? {} : { spec: entry.spec }),
+            ...(entry.registry === undefined ? {} : { registry: entry.registry }),
           };
     const shown = moduleUpdate === undefined ? state : 'outdated';
     const hint =
@@ -464,7 +478,15 @@ export function marketRows(
         ? {}
         : { version: { installed: entry.installed, ...(entry.latest === undefined ? {} : { latest: entry.latest }) } }),
       ...(moduleUpdate === undefined ? {} : { moduleUpdate }),
-      ...(entry?.market === undefined ? {} : { market: entry.market, pkg: entry.market.pkg }),
+      ...(entry?.market === undefined ? {} : { market: entry.market }),
+      ...(entry?.pkg === undefined
+        ? entry?.market === undefined
+          ? {}
+          : { pkg: entry.market.pkg }
+        : { pkg: entry.pkg }),
+      ...(entry?.spec === undefined ? {} : { spec: entry.spec }),
+      ...(entry?.registry === undefined ? {} : { registry: entry.registry }),
+      ...(entry?.market === undefined ? {} : { removeViaBundle: true }),
       ...(moduleUpdate === undefined ? (note === undefined ? {} : { note }) : {}),
       ...(local ? { local: true } : {}),
       defaultShown: defaults.has(manifest.id),

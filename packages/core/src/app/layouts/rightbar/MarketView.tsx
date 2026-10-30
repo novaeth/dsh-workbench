@@ -1,4 +1,4 @@
-import { Fragment, createElement as h } from 'react';
+import { createElement as h, useState } from 'react';
 import type { ReactNode, Translate } from '@dsh-workbench/shared';
 import type { UnitManifest } from '@dsh-workbench/shared';
 import { useHostWrite } from '@/shared/hooks/use-host-write';
@@ -21,52 +21,40 @@ import {
   latestCheckSummary,
   liveManifests,
   marketCatalog,
-  marketOrder,
-  marketRowTitle,
   marketRows,
-  marketSections,
   sharedRows,
   type InstalledWorkbenchModule,
   type LatestCheckSummary,
   type MarketRow,
-  type MarketRowAction,
   type SharedRow,
 } from './market-rows';
 import { installedPluginRows } from './market-plugin-rows';
+import { MarketSceneView } from './market-scene-view';
 import type { MarketNameMap, TitleResolve } from './market-names';
 import { workbenchRow } from './market-workbench-row';
 import type { MarketMock } from './market-mock';
 import type { MarketFailure } from './market-row-types';
 import type { ModuleUpdateMap } from './market-rows';
 import type { WorkbenchSelfUpdate, WorkbenchVersion } from '@/kernel/contract/bundle-install';
-import { MarketChecking, MarketEmpty } from './MarketStates';
-import { SharedSection } from './SharedSection';
 import {
   heldIdOf,
-  marketFootVisible,
   pendingLanded,
   pendingRowOf,
   pinnedRowOf,
   removingIdOf,
   useHeldRow,
   marketNamesOf,
+  marketRowMap,
   withPinnedRow,
   type Pending,
 } from './market-view-text';
-import { MarketSection } from './market-section';
 import { marketActOf } from './market-act';
 import { usePublishMarketBusy } from './market-busy';
 import { useMarketDefault } from './use-market-default';
-import { marketSectionIcon } from './market-section-icon';
 import { SectionCheck } from '../market/section-check';
 import type { VersionsCheck, VersionsPart } from '../market/use-module-versions';
-import { UninstallConfirm } from './market-uninstall';
-import { PanelFoot } from '@/shared/components/PanelFoot';
-import styles from '../market/MarketPage.module.css';
 
-const CONFIRM_UNINSTALL: readonly MarketRowAction[] = ['uninstall', 'remove-bundle', 'uninstall-plugin'];
 const NO_CHECK: VersionsCheck = { checking: false, failed: false, checkedAt: null };
-const NO_ROWS: readonly MarketRow[] = [];
 const NO_UNITS: ReadonlySet<string> = new Set();
 
 export interface MarketViewProps {
@@ -93,137 +81,6 @@ export interface MarketViewProps {
   readonly mock?: MarketMock | undefined;
   readonly defaults?: readonly string[] | undefined;
   readonly changed?: Readonly<Record<string, number>> | undefined;
-}
-
-export function MarketBody({
-  t,
-  self,
-  shown,
-  pluginList,
-  installedList,
-  shared,
-  pending,
-  failed,
-  notice,
-  act,
-  onConfirming,
-  setDefault,
-  boardBusy,
-  checks,
-  onRecheck,
-  rechecking,
-  runtimePluginMarket,
-}: {
-  readonly t: Translate;
-  readonly runtimePluginMarket?: boolean | undefined;
-  readonly self: MarketRow | undefined;
-  readonly shown: readonly MarketRow[];
-  readonly pluginList: readonly MarketRow[];
-  readonly installedList: readonly MarketRow[];
-  readonly shared: readonly SharedRow[];
-  readonly pending: Pending | null;
-  readonly failed: MarketFailure | null;
-  readonly notice: string | null;
-  readonly act: (id: string, action: MarketRowAction) => Promise<void>;
-  readonly onConfirming: (id: string | null) => void;
-  readonly setDefault: (id: string, next: boolean) => Promise<void>;
-  readonly boardBusy: boolean;
-  readonly checks: Readonly<Record<VersionsPart, ReactNode>>;
-  readonly onRecheck: () => void;
-  readonly rechecking: boolean;
-}) {
-  const failureOf = (id: string): MarketFailure | null => (failed?.id === id ? failed : null);
-  const foot = marketFootVisible(shown, installedList);
-  const sections = marketSections(
-    marketOrder([...shown, ...installedList], (row) => marketRowTitle(row, t)),
-  );
-  const installed = sections.find((section) => section.id === 'installed');
-  const pendingSection = sections.find((section) => section.id === 'not-installed');
-  return (
-    <>
-      {notice === null ? null : <div className={styles.marketNote}>{notice}</div>}
-      <MarketSection
-        t={t}
-        rows={self === undefined ? [] : [self]}
-        onDefault={setDefault}
-        boardBusy={boardBusy}
-        pending={pending}
-        failureOf={failureOf}
-        act={act}
-        confirmActions={CONFIRM_UNINSTALL}
-        onConfirming={onConfirming}
-        onRecheck={onRecheck}
-        rechecking={rechecking}
-      />
-      {self === undefined ? null : (
-        <div className={styles.marketSelfDivider} aria-hidden="true" />
-      )}
-      <MarketSection
-        t={t}
-        titleKey="panels.market.sectionInstalled"
-        icon={marketSectionIcon('installed')}
-        rows={installed?.rows ?? NO_ROWS}
-        keepHead
-        headAction={checks.modules}
-        onDefault={setDefault}
-        boardBusy={boardBusy}
-        pending={pending}
-        failureOf={failureOf}
-        act={act}
-        confirmActions={CONFIRM_UNINSTALL}
-        onConfirming={onConfirming}
-        onRecheck={onRecheck}
-        rechecking={rechecking}
-      />
-      {pendingSection === undefined ? null : (
-        <MarketSection
-          t={t}
-          titleKey={pendingSection.titleKey}
-          icon={marketSectionIcon('pending')}
-          rows={pendingSection.rows}
-          onDefault={setDefault}
-          boardBusy={boardBusy}
-          pending={pending}
-          failureOf={failureOf}
-          act={act}
-          confirmActions={CONFIRM_UNINSTALL}
-          onConfirming={onConfirming}
-          onRecheck={onRecheck}
-          rechecking={rechecking}
-        />
-      )}
-      {runtimePluginMarket === false ? null : (
-      <MarketSection
-        t={t}
-        titleKey="panels.market.sectionPlugins"
-        icon={marketSectionIcon('plugins')}
-        rows={pluginList}
-        headAction={checks.plugins}
-        onDefault={setDefault}
-        boardBusy={boardBusy}
-        pending={pending}
-        failureOf={failureOf}
-        act={act}
-        confirmActions={CONFIRM_UNINSTALL}
-        onConfirming={onConfirming}
-        onRecheck={onRecheck}
-        rechecking={rechecking}
-      />
-      )}
-
-      {foot ? <PanelFoot size="md" text={t('panels.market.foot')} /> : null}
-
-      <SharedSection
-        t={t}
-        rows={shared}
-        pending={pending}
-        failureOf={failureOf}
-        act={act}
-        onRecheck={onRecheck}
-        rechecking={rechecking}
-      />
-    </>
-  );
 }
 
 
@@ -349,6 +206,7 @@ export function MarketView({
 }: MarketViewProps) {
   const { pending, setPending, confirming, setConfirming, failed, setFailed, notice, setNotice } =
     useMarketTransient({ mock, onPending });
+  const [detailId, setDetailId] = useState<string | null>(null);
   const { names, effective, updateMap, rows, shared, installedList, byDefault, steady, pinned, removing, busyId } =
     useMarketScene({
       t,
@@ -381,12 +239,9 @@ export function MarketView({
   const shown = withPinnedRow(pendingRow === undefined ? rows : [...rows, pendingRow], pinned);
   const pluginSource = mock?.plugins ?? plugins ?? null;
   const pluginList = installedPluginRows(pluginSource ?? [], byDefault, changed);
-  const rowById = new Map(
-    [...shown, ...(self === undefined ? [] : [self]), ...installedList, ...pluginList].map(
-      (row) => [row.id, row] as const,
-    ),
-  );
+  const rowById = marketRowMap(shown, self, installedList, pluginList);
   const confirmingRow = confirming === null ? undefined : rowById.get(confirming);
+  const detailRow = detailId === null ? undefined : rowById.get(detailId);
 
   const seats = { setPending, setHeld: steady.hold, setConfirming, setFailed, setNotice };
   const act = marketActOf({
@@ -430,44 +285,34 @@ export function MarketView({
     onCheck: mock === undefined ? onCheck : undefined,
   });
 
-  if (!settled || ((settling?.size ?? 0) > 0 && shown.length === 0 && installedList.length === 0)) {
-    return <MarketChecking t={t} />;
-  }
-
-  if (nothing) {
-    return <MarketEmpty t={t} />;
-  }
-
   return (
-    <>
-      <MarketBody
-        t={t}
-        runtimePluginMarket={runtimePluginMarket}
-        self={self}
-        shown={shown}
-        pluginList={pluginList}
-        installedList={installedList}
-        shared={shared}
-        pending={pending}
-        failed={failed}
-        notice={notice}
-        act={act}
-        onConfirming={setConfirming}
-        setDefault={setDefault}
-        boardBusy={boardBusy}
-        checks={checks}
-        onRecheck={recheck}
-        rechecking={checkingShown}
-      />
-
-      <UninstallConfirm
-        t={t}
-        confirming={confirming}
-        row={confirmingRow}
-        onClose={() => setConfirming(null)}
-        act={act}
-        rowById={rowById}
-      />
-    </>
+    <MarketSceneView
+      t={t}
+      runtimePluginMarket={runtimePluginMarket}
+      self={self}
+      shown={shown}
+      pluginList={pluginList}
+      installedList={installedList}
+      shared={shared}
+      pending={pending}
+      failed={failed}
+      notice={notice}
+      act={act}
+      onConfirming={setConfirming}
+      setDefault={setDefault}
+      boardBusy={boardBusy}
+      checks={checks}
+      onRecheck={recheck}
+      rechecking={checkingShown}
+      onOpenDetail={setDetailId}
+      detailRow={detailRow}
+      confirming={confirming}
+      confirmingRow={confirmingRow}
+      rowById={rowById}
+      settled={settled}
+      nothing={nothing}
+      settlingSize={settling?.size ?? 0}
+      onBack={() => setDetailId(null)}
+    />
   );
 }

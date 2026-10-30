@@ -198,6 +198,8 @@ export interface ModuleVersion {
   readonly local?: boolean;
   readonly refused?: readonly string[];
   readonly market?: MarketInstalledModule;
+  readonly spec?: string;
+  readonly registry?: string;
 }
 
 export interface WorkbenchVersion {
@@ -206,6 +208,8 @@ export interface WorkbenchVersion {
   readonly latest?: string;
   readonly running?: string;
   readonly local?: boolean;
+  readonly spec?: string;
+  readonly registry?: string;
   readonly followUp?: {
     readonly id: string;
     readonly kind: 'data-migration';

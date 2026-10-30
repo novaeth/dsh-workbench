@@ -138,7 +138,7 @@ describe('本机那份（link: 装的，含 DIY 工坊造的）', () => {
       { unit: 'hello', pkg: '@p/hello', installed: '0.1.0', latest: '0.2.0', local: true },
     ]);
 
-    expect(updates).toEqual({ hello: { installed: '0.1.0', local: true } });
+    expect(updates).toEqual({ hello: { installed: '0.1.0', local: true, pkg: '@p/hello' } });
   });
 
   it('★ 行上带「本地」标记；非本地那份不带', () => {

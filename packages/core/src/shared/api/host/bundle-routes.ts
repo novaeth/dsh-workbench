@@ -26,6 +26,7 @@ import {
   type WorkbenchSelfUpdate,
 } from '@/kernel/contract/bundle-install';
 import { migrationFollowUp, type WorkbenchMigrationFollowUp } from './migration-follow-up.js';
+import { dependencyReader } from './profile-dependencies.js';
 
 function registryOf(search: URLSearchParams): BundleRegistry | undefined {
   const raw = param(search, 'registry');
@@ -115,6 +116,7 @@ async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: 
 }): Promise<WorkbenchVersion | undefined> {
   const read = supply.readProfilePackage(input.dir, PLUGIN_ID);
   if (read === undefined) return undefined;
+  const spec = dependencyReader(input.dir)(PLUGIN_ID);
   const registry = read.registry ?? input.fallback;
   const shell = input.shell;
   const queried =
@@ -142,6 +144,8 @@ async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: 
     ...(input.running === undefined ? {} : { running: input.running }),
     ...(read.local === true ? { local: true } : {}),
     ...(input.followUp === undefined ? {} : { followUp: input.followUp }),
+    ...(spec === undefined ? {} : { spec }),
+    ...(registry === undefined || read.local === true ? {} : { registry }),
   };
 }
 
@@ -167,11 +171,13 @@ export function moduleVersionsHandler(
     );
     const force = param(search, 'force') === '1';
     const fallback = (await manager.registries())?.resolved ?? undefined;
+    const dependencyOf = dependencyReader(dir);
     const modules: ModuleVersion[] = await Promise.all(
       found.map(async (module) => {
         const local = module.local === true;
         const fromRegistry = module.fromRegistry !== false;
         const registry = fromRegistry ? (module.registry ?? fallback) : undefined;
+        const spec = dependencyOf(module.pkg);
         const latest =
           local || !fromRegistry || shell === undefined || registry === undefined
             ? undefined
@@ -216,6 +222,8 @@ export function moduleVersionsHandler(
                       : ('probe-failed' as const),
                 }),
           ...(refused === undefined ? {} : { refused }),
+          ...(spec === undefined ? {} : { spec }),
+          ...(registry === undefined ? {} : { registry }),
         };
       }),
     );

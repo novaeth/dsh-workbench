@@ -143,6 +143,19 @@ export function marketFootVisible(
 
 const NO_NAMES: MarketNameMap = new Map();
 
+export function marketRowMap(
+  shown: readonly MarketRow[],
+  self: MarketRow | undefined,
+  installed: readonly MarketRow[],
+  plugins: readonly MarketRow[],
+): ReadonlyMap<string, MarketRow> {
+  return new Map(
+    [...shown, ...(self === undefined ? [] : [self]), ...installed, ...plugins].map(
+      (row) => [row.id, row] as const,
+    ),
+  );
+}
+
 export function marketNamesOf(
   t: Translate,
   modules: readonly NameSource[],

@@ -38,6 +38,8 @@ export function installedPluginRows(
       defaultShown: defaults.has(id),
       defaultChanged: changed[id] ?? 0,
       ...(note === undefined ? {} : { note }),
+      ...(plugin.registry === undefined ? {} : { registry: plugin.registry }),
+      ...(plugin.installedAt === undefined ? {} : { installedAt: plugin.installedAt }),
       ...(plugin.installed === undefined
         ? {}
         : { versionLabel: `${plugin.pkg}@${plugin.installed}` }),
