@@ -6,6 +6,9 @@ node_modules/
 .pnpm-store/
 *.log
 
+# 内部文档仓：单独 clone 到 private-docs/，不入库、不参与主仓提交
+private-docs/
+
 # macOS
 .DS_Store
 

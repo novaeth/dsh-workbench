@@ -38,8 +38,8 @@ install; running one package's tests before any build does not, so run
 `pnpm run build` once if you go that way.
 
 Internal maintainers: the design docs and ADRs live in the private `private-docs/`
-submodule. Public builds and the gate do not need it. With access, run
-`git submodule update --init`. The full command list is in
+repo, cloned into the repo root as `private-docs/` (gitignored; ask a maintainer
+for access). Public builds and the gate do not need it. The full command list is in
 [`AGENTS.md`](AGENTS.md) and [`packages/core/README.md`](packages/core/README.md).
 
 ## Writing tests
@@ -64,7 +64,7 @@ they cover — never scattered next to it (S73).
 - Commit messages follow Conventional Commits (`feat(scope): …`, `fix: …`,
   `chore: …`). A `commit-msg` hook rejects anything else, and `pnpm run check`
   lints the HEAD message through `pnpm run lint:commit`.
-- New decisions get an ADR in the `private-docs/` submodule. Internal feature
+- New decisions get an ADR in the private `private-docs/` repo. Internal feature
   specs and work items live there too; they are not part of the public tree.
 - Code comments are not allowed anywhere in the repo (JS / TS / CSS). The only
   exception is JSDoc attached to exported members of a public entry — the kit,

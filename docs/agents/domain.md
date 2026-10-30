@@ -5,8 +5,8 @@
 ## 动手前先读
 
 - **`CONTEXT.md`**（仓根）：本项目的词表，只放这个项目自己的词。
-- **`private-docs/docs/adr/`**：要动的区域涉及的 ADR 先读（`0001-*.md` …）。它在私有子仓里；
-  没有权限就跳过，**不要**假装读过。
+- **`private-docs/docs/adr/`**：要动的区域涉及的 ADR 先读（`0001-*.md` …）。它在私有仓里
+  （单独 clone 到 `private-docs/`，不入库）；没有权限就跳过，**不要**假装读过。
 - **`ARCHITECTURE.md`**：层序、两个运行时、槽位与数据通路的结构地图。不是 ADR，但改结构前先看。
 
 这些文件不存在时**安静跳过**：不要提示缺失，也不要先建议创建。`/domain-modeling`
@@ -19,7 +19,7 @@
     /
     ├── CONTEXT.md
     ├── ARCHITECTURE.md
-    └── private-docs/docs/adr/        ← 私有子仓；ADR 只在这里，不另起 docs/adr/
+    └── private-docs/docs/adr/        ← 私有仓（不入库）；ADR 只在这里，不另起 docs/adr/
 
 ## 用词表的词
 

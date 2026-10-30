@@ -1,7 +1,8 @@
-# 工单：本地 markdown（私有子仓）
+# 工单：本地 markdown（私有仓）
 
-本仓的 spec 与工单是 markdown 文件，住在私有子仓的 `private-docs/.scratch/`。
-公开仓不碰它们；没有子仓权限时就做不了，先问用户，不要往仓根另起一个 `.scratch/`。
+本仓的 spec 与工单是 markdown 文件，住在私有仓（单独 clone 到 `private-docs/`，不入库）的
+`private-docs/.scratch/` 下。公开仓不碰它们；没有私有仓权限时就做不了，先问用户，
+不要往仓根另起一个 `.scratch/`。
 
 ## 约定
 

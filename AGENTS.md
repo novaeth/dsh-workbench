@@ -7,7 +7,7 @@ profile**（插件页一条龙，见 ADR-0037）。
 
 > 公开仓：不要提交内部主机名、私有源地址、个人绝对路径或客户数据。组织特有的词表由
 > `DSH_WB_INTERNAL_MARKERS` 配在 CI，不写进仓库；`check:markers` 只兜通用规则。
-> 内部规格、工单与 ADR 住在私有子仓 `private-docs/`（git submodule）：ADR 在 `private-docs/docs/adr/`，
+> 内部规格、工单与 ADR 住在私有仓 `private-docs/`（单独 clone，不入库）：ADR 在 `private-docs/docs/adr/`，
 > spec / 工单在 `private-docs/.scratch/`。公开构建与门禁不需要它；公开文档不要链进去。
 
 ## 仓库结构（pnpm workspace）
@@ -25,7 +25,7 @@ profile**（插件页一条龙，见 ADR-0037）。
 | `packages/adapters-default/` | 默认适配器集合；core 只依赖它 |
 | `packages/docs/` | 文档站（Pagoda CLI，私有包，不出货）：`site/desktop/views/*.md` 是页面，`views/index.vue` 是首页；`pnpm run dev:docs` 起站、`pnpm run build:docs` 出 `site-dist/` |
 | `ARCHITECTURE.md` | 仓库与外壳的架构：层序、两个运行时、单元协议、槽位、数据通路、门禁 |
-| `private-docs/`（私有子仓） | 内部 ADR（`docs/adr/`）与 `.scratch/` 工单；公开构建不需要它 |
+| `private-docs/`（私有仓，不入库） | 内部 ADR（`docs/adr/`）与 `.scratch/` 工单；公开构建不需要它 |
 | `CONTRIBUTING.md` | 环境、门禁纪律、提交约定 |
 
 ## 三条命令
@@ -99,7 +99,7 @@ pnpm run check                        # 门禁：整仓那一套（= `pnpm -w ru
 | 最小可安装模块样本 | [`packages/module-hello/README.md`](packages/module-hello/README.md) |
 | 改文档站、加一页、换配色 | [`packages/docs/README.md`](packages/docs/README.md) |
 | 对某个术语拿不准 | [`CONTEXT.md`](CONTEXT.md) |
-| 想知道某个选择为什么是这样 | `private-docs/docs/adr/`（需要子仓权限） |
+| 想知道某个选择为什么是这样 | `private-docs/docs/adr/`（需要私有仓权限） |
 | 模块的配置落在哪 / 给模块加一份状态 | `private-docs/docs/adr/0011-*.md` |
 | 工具面 / 审批 / 界面组件 / 设计令牌 | ADR-0046 · ADR-0032 · ADR-0028 · ADR-0029 |
 | 写 / 改界面文案、工具描述、报错、审批文案 | [`.agents/skills/wording/`](.agents/skills/wording/SKILL.md) |
@@ -114,7 +114,7 @@ pnpm run check                        # 门禁：整仓那一套（= `pnpm -w ru
 
 ### Issue tracker
 
-工单与 spec 是私有子仓里的 markdown：`private-docs/.scratch/<feature>/`。见 `docs/agents/issue-tracker.md`。
+工单与 spec 是私有仓里的 markdown：`private-docs/.scratch/<feature>/`。见 `docs/agents/issue-tracker.md`。
 
 ### Triage labels
 
