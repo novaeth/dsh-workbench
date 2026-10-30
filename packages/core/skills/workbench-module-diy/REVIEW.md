@@ -16,7 +16,7 @@
 | `alias` | `@/` 指向工作台源码 | `@/` 只指自己 `src/` |
 | `style` | 模块定义 `.wb-*`；手写行 / 操作区 / 表单（F1–F4）；`--dsw-*` / `--wb-*` 不在现读的令牌清单 | 样式走 `*.module.css`（无 `wb-` 前缀）；借外壳类用 `:global(.wb-…)`；行 / 操作区用 `FormRow(s)` / `FormActions`，表单用 `Form`（[KIT.md](KIT.md) §5）。F4：裸 `<form` 或手写 `wb-formRow` / `wb-formRows` / `wb-field`。令牌名现查：`workbench_diy_components` `scope: 'tokens'` |
 | `arch` | 结构：巨文件 / 反向依赖 / 跨运行时 / 表外目录 / 模型无测试；依赖白名单（含 execa / which / proper-lockfile / write-file-atomic / dayjs / zod）+ `shell-quote` / `shelljs` / `zx` deny；能力首选 dayjs / structuredClone / URLSearchParams / zod（日期已是硬门禁） | 见「第十二条」 |
-| `lint` | 语法：`as any` / `console` / `debugger` / 颜色字面量 / `!important` / **直接读 `process.platform` / `versions.electron` / `dshDesktop` / `hostOs` / `navigator.userAgent`** / react-hooks | 见「第十三条」 |
+| `lint` | 语法：`as any` / `console` / `debugger` / 颜色字面量 / `!important` / **直接读 `process.platform` / `versions.electron` / `dshDesktop` / `navigator.userAgent`** / react-hooks | 见「第十三条」 |
 
 ## 第十二条 `arch`
 
@@ -71,7 +71,7 @@ export default moduleLint({ rootDir: import.meta.dirname });
 | `no-explicit-any` | `as any` / `: any` | 写真实类型；或在 `moduleLint({ rules })` 放行 |
 | `no-console` | `src/**` 的 `console.log` / `info` / `debug`（`warn` / `error` 放行） | 删除；`scripts/**` 不判 |
 | `no-debugger` | 残留 `debugger` | 删除 |
-| `no-restricted-syntax` | 颜色字面量（`#ff0000` / `rgb(` / `hsl(`）、字符串 `!important`、平台原始事实（`process.platform` / `versions.electron` / `dshDesktop` / `hostOs` / `navigator.userAgent`） | 用令牌与 `*.module.css`；平台差异走能力面（`HostSurface` / `ClientSurface`），宿主/浏览器面分开写 |
+| `no-restricted-syntax` | 颜色字面量（`#ff0000` / `rgb(` / `hsl(`）、字符串 `!important`、平台原始探测（`process.platform` / `versions.electron` / `dshDesktop` / `navigator.userAgent`） | 用令牌与 `*.module.css`；平台差异走能力面：**宿主面读 `deps.surface`（`HostSurface`），浏览器面读 `kit.hooks.usePlatform()`**，宿主/浏览器面分开写 |
 | `react-hooks/*` | 条件 hook / 渲染期写 ref / 漏依赖 | 提到顶层；副作用进 `useEffect`；补依赖 |
 | `no-unused-vars` | 死代码（`^_` 放行） | 删除或改 `_x` |
 | 其他 `recommended` / `react/*` | 语法规则 | 按 eslint 原文 |

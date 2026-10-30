@@ -58,11 +58,10 @@ const PLATFORM_READ = {
     "MemberExpression[object.name='process'][property.name='platform'], " +
     "MemberExpression[object.object.name='process'][object.property.name='versions'][property.name='electron'], " +
     "MemberExpression[object.name='window'][property.name='dshDesktop'], " +
-    "MemberExpression[property.name='hostOs'], " +
     "MemberExpression[object.name='navigator'][property.name='userAgent']",
   message:
-    '平台/外壳差异走能力面（HostSurface / ClientSurface）：模块源码不直接读 ' +
-    'process.platform / versions.electron / dshDesktop / hostOs / navigator.userAgent',
+    '平台/外壳差异走能力面：宿主面读 deps.surface（HostSurface），浏览器面读 kit.hooks.usePlatform()；' +
+    '模块源码不直接读 process.platform / versions.electron / dshDesktop / navigator.userAgent',
 };
 
 const NODE_GLOBALS = {

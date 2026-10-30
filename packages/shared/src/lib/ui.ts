@@ -95,15 +95,33 @@ export function relativeTime(epochMs: number, t: TimeTranslate): string {
   return dayjs(epochMs).format('YYYY/M/D HH:mm:ss');
 }
 
+const HOME_PREFIXES = [/^\/Users\/[^/]+/, /^\/home\/[^/]+/, /^[A-Za-z]:\\Users\\[^\\]+/];
+
 /**
- * 把 `/Users/<用户名>/…` 缩成 `~/…`，免得会话行里全是一样的长前缀。
+ * 把用户主目录（macOS `/Users/<用户名>`、Linux `/home/<用户名>`、Windows `C:\Users\<用户名>`）缩成 `~`，
+ * 免得会话行里全是一样的长前缀。
  * @param path - 任意值。
  * @returns 缩好的路径；不在用户主目录下原样返回，不是字符串给空串。
  */
 export function shortenPath(path: unknown): string {
   if (typeof path !== 'string') return '';
-  const hit = path.match(/^\/Users\/[^/]+/);
-  return hit === null ? path : path.replace(hit[0], '~');
+  for (const pattern of HOME_PREFIXES) {
+    const hit = path.match(pattern);
+    if (hit !== null) return path.replace(hit[0], '~');
+  }
+  return path;
+}
+
+/**
+ * 取路径最后一段，`/` 与 `\` 都认（Windows 路径、混合分隔符都行）。
+ * @param path - 任意值。
+ * @returns 末段；尾部有分隔符先去掉，没有分隔符就整串，不是字符串给空串。
+ */
+export function pathBase(path: unknown): string {
+  if (typeof path !== 'string') return '';
+  const trimmed = path.replace(/[\\/]+$/, '');
+  const at = Math.max(trimmed.lastIndexOf('/'), trimmed.lastIndexOf('\\'));
+  return at === -1 ? trimmed : trimmed.slice(at + 1);
 }
 
 const LOCAL_TIMESTAMP = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/;

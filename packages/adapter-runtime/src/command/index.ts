@@ -51,23 +51,15 @@ export function createCommandReader(options: CommandReaderOptions): CommandReade
         const result = await runShell(shell, quoteAll(argv), {
           ...(request.timeoutMs === undefined ? {} : { timeoutMs: request.timeoutMs }),
           ...(request.cwd === undefined ? {} : { workdir: request.cwd }),
+          ...(request.env === undefined ? {} : { env: request.env }),
         });
-        const filePaths = temp?.paths ?? [];
-        if (result.timedOut) {
-          return {
-            stdout: result.stdout,
-            stderr: result.stderr,
-            exitCode: result.exitCode ?? -1,
-            timedOut: true,
-            filePaths,
-          };
-        }
         return {
           stdout: result.stdout,
           stderr: result.stderr,
           exitCode: result.exitCode ?? -1,
-          timedOut: false,
-          filePaths,
+          timedOut: result.timedOut,
+          truncated: result.truncated,
+          filePaths: temp?.paths ?? [],
         };
       } catch (error) {
         return {
@@ -75,6 +67,7 @@ export function createCommandReader(options: CommandReaderOptions): CommandReade
           stderr: String(error),
           exitCode: -1,
           timedOut: false,
+          truncated: false,
           filePaths: temp?.paths ?? [],
           error: String(error),
         };

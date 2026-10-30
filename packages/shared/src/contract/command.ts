@@ -7,6 +7,7 @@ export interface CommandRequest {
   readonly argv: readonly string[];
   readonly timeoutMs?: number | undefined;
   readonly cwd?: string | undefined;
+  readonly env?: Readonly<Record<string, string>> | undefined;
   readonly files?: readonly CommandFile[] | undefined;
   readonly appendFileArgs?: string | undefined;
 }
@@ -16,6 +17,7 @@ export interface CommandResult {
   readonly stderr: string;
   readonly exitCode: number;
   readonly timedOut: boolean;
+  readonly truncated: boolean;
   readonly filePaths: readonly string[];
   readonly error?: string | undefined;
 }

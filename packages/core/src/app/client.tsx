@@ -60,6 +60,7 @@ import * as longTaskModule from '@/shared/hooks/use-long-task';
 import * as capabilityGateModule from '@/shared/hooks/use-capability-gate';
 import * as unitBoardModule from '@/shared/hooks/use-unit-board';
 import * as visibleBusyModule from '@/shared/hooks/use-visible-busy';
+import { usePlatform } from '@/shared/hooks/use-platform';
 import * as blockerStateModule from '@/shared/components/BlockerState';
 import {
   ActivityAction, ActivityBlock, ActivityLine, ApprovalDetail, ApprovalPlan, Card, CardAnchor, CardBoundary,
@@ -70,7 +71,7 @@ import {
   StateBlock, TextField, apiGet, apiPost, blockerOfCapability, blockerOfError, cardIdOf, cx,
   defaultSelectFilter, dictionaries, duplicateKeysOf, errorReasonOf, excerpt, factOfRoute, filterSelectOptions,
   firstProblemOf, formFirstProblemOf, formValuesOf, holdBusy, mergeMessagesSkipping, parseJsonLoose,
-  parseLocalTimestamp, readText, relativeTime, relativeTimeAgo, relativeTimeBucket, relativeTimeCompact,
+  parseLocalTimestamp, pathBase, readText, relativeTime, relativeTimeAgo, relativeTimeBucket, relativeTimeCompact,
   revealFirstProblem, searchTextOf, selectCursorValue, selectEntries, shortenPath, stepSelectCursor,
   writeText,
 } from '@dsh-workbench/shared';
@@ -85,6 +86,7 @@ export const kit = {
     ...capabilityGateModule,
     ...unitBoardModule,
     ...visibleBusyModule,
+    usePlatform,
   },
   components: {
     ...blockerStateModule,
@@ -99,7 +101,7 @@ export const kit = {
     longTaskIsLive,
     MIN_BUSY_MS, blockerOfCapability, blockerOfError, cardIdOf, cx, defaultSelectFilter, duplicateKeysOf,
     errorReasonOf, excerpt, filterSelectOptions, firstProblemOf, formFirstProblemOf, formValuesOf, holdBusy,
-    parseJsonLoose, parseLocalTimestamp, readText, relativeTime, relativeTimeAgo, relativeTimeBucket,
+    parseJsonLoose, parseLocalTimestamp, pathBase, readText, relativeTime, relativeTimeAgo, relativeTimeBucket,
     relativeTimeCompact, revealFirstProblem, searchTextOf, selectCursorValue, selectEntries, shortenPath,
     stepSelectCursor, writeText,
 

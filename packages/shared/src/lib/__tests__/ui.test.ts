@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   cx,
   parseLocalTimestamp,
+  pathBase,
   relativeTime,
   relativeTimeAgo,
   relativeTimeBucket,
@@ -112,13 +113,38 @@ describe('shortenPath', () => {
     expect(shortenPath('/Users/you/dev/app')).toBe('~/dev/app');
   });
 
+  it('Linux 与 Windows 的用户主目录也缩', () => {
+    expect(shortenPath('/home/you/dev/app')).toBe('~/dev/app');
+    expect(shortenPath('C:\\Users\\you\\dev\\app')).toBe('~\\dev\\app');
+  });
+
   it('非用户目录原样返回', () => {
     expect(shortenPath('/Volumes/dev/app')).toBe('/Volumes/dev/app');
+    expect(shortenPath('D:\\work\\app')).toBe('D:\\work\\app');
   });
 
   it('非字符串给空串', () => {
     expect(shortenPath(undefined)).toBe('');
     expect(shortenPath(42)).toBe('');
+  });
+});
+
+describe('pathBase', () => {
+  it('取最后一段，POSIX 与 Windows 都认', () => {
+    expect(pathBase('/Users/you/dev/app')).toBe('app');
+    expect(pathBase('C:\\Users\\you\\dev\\app')).toBe('app');
+    expect(pathBase('C:/Users/you/dev/app')).toBe('app');
+  });
+
+  it('尾部有分隔符先去掉', () => {
+    expect(pathBase('/Users/you/dev/app/')).toBe('app');
+    expect(pathBase('C:\\Users\\you\\dev\\app\\')).toBe('app');
+  });
+
+  it('没有分隔符就整串，非字符串给空串', () => {
+    expect(pathBase('app')).toBe('app');
+    expect(pathBase(undefined)).toBe('');
+    expect(pathBase(42)).toBe('');
   });
 });
 

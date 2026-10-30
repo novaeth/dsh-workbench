@@ -46,4 +46,21 @@ describe('createCommandReader', () => {
       createCommandReader({ shell: boom.shell }).run({ argv: ['gitops'] }),
     ).resolves.toMatchObject({ exitCode: -1, error: 'Error: boom' });
   });
+
+  it('env 是叠加给宿主 shell 的覆盖，命令行里不拼前缀', async () => {
+    const fake = createFakeShell([{ stdout: 'ok' }]);
+    await createCommandReader({ shell: fake.shell }).run({
+      argv: ['gitops', 'ls'],
+      env: { GITOPS_PROFILE: 'work' },
+    });
+    expect(fake.calls[0]?.env).toEqual({ GITOPS_PROFILE: 'work' });
+    expect(fake.commands()[0]).toBe("'gitops' 'ls'");
+  });
+
+  it('输出被宿主截断时把 truncated 带出来', async () => {
+    const fake = createFakeShell([{ stdout: 'half', truncated: true }]);
+    await expect(
+      createCommandReader({ shell: fake.shell }).run({ argv: ['gitops'] }),
+    ).resolves.toMatchObject({ stdout: 'half', truncated: true });
+  });
 });

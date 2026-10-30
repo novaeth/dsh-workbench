@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createFakeShell, createNoopDataReader,
 } from '@dsh-workbench/shared/testing';
 import type { UnitManifest } from '@dsh-workbench/shared';
-import { createHostKit, createWorkspaceStore } from '@dsh-workbench/shared/host';
+import { createHostKit, createWorkspaceStore, hostSurface } from '@dsh-workbench/shared/host';
 import { PANELS_FILE, PANELS_MODULE_ID, RELEASED_FILE } from '../model/service';
 import { DIY_DEBUG_TOOLS, DIY_RECORD_TOOLS, DIY_TOOLS, panelsUnit } from '../unit';
 import { WORKBENCH_ADAPTERS } from '@dsh-workbench/shared/host';
@@ -45,7 +45,7 @@ function mount(options: {
     ownedUnits: () => [panelsUnit.id],
     store: store(),
     data: createNoopDataReader(),
-    ...createHostKit({ libInstallCommand: (options) => `npm i ${options.need.name}` }),
+    ...createHostKit({ libInstallCommand: (options) => `npm i ${options.need.name}`, surface: hostSurface() }),
     ...(options.installable === undefined ? {} : { installable: options.installable }),
     ...(options.probe === undefined ? {} : { probe: options.probe }),
   });

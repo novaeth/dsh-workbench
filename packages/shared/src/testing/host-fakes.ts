@@ -16,6 +16,7 @@ export interface ShellReply {
   exitCode?: number | null;
   timedOut?: boolean;
   aborted?: boolean;
+  truncated?: boolean;
   failWith?: Error;
 }
 
@@ -50,7 +51,7 @@ export function createFakeShell(replies: ShellReply[] | ((call: ShellCall, index
             exitCode: reply.exitCode ?? 0,
             timedOut: reply.timedOut ?? false,
             aborted: reply.aborted ?? false,
-            stdout: { text: reply.stdout ?? '', truncated: false },
+            stdout: { text: reply.stdout ?? '', truncated: reply.truncated === true },
             stderr: { text: reply.stderr ?? '', truncated: false },
           };
         },

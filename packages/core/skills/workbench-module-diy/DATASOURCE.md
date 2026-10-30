@@ -49,8 +49,9 @@
    - 脚本约定：不在站点 → `{ ok: false, code: "not-on-site" }`；登录过期 → `{ ok: false, code: "not-logged-in" }`
      （工具归一为 `auth-required`）；成功 → `{ ok: true, ...数据 }`。
    - 新 session 的 `eval` 会静默开 `about:blank`（后台容器窗，不抢焦点）。脚本第一行判断
-     `location.origin`；不在站点则 `open` 该页，等约 1 秒再 eval。两拍都用 shared 的 `backgroundLine`
-     拼（前缀 `env OPENCLI_WINDOW=background`），不要直接拼 `opencli browser …`。
+     `location.origin`；不在站点则 `open` 该页，等约 1 秒再 eval。在 shell 里跑 opencli 时不要自己
+     拼命令前缀：`OPENCLI_WINDOW` 这类环境变量走宿主 shell 的 env 覆盖（`env` 是叠加，POSIX / pwsh 通用），
+     手写 `env NAME=value` / `$env:NAME` 在另一个平台就是坏的。
    - 读与屏用不同会话：`data.read({ kind: 'browser' })` 默认读会话 `workbench-read`；`workbench` 是看 / 动族的屏会话。同名会把用户的页导航走。需要独立标签就传 `session: "<unit>"`。
    - DOM 读不要在宿主脚本里 `querySelectorAll`：宿主产物禁止 `document.`，且无法单测。探时用
      `workbench_diy_find`（`read=…, args=["--css", "<选择器>"]`）；固化用

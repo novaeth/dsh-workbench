@@ -129,6 +129,8 @@
 - `sources` 按顺序试（本地 → 私有 → 公共）。没写 `sources` 就是「我自己装，你只帮我判」——外壳只探不代装。
 - `bin` 想让人一键装，就写 `install.line`（一条能直接粘进终端的命令，`platforms` 可限定平台）；
   不写就只显示「缺这条命令」，按钮都不会有。`docs` 是给人和 agent 看的补充链接。
+  跨平台要么按 `darwin` / `linux` / `win32` 各写一条 `install.platforms`，要么只写你那一个平台并说明；
+  别让 Windows 用户看到 `brew install`。`install.kind: "npm"` 则由外壳装进隔离运行时并接上 PATH。
 - `lib` 自己起运行时的命令（比如发布编排库自己 `execFile('opencli')`）就写 `runs: ["opencli"]`：
   外壳把它手上那份「跑 opencli」的执行器注入进去（库侧约定暴露 `setOpencliRunner`），
   于是编排与面板用同一份 opencli（同一套插件、同一份登录态）。不写 `runs` 就按库自己的 PATH 找。

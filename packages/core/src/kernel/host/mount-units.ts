@@ -1,10 +1,10 @@
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext, HostSurface } from '@dsh-workbench/shared';
 import type { DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared';
 import { runsRouteOf, stopRouteOf } from '@dsh-workbench/shared/host';
 import { APPROVAL_NOTE_ARG } from '@dsh-workbench/shared/host';
 import type { UnitManifest } from '@dsh-workbench/shared/host';
 import { param, type RouteTable } from '@dsh-workbench/shared/host';
-import { adaptersOf, createHostKit, createLongTaskHost } from '@dsh-workbench/shared/host';
+import { adaptersOf, createHostKit, createLongTaskHost, hostSurface } from '@dsh-workbench/shared/host';
 import type {
   ContextRenderer,
   LongTaskBase,
@@ -317,6 +317,7 @@ export function mountUnits(
     probe?: UnitMountDeps['probe'];
     store?: UnitMountDeps['store'];
     values?: UnitMountDeps['values'];
+    surface?: HostSurface | undefined;
     longTasks?:
       | {
           readonly scope: string;
@@ -334,6 +335,7 @@ export function mountUnits(
   });
   const hostKit = createHostKit({
     libInstallCommand: (options) => adaptersOf(deps.ctx).supply.libInstallCommand(options),
+    surface: deps.surface ?? hostSurface(),
   });
   const data: DataReader = deps.data ?? {
     read: missingData,

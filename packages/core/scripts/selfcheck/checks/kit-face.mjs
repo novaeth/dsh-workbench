@@ -39,6 +39,8 @@ const ADDITIONS = [
   { key: 'lib.longTaskIsLive', why: 'named' },
 
   { key: 'api.factOfRoute', why: 'named' },
+  { key: 'hooks.usePlatform', why: 'named' },
+  { key: 'lib.pathBase', why: 'named' },
 ];
 
 function mdFilesUnder(dir) {

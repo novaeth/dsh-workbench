@@ -102,8 +102,9 @@ module client
 | 模块拿到的 | 来自 core 的哪里 | 用途 |
 |---|---|---|
 | `mount({ data })` | `AdapterSet.data` | `data.read` 读 HTTP / 浏览器 |
+| `mount({ surface })` | `HostKit.surface`（宿主 platform 层） | 宿主平台事实与能力（deployment / hostOs / pageDebug …），工具里按它分叉 |
 | `ctx.get('tools')` | 宿主工具面 | 注册模块工具、审批 |
-| `kit` | `@dsh-workbench/core/client` | 卡片、表单、加载 / 空 / 错三态 |
+| `kit` | `@dsh-workbench/core/client` | 卡片、表单、加载 / 空 / 错三态；`kit.hooks.usePlatform()` 给浏览器 / 宿主两端的平台事实 |
 | `/workbench/api/<unit>` | 宿主路由表 | 卡片读模块自己的路由 |
 | `workbenchUnits` | 宿主 / 浏览器注册表 | 注册两个面 |
 

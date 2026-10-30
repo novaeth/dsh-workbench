@@ -34,4 +34,17 @@ export type {
   UnitClientFace,
 } from '@dsh-workbench/shared';
 export type { DshClientContext as ClientContext, DshHostContext as HostContext } from '@dsh-workbench/shared';
+export type {
+  ClientCapabilities,
+  ClientShell,
+  ClientSurface,
+  Deployment,
+  HostCapabilities,
+  HostOs,
+  HostRuntime,
+  HostSurface,
+  ProfileName,
+  SelfUpdateCli,
+  ToolchainPlan,
+} from '@dsh-workbench/shared';
 export type { UnitRegistry } from '../host/unit-registry.js';

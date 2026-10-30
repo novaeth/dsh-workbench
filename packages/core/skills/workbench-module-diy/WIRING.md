@@ -7,6 +7,8 @@
 | 需要 | 来源 |
 |---|---|
 | 宿主侧纯函数 / 常量 | 优先工具 / 挂载里的 `deps`（`HostKit`）；模块顶层常量仍从 `@dsh-workbench/shared/host` 取（`dependencies`） |
+| 宿主平台事实（deployment / 能力 / 宿主机工具链） | `mount(deps)` 里的 `deps.surface`（`HostSurface`）：工具（`registerTools`）在闭包里用它；不要自己读 `process.platform` |
+| 浏览器平台事实（Desktop / web、hostOs、能力） | `kit.hooks.usePlatform()`：`client` 现算、`host` 来自 health（没读到按未知处理） |
 | 浏览器侧 hooks / 组件 / 图标 / 文案工具 | `@dsh-workbench/core/client` 的 `kit` |
 | kit 没有的 dsh 控件 / 图标 | `@deepseek-ai/dsh-client-ui-primitives`（`dsh.client.external` + 精确版 devDependency；[KIT.md](KIT.md) §8） |
 | 类型 | `import type` |

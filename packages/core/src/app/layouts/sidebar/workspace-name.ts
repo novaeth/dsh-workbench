@@ -1,4 +1,4 @@
-import { DEFAULT_WORKSPACE_TITLE } from '@dsh-workbench/shared';
+import { DEFAULT_WORKSPACE_TITLE, pathBase } from '@dsh-workbench/shared';
 
 export const WORKSPACE_NAME_MAX = 20;
 
@@ -15,9 +15,7 @@ interface Named {
 }
 
 export function basenameOf(value: string): string {
-  const trimmed = value.replace(/[/\\]+$/, '');
-  const at = Math.max(trimmed.lastIndexOf('/'), trimmed.lastIndexOf('\\'));
-  return at === -1 ? trimmed : trimmed.slice(at + 1);
+  return pathBase(value);
 }
 
 export function displayNameOf(workspace: Named): WorkspaceDisplayName {

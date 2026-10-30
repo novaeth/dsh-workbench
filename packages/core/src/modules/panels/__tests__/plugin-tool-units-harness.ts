@@ -1,5 +1,5 @@
 import type { DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared';
-import { createHostKit, toolUnits, type PluginUnitsPort, type ToolScopeContext, type UnitOwnedFace, type WorkspaceStore } from '@dsh-workbench/shared/host';
+import { createHostKit, hostSurface, toolUnits, type PluginUnitsPort, type ToolScopeContext, type UnitOwnedFace, type WorkspaceStore } from '@dsh-workbench/shared/host';
 import { createFakeShell, createNoopDataReader,
 } from '@dsh-workbench/shared/testing';
 import { mountUnits } from '@/kernel/host/mount-units';
@@ -151,7 +151,7 @@ export function harnessOf(options: {
     ownedUnits: () => [],
     store: options.store,
     data: createNoopDataReader(),
-    ...createHostKit({ libInstallCommand: (options) => `npm i ${options.need.name}` }),
+    ...createHostKit({ libInstallCommand: (options) => `npm i ${options.need.name}`, surface: hostSurface() }),
   });
 
   return {

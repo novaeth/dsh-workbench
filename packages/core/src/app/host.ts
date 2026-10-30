@@ -4,7 +4,7 @@ import { assembleHostUnits } from '@/app/units/host';
 import { createPostChannels } from '@/shared/api/host/post-channels';
 import { takeHeldNotices, type AgentsLookup } from '@/shared/api/host/diy-debug-act';
 import { registerDiyActs } from '@/shared/api/host/diy-acts';
-import { runningVersionOf } from '@dsh-workbench/shared/host';
+import { hostSurface, runningVersionOf } from '@dsh-workbench/shared/host';
 import {
   capabilityHandler,
   registerApi,
@@ -37,8 +37,7 @@ import {
 } from '@/kernel/host/unit-registry';
 import { bindRosterFacts } from '@/shared/api/host/unit-roster-facts';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
-import { dshHome } from '@dsh-workbench/shared/host';
-import { withLibRunners } from '@dsh-workbench/shared/host';
+import { dshHome, withLibRunners } from '@dsh-workbench/shared/host';
 import { CONFIG_SYNC_ROUTE } from '@/kernel/contract/config-sync';
 import { PROFILE_CREATE_ROUTE } from '@/kernel/contract/profile-create';
 import { SIDEBAR_EDITION_ROUTE } from '@/kernel/contract/sidebar-edition';
@@ -105,10 +104,12 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   const capabilities = adapters.runtime.capabilities(ctx);
   const runtimeProfile = adapters.runtime.profile?.(ctx) ?? null;
   const runtimeCheck = adapters.runtime.check;
+  const profileDir = adapters.profile.dirOf(ctx);
+  const surface = hostSurface({ profile: profileDir ?? undefined });
   routes.health = async (search) => ({
     ...((await baseHealth?.(search)) as Record<string, unknown>),
     capabilities,
-    runtimeProfile,
+    runtimeProfile, surface,
     adapterSet: {
       configured: adapterSpec,
       active: adapters.id,
@@ -122,7 +123,6 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     },
   });
   const renderers = new Map<string, ContextRenderer>();
-  const profileDir = adapters.profile.dirOf(ctx);
   const packageRoot = adapters.runtime.packageRoot(import.meta.url);
   const reconcileProfile = async (): Promise<boolean> => {
     const hmr = ctx.get<{
@@ -272,7 +272,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
         git: adapters.git,
         commands: adapters.commands,
         probe: (unit, options) => probeOne(unit, options?.force ?? false),
-        values,
+        values, surface,
         longTasks: {
           scope: process.env['DSH_HOME'] ?? '',
           bump: (names) => facts.bump([...names, LONG_TASKS_ROUTE]),
