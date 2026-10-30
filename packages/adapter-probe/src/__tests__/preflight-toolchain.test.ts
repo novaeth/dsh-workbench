@@ -1,9 +1,34 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { DshShell, DshShellExecution } from '@dsh-workbench/shared';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { createPreflight, probeDesktopToolchain } from '../index.js';
 import { ALL_OK } from './preflight-fixtures';
 
+function hangingShell(): DshShell {
+  return {
+    resolve: (request) => request,
+    execute: () => new Promise<DshShellExecution>(() => {}),
+  };
+}
+
 describe('Desktop 工具链步骤', () => {
+  it('★ 命令没返回 → 报 stalled，不把"没装"三个字安到 node 头上', async () => {
+    vi.useFakeTimers();
+    try {
+      const pending = probeDesktopToolchain(hangingShell());
+      await vi.advanceTimersByTimeAsync(11_000);
+      const report = await pending;
+
+      expect(report.stalled).toBe(true);
+      expect(report.ok).toBe(false);
+      expect(report.nodeMissing).toBe(false);
+      expect(report.detail).toContain('没有返回');
+      expect(report.detail).not.toContain('不在 PATH');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('★ 真实探测：node 好、npm 缺、pnpm 11 → warn 的理由分开说', async () => {
     const fake = createFakeShell([
       { stdout: 'v24.21.0\n' },
@@ -62,6 +87,29 @@ describe('Desktop 工具链步骤', () => {
     const snapshot = await preflight.run();
 
     expect(snapshot.phase).toBe('failed');
+    expect(snapshot.steps.find((step) => step.id === 'toolchain')?.status).toBe('failed');
+    expect(fake.calls).toHaveLength(0);
+  });
+
+  it('★ 命令没返回 → 停住并走 host 那档：一条 opencli 命令不发，也不提"装 Node"', async () => {
+    const fake = createFakeShell(ALL_OK);
+    const preflight = createPreflight({
+      shell: fake.shell,
+      probeToolchain: async () => ({
+        ok: false,
+        detail: '版本探测没有返回：node / npm / pnpm 的命令都没把结果交回来（不是没装）',
+        nodeMissing: false,
+        npmMissing: false,
+        pnpmProblem: false,
+        stalled: true,
+      }),
+    });
+
+    const snapshot = await preflight.run();
+
+    expect(snapshot.phase).toBe('failed');
+    expect(snapshot.failure).toBe('host');
+    expect(snapshot.guidance).toBe('host');
     expect(snapshot.steps.find((step) => step.id === 'toolchain')?.status).toBe('failed');
     expect(fake.calls).toHaveLength(0);
   });

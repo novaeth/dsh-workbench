@@ -1,7 +1,7 @@
 export type PreflightStepId = 'toolchain' | 'cli' | 'bridge' | 'runtime' | 'diy' | 'warm';
 export type PreflightStepStatus = 'pending' | 'running' | 'ok' | 'warn' | 'failed';
-export type PreflightFailure = 'permission' | 'network' | 'missing' | 'unknown';
-export type PreflightGuidance = 'install' | 'path' | 'shell';
+export type PreflightFailure = 'permission' | 'network' | 'missing' | 'host' | 'unknown';
+export type PreflightGuidance = 'install' | 'path' | 'shell' | 'host';
 export type PreflightBridgeIssue = string;
 
 export interface PreflightStep {

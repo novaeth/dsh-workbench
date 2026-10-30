@@ -1,20 +1,33 @@
 import type { DshShell, RuntimeCapabilities } from '@dsh-workbench/shared';
-import { INSTALL_TIMEOUT_MS, OPENCLI_TIMEOUT_MS, PREFLIGHT_FRESH_MS, WARM_TIMEOUT_MS } from '@dsh-workbench/shared/host';
+import {
+  INSTALL_TIMEOUT_MS,
+  OPENCLI_TIMEOUT_MS,
+  PREFLIGHT_FRESH_MS,
+  PREFLIGHT_VERSION_TIMEOUT_MS,
+  WARM_TIMEOUT_MS,
+} from '@dsh-workbench/shared/host';
 import { tailLines } from '@dsh-workbench/shared/host';
 import { opencliCommandLine } from '@dsh-workbench/adapter-runtime';
 import { runShell } from '@dsh-workbench/shared/host';
 import { DIY_UPGRADE_COMMAND } from './diy-preset-health.js';
 import type { DiyPresetVerdict } from './diy-preset-health.js';
 import { opencliInstallCommand } from './install.js';
-import {
-  desktopPnpmPath,
-  LOCAL_NPM_VERSION,
-  LOCAL_PNPM_VERSION,
-  type LocalNpmProvision,
-  type LocalPnpmProvision,
-} from './toolchain.js';
+import { LOCAL_NPM_VERSION, LOCAL_PNPM_VERSION, type LocalNpmProvision, type LocalPnpmProvision } from './toolchain.js';
+import type { ToolchainReport } from './toolchain-probe.js';
 import type { DesktopBrowser } from './browser-wake.js';
 import { bridgeFixCommand } from './browser-wake.js';
+
+export type PreflightFailure = 'permission' | 'network' | 'missing' | 'host' | 'unknown';
+
+export function classifyFailure(text: string): PreflightFailure {
+  const lower = text.toLowerCase();
+  if (/eacces|eperm|permission denied|operation not permitted/.test(lower)) return 'permission';
+  if (/enotfound|etimedout|econnrefused|econnreset|network|proxy|fetch failed/.test(lower)) return 'network';
+  if (/command not found|not found|no such file/.test(lower)) return 'missing';
+  return 'unknown';
+}
+
+export type PreflightGuidance = 'install' | 'path' | 'shell' | 'host';
 
 export type PreflightStepId = 'toolchain' | 'runtime' | 'cli' | 'bridge' | 'diy' | 'warm';
 
@@ -26,66 +39,6 @@ export interface PreflightStep {
   readonly detail?: string;
   readonly action?: string;
   readonly command?: string;
-}
-
-export interface ToolchainReport {
-  readonly ok: boolean;
-  readonly detail: string;
-  readonly nodeMissing: boolean;
-  readonly npmMissing: boolean;
-  readonly pnpmProblem: boolean;
-}
-
-export type PreflightFailure = 'permission' | 'network' | 'missing' | 'unknown';
-
-export function classifyFailure(text: string): PreflightFailure {
-  const lower = text.toLowerCase();
-  if (/eacces|eperm|permission denied|operation not permitted/.test(lower)) return 'permission';
-  if (/enotfound|etimedout|econnrefused|econnreset|network|proxy|fetch failed/.test(lower)) return 'network';
-  if (/command not found|not found|no such file/.test(lower)) return 'missing';
-  return 'unknown';
-}
-
-export type PreflightGuidance = 'install' | 'path' | 'shell';
-
-async function toolVersion(
-  shell: DshShell,
-  line: string,
-): Promise<{ ok: boolean; text: string }> {
-  try {
-    const result = await runShell(shell, line, { timeoutMs: 10_000 });
-    const text = (result.stdout || result.stderr).trim().split('\n')[0] ?? '';
-    return { ok: result.exitCode === 0 && !result.timedOut, text };
-  } catch {
-    return { ok: false, text: '' };
-  }
-}
-
-export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainReport> {
-  const [node, npm, pnpm] = await Promise.all([
-    toolVersion(shell, 'node --version'),
-    toolVersion(shell, 'npm --version'),
-    toolVersion(shell, 'pnpm --version'),
-  ]);
-  const nodeMissing = !node.ok;
-  const npmMissing = !npm.ok;
-  const hasBundledPnpm = desktopPnpmPath() !== undefined;
-  const pnpmMajor = /^v?(\d+)/.exec(pnpm.text)?.[1];
-  const pnpmProblem = !pnpm.ok || pnpmMajor !== '10';
-  const parts = [
-    nodeMissing ? 'node 不在 PATH（Desktop 自带 Node 的 shim 没生效）' : `node ${node.text}（Desktop 自带）`,
-    npmMissing
-      ? hasBundledPnpm
-        ? 'npm 缺（opencli 安装走 pnpm；插件安装/模块库仍需 npm）'
-        : 'npm 缺（装不了 opencli：bundled pnpm 也没找到）'
-      : `npm ${npm.text}`,
-    pnpmProblem
-      ? pnpm.ok
-        ? `pnpm ${pnpm.text}（工坊按 10 方言）`
-        : 'pnpm 缺（只影响工坊 build/install）'
-      : `pnpm ${pnpm.text}`,
-  ];
-  return { ok: !nodeMissing, detail: parts.join(' · '), nodeMissing, npmMissing, pnpmProblem };
 }
 
 export type PreflightBridgeIssue = 'daemon' | 'extension' | 'profile' | 'stale' | 'unknown';
@@ -158,6 +111,7 @@ export interface BridgeVerdict {
   readonly detail: string;
   readonly issues: readonly PreflightBridgeIssue[];
   readonly command?: string | undefined;
+  readonly stalled?: boolean | undefined;
 }
 
 export function canWarm(bridge: { ok: boolean; issues: readonly PreflightBridgeIssue[] }): boolean {
@@ -205,6 +159,7 @@ export function createPreflight(options: {
     ...(options.desktopBrowser === undefined ? {} : { canWakeBrowser: true }),
   };
   let running: Promise<PreflightSnapshot> | null = null;
+  let shellStalled = false;
 
   function set(next: Partial<PreflightSnapshot> & { steps?: PreflightStep[] }): PreflightSnapshot {
     current = { ...current, ...next, at: Date.now() };
@@ -215,12 +170,28 @@ export function createPreflight(options: {
     return set({ steps: current.steps.map((item) => (item.id === id ? { ...item, ...patch } : item)) });
   }
 
+  function hostFailure(detail: string): PreflightSnapshot {
+    return set({ phase: 'failed', error: detail, failure: 'host', guidance: 'host' });
+  }
+
   async function exec(
     commandLine: string,
     timeoutMs: number,
-  ): Promise<{ kind: 'ok'; stdout: string } | { kind: 'nonzero'; detail: string } | { kind: 'error'; detail: string }> {
+  ): Promise<
+    | { kind: 'ok'; stdout: string }
+    | { kind: 'nonzero'; detail: string }
+    | { kind: 'error'; detail: string }
+    | { kind: 'stalled'; detail: string }
+  > {
+    if (shellStalled) {
+      return { kind: 'stalled', detail: `前一条命令就没交回结果，这一步没跑：${commandLine}` };
+    }
     try {
       const result = await runShell(shell, commandLine, { timeoutMs });
+      if (result.stalled) {
+        shellStalled = true;
+        return { kind: 'stalled', detail: `没有返回（宿主没把结果交回来）：${commandLine}` };
+      }
       if (result.timedOut) {
         return { kind: 'error', detail: `超时（${String(timeoutMs)} ms）：${commandLine}` };
       }
@@ -233,14 +204,24 @@ export function createPreflight(options: {
     }
   }
 
-  async function probeVersion(): Promise<{ ok: boolean; missing: boolean; detail: string }> {
-    const result = await exec(`${command} --version`, OPENCLI_TIMEOUT_MS);
-    if (result.kind === 'ok') return { ok: true, missing: false, detail: result.stdout.trim().split('\n')[0] ?? '' };
-    return { ok: false, missing: result.kind === 'nonzero', detail: result.detail };
+  async function probeVersion(): Promise<{ ok: boolean; missing: boolean; detail: string; stalled: boolean }> {
+    const result = await exec(`${command} --version`, PREFLIGHT_VERSION_TIMEOUT_MS);
+    if (result.kind === 'ok') {
+      return { ok: true, missing: false, detail: result.stdout.trim().split('\n')[0] ?? '', stalled: false };
+    }
+    return {
+      ok: false,
+      missing: result.kind === 'nonzero',
+      detail: result.detail,
+      stalled: result.kind === 'stalled',
+    };
   }
 
   async function probeBridge(): Promise<BridgeVerdict> {
     const result = await exec(`${command} doctor`, OPENCLI_TIMEOUT_MS);
+    if (result.kind === 'stalled') {
+      return { ok: false, detail: result.detail, issues: ['unknown'], stalled: true };
+    }
     if (result.kind !== 'ok') return { ok: false, detail: result.detail, issues: ['unknown'] };
     const report = readBridgeReport(result.stdout);
     if (report.ok) return report;
@@ -305,6 +286,7 @@ export function createPreflight(options: {
   }
 
   async function doRun(): Promise<PreflightSnapshot> {
+    shellStalled = false;
     set({
       phase: 'checking',
       error: undefined,
@@ -321,13 +303,16 @@ export function createPreflight(options: {
     let toolchain =
       toolchainStarted === undefined
         ? undefined
-        : await toolchainStarted.catch(() => ({
-            ok: false,
-            detail: '工具链探测没跑起来',
-            nodeMissing: true,
-            npmMissing: true,
-            pnpmProblem: true,
-          }));
+        : await toolchainStarted.catch(
+            (): ToolchainReport => ({
+              ok: false,
+              detail: '工具链探测没跑起来',
+              nodeMissing: true,
+              npmMissing: true,
+              pnpmProblem: true,
+              stalled: false,
+            }),
+          );
     if (toolchain !== undefined && toolchain.ok && toolchain.npmMissing && options.provisionNpm !== undefined) {
       set({ phase: 'installing' });
       patchStep('toolchain', { status: 'running', action: `装本地 npm@${LOCAL_NPM_VERSION}` });
@@ -364,12 +349,9 @@ export function createPreflight(options: {
         action: undefined,
       });
       if (!toolchain.ok) {
-        return set({
-          phase: 'failed',
-          error: toolchain.detail,
-          failure: 'missing',
-          guidance: 'install',
-        });
+        return toolchain.stalled === true
+          ? hostFailure(toolchain.detail)
+          : set({ phase: 'failed', error: toolchain.detail, failure: 'missing', guidance: 'install' });
       }
     }
 
@@ -389,6 +371,10 @@ export function createPreflight(options: {
       if (diyStarted !== undefined) patchStep('diy', { status: 'running' });
 
       let version = await probeVersion();
+      if (version.stalled) {
+        patchStep('cli', { status: 'failed', detail: version.detail, action: undefined });
+        return hostFailure(version.detail);
+      }
       if (!version.ok && !version.missing) {
         patchStep('cli', { status: 'failed', detail: version.detail, action: undefined });
         return set({
@@ -426,6 +412,10 @@ export function createPreflight(options: {
         }
         patchStep('cli', { status: 'running', action: `${command} --version` });
         version = await probeVersion();
+        if (version.stalled) {
+          patchStep('cli', { status: 'failed', detail: version.detail, action: undefined });
+          return hostFailure(version.detail);
+        }
         if (!version.ok) {
           patchStep('cli', { status: 'failed', detail: version.detail, command: installCommand });
           return set({
@@ -441,6 +431,10 @@ export function createPreflight(options: {
 
     patchStep('bridge', { status: 'running', action: `${command} doctor` });
     const bridge = withBridge ? await probeBridge() : { ok: true, detail: '', issues: [] };
+    if (bridge.stalled === true) {
+      patchStep('bridge', { status: 'failed', detail: bridge.detail, action: undefined });
+      return hostFailure(bridge.detail);
+    }
     if (withBridge && options.desktopBrowser !== undefined && bridge.ok) {
       await options.desktopBrowser.observe().catch(() => undefined);
     }

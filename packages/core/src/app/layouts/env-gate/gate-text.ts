@@ -6,7 +6,20 @@ import { runtimeText } from '@/shared/hooks/locale-text';
 export function failedStepText(guidance: PreflightGuidance | undefined, t: Translate): string {
   if (guidance === 'path') return t('env.stepFailed.path');
   if (guidance === 'shell') return t('env.stepFailed.shell');
+  if (guidance === 'host') return t('env.stepFailed.host');
   return t('env.stepFailed.install');
+}
+
+export interface GuidanceText {
+  readonly why: string;
+  readonly step: string;
+}
+
+export function guidanceTextOf(guidance: PreflightGuidance | undefined, t: Translate): GuidanceText {
+  if (guidance === 'path') return { why: t('env.fix.whyPath'), step: t('env.fix.stepPath') };
+  if (guidance === 'shell') return { why: t('env.fix.whyShell'), step: t('env.fix.stepShell') };
+  if (guidance === 'host') return { why: t('env.fix.whyHost'), step: t('env.fix.stepHost') };
+  return { why: t('env.fix.why'), step: t('env.fix.step') };
 }
 
 export function stepDetailText(step: PreflightStep, snapshot: PreflightSnapshot, t: Translate): string {

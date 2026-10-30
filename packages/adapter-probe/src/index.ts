@@ -9,6 +9,7 @@ export * from './probe-units.js';
 export * from './probe-verdict.js';
 export * from './runtime-seed.js';
 export * from './toolchain.js';
+export * from './toolchain-probe.js';
 export * from './version-range.js';
 export * from './install.js';
 export * from './self-update.js';

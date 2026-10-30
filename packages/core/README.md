@@ -166,6 +166,7 @@ dsh-workbench migrate --force  # 已经迁过一次、想再补并一次
 | 自检说「连接浏览器 · 还没连上」/ 面板取不到数据 | 扩展没装或没启用：从 [Chrome 应用商店](https://chromewebstore.google.com/detail/opencli/ildkmabpimmkaediidaifkhjpohdnifk)装 OpenCLI，在扩展页确认启用，保持浏览器开着，回「准备工作台」那一屏点「重试」。多个浏览器账号会要求先选默认的那个：按页面上给的那条命令做 |
 | 体检说「连接浏览器 · 还没连上」，可面板照样能用 | 本机全局 opencli 与隔离运行时版本不一致，daemon 被顶成对方那版；下一条浏览器命令会自动把它重启回来，复检后改回「已连接」 |
 | Desktop 里体检一直「没连上」 | 浏览器没开。「准备工作台」那一屏有「打开浏览器」，点了才开上次承载扩展的那个（没记住就用 Chrome），开完自动复检；点了会切到 Chrome 前台（冷启动抢焦点，静默做不到）。仍连不上多半是扩展没装或被禁用 |
+| 准备页停住、说「命令行没有返回」 | 命令发出去了、结果没回来（宿主那边的子进程没起来，常见于 Windows 沙箱的残留锁文件）。完全退出工作台（托盘图标也要退），清掉系统临时目录里 `dsh-` 开头的残留，再打开；反复出现就升级 dsh 客户端。重装 Node / npm / pnpm 没用 —— 工具本身是好的 |
 | 模型列表里只有出厂的几个、没有自己配的供应商 | 新 profile 不带设置。设置 → 工作台设置 → 配置同步 → 勾 `llm-` 那几行 → 同步 |
 | 配置同步里某行说 `@x 还没装` | 那一行点名的包不在这个 profile 的 `node_modules` 里：`dsh plugin --profile workbench add @x`（或在模块市场装），装完 dsh 会自行重组，它报 `restartReason` 时才重启 |
 | 启动被拒，说 dsh 太旧 | `npm i -g @deepseek-ai/dsh@latest`，装完重启工作台 |

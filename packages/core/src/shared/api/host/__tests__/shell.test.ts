@@ -36,6 +36,7 @@ describe('runShell', () => {
       stdout: 'out\n',
       stderr: 'err\n',
       truncated: false,
+      stalled: false,
     });
   });
 

@@ -7,7 +7,7 @@ import { apiGet } from '@dsh-workbench/shared';
 import { LOCALE_NS } from '@dsh-workbench/shared';
 import { devSurface } from '@/shared/dev-surface';
 import { runtimeProfileValue } from '@/shared/hooks/use-runtime-capabilities';
-import { bridgeAdvice, gateHintOf, showsRawAll, stepDetailText } from './gate-text';
+import { bridgeAdvice, gateHintOf, guidanceTextOf, showsRawAll, stepDetailText } from './gate-text';
 import { createGateDeadline } from './gate-deadline';
 import { el, spinnerIcon, svgIcon } from './gate-dom';
 
@@ -294,10 +294,9 @@ export function createBootGate(
     const commandText = fix?.command;
 
     const guidance = snapshot.guidance ?? 'install';
-    const why = guidance === 'path' ? t('env.fix.whyPath') : guidance === 'shell' ? t('env.fix.whyShell') : t('env.fix.why');
-    const step = guidance === 'path' ? t('env.fix.stepPath') : guidance === 'shell' ? t('env.fix.stepShell') : t('env.fix.step');
-    fixWhy.textContent = why;
-    fixStep.textContent = step;
+    const advice = guidanceTextOf(guidance, t);
+    fixWhy.textContent = advice.why;
+    fixStep.textContent = advice.step;
 
     const showCommand = guidance === 'install' && commandText !== undefined;
     fixCommand.set(showCommand ? commandText : undefined);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { zh } from '@dsh-workbench/shared';
 import { gateActionOf } from '../boot-gate';
-import { bridgeAdvice, gateHintOf, stepDetailText } from '../gate-text';
+import { bridgeAdvice, failedStepText, gateHintOf, guidanceTextOf, stepDetailText } from '../gate-text';
 import { GATE_MOCKS } from '../gate-mock';
 
 const t = ((key: string) => (zh as Record<string, string>)[key] ?? key) as never;
@@ -63,7 +63,7 @@ describe('GATE_MOCKS', () => {
     }
   });
 
-  it('★ "给确切命令"只在 `install` 那档：`path` / `shell` 不给（照做也没用）', () => {
+  it('★ "给确切命令"只在 `install` 那档：`path` / `shell` / `host` 不给（照做也没用）', () => {
     for (const item of GATE_MOCKS) {
       const failed = item.snapshot.steps.find((step) => step.status === 'failed');
       const hasCommand = failed?.command !== undefined;
@@ -71,14 +71,29 @@ describe('GATE_MOCKS', () => {
         expect(hasCommand, item.id).toBe(true);
         expect(item.expect.command, item.id).toBe(true);
       }
-      if (item.expect.guidance === 'path' || item.expect.guidance === 'shell') {
+      if (item.expect.guidance === 'path' || item.expect.guidance === 'shell' || item.expect.guidance === 'host') {
         expect(item.expect.command, item.id).toBe(false);
       }
       if (item.snapshot.phase !== 'failed') expect(hasCommand, item.id).toBe(false);
     }
   });
 
-  it('★ 覆盖了真机上难造的那几档：安装中、装不上、装了找不到、执行缝坏、浏览器通道三种坏法', () => {
+  it('★ 命令没返回那档：说的是"退干净、清残留、再打开"，不是让人重装工具', () => {
+    const t = (key: string): string => key;
+
+    expect(guidanceTextOf('host', t)).toEqual({ why: 'env.fix.whyHost', step: 'env.fix.stepHost' });
+    expect(guidanceTextOf(undefined, t)).toEqual({ why: 'env.fix.why', step: 'env.fix.step' });
+    expect(failedStepText('host', t)).toBe('env.stepFailed.host');
+
+    const host = GATE_MOCKS.find((item) => item.id === 'failed-host');
+    expect(stepDetailText(host?.snapshot.steps[0] as never, host?.snapshot as never, t)).toBe(
+      'env.stepFailed.host',
+    );
+    expect(zh['env.fix.stepHost']).toContain('完全退出');
+    expect(zh['env.fix.whyHost']).not.toContain('装不上');
+  });
+
+  it('★ 覆盖了真机上难造的那几档：安装中、装不上、装了找不到、执行缝坏、命令没返回、浏览器通道三种坏法', () => {
     const ids = GATE_MOCKS.map((item) => item.id);
 
     for (const id of [
@@ -87,6 +102,7 @@ describe('GATE_MOCKS', () => {
       'failed-network',
       'failed-path',
       'failed-shell',
+      'failed-host',
       'warn-extension',
       'warn-daemon',
       'warn-profile',

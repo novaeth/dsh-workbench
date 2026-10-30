@@ -5,7 +5,8 @@ import { INSTALL_TIMEOUT_MS, preflightHandler, runShell, tailLines, workbenchRoo
 import { WAKE_BROWSER_ROUTE } from '@dsh-workbench/shared/contract/protocol/preflight-wake';
 import { createDiyPresetProbe } from './diy-preset-health.js';
 import { hostSurface } from './platform.js';
-import { createPreflight, probeDesktopToolchain } from './preflight.js';
+import { createPreflight } from './preflight.js';
+import { probeDesktopToolchain } from './toolchain-probe.js';
 import { createDesktopBrowser, type DesktopBrowser } from './browser-wake.js';
 import { profileDirOf } from '@dsh-workbench/adapter-supply';
 import { prependPath, runtimeSeedRootOf } from './runtime-seed.js';

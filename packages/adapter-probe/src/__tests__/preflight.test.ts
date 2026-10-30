@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { DshShell } from '@dsh-workbench/shared';
 import { classifyFailure, createPreflight, opencliInstallCommandDefault } from '../index.js';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { ALL_OK, BROKEN_BRIDGE, EXTENSION_ONLY_BRIDGE, GOOD_BRIDGE_REPORT, build } from './preflight-fixtures';
@@ -388,5 +389,99 @@ describe('classifyFailure（失败时给人话指引的依据）', () => {
 
   it('认不出来就说认不出来（不硬猜）', () => {
     expect(classifyFailure('something odd happened')).toBe('unknown');
+  });
+});
+
+function scriptedShell(hangOn: (command: string, timesSeen: number) => boolean) {
+  const calls: string[] = [];
+  const shell: DshShell = {
+    resolve: (request) => {
+      calls.push((request as { command: string }).command);
+      return request;
+    },
+    execute: async () => ({
+      result: async () => {
+        const seen = calls.filter((call) => call === calls[calls.length - 1]).length;
+        const command = calls[calls.length - 1] ?? '';
+        if (hangOn(command, seen)) return new Promise<never>(() => {});
+        return {
+          exitCode: 0,
+          timedOut: false,
+          aborted: false,
+          stdout: { text: command.endsWith('doctor') ? GOOD_BRIDGE_REPORT : '1.8.8\n', truncated: false },
+          stderr: { text: '', truncated: false },
+        };
+      },
+    }),
+  };
+  return { shell, calls };
+}
+
+const TOOLCHAIN_OK = {
+  ok: true,
+  detail: 'node v24.21.0（Desktop 自带）· npm 10.9.4 · pnpm 10.32.1',
+  nodeMissing: false,
+  npmMissing: false,
+  pnpmProblem: false,
+  stalled: false,
+};
+
+describe('宿主不交回命令结果（沙箱 / 子进程起不来）', () => {
+  it('★ 版本命令没返回 → 40 秒内停住走 host 那档，后面的 doctor 一条都不发', async () => {
+    vi.useFakeTimers();
+    try {
+      const fake = scriptedShell((command) => command === 'opencli --version');
+      const preflight = createPreflight({ shell: fake.shell, probeToolchain: async () => TOOLCHAIN_OK });
+      const pending = preflight.run();
+      await vi.advanceTimersByTimeAsync(40_000);
+      const snapshot = await pending;
+
+      expect(snapshot.phase).toBe('failed');
+      expect(snapshot.guidance).toBe('host');
+      expect(snapshot.failure).toBe('host');
+      expect(fake.calls).toEqual(['opencli --version']);
+      expect(snapshot.steps.find((step) => step.id === 'cli')?.status).toBe('failed');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('★ 版本通了、doctor 没返回 → 也停住走 host 那档，不再白等第二遍', async () => {
+    vi.useFakeTimers();
+    try {
+      const fake = scriptedShell((command) => command === 'opencli doctor');
+      const preflight = createPreflight({ shell: fake.shell, probeToolchain: async () => TOOLCHAIN_OK });
+      const pending = preflight.run();
+      await vi.advanceTimersByTimeAsync(130_000);
+      const snapshot = await pending;
+
+      expect(snapshot.phase).toBe('failed');
+      expect(snapshot.guidance).toBe('host');
+      expect(fake.calls).toEqual(['opencli --version', 'opencli doctor']);
+      expect(snapshot.steps.find((step) => step.id === 'bridge')?.status).toBe('failed');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('★ 重试要重新探：上一次卡住不把这一次也判死', async () => {
+    vi.useFakeTimers();
+    try {
+      const fake = scriptedShell((command, seen) => command === 'opencli --version' && seen === 1);
+      const preflight = createPreflight({ shell: fake.shell, probeToolchain: async () => TOOLCHAIN_OK });
+
+      const first = preflight.run();
+      await vi.advanceTimersByTimeAsync(130_000);
+      expect((await first).guidance).toBe('host');
+
+      const second = preflight.run({ hard: true });
+      await vi.advanceTimersByTimeAsync(130_000);
+      const snapshot = await second;
+
+      expect(snapshot.phase).toBe('ready');
+      expect(fake.calls.filter((call) => call === 'opencli doctor')).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

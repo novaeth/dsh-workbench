@@ -253,6 +253,26 @@ export const GATE_MOCKS: readonly GateMock[] = [
     },
     { hint: 'failed', guidance: 'shell', command: false },
   ),
+  mock(
+    'failed-host',
+    '命令没有返回',
+    '命令发出去了、结果没回来（沙箱子进程起不来）：给的是"退干净、清残留、再打开"，不是让人重装 Node / npm。',
+    {
+      phase: 'failed',
+      steps: [
+        {
+          id: 'toolchain',
+          status: 'failed',
+          detail: '版本探测没有返回：node / npm / pnpm 的命令都没把结果交回来（不是没装）',
+        },
+        BRIDGE_PENDING,
+      ],
+      error: '版本探测没有返回：node / npm / pnpm 的命令都没把结果交回来（不是没装）',
+      failure: 'host',
+      guidance: 'host',
+    },
+    { hint: 'failed', guidance: 'host', command: false },
+  ),
 ];
 
 function el(tag: string, className: string, text?: string): HTMLElement {
