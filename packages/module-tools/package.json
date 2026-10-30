@@ -1,6 +1,6 @@
 {
   "name": "@dsh-workbench/module-tools",
-  "version": "1.1.10",
+  "version": "1.1.11",
   "description": "模块包的构建与门禁工具：build（单文件 ESM 宿主侧 + 套 loader 壳的浏览器侧）、check（契约/产物边界/源码边界/卡片渲染）。模块包不再各带一份构建脚本。",
   "license": "MIT",
   "type": "module",

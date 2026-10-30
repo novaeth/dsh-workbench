@@ -1,6 +1,6 @@
 {
   "name": "@dsh-workbench/adapter-probe",
-  "version": "1.1.10",
+  "version": "1.1.11",
   "description": "Workbench adapter-probe adapter.",
   "type": "module",
   "exports": {
