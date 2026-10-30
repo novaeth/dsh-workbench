@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import type { ApiResponse } from '@dsh-workbench/shared';
 import type {
   ModuleVersion,
@@ -12,8 +12,6 @@ import { readInstalledPlugins, readModuleVersions } from '@/shared/hooks/bundle-
 import { readMarketInstalled } from '@/shared/hooks/market-queries';
 import { CAPABILITY_FACT } from '@/shared/hooks/use-capabilities';
 import { useFactRevision } from '@/shared/hooks/use-facts';
-
-import { MARKET_STALE_MS, shouldProbeOnEnter } from '../rightbar/market-freshness';
 
 export type VersionsScope = 'all' | 'modules' | 'plugins';
 export type VersionsPart = Exclude<VersionsScope, 'all'>;
@@ -35,19 +33,20 @@ export interface ModuleVersionsState {
   readonly pluginsCheck: VersionsCheck;
 }
 
-export interface ModuleVersionsView extends ModuleVersionsState {
-  readonly checking: boolean;
-  reload(options?: {
-    readonly force?: boolean;
-    readonly fresh?: boolean;
-    readonly scope?: VersionsScope;
-  }): void;
-}
-
 export interface ModuleVersionsRead {
+  check?: boolean;
   force?: boolean;
   fresh?: boolean;
   scope?: VersionsScope;
+}
+
+export interface InstalledReadOptions {
+  readonly fresh?: boolean;
+}
+
+export interface ModuleVersionsView extends ModuleVersionsState {
+  readonly checking: boolean;
+  reload(options?: ModuleVersionsRead): void;
 }
 
 const IDLE: VersionsCheck = { checking: false, failed: false, checkedAt: null };
@@ -65,12 +64,10 @@ const NOT_READ: ModuleVersionsState = {
 
 let state: ModuleVersionsState = NOT_READ;
 const listeners = new Set<() => void>();
-const inFlight = new Map<
-  VersionsScope,
-  { readonly force: boolean; readonly epoch: number; readonly promise: Promise<void> }
->();
+const inFlight = new Map<string, { readonly epoch: number; readonly promise: Promise<void> }>();
 const seq: Record<VersionsPart, number> = { modules: 0, plugins: 0 };
 const newestForceSeq: Record<VersionsPart, number> = { modules: -1, plugins: -1 };
+const newestDataSeq: Record<VersionsPart, number> = { modules: -1, plugins: -1 };
 let epoch = 0;
 let allSeq = 0;
 
@@ -91,6 +88,8 @@ export function resetModuleVersions(): void {
   seq.plugins = 0;
   newestForceSeq.modules = -1;
   newestForceSeq.plugins = -1;
+  newestDataSeq.modules = -1;
+  newestDataSeq.plugins = -1;
   epoch = 0;
 }
 
@@ -111,6 +110,50 @@ export function withMarketUpdates(
     const row = byPkg.get(module.pkg);
     return row === undefined ? module : { ...module, latest: row.version, market: row };
   });
+}
+
+function withPreviousLatest(
+  modules: readonly ModuleVersion[],
+  previous: readonly ModuleVersion[],
+): readonly ModuleVersion[] {
+  if (previous.length === 0) return modules;
+  const byPkg = new Map(previous.map((module) => [module.pkg, module] as const));
+  return modules.map((module) => {
+    const old = byPkg.get(module.pkg);
+    if (old === undefined) return module;
+    return {
+      ...module,
+      ...(module.latest === undefined && old.latest !== undefined ? { latest: old.latest } : {}),
+      ...(module.latestBlocked === undefined && old.latestBlocked !== undefined
+        ? { latestBlocked: old.latestBlocked }
+        : {}),
+      ...(module.latestUnavailable === undefined && old.latestUnavailable !== undefined
+        ? { latestUnavailable: old.latestUnavailable }
+        : {}),
+    };
+  });
+}
+
+function withPreviousPluginLatest(
+  plugins: readonly InstalledPlugin[],
+  previous: readonly InstalledPlugin[],
+): readonly InstalledPlugin[] {
+  if (previous.length === 0) return plugins;
+  const byPkg = new Map(previous.map((plugin) => [plugin.pkg, plugin] as const));
+  return plugins.map((plugin) => {
+    const old = byPkg.get(plugin.pkg);
+    if (old === undefined || plugin.latest !== undefined || old.latest === undefined) return plugin;
+    return { ...plugin, latest: old.latest };
+  });
+}
+
+function withPreviousWorkbenchLatest(
+  next: WorkbenchVersion | null,
+  previous: WorkbenchVersion | null,
+): WorkbenchVersion | null {
+  if (next === null || previous === null) return next;
+  if (next.latest !== undefined || previous.latest === undefined || next.pkg !== previous.pkg) return next;
+  return { ...next, latest: previous.latest };
 }
 
 export function moduleVersionsCheckedAt(now: ModuleVersionsState): number | null {
@@ -153,85 +196,140 @@ function landed(seat: VersionsCheck, ticket: number, latest: number, ok: boolean
 
 type ModulesResponse = readonly [ApiResponse<ModuleVersionsPayload>, ApiResponse<MarketInstalledPayload>];
 
-function readModulesOnce(force: boolean): Promise<ModulesResponse | null> {
-  return Promise.all([readModuleVersions(force), readMarketInstalled()]).catch(() => null);
+function readModulesOnce(force: boolean, check: boolean): Promise<ModulesResponse | null> {
+  return Promise.all([readModuleVersions(force, check), readMarketInstalled()]).catch(() => null);
 }
 
-function readPluginsOnce(force: boolean): Promise<ApiResponse<InstalledPluginsPayload> | null> {
-  return readInstalledPlugins(force).catch(() => null);
+function readPluginsOnce(force: boolean, check: boolean): Promise<ApiResponse<InstalledPluginsPayload> | null> {
+  return readInstalledPlugins(force, check).catch(() => null);
 }
 
-export function runModuleVersionsRead(force = false, fresh = false, scope: VersionsScope = 'all'): Promise<void> {
+interface ReadRun {
+  readonly kind: 'data' | 'check';
+  readonly force: boolean;
+  readonly fresh: boolean;
+  readonly scope: VersionsScope;
+}
+
+function readKey(run: ReadRun): string {
+  return `${run.kind}:${run.scope}:${run.force ? 'force' : 'cached'}`;
+}
+
+function superseded(run: ReadRun, part: VersionsPart, ticket: number): boolean {
+  if (run.kind === 'data') return ticket < newestDataSeq[part];
+  return !run.force && ticket < newestForceSeq[part];
+}
+
+function runRead(run: ReadRun): Promise<void> {
   const at = epoch;
-  const running = inFlight.get(scope);
-  if (!fresh && running !== undefined && running.force === force && running.epoch === at) {
-    return running.promise;
-  }
-  const allTicket = scope === 'all' ? (allSeq += 1) : allSeq;
+  const key = readKey(run);
+  const running = inFlight.get(key);
+  if (!run.fresh && running !== undefined && running.epoch === at) return running.promise;
+  const check = run.kind === 'check';
+  const allTicket = run.scope === 'all' ? (allSeq += 1) : allSeq;
   const tickets = new Map<VersionsPart, number>();
-  for (const part of partsOf(scope)) {
+  for (const part of partsOf(run.scope)) {
     const ticket = (seq[part] += 1);
     tickets.set(part, ticket);
-    if (force) newestForceSeq[part] = ticket;
+    if (run.force) newestForceSeq[part] = ticket;
+    if (!check) newestDataSeq[part] = ticket;
   }
-  publish(checking(scope));
-  const modulesRead = tickets.has('modules') ? readModulesOnce(force) : null;
-  const pluginsRead = tickets.has('plugins') ? readPluginsOnce(force) : null;
+  if (check) publish(checking(run.scope));
+  const modulesTicket = tickets.get('modules');
+  const pluginsTicket = tickets.get('plugins');
+  const modulesRead =
+    modulesTicket === undefined
+      ? null
+      : readModulesOnce(run.force, check).then((response) => {
+          if (at !== epoch || response === null || superseded(run, 'modules', modulesTicket)) return;
+          const [modules, market] = response;
+          const payload = modules.ok === true ? modules : null;
+          const listed =
+            payload === null
+              ? null
+              : withMarketUpdates(payload.modules, market.ok === true ? market.modules : []);
+          const shown = listed === null ? null : check ? listed : withPreviousLatest(listed, state.modules ?? []);
+          publish({
+            ...state,
+            modules: shown ?? state.modules,
+            workbench:
+              payload === null
+                ? state.workbench
+                : check
+                  ? (payload.workbench ?? null)
+                  : withPreviousWorkbenchLatest(payload.workbench ?? null, state.workbench),
+            selfUpdate: payload === null ? state.selfUpdate : (payload.selfUpdate ?? null),
+            read: true,
+            ...(check
+              ? {
+                  modulesCheck: landed(
+                    state.modulesCheck,
+                    modulesTicket,
+                    seq.modules,
+                    payload !== null,
+                    Date.now(),
+                  ),
+                }
+              : {}),
+          });
+        });
+  const pluginsRead =
+    pluginsTicket === undefined
+      ? null
+      : readPluginsOnce(run.force, check).then((response) => {
+          if (at !== epoch || response === null || superseded(run, 'plugins', pluginsTicket)) return;
+          const ok = response.ok === true;
+          publish({
+            ...state,
+            plugins: ok
+              ? check
+                ? response.plugins
+                : withPreviousPluginLatest(response.plugins, state.plugins ?? [])
+              : state.plugins,
+            ...(check
+              ? { pluginsCheck: landed(state.pluginsCheck, pluginsTicket, seq.plugins, ok, Date.now()) }
+              : {}),
+          });
+        });
   const promise = Promise.all([modulesRead, pluginsRead])
-    .then(([modules, plugins]) => {
-      if (at !== epoch) return;
-      const now = Date.now();
-      const modulesTicket = tickets.get('modules');
-      const pluginsTicket = tickets.get('plugins');
-      const modulesLanded = modulesTicket !== undefined && (force || modulesTicket >= newestForceSeq.modules);
-      const pluginsLanded = pluginsTicket !== undefined && (force || pluginsTicket >= newestForceSeq.plugins);
-      const modulesOk = modulesLanded && modules !== null && modules[0].ok === true;
-      const pluginsOk = pluginsLanded && plugins !== null && plugins.ok === true;
-      publish({
-        ...state,
-        modules: modulesOk
-          ? withMarketUpdates(modules[0].modules, modules[1].ok === true ? modules[1].modules : [])
-          : state.modules,
-        workbench: modulesOk ? (modules[0].workbench ?? null) : state.workbench,
-        selfUpdate: modulesOk ? (modules[0].selfUpdate ?? null) : state.selfUpdate,
-        plugins: pluginsOk ? plugins.plugins : state.plugins,
-        read: true,
-        allChecking: scope === 'all' && allTicket === allSeq ? false : state.allChecking,
-        modulesCheck:
-          modulesLanded && modulesTicket !== undefined
-            ? landed(state.modulesCheck, modulesTicket, seq.modules, modulesOk, now)
-            : state.modulesCheck,
-        pluginsCheck:
-          pluginsLanded && pluginsTicket !== undefined
-            ? landed(state.pluginsCheck, pluginsTicket, seq.plugins, pluginsOk, now)
-            : state.pluginsCheck,
-      });
+    .then(() => {
+      if (at !== epoch || !check || run.scope !== 'all' || allTicket !== allSeq) return;
+      if (!state.allChecking) return;
+      publish({ ...state, allChecking: false });
     })
     .finally(() => {
-      if (inFlight.get(scope)?.promise === promise) inFlight.delete(scope);
+      if (inFlight.get(key)?.promise === promise) inFlight.delete(key);
     });
-  inFlight.set(scope, { force, epoch: at, promise });
+  inFlight.set(key, { epoch: at, promise });
   return promise;
+}
+
+export function runModuleVersionsRead(
+  force = false,
+  fresh = false,
+  scope: VersionsScope = 'all',
+): Promise<void> {
+  return runRead({ kind: 'check', force, fresh, scope });
+}
+
+export function runInstalledRead(options: InstalledReadOptions = {}): Promise<void> {
+  return runRead({ kind: 'data', force: false, fresh: options.fresh === true, scope: 'all' });
 }
 
 export function useModuleVersions(): ModuleVersionsView {
   const value = useSyncExternalStore(subscribeModuleVersions, moduleVersionsValue);
   const factRev = useFactRevision(CAPABILITY_FACT);
-  const mountedRef = useRef(false);
 
   useEffect(() => {
-    const first = !mountedRef.current;
-    mountedRef.current = true;
-    if (
-      first &&
-      !shouldProbeOnEnter({ checkedAt: moduleVersionsCheckedAt(state), now: Date.now(), staleMs: MARKET_STALE_MS })
-    )
-      return;
-    void runModuleVersionsRead(false);
+    void runInstalledRead();
   }, [factRev]);
 
   const reload = useCallback((options?: ModuleVersionsRead): void => {
-    void runModuleVersionsRead(options?.force === true, options?.fresh === true, options?.scope ?? 'all');
+    if (options?.check === true) {
+      void runModuleVersionsRead(options.force === true, options.fresh === true, options.scope ?? 'all');
+      return;
+    }
+    void runInstalledRead({ fresh: options?.fresh === true });
   }, []);
 
   return {

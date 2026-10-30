@@ -5,10 +5,21 @@ import {
   bumpModuleVersionsEpoch,
   type ModuleVersionsView,
   type VersionsPart,
+  type VersionsScope,
 } from './use-module-versions';
 
+export interface MarketReloadOptions {
+  readonly force?: boolean;
+}
+
+export interface MarketCheckOptions {
+  readonly force?: boolean;
+  readonly scope?: VersionsScope;
+}
+
 export interface MarketReload {
-  readonly reload: (options?: { readonly force?: boolean }) => void;
+  readonly reload: (options?: MarketReloadOptions) => void;
+  readonly recheck: () => void;
   readonly checkPart: (part: VersionsPart) => void;
 }
 
@@ -22,23 +33,42 @@ export interface MarketReloadInput {
 export function useMarketReload(input: MarketReloadInput): MarketReload {
   const { checkedAt, forceProbe, reloadCapability, reloadVersions } = input;
   const reload = useCallback(
-    (options?: { readonly force?: boolean }): void => {
+    (options?: MarketReloadOptions): void => {
       if (options?.force === true) {
         bumpModuleVersionsEpoch();
         bumpCapabilityEpoch();
         forceProbe();
-        reloadVersions({ force: true, fresh: true });
-        return;
+      } else {
+        reloadCapability();
       }
-      reloadCapability();
       reloadVersions();
     },
     [reloadCapability, reloadVersions, forceProbe],
   );
 
-  const checkPart = useCallback(
-    (part: VersionsPart): void => reloadVersions({ force: true, fresh: true, scope: part }),
+  const check = useCallback(
+    (options?: MarketCheckOptions): void => {
+      reloadVersions({
+        check: true,
+        force: options?.force === true,
+        fresh: true,
+        ...(options?.scope === undefined ? {} : { scope: options.scope }),
+      });
+    },
     [reloadVersions],
+  );
+
+  const recheck = useCallback((): void => {
+    bumpCapabilityEpoch();
+    forceProbe();
+    check({ force: true });
+  }, [check, forceProbe]);
+
+  const checkPart = useCallback(
+    (part: VersionsPart): void => {
+      check({ force: true, scope: part });
+    },
+    [check],
   );
 
   const enteredRef = useRef(false);
@@ -46,11 +76,11 @@ export function useMarketReload(input: MarketReloadInput): MarketReload {
   useEffect(() => {
     if (enteredRef.current) return;
     enteredRef.current = true;
-    reloadVersions();
     if (!shouldProbeOnEnter({ checkedAt, now: Date.now(), staleMs: MARKET_STALE_MS })) return;
     markNextProbeSilent();
     forceProbe();
-  }, [checkedAt, forceProbe, reloadVersions]);
+    check();
+  }, [checkedAt, forceProbe, check]);
 
-  return { reload, checkPart };
+  return { reload, recheck, checkPart };
 }

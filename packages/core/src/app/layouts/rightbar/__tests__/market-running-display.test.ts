@@ -166,6 +166,15 @@ describe('更新跑完那一格：解锁挂在读数上，不是挂到写响应�
     expect(hold).toContain('REMOVAL_ACTIONS.has(pending.action)');
   });
 
+  it('★ 等读数期间每 800ms 那趟轮询只读已安装，不是一次「检测更新」', () => {
+    const hold = read('market-settle-hold.ts');
+    const reload = read('../market/use-market-reload.ts');
+
+    expect(hold).toContain('onChanged();');
+    expect(hold).not.toContain('check: true');
+    expect(reload).toMatch(/reloadVersions\(\);/);
+  });
+
   it('★ 等读数这一格认的是 pending 自己那两枚记号（不给别的动作长挂）', () => {
     const hold = read('market-settle-hold.ts');
 

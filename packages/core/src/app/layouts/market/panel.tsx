@@ -117,7 +117,7 @@ function MarketPanel({
   const updates = useMemo(() => marketUpdatesOf(modules), [modules]);
   const installed = modules === null ? undefined : withClientRefusals(modules, units.refusals());
 
-  const { reload, checkPart } = useMarketReload({
+  const { reload, recheck, checkPart } = useMarketReload({
     checkedAt,
     forceProbe,
     reloadCapability,
@@ -155,7 +155,7 @@ function MarketPanel({
         busy={busy}
         checking={checking || versionsAllChecking}
         onTab={setTab}
-        onReload={() => reload({ force: true })}
+        onReload={recheck}
         onAdd={openAddModule}
       />
       {devMarket.strip}

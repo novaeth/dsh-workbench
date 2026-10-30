@@ -82,6 +82,7 @@ interface ProbeReleaseOptions {
   readonly package: string;
   readonly registry?: string | undefined;
   readonly force?: boolean;
+  readonly check?: boolean;
   readonly cacheDir?: string | undefined;
   readonly prefix?: string | undefined;
 }
@@ -169,10 +170,11 @@ async function probeOf(
   package: string;
   registry?: string | undefined;
   force?: boolean;
+  check?: boolean;
   cacheDir?: string | undefined;
   prefix?: string | undefined;
 }): Promise<PluginRelease | undefined> {
-  const { shell, package: pkg, registry, force = false, cacheDir, prefix } = options;
+  const { shell, package: pkg, registry, force = false, check = true, cacheDir, prefix } = options;
   if (pkg === "") return undefined;
 
   const ledger = await runShell(
@@ -189,7 +191,7 @@ async function probeOf(
       ? undefined
       : registry.trim();
   const latest =
-    source === undefined
+    source === undefined || !check
       ? undefined
       : await latestVersionOf(latestCache, { shell, name: pkg, registry: source, force, cacheDir });
 

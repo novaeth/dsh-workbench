@@ -22,10 +22,16 @@ export function readBundleInspection(spec: string, registry?: string): Promise<A
   return apiGet<BundleInspectionPayload>(BUNDLE_INSPECT_ROUTE, query);
 }
 
-export function readModuleVersions(force = false): Promise<ApiResponse<ModuleVersionsPayload>> {
-  return apiGet<ModuleVersionsPayload>(MODULE_VERSIONS_ROUTE, force ? { force: '1' } : undefined);
+export function readModuleVersions(force = false, check = true): Promise<ApiResponse<ModuleVersionsPayload>> {
+  return apiGet<ModuleVersionsPayload>(MODULE_VERSIONS_ROUTE, {
+    ...(force ? { force: '1' } : {}),
+    ...(check ? {} : { check: '0' }),
+  });
 }
 
-export function readInstalledPlugins(force = false): Promise<ApiResponse<InstalledPluginsPayload>> {
-  return apiGet<InstalledPluginsPayload>(INSTALLED_PLUGINS_ROUTE, force ? { force: '1' } : undefined);
+export function readInstalledPlugins(force = false, check = true): Promise<ApiResponse<InstalledPluginsPayload>> {
+  return apiGet<InstalledPluginsPayload>(INSTALLED_PLUGINS_ROUTE, {
+    ...(force ? { force: '1' } : {}),
+    ...(check ? {} : { check: '0' }),
+  });
 }

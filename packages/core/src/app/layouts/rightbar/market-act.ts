@@ -8,6 +8,7 @@ import { updateVerdictOf, updateVerdictText, type UpdatedModule } from './market
 import { updateStuckCardOf } from './failure-card-text';
 import { holdOf, type HeldRow, type Pending } from './market-view-text';
 import { REMOVAL_ACTIONS, awaitsReadBack, swapUntil } from './market-settle';
+import type { MarketReloadOptions } from '../market/use-market-reload';
 
 const STEADY_ACTIONS: ReadonlySet<MarketRowAction> = new Set<MarketRowAction>([
   'update',
@@ -62,7 +63,7 @@ export interface MarketActOptions {
   readonly rowOf: (id: string) => MarketRow | undefined;
   readonly seats: MarketActSeats;
   readonly send: (body: Record<string, unknown>) => Promise<WriteOutcome<unknown>>;
-  readonly onChanged: (options?: { readonly force?: boolean }) => void;
+  readonly onChanged: (options?: MarketReloadOptions) => void;
 }
 
 export function marketActOf(options: MarketActOptions): (id: string, action: MarketRowAction) => Promise<void> {

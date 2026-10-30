@@ -218,7 +218,10 @@ describe('市场页头：动作在飞，页头与列表里的钮一起禁用', (
     expect(header).toContain("t('panels.market.checkAll')");
     expect(page).toContain('checking={checking || versionsAllChecking}');
     expect(page).toContain('useMarketReload({');
-    expect(reload).toContain('reloadVersions({ force: true, fresh: true, scope: part })');
+    expect(page).toContain('onReload={recheck}');
+    expect(reload).toContain('check: true,');
+    expect(reload).toContain('check({ force: true });');
+    expect(reload).toContain('check({ force: true, scope: part })');
     expect(view).toContain('part="modules"');
     expect(view).toContain('part="plugins"');
     expect(section).toContain('latestCheck={latest}');

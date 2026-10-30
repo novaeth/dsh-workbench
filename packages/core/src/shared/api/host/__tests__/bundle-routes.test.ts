@@ -447,6 +447,25 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
     });
   }
 
+  it('★ 只看已安装那一趟（check=0）：一个 npm view 都不发，也不给 latest 与「问不到」', async () => {
+    const { dir, cleanup } = profileWith('0.1.2');
+    const { shell, commands } = fakeShell({ '@a/mod': '0.2.0' });
+    const ctx = fakeContext({ ...MANAGER }, dir);
+
+    const result = (await moduleVersionsHandler(ctx, shell as never)(
+      new URLSearchParams('check=0'),
+    )) as { modules: { unit: string; installed: string; latest?: string; latestUnavailable?: string }[] };
+
+    expect(commands.filter((line) => line.includes('npm view'))).toEqual([]);
+    expect(result.modules).toMatchObject([
+      { unit: 'mod', pkg: '@a/mod', installed: '0.1.2' },
+      { unit: 'other', pkg: '@a/other', installed: '0.1.2' },
+    ]);
+    expect(result.modules[0]?.latest).toBeUndefined();
+    expect(result.modules[0]?.latestUnavailable).toBeUndefined();
+    cleanup();
+  });
+
   it('★ 新版要更新的协议 → 标 latestBlocked', async () => {
     const { dir, cleanup } = profileWith('0.1.2');
     const { shell } = fakeShell({ '@a/mod': '0.2.0' }, { '@a/mod': declarationOf('mod', 4) });

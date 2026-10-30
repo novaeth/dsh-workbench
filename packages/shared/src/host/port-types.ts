@@ -76,6 +76,7 @@ export interface SupplyProbeReleaseOptions {
   readonly package: string;
   readonly registry?: string | undefined;
   readonly force?: boolean;
+  readonly check?: boolean;
 }
 
 export interface EnvSupplyPort {

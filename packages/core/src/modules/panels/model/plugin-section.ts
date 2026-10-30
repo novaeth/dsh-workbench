@@ -9,16 +9,17 @@ export async function installedPlugins(options: {
   readonly ledger: PluginLedger;
   readonly shell?: DshShell | undefined;
   readonly force?: boolean;
+  readonly check?: boolean;
   readonly supply?: SupplyPort | undefined;
 }): Promise<readonly InstalledPlugin[]> {
-  const { ledger, shell, force = false } = options;
+  const { ledger, shell, force = false, check = true } = options;
   const supply = options.supply ?? requireSupply();
   const rows: InstalledPlugin[] = [];
   for (const entry of ledger.list()) {
     const release =
       shell === undefined || entry.local === true || entry.registry === undefined
         ? undefined
-        : await supply.probeRelease({ shell, package: entry.package, registry: entry.registry, force });
+        : await supply.probeRelease({ shell, package: entry.package, registry: entry.registry, force, check });
     rows.push({
       pkg: entry.package,
       ...(entry.name === undefined ? {} : { name: entry.name }),
@@ -49,6 +50,7 @@ export function pluginRoutes(options: {
         ...(options.shell === undefined ? {} : { shell: options.shell }),
         ...(options.supply === undefined ? {} : { supply: options.supply }),
         force: param(search, 'force') === '1',
+        check: param(search, 'check') !== '0',
       });
       const payload: InstalledPluginsPayload = { plugins };
       return { ok: true, ...payload };

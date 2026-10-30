@@ -110,6 +110,7 @@ async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: 
   readonly shell: DshShell | undefined;
   readonly fallback: string | undefined;
   readonly force: boolean;
+  readonly check: boolean;
   readonly running?: string | undefined;
   readonly followUp?: WorkbenchMigrationFollowUp | undefined;
   readonly logger?: { warn?(message: string): void } | undefined;
@@ -120,7 +121,7 @@ async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: 
   const registry = read.registry ?? input.fallback;
   const shell = input.shell;
   const queried =
-    read.local === true || shell === undefined || registry === undefined
+    read.local === true || !input.check || shell === undefined || registry === undefined
       ? undefined
       : await supply.latestVersion({ shell, name: read.pkg, registry, force: input.force });
   const latest =
@@ -170,6 +171,7 @@ export function moduleVersionsHandler(
         .map((one) => [one.unit, one.reasons]),
     );
     const force = param(search, 'force') === '1';
+    const check = param(search, 'check') !== '0';
     const fallback = (await manager.registries())?.resolved ?? undefined;
     const dependencyOf = dependencyReader(dir);
     const modules: ModuleVersion[] = await Promise.all(
@@ -179,7 +181,7 @@ export function moduleVersionsHandler(
         const registry = fromRegistry ? (module.registry ?? fallback) : undefined;
         const spec = dependencyOf(module.pkg);
         const latest =
-          local || !fromRegistry || shell === undefined || registry === undefined
+          local || !fromRegistry || !check || shell === undefined || registry === undefined
             ? undefined
             : await supply.latestVersion({ shell, name: module.pkg, registry, force });
         const raw = supply.moduleDeclarationOf(dir, module.pkg);
@@ -214,13 +216,13 @@ export function moduleVersionsHandler(
             ? { local: true, latestUnavailable: 'local' as const }
             : latest !== undefined
               ? {}
-              : {
-                  latestUnavailable: !fromRegistry
-                    ? ('not-registry' as const)
-                    : registry === undefined
-                      ? ('no-registry' as const)
-                      : ('probe-failed' as const),
-                }),
+              : !fromRegistry
+                ? { latestUnavailable: 'not-registry' as const }
+                : registry === undefined
+                  ? { latestUnavailable: 'no-registry' as const }
+                  : check
+                    ? { latestUnavailable: 'probe-failed' as const }
+                    : {}),
           ...(refused === undefined ? {} : { refused }),
           ...(spec === undefined ? {} : { spec }),
           ...(registry === undefined ? {} : { registry }),
@@ -245,6 +247,7 @@ export function moduleVersionsHandler(
       shell,
       fallback,
       force,
+      check,
       ...(running === undefined ? {} : { running }),
       ...(followUp === undefined ? {} : { followUp }),
       logger: ctx.logger,

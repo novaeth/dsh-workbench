@@ -8,6 +8,7 @@ import {
   bumpModuleVersionsEpoch,
   moduleVersionsValue,
   resetModuleVersions,
+  runInstalledRead,
   runModuleVersionsRead,
 } from '../use-module-versions';
 
@@ -23,6 +24,11 @@ vi.mock('@/shared/hooks/market-queries', () => ({
 const versions = (installed: string): ApiResponse<ModuleVersionsPayload> => ({
   ok: true,
   modules: [{ unit: 'm', pkg: '@a/m', installed }],
+});
+
+const versionsWithLatest = (installed: string, latest: string): ApiResponse<ModuleVersionsPayload> => ({
+  ok: true,
+  modules: [{ unit: 'm', pkg: '@a/m', installed, latest }],
 });
 
 const noPlugins: ApiResponse<InstalledPluginsPayload> = { ok: true, plugins: [] };
@@ -228,5 +234,111 @@ describe('分区检查：页头查全部，两段各查各的', () => {
 
     expect(moduleVersionsValue().modulesCheck.failed).toBe(true);
     expect(moduleVersionsValue().pluginsCheck.failed).toBe(false);
+  });
+});
+
+describe('首屏那一趟（已安装）与「检测更新」那一趟是两趟', () => {
+  it('★ 已安装那一趟不问源（check=0），落地就把骨架收起来：不转圈、不写「最近检查」', async () => {
+    vi.mocked(readModuleVersions).mockResolvedValueOnce(versions('0.1.1'));
+
+    const run = runInstalledRead();
+    expect(moduleVersionsValue().read).toBe(false);
+    expect(moduleVersionsValue().allChecking).toBe(false);
+
+    await run;
+
+    expect(readModuleVersions).toHaveBeenCalledWith(false, false);
+    expect(readInstalledPlugins).toHaveBeenCalledWith(false, false);
+    expect(moduleVersionsValue().read).toBe(true);
+    expect(moduleVersionsValue().modules?.[0]?.installed).toBe('0.1.1');
+    expect(moduleVersionsValue().allChecking).toBe(false);
+    expect(moduleVersionsValue().modulesCheck.checking).toBe(false);
+    expect(moduleVersionsValue().modulesCheck.checkedAt).toBeNull();
+  });
+
+  it('★ 检测更新那一趟才问源、才转圈、才写「最近检查」', async () => {
+    const read = deferred<ApiResponse<ModuleVersionsPayload>>();
+    vi.mocked(readModuleVersions).mockReturnValueOnce(read.promise);
+
+    const run = runModuleVersionsRead(true, true);
+    expect(moduleVersionsValue().allChecking).toBe(true);
+
+    read.resolve(versionsWithLatest('0.1.1', '0.1.2'));
+    await run;
+
+    expect(readModuleVersions).toHaveBeenCalledWith(true, true);
+    expect(moduleVersionsValue().modules?.[0]?.latest).toBe('0.1.2');
+    expect(moduleVersionsValue().modulesCheck.checkedAt).not.toBeNull();
+  });
+
+  it('★ 进页面两趟同时起飞时，已安装那一趟先落地就要把骨架收起来（不许被后起的检测挤掉）', async () => {
+    const data = deferred<ApiResponse<ModuleVersionsPayload>>();
+    const check = deferred<ApiResponse<ModuleVersionsPayload>>();
+    vi.mocked(readModuleVersions).mockReturnValueOnce(data.promise).mockReturnValueOnce(check.promise);
+
+    const first = runInstalledRead();
+    const second = runModuleVersionsRead(true, true);
+
+    data.resolve(versions('0.1.1'));
+    await first;
+    expect(moduleVersionsValue().read).toBe(true);
+    expect(moduleVersionsValue().modules?.[0]?.installed).toBe('0.1.1');
+    expect(moduleVersionsValue().modulesCheck.checkedAt).toBeNull();
+
+    check.resolve(versionsWithLatest('0.1.1', '0.1.2'));
+    await second;
+    expect(moduleVersionsValue().modules?.[0]?.latest).toBe('0.1.2');
+    expect(moduleVersionsValue().modulesCheck.checkedAt).not.toBeNull();
+  });
+
+  it('★ 已安装那一趟不许把上一次检测到的「有新版」擦掉，也不动那个时刻', async () => {
+    vi.mocked(readModuleVersions).mockResolvedValueOnce(versionsWithLatest('0.1.1', '0.1.2'));
+    await runModuleVersionsRead(true, true);
+    const at = moduleVersionsValue().modulesCheck.checkedAt;
+
+    vi.mocked(readModuleVersions).mockResolvedValueOnce(versions('0.1.1'));
+    await runInstalledRead();
+
+    expect(moduleVersionsValue().modules?.[0]).toMatchObject({ installed: '0.1.1', latest: '0.1.2' });
+    expect(moduleVersionsValue().modulesCheck.checkedAt).toBe(at);
+  });
+});
+
+describe('更新挂起期间每 800ms 一趟的落地轮询（只读已安装）', () => {
+  it('★ 它照样把新版本换上，但不点亮「正在检查…」，也不把「最近检查」推成「刚刚」', async () => {
+    vi.mocked(readModuleVersions).mockResolvedValueOnce(versions('0.1.1'));
+    await runModuleVersionsRead(true, true);
+    const at = moduleVersionsValue().modulesCheck.checkedAt;
+    const pluginsAt = moduleVersionsValue().pluginsCheck.checkedAt;
+    expect(at).not.toBeNull();
+
+    vi.mocked(readModuleVersions).mockResolvedValueOnce(versions('0.1.2'));
+    const poll = runInstalledRead();
+    expect(moduleVersionsValue().allChecking).toBe(false);
+    expect(moduleVersionsValue().modulesCheck.checking).toBe(false);
+
+    await poll;
+
+    expect(moduleVersionsValue().modules?.[0]?.installed).toBe('0.1.2');
+    expect(moduleVersionsValue().modulesCheck.checking).toBe(false);
+    expect(moduleVersionsValue().modulesCheck.checkedAt).toBe(at);
+    expect(moduleVersionsValue().pluginsCheck.checkedAt).toBe(pluginsAt);
+  });
+
+  it('★ 连着一串轮询也不许把「正在检查…」和「最近检查：刚刚」来回拨', async () => {
+    vi.mocked(readModuleVersions).mockResolvedValueOnce(versions('0.1.1'));
+    await runModuleVersionsRead(true, true);
+    const at = moduleVersionsValue().modulesCheck.checkedAt;
+
+    const seen: string[] = [];
+    for (let tick = 0; tick < 4; tick += 1) {
+      vi.mocked(readModuleVersions).mockResolvedValueOnce(versions('0.1.1'));
+      const poll = runInstalledRead();
+      seen.push(moduleVersionsValue().modulesCheck.checking ? 'checking' : 'quiet');
+      await poll;
+      seen.push(moduleVersionsValue().modulesCheck.checkedAt === at ? 'quiet' : 'checking');
+    }
+
+    expect(seen).toEqual(['quiet', 'quiet', 'quiet', 'quiet', 'quiet', 'quiet', 'quiet', 'quiet']);
   });
 });

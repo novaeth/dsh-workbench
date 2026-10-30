@@ -76,6 +76,20 @@ describe('「已安装 opencli 插件」那一段的数据：台账说了算', (
     );
   });
 
+  it('★ 只看已安装那一趟（check=false）：照旧发 npm ls 拿版本，但一个 npm view 都不发', async () => {
+    const ledger = rig();
+    ledger.intend({ package: PKG, registry: REGISTRY });
+    ledger.complete(PKG, 'inventory');
+    putPlugin('inventory');
+    const fake = shellOf('1.0.24', '1.0.25');
+
+    const rows = await installedPlugins({ ledger, shell: fake.shell, check: false });
+
+    expect(rows).toMatchObject([{ pkg: PKG, installed: '1.0.24' }]);
+    expect(rows[0]?.latest).toBeUndefined();
+    expect(fake.commands().some((line) => line.includes('npm view'))).toBe(false);
+  });
+
   it('★ 同一个包问两遍只问一次新版（走 release.ts 那份 TTL 缓存，不新写一个查版本器）', async () => {
     const ledger = rig();
     ledger.intend({ package: PKG, registry: REGISTRY });

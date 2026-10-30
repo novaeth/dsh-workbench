@@ -53,6 +53,7 @@ import { usePublishMarketBusy } from './market-busy';
 import { useMarketDefault } from './use-market-default';
 import { SectionCheck } from '../market/section-check';
 import type { VersionsCheck, VersionsPart } from '../market/use-module-versions';
+import type { MarketReloadOptions } from '../market/use-market-reload';
 
 const NO_CHECK: VersionsCheck = { checking: false, failed: false, checkedAt: null };
 const NO_UNITS: ReadonlySet<string> = new Set();
@@ -65,7 +66,7 @@ export interface MarketViewProps {
   readonly capabilities: CapabilityMap | null;
   readonly runtimePluginMarket?: boolean | undefined;
   readonly freshness: MarketFreshness;
-  readonly onChanged: (options?: { readonly force?: boolean }) => void;
+  readonly onChanged: (options?: MarketReloadOptions) => void;
   readonly onPending?: ((pending: boolean) => void) | undefined;
   readonly updates?: ModuleUpdateMap | undefined;
   readonly modulesCheck?: VersionsCheck | undefined;
