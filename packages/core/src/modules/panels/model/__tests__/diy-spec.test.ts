@@ -65,7 +65,6 @@ describe('这把工具', () => {
     expect(built.commands).toHaveLength(1);
     expect(built.commands[0]).toContain('--help');
     expect(built.commands[0]).toContain("'inventory' 'publish'");
-    expect(built.commands[0]).toContain('OPENCLI_WINDOW=background');
   });
 
   it('回的不是 JSON（老版本 / 报错原文）也照样把 stdout 交出去，不假装有 spec', async () => {

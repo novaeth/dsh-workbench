@@ -15,7 +15,7 @@ const SEAM_TITLE = '★ 一级命令不走执行缝：市场索引 / 文档 / �
 
 const SANDBOX_TITLE = '★ 沙箱拒绝单独成一种结论：EPERM → sandbox，界面有一句话，不再是 git-network';
 
-const NO_PROMPT_TITLE = '★ 自己起 git 也禁交互：GIT_TERMINAL_PROMPT / GIT_ASKPASS / SSH_ASKPASS 一个不少';
+const NO_PROMPT_TITLE = '★ 自己起 git 也禁交互：终端提示与 SSH 交互一律关（ASKPASS 只在 POSIX 上指 /usr/bin/false）';
 
 function seamHits() {
   const hits = [];
@@ -46,7 +46,7 @@ function noPromptGaps() {
   const gaps = [];
   const runner = read(pkg('src/shared/api/host/git-process.ts'));
   const exec = read(pkg('src/shared/api/host/git-exec.ts'));
-  if (!runner.includes('GIT_NO_PROMPT_ENV')) gaps.push('git-process 没用共用的禁交互环境');
+  if (!runner.includes('gitNoPromptProcessEnv')) gaps.push('git-process 没用共用的禁交互环境');
   for (const name of ['GIT_TERMINAL_PROMPT', 'GIT_ASKPASS', 'SSH_ASKPASS_REQUIRE']) {
     if (!exec.includes(name)) gaps.push(`git-exec 少了 ${name}`);
   }

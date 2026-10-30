@@ -149,6 +149,7 @@ export interface DshShellExecution {
 
 /**
  * dsh 的 shell 服务：先 resolve 出执行规格，再把它原样喂给 execute。
+ * `env` 是**叠加**在宿主环境上的变量覆盖（不是替换），所以设一个变量不必自己拼 shell 语法。
  */
 export interface DshShell {
   resolve(request: {
@@ -158,6 +159,7 @@ export interface DshShell {
     onExpiry?: 'kill' | 'none';
     stdoutMaxBytes?: number;
     signal?: AbortSignal;
+    env?: Readonly<Record<string, string>>;
   }): unknown;
   execute(spec: unknown): Promise<DshShellExecution>;
 }

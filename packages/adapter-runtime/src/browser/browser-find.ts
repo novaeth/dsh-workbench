@@ -1,7 +1,7 @@
 import type { DshShell } from '@dsh-workbench/shared';
 import { parseJsonLoose } from '@dsh-workbench/shared/host';
 import { BROWSER_READ_SESSION } from './browser-read.js';
-import { backgroundLine } from '../cli/index.js';
+import { backgroundLine, OPENCLI_WINDOW_ENV } from '../cli/index.js';
 import { runShell } from '@dsh-workbench/shared/host';
 
 const DEFAULT_TIMEOUT_MS = 25000;
@@ -136,7 +136,7 @@ async function currentUrl(
 ): Promise<string> {
   const line = backgroundLine(command, ['browser', session, 'get', 'url', '--window', 'background']);
   try {
-    const result = await runShell(shell, line, { timeoutMs: URL_TIMEOUT_MS });
+    const result = await runShell(shell, line, { timeoutMs: URL_TIMEOUT_MS, env: OPENCLI_WINDOW_ENV });
     if (result.exitCode !== 0) return '';
     return urlOf(result.stdout);
   } catch {
@@ -175,7 +175,7 @@ async function findOnce(
     '--window',
     'background',
   ]);
-  const result = await runShell(shell, line, { timeoutMs });
+  const result = await runShell(shell, line, { timeoutMs, env: OPENCLI_WINDOW_ENV });
   if (result.timedOut) {
     return { kind: 'timeout', detail: `没在 ${Math.round(timeoutMs / 1000)} 秒内返回` };
   }
@@ -200,7 +200,7 @@ async function openOnce(
   const line = backgroundLine(command, ['browser', session, 'open', url, '--window', 'background']);
   let result: Awaited<ReturnType<typeof runShell>>;
   try {
-    result = await runShell(shell, line, { timeoutMs });
+    result = await runShell(shell, line, { timeoutMs, env: OPENCLI_WINDOW_ENV });
   } catch (error) {
     return error instanceof Error ? error.message : String(error);
   }

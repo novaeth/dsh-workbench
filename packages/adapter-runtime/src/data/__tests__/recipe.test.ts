@@ -21,7 +21,7 @@ describe('DataReader.request · 配方读', () => {
 
     expect(result).toEqual({ ok: true, data: { balance: 3 } });
     expect(fake.commands()[0]).toContain("'browser' 'workbench-read' 'eval'");
-    expect(fake.commands()[0]).toContain('OPENCLI_WINDOW=background');
+    expect(fake.calls[0]?.env).toEqual({ OPENCLI_WINDOW: 'background' });
   });
 
   it('text 响应 → 解包成字符串', async () => {

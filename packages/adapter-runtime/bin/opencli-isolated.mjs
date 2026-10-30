@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { homedir, userInfo } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -10,7 +10,7 @@ const workbenchHome = process.env.DSH_WORKBENCH_HOME?.trim() || join(dshHome, 'w
 const root = join(workbenchHome, 'opencli');
 const isolatedHome = join(root, 'home');
 const main = join(root, 'toolchain', 'node_modules', '@jackwener', 'opencli', 'dist', 'src', 'main.js');
-const realHome = process.env.HOME || process.env.USERPROFILE || homedir();
+const realHome = userInfo().homedir;
 const preload = join(dirname(fileURLToPath(import.meta.url)), 'opencli-node-mode.cjs');
 
 mkdirSync(isolatedHome, { recursive: true });

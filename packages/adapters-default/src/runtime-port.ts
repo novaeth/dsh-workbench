@@ -60,13 +60,13 @@ export function createRuntimePort(): RuntimePort {
           pluginArea: { zh: 'opencli 的插件区', en: 'the opencli plugin area' },
         },
         installHint: {
-          zh: '确认 opencli 已经装好、在终端里能直接运行（which opencli）。',
-          en: 'Make sure opencli is installed and runs from your terminal (which opencli).',
+          zh: '确认 opencli 已经装好、在终端里能直接运行。',
+          en: 'Make sure opencli is installed and runs from your terminal.',
         },
         diagnose: {
           exec: {
-            zh: '确认 opencli 已经装好、在终端里能直接运行（which opencli）。',
-            en: 'Make sure opencli is installed and runs from your terminal (which opencli).',
+            zh: '确认 opencli 已经装好、在终端里能直接运行。',
+            en: 'Make sure opencli is installed and runs from your terminal.',
           },
           login: {
             zh: '在工作台的浏览器桥里登录一次；登录态会一直留着。',

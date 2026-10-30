@@ -11,8 +11,7 @@ export const opencliSurface: RuntimeCommandSurface = {
   invoke: (site, command) => (command === undefined || command === '' ? `opencli ${site}` : `opencli ${site} ${command}`),
   help: (site) => `opencli ${site} --help`,
   authorHint: 'opencli skills read opencli-adapter-author',
-  background: (command, argv) =>
-    [quoteShellArg('env'), quoteShellArg('OPENCLI_WINDOW=background'), quoteShellArg(command), ...argv.map(quoteShellArg)].join(' '),
+  background: (command, argv) => [quoteShellArg(command), ...argv.map(quoteShellArg)].join(' '),
 };
 
 export function testAdaptersWith(paths: {

@@ -42,9 +42,14 @@ async function settleWithin<T>(work: Promise<T>, limitMs: number): Promise<T | n
 export async function runShell(
   shell: DshShell,
   command: string,
-  options: { workdir?: string; timeoutMs?: number; signal?: AbortSignal } = {},
+  options: {
+    workdir?: string;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+    env?: Readonly<Record<string, string>>;
+  } = {},
 ): Promise<ShellResult> {
-  const { workdir, timeoutMs = GIT_TIMEOUT_MS, signal } = options;
+  const { workdir, timeoutMs = GIT_TIMEOUT_MS, signal, env } = options;
 
   const spec = shell.resolve({
     command,
@@ -53,6 +58,7 @@ export async function runShell(
     onExpiry: 'kill',
     stdoutMaxBytes: DEFAULT_MAX_BYTES,
     ...(signal === undefined ? {} : { signal }),
+    ...(env === undefined ? {} : { env }),
   });
 
   const settled = await settleWithin(

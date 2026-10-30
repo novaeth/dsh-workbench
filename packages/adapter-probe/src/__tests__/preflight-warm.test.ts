@@ -35,8 +35,8 @@ describe('启动预热站点登录态（ADR-0024）', () => {
     ]);
     expect(snapshot.steps[2]?.detail).toBe('2');
     expect(fake.commands().slice(2)).toEqual([
-      "'env' 'OPENCLI_WINDOW=background' 'opencli' 'inventory' 'enterprises' --site-session persistent -f json",
-      "'env' 'OPENCLI_WINDOW=background' 'opencli' 'demo' 'issues' '--team' 'example-team' '--project' 'example-project' '--pageSize' '1' --site-session persistent -f json",
+      "'opencli' 'inventory' 'enterprises' --site-session persistent -f json",
+      "'opencli' 'demo' 'issues' '--team' 'example-team' '--project' 'example-project' '--pageSize' '1' --site-session persistent -f json",
     ]);
     expect(fake.peak()).toBe(2);
   });
@@ -106,7 +106,7 @@ describe('启动预热站点登录态（ADR-0024）', () => {
     expect(fake.commands()).toEqual([
       'opencli --version',
       'opencli doctor',
-      "'env' 'OPENCLI_WINDOW=background' 'opencli' 'inventory' 'enterprises' --site-session persistent -f json",
+      "'opencli' 'inventory' 'enterprises' --site-session persistent -f json",
       'opencli doctor',
     ]);
   });
@@ -133,7 +133,7 @@ describe('启动预热站点登录态（ADR-0024）', () => {
     expect(fake.commands()).toEqual([
       'opencli --version',
       'opencli doctor',
-      "'env' 'OPENCLI_WINDOW=background' 'opencli' 'inventory' 'enterprises' --site-session persistent -f json",
+      "'opencli' 'inventory' 'enterprises' --site-session persistent -f json",
       'opencli doctor',
     ]);
   });

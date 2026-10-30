@@ -7,6 +7,7 @@ export interface ShellCall {
   timeoutMs?: number;
   onExpiry?: string;
   stdoutMaxBytes?: number;
+  env?: Readonly<Record<string, string>>;
 }
 
 export interface ShellReply {

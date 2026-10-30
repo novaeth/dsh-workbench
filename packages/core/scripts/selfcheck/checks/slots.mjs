@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { read, pkg, SRC } from '../lib.mjs';
@@ -230,7 +231,7 @@ export const checks = [
     run(ctx, report) {
 
       ctx.dshConversationBundle = (() => {
-        const home = process.env.DSH_HOME ?? join(process.env.HOME ?? '', '.dsh');
+        const home = process.env.DSH_HOME ?? join(homedir(), '.dsh');
         const roots = [
           join(dirname(dirname(process.execPath)), 'lib', 'node_modules'),
           join(dirname(dirname(process.execPath)), 'node_modules'),

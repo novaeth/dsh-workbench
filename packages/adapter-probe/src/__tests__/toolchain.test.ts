@@ -110,14 +110,14 @@ describe('本地 npm', () => {
     expect(localNpmCache(root)).toBe(join(root, 'npm-cache'));
   });
 
-  it('★ win32 用双引号包路径，不再发 POSIX 单引号', () => {
+  it('★ win32 按 pwsh 的字面量包路径（单引号），不留 POSIX 那套反斜杠逃逸', () => {
     const root = tempRoot();
     const command = localNpmInstallCommand(root, desktopPnpm, (path) => path === pnpmCjs, 'win32');
 
-    expect(command).toContain(`"${pnpmCjs}"`);
-    expect(command).toContain(`--dir "${join(root, 'npm')}"`);
-    expect(command).toContain(`--store-dir "${join(root, 'npm-store')}"`);
-    expect(command).not.toContain(`'${pnpmCjs}'`);
+    expect(command).toContain(`'${pnpmCjs}'`);
+    expect(command).toContain(`--dir '${join(root, 'npm')}'`);
+    expect(command).toContain(`--store-dir '${join(root, 'npm-store')}'`);
+    expect(command).not.toContain(`"${pnpmCjs}"`);
   });
 
   it('web 不生成本地 npm 命令', () => {
@@ -201,13 +201,13 @@ describe('本地 pnpm 10', () => {
     expect(command).toContain(`--store-dir '${join(root, 'pnpm-store')}'`);
   });
 
-  it('★ win32 的 pnpm 安装命令也用双引号', () => {
+  it('★ win32 的 pnpm 安装命令也按 pwsh 的字面量包路径', () => {
     const root = tempRoot();
     const command = localPnpmInstallCommand(root, desktopPnpm, (path) => path === pnpmCjs, 'win32');
 
-    expect(command).toContain(`"${pnpmCjs}"`);
-    expect(command).toContain(`--dir "${join(root, 'pnpm-10')}"`);
-    expect(command).toContain(`--store-dir "${join(root, 'pnpm-store')}"`);
+    expect(command).toContain(`'${pnpmCjs}'`);
+    expect(command).toContain(`--dir '${join(root, 'pnpm-10')}'`);
+    expect(command).toContain(`--store-dir '${join(root, 'pnpm-store')}'`);
   });
 
   it('web 不生成本地 pnpm 命令', () => {

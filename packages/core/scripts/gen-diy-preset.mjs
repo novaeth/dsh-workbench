@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -67,7 +68,7 @@ function standardPresetPath() {
 
   }
 
-  const home = process.env.DSH_HOME ?? join(process.env.HOME ?? '', '.dsh');
+  const home = process.env.DSH_HOME ?? join(homedir(), '.dsh');
   const profile = process.env.WORKBENCH_PROFILE ?? 'workbench';
   candidates.push(join(home, 'profiles', profile, 'node_modules', '@deepseek-ai', 'dsh-web-app', 'presets', 'standard.patch.yml'));
 

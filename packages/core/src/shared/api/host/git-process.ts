@@ -1,5 +1,5 @@
 import { execa } from 'execa';
-import { GIT_NO_PROMPT_ENV } from './git-exec.js';
+import { gitNoPromptProcessEnv } from './git-exec.js';
 
 export interface GitRunResult {
   readonly exitCode: number | null;
@@ -21,7 +21,7 @@ const DEFAULT_MAX_BYTES = 8 * 1024 * 1024;
 export const runGitProcess: GitRunner = async (args, options = {}) => {
   const result = await execa('git', [...args], {
     ...(options.cwd === undefined ? {} : { cwd: options.cwd }),
-    env: { ...process.env, ...GIT_NO_PROMPT_ENV },
+    env: gitNoPromptProcessEnv(),
     stdin: 'ignore',
     reject: false,
     ...(options.timeoutMs === undefined ? {} : { timeout: options.timeoutMs }),

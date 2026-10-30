@@ -10,10 +10,12 @@ interface Step {
 
 function fakeShell(plan: readonly Step[]) {
   const commands: string[] = [];
+  const calls: Array<{ command: string; env?: Readonly<Record<string, string>> }> = [];
   let index = 0;
   const shell = {
-    resolve(request: { command: string }) {
+    resolve(request: { command: string; env?: Readonly<Record<string, string>> }) {
       commands.push(request.command);
+      calls.push(request);
       return request;
     },
     async execute() {
@@ -30,7 +32,7 @@ function fakeShell(plan: readonly Step[]) {
       };
     },
   };
-  return { shell: shell as never, commands };
+  return { shell: shell as never, commands, calls };
 }
 
 const FAST = { retryMs: 1, settleMs: 1, timeoutMs: 50 } as const;
@@ -194,16 +196,16 @@ describe('browserRead · 命令这一层的问题', () => {
 });
 
 function backgroundless(commands: readonly string[]): readonly string[] {
-  return commands
-    .filter((one) => one.includes("'browser'"))
-    .filter(
-      (one) => !one.includes("'--window' 'background'") || !one.includes("'OPENCLI_WINDOW=background'"),
-    );
+  return commands.filter((one) => one.includes("'browser'")).filter((one) => !one.includes("'--window' 'background'"));
+}
+
+function envless(calls: readonly { env?: Readonly<Record<string, string>> }[]): number {
+  return calls.filter((call) => call.env?.OPENCLI_WINDOW !== 'background').length;
 }
 
 describe('browserRead · 后台静默（每一拍都不许抢焦点）', () => {
   it('不在站点上那一趟：eval → open → eval 三条全带', async () => {
-    const { shell, commands } = fakeShell([
+    const { shell, commands, calls } = fakeShell([
       { stdout: JSON.stringify({ ok: false, code: 'not-on-site' }) },
       {},
       { stdout: JSON.stringify({ ok: true, n: 1 }) },
@@ -213,10 +215,11 @@ describe('browserRead · 后台静默（每一拍都不许抢焦点）', () => {
     expect(out.ok).toBe(true);
     expect(commands.filter((one) => one.includes("'browser'"))).toHaveLength(3);
     expect(backgroundless(commands)).toEqual([]);
+    expect(envless(calls)).toBe(0);
   });
 
   it('命令失败重试那一拍也带', async () => {
-    const { shell, commands } = fakeShell([
+    const { shell, commands, calls } = fakeShell([
       { exitCode: 1, stderr: 'boom' },
       { stdout: JSON.stringify({ ok: true }) },
     ]);
@@ -224,5 +227,6 @@ describe('browserRead · 后台静默（每一拍都不许抢焦点）', () => {
 
     expect(commands.filter((one) => one.includes("'eval'"))).toHaveLength(2);
     expect(backgroundless(commands)).toEqual([]);
+    expect(envless(calls)).toBe(0);
   });
 });

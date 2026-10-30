@@ -1,7 +1,8 @@
 import { existsSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
 
-const HOME = process.env.DSH_HOME ?? join(process.env.HOME ?? '', '.dsh');
+const HOME = process.env.DSH_HOME ?? join(homedir(), '.dsh');
 const PROFILE = process.env.WORKBENCH_PROFILE ?? 'workbench';
 const PORT = process.env.WORKBENCH_PORT ?? '3081';
 const BASE = `http://127.0.0.1:${PORT}/workbench/api`;

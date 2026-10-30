@@ -71,7 +71,7 @@ describe('clip 在本地裁：CSS px × dpr，越界就退回整屏', () => {
 describe('★★ 端到端：命令形状是 browser workbench <verb>，返回体是 opencli 原样', () => {
   const pageThen = (value: string) => (line: string) => (line.includes("'eval'") ? { stdout: PAGE } : { stdout: value });
 
-  it('★★ 每条都钉死会话 workbench、带 --window background 与 OPENCLI_WINDOW=background', async () => {
+  it('★★ 每条都钉死会话 workbench，并带 --window background（窗口模式走宿主环境变量，不在命令行里）', async () => {
     const rig = browserRig({ answer: pageThen('{"ok":true}') });
     const outcome = await run(rig, DIY_STATE_TOOL, { unit: 'demo', args: ['--source', 'ax'] });
 
@@ -82,7 +82,7 @@ describe('★★ 端到端：命令形状是 browser workbench <verb>，返回�
     expect(rig.commands[1]).toContain(
       "'browser' 'workbench' 'state' '--source' 'ax' '--window' 'background'",
     );
-    expect(rig.commands[1]).toContain('OPENCLI_WINDOW=background');
+    expect(rig.commands[1]).toContain("'--window' 'background'");
     expect(rig.commands[1]).not.toContain('--session');
   });
 

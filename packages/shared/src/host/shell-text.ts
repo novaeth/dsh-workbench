@@ -1,12 +1,26 @@
 /**
- * 按目标平台把一个值裹成 shell 字面量：POSIX 用单引号，win32 用双引号（cmd 与 PowerShell 都认）。
+ * 一台机器上跑命令的那种 shell：POSIX 系（sh / bash / zsh），或 dsh 在 Windows 上用的 pwsh。
+ */
+export type ShellKind = 'posix' | 'pwsh';
+
+/**
+ * 按目标平台判 shell 种类：win32 是 pwsh（dsh 的 Windows 执行器就是 PowerShell），其余是 POSIX。
+ * @param platform - 目标平台，默认当前 `process.platform`。
+ * @returns `'pwsh'` 或 `'posix'`。
+ */
+export function shellKindOf(platform: NodeJS.Platform = process.platform): ShellKind {
+  return platform === 'win32' ? 'pwsh' : 'posix';
+}
+
+/**
+ * 按目标平台把一个值裹成 shell 字面量：POSIX 用单引号并按 `'\''` 逃逸，pwsh 也用单引号但按 `''` 逃逸。
  * @param value - 任意值；不是字符串的先 `String()`。
  * @param platform - 目标平台，默认当前 `process.platform`。
  * @returns 可安全拼进该平台 shell 命令的一段文本；含空格 / 元字符的值不会被当成语法。
  */
 export function quoteShellArgFor(value: unknown, platform: NodeJS.Platform = process.platform): string {
   const text = String(value);
-  if (platform === 'win32') return `"${text.replace(/"/g, '\\"')}"`;
+  if (shellKindOf(platform) === 'pwsh') return `'${text.replace(/'/g, "''")}'`;
   return `'${text.replace(/'/g, `'\\''`)}'`;
 }
 

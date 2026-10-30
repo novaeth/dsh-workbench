@@ -43,7 +43,7 @@ function step(payload: Record<string, unknown> | undefined, extra: Partial<ActSt
 }
 
 const backgroundLine = (command: string, argv: readonly string[]): string =>
-  [quoteShellArg('env'), quoteShellArg('OPENCLI_WINDOW=background'), quoteShellArg(command), ...argv.map(quoteShellArg)].join(' ');
+  [quoteShellArg(command), ...argv.map(quoteShellArg)].join(' ');
 
 describe('actBrowser：把子命令原样挂到 opencli browser <会话> 上', () => {
   it('★★ 参数各自引号、背景前缀与 --window background 都带上，超时默认 15 秒', async () => {
@@ -51,7 +51,7 @@ describe('actBrowser：把子命令原样挂到 opencli browser <会话> 上', (
     const got = await actBrowser(rig.shell, 'opencli', 'workbench', ['click', '.wb-cardOpen'], undefined, backgroundLine);
 
     expect(rig.lines[0]).toBe(
-      "'env' 'OPENCLI_WINDOW=background' 'opencli' 'browser' 'workbench' 'click' '.wb-cardOpen' '--window' 'background'",
+      "'opencli' 'browser' 'workbench' 'click' '.wb-cardOpen' '--window' 'background'",
     );
     expect(rig.timeouts[0]).toBe(ACT_TIMEOUT_MS);
     expect(got.ok).toBe(true);

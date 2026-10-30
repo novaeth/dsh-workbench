@@ -1,7 +1,7 @@
 import type { DshShell } from '@dsh-workbench/shared';
 import { parseJsonLoose } from '@dsh-workbench/shared/host';
 import { tailLines } from '@dsh-workbench/shared/host';
-import { backgroundLine } from '../cli/index.js';
+import { backgroundLine, OPENCLI_WINDOW_ENV } from '../cli/index.js';
 import { runShell } from '@dsh-workbench/shared/host';
 
 import { BROWSER_READ_SESSION, BROWSER_RECORD_SESSION, BROWSER_SCREEN_SESSION } from '@dsh-workbench/shared/host';
@@ -106,7 +106,7 @@ async function shellRun(
   argv: readonly string[],
   timeoutMs: number,
 ): Promise<ShellOutcome> {
-  const result = await runShell(shell, backgroundLine(command, argv), { timeoutMs });
+  const result = await runShell(shell, backgroundLine(command, argv), { timeoutMs, env: OPENCLI_WINDOW_ENV });
   if (result.timedOut) {
     return { kind: 'timeout', detail: `没在 ${Math.round(timeoutMs / 1000)} 秒内返回`, stderr: result.stderr };
   }

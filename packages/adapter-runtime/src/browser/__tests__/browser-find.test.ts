@@ -26,13 +26,15 @@ interface Plan {
 
 function fakeShell(plan: Plan) {
   const commands: string[] = [];
+  const calls: Array<{ command: string; env?: Readonly<Record<string, string>> }> = [];
   const counters = { url: 0, find: 0, open: 0 };
   const pick = <T>(list: readonly T[] | undefined, index: number, fallback: T): T =>
     (list ?? [])[Math.min(index, Math.max(0, (list ?? []).length - 1))] ?? fallback;
 
   const shell = {
-    resolve(request: { command: string }) {
+    resolve(request: { command: string; env?: Readonly<Record<string, string>> }) {
       commands.push(request.command);
+      calls.push(request);
       return request;
     },
     async execute(spec: { command: string }) {
@@ -64,7 +66,7 @@ function fakeShell(plan: Plan) {
       };
     },
   };
-  return { shell: shell as never, commands };
+  return { shell: shell as never, commands, calls };
 }
 
 const FAST = { settleMs: 1, timeoutMs: 50 } as const;
@@ -294,28 +296,30 @@ describe('cellRowsOf / reasonOf / sameOrigin', () => {
 });
 
 function backgroundless(commands: readonly string[]): readonly string[] {
-  return commands
-    .filter((one) => one.includes("'browser'"))
-    .filter(
-      (one) => !one.includes("'--window' 'background'") || !one.includes("'OPENCLI_WINDOW=background'"),
-    );
+  return commands.filter((one) => one.includes("'browser'")).filter((one) => !one.includes("'--window' 'background'"));
+}
+
+function envless(calls: readonly { env?: Readonly<Record<string, string>> }[]): number {
+  return calls.filter((call) => call.env?.OPENCLI_WINDOW !== 'background').length;
 }
 
 describe('browserFind · 后台静默（问页 + 读 + 打开都不许抢焦点）', () => {
   it('已经在目标站点上：get url + find 两条全带', async () => {
-    const { shell, commands } = fakeShell({ url: SITE, find: [{ stdout: MATCH }] });
+    const { shell, commands, calls } = fakeShell({ url: SITE, find: [{ stdout: MATCH }] });
     await browserFind({ shell, css: CSS, url: SITE, ...FAST });
 
     expect(commands).toHaveLength(2);
     expect(backgroundless(commands)).toEqual([]);
+    expect(envless(calls)).toBe(0);
   });
 
   it('不在目标站点上：get url + open + find 三条全带', async () => {
-    const { shell, commands } = fakeShell({ url: ['about:blank', SITE], find: [{ stdout: MATCH }] });
+    const { shell, commands, calls } = fakeShell({ url: ['about:blank', SITE], find: [{ stdout: MATCH }] });
     await browserFind({ shell, css: CSS, url: SITE, ...FAST });
 
     expect(commands.filter((one) => one.includes("'open'"))).toHaveLength(1);
     expect(backgroundless(commands)).toEqual([]);
+    expect(envless(calls)).toBe(0);
   });
 });
 

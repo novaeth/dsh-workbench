@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { DshShell } from '@dsh-workbench/shared';
-import { bindCurrentTab, jsonOf, readyPageOf, runBrowserStep, writeShotsDir } from '../diy-browser';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
+import { bindCurrentTab, jsonOf, readyPageOf, runBrowserStep, writeShotsDir } from '../diy-browser';
+import { cardSelectorOf } from '../diy-scripts';
 
 const backgroundLine = (command: string, argv: readonly string[]): string =>
-  [quoteShellArg('env'), quoteShellArg('OPENCLI_WINDOW=background'), quoteShellArg(command), ...argv.map(quoteShellArg)].join(' ');
-import { cardSelectorOf } from '../diy-scripts';
+  [quoteShellArg(command), ...argv.map(quoteShellArg)].join(' ');
 
 interface Step {
   readonly stdout?: string;
@@ -52,7 +52,7 @@ describe('跑一条 opencli：argv 原样挂上背景前缀，结果原样回来
     );
 
     expect(rig.lines[0]).toBe(
-      "'env' 'OPENCLI_WINDOW=background' 'opencli' 'browser' 'workbench' 'state' '--source' 'ax' '--window' 'background'",
+      "'opencli' 'browser' 'workbench' 'state' '--source' 'ax' '--window' 'background'",
     );
     expect(step.ok).toBe(true);
     expect(step.stdout).toBe('ok');
@@ -98,7 +98,7 @@ describe('抠 JSON 与那一页的握手', () => {
     expect(bound.ok).toBe(false);
     expect(bound.reason).toContain('扩展没连上');
     expect(bad.lines[0]).toContain("'browser' 'workbench' 'bind'");
-    expect(bad.lines[0]).toContain('OPENCLI_WINDOW=background');
+    expect(bad.lines[0]).toContain("'--window' 'background'");
 
     const good = fakeShell([
       { stdout: JSON.stringify({ session: 'workbench', url: 'http://127.0.0.1:3081/', title: '工作台' }) },

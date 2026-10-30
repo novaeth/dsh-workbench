@@ -57,6 +57,30 @@ describe('runShell', () => {
     expect(result.stalled).toBe(false);
   });
 
+  it('★ env 走 resolve 的覆盖字段，不拼进命令行的 shell 语法', async () => {
+    const seen: Array<Record<string, unknown>> = [];
+    const shell: DshShell = {
+      resolve: (request) => {
+        seen.push(request as unknown as Record<string, unknown>);
+        return request;
+      },
+      execute: async () => ({
+        result: async () => ({
+          exitCode: 0,
+          timedOut: false,
+          aborted: false,
+          stdout: { text: '', truncated: false },
+          stderr: { text: '', truncated: false },
+        }),
+      }),
+    };
+
+    await runShell(shell, 'node --version', { env: { OPENCLI_WINDOW: 'background' } });
+
+    expect(seen[0]?.command).toBe('node --version');
+    expect(seen[0]?.env).toEqual({ OPENCLI_WINDOW: 'background' });
+  });
+
   it('★ 宿主自己抛错 → 照旧抛出去，不吞成 stalled', async () => {
     const shell: DshShell = {
       resolve: (request) => request,

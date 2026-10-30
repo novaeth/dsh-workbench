@@ -16,15 +16,16 @@ async function expectDataError(promise: Promise<unknown>, code: string): Promise
 }
 
 describe('createOpencli', () => {
-  it('拼出 `env OPENCLI_WINDOW=background opencli demo <args> --site-session persistent -f json`，并把参数逐个转义', async () => {
+  it('拼出 `opencli demo <args> --site-session persistent -f json`，参数逐个转义，窗口模式走环境变量', async () => {
     const fake = createFakeShell([{ stdout: '[]' }]);
     const opencli = createOpencli({ shell: fake.shell, plugin: 'demo' });
 
     await opencli.json(['issues', '--team', "it's", '--project', 'a b']);
 
     expect(fake.commands()[0]).toBe(
-      `'env' 'OPENCLI_WINDOW=background' 'opencli' 'demo' 'issues' '--team' 'it'\\''s' '--project' 'a b' --site-session persistent -f json`,
+      `'opencli' 'demo' 'issues' '--team' 'it'\\''s' '--project' 'a b' --site-session persistent -f json`,
     );
+    expect(fake.calls[0]?.env).toEqual({ OPENCLI_WINDOW: 'background' });
   });
 
   it('★ 每条命令都租一页持久站点会话：新版插件（navigateBefore:false + cookie jar）没有页就一律误报未登录', async () => {
@@ -209,7 +210,7 @@ describe('createOpencli', () => {
     const opencli = createOpencli({ shell: fake.shell, plugin: 'demo', logger });
 
     const error = await expectDataError(opencli.json(['issues']), 'cli-exec-failed');
-    expect(error.hint).toContain('which opencli');
+    expect(error.hint).toContain('PATH');
   });
 
   it('失败会留下一条 warn（诊断用，不上抛给用户）', async () => {

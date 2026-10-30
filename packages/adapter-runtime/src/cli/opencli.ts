@@ -1,9 +1,9 @@
 import type { DshShell } from '@dsh-workbench/shared';
 import { OPENCLI_MAX_CONCURRENT, OPENCLI_TIMEOUT_MS } from '@dsh-workbench/shared/host';
 import { parseJsonLoose } from '@dsh-workbench/shared/host';
-import { quoteShellArg, tailLines } from '@dsh-workbench/shared/host';
+import { quoteShellArgFor, tailLines } from '@dsh-workbench/shared/host';
 import { helpUrlOf, parseCliErrorEnvelope } from '@dsh-workbench/shared/host';
-import { backgroundPrefix } from './opencli-window.js';
+import { OPENCLI_WINDOW_ENV } from './opencli-window.js';
 import { runShell } from '@dsh-workbench/shared/host';
 import type { Opencli, OpencliResult, OpencliSession } from './opencli-types.js';
 import { WorkbenchDataError } from '@dsh-workbench/shared/host';
@@ -16,11 +16,11 @@ export function opencliCommandLine(
   command: string,
   argv: readonly string[],
   session: OpencliSession = 'persistent',
+  platform: NodeJS.Platform = process.platform,
 ): string {
   return [
-    ...backgroundPrefix(),
-    quoteShellArg(command),
-    ...argv.map(quoteShellArg),
+    quoteShellArgFor(command, platform),
+    ...argv.map((arg) => quoteShellArgFor(arg, platform)),
     ...(session === 'persistent' ? SITE_SESSION_ARGS : []),
     '-f',
     'json',
@@ -79,10 +79,11 @@ export function createOpencli(options: {
       result = await runShell(shell, commandLine, {
         ...(workdir === undefined ? {} : { workdir }),
         timeoutMs,
+        env: OPENCLI_WINDOW_ENV,
       });
     } catch (error) {
       throw new WorkbenchDataError('cli-exec-failed', `执行 opencli 失败：${String(error)}`, {
-        hint: '确认 opencli 已安装且在 PATH 里（which opencli）。',
+        hint: '确认 opencli 已安装，并且在 PATH 里。',
       });
     }
 

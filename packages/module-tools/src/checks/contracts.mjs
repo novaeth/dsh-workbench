@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { homedir } from 'node:os';
 import { join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { buildSupplyIndex, readDeclaration, recipeProblemOf } from '@dsh-workbench/shared/host';
@@ -63,7 +64,7 @@ const OPENCLI_NPM_PACKAGE = '@jackwener/opencli';
 
 function isolatedRootOf() {
   const home = process.env.DSH_HOME?.trim();
-  return `${home === undefined || home === '' ? `${process.env.HOME ?? ''}/.dsh` : home}/workbench/opencli`;
+  return `${home === undefined || home === '' ? join(homedir(), '.dsh') : home}/workbench/opencli`;
 }
 
 function catalogPathOf() {
