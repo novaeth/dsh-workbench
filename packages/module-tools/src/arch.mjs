@@ -25,32 +25,11 @@ const DECLARED_TOOLS_ROLE = { id: 'lib:declared-tools', pattern: DECLARED_TOOLS_
 
 const DEFAULT_THRESHOLDS = { fileLines: 200, viewLines: 200, functionLines: 80 };
 
-const TEST_LINES_REASON =
-  '测试文件是脚手架，不是产品代码：夹具、逐条断言、一条用例十来行，200 行这个阈值对它是错的口径；' +
-  '按它拆文件只会把测试脚手架摞进 src/ 的层里（作者反馈：一个模块被逼出过 src/host/testing.ts）。' +
-  '测试在方言里本来就有一条排他角色（layer 99，S21 跳过它），这条豁免与那条同一个理由。' +
-  '要形状与体积上的约束，请写进模块自己的测试（用例数、覆盖的行为），不要用文件行数卡它。';
-
-const TEST_LINES_EXCEPTIONS = [
-  { rule: 'S16', glob: '**/*.{test,spec}.{ts,tsx,mts,cts,js,mjs,cjs}', reason: TEST_LINES_REASON },
-
-  { rule: 'S16', glob: 'src/**/__tests__/**', reason: TEST_LINES_REASON },
-];
-
 const TESTS_DIR_ROLE = {
   id: 'lib:tests-dir',
   pattern: 'src/**/__tests__/**',
   layer: 99,
   exclusive: true,
-};
-
-const STYLE_EXCEPTION = {
-  rule: 'D04',
-  glob: 'src/components/**',
-  reason:
-    '主题令牌由 dsh 在运行时提供（--dsw-*）：模块包**不拥有**令牌表，声明一份自己的' +
-    '就是编造一处不存在的真相。所以组件样式里引用的 --dsw-* 在本地查不闭合是正常的；' +
-    'dsh 改名会由外壳升级暴露，而不是由模块本地的表兜住。',
 };
 
 const SEED_PACKAGES = [
@@ -74,6 +53,11 @@ const ALLOWED_DEPS = [
 
 const DESIGN = {
   styleDir: 'src/components',
+  externalTokens: [
+    { prefix: '--dsw-', provider: '@deepseek-ai/dsh-client-ui-theme' },
+    { prefix: '--ds-', provider: '@deepseek-ai/dsh-client-ui-theme' },
+    { prefix: '--wb-', provider: '@dsh-workbench/core' },
+  ],
   tokenDir: '',
   paletteFile: '',
   vendorDir: 'src/components/vendor',
@@ -259,7 +243,7 @@ export function moduleArch(options = {}) {
         },
       }),
 
-      { enable: ['S71', 'S72', 'S73'] },
+
     ],
     overrides: {
       include: ['src/**'],
@@ -279,7 +263,7 @@ export function moduleArch(options = {}) {
           { pattern: 'src/components/**', runtime: 'client' },
         ],
       },
-      exceptions: [STYLE_EXCEPTION, ...TEST_LINES_EXCEPTIONS, ...exceptions],
+      exceptions: [...exceptions],
     },
   };
 }

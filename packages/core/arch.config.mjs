@@ -54,6 +54,13 @@ export default {
       vendorDir: '',
       themeFile: '',
 
+      externalTokens: [
+        { prefix: '--dsw-', provider: '@deepseek-ai/dsh-client-ui-theme' },
+        { prefix: '--ds-', provider: '@deepseek-ai/dsh-client-ui-theme' },
+        { prefix: '--dsh-', provider: '@deepseek-ai/dsh-client-ui-theme' },
+      ],
+      externalConsumers: ['../shared/src/**'],
+
       valueWhitelists: [
         { rule: 'D12', allow: ['0'] },
         { rule: 'D13', allow: ['0'] },
@@ -140,7 +147,6 @@ export default {
       },
     }),
 
-    { enable: ['S60', 'S62', 'S63', 'S64', 'S65', 'S66', 'S67', 'S68', 'S69', 'S70', 'S71', 'S72', 'S73', 'S74', 'D31'] },
 
     i18n(noneI18nKit()),
     uiKit(noneKit()),
@@ -176,32 +182,6 @@ export default {
     ],
     exceptions: [
       {
-        rule: 'S16',
-        glob: '**/*.{test,spec}.{ts,tsx,mts,cts,js,mjs,cjs}',
-        reason:
-          '测试文件是脚手架，不是产品代码：夹具、逐条断言、一条用例十来行，行数阈值对它是错的口径；' +
-          '按它拆文件只会把测试脚手架摞进 src/ 的层里。模块工具包对模块的方言里本来就排掉了测试文件的两条 S16' +
-          '（packages/module-tools/src/arch.mjs），这条与那条同一个理由。' +
-          '要形状与体积上的约束，请写进用例本身（覆盖了哪些行为、边界在哪），不要用文件行数卡它。',
-      },
-      {
-        rule: 'D04',
-        glob: 'src/shared/styles/**',
-        reason:
-          '主题令牌由 dsh 在运行时提供（--dsw-*，见 @deepseek-ai/dsh-client-ui-theme）。' +
-          '本仓**不拥有主题**：tokens/palette.css 只兜 dsh 没有对应令牌的那几个静态值（名字一律 --wb-static-*），' +
-          '凡是 --dsw-* 的**名字**都不在本仓定义 —— 所以这里的引用查不闭合是正常的、也是唯一一处例外。' +
-          'dsh 改名会由它的版本升级暴露，而不是由本仓的本地表兜住。',
-      },
-      {
-        rule: 'D04',
-        glob: '**/*.module.css',
-        reason:
-          '同上：组件样式（ADR-0029 的 S4）写在自己的 `.module.css` 里，但颜色/圆角/字号/间距' +
-          '用的仍是 dsh 的运行时令牌（--dsw-*）—— 组件样式与全局样式表是同一个理由，' +
-          '只是落点从"声明过的样式目录"变成了"组件旁边"。',
-      },
-      {
         rule: 'D18',
         glob: 'src/app/layouts/rightbar/ModulesPage.module.css',
         reason:
@@ -209,16 +189,6 @@ export default {
           '那份 palette 当初就是为了这个值（以及 darwin 标题栏叠加、mask 端点）才存在的：' +
           'dsh 没有对应令牌，所以它不是"绕过语义令牌"，而是这个值本来就不语义。' +
           '组件样式搬进 .module.css 后（ADR-0029 的 S4）这条豁免跟着搬一次。',
-      },
-      {
-        rule: 'D05',
-        glob: 'src/shared/styles/tokens/scale.css',
-        reason:
-          '令牌**定义**住在本包、而它的**消费者**在 S3 之后有一半住在 packages/shared（组件自带样式）。' +
-          'arch 只看一个包，于是 ResourceStates 在用的 --wb-dur-1-4 / --wb-len-13 / --wb-len-300 这些' +
-          '会被报成"没人用"（实测 5 条误报）。跨包的令牌账由 selfcheck 的两条判据按**整个 workspace** 算：' +
-          '「★ 令牌账（跨包）：引用的 --wb-* 都有定义」与「…定义的 --wb-* 都有人用」—— 视野比这条宽，' +
-          '所以这里豁免掉不会漏掉真死令牌。',
       },
       {
         rule: 'H09',
@@ -295,17 +265,20 @@ export default {
           '（`WB_RELEASE=1` → `src/dev/surface.stub.ts`）把它们整棵排除 ⇒ **发布产物里没有它们**。',
       },
       {
+        rule: 'D05',
+        glob: 'src/shared/styles/tokens/scale.css',
+        reason:
+          '这是本仓的**模块面令牌 API**：module-facing 的 --wb-* 由仓库之外的模块包消费，' +
+          '本仓里天然没有引用者（selfcheck 的「跨包令牌账：定义的 --wb-* 都有人用」把这几条列为在册）。' +
+          '包内的跨包消费者（packages/shared 的组件样式）已由 designSystem.externalConsumers 计入，' +
+          '不再需要按整份文件静音；这条只兜「定义在本仓、消费者在仓外」的公开令牌面。',
+      },
+      {
         rule: 'P06',
         glob: 'src/modules/panels/model/diy-record.ts',
         reason:
           '这条判定命中的是**注入子进程的那段脚本字符串**里的 `process.argv[1]` —— 那是子脚本自己的入参，' +
           '不是外壳在解析命令行（外壳的 argv 只在 bin 里读）。脚本以字符串形式随宿主下发，行内正则分不清。',
-      },
-      {
-        rule: 'P06',
-        glob: '**/*.test.ts',
-        reason:
-          '测试夹具要真起子进程、真写状态文件才能验证行为本身；产品代码里起进程只走 execa、直写状态只走 write-file-atomic。',
       },
     ],
   },

@@ -28,7 +28,7 @@
     "selfcheck": "node scripts/selfcheck/index.mjs"
   },
   "dependencies": {
-    "@arch-guard/core": "^0.11.2",
+    "@arch-guard/core": "^0.11.3",
     "@dsh-workbench/shared": "workspace:*",
     "@eslint/js": "^10.0.1",
     "commander": "^15.0.0",

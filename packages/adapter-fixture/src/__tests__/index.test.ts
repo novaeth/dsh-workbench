@@ -8,7 +8,7 @@ import { loadAdapterSet, resolveAdapterSet, type AdapterSet } from '@dsh-workben
 import { createAdapterSet, FIXTURE_MARKER } from '../index.js';
 
 const dirs: string[] = [];
-const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)));
+const packageRoot = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 
 function profileWithFixture(): string {
   const dir = mkdtempSync(join(tmpdir(), 'wb-fixture-profile-'));
