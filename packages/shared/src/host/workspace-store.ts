@@ -30,15 +30,22 @@ export function workspaceKey(workspace: string): string {
   return `${slug(path.basename(abs))}-${createHash('sha1').update(abs).digest('hex').slice(0, 8)}`;
 }
 
-function inside(dir: string, name: string): string {
+function safeName(name: string): string {
   const trimmed = name.trim();
   if (trimmed === '' || trimmed === '.' || trimmed === '..') {
     throw new Error(`模块文件夹里只接受相对文件名，收到的是「${name}」`);
   }
-  if (trimmed.includes('\0') || path.isAbsolute(trimmed)) {
+  if (trimmed.includes('\0') || path.isAbsolute(trimmed) || /^[A-Za-z]:[\\/]/.test(trimmed)) {
     throw new Error(`模块只能写自己的文件夹：不接受绝对路径「${name}」`);
   }
-  const full = path.resolve(dir, trimmed);
+  if (trimmed.replace(/\\/g, '/').split('/').includes('..')) {
+    throw new Error(`模块只能写自己的文件夹：路径越界「${name}」`);
+  }
+  return trimmed;
+}
+
+function inside(dir: string, name: string): string {
+  const full = path.resolve(dir, safeName(name));
   if (full !== dir && !full.startsWith(dir + path.sep)) {
     throw new Error(`模块只能写自己的文件夹：路径越界「${name}」`);
   }
@@ -50,15 +57,15 @@ function memoryStore(dir: string): ModuleStore {
   return {
     dir,
     read: (name) => {
-      inside(dir, name);
+      safeName(name);
       return files.get(name) ?? null;
     },
     write: (name, value) => {
-      inside(dir, name);
+      safeName(name);
       files.set(name, value);
     },
     remove: (name) => {
-      inside(dir, name);
+      safeName(name);
       files.delete(name);
     },
     list: () => [...files.keys()].sort(),

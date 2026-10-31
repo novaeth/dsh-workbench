@@ -29,16 +29,23 @@ export interface BoardProbe {
   readonly drawn: boolean;
 }
 
+function normalizePath(value: string): string {
+  const forward = value.replace(/\\/g, '/').replace(/\/+$/g, '');
+  return /^[A-Za-z]:\//.test(forward) || forward.startsWith('//') ? forward.toLowerCase() : forward;
+}
+
 /**
  * 判一个路径落不落在这个工作区里（按路径前缀比，不是字符串包含）。
  * @param root - 工作区根路径。
  * @param target - 要判的路径。
- * @returns 同一个路径或在其下给 `true`；`root` 末尾带不带斜杠都认（`/a` 不匹配 `/ab`）。
+ * @returns 同一个路径或在其下给 `true`；分隔符先归一（Windows 的 `\` 与 `/` 都认），
+ *   盘符路径按大小写不敏感比；`root` 末尾带不带斜杠都认（`/a` 不匹配 `/ab`）。
  */
 export function insideWorkshop(root: string, target: string): boolean {
-  if (target === root) return true;
-  const base = root.endsWith('/') ? root : `${root}/`;
-  return target.startsWith(base);
+  const base = normalizePath(root);
+  const real = normalizePath(target);
+  if (real === base) return true;
+  return real.startsWith(base === '' ? '/' : `${base}/`);
 }
 
 /**

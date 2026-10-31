@@ -1,6 +1,5 @@
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import { insideWorkshop as insidePath } from '@dsh-workbench/shared/host';
+import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 
 export interface DiyModule {
   readonly unit: string;
@@ -21,7 +20,8 @@ function asText(value: unknown): string {
 export function insideRoot(root: string, target: string): boolean {
   const base = existsSync(root) ? realpathSync(root) : resolve(root);
   const real = existsSync(target) ? realpathSync(target) : resolve(target);
-  return insidePath(base, real);
+  const rel = relative(base, real);
+  return rel === '' || (rel !== '..' && !rel.startsWith(`..${sep}`) && !isAbsolute(rel));
 }
 
 function manifestAt(dir: string): Record<string, unknown> | undefined {

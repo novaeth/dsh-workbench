@@ -51,4 +51,12 @@ describe('干不了活是为什么：先看人在不在工坊，再看板画没�
     expect(insideWorkshop('/a/b', '/a/bc')).toBe(false);
     expect(insideWorkshop('/a/b/', '/a/b/c')).toBe(true);
   });
+
+  it('★ Windows 路径：反斜杠、混合分隔符与盘符大小写都认', () => {
+    expect(insideWorkshop('C:\\w\\ws', 'C:\\w\\ws\\packages\\module-demo')).toBe(true);
+    expect(insideWorkshop('C:\\w\\ws', 'C:/w/ws/packages/module-demo')).toBe(true);
+    expect(insideWorkshop('c:\\w\\ws', 'C:\\W\\WS\\packages')).toBe(true);
+    expect(insideWorkshop('C:\\w\\ws', 'C:\\w\\ws2')).toBe(false);
+    expect(insideWorkshop('C:\\w\\ws', 'D:\\w\\ws\\packages')).toBe(false);
+  });
 });

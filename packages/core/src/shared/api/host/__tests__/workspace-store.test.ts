@@ -89,6 +89,8 @@ describe('createWorkspaceStore：模块读写自己的文件夹', () => {
     const none = store.for('inventory', null);
     none.write('binding.json', { ok: true });
     expect(none.read('binding.json')).toEqual({ ok: true });
+    expect(() => none.write('../escape.json', { ok: true })).toThrow();
+    expect(() => none.write('/tmp/escape.json', { ok: true })).toThrow();
 
     const other = store.machine('inventory');
     other.write('released.json', { ids: ['x'] });
