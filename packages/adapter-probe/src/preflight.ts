@@ -1,8 +1,8 @@
 import type { DshShell, RuntimeCapabilities } from '@dsh-workbench/shared';
 import {
-  INSTALL_TIMEOUT_MS,
-  OPENCLI_TIMEOUT_MS,
+  PREFLIGHT_DOCTOR_TIMEOUT_MS,
   PREFLIGHT_FRESH_MS,
+  PREFLIGHT_INSTALL_TIMEOUT_MS,
   PREFLIGHT_VERSION_TIMEOUT_MS,
   WARM_TIMEOUT_MS,
 } from '@dsh-workbench/shared/host';
@@ -216,7 +216,7 @@ export function createPreflight(options: {
   }
 
   async function probeBridge(): Promise<BridgeVerdict> {
-    const result = await exec('bridge', `${command} doctor`, OPENCLI_TIMEOUT_MS);
+    const result = await exec('bridge', `${command} doctor`, PREFLIGHT_DOCTOR_TIMEOUT_MS);
     if (result.kind === 'stalled') {
       return { ok: false, detail: result.detail, issues: ['unknown'], stalled: true };
     }
@@ -233,7 +233,7 @@ export function createPreflight(options: {
       if (installed.detail.trim() !== '') appendLog('cli', installed.detail);
       return installed;
     }
-    const result = await exec('cli', installCommand, INSTALL_TIMEOUT_MS);
+    const result = await exec('cli', installCommand, PREFLIGHT_INSTALL_TIMEOUT_MS);
     if (result.kind !== 'ok') return { ok: false, detail: result.detail };
     return { ok: true, detail: tailLines(result.stdout, 1) };
   }
