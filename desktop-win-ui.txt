@@ -1,0 +1,31 @@
+**********************
+PowerShell transcript start
+Start time: 20261031073441
+Username: runnervmdaln5\runneradmin
+RunAs User: runnervmdaln5\runneradmin
+Configuration Name: 
+Machine: runnervmdaln5 (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -command . 'D:\a\_temp\28a96282-08a1-45e6-817a-a684c3d90bfa.ps1'
+Process ID: 2380
+PSVersion: 7.6.7
+PSEdition: Core
+GitCommitId: 7.6.7
+OS: Microsoft Windows 10.0.26100
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Transcript started, output file is desktop-win-ui.txt
+
+Checking for update
+Update for version 0.2.1-rc.5 is not available (latest version: 0.2.1-rc.5, downgrade is disallowed).
+dsh web: http://127.0.0.1:53939/?token=EOhW9gv9dPDhxRQ6z_I9pk2ZGKIlbjr11xZOv6x_Iyw
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/7c0cc6c7-4140-4232-9144-9a38a35bf0c5
+
+**********************
+PowerShell transcript end
+End time: 20261031073615
+**********************
