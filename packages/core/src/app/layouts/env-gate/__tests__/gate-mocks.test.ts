@@ -204,12 +204,13 @@ describe('GATE_MOCKS', () => {
     }
   });
 
-  it('★ 还在跑的那一行留空：转圈就是它在说"在做"，不叠一行技术细节', () => {
+  it('★ 还在跑的那一行显示当前动作，让人知道确实在装什么', () => {
     const t = (key: string): string => key;
     const snapshot = GATE_MOCKS.find((item) => item.id === 'checking')?.snapshot as never;
-    const running = { id: 'cli', status: 'running' };
+    const running = { id: 'cli', status: 'running', action: '安装 opencli' };
 
-    expect(stepDetailText(running as never, snapshot, t)).toBe('');
+    expect(stepDetailText(running as never, snapshot, t)).toBe('安装 opencli');
+    expect(stepDetailText({ id: 'cli', status: 'running' } as never, snapshot, t)).toBe('');
   });
 
   it('只有 opencli 缺失才是拦路的：bridge 那步再怎么缺也只到 warn', () => {

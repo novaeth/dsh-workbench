@@ -249,7 +249,11 @@ export function createBootGate(
 
   function render(snapshot: PreflightSnapshot): void {
     wakeNote.hidden = true;
-    hint.textContent = gateHintOf(snapshot, t);
+    const runningStep = snapshot.steps.find((step) => step.status === 'running');
+    hint.textContent =
+      runningStep?.action === undefined
+        ? gateHintOf(snapshot, t)
+        : `${stepLabel(runningStep, t)} · ${runningStep.action}`;
 
     const items = snapshot.steps.map((step) => {
       const row = ensureRow(step);

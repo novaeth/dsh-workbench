@@ -367,7 +367,7 @@ export function createPreflight(options: {
 
     const diyStarted = options.probeDiy?.();
     if (withConsole) {
-      patchStep('cli', { status: 'running', action: `${command} --version` });
+      patchStep('cli', { status: 'running', action: '检查 opencli 版本' });
       if (diyStarted !== undefined) patchStep('diy', { status: 'running' });
 
       let version = await probeVersion();
@@ -395,7 +395,7 @@ export function createPreflight(options: {
           });
         }
         set({ phase: 'installing' });
-        patchStep('cli', { status: 'running', action: installCommand, command: installCommand });
+        patchStep('cli', { status: 'running', action: '安装 opencli', command: installCommand });
         const installed = await installOpencli();
         if (!installed.ok) {
           patchStep('cli', {
@@ -410,7 +410,7 @@ export function createPreflight(options: {
             guidance: 'install',
           });
         }
-        patchStep('cli', { status: 'running', action: `${command} --version` });
+        patchStep('cli', { status: 'running', action: '检查 opencli 版本' });
         version = await probeVersion();
         if (version.stalled) {
           patchStep('cli', { status: 'failed', detail: version.detail, action: undefined });

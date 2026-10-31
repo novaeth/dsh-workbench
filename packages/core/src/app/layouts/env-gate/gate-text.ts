@@ -24,7 +24,8 @@ export function guidanceTextOf(guidance: PreflightGuidance | undefined, t: Trans
 
 export function stepDetailText(step: PreflightStep, snapshot: PreflightSnapshot, t: Translate): string {
   if (step.status === 'failed') return failedStepText(snapshot.guidance, t);
-  if (step.status === 'pending' || step.status === 'running') return '';
+  if (step.status === 'pending') return '';
+  if (step.status === 'running') return step.action ?? '';
   if (step.id === 'toolchain') return step.status === 'ok' ? t('env.toolchain.ok') : t('env.toolchain.warn');
   if (step.id === 'cli') return step.status === 'ok' ? t('env.runtime.ok') : '';
   if (step.id === 'bridge') return step.status === 'ok' ? t('env.bridge.ok') : t('env.bridge.short');
