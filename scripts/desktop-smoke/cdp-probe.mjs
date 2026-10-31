@@ -3,6 +3,7 @@ import fs from 'node:fs';
 const port = process.argv[2] ?? '9222';
 const shot = process.argv[3] ?? 'desktop-smoke.png';
 const expectWorkbench = process.argv.includes('--expect-workbench');
+const installViaUi = process.argv.includes('--install-via-ui');
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -66,6 +67,66 @@ console.log(`target: ${target.url}`);
 
 const cdp = await connect(target.webSocketDebuggerUrl);
 await cdp.send('Page.enable');
+
+if (installViaUi) {
+  const clickText = (text) => `(() => {
+    const nodes = [...document.querySelectorAll('button, a, [role="button"], [role="tab"]')];
+    const exact = nodes.find((node) => node.innerText?.trim() === ${JSON.stringify(text)});
+    const loose = nodes.find((node) => node.innerText?.includes(${JSON.stringify(text)}));
+    const target = exact ?? loose;
+    target?.click();
+    return target === undefined ? 'missing' : (target.innerText ?? '').trim();
+  })()`;
+
+  const step = async (label, expression) => {
+    const result = await cdp.send('Runtime.evaluate', { expression, returnByValue: true });
+    console.log(`${label}: ${JSON.stringify(result.result?.value)}`);
+    await sleep(2000);
+  };
+
+  await step('open plugins', clickText('Plugins'));
+  const bodyAfterPlugins = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
+  console.log('PLUGINS_BODY_START');
+  console.log((bodyAfterPlugins.result?.value ?? '').slice(0, 3000));
+  console.log('PLUGINS_BODY_END');
+  await step('add plugin', clickText('Add plugin'));
+
+  const fields = await cdp.send('Runtime.evaluate', {
+    expression: `JSON.stringify([...document.querySelectorAll('input, textarea')].map((node, index) => ({ index, tag: node.tagName, type: node.type, placeholder: node.placeholder, aria: node.getAttribute('aria-label'), visible: node.offsetParent !== null })))`,
+    returnByValue: true,
+  });
+  console.log(`FIELDS: ${fields.result?.value ?? ''}`);
+
+  const fill = await cdp.send('Runtime.evaluate', {
+    expression: `(() => {
+      const field = [...document.querySelectorAll('input, textarea')].find((node) => node.offsetParent !== null && (node.type === 'text' || node.tagName === 'TEXTAREA'));
+      if (field === undefined) return 'no field';
+      const setter = Object.getOwnPropertyDescriptor(field instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype, 'value').set;
+      setter.call(field, '@dsh-workbench/core');
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      field.dispatchEvent(new Event('change', { bubbles: true }));
+      field.focus();
+      return field.value;
+    })()`,
+    returnByValue: true,
+  });
+  console.log(`fill: ${JSON.stringify(fill.result?.value)}`);
+  await sleep(1000);
+  await step('install', clickText('Install'));
+
+  let last = '';
+  for (let i = 0; i < 36; i += 1) {
+    await sleep(5000);
+    const current = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
+    last = current.result?.value ?? '';
+    console.log(`install wait ${i + 1}s: ${last.slice(-300).replaceAll('\n', ' | ')}`);
+    if (/Enable now|Installed|failed|Failed|错误|失败/u.test(last)) break;
+  }
+  if (/Enable now/u.test(last)) await step('enable now', clickText('Enable now'));
+  await step('close dialog', `(() => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); return 'escape'; })()`);
+  await sleep(5000);
+}
+
 const text = await cdp.send('Runtime.evaluate', {
   expression: 'document.body.innerText',
   returnByValue: true,

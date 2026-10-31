@@ -6,7 +6,7 @@ name: desktop-smoke
     - cron: '17 2 * * 1'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: desktop-smoke-${{ github.ref }}
@@ -46,26 +46,33 @@ jobs:
           Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
           Start-Sleep -Seconds 3
           Get-Content "$env:USERPROFILE\.dsh\profiles\desktop\package.json" -Raw
-      - name: Install workbench bundle
-        shell: pwsh
-        run: |
-          & $env:DESKTOP_CLI plugin --profile desktop add '@dsh-workbench/core@latest'
-          if ($LASTEXITCODE -ne 0) { throw "plugin install failed: $LASTEXITCODE" }
-          Get-Content "$env:USERPROFILE\.dsh\profiles\desktop\package.json" -Raw
       - name: Launch and assert workbench panel
         shell: pwsh
         run: |
+          Start-Transcript -Path desktop-win-ui.txt -Force
           $out = Join-Path $env:RUNNER_TEMP 'desktop-win-app.log'
           $err = Join-Path $env:RUNNER_TEMP 'desktop-win-app.err.log'
           $p = Start-Process -FilePath $env:DESKTOP_EXE -ArgumentList '--remote-debugging-port=9222' -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
           Start-Sleep -Seconds 60
           Get-Content $out, $err -ErrorAction SilentlyContinue
-          & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win.png --expect-workbench
-          if ($LASTEXITCODE -ne 0) { throw "cdp probe failed: $LASTEXITCODE" }
+          & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win.png --install-via-ui --expect-workbench
+          $code = $LASTEXITCODE
+          Stop-Transcript
+          if ($code -ne 0) { throw "cdp probe failed: $code" }
       - name: Stop Desktop
         if: always()
         shell: pwsh
         run: Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
+      - name: Commit probe log
+        if: always()
+        shell: bash
+        run: |
+          git config user.name ci
+          git config user.email ci@example.com
+          git add -f desktop-win-ui.txt desktop-win.png || true
+          git commit -m "ci: windows desktop ui probe [skip ci]" || true
+          git push origin HEAD:desktop-ui-log-win-${{ github.run_id }}
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -105,24 +112,30 @@ jobs:
           pkill -f 'DeepSeek Harness' 2>/dev/null || true
           sleep 3
           cat "$HOME/.dsh/profiles/desktop/package.json"
-      - name: Install workbench bundle
-        shell: bash
-        run: |
-          '/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh' plugin --profile desktop add '@dsh-workbench/core@latest'
-          cat "$HOME/.dsh/profiles/desktop/package.json"
       - name: Launch and assert workbench panel
         shell: bash
         run: |
+          exec > >(tee desktop-mac-ui.txt) 2>&1
           pkill -f 'DeepSeek Harness' 2>/dev/null || true
           sleep 3
           '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9222 > "$RUNNER_TEMP/desktop-mac-app.log" 2>&1 &
           sleep 60
           cat "$RUNNER_TEMP/desktop-mac-app.log"
-          node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-mac.png --expect-workbench
+          node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-mac.png --install-via-ui --expect-workbench
       - name: Stop Desktop
         if: always()
         shell: bash
         run: pkill -f 'DeepSeek Harness' 2>/dev/null || true
+      - name: Commit probe log
+        if: always()
+        shell: bash
+        run: |
+          git config user.name ci
+          git config user.email ci@example.com
+          git add -f desktop-mac-ui.txt desktop-mac.png || true
+          git commit -m "ci: macos desktop ui probe [skip ci]" || true
+          git push origin HEAD:desktop-ui-log-mac-${{ github.run_id }}
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
