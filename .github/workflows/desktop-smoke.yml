@@ -51,6 +51,18 @@ jobs:
           Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
           Start-Sleep -Seconds 3
           Get-Content "$env:USERPROFILE\.dsh\profiles\desktop\package.json" -Raw
+      - name: Probe pnpm opencli install
+        shell: bash
+        run: |
+          set -x
+          root="$RUNNER_TEMP/opencli-probe"
+          mkdir -p "$root/toolchain"
+          printf '{"name":"probe","private":true}\n' > "$root/toolchain/package.json"
+          start=$(date +%s)
+          node "/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs" add --dir "$root/toolchain" @jackwener/opencli@1.8.8 --store-dir "$root/pnpm-store" --allow-build=@jackwener/opencli > desktop-mac-pnpm-probe.txt 2>&1 || true
+          end=$(date +%s)
+          echo "elapsed=$((end-start))s" >> desktop-mac-pnpm-probe.txt
+          tail -60 desktop-mac-pnpm-probe.txt
       - name: Launch and assert workbench panel
         shell: pwsh
         run: |
