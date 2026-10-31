@@ -148,6 +148,18 @@ if (installViaUi) {
     if (/Looks good/u.test(body) && !/Installing background tools|Waiting \d+s/u.test(body)) break;
     await sleep(5000);
   }
+  await step('install background tools', clickText('Install background tools'));
+  for (let i = 0; i < 12; i += 1) {
+    await sleep(5000);
+    const current = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
+    console.log(`tools wait ${i * 5}s: ${(current.result?.value ?? '').slice(-600).replaceAll('\n', ' | ')}`);
+  }
+  await step('connect browser', clickText('Connect your browser'));
+  await sleep(10000);
+  const final = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
+  console.log('FINAL_BODY_START');
+  console.log((final.result?.value ?? '').slice(-2500));
+  console.log('FINAL_BODY_END');
 }
 
 const text = await cdp.send('Runtime.evaluate', {
