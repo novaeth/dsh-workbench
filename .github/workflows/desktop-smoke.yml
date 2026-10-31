@@ -1,0 +1,106 @@
+name: desktop-smoke
+
+"on":
+  workflow_dispatch:
+  push:
+    branches: [desktop-smoke]
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: desktop / windows x64
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe Windows Desktop
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $log = Join-Path $env:GITHUB_WORKSPACE 'desktop-win-probe.txt'
+          Start-Transcript -Path $log -Force
+          try {
+            $installer = Join-Path $env:RUNNER_TEMP 'dsh-desktop-win.exe'
+            Invoke-WebRequest -Uri 'https://download.deepseek.com/desktop/dsh-latest-windows-x64.exe' -OutFile $installer
+            Get-Item $installer | Select-Object FullName, Length | Format-List
+            $install = Start-Process -FilePath $installer -ArgumentList '/S' -Wait -PassThru
+            "install exit: $($install.ExitCode)"
+            Start-Sleep -Seconds 10
+            $roots = @("$env:LOCALAPPDATA\Programs", "$env:ProgramFiles", "${env:ProgramFiles(x86)}")
+            $exe = Get-ChildItem -Path $roots -Filter 'DeepSeek Harness.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($null -eq $exe) { throw 'DeepSeek Harness.exe not found after install' }
+            "install dir: $($exe.DirectoryName)"
+            Get-ChildItem "$($exe.DirectoryName)\resources" | Select-Object Name, Length | Format-Table
+            $cli = Join-Path $exe.DirectoryName 'resources\runtime\cli\bin\dsh.cmd'
+            "cli: $cli"
+            & $cli --version 2>&1
+            & $cli --help 2>&1 | Select-Object -First 20
+            $p = Start-Process -FilePath $exe.FullName -PassThru
+            Start-Sleep -Seconds 20
+            "process still running: $(-not $p.HasExited)"
+            Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Select-Object Id, ProcessName, MainWindowTitle | Format-Table
+            "--- profiles ---"
+            foreach ($dir in @("$env:USERPROFILE\.dsh", "$env:APPDATA\dsh", "$env:LOCALAPPDATA\DeepSeek Harness", "$env:APPDATA\DeepSeek Harness")) {
+              "== $dir"
+              if (Test-Path $dir) { Get-ChildItem $dir -Force -Depth 3 -ErrorAction SilentlyContinue | Select-Object FullName | Format-Table -HideTableHeaders } else { 'missing' }
+            }
+            Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
+          } finally {
+            Stop-Transcript
+          }
+      - name: Commit probe log
+        if: always()
+        shell: bash
+        run: |
+          git config user.name ci
+          git config user.email ci@example.com
+          git add -f desktop-win-probe.txt || true
+          git commit -m "ci: windows desktop probe [skip ci]" || true
+          git push origin HEAD:desktop-log-win-${{ github.run_id }}
+
+  macos:
+    name: desktop / macos arm64
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe macOS Desktop
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -x
+          log=desktop-mac-probe.txt
+          exec > >(tee "$log") 2>&1
+          curl -fL --retry 2 -o "$RUNNER_TEMP/dsh-desktop-mac.dmg" "https://download.deepseek.com/desktop/dsh-latest-macos-arm64.dmg"
+          ls -lh "$RUNNER_TEMP/dsh-desktop-mac.dmg"
+          hdiutil attach -nobrowse -readonly -mountpoint "$RUNNER_TEMP/dsh-mnt" "$RUNNER_TEMP/dsh-desktop-mac.dmg"
+          cp -R "$RUNNER_TEMP/dsh-mnt/DeepSeek Harness.app" /Applications/
+          hdiutil detach "$RUNNER_TEMP/dsh-mnt"
+          app="/Applications/DeepSeek Harness.app"
+          xattr -dr com.apple.quarantine "$app" || true
+          "$app/Contents/Resources/runtime/cli/bin/dsh" --version
+          "$app/Contents/Resources/runtime/cli/bin/dsh" --help | head -20
+          "$app/Contents/MacOS/DeepSeek Harness" > "$RUNNER_TEMP/desktop-mac-app.log" 2>&1 &
+          pid=$!
+          sleep 20
+          ps -p "$pid" -o pid,stat,command || true
+          pgrep -fl "DeepSeek Harness" || true
+          echo '--- app log ---'
+          cat "$RUNNER_TEMP/desktop-mac-app.log" || true
+          echo '--- profiles ---'
+          for dir in "$HOME/.dsh" "$HOME/Library/Application Support/DeepSeek Harness" "$HOME/Library/Application Support/dsh"; do
+            echo "== $dir"
+            if [ -e "$dir" ]; then find "$dir" -maxdepth 4 -print | head -80; else echo missing; fi
+          done
+          kill "$pid" 2>/dev/null || true
+      - name: Commit probe log
+        if: always()
+        shell: bash
+        run: |
+          git config user.name ci
+          git config user.email ci@example.com
+          git add -f desktop-mac-probe.txt || true
+          git commit -m "ci: macos desktop probe [skip ci]" || true
+          git push origin HEAD:desktop-log-mac-${{ github.run_id }}
