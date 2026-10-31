@@ -1,0 +1,77 @@
+**********************
+PowerShell transcript start
+Start time: 20261031070846
+Username: runnervmdaln5\runneradmin
+RunAs User: runnervmdaln5\runneradmin
+Configuration Name: 
+Machine: runnervmdaln5 (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -command . 'D:\a\_temp\1dd9774d-cc11-425d-be7a-412a81066751.ps1'
+Process ID: 9948
+PSVersion: 7.6.7
+PSEdition: Core
+GitCommitId: 7.6.7
+OS: Microsoft Windows 10.0.26100
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Transcript started, output file is D:\a\dsh-workbench\dsh-workbench\desktop-win-launch.txt
+--- app stdout ---
+
+Checking for update
+Update for version 0.2.1-rc.5 is not available (latest version: 0.2.1-rc.5, downgrade is disallowed).
+dsh web: http://127.0.0.1:57662/?token=33FajFf6zu-ijmjaVZYWuQ6v32Lp_EUE8Vf74RJQp0Q
+--- app stderr ---
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/69c46973-819c-4887-b72c-294a77ac28e3
+workbench url: http://127.0.0.1:57662/?token=33FajFf6zu-ijmjaVZYWuQ6v32Lp_EUE8Vf74RJQp0Q
+http status: 200
+--- cdp ---
+node exit: 0
+pages: 2
+- page file:///C:/Users/runneradmin/AppData/Local/Programs/DeepSeek%20Harness/resources/app.asar/renderer/welcome.html
+- page dsh-app://app/
+welcome skip: scheduled
+pages after skip: 1
+- page dsh-app://app/
+target: dsh-app://app/
+BODY_START
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+More
+Into the Unknown
+Preview
+Standard mode
+Choose a workspace to start
+Workbench panel
+Reading the panel setup…
+Preparing the workbench
+
+Getting the runtime ready…
+
+Check the environment
+-
+Install background tools
+-
+Connect your browser
+-
+Check DIY mode
+Waiting 57s
+BODY_END
+TITLE: DeepSeek Harness
+SCREENSHOT: desktop-win.png (12942 bytes)
+**********************
+PowerShell transcript end
+End time: 20261031070959
+**********************

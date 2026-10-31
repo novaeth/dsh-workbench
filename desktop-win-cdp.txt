@@ -1,0 +1,41 @@
+pages: 2
+- page file:///C:/Users/runneradmin/AppData/Local/Programs/DeepSeek%20Harness/resources/app.asar/renderer/welcome.html
+- page dsh-app://app/
+welcome skip: scheduled
+pages after skip: 1
+- page dsh-app://app/
+target: dsh-app://app/
+BODY_START
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+More
+Into the Unknown
+Preview
+Standard mode
+Choose a workspace to start
+Workbench panel
+Reading the panel setup…
+Preparing the workbench
+
+Getting the runtime ready…
+
+Check the environment
+-
+Install background tools
+-
+Connect your browser
+-
+Check DIY mode
+Waiting 57s
+BODY_END
+TITLE: DeepSeek Harness
+SCREENSHOT: desktop-win.png (12942 bytes)
