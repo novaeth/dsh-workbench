@@ -110,6 +110,7 @@ export function createBootGate(
   overlay.setAttribute('aria-label', t('env.title'));
   const card = el('div', styles.card);
   const title = el('h1', styles.title, t('env.title'));
+  const bootHint = el('p', styles.hint, t('env.checking'));
   const list = el('ul', styles.steps);
   const rawAll = el('details', styles.raw);
   const rawAllBody = el('pre', styles.error);
@@ -176,13 +177,14 @@ export function createBootGate(
   diyRaw.append(el('summary', styles.rawSummary, t('env.fix.details')), diyRawText);
   diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons, diyRaw);
 
-  card.append(title, list, actions, bridge, diy, rawAll, liveLog);
+  card.append(title, bootHint, list, actions, bridge, diy, rawAll, liveLog);
   overlay.append(card);
   document.body.append(overlay);
 
   const previousInert = root?.inert ?? false;
   if (root !== null) root.inert = true;
 
+  let bootHintShown = true;
   let closed = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let waitingSince: number | null = null;
@@ -257,6 +259,10 @@ export function createBootGate(
 
   function render(snapshot: PreflightSnapshot): void {
     wakeNote.hidden = true;
+    if (bootHintShown && (snapshot.phase !== 'idle' || snapshot.steps.length > 0)) {
+      bootHintShown = false;
+      bootHint.hidden = true;
+    }
 
     const items = snapshot.steps.map((step) => {
       const row = ensureRow(step);
