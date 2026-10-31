@@ -1,8 +1,10 @@
+import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resolvePluginSource } from '../plugin-source.js';
 
 const DSH_HOME = "/tmp/dshhome";
-const ROOT = `${DSH_HOME}/workbench/opencli`;
+const ROOT = path.join(DSH_HOME, 'workbench', 'opencli');
+const at = (...parts: string[]): string => path.join(ROOT, ...parts);
 const REGISTRY = "https://npm.example.com/team/repo";
 const ENV = "DSH_WB_TEST_REGISTRY";
 
@@ -119,14 +121,14 @@ describe("resolvePluginSource：npm（装进工作台自己的隔离运行时）
 
     expect(resolved.commands).toHaveLength(4);
     expect(resolved.commands[0]?.line).toBe(
-      `npm i --prefix '${ROOT}/plugins-npm' 'opencli-plugin-demo@latest' ` +
-        `--registry '${REGISTRY}' --cache '${ROOT}/npm-cache'`,
+      `npm i --prefix '${at('plugins-npm')}' 'opencli-plugin-demo@latest' ` +
+        `--registry '${REGISTRY}' --cache '${at('npm-cache')}'`,
     );
     expect(resolved.commands[1]?.line).toBe(
-      `rm -rf '${ROOT}/plugins-npm/node_modules/@jackwener/opencli' && ` +
-        `mkdir -p '${ROOT}/plugins-npm/node_modules/@jackwener' && ` +
-        `ln -s '${ROOT}/toolchain/node_modules/@jackwener/opencli' ` +
-        `'${ROOT}/plugins-npm/node_modules/@jackwener/opencli'`,
+      `rm -rf '${at('plugins-npm', 'node_modules', '@jackwener', 'opencli')}' && ` +
+        `mkdir -p '${at('plugins-npm', 'node_modules', '@jackwener')}' && ` +
+        `ln -s '${at('toolchain', 'node_modules', '@jackwener', 'opencli')}' ` +
+        `'${at('plugins-npm', 'node_modules', '@jackwener', 'opencli')}'`,
     );
     expect(resolved.commands[2]).toEqual({
       line: "'opencli' plugin uninstall 'demo'",
@@ -134,7 +136,7 @@ describe("resolvePluginSource：npm（装进工作台自己的隔离运行时）
     });
     expect(resolved.commands[3]?.line).toBe(
       `NPM_CONFIG_REGISTRY='${REGISTRY}' 'opencli' plugin install ` +
-        `'${ROOT}/plugins-npm/node_modules/opencli-plugin-demo'`,
+        `'${at('plugins-npm', 'node_modules', 'opencli-plugin-demo')}'`,
     );
   });
 
@@ -155,15 +157,15 @@ describe("resolvePluginSource：npm（装进工作台自己的隔离运行时）
     if (!resolved.ok) throw new Error("应该解析得出");
     expect(resolved.line).toBe(
       [
-        `npm i --prefix '${ROOT}/plugins-npm' 'opencli-plugin-demo@latest' ` +
-          `--registry '${REGISTRY}' --cache '${ROOT}/npm-cache'`,
-        `rm -rf '${ROOT}/plugins-npm/node_modules/@jackwener/opencli' && ` +
-          `mkdir -p '${ROOT}/plugins-npm/node_modules/@jackwener' && ` +
-          `ln -s '${ROOT}/toolchain/node_modules/@jackwener/opencli' ` +
-          `'${ROOT}/plugins-npm/node_modules/@jackwener/opencli'`,
+        `npm i --prefix '${at('plugins-npm')}' 'opencli-plugin-demo@latest' ` +
+          `--registry '${REGISTRY}' --cache '${at('npm-cache')}'`,
+        `rm -rf '${at('plugins-npm', 'node_modules', '@jackwener', 'opencli')}' && ` +
+          `mkdir -p '${at('plugins-npm', 'node_modules', '@jackwener')}' && ` +
+          `ln -s '${at('toolchain', 'node_modules', '@jackwener', 'opencli')}' ` +
+          `'${at('plugins-npm', 'node_modules', '@jackwener', 'opencli')}'`,
         "('opencli' plugin uninstall 'demo' || true)",
         `NPM_CONFIG_REGISTRY='${REGISTRY}' 'opencli' plugin install ` +
-          `'${ROOT}/plugins-npm/node_modules/opencli-plugin-demo'`,
+          `'${at('plugins-npm', 'node_modules', 'opencli-plugin-demo')}'`,
       ].join(" && "),
     );
   });

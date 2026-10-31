@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, symlinkSync } from 'node:fs';
-import { delimiter, dirname } from 'node:path';
+import { delimiter, dirname, join } from 'node:path';
 import { OPENCLI_NPM_PACKAGE, libsBinDir, libsPrefix, toolchainOpencliDir } from '../foundation/paths.js';
 
 
@@ -12,7 +12,7 @@ export function ensureLibsBinOnPath(env: NodeJS.ProcessEnv = process.env): boole
 }
 
 export function ensureLibsOpencliPeer(): boolean {
-  const link = `${libsPrefix()}/node_modules/${OPENCLI_NPM_PACKAGE}`;
+  const link = join(libsPrefix(), 'node_modules', ...OPENCLI_NPM_PACKAGE.split('/'));
   if (existsSync(link)) return false;
   const target = toolchainOpencliDir();
   if (!existsSync(target)) return false;

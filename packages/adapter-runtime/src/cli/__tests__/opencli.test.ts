@@ -22,8 +22,9 @@ describe('createOpencli', () => {
 
     await opencli.json(['issues', '--team', "it's", '--project', 'a b']);
 
+    const apostrophe = process.platform === 'win32' ? `'it''s'` : `'it'\\''s'`;
     expect(fake.commands()[0]).toBe(
-      `'opencli' 'demo' 'issues' '--team' 'it'\\''s' '--project' 'a b' --site-session persistent -f json`,
+      `'opencli' 'demo' 'issues' '--team' ${apostrophe} '--project' 'a b' --site-session persistent -f json`,
     );
     expect(fake.calls[0]?.env).toEqual({ OPENCLI_WINDOW: 'background' });
   });

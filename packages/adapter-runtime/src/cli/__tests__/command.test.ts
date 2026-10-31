@@ -19,8 +19,12 @@ function ctxOf(home: string | undefined): never {
   } as never;
 }
 
+function stableOf(home: string): string {
+  return path.join(home, 'workbench', 'opencli', 'bin', process.platform === 'win32' ? 'opencli.cmd' : 'opencli');
+}
+
 function installed(home: string): string {
-  const stable = path.join(home, 'workbench', 'opencli', 'bin', 'opencli');
+  const stable = stableOf(home);
   fs.mkdirSync(path.dirname(stable), { recursive: true });
   fs.writeFileSync(stable, '');
   return stable;
@@ -47,7 +51,7 @@ describe('opencliCommandOf', () => {
     expect(opencliCommandOf(ctxOf(home))).toEqual({
       command: 'opencli',
       source: 'path',
-      isolated: path.join(home, 'workbench', 'opencli', 'bin', 'opencli'),
+      isolated: stableOf(home),
     });
   });
 
@@ -85,9 +89,7 @@ describe('opencliCommandOf', () => {
 describe('isolatedOpencliPathOf', () => {
   it('给的是候选路径，存不存在都报（诊断要能区分"没配"和"没装"）', () => {
     const home = tempDir();
-    expect(isolatedOpencliPathOf(ctxOf(home))).toBe(
-      path.join(home, 'workbench', 'opencli', 'bin', 'opencli'),
-    );
+    expect(isolatedOpencliPathOf(ctxOf(home))).toBe(stableOf(home));
     expect(isolatedOpencliPathOf(ctxOf(undefined))).toBeNull();
   });
 });

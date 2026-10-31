@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { pluginAt } from '@dsh-workbench/shared/host';
 
 export interface PluginEntryRef {
@@ -13,7 +14,7 @@ export interface PluginFiles {
 
 export function pluginDirOf(entry: PluginEntryRef, files: PluginFiles | undefined): string {
   if (entry.local === true || files?.dir === undefined) return entry.package;
-  return `${files.dir}/${entry.package}`;
+  return join(files.dir, entry.package);
 }
 
 export function pluginOnDisk(entry: PluginEntryRef, files: PluginFiles | undefined): boolean {

@@ -205,7 +205,7 @@ describe('审批屏黄金文件：每一族上屏长什么样，一眼可见', (
     const actual = await document();
     if (process.env['WB_SCREENS_PRINT'] === '1') process.stdout.write(actual);
 
-    const golden = readFileSync(GOLDEN, 'utf8');
+    const golden = readFileSync(GOLDEN, 'utf8').replaceAll('\r\n', '\n');
     const actualLines = actual.split('\n');
     const goldenLines = golden.split('\n');
     const at = actualLines.findIndex((line, index) => line !== goldenLines[index]);

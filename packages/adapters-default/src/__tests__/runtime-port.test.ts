@@ -1,4 +1,4 @@
-import { delimiter } from 'node:path';
+import { delimiter, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { runtimeSeedPaths } from '@dsh-workbench/adapter-probe';
 import { libsBinDir } from '@dsh-workbench/adapter-runtime';
@@ -7,9 +7,9 @@ import { prependRuntimePath, runtimePathDirs } from '../runtime-port.js';
 describe('运行时上 PATH：顺序就是优先级', () => {
   it('★ 自己那份 opencli 排最前，共用依赖其次，入口目录最后', () => {
     expect(runtimePathDirs(runtimeSeedPaths('/dsh/workbench'))).toEqual([
-      '/dsh/workbench/opencli/bin',
+      join('/dsh/workbench', 'opencli', 'bin'),
       libsBinDir(),
-      '/dsh/workbench/bin',
+      join('/dsh/workbench', 'bin'),
     ]);
   });
 
@@ -18,9 +18,9 @@ describe('运行时上 PATH：顺序就是优先级', () => {
     prependRuntimePath(runtimeSeedPaths('/dsh/workbench'), env);
 
     expect(env.PATH.split(delimiter).slice(0, 3)).toEqual([
-      '/dsh/workbench/opencli/bin',
+      join('/dsh/workbench', 'opencli', 'bin'),
       libsBinDir(),
-      '/dsh/workbench/bin',
+      join('/dsh/workbench', 'bin'),
     ]);
   });
 

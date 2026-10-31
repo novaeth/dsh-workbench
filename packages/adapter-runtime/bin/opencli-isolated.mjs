@@ -23,8 +23,11 @@ if (!existsSync(main)) {
 const env = {
   ...process.env,
   HOME: isolatedHome,
-  npm_config_cache: join(root, 'npm-cache'),
 };
+for (const key of Object.keys(env)) {
+  if (key.toLowerCase() === 'npm_config_cache') delete env[key];
+}
+env.npm_config_cache = join(root, 'npm-cache');
 const userConfig = join(realHome, '.npmrc');
 if (existsSync(userConfig)) env.NPM_CONFIG_USERCONFIG = userConfig;
 if (process.versions.electron !== undefined) env.ELECTRON_RUN_AS_NODE = '1';

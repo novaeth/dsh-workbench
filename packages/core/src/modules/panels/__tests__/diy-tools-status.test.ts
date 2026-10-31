@@ -2,6 +2,7 @@ import dayjs from 'dayjs';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { tmpdir } from 'node:os';
 import { createDiyRig } from './diy-harness';
 import { DIY_RECON_TOOL, DIY_STATUS_TOOL, DIY_SHOW_TOOL } from '../unit';
 
@@ -144,7 +145,7 @@ describe('workbench_diy · open', () => {
 });
 
 describe('workbench_diy · recon（先看有没有现成的）', () => {
-  const catalogDir = fs.mkdtempSync(path.join(process.env['TMPDIR'] ?? '/tmp', 'diy-catalog-'));
+  const catalogDir = fs.mkdtempSync(path.join(tmpdir(), 'diy-catalog-'));
   const catalog = path.join(catalogDir, 'cli-manifest.json');
   const pluginsDir = path.join(catalogDir, 'no-plugins');
   fs.mkdirSync(pluginsDir, { recursive: true });

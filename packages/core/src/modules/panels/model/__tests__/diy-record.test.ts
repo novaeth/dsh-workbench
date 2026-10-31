@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createDiyRig } from '../../__tests__/diy-harness';
 import { ARM_OK, GET, POST, URL, entry, envelope, heldStore, line } from '../../__tests__/record-fixtures';
@@ -36,8 +37,8 @@ describe('录制交接：prepare / read / stop 三把', () => {
     expect(out.phase).toBe('armed');
     expect(out.capture).toBe(true);
     expect(out.talk).toBe('已开始录制');
-    expect(out.captureFile).toContain(`${rig.root()}/workbench/artifacts/`);
-    expect(out.captureFile.endsWith('/rec-demo.jsonl')).toBe(true);
+    expect(out.captureFile).toContain(join(rig.root(), 'workbench', 'artifacts', ''));
+    expect(out.captureFile.endsWith(join('rec-demo.jsonl'))).toBe(true);
 
     expect(built.record.live(Date.now())?.phase).toBe('armed');
     expect(built.record.live(Date.now())?.unit).toBe('demo');

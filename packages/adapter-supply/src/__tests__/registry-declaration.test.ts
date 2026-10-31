@@ -142,7 +142,8 @@ describe('pathDeclarationOf', () => {
     const { dir, cleanup } = localDir({ name: '@t/rel', dsh: { workbench: { unit: 'rel' } } });
     try {
       expect(pathDeclarationOf(dir)).toEqual({ unit: 'rel' });
-      expect(pathDeclarationOf(path.relative(process.cwd(), dir))).toBeUndefined();
+      const rel = path.relative(process.cwd(), dir);
+      if (rel !== '' && !path.isAbsolute(rel)) expect(pathDeclarationOf(rel)).toBeUndefined();
     } finally {
       cleanup();
     }

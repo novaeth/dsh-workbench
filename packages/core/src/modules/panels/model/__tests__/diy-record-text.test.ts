@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { RecordExpect } from '@dsh-workbench/shared/host';
 import { captureFileOf } from '../diy-record';
@@ -393,7 +394,7 @@ describe('录制交接：清单一条都不删、原文按 key 取（纯函数�
   });
 
   it('★ 捕获文件落在取证目录里（按 unit 取名）', () => {
-    expect(captureFileOf('/w/artifacts/demo', 'demo')).toBe('/w/artifacts/demo/rec-demo.jsonl');
+    expect(captureFileOf('/w/artifacts/demo', 'demo')).toBe(join('/w', 'artifacts', 'demo', 'rec-demo.jsonl'));
   });
 
   it('★★ 每一档拒法都有话说（别回一句光秃秃的 code）', () => {

@@ -246,14 +246,14 @@ describe('发现域 · 沙箱拦住时给得出怎么修', () => {
       docs,
       modules: () => [],
       defaultRegistry: async () => undefined,
-      profilePath: '/home/u/.dsh/profiles/desktop',
+      profilePath: join('/home/u', '.dsh', 'profiles', 'desktop'),
     });
 
     const payload = await discover.snapshot();
 
     expect(payload.state).toBe('unreadable');
     expect(payload.problem?.kind).toBe('sandbox');
-    expect(payload.problem?.detail).toContain('/home/u/.dsh/profiles/desktop/cordis.patch.yml');
+    expect(payload.problem?.detail).toContain(join('/home/u', '.dsh', 'profiles', 'desktop', 'cordis.patch.yml'));
     expect(payload.problem?.detail).toContain("workspaceRoot: !!js dshHomePath('workbench')");
   });
 });

@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { runtimeLayoutOf } from '@dsh-workbench/shared/host';
 
 export const OPENCLI_RUNTIME_ID = 'opencli';
@@ -35,11 +36,11 @@ export function npmCacheDir(): string {
 }
 
 export function toolchainOpencliDir(): string {
-  return `${isolatedRoot()}/toolchain/node_modules/${OPENCLI_NPM_PACKAGE}`;
+  return join(isolatedRoot(), 'toolchain', 'node_modules', ...OPENCLI_NPM_PACKAGE.split('/'));
 }
 
 export function vendorPeerLink(): { readonly dir: string; readonly parent: string } {
-  const base = `${vendorPrefix()}/node_modules`;
+  const base = join(vendorPrefix(), 'node_modules');
   const [scope] = OPENCLI_NPM_PACKAGE.split('/');
-  return { dir: `${base}/${OPENCLI_NPM_PACKAGE}`, parent: `${base}/${scope}` };
+  return { dir: join(base, ...OPENCLI_NPM_PACKAGE.split('/')), parent: join(base, scope ?? '') };
 }

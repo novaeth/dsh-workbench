@@ -7,7 +7,7 @@ import { OPENCLI_MANIFEST_FILE } from '../index.js';
 import { LOCAL_PLUGIN_ENV, packageRouteOf, pluginInstallPlan, resetPackageRouteCache } from '../index.js';
 
 const DSH_HOME = '/tmp/dshhome';
-const PREFIX = `${DSH_HOME}/workbench/opencli/plugins-npm`;
+const PREFIX = path.join(DSH_HOME, 'workbench', 'opencli', 'plugins-npm');
 const REGISTRY = 'https://npm.example.com/team/';
 const roots: string[] = [];
 
@@ -200,11 +200,11 @@ describe('插件的安装命令（复用 plugin-source 那两条既有分支）'
 
     if (!plan.ok) throw new Error('这条该装得上');
     expect(plan.commands[0]?.line).toBe(
-      `npm i --prefix '${PREFIX}' 'opencli-plugin-demo@1.2.3' --registry '${REGISTRY}' --cache '${DSH_HOME}/workbench/opencli/npm-cache'`,
+      `npm i --prefix '${PREFIX}' 'opencli-plugin-demo@1.2.3' --registry '${REGISTRY}' --cache '${path.join(DSH_HOME, 'workbench', 'opencli', 'npm-cache')}'`,
     );
     expect(plan.commands.some((step) => step.line.includes("'opencli' plugin uninstall 'demo'"))).toBe(true);
     expect(plan.commands.at(-1)?.line).toContain(
-      `'opencli' plugin install '${PREFIX}/node_modules/opencli-plugin-demo'`,
+      `'opencli' plugin install '${path.join(PREFIX, 'node_modules', 'opencli-plugin-demo')}'`,
     );
     expect(plan.line).toContain('NPM_CONFIG_REGISTRY=');
   });

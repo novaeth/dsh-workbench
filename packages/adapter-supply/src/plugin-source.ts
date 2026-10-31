@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import type { SupplySource } from '@dsh-workbench/shared';
 import type {
   PluginSourceCommand,
@@ -55,7 +56,7 @@ function npmSource(
   if (name === '') return { ok: false, problem: 'malformed' };
 
   const prefix = vendorPrefix();
-  const dirInPrefix = `${prefix}/node_modules/${name}`;
+  const dirInPrefix = join(prefix, 'node_modules', name);
   const peer = vendorPeerLink();
 
   const commands: PluginSourceCommand[] = [

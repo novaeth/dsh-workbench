@@ -17,7 +17,7 @@ describe('ensureLibsOpencliPeer', () => {
     expect(ensureLibsOpencliPeer()).toBe(true);
     const link = join(root, 'opencli/libs/node_modules/@jackwener/opencli');
     expect(existsSync(link)).toBe(true);
-    expect(realpathSync(link)).toContain('toolchain/node_modules/@jackwener/opencli');
+    expect(realpathSync(link).replaceAll('\\', '/')).toContain('toolchain/node_modules/@jackwener/opencli');
     expect(ensureLibsOpencliPeer()).toBe(false);
   });
 
@@ -33,9 +33,10 @@ describe('ensureLibsOpencliPeer', () => {
 describe('ensureLibsBinOnPath', () => {
   it('★ 把 bin 目录前插一次；再插不会重复（PATH 不许越跑越长）', () => {
     const env = { PATH: `/usr/bin${delimiter}/bin` };
+    const expected = join('opencli', 'libs', 'node_modules', '.bin');
     expect(ensureLibsBinOnPath(env)).toBe(true);
-    expect(env.PATH.split(delimiter)[0].endsWith('/opencli/libs/node_modules/.bin')).toBe(true);
+    expect(env.PATH.split(delimiter)[0].endsWith(expected)).toBe(true);
     expect(ensureLibsBinOnPath(env)).toBe(false);
-    expect(env.PATH.split(delimiter).filter((one) => one.endsWith('/opencli/libs/node_modules/.bin'))).toHaveLength(1);
+    expect(env.PATH.split(delimiter).filter((one) => one.endsWith(expected))).toHaveLength(1);
   });
 });

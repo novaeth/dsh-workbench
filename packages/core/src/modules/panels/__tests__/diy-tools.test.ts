@@ -348,7 +348,7 @@ describe('workbench_diy · 降级', () => {
       createDebugStore(),
     );
 
-    expect(dir).toBe(rig.PACKAGES() + '/module-demo');
+    expect(dir).toBe(path.join(rig.PACKAGES(), 'module-demo'));
     await expect(registered[0]?.execute({}, rig.diyExec())).rejects.toThrow(/登记工作区/);
   });
 });
