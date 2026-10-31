@@ -94,8 +94,12 @@ jobs:
         run: |
           git config user.name ci
           git config user.email ci@example.com
-          git add -f desktop-win*.png desktop-win*.txt || true
-          git commit -m "ci: windows desktop ui probe [skip ci]" || true
+          shopt -s nullglob
+          files=(desktop-win*.png desktop-win*.txt)
+          if [ ${#files[@]} -gt 0 ]; then
+            git add -f "${files[@]}"
+            git commit -m "ci: windows desktop ui probe [skip ci]" || true
+          fi
           git push origin HEAD:desktop-ui-log-win-${{ github.run_id }}
 
       - uses: actions/upload-artifact@v4
@@ -143,6 +147,7 @@ jobs:
           cat "$HOME/.dsh/profiles/desktop/package.json"
       - name: Probe pnpm opencli install
         shell: bash
+        timeout-minutes: 4
         run: |
           set -x
           root="$RUNNER_TEMP/opencli-probe"
@@ -151,8 +156,10 @@ jobs:
           export npm_config_registry='https://registry.npmmirror.com'
           export NPM_CONFIG_REGISTRY="$npm_config_registry"
           start=$(date +%s)
-          timeout 60 node "/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs" add --dir "$root/toolchain" @jackwener/opencli@1.8.8 --store-dir "$root/npm-cache" --allow-build=@jackwener/opencli > desktop-mac-pnpm-probe.txt 2>&1
+          set +e
+          node "/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs" add --dir "$root/toolchain" @jackwener/opencli@1.8.8 --store-dir "$root/npm-cache" --allow-build=@jackwener/opencli > desktop-mac-pnpm-probe.txt 2>&1
           code=$?
+          set -e
           end=$(date +%s)
           echo "elapsed=$((end-start))s exit=$code" >> desktop-mac-pnpm-probe.txt
           tail -60 desktop-mac-pnpm-probe.txt
@@ -165,10 +172,12 @@ jobs:
           echo "registry: $NPM_CONFIG_REGISTRY"
           pkill -f 'DeepSeek Harness' 2>/dev/null || true
           sleep 3
+          cd /
+          pwd
           '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9222 > "$RUNNER_TEMP/desktop-mac-app.log" 2>&1 &
           sleep 60
           cat "$RUNNER_TEMP/desktop-mac-app.log"
-          node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-mac.png --install-via-ui --expect-workbench
+          node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9222 desktop-mac.png --install-via-ui --expect-workbench
 
       - name: Assert opencli installed
         shell: bash
@@ -191,8 +200,14 @@ jobs:
         shell: bash
         run: |
           exec > >(tee desktop-mac-inspect.txt) 2>&1
+          echo '--- pwd ---'
+          pwd
           echo '--- processes ---'
           ps -ef | grep -Ei 'pnpm|opencli|deepseek|node' | grep -v grep | head -80 || true
+          echo '--- app cwd ---'
+          for pid in $(pgrep -f 'DeepSeek Harness' 2>/dev/null); do
+            echo "pid $pid: $(lsof -a -p "$pid" -d cwd -Fn 2>/dev/null | tr '\n' ' ')"
+          done
           echo '--- workbench tree ---'
           find "$HOME/.dsh/workbench" -maxdepth 4 -print 2>/dev/null | head -150 || true
           echo '--- opencli tree ---'
@@ -209,12 +224,12 @@ jobs:
           find "$HOME/Library/Logs/DeepSeek Harness" -type f 2>/dev/null | while read -r file; do
             echo "=== $file"
             tail -300 "$file" 2>/dev/null || true
-          done
+          done || true
           echo '--- dsh logs ---'
           find "$HOME/.dsh/logs" -type f 2>/dev/null | while read -r file; do
             echo "=== $file"
             tail -200 "$file" 2>/dev/null || true
-          done
+          done || true
 
       - name: Stop Desktop
         if: always()
@@ -226,8 +241,12 @@ jobs:
         run: |
           git config user.name ci
           git config user.email ci@example.com
-          git add -f desktop-mac*.png desktop-mac*.txt || true
-          git commit -m "ci: macos desktop ui probe [skip ci]" || true
+          shopt -s nullglob
+          files=(desktop-mac*.png desktop-mac*.txt)
+          if [ ${#files[@]} -gt 0 ]; then
+            git add -f "${files[@]}"
+            git commit -m "ci: macos desktop ui probe [skip ci]" || true
+          fi
           git push origin HEAD:desktop-ui-log-mac-${{ github.run_id }}
 
       - uses: actions/upload-artifact@v4
