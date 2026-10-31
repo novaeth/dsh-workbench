@@ -100,9 +100,14 @@ hooks for a one-off commit.
 
 ## CI
 
-GitHub Actions runs `.github/workflows/docs.yml` on pull requests and pushes to `main`:
-`pnpm run check:docs`, the `DOC-3` link/§N gate, and `pnpm run lint`. The full
-`pnpm run check` is still the release gate and is expected before pushing; the docs
+GitHub Actions runs two workflows on pull requests and pushes to `main`:
+
+- `.github/workflows/docs.yml` (ubuntu): `pnpm run check:docs`, the `DOC-3` link/§N gate, and `pnpm run lint`.
+- `.github/workflows/platform-ci.yml` (Windows Server 2025 + macOS): install, build, typecheck, and the
+  full test suite via `pnpm run coverage`. The Windows lane skips the docs site build (Pagoda), which is
+  platform-independent and still built by the macOS lane.
+
+The full `pnpm run check` is still the release gate and is expected before pushing; the docs
 workflow keeps document facts from silently drifting in PRs.
 
 ## Docs site
