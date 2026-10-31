@@ -170,7 +170,7 @@ if (installViaUi) {
       gateCaptured = true;
       if (quick) break;
     }
-    if (/Looks good/u.test(body) && !/Installing background tools|Waiting \d+s/u.test(body)) break;
+    if (!/Preparing the workbench|准备工作台/u.test(body)) break;
     await sleep(5000);
   }
   if (quick) {
@@ -180,14 +180,13 @@ if (installViaUi) {
     cdp.close();
     process.exit(0);
   }
-  await step('install background tools', clickText('Install background tools'));
-  for (let i = 0; i < 12; i += 1) {
-    await sleep(5000);
+  for (let i = 0; i < 90; i += 1) {
     const current = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
-    console.log(`tools wait ${i * 5}s: ${(current.result?.value ?? '').slice(-600).replaceAll('\n', ' | ')}`);
+    const body = current.result?.value ?? '';
+    console.log(`ready wait ${i * 5}s: ${body.slice(-600).replaceAll('\n', ' | ')}`);
+    if (!/Preparing the workbench|准备工作台/u.test(body) && /Workbench panel|工作台面板/u.test(body)) break;
+    await sleep(5000);
   }
-  await step('connect browser', clickText('Connect your browser'));
-  await sleep(10000);
   const final = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
   console.log('FINAL_BODY_START');
   console.log((final.result?.value ?? '').slice(-2500));
