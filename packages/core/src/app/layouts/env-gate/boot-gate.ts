@@ -116,10 +116,6 @@ export function createBootGate(
   const rawAllBody = el('pre', styles.error);
   rawAll.append(el('summary', styles.rawSummary, t('env.fix.details')), rawAllBody);
   rawAll.hidden = true;
-  const liveLog = el('details', styles.raw) as HTMLDetailsElement;
-  const liveLogBody = el('pre', styles.error);
-  liveLog.append(el('summary', styles.rawSummary, t('env.log')), liveLogBody);
-  liveLog.hidden = true;
   const actions = el('div', styles.actions);
   actions.hidden = true;
   const fixTitle = el('h2', styles.fixTitle, t('env.fix.title'));
@@ -177,7 +173,7 @@ export function createBootGate(
   diyRaw.append(el('summary', styles.rawSummary, t('env.fix.details')), diyRawText);
   diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons, diyRaw);
 
-  card.append(title, bootHint, list, actions, bridge, diy, rawAll, liveLog);
+  card.append(title, bootHint, list, actions, bridge, diy, rawAll);
   overlay.append(card);
   document.body.append(overlay);
 
@@ -187,13 +183,6 @@ export function createBootGate(
   let bootHintShown = true;
   let closed = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  let snapshotLog = '';
-
-  function paintLog(): void {
-    liveLog.hidden = snapshotLog === '';
-    liveLogBody.textContent = snapshotLog;
-    if (liveLog.open) liveLogBody.scrollTop = liveLogBody.scrollHeight;
-  }
   let cancelled = false;
   const forcePlan = createForcePlan();
   let pinned: PreflightSnapshot | null = null;
@@ -212,9 +201,14 @@ export function createBootGate(
 
   interface StepRow {
     readonly item: HTMLElement;
+    readonly head: HTMLElement;
     readonly mark: HTMLElement;
     readonly detail: HTMLElement;
+    readonly arrow: HTMLElement;
+    readonly log: HTMLElement;
     status: string;
+    expandable: boolean;
+    expanded: boolean;
   }
 
   const rows = new Map<PreflightStepId, StepRow>();
@@ -224,10 +218,42 @@ export function createBootGate(
     const existing = rows.get(step.id);
     if (existing !== undefined) return existing;
     const item = el('li', styles.step);
+    const head = el('div', styles.head);
+    head.setAttribute('role', 'button');
+    head.setAttribute('tabindex', '0');
+    head.setAttribute('aria-expanded', 'false');
     const mark = el('span', styles.mark);
     mark.setAttribute('aria-hidden', 'true');
-    const row: StepRow = { item, mark, detail: el('span', styles.detail), status: '' };
-    item.append(mark, el('span', styles.label, stepLabel(step, t)), row.detail);
+    const row: StepRow = {
+      item,
+      head,
+      mark,
+      detail: el('span', styles.detail),
+      arrow: el('span', styles.arrow, '›'),
+      log: el('pre', styles.stepLog),
+      status: '',
+      expandable: false,
+      expanded: false,
+    };
+    row.arrow.setAttribute('aria-hidden', 'true');
+    row.arrow.hidden = true;
+    row.log.hidden = true;
+    head.append(mark, el('span', styles.label, stepLabel(step, t)), row.detail, row.arrow);
+    item.append(head, row.log);
+    const toggle = (): void => {
+      if (!row.expandable) return;
+      row.expanded = !row.expanded;
+      row.log.hidden = !row.expanded;
+      head.setAttribute('aria-expanded', row.expanded ? 'true' : 'false');
+      item.dataset.expanded = row.expanded ? 'true' : 'false';
+      if (row.expanded) row.log.scrollTop = row.log.scrollHeight;
+    };
+    head.addEventListener('click', toggle);
+    head.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      toggle();
+    });
     rows.set(step.id, row);
     return row;
   }
@@ -252,6 +278,18 @@ export function createBootGate(
         }
       }
       row.detail.textContent = stepDetailText(step, snapshot, t);
+      const logLines = step.log ?? [];
+      row.expandable = logLines.length > 0;
+      row.item.dataset.expandable = row.expandable ? 'true' : 'false';
+      row.arrow.hidden = !row.expandable;
+      row.log.textContent = logLines.join('\n');
+      if (!row.expandable && row.expanded) {
+        row.expanded = false;
+        row.log.hidden = true;
+        row.head.setAttribute('aria-expanded', 'false');
+        row.item.dataset.expanded = 'false';
+      }
+      if (row.expanded) row.log.scrollTop = row.log.scrollHeight;
       return row.item;
     });
 
@@ -339,8 +377,6 @@ export function createBootGate(
 
     const panelShown = !actions.hidden || !bridge.hidden || !diy.hidden;
     rawAll.hidden = !showsRawAll(snapshot, panelShown) || rawLines.length === 0;
-    snapshotLog = (snapshot.log ?? []).join('\n');
-    paintLog();
   }
 
   async function poll(): Promise<void> {
