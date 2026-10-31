@@ -63,6 +63,21 @@ jobs:
           Get-Content $cdp -ErrorAction SilentlyContinue
           Stop-Transcript
           if ($code -ne 0) { throw "cdp probe failed: $code" }
+
+      - name: Inspect workbench install
+        if: always()
+        shell: pwsh
+        run: |
+          Start-Transcript -Path desktop-win-inspect.txt -Force
+          try {
+            $root = "$env:USERPROFILE\.dsh\workbench"
+            "workbench root: $root"
+            if (Test-Path $root) { Get-ChildItem $root -Recurse -Depth 3 -ErrorAction SilentlyContinue | Select-Object FullName, Length | Format-Table -AutoSize | Out-String -Width 400 }
+            $opencli = @("$root\opencli", "$root\opencli\toolchain", "$root\opencli\bin")
+            foreach ($dir in $opencli) { "== $dir"; if (Test-Path $dir) { Get-ChildItem $dir -Force -ErrorAction SilentlyContinue | Select-Object Name } else { 'missing' } }
+            Get-ChildItem "$env:USERPROFILE\.dsh" -Filter '*.log' -Recurse -ErrorAction SilentlyContinue | Select-Object FullName, Length
+          } finally { Stop-Transcript }
+
       - name: Stop Desktop
         if: always()
         shell: pwsh
@@ -73,7 +88,7 @@ jobs:
         run: |
           git config user.name ci
           git config user.email ci@example.com
-          git add -f desktop-win-ui.txt desktop-win-cdp.txt desktop-win.png || true
+          git add -f desktop-win-ui.txt desktop-win-cdp.txt desktop-win-inspect.txt desktop-win.png || true
           git commit -m "ci: windows desktop ui probe [skip ci]" || true
           git push origin HEAD:desktop-ui-log-win-${{ github.run_id }}
 
@@ -126,6 +141,19 @@ jobs:
           sleep 60
           cat "$RUNNER_TEMP/desktop-mac-app.log"
           node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-mac.png --install-via-ui --expect-workbench
+
+      - name: Inspect workbench install
+        if: always()
+        shell: bash
+        run: |
+          exec > >(tee desktop-mac-inspect.txt) 2>&1
+          echo '--- workbench tree ---'
+          find "$HOME/.dsh/workbench" -maxdepth 4 -print 2>/dev/null | head -150 || true
+          echo '--- opencli paths ---'
+          find "$HOME/.dsh" -maxdepth 5 -iname '*opencli*' -print 2>/dev/null | head -80 || true
+          echo '--- logs ---'
+          find "$HOME/.dsh" "$HOME/Library/Logs" -maxdepth 4 -type f -iname '*dsh*' -o -iname '*deepseek*' 2>/dev/null | head -40 || true
+
       - name: Stop Desktop
         if: always()
         shell: bash
@@ -136,7 +164,7 @@ jobs:
         run: |
           git config user.name ci
           git config user.email ci@example.com
-          git add -f desktop-mac-ui.txt desktop-mac.png || true
+          git add -f desktop-mac-ui.txt desktop-mac-inspect.txt desktop-mac.png || true
           git commit -m "ci: macos desktop ui probe [skip ci]" || true
           git push origin HEAD:desktop-ui-log-mac-${{ github.run_id }}
 
