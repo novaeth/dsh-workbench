@@ -1,0 +1,191 @@
+--- pwd ---
+/Users/runner/work/dsh-workbench/dsh-workbench
+--- processes ---
+  501  4859     1   0  2:05PM ??         0:02.15 /Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness --remote-debugging-port=9222
+  501  4861  4859   0  2:05PM ??         0:00.90 /Applications/DeepSeek Harness.app/Contents/Frameworks/DeepSeek Harness Helper.app/Contents/MacOS/DeepSeek Harness Helper --type=gpu-process --user-data-dir=/Users/runner/Library/Application Support/@deepseek-ai/dsh-desktop --gpu-preferences=WAAAAAAAAAAgAQAEAAAAAAAAAAAAAGAAQAAAAAAAAAADAAAAAAAAADgAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAKAAAAAAAAAAoAAAAAAAAAAgAAAAAAAAADAAAAAEAAAAAAAAAAAAAAAgAAAAAAAAACAAAAAAAAAA= --shared-files --field-trial-handle=1718379636,r,7178245335793820749,10839856584985134098,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,5082870622167590479,10073352033797759996,4 --trace-process-track-uuid=3190708988185955192 --seatbelt-client=30
+  501  4862  4859   0  2:05PM ??         0:00.15 /Applications/DeepSeek Harness.app/Contents/Frameworks/DeepSeek Harness Helper.app/Contents/MacOS/DeepSeek Harness Helper --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=network --user-data-dir=/Users/runner/Library/Application Support/@deepseek-ai/dsh-desktop --standard-schemes=dsh-app --secure-schemes=dsh-app --cors-schemes=dsh-app --fetch-schemes=dsh-app --streaming-schemes=dsh-app --code-cache-schemes=dsh-app --shared-files --field-trial-handle=1718379636,r,7178245335793820749,10839856584985134098,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,5082870622167590479,10073352033797759996,4 --trace-process-track-uuid=3190708989122997041 --seatbelt-client=34
+  501  4880  4859   0  2:05PM ??         0:02.31 /Applications/DeepSeek Harness.app/Contents/Frameworks/DeepSeek Harness Helper (Renderer).app/Contents/MacOS/DeepSeek Harness Helper (Renderer) --type=renderer --user-data-dir=/Users/runner/Library/Application Support/@deepseek-ai/dsh-desktop --standard-schemes=dsh-app --secure-schemes=dsh-app --cors-schemes=dsh-app --fetch-schemes=dsh-app --streaming-schemes=dsh-app --code-cache-schemes=dsh-app --app-path=/Applications/DeepSeek Harness.app/Contents/Resources/app.asar --enable-sandbox --remote-debugging-port=9222 --lang=en-US --num-raster-threads=1 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --renderer-client-id=4 --launch-time-ticks=295011781 --shared-files --field-trial-handle=1718379636,r,7178245335793820749,10839856584985134098,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,5082870622167590479,10073352033797759996,4 --trace-process-track-uuid=3190708990060038890 --seatbelt-client=48
+  501  4962  4859   0  2:05PM ??         0:04.91 /Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness --expose-internals /Applications/DeepSeek Harness.app/Contents/Resources/app.asar/dsh/node_modules/@deepseek-ai/dsh-desktop-host/lib/index.js /Applications/DeepSeek Harness.app/Contents/Resources/app.asar/dsh /Users/runner/.dsh/profiles/desktop /Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime /Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.mjs /Applications/DeepSeek Harness.app/Contents/Resources/runtime/bin
+  501  7323     1   0  2:07PM ??         0:00.13 /Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node /Users/runner/.dsh/workbench/opencli/toolchain/node_modules/.pnpm/@jackwener+opencli@1.8.8/node_modules/@jackwener/opencli/dist/src/daemon.js
+--- app cwd ---
+pid 4859: p4859 fcwd n/ 
+pid 4861: p4861 fcwd n/ 
+pid 4862: p4862 fcwd n/ 
+pid 4880: p4880 fcwd n/ 
+pid 4962: p4962 fcwd n/Users/runner/.dsh/profiles/desktop 
+pid 7323: p7323 fcwd n/Users/runner/.dsh/profiles/desktop 
+--- workbench tree ---
+/Users/runner/.dsh/workbench
+/Users/runner/.dsh/workbench/diy
+/Users/runner/.dsh/workbench/diy/.agents
+/Users/runner/.dsh/workbench/diy/.agents/skills
+/Users/runner/.dsh/workbench/diy/.agents/skills/workbench-module-diy
+/Users/runner/.dsh/workbench/diy/.npmrc
+/Users/runner/.dsh/workbench/diy/README.md
+/Users/runner/.dsh/workbench/diy/package.json
+/Users/runner/.dsh/workbench/diy/packages
+/Users/runner/.dsh/workbench/diy/AGENTS.md
+/Users/runner/.dsh/workbench/diy/pnpm-workspace.yaml
+/Users/runner/.dsh/workbench/bin
+/Users/runner/.dsh/workbench/bin/desktop
+/Users/runner/.dsh/workbench/bin/desktop/node
+/Users/runner/.dsh/workbench/bin/dsh-wb-module
+/Users/runner/.dsh/workbench/seed.log
+/Users/runner/.dsh/workbench/opencli
+/Users/runner/.dsh/workbench/opencli/home
+/Users/runner/.dsh/workbench/opencli/home/.opencli
+/Users/runner/.dsh/workbench/opencli/home/.opencli/node_modules
+/Users/runner/.dsh/workbench/opencli/home/.opencli/package.json
+/Users/runner/.dsh/workbench/opencli/home/.opencli/clis
+/Users/runner/.dsh/workbench/opencli/bin
+/Users/runner/.dsh/workbench/opencli/bin/opencli
+/Users/runner/.dsh/workbench/opencli/npm-cache
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/projects
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/index.db
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files
+/Users/runner/.dsh/workbench/opencli/toolchain
+/Users/runner/.dsh/workbench/opencli/toolchain/pnpm-lock.yaml
+/Users/runner/.dsh/workbench/opencli/toolchain/node_modules
+/Users/runner/.dsh/workbench/opencli/toolchain/node_modules/@jackwener
+/Users/runner/.dsh/workbench/opencli/toolchain/node_modules/.pnpm
+/Users/runner/.dsh/workbench/opencli/toolchain/node_modules/.modules.yaml
+/Users/runner/.dsh/workbench/opencli/toolchain/node_modules/.bin
+/Users/runner/.dsh/workbench/opencli/toolchain/node_modules/.pnpm-workspace-state-v1.json
+/Users/runner/.dsh/workbench/opencli/toolchain/package.json
+/Users/runner/.dsh/workbench/opencli/toolchain/pnpm-workspace.yaml
+--- opencli tree ---
+/Users/runner/.dsh/workbench/opencli
+/Users/runner/.dsh/workbench/opencli/home
+/Users/runner/.dsh/workbench/opencli/home/.opencli
+/Users/runner/.dsh/workbench/opencli/home/.opencli/node_modules
+/Users/runner/.dsh/workbench/opencli/home/.opencli/node_modules/@jackwener
+/Users/runner/.dsh/workbench/opencli/home/.opencli/package.json
+/Users/runner/.dsh/workbench/opencli/home/.opencli/clis
+/Users/runner/.dsh/workbench/opencli/bin
+/Users/runner/.dsh/workbench/opencli/bin/opencli
+/Users/runner/.dsh/workbench/opencli/npm-cache
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/projects
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/projects/8f0088266223c0f6775e1da3dc85f399
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/index.db
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/61
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/0d
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/95
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/59
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/92
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/0c
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/66
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/3e
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/50
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/68
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/57
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/3b
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/6f
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/03
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/9b
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/9e
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/04
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/6a
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/32
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/35
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/69
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/3c
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/56
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/51
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/3d
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/58
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/67
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/0b
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/93
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/94
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/0e
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/60
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/34
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/5a
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/5f
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/33
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/05
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/9d
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/9c
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/02
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/a4
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/a3
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/b5
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/b2
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/d9
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/ac
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/ad
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/bb
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/d7
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/d0
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/be
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/b3
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/df
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/da
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/b4
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/a2
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/a5
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/bd
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/d1
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/d6
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/bc
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/ae
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/d8
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/ab
+/Users/runner/.dsh/workbench/opencli/npm-cache/v11/files/e5
+--- seed log ---
+→ DIY 工坊入口：/Users/runner/.dsh/workbench/bin/dsh-wb-module
+→ 工坊指引已链上：/Users/runner/.dsh/workbench/diy/.agents/skills/workbench-module-diy → /Users/runner/.dsh/profiles/desktop/node_modules/@dsh-workbench/core/skills/workbench-module-diy
+→ 建 DIY 工坊 /Users/runner/.dsh/workbench/diy
+→ ⚠️ PATH 上没有 pnpm，工坊依赖没装。装好 pnpm 后跑一次：
+     cd /Users/runner/.dsh/workbench/diy && pnpm install
+--- desktop profile patch ---
+- id: sandbox-policy
+  config:
+    mode: workspace-write
+    workspaceRoot: /Users/runner/.dsh/workbench
+--- desktop profile package ---
+{
+  "name": "dsh-profile-desktop",
+  "private": true,
+  "dependencies": {
+    "@dsh-workbench/core": "1.1.14-beta.1"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "@dsh-workbench/core"
+      ]
+    }
+  }
+}
+--- app stdout ---
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/341f759d-9e85-467d-893e-16aa1ebc68da
+Checking for update
+Update for version 0.2.1-rc.5 is not available (latest version: 0.2.1-rc.5, downgrade is disallowed).
+dsh web: http://127.0.0.1:49196/?token=0NWWUL7Cy8XflHu2L-oX4J3fITE4q_oBLcVqSu6ykMI
+--- library logs ---
+=== /Users/runner/Library/Logs/DeepSeek Harness/crash-2026-10-31T14-05-46-554Z-renderer.log
+time: 2026-10-31T14:05:46.554Z
+source: renderer
+phase: running
+app: @deepseek-ai/dsh-desktop 0.2.1-rc.5
+platform: darwin arm64
+electron: 44.7.0
+node: 24.21.0
+locale: en
+shell pid: 3958
+
+--- error ---
+Error: Desktop renderer exited: killed
+    at WebContents.<anonymous> (file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/lib/main.js:12933:107)
+    at WebContents.emit (node:events:526:24)
+
+--- renderer console (error level, oldest first) ---
+(no error-level renderer console output was captured)
+--- dsh logs ---
