@@ -80,7 +80,7 @@ jobs:
             if ($null -eq $exe) { throw 'DeepSeek Harness.exe not found' }
             $out = Join-Path $env:RUNNER_TEMP 'win-app-out.log'
             $err = Join-Path $env:RUNNER_TEMP 'win-app-err.log'
-            $p = Start-Process -FilePath $exe.FullName -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
+            $p = Start-Process -FilePath $exe.FullName -ArgumentList '--remote-debugging-port=9222' -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
             Start-Sleep -Seconds 30
             "--- app stdout ---"
             Get-Content $out -ErrorAction SilentlyContinue
@@ -99,6 +99,9 @@ jobs:
             } else {
               'workbench url not found in app stdout'
             }
+            Start-Sleep -Seconds 5
+            "--- cdp ---"
+            node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win.png 2>&1
             Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
           } finally {
             Stop-Transcript
@@ -173,7 +176,7 @@ jobs:
           pkill -f 'DeepSeek Harness' 2>/dev/null || true
           sleep 3
           app="/Applications/DeepSeek Harness.app"
-          "$app/Contents/MacOS/DeepSeek Harness" > "$RUNNER_TEMP/desktop-mac-app2.log" 2>&1 &
+          "$app/Contents/MacOS/DeepSeek Harness" --remote-debugging-port=9222 > "$RUNNER_TEMP/desktop-mac-app2.log" 2>&1 &
           pid=$!
           sleep 30
           echo '--- app log ---'
@@ -185,6 +188,9 @@ jobs:
           else
             echo 'workbench url not found in app log'
           fi
+          sleep 5
+          echo '--- cdp ---'
+          node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-mac.png 2>&1 || true
           ps -p "$pid" -o pid,stat,command || true
           kill "$pid" 2>/dev/null || true
 
