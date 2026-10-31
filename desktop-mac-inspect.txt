@@ -1,0 +1,30 @@
+--- workbench tree ---
+/Users/runner/.dsh/workbench
+/Users/runner/.dsh/workbench/diy
+/Users/runner/.dsh/workbench/diy/.agents
+/Users/runner/.dsh/workbench/diy/.agents/skills
+/Users/runner/.dsh/workbench/diy/.agents/skills/workbench-module-diy
+/Users/runner/.dsh/workbench/diy/.npmrc
+/Users/runner/.dsh/workbench/diy/README.md
+/Users/runner/.dsh/workbench/diy/package.json
+/Users/runner/.dsh/workbench/diy/packages
+/Users/runner/.dsh/workbench/diy/AGENTS.md
+/Users/runner/.dsh/workbench/diy/pnpm-workspace.yaml
+/Users/runner/.dsh/workbench/bin
+/Users/runner/.dsh/workbench/bin/desktop
+/Users/runner/.dsh/workbench/bin/desktop/node
+/Users/runner/.dsh/workbench/bin/dsh-wb-module
+/Users/runner/.dsh/workbench/seed.log
+/Users/runner/.dsh/workbench/opencli
+/Users/runner/.dsh/workbench/opencli/home
+/Users/runner/.dsh/workbench/opencli/bin
+/Users/runner/.dsh/workbench/opencli/bin/opencli
+/Users/runner/.dsh/workbench/opencli/toolchain
+/Users/runner/.dsh/workbench/opencli/toolchain/package.json
+--- opencli paths ---
+/Users/runner/.dsh/workbench/opencli
+/Users/runner/.dsh/workbench/opencli/bin/opencli
+--- logs ---
+/Users/runner/.dsh/sessions/--Users-runner-Documents-deepseek-harness-default-workspace--
+/Users/runner/.dsh/workbench/bin/dsh-wb-module
+/Users/runner/Library/Logs/DeepSeek Harness
