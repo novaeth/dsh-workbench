@@ -66,6 +66,7 @@ export function registerPreflight(input: {
       const result = await provisionLocalPnpm({
         root,
         pnpm: process.env.DSH_WB_PNPM?.trim() || 'pnpm',
+        npm: 'npm',
         run: async (command) => {
           const ran = await runShell(input.shell, command, { timeoutMs: INSTALL_TIMEOUT_MS });
           return {

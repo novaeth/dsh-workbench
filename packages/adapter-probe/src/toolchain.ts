@@ -166,28 +166,44 @@ export async function provisionLocalPnpm(options: {
   readonly proc?: PnpmProcess | undefined;
   readonly exists?: ((path: string) => boolean) | undefined;
   readonly pnpm?: string | undefined;
+  readonly npm?: string | undefined;
 }): Promise<LocalPnpmProvision> {
+  const platform = options.platform ?? process.platform;
   const bootstrap = options.pnpm?.trim();
-  const command =
+  const pnpmCommand =
     bootstrap === undefined || bootstrap === ''
       ? localPnpmInstallCommand(options.root, options.proc ?? process, options.exists ?? existsSync)
-      : `${bootstrap} add --dir ${quoteShellArgFor(localPnpmRoot(options.root), options.platform ?? process.platform)} pnpm@${LOCAL_PNPM_VERSION} --store-dir ${quoteShellArgFor(join(options.root, 'pnpm-store'), options.platform ?? process.platform)}`;
-  if (command === undefined) return { ok: false, detail: '找不到可用的 pnpm，装不了本地 pnpm 10' };
+      : `${bootstrap} add --dir ${quoteShellArgFor(localPnpmRoot(options.root), platform)} pnpm@${LOCAL_PNPM_VERSION} --store-dir ${quoteShellArgFor(join(options.root, 'pnpm-store'), platform)}`;
+  const npm = options.npm?.trim();
+  const npmCommand =
+    npm === undefined || npm === ''
+      ? undefined
+      : `${npm} install --prefix ${quoteShellArgFor(localPnpmRoot(options.root), platform)} pnpm@${LOCAL_PNPM_VERSION} --cache ${quoteShellArgFor(join(options.root, 'npm-cache'), platform)} --no-audit --no-fund`;
+  const commands = [pnpmCommand, npmCommand].filter((item): item is string => item !== undefined);
+  if (commands.length === 0) return { ok: false, detail: '找不到可用的 pnpm 或 npm，装不了本地 pnpm 10' };
   try {
     mkdirSync(localPnpmRoot(options.root), { recursive: true });
   } catch (error) {
     return { ok: false, detail: `建不了 ${localPnpmRoot(options.root)}：${String(error)}` };
   }
-  const result = await options.run(command);
-  if (!result.ok) return { ok: false, detail: result.detail };
-  const platform = options.platform ?? process.platform;
-  const installed = options.installed?.() ?? existsSync(localPnpmCommand(options.root, platform));
-  if (!installed) return { ok: false, detail: 'pnpm 跑完但本地 pnpm 10 不在' };
-  return {
-    ok: true,
-    binDir: localPnpmBin(options.root),
-    detail: `pnpm@${LOCAL_PNPM_VERSION} 装到 ${localPnpmRoot(options.root)}`,
-  };
+  let detail = '';
+  for (const command of commands) {
+    const result = await options.run(command);
+    if (result.ok) {
+      const installed = options.installed?.() ?? existsSync(localPnpmCommand(options.root, platform));
+      if (installed) {
+        return {
+          ok: true,
+          binDir: localPnpmBin(options.root),
+          detail: `pnpm@${LOCAL_PNPM_VERSION} 装到 ${localPnpmRoot(options.root)}`,
+        };
+      }
+      detail = 'pnpm 跑完但本地 pnpm 10 不在';
+    } else {
+      detail = result.detail;
+    }
+  }
+  return { ok: false, detail };
 }
 
 export function provisionLocalPnpmSync(options: {

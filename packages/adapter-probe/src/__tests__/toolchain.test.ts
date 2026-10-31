@@ -237,6 +237,27 @@ describe('本地 pnpm 10', () => {
     expect(commands[0]).toContain(`pnpm@${LOCAL_PNPM_VERSION}`);
   });
 
+  it('★ pnpm 不可用时，最后才用 npm 装本地 pnpm', async () => {
+    const root = tempRoot();
+    const commands: string[] = [];
+    const result = await provisionLocalPnpm({
+      root,
+      pnpm: 'pnpm',
+      npm: 'npm',
+      installed: () => true,
+      run: async (command) => {
+        commands.push(command);
+        return command.startsWith('npm ') ? { ok: true, detail: '' } : { ok: false, detail: 'pnpm missing' };
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(commands).toHaveLength(2);
+    expect(commands[0]).toContain(' add --dir ');
+    expect(commands[1]).toContain('npm install --prefix');
+    expect(commands[1]).toContain(`pnpm@${LOCAL_PNPM_VERSION}`);
+  });
+
   it('★ 同步 provision 也走同一条命令（启动时 seed 之前用）', () => {
     const root = tempRoot();
     const commands: string[] = [];
