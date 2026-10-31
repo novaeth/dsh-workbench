@@ -187,36 +187,12 @@ export function createBootGate(
   let bootHintShown = true;
   let closed = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  let waitingSince: number | null = null;
-  let ticker: ReturnType<typeof setInterval> | undefined;
   let snapshotLog = '';
-  let waitingLine = '';
 
   function paintLog(): void {
-    const text = [snapshotLog, waitingLine].filter((line) => line !== '').join('\n');
     liveLog.hidden = snapshotLog === '';
-    liveLogBody.textContent = text;
+    liveLogBody.textContent = snapshotLog;
     if (liveLog.open) liveLogBody.scrollTop = liveLogBody.scrollHeight;
-  }
-
-  function startElapsed(): void {
-    if (waitingSince === null) waitingSince = Date.now();
-    if (ticker !== undefined) return;
-    const paint = (): void => {
-      const seconds = Math.max(0, Math.floor((Date.now() - (waitingSince ?? Date.now())) / 1000));
-      waitingLine = seconds < 1 ? '' : t('env.elapsed', { seconds });
-      paintLog();
-    };
-    paint();
-    ticker = setInterval(paint, 500);
-  }
-
-  function stopElapsed(): void {
-    if (ticker !== undefined) clearInterval(ticker);
-    ticker = undefined;
-    waitingSince = null;
-    waitingLine = '';
-    paintLog();
   }
   let cancelled = false;
   const forcePlan = createForcePlan();
@@ -227,7 +203,6 @@ export function createBootGate(
     closed = true;
     cancelled = true;
     if (timer !== undefined) clearTimeout(timer);
-    if (ticker !== undefined) clearInterval(ticker);
     deadline.disarm();
     overlay.remove();
     if (root !== null) root.inert = previousInert;
@@ -291,10 +266,6 @@ export function createBootGate(
       return detail === '' ? [] : [`${stepLabel(step, t)}: ${detail}`];
     });
     rawAllBody.textContent = rawLines.join('\n');
-
-    const waiting = snapshot.phase !== 'ready' && snapshot.phase !== 'failed';
-    if (waiting) startElapsed();
-    else stopElapsed();
 
     const failed = snapshot.phase === 'failed';
     actions.hidden = !failed;
