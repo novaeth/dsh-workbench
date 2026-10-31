@@ -1,7 +1,8 @@
 import { normalizeBody, parseBlocks, replaceBlock } from './lib.mjs';
-import { archRules, gateChainInline } from './blocks.mjs';
+import { adapterSet, archRules, dataContract, gateChainInline } from './blocks.mjs';
 import { coreArchRules, gateSteps } from './facts.mjs';
 import { depEdges, packageTable, sharedExportsCheck } from './checks.mjs';
+import { gateCount, jsonProblemOf, numberFrom } from './extra-checks.mjs';
 
 function record(results, name, ok) {
   results.push({ name, ok });
@@ -82,6 +83,13 @@ export async function selfTest() {
     'shared 入口负例：漏 contract',
     sharedExportsCheck({ keys, texts: { ...complete, 'packages/shared/README.md': full.slice(0, 3).join(' ') } }).length === 1,
   );
+
+  record(results, '中文数字解析', numberFrom('十三') === 13 && numberFrom('八') === 8 && numberFrom('二十') === 20 && numberFrom('34') === 34);
+  record(results, 'AdapterSet 块含可选读端口', adapterSet().includes('readonly libs?: LibReader') && adapterSet().includes('readonly actions: HostActions'));
+  record(results, 'DataRequest 块已 AST 化', dataContract().includes('adapter: string') && dataContract().includes('argv: readonly string[]') && dataContract().includes('pageCode?: string'));
+  record(results, '门禁数量可抽取', gateCount() >= 10);
+
+  record(results, 'JSON 示例校验正负例', jsonProblemOf('{"a":1}') === undefined && jsonProblemOf('{"a":}') !== undefined && jsonProblemOf('"dsh": {},', true) === undefined);
 
   const rules = await coreArchRules();
   record(results, 'S 规则来自 arch.config', rules.length >= 10 && new Set(rules.map((rule) => rule.id)).size === rules.length);

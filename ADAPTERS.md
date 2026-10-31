@@ -7,24 +7,26 @@
 
 ## 契约
 
+<!-- doc-facts:begin adapter-set -->
 ```ts
 interface AdapterSet {
-  apiVersion: number;
-  id: string;
-  version: string;
-  data: DataReader;
-  libs?: LibReader;
-  git?: GitReader;
-  commands?: CommandReader;
-  supply: EnvSupplyPort;
-  modules: ModulePort;
-  profile: ProfilePort;
-  probe: ProbePort;
-  runtime: RuntimePort;
-  plugins: PluginSurface;
-  actions: HostActions;
+  readonly apiVersion: number;
+  readonly id: string;
+  readonly version: string;
+  readonly data: DataReader;
+  readonly libs?: LibReader | undefined;
+  readonly git?: GitReader | undefined;
+  readonly commands?: CommandReader | undefined;
+  readonly supply: EnvSupplyPort;
+  readonly modules: ModulePort;
+  readonly profile: ProfilePort;
+  readonly probe: ProbePort;
+  readonly runtime: RuntimePort;
+  readonly plugins: PluginSurface;
+  readonly actions: HostActions;
 }
 ```
+<!-- doc-facts:end adapter-set -->
 
 - `EnvSupplyPort` 是第三方可实现的窄口：`resolvePluginSource`、`libInstallCommand`、
   `libUninstallCommand`、`pluginInstallPlan`、`latestVersion`、`missingReleaseParts`、

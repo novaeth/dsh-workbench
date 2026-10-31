@@ -419,16 +419,28 @@ cli ← browser ← data
 
 ### 4.4 DataReader
 
+<!-- doc-facts:begin data-contract -->
 ```ts
 type DataRequest =
-  | { kind: 'http'; url; headers?; timeoutMs? }
-  | { kind: 'browser'; script; url?; loginUrl?; session?; open?; timeoutMs? }
-  | { kind: 'command'; adapter; argv; timeoutMs? };
+  | { readonly kind: 'http'; readonly url: string; readonly headers?: Readonly<Record<string, string>>; readonly timeoutMs?: number }
+  | { readonly kind: 'browser'; readonly script: string; readonly url?: string; readonly loginUrl?: string; readonly session?: string; readonly open?: boolean; readonly timeoutMs?: number }
+  | { readonly kind: 'command'; readonly adapter: string; readonly argv: readonly string[]; readonly timeoutMs?: number };
 
-type DataResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: { code; message; status?; detail?; hint?; helpUrl?; pageCode? } };
+type DataResult<T = unknown> =
+  | { readonly ok: true; readonly data: T }
+  | { readonly ok: false; readonly error: DataError };
+
+interface DataError {
+  readonly code: DataErrorCode;
+  readonly message: string;
+  readonly status?: number;
+  readonly detail?: string;
+  readonly hint?: string;
+  readonly helpUrl?: string;
+  readonly pageCode?: string;
+}
 ```
+<!-- doc-facts:end data-contract -->
 
 - `http`：**只做 GET**；写走模块工具与审批。统一超时、状态码、401/403 → `auth`、非 JSON → `parse`。
 - `browser`：复用浏览器适配器，读会话默认与屏会话分开。

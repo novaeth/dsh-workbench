@@ -1,6 +1,7 @@
 import { readText, writeText, parseBlocks, replaceBlock, normalizeBody } from './lib.mjs';
-import { archRules, gateChain, gateChainInline, gateChainLabels } from './blocks.mjs';
+import { adapterSet, archRules, dataContract, gateChain, gateChainInline, gateChainLabels } from './blocks.mjs';
 import { depEdges, packageTable, sharedExportsCheck } from './checks.mjs';
+import { contractPorts, counts, mountContract, needsKinds, privateSymlink, skillsDesign, skillsSchema, skillsTools, templateScripts } from './extra-checks.mjs';
 import { selfTest } from './selftest.mjs';
 
 const BLOCK_FACTS = {
@@ -11,12 +12,23 @@ const BLOCK_FACTS = {
     render: gateChainLabels,
   },
   'arch-rules': { files: ['ARCHITECTURE.md'], render: archRules },
+  'adapter-set': { files: ['ADAPTERS.md'], render: adapterSet },
+  'data-contract': { files: ['ARCHITECTURE.md'], render: dataContract },
 };
 
 const ASSERT_FACTS = {
   'package-table': packageTable,
   'dep-edges': depEdges,
   'shared-exports': sharedExportsCheck,
+  'contract-ports': contractPorts,
+  counts,
+  'skills-tools': skillsTools,
+  'skills-design': skillsDesign,
+  'private-symlink': privateSymlink,
+  'skills-schema': skillsSchema,
+  'needs-kinds': needsKinds,
+  'mount-contract': mountContract,
+  'template-scripts': templateScripts,
 };
 
 function option(args, name) {
@@ -28,8 +40,7 @@ function option(args, name) {
 
 function selected(map, only) {
   if (only === undefined) return Object.entries(map);
-  if (map[only] === undefined) throw new Error(`没有这个事实：${only}`);
-  return [[only, map[only]]];
+  return map[only] === undefined ? [] : [[only, map[only]]];
 }
 
 function printProblem(problem) {
@@ -103,6 +114,7 @@ async function runCheck(only, reportOnly) {
 }
 
 async function runWrite(only) {
+  if (only !== undefined && BLOCK_FACTS[only] === undefined) throw new Error(`${only} 不是块事实（断言没有 --write）`);
   let count = 0;
   for (const [name, fact] of selected(BLOCK_FACTS, only)) {
     const rendered = await Promise.resolve(fact.render());
@@ -134,6 +146,9 @@ async function main() {
   const write = args.includes('--write');
   const reportOnly = args.includes('--report-only');
   const only = option(args, '--only');
+  if (only !== undefined && BLOCK_FACTS[only] === undefined && ASSERT_FACTS[only] === undefined) {
+    throw new Error(`没有这个事实：${only}`);
+  }
   if (args.includes('--list')) {
     runList();
     return 0;

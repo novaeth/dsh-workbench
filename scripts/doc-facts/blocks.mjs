@@ -1,4 +1,5 @@
 import { coreArchRules, gateSteps } from './facts.mjs';
+import { renderAdapterSet, renderDataContract } from './ts-facts.mjs';
 
 const LABELS = {
   'lint:commit': '提交信息',
@@ -67,4 +68,12 @@ export async function archRules() {
     '|---|---|',
     ...rules.map((rule) => `| ${rule.id} | ${rule.title} |`),
   ].join('\n');
+}
+
+export function adapterSet() {
+  return renderAdapterSet();
+}
+
+export function dataContract() {
+  return renderDataContract();
 }
