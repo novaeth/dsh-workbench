@@ -50,13 +50,67 @@ jobs:
           } finally {
             Stop-Transcript
           }
+
+      - name: Install workbench plugin (Windows)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $log = Join-Path $env:GITHUB_WORKSPACE 'desktop-win-plugin.txt'
+          Start-Transcript -Path $log -Force
+          try {
+            $exe = Get-ChildItem -Path @("$env:LOCALAPPDATA\Programs", "$env:ProgramFiles", "${env:ProgramFiles(x86)}") -Filter 'DeepSeek Harness.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($null -eq $exe) { throw 'DeepSeek Harness.exe not found' }
+            $cli = Join-Path $exe.DirectoryName 'resources\runtime\cli\bin\dsh.cmd'
+            & $cli plugin --profile desktop add '@dsh-workbench/core@1.1.13' 2>&1
+            "--- profile package.json ---"
+            Get-Content "$env:USERPROFILE\.dsh\profiles\desktop\package.json" -Raw
+            "--- profile cordis.yml ---"
+            Get-Content "$env:USERPROFILE\.dsh\profiles\desktop\cordis.yml" -Raw
+          } finally {
+            Stop-Transcript
+          }
+      - name: Launch with workbench (Windows)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $log = Join-Path $env:GITHUB_WORKSPACE 'desktop-win-launch.txt'
+          Start-Transcript -Path $log -Force
+          try {
+            $exe = Get-ChildItem -Path @("$env:LOCALAPPDATA\Programs", "$env:ProgramFiles", "${env:ProgramFiles(x86)}") -Filter 'DeepSeek Harness.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($null -eq $exe) { throw 'DeepSeek Harness.exe not found' }
+            $out = Join-Path $env:RUNNER_TEMP 'win-app-out.log'
+            $err = Join-Path $env:RUNNER_TEMP 'win-app-err.log'
+            $p = Start-Process -FilePath $exe.FullName -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
+            Start-Sleep -Seconds 30
+            "--- app stdout ---"
+            Get-Content $out -ErrorAction SilentlyContinue
+            "--- app stderr ---"
+            Get-Content $err -ErrorAction SilentlyContinue
+            $line = Select-String -Path $out -Pattern 'dsh web: (http\S+)' -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($null -ne $line) {
+              $url = $line.Matches[0].Groups[1].Value
+              "workbench url: $url"
+              try {
+                $r = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 15
+                "http status: $($r.StatusCode)"
+              } catch {
+                "http probe failed: $($_.Exception.Message)"
+              }
+            } else {
+              'workbench url not found in app stdout'
+            }
+            Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
+          } finally {
+            Stop-Transcript
+          }
+
       - name: Commit probe log
         if: always()
         shell: bash
         run: |
           git config user.name ci
           git config user.email ci@example.com
-          git add -f desktop-win-probe.txt || true
+          git add -f desktop-win-probe.txt desktop-win-plugin.txt desktop-win-launch.txt || true
           git commit -m "ci: windows desktop probe [skip ci]" || true
           git push origin HEAD:desktop-log-win-${{ github.run_id }}
 
@@ -95,12 +149,51 @@ jobs:
             if [ -e "$dir" ]; then find "$dir" -maxdepth 4 -print | head -80; else echo missing; fi
           done
           kill "$pid" 2>/dev/null || true
+
+      - name: Install workbench plugin (macOS)
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -x
+          log=desktop-mac-plugin.txt
+          exec > >(tee "$log") 2>&1
+          cli="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh"
+          "$cli" plugin --profile desktop add '@dsh-workbench/core@1.1.13'
+          echo '--- profile package.json ---'
+          cat "$HOME/.dsh/profiles/desktop/package.json"
+          echo '--- profile cordis.yml ---'
+          cat "$HOME/.dsh/profiles/desktop/cordis.yml"
+      - name: Launch with workbench (macOS)
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -x
+          log=desktop-mac-launch.txt
+          exec > >(tee "$log") 2>&1
+          pkill -f 'DeepSeek Harness' 2>/dev/null || true
+          sleep 3
+          app="/Applications/DeepSeek Harness.app"
+          "$app/Contents/MacOS/DeepSeek Harness" > "$RUNNER_TEMP/desktop-mac-app2.log" 2>&1 &
+          pid=$!
+          sleep 30
+          echo '--- app log ---'
+          cat "$RUNNER_TEMP/desktop-mac-app2.log" || true
+          url=$(grep -oE 'http://127\.0\.0\.1:[0-9]+/\?token=[^ ]+' "$RUNNER_TEMP/desktop-mac-app2.log" | head -1 || true)
+          if [ -n "$url" ]; then
+            echo "workbench url: $url"
+            curl -s -o /dev/null -w 'http status: %{http_code}\n' "$url"
+          else
+            echo 'workbench url not found in app log'
+          fi
+          ps -p "$pid" -o pid,stat,command || true
+          kill "$pid" 2>/dev/null || true
+
       - name: Commit probe log
         if: always()
         shell: bash
         run: |
           git config user.name ci
           git config user.email ci@example.com
-          git add -f desktop-mac-probe.txt || true
+          git add -f desktop-mac-probe.txt desktop-mac-plugin.txt desktop-mac-launch.txt || true
           git commit -m "ci: macos desktop probe [skip ci]" || true
           git push origin HEAD:desktop-log-mac-${{ github.run_id }}
