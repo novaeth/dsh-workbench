@@ -1,0 +1,36 @@
+**********************
+PowerShell transcript start
+Start time: 20261031163405
+Username: runnervmdaln5\runneradmin
+RunAs User: runnervmdaln5\runneradmin
+Configuration Name: 
+Machine: runnervmdaln5 (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -command . 'D:\a\_temp\0136bc77-63b9-43ce-bb95-b2ea9136b783.ps1'
+Process ID: 8896
+PSVersion: 7.6.7
+PSEdition: Core
+GitCommitId: 7.6.7
+OS: Microsoft Windows 10.0.26100
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Transcript started, output file is desktop-win-ui.txt
+registry: https://registry.npmmirror.com
+
+Checking for update
+Update for version 0.2.1-rc.5 is not available (latest version: 0.2.1-rc.5, downgrade is disallowed).
+dsh web: http://127.0.0.1:62442/?token=v7Ahe96WYsKBEFKRS-5qdeORzJIwlDDqVCgDdEOyOkc
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/724e1e94-a96e-4f93-a62f-be6b219d86d8
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> $global:?
+False
+**********************
+PowerShell transcript end
+End time: 20261031163614
+**********************
