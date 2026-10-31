@@ -7,7 +7,7 @@ import { apiGet } from '@dsh-workbench/shared';
 import { LOCALE_NS } from '@dsh-workbench/shared';
 import { devSurface } from '@/shared/dev-surface';
 import { runtimeProfileValue } from '@/shared/hooks/use-runtime-capabilities';
-import { bridgeAdvice, gateHintOf, guidanceTextOf, showsRawAll, stepDetailText } from './gate-text';
+import { bridgeAdvice, guidanceTextOf, showsRawAll, stepDetailText } from './gate-text';
 import { createGateDeadline } from './gate-deadline';
 import { el, spinnerIcon, svgIcon } from './gate-dom';
 
@@ -110,12 +110,7 @@ export function createBootGate(
   overlay.setAttribute('aria-label', t('env.title'));
   const card = el('div', styles.card);
   const title = el('h1', styles.title, t('env.title'));
-  const hint = el('p', styles.hint, t('env.checking'));
   const list = el('ul', styles.steps);
-  const progressRow = el('div', styles.progress);
-  progressRow.hidden = true;
-  const elapsed = el('span', styles.elapsed);
-  progressRow.append(elapsed);
   const rawAll = el('details', styles.raw);
   const rawAllBody = el('pre', styles.error);
   rawAll.append(el('summary', styles.rawSummary, t('env.fix.details')), rawAllBody);
@@ -181,7 +176,7 @@ export function createBootGate(
   diyRaw.append(el('summary', styles.rawSummary, t('env.fix.details')), diyRawText);
   diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons, diyRaw);
 
-  card.append(title, hint, list, progressRow, actions, bridge, diy, rawAll, liveLog);
+  card.append(title, list, actions, bridge, diy, rawAll, liveLog);
   overlay.append(card);
   document.body.append(overlay);
 
@@ -192,14 +187,23 @@ export function createBootGate(
   let timer: ReturnType<typeof setTimeout> | undefined;
   let waitingSince: number | null = null;
   let ticker: ReturnType<typeof setInterval> | undefined;
+  let snapshotLog = '';
+  let waitingLine = '';
+
+  function paintLog(): void {
+    const text = [snapshotLog, waitingLine].filter((line) => line !== '').join('\n');
+    liveLog.hidden = text === '';
+    liveLogBody.textContent = text;
+    if (liveLog.open) liveLogBody.scrollTop = liveLogBody.scrollHeight;
+  }
 
   function startElapsed(): void {
     if (waitingSince === null) waitingSince = Date.now();
     if (ticker !== undefined) return;
     const paint = (): void => {
       const seconds = Math.max(0, Math.floor((Date.now() - (waitingSince ?? Date.now())) / 1000));
-      elapsed.textContent = t('env.elapsed', { seconds });
-      progressRow.hidden = seconds < 1;
+      waitingLine = seconds < 1 ? '' : t('env.elapsed', { seconds });
+      paintLog();
     };
     paint();
     ticker = setInterval(paint, 500);
@@ -209,8 +213,8 @@ export function createBootGate(
     if (ticker !== undefined) clearInterval(ticker);
     ticker = undefined;
     waitingSince = null;
-    elapsed.textContent = '';
-    progressRow.hidden = true;
+    waitingLine = '';
+    paintLog();
   }
   let cancelled = false;
   const forcePlan = createForcePlan();
@@ -253,11 +257,6 @@ export function createBootGate(
 
   function render(snapshot: PreflightSnapshot): void {
     wakeNote.hidden = true;
-    const runningStep = snapshot.steps.find((step) => step.status === 'running');
-    hint.textContent =
-      runningStep?.action === undefined
-        ? gateHintOf(snapshot, t)
-        : `${stepLabel(runningStep, t)} · ${runningStep.action}`;
 
     const items = snapshot.steps.map((step) => {
       const row = ensureRow(step);
@@ -363,10 +362,8 @@ export function createBootGate(
 
     const panelShown = !actions.hidden || !bridge.hidden || !diy.hidden;
     rawAll.hidden = !showsRawAll(snapshot, panelShown) || rawLines.length === 0;
-    const logText = (snapshot.log ?? []).join('\n');
-    liveLog.hidden = logText === '';
-    liveLogBody.textContent = logText;
-    if (liveLog.open) liveLogBody.scrollTop = liveLogBody.scrollHeight;
+    snapshotLog = (snapshot.log ?? []).join('\n');
+    paintLog();
   }
 
   async function poll(): Promise<void> {
@@ -401,7 +398,6 @@ export function createBootGate(
     retry.setAttribute('disabled', '');
     bridgeRetry.setAttribute('disabled', '');
     diyRetry.setAttribute('disabled', '');
-    hint.textContent = t('env.checking');
     if (pinned !== null) {
       render(pinned);
       return;
