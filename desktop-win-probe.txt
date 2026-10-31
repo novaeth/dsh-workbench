@@ -1,0 +1,101 @@
+**********************
+PowerShell transcript start
+Start time: 20261031065542
+Username: runnervmdaln5\runneradmin
+RunAs User: runnervmdaln5\runneradmin
+Configuration Name: 
+Machine: runnervmdaln5 (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -command . 'D:\a\_temp\de9fec21-b0fc-4136-90f8-ca620bfbd4c8.ps1'
+Process ID: 5784
+PSVersion: 7.6.7
+PSEdition: Core
+GitCommitId: 7.6.7
+OS: Microsoft Windows 10.0.26100
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Transcript started, output file is D:\a\dsh-workbench\dsh-workbench\desktop-win-probe.txt
+
+FullName : D:\a\_temp\dsh-desktop-win.exe
+Length   : 289408544
+
+install exit: 0
+install dir: C:\Users\runneradmin\AppData\Local\Programs\DeepSeek Harness
+
+Name              Length
+----              ------
+app.asar.unpacked
+runtime
+app-update.yml    306
+app.asar          182766714
+default_app.asar  110862
+elevate.exe       120808
+icon.png          128820
+tray.ico          15698
+
+cli: C:\Users\runneradmin\AppData\Local\Programs\DeepSeek Harness\resources\runtime\cli\bin\dsh.cmd
+Usage: dsh [--profile] <name> [options] [app-args...]
+       dsh plugin --profile <name> <pnpm-args...>
+
+dsh: boot a DeepSeek Harness profile — an ordered stack of plugin-bundle patch
+layers under your own overrides.
+
+Arguments:
+  args                           arguments for the booted profile's app (see:
+                                 dsh --profile <name> --help)
+
+Options:
+  -V, --version                  output the version number
+  --profile <name>               the profile under $DSH_HOME/profiles to boot
+  --from-default-profile <name>  replace a custom profile with a fresh copy of a
+                                 shipped profile template
+  --patch <path>                 extra patch-list overlay applied after the
+                                 profile layer (repeatable)
+  --dump-config                  print the composed profile tree and exit
+  --dump-config-schema           print JSON Schema for profile entries and
+                                 patches without mounting
+process still running: True
+
+  Id ProcessName      MainWindowTitle
+  -- -----------      ---------------
+ 824 DeepSeek Harness
+1688 DeepSeek Harness
+4352 DeepSeek Harness
+6564 DeepSeek Harness DeepSeek Harness
+7444 DeepSeek Harness
+7692 DeepSeek Harness
+
+--- profiles ---
+== C:\Users\runneradmin\.dsh
+
+C:\Users\runneradmin\.dsh\profiles
+C:\Users\runneradmin\.dsh\sessions
+C:\Users\runneradmin\.dsh\storages
+C:\Users\runneradmin\.dsh\.anonymous-user-id
+C:\Users\runneradmin\.dsh\.credentials.yaml
+C:\Users\runneradmin\.dsh\profiles\desktop
+C:\Users\runneradmin\.dsh\profiles\desktop\cordis.patch.yml
+C:\Users\runneradmin\.dsh\profiles\desktop\cordis.yml
+C:\Users\runneradmin\.dsh\profiles\desktop\package.json
+C:\Users\runneradmin\.dsh\profiles\desktop\pnpm-workspace.yaml
+C:\Users\runneradmin\.dsh\sessions\--C-Users-runneradmin-Documents-deepseek-harness-default-workspace--
+C:\Users\runneradmin\.dsh\sessions\--C-Users-runneradmin-Documents-deepseek-harness-default-workspace--\session-de9a7c…
+C:\Users\runneradmin\.dsh\sessions\--C-Users-runneradmin-Documents-deepseek-harness-default-workspace--\session-de9a7c…
+C:\Users\runneradmin\.dsh\storages\session_projcache
+C:\Users\runneradmin\.dsh\storages\workspace.json
+C:\Users\runneradmin\.dsh\storages\session_projcache\sessions
+C:\Users\runneradmin\.dsh\storages\session_projcache\sessions\session-de9a7c13-7036-4552-926a-3dd24548c41f.json
+
+== C:\Users\runneradmin\AppData\Roaming\dsh
+missing
+== C:\Users\runneradmin\AppData\Local\DeepSeek Harness
+missing
+== C:\Users\runneradmin\AppData\Roaming\DeepSeek Harness
+missing
+**********************
+PowerShell transcript end
+End time: 20261031065651
+**********************
