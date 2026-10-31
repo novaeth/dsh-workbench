@@ -1,3 +1,4 @@
+export * from './bootstrap-run.js';
 export * from './browser-wake.js';
 export * from './diy-preset-health.js';
 export * from './platform.js';

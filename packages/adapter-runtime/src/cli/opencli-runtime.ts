@@ -44,9 +44,16 @@ export function libDir(name: string): string {
   return join(libsPrefix(), 'node_modules', name);
 }
 
+export function pnpmIsolationFlags(): string {
+  return (
+    `--config.cache-dir=${quoteShellArg(join(isolatedRoot(), 'pnpm-cache'))} ` +
+    `--config.state-dir=${quoteShellArg(join(isolatedRoot(), 'pnpm-state'))}`
+  );
+}
+
 export function isolatedInstallCommand(): string {
   const pnpm = process.env.DSH_WB_PNPM?.trim() || 'pnpm';
-  return `${pnpm} add --dir ${quoteShellArg(toolchainDir())} ${OPENCLI_NPM_PACKAGE}@${OPENCLI_PIN} --store-dir ${quoteShellArg(npmCacheDir())} --allow-build=${OPENCLI_NPM_PACKAGE}`;
+  return `${pnpm} add --dir ${quoteShellArg(toolchainDir())} ${OPENCLI_NPM_PACKAGE}@${OPENCLI_PIN} --store-dir ${quoteShellArg(npmCacheDir())} ${pnpmIsolationFlags()} --allow-build=${OPENCLI_NPM_PACKAGE}`;
 }
 
 export function isolatedPnpmInstallCommand(pnpmCjs: string): string {
@@ -54,7 +61,7 @@ export function isolatedPnpmInstallCommand(pnpmCjs: string): string {
   return (
     `node ${quoteShellArg(pnpmCjs)} add --dir ${quoteShellArg(toolchainDir())} ` +
     `${OPENCLI_NPM_PACKAGE}@${OPENCLI_PIN} --store-dir ${quoteShellArg(store)} ` +
-    `--allow-build=${OPENCLI_NPM_PACKAGE}`
+    `${pnpmIsolationFlags()} --allow-build=${OPENCLI_NPM_PACKAGE}`
   );
 }
 

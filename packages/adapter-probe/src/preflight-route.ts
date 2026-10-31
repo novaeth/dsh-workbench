@@ -1,9 +1,11 @@
 import { basename, join } from 'node:path';
 import type { DshHostContext, DshShell, RuntimeCapabilities } from '@dsh-workbench/shared';
 import type { RouteTable } from '@dsh-workbench/shared/host';
-import { INSTALL_TIMEOUT_MS, preflightHandler, runShell, tailLines, workbenchRoot } from '@dsh-workbench/shared/host';
+import { INSTALL_TIMEOUT_MS, preflightHandler, workbenchRoot } from '@dsh-workbench/shared/host';
 import { WAKE_BROWSER_ROUTE } from '@dsh-workbench/shared/contract/protocol/preflight-wake';
+import { runBootstrapCommand } from './bootstrap-run.js';
 import { createDiyPresetProbe } from './diy-preset-health.js';
+import { opencliInstallCommand } from './install.js';
 import { hostSurface } from './platform.js';
 import { createPreflight } from './preflight.js';
 import { probeDesktopToolchain } from './toolchain-probe.js';
@@ -41,7 +43,11 @@ export function registerPreflight(input: {
 }): void {
   const command =
     input.runtimeCommands['opencli'] ?? Object.values(input.runtimeCommands)[0] ?? 'opencli';
-  const installCommand = process.env.DSH_WORKBENCH_OPENCLI_INSTALL;
+  const configuredInstall = process.env.DSH_WORKBENCH_OPENCLI_INSTALL;
+  const installCommand =
+    configuredInstall === undefined || configuredInstall === ''
+      ? opencliInstallCommand()
+      : configuredInstall;
   const desktopBrowser =
     input.desktopBrowser ??
     desktopBrowserOf({
@@ -52,7 +58,8 @@ export function registerPreflight(input: {
   const preflight = createPreflight({
     shell: input.shell,
     command,
-    ...(installCommand === undefined || installCommand === '' ? {} : { installCommand }),
+    installCommand,
+    install: () => runBootstrapCommand(installCommand, { timeoutMs: INSTALL_TIMEOUT_MS }),
     logger: input.ctx.logger,
     warmReads: input.warmReads,
     ...(input.runtimeCapabilities === undefined ? {} : { capabilities: input.runtimeCapabilities }),
@@ -67,13 +74,7 @@ export function registerPreflight(input: {
         root,
         pnpm: process.env.DSH_WB_PNPM?.trim() || 'pnpm',
         npm: 'npm',
-        run: async (command) => {
-          const ran = await runShell(input.shell, command, { timeoutMs: INSTALL_TIMEOUT_MS });
-          return {
-            ok: ran.exitCode === 0 && !ran.timedOut,
-            detail: tailLines(ran.stderr || ran.stdout, 3),
-          };
-        },
+        run: (command) => runBootstrapCommand(command, { timeoutMs: INSTALL_TIMEOUT_MS }),
       });
       if (result.ok && result.binDir !== undefined) {
         prependPath(result.binDir);

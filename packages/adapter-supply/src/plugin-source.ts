@@ -6,7 +6,13 @@ import type {
   ResolvedPluginSource,
 } from '@dsh-workbench/shared';
 import { npmRegistryOf, quoteShellArg } from '@dsh-workbench/shared/host';
-import { npmCacheDir, toolchainOpencliDir, vendorPeerLink, vendorPrefix } from '@dsh-workbench/adapter-runtime';
+import {
+  npmCacheDir,
+  pnpmIsolationFlags,
+  toolchainOpencliDir,
+  vendorPeerLink,
+  vendorPrefix,
+} from '@dsh-workbench/adapter-runtime';
 
 
 export type {
@@ -68,6 +74,7 @@ function npmSource(
         quoteShellArg(`${name}@${version}`),
         `--registry ${quoteShellArg(registry.value)}`,
         `--store-dir ${quoteShellArg(npmCacheDir())}`,
+        pnpmIsolationFlags(),
         `--allow-build=${quoteShellArg(name)}`,
       ].join(' '),
     },

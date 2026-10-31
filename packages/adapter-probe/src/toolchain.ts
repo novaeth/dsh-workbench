@@ -4,6 +4,7 @@ import writeFileAtomic from 'write-file-atomic';
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { quoteShellArg, quoteShellArgFor } from '@dsh-workbench/shared/host';
+import { bootstrapEnv } from './bootstrap-run.js';
 import { hostSurface } from './platform.js';
 
 export interface ToolchainProcess {
@@ -229,7 +230,12 @@ export function provisionLocalPnpmSync(options: {
     const run =
       options.run ??
       ((line: string) => {
-        execaSync(line, { stdio: 'ignore', timeout: 180_000, env: process.env, shell: true });
+        execaSync(line, {
+          stdio: 'ignore',
+          timeout: 180_000,
+          env: bootstrapEnv({ opencliRoot: join(options.root, 'opencli') }),
+          shell: true,
+        });
       });
     run(command);
   } catch (error) {
