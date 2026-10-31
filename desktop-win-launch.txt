@@ -1,0 +1,32 @@
+**********************
+PowerShell transcript start
+Start time: 20261031063546
+Username: runnervmdaln5\runneradmin
+RunAs User: runnervmdaln5\runneradmin
+Configuration Name: 
+Machine: runnervmdaln5 (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -command . 'D:\a\_temp\a7b432d1-fbb9-45c9-b1c0-fb50aab79ae8.ps1'
+Process ID: 8152
+PSVersion: 7.6.7
+PSEdition: Core
+GitCommitId: 7.6.7
+OS: Microsoft Windows 10.0.26100
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Transcript started, output file is D:\a\dsh-workbench\dsh-workbench\desktop-win-launch.txt
+--- app stdout ---
+
+Checking for update
+Update for version 0.2.1-rc.5 is not available (latest version: 0.2.1-rc.5, downgrade is disallowed).
+dsh web: http://127.0.0.1:54731/?token=BQkSBWKHQMt14l0Fz4FUrkjWGNkUzpyHWPeArCmyHS4
+--- app stderr ---
+workbench url: http://127.0.0.1:54731/?token=BQkSBWKHQMt14l0Fz4FUrkjWGNkUzpyHWPeArCmyHS4
+http status: 200
+**********************
+PowerShell transcript end
+End time: 20261031063617
+**********************
