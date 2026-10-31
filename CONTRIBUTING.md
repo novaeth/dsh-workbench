@@ -94,6 +94,9 @@ Some document blocks are generated from code, not hand-written. Change the sourc
 (for example `package.json`'s `scripts.check` or `packages/core/arch.config.mjs`) and run
 `pnpm run doc-facts:write`; `pnpm run check:doc-facts` fails when a block is stale.
 `pnpm run check:docs` runs it together with the other document checks.
+Husky also runs `pnpm run check:docs` plus the `DOC-3` link/§N gate on every
+commit; run the full `pnpm run check` before pushing. Set `HUSKY=0` to skip
+hooks for a one-off commit.
 
 ## Docs site
 
