@@ -5,7 +5,10 @@ const shot = process.argv[3] ?? 'desktop-smoke.png';
 const expectWorkbench = process.argv.includes('--expect-workbench');
 const installViaUi = process.argv.includes('--install-via-ui');
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 async function pagesOf() {
   const response = await fetch(`http://127.0.0.1:${port}/json`);
