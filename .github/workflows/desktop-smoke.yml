@@ -176,8 +176,20 @@ jobs:
           pwd
           '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9222 > "$RUNNER_TEMP/desktop-mac-app.log" 2>&1 &
           sleep 60
+          (
+            cd "$GITHUB_WORKSPACE"
+            for i in 1 2 3 4 5 6 7 8; do
+              sleep 30
+              echo "=== t=$((i * 30))s"
+              ps -ef | grep -Ei 'pnpm|sandbox-exec|opencli|dsh-desktop-host' | grep -v grep || true
+              for pid in $(pgrep -f 'dsh-desktop-host' 2>/dev/null); do
+                echo "--- sample $pid"
+                sample "$pid" 1 -file "desktop-mac-sample-$i.txt" 2>&1 | tail -3 || true
+              done
+            done
+          ) > "$GITHUB_WORKSPACE/desktop-mac-ps.txt" 2>&1 &
           cat "$RUNNER_TEMP/desktop-mac-app.log"
-          node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9222 desktop-mac.png --install-via-ui --expect-workbench
+          ( cd "$GITHUB_WORKSPACE" && node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-mac.png --install-via-ui --expect-workbench )
 
       - name: Assert opencli installed
         shell: bash

@@ -227,8 +227,16 @@ if (installViaUi) {
   for (let i = 0; i < 90; i += 1) {
     const current = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
     const body = current.result?.value ?? '';
-    console.log(`ready wait ${i * 5}s: ${body.slice(-600).replaceAll('\n', ' | ')}`);
-    if (!/Preparing the workbench|准备工作台/u.test(body) && /Workbench panel|工作台面板/u.test(body)) break;
+    const snapshot = await preflightOf(cdp);
+    const phase = snapshot?.phase ?? '';
+    console.log(`ready wait ${i * 5}s [${phase}]: ${body.slice(-600).replaceAll('\n', ' | ')}`);
+    if (phase === 'failed') {
+      const failedImage = await cdp.send('Page.captureScreenshot', { format: 'png' });
+      fs.writeFileSync(failedShot, Buffer.from(failedImage.data, 'base64'));
+      await dumpPreflight(cdp, 'FAILED');
+      throw new Error(`preflight failed: ${failedShot}`);
+    }
+    if (phase === 'ready' && !/Preparing the workbench|准备工作台/u.test(body) && /Workbench panel|工作台面板/u.test(body)) break;
     await sleep(5000);
   }
   await dumpPreflight(cdp, 'AFTER_GATE');
