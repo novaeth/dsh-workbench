@@ -1,0 +1,171 @@
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/78bdfa4b-ac93-414c-a061-0eafb134a7ee
+Checking for update
+Update for version 0.2.1-rc.5 is not available (latest version: 0.2.1-rc.5, downgrade is disallowed).
+dsh web: http://127.0.0.1:49191/?token=pg5_WhsZX7v8taBpFexg9Ej89udre6Dqlg4FCZHIb7Y
+pages: 2
+- page file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/renderer/welcome.html
+- page dsh-app://app/
+welcome skip: scheduled
+pages after skip: 1
+- page dsh-app://app/
+target: dsh-app://app/
+open plugins: "Plugins"
+PLUGINS_BODY_START
+New Session
+⌘
+N
+Plugins
+Automation tasks
+More
+Workspaces
+Default workspace
+New Session
+More
+Plugins
+Install, enable, and configure plugins
+Add plugin
+Built-in plugin settings
+Subagent
+Set Subagent recursion depth, count, and models.
+Web search
+Set up the DeepSeek search provider.
+Agent loop
+Control how the Agent dispatches tool calls.
+Shell
+Limit how long each command may run and how much it may output.
+Experimental plugins
+More
+Agent Teams
+Experimental
+Enable team collaboration, team tools, the member roster, and the shared task board.
+Voice input
+Experimental
+Transcribe recordings locally with SenseVoice; first use requires installing dependencies
+Auto Authorization Review
+Experimental
+Add an Auto review permission mode that uses the model to assess authorization before each tool call.
+Developer Tools
+Experimental
+Inspect and debug raw session data, grouped chat messages, and the NodeJS backend.
+PLUGINS_BODY_END
+add plugin: "Add plugin"
+FIELDS: [{"index":0,"tag":"INPUT","type":"text","placeholder":"Search session names","aria":null,"visible":true},{"index":1,"tag":"INPUT","type":"text","placeholder":"for example dsh-plugin-whale-pet","aria":"Package name or address","visible":true}]
+focus: "for example dsh-plugin-whale-pet"
+filled: "@dsh-workbench/core"
+install click: {"disabled":false}
+AFTER_INSTALL_CLICK_START
+New Session
+⌘
+N
+Plugins
+Automation tasks
+More
+Workspaces
+Default workspace
+New Session
+More
+Plugins
+Install, enable, and configure plugins
+View installation
+Built-in plugin settings
+Subagent
+Set Subagent recursion depth, count, and models.
+Web search
+Set up the DeepSeek search provider.
+Agent loop
+Control how the Agent dispatches tool calls.
+Shell
+Limit how long each command may run and how much it may output.
+Experimental plugins
+More
+Agent Teams
+Experimental
+Enable team collaboration, team tools, the member roster, and the shared task board.
+Voice input
+Experimental
+Transcribe recordings locally with SenseVoice; first use requires installing dependencies
+Auto Authorization Review
+Experimental
+Add an Auto review permission mode that uses the model to assess authorization before each tool call.
+Developer Tools
+Experimental
+Inspect and debug raw session data, grouped chat messages, and the NodeJS backend.
+Cancel installation and return to editing
+Installing the plugin…
+
+@dsh-workbench/core
+
+个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+
+Version 1.1.13
+
+Show install details
+Cancel install
+AFTER_INSTALL_CLICK_END
+install wait 1s:  of the latest version 1.1.13. A newly published version has not completed this waiting period and may contain undetected malicious code or defects. If you need 1.1.13, uninstall the current version and then install @dsh-workbench/core@1.1.13 to request that version. |  | Show install details | Enable now
+enable now: "Enable now"
+close dialog: "escape"
+BODY_START
+New Session
+⌘
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Plugins
+Install, enable, and configure plugins
+Add plugin
+Built-in plugin settings
+Subagent
+Set Subagent recursion depth, count, and models.
+Web search
+Set up the DeepSeek search provider.
+Agent loop
+Control how the Agent dispatches tool calls.
+Shell
+Limit how long each command may run and how much it may output.
+Experimental plugins
+More
+Agent Teams
+Experimental
+Enable team collaboration, team tools, the member roster, and the shared task board.
+Voice input
+Experimental
+Transcribe recordings locally with SenseVoice; first use requires installing dependencies
+Auto Authorization Review
+Experimental
+Add an Auto review permission mode that uses the model to assess authorization before each tool call.
+Developer Tools
+Experimental
+Inspect and debug raw session data, grouped chat messages, and the NodeJS backend.
+Installed plugins
+@dsh-workbench/core
+个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+Workbench panel
+No modules on the panel yet
+You can also just tell the agent: “add a module to the panel”.
+Build a module
+Choose modules
+Browse the module market
+Preparing the workbench
+
+Installing background tools — the first run takes a moment…
+
+✓
+Check the environment
+Looks good
+Install background tools
+-
+Connect your browser
+Check DIY mode
+Waiting 4s
+BODY_END
+TITLE: DeepSeek Harness
+SCREENSHOT: desktop-mac.png (21625 bytes)
