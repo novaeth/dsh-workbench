@@ -57,8 +57,10 @@ jobs:
           $p = Start-Process -FilePath $env:DESKTOP_EXE -ArgumentList '--remote-debugging-port=9222' -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
           Start-Sleep -Seconds 60
           Get-Content $out, $err -ErrorAction SilentlyContinue
-          & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win.png --install-via-ui --expect-workbench
+          $cdp = Join-Path $env:GITHUB_WORKSPACE 'desktop-win-cdp.txt'
+          & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win.png --install-via-ui --expect-workbench *> $cdp
           $code = $LASTEXITCODE
+          Get-Content $cdp -ErrorAction SilentlyContinue
           Stop-Transcript
           if ($code -ne 0) { throw "cdp probe failed: $code" }
       - name: Stop Desktop
@@ -71,7 +73,7 @@ jobs:
         run: |
           git config user.name ci
           git config user.email ci@example.com
-          git add -f desktop-win-ui.txt desktop-win.png || true
+          git add -f desktop-win-ui.txt desktop-win-cdp.txt desktop-win.png || true
           git commit -m "ci: windows desktop ui probe [skip ci]" || true
           git push origin HEAD:desktop-ui-log-win-${{ github.run_id }}
 
