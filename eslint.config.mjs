@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
+import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 const KERNEL_BANS = [
@@ -163,22 +164,17 @@ export default tseslint.config(
     rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
   {
-    files: ['**/*.{js,mjs,cjs}'],
-    languageOptions: {
-      globals: {
-        AbortSignal: 'readonly',
-        Buffer: 'readonly',
-        TextEncoder: 'readonly',
-        URL: 'readonly',
-        URLSearchParams: 'readonly',
-        console: 'readonly',
-        fetch: 'readonly',
-        module: 'readonly',
-        process: 'readonly',
-        setTimeout: 'readonly',
-        clearTimeout: 'readonly',
-      },
-    },
+    files: ['**/*.{js,mjs}'],
+    ignores: ['packages/docs/site/**'],
+    languageOptions: { globals: { ...globals.nodeBuiltin } },
+  },
+  {
+    files: ['**/*.cjs'],
+    languageOptions: { globals: { ...globals.node } },
+  },
+  {
+    files: ['packages/docs/site/**/*.{js,mjs}'],
+    languageOptions: { globals: { ...globals.browser } },
   },
 
   {
