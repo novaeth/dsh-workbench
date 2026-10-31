@@ -97,22 +97,38 @@ if (installViaUi) {
   });
   console.log(`FIELDS: ${fields.result?.value ?? ''}`);
 
-  const fill = await cdp.send('Runtime.evaluate', {
+  const focus = await cdp.send('Runtime.evaluate', {
     expression: `(() => {
-      const field = [...document.querySelectorAll('input, textarea')].find((node) => node.offsetParent !== null && (node.type === 'text' || node.tagName === 'TEXTAREA'));
+      const field = document.querySelector('input[aria-label="Package name or address"]') ?? [...document.querySelectorAll('input, textarea')].filter((node) => node.offsetParent !== null).at(-1);
       if (field === undefined) return 'no field';
-      const setter = Object.getOwnPropertyDescriptor(field instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype, 'value').set;
-      setter.call(field, '@dsh-workbench/core');
-      field.dispatchEvent(new Event('input', { bubbles: true }));
-      field.dispatchEvent(new Event('change', { bubbles: true }));
       field.focus();
-      return field.value;
+      return field.getAttribute('placeholder');
     })()`,
     returnByValue: true,
   });
-  console.log(`fill: ${JSON.stringify(fill.result?.value)}`);
-  await sleep(1000);
-  await step('install', clickText('Install'));
+  console.log(`focus: ${JSON.stringify(focus.result?.value)}`);
+  await cdp.send('Input.insertText', { text: '@dsh-workbench/core' });
+  await sleep(500);
+  const filled = await cdp.send('Runtime.evaluate', {
+    expression: `document.querySelector('input[aria-label="Package name or address"]')?.value ?? ''`,
+    returnByValue: true,
+  });
+  console.log(`filled: ${JSON.stringify(filled.result?.value)}`);
+  const installButton = await cdp.send('Runtime.evaluate', {
+    expression: `(() => {
+      const button = [...document.querySelectorAll('button')].find((node) => node.innerText?.trim() === 'Install');
+      if (button === undefined) return 'missing';
+      button.click();
+      return { disabled: button.disabled };
+    })()`,
+    returnByValue: true,
+  });
+  console.log(`install click: ${JSON.stringify(installButton.result?.value)}`);
+  await sleep(2000);
+  const afterInstallClick = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
+  console.log('AFTER_INSTALL_CLICK_START');
+  console.log((afterInstallClick.result?.value ?? '').slice(-2000));
+  console.log('AFTER_INSTALL_CLICK_END');
 
   let last = '';
   for (let i = 0; i < 36; i += 1) {
