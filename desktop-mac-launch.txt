@@ -1,0 +1,77 @@
++ pkill -f 'DeepSeek Harness'
++ true
++ sleep 3
++ app='/Applications/DeepSeek Harness.app'
++ pid=23223
++ sleep 30
++ '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9222
++ echo '--- app log ---'
+--- app log ---
++ cat /Users/runner/work/_temp/desktop-mac-app2.log
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/7c31c98b-749e-4031-8035-9416be35e001
+Checking for update
+Update for version 0.2.1-rc.5 is not available (latest version: 0.2.1-rc.5, downgrade is disallowed).
+dsh web: http://127.0.0.1:49237/?token=ZSG35o9UP0mGG4_jbzRV9g0R1YFf3mMOPCfmq503bQI
+++ grep -oE 'http://127\.0\.0\.1:[0-9]+/\?token=[^ ]+' /Users/runner/work/_temp/desktop-mac-app2.log
+++ head -1
++ url='http://127.0.0.1:49237/?token=ZSG35o9UP0mGG4_jbzRV9g0R1YFf3mMOPCfmq503bQI'
++ '[' -n 'http://127.0.0.1:49237/?token=ZSG35o9UP0mGG4_jbzRV9g0R1YFf3mMOPCfmq503bQI' ']'
++ echo 'workbench url: http://127.0.0.1:49237/?token=ZSG35o9UP0mGG4_jbzRV9g0R1YFf3mMOPCfmq503bQI'
+workbench url: http://127.0.0.1:49237/?token=ZSG35o9UP0mGG4_jbzRV9g0R1YFf3mMOPCfmq503bQI
++ curl -s -o /dev/null -w 'http status: %{http_code}\n' 'http://127.0.0.1:49237/?token=ZSG35o9UP0mGG4_jbzRV9g0R1YFf3mMOPCfmq503bQI'
+http status: 303
++ sleep 5
++ echo '--- cdp ---'
+--- cdp ---
++ node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-mac.png
+pages: 2
+- page file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/renderer/welcome.html
+- page dsh-app://app/
+welcome skip: skip()
+pages after skip: 1
+- page dsh-app://app/
+target: dsh-app://app/
+BODY_START
+New Session
+⌘
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Into the Unknown
+Preview
+Standard mode
+Describe what you want to build, / commands, @ files or sessions
+Select model
+Workbench panel
+No modules on the panel yet
+You can also just tell the agent: “add a module to the panel”.
+Build a module
+Choose modules
+Browse the module market
+Preparing the workbench
+
+Getting the runtime ready…
+
+Check the environment
+-
+Install background tools
+-
+Connect your browser
+-
+Check DIY mode
+Waiting 34s
+BODY_END
+TITLE: DeepSeek Harness
+SCREENSHOT: desktop-mac.png (18941 bytes)
++ ps -p 23223 -o pid,stat,command
+  PID STAT COMMAND
+23223 S<   /Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness --remote-debugging-port=9222
++ kill 23223
