@@ -147,11 +147,14 @@ jobs:
           set -x
           root="$RUNNER_TEMP/opencli-probe"
           mkdir -p "$root/toolchain"
-          printf '{"name":"probe","private":true}\n' > "$root/toolchain/package.json"
+          printf '{"name":"dsh-workbench-toolchain","private":true,"dependencies":{"@jackwener/opencli":"1.8.8"}}\n' > "$root/toolchain/package.json"
+          export npm_config_registry='https://registry.npmmirror.com'
+          export NPM_CONFIG_REGISTRY="$npm_config_registry"
           start=$(date +%s)
-          node "/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs" add --dir "$root/toolchain" @jackwener/opencli@1.8.8 --store-dir "$root/pnpm-store" --allow-build=@jackwener/opencli > desktop-mac-pnpm-probe.txt 2>&1 || true
+          timeout 60 node "/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs" add --dir "$root/toolchain" @jackwener/opencli@1.8.8 --store-dir "$root/npm-cache" --allow-build=@jackwener/opencli > desktop-mac-pnpm-probe.txt 2>&1
+          code=$?
           end=$(date +%s)
-          echo "elapsed=$((end-start))s" >> desktop-mac-pnpm-probe.txt
+          echo "elapsed=$((end-start))s exit=$code" >> desktop-mac-pnpm-probe.txt
           tail -60 desktop-mac-pnpm-probe.txt
       - name: Launch and assert workbench panel
         shell: bash
@@ -188,12 +191,30 @@ jobs:
         shell: bash
         run: |
           exec > >(tee desktop-mac-inspect.txt) 2>&1
+          echo '--- processes ---'
+          ps -ef | grep -Ei 'pnpm|opencli|deepseek|node' | grep -v grep | head -80 || true
           echo '--- workbench tree ---'
           find "$HOME/.dsh/workbench" -maxdepth 4 -print 2>/dev/null | head -150 || true
-          echo '--- opencli paths ---'
-          find "$HOME/.dsh" -maxdepth 5 -iname '*opencli*' -print 2>/dev/null | head -80 || true
-          echo '--- logs ---'
-          find "$HOME/.dsh" "$HOME/Library/Logs" -maxdepth 4 -type f -iname '*dsh*' -o -iname '*deepseek*' 2>/dev/null | head -40 || true
+          echo '--- opencli tree ---'
+          find "$HOME/.dsh/workbench/opencli" -maxdepth 4 -print 2>/dev/null | head -80 || true
+          echo '--- seed log ---'
+          cat "$HOME/.dsh/workbench/seed.log" 2>/dev/null || true
+          echo '--- desktop profile patch ---'
+          cat "$HOME/.dsh/profiles/desktop/cordis.patch.yml" 2>/dev/null || true
+          echo '--- desktop profile package ---'
+          cat "$HOME/.dsh/profiles/desktop/package.json" 2>/dev/null || true
+          echo '--- app stdout ---'
+          cat "$RUNNER_TEMP/desktop-mac-app.log" 2>/dev/null | tail -400 || true
+          echo '--- library logs ---'
+          find "$HOME/Library/Logs/DeepSeek Harness" -type f 2>/dev/null | while read -r file; do
+            echo "=== $file"
+            tail -300 "$file" 2>/dev/null || true
+          done
+          echo '--- dsh logs ---'
+          find "$HOME/.dsh/logs" -type f 2>/dev/null | while read -r file; do
+            echo "=== $file"
+            tail -200 "$file" 2>/dev/null || true
+          done
 
       - name: Stop Desktop
         if: always()
