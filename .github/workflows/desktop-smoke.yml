@@ -51,6 +51,16 @@ jobs:
             Stop-Transcript
           }
 
+
+      - name: Install Chrome/OpenCLI (Windows)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $chrome = @("$env:ProgramFiles\Google\Chrome\Application\chrome.exe", "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+          "chrome: $chrome"
+          npm install -g '@jackwener/opencli@1.8.8'
+          opencli --version
+
       - name: Install workbench plugin (Windows)
         shell: pwsh
         continue-on-error: true
@@ -81,7 +91,7 @@ jobs:
             $out = Join-Path $env:RUNNER_TEMP 'win-app-out.log'
             $err = Join-Path $env:RUNNER_TEMP 'win-app-err.log'
             $p = Start-Process -FilePath $exe.FullName -ArgumentList '--remote-debugging-port=9222' -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
-            Start-Sleep -Seconds 30
+            Start-Sleep -Seconds 60
             "--- app stdout ---"
             Get-Content $out -ErrorAction SilentlyContinue
             "--- app stderr ---"
@@ -154,6 +164,16 @@ jobs:
           done
           kill "$pid" 2>/dev/null || true
 
+
+      - name: Install Chrome/OpenCLI (macOS)
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -x
+          ls -l "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" || true
+          npm install -g '@jackwener/opencli@1.8.8'
+          opencli --version || true
+
       - name: Install workbench plugin (macOS)
         shell: bash
         continue-on-error: true
@@ -179,7 +199,7 @@ jobs:
           app="/Applications/DeepSeek Harness.app"
           "$app/Contents/MacOS/DeepSeek Harness" --remote-debugging-port=9222 > "$RUNNER_TEMP/desktop-mac-app2.log" 2>&1 &
           pid=$!
-          sleep 30
+          sleep 60
           echo '--- app log ---'
           cat "$RUNNER_TEMP/desktop-mac-app2.log" || true
           url=$(grep -oE 'http://127\.0\.0\.1:[0-9]+/\?token=[^ ]+' "$RUNNER_TEMP/desktop-mac-app2.log" | head -1 || true)

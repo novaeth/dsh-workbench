@@ -44,12 +44,8 @@ if (welcome !== undefined) {
   const cdp = await connect(welcome.webSocketDebuggerUrl);
   const skipped = await cdp.send('Runtime.evaluate', {
     expression: `(async () => {
-      if (typeof window.dshWelcome?.skip === 'function') {
-        await window.dshWelcome.skip();
-        return 'skip()';
-      }
       document.querySelector('#api-key')?.click();
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 700));
       document.querySelector('#skip-key')?.click();
       return 'clicked';
     })()`,
