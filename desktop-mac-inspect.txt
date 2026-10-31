@@ -1,0 +1,101 @@
+--- pwd ---
+/Users/runner/work/dsh-workbench/dsh-workbench
+--- processes ---
+  501  2540     1   0  1:48PM ??         0:08.07 /Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness --remote-debugging-port=9222
+  501  2542  2540   0  1:48PM ??         0:05.18 /Applications/DeepSeek Harness.app/Contents/Frameworks/DeepSeek Harness Helper.app/Contents/MacOS/DeepSeek Harness Helper --type=gpu-process --user-data-dir=/Users/runner/Library/Application Support/@deepseek-ai/dsh-desktop --gpu-preferences=WAAAAAAAAAAgAQAEAAAAAAAAAAAAAGAAQAAAAAAAAAADAAAAAAAAADgAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAKAAAAAAAAAAoAAAAAAAAAAgAAAAAAAAADAAAAAEAAAAAAAAAAAAAAAgAAAAAAAAACAAAAAAAAAA= --shared-files --field-trial-handle=1718379636,r,8141224758669921297,14944684707557389044,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,14663334594349107124,1215618577912856846,4 --trace-process-track-uuid=3190708988185955192 --seatbelt-client=29
+  501  2543  2540   0  1:48PM ??         0:00.39 /Applications/DeepSeek Harness.app/Contents/Frameworks/DeepSeek Harness Helper.app/Contents/MacOS/DeepSeek Harness Helper --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=network --user-data-dir=/Users/runner/Library/Application Support/@deepseek-ai/dsh-desktop --standard-schemes=dsh-app --secure-schemes=dsh-app --cors-schemes=dsh-app --fetch-schemes=dsh-app --streaming-schemes=dsh-app --code-cache-schemes=dsh-app --shared-files --field-trial-handle=1718379636,r,8141224758669921297,14944684707557389044,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,14663334594349107124,1215618577912856846,4 --trace-process-track-uuid=3190708989122997041 --seatbelt-client=34
+  501  2551  2540   0  1:48PM ??         0:07.75 /Applications/DeepSeek Harness.app/Contents/Frameworks/DeepSeek Harness Helper (Renderer).app/Contents/MacOS/DeepSeek Harness Helper (Renderer) --type=renderer --user-data-dir=/Users/runner/Library/Application Support/@deepseek-ai/dsh-desktop --standard-schemes=dsh-app --secure-schemes=dsh-app --cors-schemes=dsh-app --fetch-schemes=dsh-app --streaming-schemes=dsh-app --code-cache-schemes=dsh-app --app-path=/Applications/DeepSeek Harness.app/Contents/Resources/app.asar --enable-sandbox --remote-debugging-port=9222 --lang=en-US --num-raster-threads=1 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --renderer-client-id=4 --launch-time-ticks=192375075 --shared-files --field-trial-handle=1718379636,r,8141224758669921297,14944684707557389044,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,14663334594349107124,1215618577912856846,4 --trace-process-track-uuid=3190708990060038890 --seatbelt-client=56
+  501  2559  2540   0  1:48PM ??         0:19.96 /Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness --expose-internals /Applications/DeepSeek Harness.app/Contents/Resources/app.asar/dsh/node_modules/@deepseek-ai/dsh-desktop-host/lib/index.js /Applications/DeepSeek Harness.app/Contents/Resources/app.asar/dsh /Users/runner/.dsh/profiles/desktop /Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime /Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.mjs /Applications/DeepSeek Harness.app/Contents/Resources/runtime/bin
+  501  3949  3948   0  1:49PM ??         0:01.12 node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-mac.png --install-via-ui --expect-workbench
+--- app cwd ---
+pid 2540: p2540 fcwd n/ 
+pid 2542: p2542 fcwd n/ 
+pid 2543: p2543 fcwd n/ 
+pid 2551: p2551 fcwd n/ 
+pid 2559: p2559 fcwd n/Users/runner/.dsh/profiles/desktop 
+--- workbench tree ---
+/Users/runner/.dsh/workbench
+/Users/runner/.dsh/workbench/diy
+/Users/runner/.dsh/workbench/diy/.agents
+/Users/runner/.dsh/workbench/diy/.agents/skills
+/Users/runner/.dsh/workbench/diy/.agents/skills/workbench-module-diy
+/Users/runner/.dsh/workbench/diy/.npmrc
+/Users/runner/.dsh/workbench/diy/README.md
+/Users/runner/.dsh/workbench/diy/package.json
+/Users/runner/.dsh/workbench/diy/packages
+/Users/runner/.dsh/workbench/diy/AGENTS.md
+/Users/runner/.dsh/workbench/diy/pnpm-workspace.yaml
+/Users/runner/.dsh/workbench/bin
+/Users/runner/.dsh/workbench/bin/desktop
+/Users/runner/.dsh/workbench/bin/desktop/node
+/Users/runner/.dsh/workbench/bin/dsh-wb-module
+/Users/runner/.dsh/workbench/seed.log
+/Users/runner/.dsh/workbench/opencli
+/Users/runner/.dsh/workbench/opencli/home
+/Users/runner/.dsh/workbench/opencli/bin
+/Users/runner/.dsh/workbench/opencli/bin/opencli
+/Users/runner/.dsh/workbench/opencli/toolchain
+/Users/runner/.dsh/workbench/opencli/toolchain/package.json
+--- opencli tree ---
+/Users/runner/.dsh/workbench/opencli
+/Users/runner/.dsh/workbench/opencli/home
+/Users/runner/.dsh/workbench/opencli/bin
+/Users/runner/.dsh/workbench/opencli/bin/opencli
+/Users/runner/.dsh/workbench/opencli/toolchain
+/Users/runner/.dsh/workbench/opencli/toolchain/package.json
+--- seed log ---
+→ DIY 工坊入口：/Users/runner/.dsh/workbench/bin/dsh-wb-module
+→ 工坊指引已链上：/Users/runner/.dsh/workbench/diy/.agents/skills/workbench-module-diy → /Users/runner/.dsh/profiles/desktop/node_modules/@dsh-workbench/core/skills/workbench-module-diy
+→ 建 DIY 工坊 /Users/runner/.dsh/workbench/diy
+→ ⚠️ PATH 上没有 pnpm，工坊依赖没装。装好 pnpm 后跑一次：
+     cd /Users/runner/.dsh/workbench/diy && pnpm install
+--- desktop profile patch ---
+# Your patch layer for this dsh profile, applied after every bundle layer:
+# a top-level YAML array of loader patch entries (id-targeted config
+# overrides, disables, and insert lists; `!!js` expressions allowed).
+[]
+--- desktop profile package ---
+{
+  "name": "dsh-profile-desktop",
+  "private": true,
+  "dependencies": {
+    "@dsh-workbench/core": "1.1.14-beta.1"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "@dsh-workbench/core"
+      ]
+    }
+  }
+}
+--- app stdout ---
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/6052585c-a54a-4fe2-823f-a361b65d0499
+Checking for update
+Update for version 0.2.1-rc.5 is not available (latest version: 0.2.1-rc.5, downgrade is disallowed).
+dsh web: http://127.0.0.1:49199/?token=GsdZ01e6Elk6qxWHjfRGV7cjXQS-1yqti4mf7lxzaxs
+Checking for update
+Update for version 0.2.1-rc.5 is not available (latest version: 0.2.1-rc.5, downgrade is disallowed).
+--- library logs ---
+=== /Users/runner/Library/Logs/DeepSeek Harness/crash-2026-10-31T13-48-15-058Z-renderer.log
+time: 2026-10-31T13:48:15.058Z
+source: renderer
+phase: running
+app: @deepseek-ai/dsh-desktop 0.2.1-rc.5
+platform: darwin arm64
+electron: 44.7.0
+node: 24.21.0
+locale: en
+shell pid: 1749
+
+--- error ---
+Error: Desktop renderer exited: killed
+    at WebContents.<anonymous> (file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/lib/main.js:12933:107)
+    at WebContents.emit (node:events:526:24)
+
+--- renderer console (error level, oldest first) ---
+(no error-level renderer console output was captured)
+--- dsh logs ---
