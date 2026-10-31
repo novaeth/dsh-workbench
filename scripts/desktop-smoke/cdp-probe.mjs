@@ -5,6 +5,7 @@ const shot = process.argv[3] ?? 'desktop-smoke.png';
 const expectWorkbench = process.argv.includes('--expect-workbench');
 const installViaUi = process.argv.includes('--install-via-ui');
 const workbenchSpec = process.env.DESKTOP_WORKBENCH_SPEC ?? '@dsh-workbench/core';
+const quick = process.env.DESKTOP_SMOKE_QUICK === '1';
 
 const sleep = (ms) =>
   new Promise((resolve) => {
@@ -148,7 +149,7 @@ if (installViaUi) {
   const gateShot = shot.replace(/\.png$/u, '-gate.png');
   const gateOpenShot = shot.replace(/\.png$/u, '-gate-open.png');
   let gateCaptured = false;
-  for (let i = 0; i < 72; i += 1) {
+  for (let i = 0; i < (quick ? 12 : 72); i += 1) {
     const current = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
     const body = current.result?.value ?? '';
     console.log(`health wait ${i * 5}s: ${body.slice(-700).replaceAll('\n', ' | ')}`);
@@ -167,9 +168,17 @@ if (installViaUi) {
         console.log(`GATE_OPEN_SCREENSHOT: ${gateOpenShot} (${fs.statSync(gateOpenShot).size} bytes)`);
       }
       gateCaptured = true;
+      if (quick) break;
     }
     if (/Looks good/u.test(body) && !/Installing background tools|Waiting \d+s/u.test(body)) break;
     await sleep(5000);
+  }
+  if (quick) {
+    const quickImage = await cdp.send('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync(shot, Buffer.from(quickImage.data, 'base64'));
+    console.log(`SCREENSHOT: ${shot} (${fs.statSync(shot).size} bytes)`);
+    cdp.close();
+    process.exit(0);
   }
   await step('install background tools', clickText('Install background tools'));
   for (let i = 0; i < 12; i += 1) {

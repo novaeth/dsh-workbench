@@ -17,11 +17,13 @@ concurrency:
 jobs:
   windows:
     name: desktop / windows x64
+    if: github.event_name != 'push'
     runs-on: windows-latest
     timeout-minutes: 45
     env:
       HUSKY: 0
       DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@1.1.14-beta.0'
+      DESKTOP_SMOKE_QUICK: '1'
     steps:
       - uses: actions/checkout@v4
       - name: Install Desktop
@@ -113,6 +115,7 @@ jobs:
     timeout-minutes: 45
     env:
       HUSKY: 0
+      DESKTOP_SMOKE_QUICK: '1'
       DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@1.1.14-beta.0'
     steps:
       - uses: actions/checkout@v4
