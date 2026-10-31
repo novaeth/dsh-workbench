@@ -13,8 +13,8 @@ import {
 } from 'node:fs';
 import { delimiter, dirname, join, sep } from 'node:path';
 import type { DshHomePath, DshHostContext } from '@dsh-workbench/shared';
-import { quoteShellArg } from '@dsh-workbench/shared/host';
-import { ensureToolchain, localNpmCache, provisionLocalPnpmSync } from './toolchain.js';
+import { quoteShellArg, quoteShellArgFor } from '@dsh-workbench/shared/host';
+import { desktopPnpmPath, desktopPnpmVersion, ensureToolchain, localNpmCache, provisionLocalPnpmSync } from './toolchain.js';
 
 export type SeedLog = (message: string) => void;
 
@@ -183,6 +183,14 @@ export function prependPath(entryDir: string, env: NodeJS.ProcessEnv = process.e
 }
 
 export function seedWorkbenchToolchain(root: string, log: SeedLog): void {
+  const bundledPnpm = desktopPnpmPath();
+  const bundledVersion = desktopPnpmVersion()?.split('.')[0];
+  if (bundledPnpm !== undefined && bundledVersion === '10') {
+    process.env.DSH_WB_PNPM = `node ${quoteShellArgFor(bundledPnpm, process.platform)}`;
+    log(`pnpm 用 Desktop 自带的：${bundledPnpm}`);
+  } else if (bundledPnpm !== undefined) {
+    log(`Desktop 自带 pnpm 版本不是 10，优先用 PATH 上的 pnpm`);
+  }
   const toolchain = ensureToolchain({ root, log });
   for (const file of toolchain.files) log(`工具链写下 ${file}`);
   if (toolchain.pathDir !== undefined && prependPath(toolchain.pathDir)) {

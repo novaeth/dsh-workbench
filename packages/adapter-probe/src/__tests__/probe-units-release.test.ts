@@ -57,7 +57,7 @@ describe('版本信号（源上有新版）', () => {
     expect(state?.status).toBe('outdated');
     expect(state?.installed).toBe('1.0.39');
     expect(state?.latest).toBe('1.0.40');
-    expect(state?.command).toContain('npm i --prefix');
+    expect(state?.command).toContain('pnpm add --dir');
     expect(state?.command).toContain('ln -s');
     expect(state?.detail).toContain('源上最新');
   });

@@ -1,6 +1,7 @@
 import type { DshShell } from '@dsh-workbench/shared';
 import { runShell } from '@dsh-workbench/shared/host';
-import { desktopPnpmPath } from './toolchain.js';
+import { quoteShellArg } from '@dsh-workbench/shared/host';
+import { desktopPnpmPath, desktopPnpmVersion } from './toolchain.js';
 
 export interface ToolchainReport {
   readonly ok: boolean;
@@ -25,10 +26,16 @@ async function toolVersion(
 }
 
 export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainReport> {
+  const bundledPnpm = desktopPnpmPath();
+  const bundledMajor = desktopPnpmVersion()?.split('.')[0];
+  const preferBundled = bundledPnpm !== undefined && bundledMajor === '10';
+  const pnpmLine = preferBundled
+    ? `node ${quoteShellArg(bundledPnpm ?? '')} --version`
+    : 'pnpm --version';
   const [node, npm, pnpm] = await Promise.all([
     toolVersion(shell, 'node --version'),
     toolVersion(shell, 'npm --version'),
-    toolVersion(shell, 'pnpm --version'),
+    toolVersion(shell, pnpmLine),
   ]);
   if (node.stalled || npm.stalled || pnpm.stalled) {
     return {
@@ -42,21 +49,18 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
   }
   const nodeMissing = !node.ok;
   const npmMissing = !npm.ok;
-  const hasBundledPnpm = desktopPnpmPath() !== undefined;
   const pnpmMajor = /^v?(\d+)/.exec(pnpm.text)?.[1];
   const pnpmProblem = !pnpm.ok || pnpmMajor !== '10';
   const parts = [
     nodeMissing ? 'node 不在 PATH（Desktop 自带 Node 的 shim 没生效）' : `node ${node.text}（Desktop 自带）`,
-    npmMissing
-      ? hasBundledPnpm
-        ? 'npm 缺（opencli 安装走 pnpm；插件安装/模块库仍需 npm）'
-        : 'npm 缺（装不了 opencli：bundled pnpm 也没找到）'
-      : `npm ${npm.text}`,
+    npmMissing ? 'npm 缺（已改用 pnpm）' : `npm ${npm.text}`,
     pnpmProblem
       ? pnpm.ok
         ? `pnpm ${pnpm.text}（工坊按 10 方言）`
-        : 'pnpm 缺（只影响工坊 build/install）'
-      : `pnpm ${pnpm.text}`,
+        : 'pnpm 缺（装不了 opencli/插件/模块库）'
+      : preferBundled
+        ? `pnpm ${pnpm.text}（Desktop 自带）`
+        : `pnpm ${pnpm.text}`,
   ];
   return { ok: !nodeMissing, detail: parts.join(' · '), nodeMissing, npmMissing, pnpmProblem };
 }

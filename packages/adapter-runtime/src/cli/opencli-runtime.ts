@@ -45,7 +45,8 @@ export function libDir(name: string): string {
 }
 
 export function isolatedInstallCommand(): string {
-  return `npm i --prefix ${quoteShellArg(toolchainDir())} ${OPENCLI_NPM_PACKAGE}@${OPENCLI_PIN} --cache ${quoteShellArg(npmCacheDir())}`;
+  const pnpm = process.env.DSH_WB_PNPM?.trim() || 'pnpm';
+  return `${pnpm} add --dir ${quoteShellArg(toolchainDir())} ${OPENCLI_NPM_PACKAGE}@${OPENCLI_PIN} --store-dir ${quoteShellArg(npmCacheDir())} --allow-build=${OPENCLI_NPM_PACKAGE}`;
 }
 
 export function isolatedPnpmInstallCommand(pnpmCjs: string): string {

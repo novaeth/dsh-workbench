@@ -121,8 +121,8 @@ describe("resolvePluginSource：npm（装进工作台自己的隔离运行时）
 
     expect(resolved.commands).toHaveLength(4);
     expect(resolved.commands[0]?.line).toBe(
-      `npm i --prefix '${at('plugins-npm')}' 'opencli-plugin-demo@latest' ` +
-        `--registry '${REGISTRY}' --cache '${at('npm-cache')}'`,
+      `pnpm add --dir '${at('plugins-npm')}' 'opencli-plugin-demo@latest' ` +
+        `--registry '${REGISTRY}' --store-dir '${at('npm-cache')}' --allow-build='opencli-plugin-demo'`,
     );
     expect(resolved.commands[1]?.line).toBe(
       `rm -rf '${at('plugins-npm', 'node_modules', '@jackwener', 'opencli')}' && ` +
@@ -157,8 +157,8 @@ describe("resolvePluginSource：npm（装进工作台自己的隔离运行时）
     if (!resolved.ok) throw new Error("应该解析得出");
     expect(resolved.line).toBe(
       [
-        `npm i --prefix '${at('plugins-npm')}' 'opencli-plugin-demo@latest' ` +
-          `--registry '${REGISTRY}' --cache '${at('npm-cache')}'`,
+        `pnpm add --dir '${at('plugins-npm')}' 'opencli-plugin-demo@latest' ` +
+          `--registry '${REGISTRY}' --store-dir '${at('npm-cache')}' --allow-build='opencli-plugin-demo'`,
         `rm -rf '${at('plugins-npm', 'node_modules', '@jackwener', 'opencli')}' && ` +
           `mkdir -p '${at('plugins-npm', 'node_modules', '@jackwener')}' && ` +
           `ln -s '${at('toolchain', 'node_modules', '@jackwener', 'opencli')}' ` +

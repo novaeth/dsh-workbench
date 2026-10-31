@@ -28,6 +28,20 @@ export function desktopPnpmPath(
   return exists(path) ? path : undefined;
 }
 
+export function desktopPnpmVersion(proc: PnpmProcess = process, exists: (path: string) => boolean = existsSync): string | undefined {
+  if (hostSurface({ proc }).deployment !== 'desktop') return undefined;
+  const resources = proc.resourcesPath;
+  if (resources === undefined || resources === '') return undefined;
+  const manifest = join(resources, 'runtime', 'primary-runtime', 'dependencies', 'pnpm', 'package.json');
+  if (!exists(manifest)) return undefined;
+  try {
+    const parsed = JSON.parse(readFileSync(manifest, 'utf8')) as { version?: unknown };
+    return typeof parsed.version === 'string' ? parsed.version : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export interface ToolchainOptions {
   readonly root: string;
   readonly proc?: ToolchainProcess | undefined;
@@ -151,13 +165,14 @@ export async function provisionLocalPnpm(options: {
   readonly platform?: NodeJS.Platform | undefined;
   readonly proc?: PnpmProcess | undefined;
   readonly exists?: ((path: string) => boolean) | undefined;
+  readonly pnpm?: string | undefined;
 }): Promise<LocalPnpmProvision> {
-  const command = localPnpmInstallCommand(
-    options.root,
-    options.proc ?? process,
-    options.exists ?? existsSync,
-  );
-  if (command === undefined) return { ok: false, detail: '找不到 Desktop 自带 pnpm，装不了本地 pnpm 10' };
+  const bootstrap = options.pnpm?.trim();
+  const command =
+    bootstrap === undefined || bootstrap === ''
+      ? localPnpmInstallCommand(options.root, options.proc ?? process, options.exists ?? existsSync)
+      : `${bootstrap} add --dir ${quoteShellArgFor(localPnpmRoot(options.root), options.platform ?? process.platform)} pnpm@${LOCAL_PNPM_VERSION} --store-dir ${quoteShellArgFor(join(options.root, 'pnpm-store'), options.platform ?? process.platform)}`;
+  if (command === undefined) return { ok: false, detail: '找不到可用的 pnpm，装不了本地 pnpm 10' };
   try {
     mkdirSync(localPnpmRoot(options.root), { recursive: true });
   } catch (error) {

@@ -56,17 +56,19 @@ function npmSource(
   if (name === '') return { ok: false, problem: 'malformed' };
 
   const prefix = vendorPrefix();
+  const pnpm = process.env.DSH_WB_PNPM?.trim() || 'pnpm';
   const dirInPrefix = join(prefix, 'node_modules', name);
   const peer = vendorPeerLink();
 
   const commands: PluginSourceCommand[] = [
     {
       line: [
-        'npm i',
-        `--prefix ${quoteShellArg(prefix)}`,
+        `${pnpm} add`,
+        `--dir ${quoteShellArg(prefix)}`,
         quoteShellArg(`${name}@${version}`),
         `--registry ${quoteShellArg(registry.value)}`,
-        `--cache ${quoteShellArg(npmCacheDir())}`,
+        `--store-dir ${quoteShellArg(npmCacheDir())}`,
+        `--allow-build=${quoteShellArg(name)}`,
       ].join(' '),
     },
     {

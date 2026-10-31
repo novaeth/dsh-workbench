@@ -200,7 +200,7 @@ describe('插件的安装命令（复用 plugin-source 那两条既有分支）'
 
     if (!plan.ok) throw new Error('这条该装得上');
     expect(plan.commands[0]?.line).toBe(
-      `npm i --prefix '${PREFIX}' 'opencli-plugin-demo@1.2.3' --registry '${REGISTRY}' --cache '${path.join(DSH_HOME, 'workbench', 'opencli', 'npm-cache')}'`,
+      `pnpm add --dir '${PREFIX}' 'opencli-plugin-demo@1.2.3' --registry '${REGISTRY}' --store-dir '${path.join(DSH_HOME, 'workbench', 'opencli', 'npm-cache')}' --allow-build='opencli-plugin-demo'`,
     );
     expect(plan.commands.some((step) => step.line.includes("'opencli' plugin uninstall 'demo'"))).toBe(true);
     expect(plan.commands.at(-1)?.line).toContain(

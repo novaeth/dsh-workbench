@@ -1,7 +1,7 @@
 import styles from './BootGate.module.css';
 import type { PreflightBridgeIssue, PreflightGuidance, PreflightSnapshot } from '@dsh-workbench/shared/host';
 
-const INSTALL_COMMAND = "npm i --prefix '/Users/you/.dsh/workbench/opencli/toolchain' @jackwener/opencli@1.8.8";
+const INSTALL_COMMAND = "pnpm add --dir '/Users/you/.dsh/workbench/opencli/toolchain' @jackwener/opencli@1.8.8 --store-dir '/Users/you/.dsh/workbench/opencli/npm-cache' --allow-build=@jackwener/opencli";
 
 export interface GateMockExpect {
   readonly hint: 'checking' | 'installing' | 'installingToolchain' | 'failed' | 'hold';
@@ -197,7 +197,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     '失败态：为什么需要它 → 确切命令（可复制）→ 照做能解决的一句人话（EACCES → 换目录 / sudo）。',
     {
       phase: 'failed',
-      steps: [{ id: 'cli', status: 'failed', detail: 'npm ERR! code EACCES', command: INSTALL_COMMAND }, BRIDGE_PENDING],
+      steps: [{ id: 'cli', status: 'failed', detail: 'ERR_PNPM_EACCES: permission denied', command: INSTALL_COMMAND }, BRIDGE_PENDING],
       error: 'npm ERR! code EACCES\nnpm ERR! syscall mkdir\nnpm ERR! path /usr/local/lib/node_modules',
       failure: 'permission',
       guidance: 'install',
@@ -210,7 +210,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     '同一档失败，但人话换成"查代理"那条（EAI_AGAIN / ENOTFOUND）。',
     {
       phase: 'failed',
-      steps: [{ id: 'cli', status: 'failed', detail: 'npm ERR! code EAI_AGAIN', command: INSTALL_COMMAND }, BRIDGE_PENDING],
+      steps: [{ id: 'cli', status: 'failed', detail: 'ERR_PNPM_META_FETCH_FAIL: EAI_AGAIN', command: INSTALL_COMMAND }, BRIDGE_PENDING],
       error: 'npm ERR! code EAI_AGAIN\nnpm ERR! network request to https://registry.npmjs.org failed',
       failure: 'network',
       guidance: 'install',

@@ -10,7 +10,7 @@ import { probeDesktopToolchain } from './toolchain-probe.js';
 import { createDesktopBrowser, type DesktopBrowser } from './browser-wake.js';
 import { profileDirOf } from '@dsh-workbench/adapter-supply';
 import { prependPath, runtimeSeedRootOf } from './runtime-seed.js';
-import { localNpmCache, provisionLocalNpm, provisionLocalPnpm } from './toolchain.js';
+import { localPnpmCommand, provisionLocalPnpm } from './toolchain.js';
 
 function desktopBrowserOf(input: {
   ctx: DshHostContext;
@@ -49,8 +49,6 @@ export function registerPreflight(input: {
       shell: input.shell,
       command,
     });
-  const profileDir = profileDirOf(input.ctx);
-  const surface = hostSurface({ profile: profileDir === null ? undefined : basename(profileDir) });
   const preflight = createPreflight({
     shell: input.shell,
     command,
@@ -61,48 +59,27 @@ export function registerPreflight(input: {
     ...(input.runtimeCheck === undefined ? {} : { runtimeCheck: input.runtimeCheck }),
     ...(input.runtimeLabel === undefined ? {} : { runtimeLabel: input.runtimeLabel }),
     probeDiy: createDiyPresetProbe(input.ctx),
-    ...(surface.deployment === 'desktop'
-      ? {
-          probeToolchain: () => probeDesktopToolchain(input.shell),
-          provisionNpm: async () => {
-            const root = runtimeSeedRootOf(input.ctx);
-            if (root === null) return { ok: false, detail: '找不到工作台根' };
-            const result = await provisionLocalNpm({
-              root,
-              run: async (command) => {
-                const ran = await runShell(input.shell, command, { timeoutMs: INSTALL_TIMEOUT_MS });
-                return {
-                  ok: ran.exitCode === 0 && !ran.timedOut,
-                  detail: tailLines(ran.stderr || ran.stdout, 3),
-                };
-              },
-            });
-            if (result.ok && result.binDir !== undefined) {
-              prependPath(result.binDir);
-              if (process.env.npm_config_cache === undefined) {
-                process.env.npm_config_cache = localNpmCache(root);
-              }
-            }
-            return result;
-          },
-          provisionPnpm: async () => {
-            const root = runtimeSeedRootOf(input.ctx);
-            if (root === null) return { ok: false, detail: '找不到工作台根' };
-            const result = await provisionLocalPnpm({
-              root,
-              run: async (command) => {
-                const ran = await runShell(input.shell, command, { timeoutMs: INSTALL_TIMEOUT_MS });
-                return {
-                  ok: ran.exitCode === 0 && !ran.timedOut,
-                  detail: tailLines(ran.stderr || ran.stdout, 3),
-                };
-              },
-            });
-            if (result.ok && result.binDir !== undefined) prependPath(result.binDir);
-            return result;
-          },
-        }
-      : {}),
+    probeToolchain: () => probeDesktopToolchain(input.shell),
+    provisionPnpm: async () => {
+      const root = runtimeSeedRootOf(input.ctx);
+      if (root === null) return { ok: false, detail: '找不到工作台根' };
+      const result = await provisionLocalPnpm({
+        root,
+        pnpm: process.env.DSH_WB_PNPM?.trim() || 'pnpm',
+        run: async (command) => {
+          const ran = await runShell(input.shell, command, { timeoutMs: INSTALL_TIMEOUT_MS });
+          return {
+            ok: ran.exitCode === 0 && !ran.timedOut,
+            detail: tailLines(ran.stderr || ran.stdout, 3),
+          };
+        },
+      });
+      if (result.ok && result.binDir !== undefined) {
+        prependPath(result.binDir);
+        process.env.DSH_WB_PNPM = localPnpmCommand(root);
+      }
+      return result;
+    },
     ...(desktopBrowser === undefined ? {} : { desktopBrowser }),
   });
   input.routes.preflight = preflightHandler(preflight);

@@ -12,7 +12,7 @@ import { runShell } from '@dsh-workbench/shared/host';
 import { DIY_UPGRADE_COMMAND } from './diy-preset-health.js';
 import type { DiyPresetVerdict } from './diy-preset-health.js';
 import { opencliInstallCommand } from './install.js';
-import { LOCAL_NPM_VERSION, LOCAL_PNPM_VERSION, type LocalNpmProvision, type LocalPnpmProvision } from './toolchain.js';
+import { LOCAL_PNPM_VERSION, type LocalNpmProvision, type LocalPnpmProvision } from './toolchain.js';
 import type { ToolchainReport } from './toolchain-probe.js';
 import type { DesktopBrowser } from './browser-wake.js';
 import { bridgeFixCommand } from './browser-wake.js';
@@ -351,22 +351,6 @@ export function createPreflight(options: {
             }),
           );
     if (toolchain !== undefined && toolchain.detail.trim() !== '') appendLog('toolchain', toolchain.detail);
-    if (toolchain !== undefined && toolchain.ok && toolchain.npmMissing && options.provisionNpm !== undefined) {
-      set({ phase: 'installing' });
-      patchStep('toolchain', { status: 'running', action: `装本地 npm@${LOCAL_NPM_VERSION}` });
-      appendLog('toolchain', '> 安装本地 npm');
-      const provisioned = await options.provisionNpm().catch((error: unknown) => ({
-        ok: false,
-        detail: String(error),
-      }));
-      if (provisioned.detail.trim() !== '') appendLog('toolchain', provisioned.detail);
-      if (provisioned.ok) {
-        const reprobed = await options.probeToolchain?.();
-        if (reprobed !== undefined) toolchain = reprobed;
-      } else {
-        toolchain = { ...toolchain, detail: `${toolchain.detail}；本地 npm 没装成：${provisioned.detail}` };
-      }
-    }
     if (toolchain !== undefined && toolchain.ok && toolchain.pnpmProblem && options.provisionPnpm !== undefined) {
       set({ phase: 'installing' });
       patchStep('toolchain', { status: 'running', action: `装本地 pnpm@${LOCAL_PNPM_VERSION}` });
@@ -386,11 +370,11 @@ export function createPreflight(options: {
     if (toolchain !== undefined) {
       set({ phase: 'checking' });
       patchStep('toolchain', {
-        status: toolchain.ok ? (toolchain.npmMissing || toolchain.pnpmProblem ? 'warn' : 'ok') : 'failed',
+        status: toolchain.ok && !toolchain.pnpmProblem ? 'ok' : 'failed',
         detail: toolchain.detail,
         action: undefined,
       });
-      if (!toolchain.ok) {
+      if (!toolchain.ok || toolchain.pnpmProblem) {
         return toolchain.stalled === true
           ? hostFailure(toolchain.detail)
           : set({ phase: 'failed', error: toolchain.detail, failure: 'missing', guidance: 'install' });

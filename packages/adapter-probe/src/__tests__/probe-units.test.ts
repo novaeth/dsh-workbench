@@ -216,9 +216,9 @@ describe('probeUnits：bin / env 两类', () => {
 
     const state = stateOf(capability, 'bin', 'gitops');
     expect(state?.provision).toBe('ready');
-    expect(state?.command).toContain('npm i --prefix');
+    expect(state?.command).toContain('pnpm add --dir');
     expect(state?.command).toContain('opencli-workflow');
-    expect(state?.command).toContain('--cache');
+    expect(state?.command).toContain('--store-dir');
     expect(state?.command).not.toContain('-g');
   });
 
