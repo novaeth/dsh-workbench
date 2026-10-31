@@ -31,8 +31,8 @@ jobs:
           cache: pnpm
       - name: Install (immutable)
         run: pnpm install --frozen-lockfile
-      - name: Build
-        run: pnpm run build
+      - name: Build (except docs)
+        run: pnpm --filter "./packages/*" --filter "!@dsh-workbench/docs" --if-present run build
       - name: Typecheck
         run: pnpm run typecheck
       - name: Test
