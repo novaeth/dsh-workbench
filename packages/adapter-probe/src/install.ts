@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { isolatedInstallCommand, isolatedPnpmInstallCommand } from '@dsh-workbench/adapter-runtime';
-import { desktopPnpmPath, type PnpmProcess } from './toolchain.js';
+import { desktopPnpmPath, desktopPnpmVersion, type PnpmProcess } from './toolchain.js';
 
 export function opencliInstallCommand(
   proc: PnpmProcess = process,
@@ -9,5 +9,8 @@ export function opencliInstallCommand(
   const override = process.env.DSH_WB_PNPM?.trim();
   if (override !== undefined && override !== '') return isolatedInstallCommand();
   const pnpm = desktopPnpmPath(proc, exists);
-  return pnpm === undefined ? isolatedInstallCommand() : isolatedPnpmInstallCommand(pnpm);
+  const major = desktopPnpmVersion(proc, exists)?.split('.')[0];
+  return pnpm === undefined || (major !== undefined && major !== '10')
+    ? isolatedInstallCommand()
+    : isolatedPnpmInstallCommand(pnpm);
 }

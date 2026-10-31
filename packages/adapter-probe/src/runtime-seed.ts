@@ -14,7 +14,14 @@ import {
 import { delimiter, dirname, join, sep } from 'node:path';
 import type { DshHomePath, DshHostContext } from '@dsh-workbench/shared';
 import { quoteShellArg, quoteShellArgFor } from '@dsh-workbench/shared/host';
-import { desktopPnpmPath, desktopPnpmVersion, ensureToolchain, localNpmCache, provisionLocalPnpmSync } from './toolchain.js';
+import {
+  desktopPnpmPath,
+  desktopPnpmVersion,
+  ensureToolchain,
+  localNpmCache,
+  localPnpmCommand,
+  provisionLocalPnpmSync,
+} from './toolchain.js';
 
 export type SeedLog = (message: string) => void;
 
@@ -204,10 +211,12 @@ export function seedWorkbenchToolchain(root: string, log: SeedLog): void {
   }
   if (toolchain.pnpmDir !== undefined) {
     if (prependPath(toolchain.pnpmDir)) log(`PATH 前插 ${toolchain.pnpmDir}`);
+    process.env.DSH_WB_PNPM = localPnpmCommand(root);
   } else if (toolchain.pathDir !== undefined) {
     const installed = provisionLocalPnpmSync({ root });
     if (installed.ok && installed.binDir !== undefined) {
       if (prependPath(installed.binDir)) log(`PATH 前插 ${installed.binDir}`);
+      process.env.DSH_WB_PNPM = localPnpmCommand(root);
       log(`工具链 provision ${installed.detail}`);
     } else {
       log(`本地 pnpm 10 没装成：${installed.detail}`);
