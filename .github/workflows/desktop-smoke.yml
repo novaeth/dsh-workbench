@@ -163,6 +163,16 @@ jobs:
           end=$(date +%s)
           echo "elapsed=$((end-start))s exit=$code" >> desktop-mac-pnpm-probe.txt
           tail -60 desktop-mac-pnpm-probe.txt
+      - name: Pre-apply writable-root patch
+        shell: bash
+        run: |
+          patch="$HOME/.dsh/profiles/desktop/cordis.patch.yml"
+          printf '%s\n' \
+            '- id: sandbox-policy' \
+            '  config:' \
+            '    mode: workspace-write' \
+            "    workspaceRoot: $HOME/.dsh/workbench" > "$patch"
+          cat "$patch"
       - name: Launch and assert workbench panel
         shell: bash
         run: |
@@ -185,6 +195,12 @@ jobs:
               for pid in $(pgrep -f 'dsh-desktop-host' 2>/dev/null); do
                 echo "--- sample $pid"
                 sample "$pid" 1 -file "desktop-mac-sample-$i.txt" 2>&1 | tail -3 || true
+              done
+              for pid in $(pgrep -f 'pnpm.cjs add' 2>/dev/null); do
+                echo "--- child $pid"
+                lsof -a -p "$pid" -d cwd -Fn 2>/dev/null || true
+                lsof -p "$pid" 2>/dev/null | grep -Ei 'TCP|opencli|npm-cache' | head -20 || true
+                sample "$pid" 1 -file "desktop-mac-pnpm-sample-$i.txt" 2>&1 | tail -3 || true
               done
             done
           ) > "$GITHUB_WORKSPACE/desktop-mac-ps.txt" 2>&1 &
