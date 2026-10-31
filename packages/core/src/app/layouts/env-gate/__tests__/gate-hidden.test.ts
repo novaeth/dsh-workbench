@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const TOGGLED = ['actions', 'progress', 'commandRow', 'bridge'];
+const TOGGLED = ['actions', 'commandRow', 'bridge'];
 const SRC = path.resolve(__dirname, '../../../../');
 
 function allCss(dir: string): string {

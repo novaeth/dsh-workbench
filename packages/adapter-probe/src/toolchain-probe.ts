@@ -2,6 +2,7 @@ import type { DshShell } from '@dsh-workbench/shared';
 import { runShell } from '@dsh-workbench/shared/host';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
 import { desktopPnpmPath, desktopPnpmVersion } from './toolchain.js';
+import { hostSurface } from './platform.js';
 
 export interface ToolchainReport {
   readonly ok: boolean;
@@ -51,8 +52,15 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
   const npmMissing = !npm.ok;
   const pnpmMajor = /^v?(\d+)/.exec(pnpm.text)?.[1];
   const pnpmProblem = !pnpm.ok || pnpmMajor !== '10';
+  const desktop = hostSurface({ proc: process }).deployment === 'desktop';
   const parts = [
-    nodeMissing ? 'node 不在 PATH（Desktop 自带 Node 的 shim 没生效）' : `node ${node.text}（Desktop 自带）`,
+    nodeMissing
+      ? desktop
+        ? 'node 不在 PATH（Desktop 自带 Node 的 shim 没生效）'
+        : 'node 不在 PATH'
+      : desktop
+        ? `node ${node.text}（Desktop 自带）`
+        : `node ${node.text}`,
     npmMissing ? 'npm 缺（已改用 pnpm）' : `npm ${npm.text}`,
     pnpmProblem
       ? pnpm.ok
