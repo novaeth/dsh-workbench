@@ -98,6 +98,13 @@ Husky also runs `pnpm run check:docs` plus the `DOC-3` link/§N gate on every
 commit; run the full `pnpm run check` before pushing. Set `HUSKY=0` to skip
 hooks for a one-off commit.
 
+## CI
+
+GitHub Actions runs `.github/workflows/docs.yml` on pull requests and pushes to `main`:
+`pnpm run check:docs`, the `DOC-3` link/§N gate, and `pnpm run lint`. The full
+`pnpm run check` is still the release gate and is expected before pushing; the docs
+workflow keeps document facts from silently drifting in PRs.
+
 ## Docs site
 
 The user-facing docs site lives in `packages/docs` and is built with
