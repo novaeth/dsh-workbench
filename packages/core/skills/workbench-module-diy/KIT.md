@@ -129,7 +129,7 @@ h(FormRows, null,
 - `Link`：唯一外链（`h(Link, { href, children })`）；不去箭头、文案不带 `→`、不手写 `<a>`。
 - `SettingsSection` / `Stack` / `BlockerState` / `Tip`：设置节 / 竖排 / 阻断屏 / Tooltip（纯图必须有它或 `aria-label`）。
 - 图标：`IconPanelScreen` / `IconModuleMark` / `IconNpm` / `IconOpencli`；其余从 dsh `Icon*Regular` 取，不自绘。
-- 真机造不出的状态：`plugin.test.ts` 覆盖五态。
+- 真机造不出的状态：`src/components/__tests__/OverviewCard.test.ts` 覆盖五态。
 
 ## 7 规则
 

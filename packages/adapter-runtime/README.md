@@ -5,13 +5,18 @@
 ## 模块
 
 ```text
-src/cli/      opencli 命令、隔离运行时、窗口参数
-src/browser/  页面读取与查找
-src/data/     DataReader（http / browser / command / recipe / 批量 recipe / 公共通道）
-channel/      随包出货的 opencli 插件（workbench fetch / workbench send）
+src/foundation/  命令解析、隔离路径、session、错误形状
+src/cli/         opencli 命令、隔离运行时、窗口参数
+src/browser/     页面读取与查找
+src/data/        DataReader（http / browser / command / recipe / 批量 recipe / 公共通道）
+src/git/         git 读端口
+src/libs/        本机库读端口
+src/command/     命令面读端口
+channel/         随包出货的 opencli 插件（workbench fetch / workbench send）
 ```
 
-三者共享命令解析、隔离路径、session 和错误形状，所以放在同一个包内，但保持独立目录。
+`foundation` 是最底层；`browser` / `cli` / `data` / `git` / `libs` / `command` 同层，
+共享 `foundation` 的命令解析、隔离路径、session 和错误形状，所以放在同一个包内，但保持独立目录。
 
 `channel/` 不是源码目录：它是**资产**，不进 `tsc`、不进 barrel，只被复制进隔离运行时
 （`plugins-npm` → peer symlink → `opencli plugin install`）。`cookie` / `cookieValue` 两种凭据来源

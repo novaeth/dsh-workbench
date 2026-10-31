@@ -66,7 +66,7 @@ return {
 浏览器侧：写走 `prefs`，读取仍走模块只读口。布局与内边距用外壳默认（`Field` / `TextField`），不必为可读性写 CSS。
 
 ```tsx
-const write = useHostWrite({ channel: 'prefs', resource: 'your-module' });
+const write = useHostWrite({ channel: 'prefs', resource: 'your-module', networkText: '网络不通，稍后重试' });
 write.send({ ignored, timeoutSeconds, workspace });   // 控件：Field + TextField / ChoiceGroup；容器 SettingsSection；保存 SaveBar
 ```
 
@@ -97,14 +97,15 @@ write.send({ ignored, timeoutSeconds, workspace });   // 控件：Field + TextFi
 
 ## 7 状态矩阵
 
-状态全集：没有绑定 / 未接入 / 分不清是哪一份 / 正在读 / 有数据 / 正在做 / 卡住（登录、权限、超时、能力未装） /
-读到但空 / 数字是上一轮。
+状态全集（界面状态，共 9 个）：没有绑定 / 未接入 / 分不清是哪一份 / 正在读 / 有数据 / 正在做 /
+卡住（登录、权限、超时、能力未装）/ 读到但空 / 数字是上一轮。`design.json` 只落 5 个状态族
+（`idle` / `loading` / `ready` / `empty` / `unreadable`），这 9 个界面状态按族填。
 
 每格三列：看到什么（哪句话、哪个画面、哪颗点）/ 能做什么（去哪补、点哪、重试）/ agent 能接着做什么（可照做的一句）。
 
 规则：每句可照做；平台没给的格不留占位；读不到就说读不到并给原因，不显示 0；有确定答案就不打扰。
-真机造不出的状态也要在设计里画；`plugin.test.ts` 覆盖五态（`check --only cards` 用七种外壳侧输入各跑一遍，
-只判"是否干净退化"，不判画的是哪一态）。
+真机造不出的状态也要在设计里画；卡片五态测试在 `src/components/__tests__/OverviewCard.test.ts`
+（`check --only cards` 用八种外壳侧输入各跑一遍，只判"是否干净退化"，不判画的是哪一态）。
 
 ### 7.1 图例
 

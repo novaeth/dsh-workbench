@@ -5,7 +5,8 @@ Thanks for helping. This is a pnpm workspace: the shell is
 live in `packages/shared`, module tooling in `packages/module-tools`, and
 `packages/module-hello` is the smallest installable module.
 
-The documentation is written in Chinese. If you only need the quickest path:
+Most documentation is written in Chinese; `CONTRIBUTING.md`, `SECURITY.md` and
+`THIRD-PARTY-NOTICES.md` are in English. If you only need the quickest path:
 install, run the gate, then read [`AGENTS.md`](AGENTS.md) for the repository
 map and the six hard constraints.
 
@@ -23,9 +24,17 @@ map and the six hard constraints.
 git clone https://github.com/novaeth/dsh-workbench.git
 cd dsh-workbench
 pnpm install
-pnpm run check        # the one gate: commit message · build · typecheck · lint · coverage ·
-                      # arch · docs · runtimes · selfcheck · module checks · release artifacts
+pnpm run check
 ```
+
+`pnpm run check` runs the one gate in this order:
+
+<!-- doc-facts:begin gate-chain-inline -->
+`lint:commit` → `build` → `typecheck` → `lint` → `coverage` →
+`check:gates:target --fail-on-red` → `arch` → `check:docs` → `check:runtimes` → `selfcheck` →
+`check:modules` → `check:adapter-defaults` → `scripts/check-adapter-contract.mjs` →
+`check:release-artifacts`
+<!-- doc-facts:end gate-chain-inline -->
 
 `pnpm run dev` starts the workbench on `:3081` next to `dsh web` on `:3080` and
 watches `packages/core/src/**`.
@@ -74,10 +83,17 @@ they cover — never scattered next to it (S73).
   barrels and the kit object, so internal helper files get no exception. The
   "why" goes into an ADR, `CONTEXT.md`, or the feature spec. CSS carries none.
 - UI is written as components with their own `.module.css`; dsh primitives are
-  reused instead of re-drawn. See [`ARCHITECTURE.md`](ARCHITECTURE.md) §13.
+  reused instead of re-drawn. See [`ARCHITECTURE.md`](ARCHITECTURE.md) §7.
 - Modules must not import the shell's source, must ship a single client bundle,
   and must pass `dsh-wb-module check`. Start from
   [`packages/core/skills/workbench-module-diy/`](packages/core/skills/workbench-module-diy/SKILL.md).
+
+## Documentation facts
+
+Some document blocks are generated from code, not hand-written. Change the source
+(for example `package.json`'s `scripts.check` or `packages/core/arch.config.mjs`) and run
+`pnpm run doc-facts:write`; `pnpm run check:doc-facts` fails when a block is stale.
+`pnpm run check:docs` runs it together with the other document checks.
 
 ## Docs site
 

@@ -692,17 +692,19 @@ const GATES = [
   },
   {
     id: 'DOC-3',
-    title: '架构文档链接存在',
+    title: '第一方文档的链接 / 锚点 / §N 引用',
     run() {
-      const findings = missingLinksOf([ARCHITECTURE, ...walkMarkdown(join(ROOT, 'docs'))], ROOT);
-      return findings.length === 0 ? pass('文档链接都通') : fail(findings);
+      const files = firstPartyDocs();
+      const findings = [...missingDocLinksOf(files), ...referenceFindingsOf(files)];
+      return findings.length === 0 ? pass(`${files.length} 份文档链接都通`) : fail(findings);
     },
     selfTest() {
       const tmp = mkdtempSync(join(tmpdir(), 'dsh-gate-doclinks-'));
       try {
-        const file = join(tmp, 'a.md');
-        writeFileSync(file, '[x](missing.md)\n');
-        return missingLinksOf([file], tmp).length === 1;
+        writeFileSync(join(tmp, 'ARCHITECTURE.md'), '# A\n\n## 1. 包\n');
+        writeFileSync(join(tmp, 'a.md'), '[x](missing.md)\n[y](#nope)\n[z](ARCHITECTURE.md) §9\n');
+        const files = [join(tmp, 'a.md'), join(tmp, 'ARCHITECTURE.md')];
+        return missingDocLinksOf(files, tmp).length === 2 && referenceFindingsOf(files).length === 1;
       } finally {
         rmSync(tmp, { recursive: true, force: true });
       }
@@ -953,6 +955,143 @@ function tempImportTest(rel, source, pattern) {
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
+}
+
+const DOC_SKIP = new Set([
+  'node_modules',
+  '.git',
+  'dist',
+  'coverage',
+  'site-dist',
+  '.verify',
+  '.doc-audit',
+  'private-docs',
+  '.agents',
+  'src.hidden',
+]);
+
+function firstPartyDocs() {
+  const out = [];
+  const visit = (here) => {
+    for (const entry of readdirSync(here)) {
+      if (DOC_SKIP.has(entry)) continue;
+      const full = join(here, entry);
+      const stat = statSync(full);
+      if (stat.isDirectory()) {
+        if (full !== ROOT) visit(full);
+        continue;
+      }
+      if (entry.endsWith('.md')) out.push(full);
+    }
+  };
+  visit(ROOT);
+  return out.sort();
+}
+
+function proseLinesOf(text) {
+  const out = [];
+  let fenced = false;
+  for (const [index, line] of text.split('\n').entries()) {
+    if (/^\s*```/.test(line)) {
+      fenced = !fenced;
+      continue;
+    }
+    if (fenced) continue;
+    out.push({ line: index + 1, text: line.replace(/`[^`]*`/g, '') });
+  }
+  return out;
+}
+
+function slugOf(text) {
+  return text
+    .replace(/<[^>]+>/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[*_~]/g, '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s_-]/gu, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
+function headingSlugsOf(text) {
+  const slugs = new Set();
+  for (const { text: line } of proseLinesOf(text)) {
+    const heading = line.match(/^#{1,6}\s+(.+)$/);
+    if (heading !== null) slugs.add(slugOf(heading[1]));
+    for (const anchor of line.matchAll(/<a\s+(?:id|name)="([^"]+)"/g)) slugs.add(anchor[1]);
+  }
+  return slugs;
+}
+
+function resolveDocTarget(file, ref) {
+  const clean = ref.split('?')[0];
+  const direct = clean.startsWith('/') ? join(ROOT, clean) : resolve(dirname(file), clean);
+  if (existsSync(direct)) return direct;
+  const base = clean.split('/').pop();
+  const matches = firstPartyDocs().filter((one) => one.split('/').pop() === base);
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
+function docLinksOf(text) {
+  const out = [];
+  for (const { line, text: flat } of proseLinesOf(text)) {
+    for (const match of flat.matchAll(/\]\(([^)\s]+)\)/g)) out.push({ link: match[1], line });
+  }
+  return out;
+}
+
+function missingDocLinksOf(files, base = ROOT) {
+  const findings = [];
+  for (const file of files) {
+    const rel = relative(base, file).split('\\').join('/');
+    const text = read(file);
+    const slugs = headingSlugsOf(text);
+    for (const { link, line } of docLinksOf(text)) {
+      if (/^(?:https?:|mailto:)/.test(link)) continue;
+      if (link.startsWith('#')) {
+        if (!slugs.has(decodeURIComponent(link.slice(1)))) {
+          findings.push(finding(rel, line, `锚点不存在 ${link}`, '改成现有标题的锚点'));
+        }
+        continue;
+      }
+      const [pathPart, anchor] = link.split('#');
+      const target = resolveDocTarget(file, pathPart);
+      if (target === undefined || !existsSync(target)) {
+        findings.push(finding(rel, line, `死链 ${link}`, '修链接或删文件'));
+        continue;
+      }
+      if (anchor === undefined || anchor === '' || !target.endsWith('.md')) continue;
+      if (!headingSlugsOf(read(target)).has(decodeURIComponent(anchor))) {
+        findings.push(finding(rel, line, `锚点不存在 ${link}`, '改成目标文档现有标题的锚点'));
+      }
+    }
+  }
+  return findings;
+}
+
+function referenceFindingsOf(files) {
+  const findings = [];
+  for (const file of files) {
+    const rel = relative(ROOT, file).split('\\').join('/');
+    for (const { line, text } of proseLinesOf(read(file))) {
+      for (const match of text.matchAll(/(?:\]\(([^)\s]+)\)|([A-Za-z0-9_./-]+\.md))\s*§(\d+)(?!\.\d)/g)) {
+        const ref = match[1] ?? match[2];
+        const num = match[3];
+        const target = resolveDocTarget(file, ref);
+        if (target === undefined || !target.endsWith('.md')) continue;
+        const numbers = new Set();
+        for (const one of proseLinesOf(read(target))) {
+          const heading = one.text.match(/^#{1,6}\s+(\d+)(?:[.\s]|$)/);
+          if (heading !== null) numbers.add(heading[1]);
+        }
+        if (numbers.has(num)) continue;
+        findings.push(
+          finding(rel, line, `§${num} 在 ${relative(ROOT, target).split('\\').join('/')} 里没有对应章节`, '改章节号或换成精确链接'),
+        );
+      }
+    }
+  }
+  return findings;
 }
 
 function missingLinksOf(files, base) {

@@ -108,7 +108,7 @@
 | `failure` | 失败形态（含"可能已经写了"） |
 | `probeCommand`（可空） | 探明 / 预览调用原文 |
 | `key` + `recipe`（可空，成对） | 调用形状（配方）：写走 `data.submit` 时填，`sync` 把它和读一起生成进 `src/datasource.ts`（`DATASOURCE.<key>`）。`key` 不许和读撞，撞了 `design check` 红 |
-| `custom`（可空） | 只记 `why`：配方盖不住的写（签名 / 多步 / 一次性 token），脚本仍留代码里；与 `recipe` 二选一，`design check` 记 warn |
+| `custom`（可空） | 只记 `why`：配方盖不住的写（签名 / 多步 / 一次性 token），脚本仍留代码里；与 `recipe` 二选一，`design check` 记红 |
 
 写了 `key + recipe` 的写，预览用 `describeRecipe(DATASOURCE.<key>)`，执行用
 `data.submit(DATASOURCE.<key>, overrides)`；不再把 origin / path 写进代码。

@@ -4,13 +4,13 @@
 
 | 判据 | 检查 | 修法 |
 |---|---|---|
-| `contracts` | 清单 ↔ 代码 ↔ `design.json` 漂移；dsh 组合期不校验清单 | 按报错改：`unit` 重名换名；`dsh.workbenchFaces` 两个源码入口；六个脚本；`private: true`。`dsh.workbench.tools` 与 `registerTools()` 一致；`design.json` 对键名；生成物过期跑 `sync` |
+| `contracts` | 清单 ↔ 代码 ↔ `design.json` 漂移；dsh 组合期不校验清单 | 按报错改：`unit` 重名换名；`dsh.workbenchFaces` 两个源码入口；至少保留 `build` / `typecheck` / `test` / `selfcheck` 四个脚本（模板共 8 个）；`private: true`。`dsh.workbench.tools` 与 `registerTools()` 一致；`design.json` 对键名；生成物过期跑 `sync` |
 | `protocol` | `dsh.workbench` 版本 / 形状 / 多余键（外壳静默忽略生字段） | 补 `"apiVersion": 3`；`unit` / `title` / `card` / `tools` / `host` 写全（名字是 `{ zh, en }` 字面量；无卡片 `null`、无工具 `[]`）；删协议外键（`faces` 在 `dsh.workbenchFaces`；不写 `scope`） |
 | `bundles` | 运行时互串：浏览器产物含 node 内置 / 宿主产物含 DOM、react | 不 import 对方那侧 |
 | `source` | 非种子 `@deepseek-ai/*`；宿主碰 dsh 浏览器包；`@/` 指外壳；根入口取运行值；客户端引 `/host`；**手写进程 / PATH / 文件锁 / 状态原子写**（import 首选库放行） | 宿主只用 Node 侧；种子词仅在 client 可达文件；`@/` 只指自己 `src/`；运行值：浏览器 `kit`、宿主 `shared/host`；进程/锁/状态写交给外壳 |
 | `primitives` | 声明 `external` 但产物无物证（原语被内联） | `dsh.client.external` 声明；devDependency 精确版对齐；产物中为 `require(...)` |
 | `kit` | 用了 peer 下限外壳没有的成员（首帧 `Element type is invalid`） | 只用 peer 范围内成员；下限抬到实际使用版 |
-| `cards` | 七种外壳侧输入 × `zh` / `en` 下崩溃 / 空白 / 脏值 | 五态可画；外层 `Card`；卡片自己用到的文案键双语齐（名字走清单 `title`，不再是卡片键）。不断言具体态（归 `plugin.test.ts`） |
+| `cards` | 八种外壳侧输入 × `zh` / `en` 下崩溃 / 空白 / 脏值 | 五态可画；外层 `Card`；卡片自己用到的文案键双语齐（名字走清单 `title`，不再是卡片键）。不断言具体态（归 `plugin.test.ts`） |
 | `standalone` | 依赖工作台源码才能构建 | 不引用工作台源码；`tsconfig.paths` 用相对路径 |
 | `markers` | 私有源 / 私网地址 / 内网域名进入公开包 | 不进包；配置落到模块配置面；组织特有的词表由 `DSH_WB_INTERNAL_MARKERS` 提供 |
 | `alias` | `@/` 指向工作台源码 | `@/` 只指自己 `src/` |
@@ -102,7 +102,7 @@ export default [
 1. `workbench_diy_panel`：每卡的读取状态（宿主码与原文）、是否崩过（原因、次数）。有结论即止。
 2. 看卡片：`workbench_diy_screenshot` / `_html` / `_find` / `_eval`，作用于用户当前页的该卡（`unit=…`）。
    这一族（14 把 + `logs_*`）需先 `workbench_diy_debug_start`（`unit=…`，审批一次），否则拒绝；
-   `_panel` / `_status` / `read=` 档不需要。用完 `_pause`，收工 `_stop`。
+   `_panel` / `_status` / `read=` 档不需要。用完 `_debug_pause`，收工 `_debug_stop`。
 3. `workbench_diy_status`（`unit=…`）：看"起得来"行（装配错误 / 声明被拒原文）。
 4. 直接请求路由：`curl '<工作台地址>/workbench/api/<unit>/<route>'`（默认 `http://127.0.0.1:3081`）。
    接口对 → 渲染侧；接口错 → 宿主侧（按 [DATASOURCE.md](DATASOURCE.md) 重探）。需要在页面内请求时用

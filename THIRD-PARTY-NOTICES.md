@@ -2,8 +2,8 @@
 
 ## Skills vendored from `mattpocock/skills`
 
-The directories under `.agents/skills/` other than `module-design/` and
-`wording/` are vendored copies of the skills in
+The directories under `.agents/skills/` other than `wording/` are vendored
+copies of the skills in
 <https://github.com/mattpocock/skills>. `skills-lock.json` records the source
 path and the content hash of each one.
 

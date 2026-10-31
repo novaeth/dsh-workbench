@@ -15,7 +15,7 @@ profile**（插件页一条龙，见 ADR-0037）。
 | 路径 | 是什么 |
 |---|---|
 | **`packages/core/`** | **外壳**（发布为 `@dsh-workbench/core`）。`src/**`、`scripts/**`、`bin/**`、`arch.config.mjs` 都指这个包里；下面的命令也在这个包目录里跑 |
-| `packages/shared/` | 共享包（`@dsh-workbench/shared`，两个入口：`.` 浏览器侧 / `./host` 宿主侧）：契约类型 · 纯 lib · i18n · 哑组件 · 平台解析 · host 工厂。收录判据三条（无模块级可变状态 / 不依赖外壳运行时 / 不产生全局副作用），自带 `check-state` 判据 |
+| `packages/shared/` | 共享包（`@dsh-workbench/shared`，三个入口：`@dsh-workbench/shared`（浏览器侧）/ `@dsh-workbench/shared/host`（宿主侧）/ `@dsh-workbench/shared/testing`（测试）；另有 `@dsh-workbench/shared/contract/*` 类型子路径）：契约类型 · 纯 lib · i18n · 哑组件 · 平台解析 · host 工厂。收录判据三条（无模块级可变状态 / 不依赖外壳运行时 / 不产生全局副作用），自带 `check-state` 判据 |
 | `packages/module-tools/` | 模块工具包（`@dsh-workbench/module-tools`）：`build` · `check`（十三条判据，`--only <name>` 单跑）· `lint` · `init`，以及 `arch` / `lint` 两个方言入口 |
 | `packages/module-hello/` | 最小可安装模块样本（`@dsh-workbench/module-hello`），同时是模块包模板 |
 | `packages/adapter-runtime/` | opencli、浏览器读、DataReader |
@@ -23,6 +23,8 @@ profile**（插件页一条龙，见 ADR-0037）。
 | `packages/adapter-profile/` | profile、配置同步、registry、发布 |
 | `packages/adapter-probe/` | preflight、探测、工具链、self-update |
 | `packages/adapters-default/` | 默认适配器集合；core 只依赖它 |
+| `packages/adapter-fixture/` | 最小 `AdapterSet` 夹具，只给集成测试（私有，不发布） |
+| `packages/adapters-chrome-mcp/` | 实验的第二份适配器集合（私有，stdio + 仓内 stub MCP server） |
 | `packages/docs/` | 文档站（Pagoda CLI，私有包，不出货）：`site/desktop/views/*.md` 是页面，`views/index.vue` 是首页；`pnpm run dev:docs` 起站、`pnpm run build:docs` 出 `site-dist/` |
 | `ARCHITECTURE.md` | 仓库与外壳的架构：层序、两个运行时、单元协议、槽位、数据通路、门禁 |
 | `private-docs/`（私有仓，不入库） | 内部 ADR（`docs/adr/`）与 `.scratch/` 工单；公开构建不需要它 |
@@ -43,8 +45,15 @@ pnpm run check                        # 门禁：整仓那一套（= `pnpm -w ru
 `site/desktop/style/`。它也在门禁的 `build` 里 —— 站点建不出来同样算红。
 
 **门禁只有一份，两个入口跑的是同一条链**：包内这条就是 `pnpm -w run check`，也就是仓库根那条 ——
-`lint:commit` → `build` → `typecheck` → `lint` → `coverage` → `arch` → `check:docs` → `check:runtimes` →
-`selfcheck` → 模块工具包的十三条判据 → `check:release-artifacts`；`pnpm release` 的闸也是它。
+
+<!-- doc-facts:begin gate-chain-inline -->
+`lint:commit` → `build` → `typecheck` → `lint` → `coverage` →
+`check:gates:target --fail-on-red` → `arch` → `check:docs` → `check:runtimes` → `selfcheck` →
+`check:modules` → `check:adapter-defaults` → `scripts/check-adapter-contract.mjs` →
+`check:release-artifacts`
+<!-- doc-facts:end gate-chain-inline -->
+
+`pnpm release` 的闸也是它。
 **别在包内另串一份短的**（会漏 lint / 文档 / 模块判据）。
 链首的 `build` 不是可有可无：`module-hello` 从 `@dsh-workbench/core/client` 取 kit，而那是构建产物
 （`client.js` + `dist/types`，都不入库）—— 不先建，干净 clone 上 `typecheck` / `test` 就找不到包。

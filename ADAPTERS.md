@@ -13,6 +13,9 @@ interface AdapterSet {
   id: string;
   version: string;
   data: DataReader;
+  libs?: LibReader;
+  git?: GitReader;
+  commands?: CommandReader;
   supply: EnvSupplyPort;
   modules: ModulePort;
   profile: ProfilePort;
@@ -24,12 +27,13 @@ interface AdapterSet {
 ```
 
 - `EnvSupplyPort` 是第三方可实现的窄口：`resolvePluginSource`、`libInstallCommand`、
-  `pluginInstallPlan`、`latestVersion`、`missingReleaseParts`、`probeRelease`、
-  `splitNpmSpec`（7 个方法，参数/返回都有类型）。
+  `libUninstallCommand`、`pluginInstallPlan`、`latestVersion`、`missingReleaseParts`、
+  `probeRelease`、`splitNpmSpec`（8 个方法，参数/返回都有类型）。
 - `ModulePort` 是模块/profile/registry/自更新那一组；`supply` 与 `modules` 分开，
   `supply` 只给探针与市场用。
 - `ProbePort`：`probeUnits` / `registerPreflight` / `declaredPluginCommands`。
-- `RuntimePort`：`packageRoot` / `commands` / `runners` / `health` / `seed` / `warnUnwritableRoot`。
+- `RuntimePort`：必需 `packageRoot` / `capabilities` / `commands` / `runners` / `health` / `seed` /
+  `warnUnwritableRoot`；可选 `profile` / `commandSurface` / `check`。
   它是**中立**的：端口不点名任何具体运行时，运行时叫什么由模块清单的 `runtime` / `runs` 声明。
 - `PluginSurface`：`declarationLookup` / `createUnits`。
 - `HostActions`：config sync 与 profile create 的 handler/action。
@@ -112,7 +116,7 @@ pnpm add @acme/adapters-set@1.0.0
 ## 门禁
 
 `pnpm run check:adapter-defaults` 除了包图，还扫 `core/src`、`shared/src`、`module-tools/src`：
-除 `core` 的 `app/host.ts` 默认兜底 dynamic import 外，生产源码（测试除外）里任何具体适配器
-import / require——含裸副作用 import、`import(/* @vite-ignore */ …)`、无空格的 `from'…'`、
-`adapter-*` 与子路径——都判红。门禁只认字面量：`import(pkg)`、模板串与字符串拼接不在这条范围内，
-那类写法靠 review。
+生产源码（测试除外）里任何具体适配器的字面量 import / require——含裸副作用 import、
+`import(/* @vite-ignore */ …)`、无空格的 `from'…'`、`adapter-*` 与子路径——都判红。
+`core` 的 `app/host.ts` 走动态 spec，本来就不在字面量范围内。门禁只认字面量：
+`import(pkg)`、模板串与字符串拼接不在这条范围内，那类写法靠 review。

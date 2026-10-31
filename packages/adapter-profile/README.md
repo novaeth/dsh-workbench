@@ -6,8 +6,6 @@
 
 - profile 创建与配置同步
 - registry notebook 与 release 信息
-- 本地 bundle 清单解析
-- 依赖 `adapter-runtime` 的隔离缓存与 vendor 路径
 
 `self-update` 属于 probe（它需要运行时种子与工具链），不在本包。
 

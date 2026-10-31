@@ -59,7 +59,7 @@ export function allSourceCss() {
 const DIRECTIVE = /^(?:\/\/|\/\*)\s*(?:!?\s*@(?:license|preserve)\b|eslint-(?:disable|enable)\b|@ts-(?:ignore|expect-error|nocheck|check)\b|@vitest-|@jest-|@flow\b|@jsx|prettier-ignore\b|global\b|exported\b|c8\b|v8\b|istanbul\b|#\s*sourceMappingURL\b|@__PURE__|#__PURE__|\/?\s*<reference\b)/u;
 
 const CODE_EXT = new Set(['.ts', '.tsx', '.js', '.mjs', '.cjs', '.css']);
-const CODE_SKIP = new Set([...JUNK, 'site-dist', 'private-docs', '.verify', '.pnpm-store', '.worktrees', 'worktrees', 'golden']);
+const CODE_SKIP = new Set([...JUNK, 'site-dist', 'private-docs', '.doc-audit', '.verify', '.pnpm-store', '.worktrees', 'worktrees', 'golden']);
 
 const SHARED_ENTRIES = ['index.ts', 'host.ts', 'testing.ts'];
 const SHELL_CLIENT = 'packages/core/src/app/client.tsx';

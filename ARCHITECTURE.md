@@ -50,11 +50,11 @@
 
 默认装哪份集合由 `packages/core/package.json` 的 `workbench.adapterSet` 决定 —— 外壳按这个 spec 动态装载，
 `packages/core/src` 里不出现任何适配器包名（S69 钉着）。协议只有三样东西：`AdapterSet`（成员与版本）、
-`RuntimeCapabilities`（有没有命令行 / 插件市场 / 浏览器桥 / 平台读 / 共用依赖）、`RuntimeProfile`（叫法、术语与
+`RuntimeCapabilities`（三个 boolean：`console` / `pluginMarket` / `browserBridge`）、`RuntimeProfile`（叫法、术语与
 排障话术）。界面按能力渲染入口，不按适配器 id 分支（S72）。
 
 第二份实现是同仓的 `@dsh-workbench/adapters-chrome-mcp`（实验包，`private: true`，stdio + 仓内 stub MCP server）。
-它跟默认集合跑**同一份** `check:adapter-contract`；要切它，只改 profile 里的一行 `adapterSet`，
+它跟默认集合跑**同一份** `node scripts/check-adapter-contract.mjs` 契约检查；要切它，只改 profile 里的一行 `adapterSet`，
 `packages/core/src` 一行都不用动 —— 工具在 `scripts/dev/adapter-set-switch.mjs`（带 `--restore`）。
 
 ### 测试的边界：按协议写，不按实现写
@@ -192,6 +192,7 @@ module client
 | `packages/adapter-profile/` | profile、配置同步、registry、发布 | `@dsh-workbench/adapter-profile` |
 | `packages/adapter-probe/` | preflight、探测、工具链、self-update | `@dsh-workbench/adapter-probe` |
 | `packages/adapters-default/` | 默认适配器集合 | `@dsh-workbench/adapters-default` |
+| `packages/adapters-chrome-mcp/` | 实验的第二份适配器集合（stdio + 仓内 stub MCP server） | 私有，不发布 |
 | `packages/adapter-fixture/` | 最小 `AdapterSet` 夹具，只给集成测试 | 私有，不发布 |
 | `packages/docs/` | 文档站，私有构建，不出货 | — |
 
@@ -202,7 +203,7 @@ module client
   └── (dynamic fallback) @dsh-workbench/adapters-default
         ├── @dsh-workbench/adapter-runtime
         ├── @dsh-workbench/adapter-supply  → runtime
-        ├── @dsh-workbench/adapter-profile → runtime
+        ├── @dsh-workbench/adapter-profile
         └── @dsh-workbench/adapter-probe   → runtime / supply / profile
 ```
 
@@ -220,6 +221,7 @@ module client
 | `@dsh-workbench/shared` | 浏览器侧、模块、契约 | 契约类型、纯 lib、i18n、哑组件 |
 | `@dsh-workbench/shared/host` | 宿主侧 | 文件、进程、HTTP、工具、长任务、宿主纯函数 |
 | `@dsh-workbench/shared/testing` | 测试 | 夹具与断言 |
+| `@dsh-workbench/shared/contract/*` | 插件 / 适配器（仅类型） | 契约子路径；`export` 里的 `./contract/*`，只给类型用 |
 
 浏览器侧不能从 `/host` 取运行值；宿主侧需要运行值时只从 `/host` 取。
 
@@ -304,7 +306,7 @@ packages/core/src/
 层  7  app/units/                            清单装配
 层  6  app/layouts/                          左栏 / 右栏 / 市场 / 环境门
 层  5  modules/panels · modules/sessions     外壳自己的域
-层  4  shared/api · shared/hooks · shared/components
+层  4  shared/api · shared/hooks · shared/components · shared/dev-surface
 层  3  （没有源码角色；具体适配器住 packages/adapter-*）
 层  2  kernel/host · kernel/client · kernel/contract
 层  0  shared/styles                         令牌
@@ -314,20 +316,24 @@ packages/core/src/
 
 ### 3.3 层号表达不了的规则
 
+<!-- doc-facts:begin arch-rules -->
 | 规则 | 判什么 |
 |---|---|
-| S60 | 外壳只使用单元公开面 |
-| S62 | 单元之间不互相 import |
-| S63 | 单元清单只依赖纯类型契约 |
-| S64 | 单元在宿主与浏览器两端都登记 |
-| S65 | 外壳层不出现平台知识 |
-| S66 | 外壳层不出现单元 id |
-| S67 | 单元只通过专属目录读写状态 |
-| S68 | 跨平台能力走登记的首选方案 |
-| S71 | `kernel/host` 与 `kernel/client` 不互相 import |
-| S72 | 模块视图不碰宿主面：components 不许 import 宿主入口 / `shared/host` / dsh 原语 / `node:*` |
-| S73 | 测试文件住在 `__tests__` 目录里；测试与被测代码物理分开，不散在源码旁 |
-| S23 | 面文件只导出面值；跨运行时走错面当场红 |
+| S60 | 外壳只许使用套件的公开面 |
+| S62 | 套件之间不许互相 import |
+| S63 | 套件清单只依赖纯类型契约 |
+| S64 | 套件必须在两端都登记 |
+| S65 | 外壳层不得出现平台知识 |
+| S66 | 外壳层不得出现套件 id |
+| S67 | 套件只能通过外壳给的专属文件夹读写 |
+| S68 | 外壳编排面不得出现运行时实现名 |
+| S69 | 外壳不许点名具体适配器包 |
+| S70 | 外壳的测试（含测试基建）也不许 import 适配器包 |
+| S71 | 内核两侧（host / client）不互相 import |
+| S72 | 外壳不许按适配器 id 分支 |
+| S73 | 测试文件住在 __tests__ 目录里 |
+| S74 | 外壳的文案里不点名运行时（话与命令面都跟着适配器走） |
+<!-- doc-facts:end arch-rules -->
 
 模块包不在 core 层表里；它们由模块工具链的十三条判据与各自 `check` 守。
 
@@ -339,13 +345,14 @@ packages/core/src/
 |---|---|---|
 | `DataReader` | `shared/contract/data.ts` | 统一传输：`http` / `browser` / `command`，以及配方 `request` / `submit` |
 | `ProfilePort` | `shared/host/port-types.ts` | profile 目录、dsh 插件、自更新视图 |
-| `EnvSupplyPort` | `shared/host/port-types.ts` | 供给窄口：插件来源、安装命令、release（7 个方法） |
+| `EnvSupplyPort` | `shared/host/port-types.ts` | 供给窄口：插件来源、安装/卸载命令、release（8 个方法） |
 | `ModulePort` | `shared/host/port-types.ts` | 已安装模块、registry、bundle、profile 包、自更新 |
 | `ProbePort` | `shared/host/port-types.ts` | `probeUnits` / `registerPreflight` / `declaredPluginCommands` |
-| `RuntimePort` | `shared/host/port-types.ts` | 包根、运行时命令/执行器/状态（按名字给）、自举、可写根告警 |
+| `RuntimePort` | `shared/host/port-types.ts` | 包根、能力、运行时命令/执行器/状态（按名字给）、自举、可写根告警 |
 | `PluginSurface` | `shared/host/port-types.ts` | 插件清单、已装插件合成单元 |
 | `HostActions` | `shared/host/port-types.ts` | config sync / profile create 的 handler 与写动作 |
-| `AdapterSet` | `shared/host/adapters.ts` | 上面这些端口的聚合，外加 `apiVersion` / `id` / `version` |
+| `LibReader` / `GitReader` / `CommandReader` | `shared/contract/{lib,git,command}.ts` | 三个可选读端口：本机库 / git / 命令面；挂在 `AdapterSet.libs` / `.git` / `.commands` |
+| `AdapterSet` | `shared/host/adapters.ts` | 上面这些端口的聚合，外加 `apiVersion` / `id` / `version` 与可选的 `libs` / `git` / `commands` |
 
 `AdapterSet` 是组合根交给业务的唯一适配器对象；`WorkbenchAdapters` 是保留的别名。
 `DataReader` 是模块作者最常用的端口；模块不 import adapter 包。
@@ -356,10 +363,9 @@ packages/core/src/
 只有 [`packages/core/src/app/host.ts`](packages/core/src/app/host.ts) 是组合根。它不静态 import 任何具体适配器：
 
 ```ts
-const resolved = await resolveAdapterSet(ctx, config?.adapterSet, async () => {
-  const mod = await import('@dsh-workbench/adapters-default');
-  return mod.createAdapterSet(ctx);
-});
+const spec = shippedAdapterSetSpec(import.meta.url);
+const mod = await import(spec);
+const resolved = await resolveAdapterSet(ctx, config?.adapterSet, () => mod.createAdapterSet(ctx));
 const adapters = resolved.set;
 adapters.runtime.seed(ctx, { corePackageUrl: import.meta.url, log: (message) => warn(ctx, message) });
 ctx.provide(WORKBENCH_ADAPTERS, adapters);
@@ -417,11 +423,11 @@ cli ← browser ← data
 type DataRequest =
   | { kind: 'http'; url; headers?; timeoutMs? }
   | { kind: 'browser'; script; url?; loginUrl?; session?; open?; timeoutMs? }
-  | { kind: 'command'; command; timeoutMs? };
+  | { kind: 'command'; adapter; argv; timeoutMs? };
 
 type DataResult<T> =
   | { ok: true; data: T }
-  | { ok: false; error: { code; message; status?; detail?; hint?; helpUrl? } };
+  | { ok: false; error: { code; message; status?; detail?; hint?; helpUrl?; pageCode? } };
 ```
 
 - `http`：**只做 GET**；写走模块工具与审批。统一超时、状态码、401/403 → `auth`、非 JSON → `parse`。
@@ -787,7 +793,7 @@ dsh-wb-module lint      lint
 dsh-wb-module init      从模板建模块
 ```
 
-模板有 `template` 与 `template-diy`；模块默认 `private: true`。
+只有一个模板：`template-diy`（`--template diy`，也是默认）；模块默认 `private: true`。
 
 ### 8.2 skills
 
@@ -805,6 +811,7 @@ packages/core/skills/workbench-module-diy/
   TOOLS.md        agent 能力、审批、长任务
   COPY.md         文案
   FAMILY.md       工具族：怎么选、怎么串
+  FLOW.md         一次性还是固化、流程落地
   LINKAGE.md      刷新与事实
   BUILD.md        落点、模板、两个面
   WIRING.md       安装、热换、发布
@@ -857,26 +864,13 @@ pnpm run check
 
 顺序：
 
+<!-- doc-facts:begin gate-chain -->
 ```text
-lint:commit → build → typecheck → lint → coverage → check:gates:target
-→ arch → check:docs → check:runtimes → selfcheck
-→ check:modules（模块工具 13 判据）→ check:adapter-defaults → check:release-artifacts
+lint:commit → build → typecheck → lint → coverage → check:gates:target --fail-on-red → arch →
+check:docs → check:runtimes → selfcheck → check:modules → check:adapter-defaults →
+scripts/check-adapter-contract.mjs → check:release-artifacts
 ```
-
-```text
-lint:commit
-   ▼
-build ──► typecheck ──► lint ──► coverage ──► check:gates:target
-                                                    │
-                                                    ▼
-                                            arch ──► check:docs ──► check:runtimes
-                                                    │
-                                                    ▼
-                                            selfcheck ──► check:modules
-                                                    │
-                                                    ▼
-                                  check:adapter-defaults ──► check:release-artifacts
-```
+<!-- doc-facts:end gate-chain -->
 
 目标门禁：
 

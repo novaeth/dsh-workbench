@@ -64,8 +64,8 @@ pnpm exec dsh-wb-module init <unit> --dir <目录> --template diy --description 
 ## 3 命令
 
 用 `pnpm exec dsh-wb-module …`；命令、`--only` 判据名与模板参数看 `--help` / `check --list`，不在指引里抄。
-`package.json` 六个脚本（`build` / `typecheck` / `test` / `selfcheck` / `check` / `lint`）必须保留，
-`contracts` 点名缺失。
+`package.json` 至少保留 `build` / `typecheck` / `test` / `selfcheck` 四个脚本，`contracts` 点名缺失；
+模板自带 8 个（另含 `check` / `lint` / `design` / `prepack`）。
 
 - `check` 不跑 `pnpm test`；状态、换算、边界测试自己跑。
 - "不适用"不是"通过"：`standalone` 需外壳源码在场，`markers` 只扫公开包（DIY 模块 `private`）。
@@ -96,11 +96,11 @@ export const apply = plugin.apply;
 再 `ctx.effect(() => units.register(face), '<unit>: 注册')`。
 
 `mount({ data })` 的 `data` 是统一数据端口（`DataReader`）；读数据用 `data.read(...)`，不要自己 import adapter。
-`mount()` 返回 `{ routes, registerTools, prefs? }`。`routes` 挂 `/workbench/api/<路由>`，只许 GET，
+`mount()` 返回 `UnitMountResult`：`routes`、`registerTools()`，以及可选的 `factsOf` / `gate` / `context` / `warmReads` / `prefs` / `actions` / `provision` / `longTasks` / `approvalDetail` / `needsApproval`。`routes` 挂 `/workbench/api/<路由>`，只许 GET，
 键必须在 `<unit>` 或 `<unit>/…` 之下（否则装配抛错）。错误返回
 `{ ok: false, error: { code, message, hint? } }`（HTTP 200，外壳转发）。`registerTools` 提供模块工具。
 
-浏览器面：`units.registerUnit({ manifest, messages, card })`。`card` 收到
+浏览器面：`units.registerUnit({ unit, messages, card })`；清单由外壳从已装清单读，不在面里重复。`card` 收到
 `{ t, world, refreshToken, onRefresh, onSummary }`（`world.current.workspace` 为当前项目），返回元素。
 三态用 kit：加载 `kit.components.SkeletonRows`；空 `kit.components.EmptyState`（无按钮）；
 错误 `kit.components.BlockerState` + `kit.lib.blockerOfError(error, t)`。

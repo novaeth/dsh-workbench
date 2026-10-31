@@ -5,16 +5,17 @@
 不会打架。
 
 对模块作者来说，这里是「不用自己重画」的那一层：卡片壳、行、表单、链接、加载态都在
-`components/`，契约类型都在 `api/`。**dsh 有的原语走 kit，工作台自己的视觉用这里的组件**，
+`components/`，契约类型都在 `contract/`。**dsh 有的原语走 kit，工作台自己的视觉用这里的组件**，
 两者拼出面板，不要从 DOM + CSS 重写一遍。
 
-## 三个入口
+## 四个导出面
 
 | 入口 | 谁用 | 有什么 |
 |---|---|---|
 | `@dsh-workbench/shared` | 浏览器侧 | 契约类型、纯函数、哑组件（样式随组件）、i18n、读通道 `apiGet` / `factOfRoute` |
-| `@dsh-workbench/shared/host` | 宿主侧（Node） | 数据根、opencli 运行时、git、http、面板状态、单元声明、请求配方 composer、公共通道插件计划等，**有 `node:*`** |
+| `@dsh-workbench/shared/host` | 宿主侧（Node） | 数据根、git、http、面板状态、单元声明、请求配方 composer 等，**有 `node:*`** |
 | `@dsh-workbench/shared/testing` | 测试 | 宿主侧假件、从 `package.json` 读模块声明 |
+| `@dsh-workbench/shared/contract/*` | 插件 / 适配器（仅类型） | 契约子路径；`exports` 里的 `./contract/*`，只给类型用 |
 
 两条硬边界：
 
@@ -40,7 +41,8 @@ CSS 处理。
 
 | 落点 | 是什么 |
 |---|---|
-| `src/api/` | 契约：单元清单、卡片面、读通道、写通道、长任务、审批、面板状态 |
+| `src/api/` | 浏览器侧接缝：读 / 写通道、平台客户端 |
+| `src/contract/` | 契约：单元清单、卡片面、读 / 写通道、长任务、审批、面板状态 |
 | `src/components/` | 哑组件：`Card` / `CardHead` / `Rows` / `Form` / `FormRow(s)` / `FormActions` / `Link` / `Stack` / 各态块 |
 | `src/config/` | 常量与存储键 |
 | `src/i18n/` | zh / en 字典、合并与设置 |

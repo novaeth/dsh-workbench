@@ -2,7 +2,7 @@
 
 工作台本体：一个 **DeepSeek Harness 插件**，给 dsh 换一层外壳 —— 左栏项目与会话、
 中间常驻对话、右侧一列实时数据面板。dsh 本体一行不改，装与不装都只影响你自己的这份实例。
-同仓的另外三个包（`shared` / `module-tools` / `module-hello`）是给**模块作者**的库与样本，
+同仓的其他包（`shared` / `module-tools` / `module-hello` / `adapter-*` / `adapters-default`）是给**作者与实现者**的库、样本与适配器，
 终端用户只会直接装这一个。
 
 > 只想把它用起来？先看根目录的 [README](../../README.md)：三种装法、界面长什么样、
@@ -89,14 +89,16 @@ dsh-workbench migrate --force  # 已经迁过一次、想再补并一次
 
 | 路径 | 是什么 |
 |---|---|
-| `dist/host/**` | 宿主侧入口（`exports["."]`）与类型；构建产物，不进 git |
+| `dist/host/**` | 宿主侧入口（`exports["."]`）；构建产物，不进 git |
+| `dist/types/**` | 类型声明（`exports` 的 `types` 指向这里）；构建产物，不进 git |
 | `client.js` | 浏览器侧 bundle，dsh 客户端按 `dsh.client` 加载 |
 | `cordis.patch.yml` | 把自己插进 profile 组合图的补丁（装载） |
 | `preset/diy.patch.yml` | 「工作台 DIY 模式」的 preset；由 `scripts/gen-diy-preset.mjs` 从 dsh 出厂那份 `standard.patch.yml` 派生（生成后提交，selfcheck 盯过期） |
 | `profile/` | 出厂 profile 模板：可写根那一行（启动器 `--patch` 用，seed 也抄进 profile） |
 | `skills/` | 模块 DIY 指引，装好后挂给 agent；漏了不报错，只是 agent 不知道要怎么做模块 |
 | `bin/` | `dsh-workbench` 启动器、隔离 opencli 的入口 |
-| `scripts/` | 随包出货的脚本：`seed-profile.sh` / `seed-workshop.sh` / `create-workbench.mjs` / `clone-profile.mjs` / `share-data-root.mjs` |
+| `scripts/` | 随包出货的脚本：`seed-profile.sh` / `seed-workshop.sh` / `create-workbench.mjs` / `clone-profile.mjs` / `share-data-root.mjs` / `patch-blocks.mjs` |
+| `icon.svg` | 插件图标（dsh 插件页用） |
 
 ## 数据落在哪
 

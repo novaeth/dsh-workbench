@@ -27,7 +27,7 @@ site/static/               原样拷到站根（logo.svg）
 
 1. 在 `site/desktop/views/` 下建 `xxx.md`（或 `guide/xxx.md`）
 2. 在 `pagoda.config.mjs` 的 `site.nav` 里挂一行 `{ title: '标题', view: 'xxx' }`
-3. 站内跳转用 `<PagodaDocLinkToView view="guide/xxx">…</PagodaDocLinkToView>`，别写死 `href`
+3. 站内跳转优先用 `<PagodaDocLinkToView view="guide/xxx">…</PagodaDocLinkToView>`；只有 `views/index.vue` 这类静态首页可以直接写 `href="#/…"`
 
 目录（`views/guide/`）的落地页必须叫 `guide/index.md`，写成 `views/guide.md` 就成了顶级页 ——
 路由的 `meta.prefix` 是空的，左侧菜单不会出现。分组 `items` 里的 `view` 只写叶子名

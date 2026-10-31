@@ -43,7 +43,7 @@ scripts/smoke.mjs  构建后冒烟：产物能 require、导出齐全
 cordis.patch.yml   把自己插进 profile 组合图
 arch.config.mjs    一行：moduleArch()
 eslint.config.mjs  两行：moduleLint()
-client.js / dist/  构建产物（不进 git，但必须进 npm 包）
+client.js          构建产物（随仓提交，npm 包要带；dist/ 不进 git）
 ```
 
 ## 开发与门禁

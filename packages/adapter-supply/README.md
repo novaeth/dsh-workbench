@@ -17,7 +17,7 @@ import { profileDirOf, profileModules, readInstalledModule } from '@dsh-workbenc
 
 ## 边界
 
-只依赖 `@dsh-workbench/shared` 的宿主契约与纯工具；不读取 core 内部文件，不拥有 profile 的 self-update。
+依赖 `@dsh-workbench/shared` 的宿主契约与纯工具，以及 `@dsh-workbench/adapter-runtime`（复用 DataReader 与路径）；不读取 core 内部文件，不拥有 profile 的 self-update。
 
 ## 验证
 

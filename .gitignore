@@ -1,3 +1,6 @@
+# 本地文档事实审计产物（一次性；报告在 .doc-audit/AUDIT.md）
+.doc-audit/
+
 # 本地验收产物
 .verify/
 

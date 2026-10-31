@@ -59,7 +59,7 @@
 |---|---|---|---|
 | L1 外壳 | `packages/core/README.md`、`ARCHITECTURE.md`、`packages/docs/**` 的使用文档、`CONTRIBUTING.md` 的门禁纪律 | core 单测、`arch`、`check:runtimes`、core selfcheck、`WB-A1` | `arch.config.mjs`；界面文案与 kit JSDoc |
 | L2 契约 | `ARCHITECTURE.md` §5–§6、源码 JSDoc | `SH-A1`、`check-state`、typecheck | 入口 `exports`；i18n 字典 |
-| L3 适配器 | `ADAPTERS.md`、各 adapter 包 README | `check:adapter-defaults`、`check-adapter-contract`、集成夹具 | `AdapterSet` 版本；profile 解析规则 |
+| L3 适配器 | `ADAPTERS.md`、各 adapter 包 README | `check:adapter-defaults`、`node scripts/check-adapter-contract.mjs`、集成夹具 | `AdapterSet` 版本；profile 解析规则 |
 | L4 模块 | 模块 `README.md`（`design render` 生成需求段）、模板 `AGENTS.md`（只讲 tools 用法） | 13 条判据、`check:modules`、模块测试、smoke | `design.json`、清单、`messages.ts` |
 | L5 工具链 | `packages/module-tools/README.md`（判据表由命令生成）、`template-diy/AGENTS.md` | module-tools selfcheck（128）、`check:docs` 的判据表校验 | 模板文件、`arch` / `lint` 方言 |
 | L6 环境 | 工坊 `README.md` / `AGENTS.md`（`seed-workshop.sh` 生成）、core README 的 profile / 排障段 | `check-workshop-generation.sh`、seed 行为自检 | `.npmrc`、`pnpm-workspace.yaml`、profile 配置 |
@@ -110,7 +110,7 @@
 |---|---|
 | L1 | `arch`（S69 不出现 adapter 包名、S72 按能力不按 id）、`check:runtimes`、`WB-A1`、core selfcheck |
 | L2 | `SH-A1`（shared 不依赖 core / adapter）、shared `check-state`、typecheck |
-| L3 | `check:adapter-defaults`、`check-adapter-contract`、集成夹具 |
+| L3 | `check:adapter-defaults`、`node scripts/check-adapter-contract.mjs`、集成夹具 |
 | L4 | module-tools 13 判据（contracts / source / arch / kit / cards / style / primitives / standalone …）；模块 arch 的 S01 / S16 / S23 / S71–S74（S74：测试住 `__tests__/`）；`check:modules` |
 | L5 | module-tools selfcheck（128 条：golden / scaffold / arch-gate / lint-gate / discover / migrate / meta …）、`check:docs` 的判据表一致性 |
 | L6 | `check-workshop-generation.sh`、seed / 入口自检、工坊生成探针 |

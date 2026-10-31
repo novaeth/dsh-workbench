@@ -12,7 +12,7 @@ pnpm check        # 十三条判据
 pnpm design check # 设计底稿有没有空格、README 有没有落后
 ```
 
-要发货再加一步 `pnpm publish`：跑门禁、核 `files` 与 `npm pack` 清单，**只 dry run，不真发**。
+要发货再加一步 `pnpm exec dsh-wb-module publish`：跑门禁、核 `files` 与 `npm pack` 清单，默认 **只 dry run，不真发**。
 维护者确认要真发时跑 `pnpm exec dsh-wb-module release`：全门禁（build / check / design / typecheck / test / selfcheck）、
 验收必须全勾、预检（登录 / license / git 远端）、按 `--target` 发到团队源 / 公网 npm / 安装包 / git，
 最后从出口侧核包（`--dry-run` 只预览，`--verify` 只核已发布的包）。配了可写 git 索引源时，
@@ -77,7 +77,7 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 <!-- dsh-wb-module:begin checks -->
 | 判据 | 层 | 摘要 |
 |---|---|---|
-| `contracts` | manifest | 单元 id、两个面、四个脚本、files、peer 下限，以及清单与代码注册对账 |
+| `contracts` | manifest | 单元 id、两个面、四个脚本、peer 依赖存在，以及清单与代码注册对账 |
 | `protocol` | manifest | dsh.workbench 的 apiVersion、静态半形状与未知键 |
 | `bundles` | build | 宿主产物不含浏览器侧、浏览器产物不内联外壳 CSS 与夹具 |
 | `source` | source | 零注释、包与运行时入口分开、不手写进程/锁/原子写 |
@@ -306,7 +306,7 @@ dsh-wb-module design accept   # 在真卡片上逐条走通后打勾
 `eslint.config.mjs`。
 
 `init` 连模板里的 `*.tpl` 一起拷、按已知 token 名逐个盖章（`__UNIT__` / `__NAME__` / `__DESC__` /
-`__SHELL_RANGE__`）、剥掉后缀，再用 `design.json` 生成 README 那一段。
+`__SHELL_RANGE__` / `__DSH_UI_VERSION__`）、剥掉后缀，再用 `design.json` 生成 README 那一段。
 `__SHELL_RANGE__` 取 init 所在工程实装的那份外壳版本；读不到就退回 module-tools 自己的版本；
 两者都读不到才保持 `^0.1.0` 并在 stderr 上说一句。
 

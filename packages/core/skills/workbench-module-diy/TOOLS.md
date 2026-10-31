@@ -81,7 +81,7 @@
 - `key` 用 lowerCamelCase；跑 `dsh-wb-module sync` 生成 `src/declared-tools.ts`，代码写
   `DECLARED_TOOLS.rebuild.name`。工具名字面量只留清单一处；键错编译错，生成物过期 / 半写 / 又写字面量都红。
 - `needsApproval` 返回：
-  `{ kind: 'read' }` 不问；`{ kind: 'ask', question, fallback }` 要问；
+  `{ kind: 'read' }` 不问；`{ kind: 'ask', reason, question, fallback }` 要问；
   `{ kind: 'deny', reason }` 拒绝（reason 交给 agent；只放策略同步可判的事实）。`writes: true` 未认领 = deny。
   `question` / `fallback` 需 zh / en。
 - `approvalDetail` 拿不到材料时返回 `{ blocked: '…' }` = 不弹。标题与详情形状见 [DESIGN.md](DESIGN.md) §3 末节：

@@ -21,7 +21,7 @@
 
 - 只在 DIY 模式的会话出现；面板得画在屏上。
 - 看 / 动 / 网络 / 日志族先 `_debug_start`（审批一次），否则整族拒、零命令；收工 `_debug_stop`。
-  `_pause` 只暂停看屏。不碰屏的：`_status` / `_panel` / `_components` / `_recon` / `_spec` /
+  `_debug_pause` 只暂停看屏。不碰屏的：`_status` / `_panel` / `_components` / `_recon` / `_spec` /
   `_install` / `_show` / `_publish`；`_find` / `_eval` 带 `read=` 时也不碰。
 - 录制独立：`_record_prepare` 审批一次，其余不问；同时只有一场，要重来先 `_record_stop`。
 
