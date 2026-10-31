@@ -1,0 +1,52 @@
+**********************
+PowerShell transcript start
+Start time: 20261031113810
+Username: runnervmhao91\runneradmin
+RunAs User: runnervmhao91\runneradmin
+Configuration Name: 
+Machine: runnervmhao91 (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -command . 'D:\a\_temp\c07a6290-934b-49dd-b6f3-25aa12758ca6.ps1'
+Process ID: 6252
+PSVersion: 7.6.9
+PSEdition: Core
+GitCommitId: 7.6.9
+OS: Microsoft Windows 10.0.26100
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Transcript started, output file is desktop-win-inspect.txt
+workbench root: C:\Users\runneradmin\.dsh\workbench
+
+FullName                                                                    Length
+--------                                                                    ------
+C:\Users\runneradmin\.dsh\workbench\bin                                     
+C:\Users\runneradmin\.dsh\workbench\diy                                     
+C:\Users\runneradmin\.dsh\workbench\opencli                                 
+C:\Users\runneradmin\.dsh\workbench\pnpm-10                                 
+C:\Users\runneradmin\.dsh\workbench\seed.log                                486
+C:\Users\runneradmin\.dsh\workbench\bin\desktop                             
+C:\Users\runneradmin\.dsh\workbench\bin\desktop\node.cmd                    143
+C:\Users\runneradmin\.dsh\workbench\diy\.agents                             
+C:\Users\runneradmin\.dsh\workbench\diy\packages                            
+C:\Users\runneradmin\.dsh\workbench\diy\.npmrc                              123
+C:\Users\runneradmin\.dsh\workbench\diy\.sync.json                          108
+C:\Users\runneradmin\.dsh\workbench\diy\.sync.lock                          44
+C:\Users\runneradmin\.dsh\workbench\diy\package.json                        798
+C:\Users\runneradmin\.dsh\workbench\diy\pnpm-workspace.yaml                 63
+C:\Users\runneradmin\.dsh\workbench\diy\README.md                           267
+C:\Users\runneradmin\.dsh\workbench\diy\.agents\skills                      
+C:\Users\runneradmin\.dsh\workbench\diy\.agents\skills\workbench-module-diy 
+C:\Users\runneradmin\.dsh\workbench\opencli\bin                             
+C:\Users\runneradmin\.dsh\workbench\opencli\home                            
+C:\Users\runneradmin\.dsh\workbench\opencli\toolchain                       
+C:\Users\runneradmin\.dsh\workbench\opencli\bin\opencli.cmd                 176
+C:\Users\runneradmin\.dsh\workbench\opencli\toolchain\package.json          118
+== C:\Users\runneradmin\.dsh\workbench\opencli
+
+**********************
+PowerShell transcript end
+End time: 20261031113810
+**********************
