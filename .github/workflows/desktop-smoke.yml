@@ -92,7 +92,7 @@ jobs:
         run: |
           git config user.name ci
           git config user.email ci@example.com
-          git add -f desktop-win-ui.txt desktop-win-cdp.txt desktop-win-inspect.txt desktop-win.png desktop-win-gate.png desktop-win-gate-open.png || true
+          git add -f desktop-win*.png desktop-win*.txt || true
           git commit -m "ci: windows desktop ui probe [skip ci]" || true
           git push origin HEAD:desktop-ui-log-win-${{ github.run_id }}
 
@@ -174,7 +174,7 @@ jobs:
         run: |
           git config user.name ci
           git config user.email ci@example.com
-          git add -f desktop-mac-ui.txt desktop-mac-inspect.txt desktop-mac.png desktop-mac-gate.png desktop-mac-gate-open.png || true
+          git add -f desktop-mac*.png desktop-mac*.txt || true
           git commit -m "ci: macos desktop ui probe [skip ci]" || true
           git push origin HEAD:desktop-ui-log-mac-${{ github.run_id }}
 
