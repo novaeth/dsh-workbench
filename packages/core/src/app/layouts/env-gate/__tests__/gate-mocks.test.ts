@@ -204,12 +204,12 @@ describe('GATE_MOCKS', () => {
     }
   });
 
-  it('★ 还在跑的那一行显示当前动作，让人知道确实在装什么', () => {
+  it('★ 还在跑的那一行不显示动作，避免把命令或路径带上界面', () => {
     const t = (key: string): string => key;
     const snapshot = GATE_MOCKS.find((item) => item.id === 'checking')?.snapshot as never;
-    const running = { id: 'cli', status: 'running', action: '安装 opencli' };
+    const running = { id: 'cli', status: 'running', action: '/Users/me/.dsh/workbench/opencli/bin/opencli --version' };
 
-    expect(stepDetailText(running as never, snapshot, t)).toBe('安装 opencli');
+    expect(stepDetailText(running as never, snapshot, t)).toBe('');
     expect(stepDetailText({ id: 'cli', status: 'running' } as never, snapshot, t)).toBe('');
   });
 
