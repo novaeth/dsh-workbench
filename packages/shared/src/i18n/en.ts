@@ -621,6 +621,7 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'env.fix.permission': 'Permission denied: rerun with sudo, or point npm\u2019s global directory at your home.',
   'env.fix.network': 'Network unreachable: check your network or proxy, then retry.',
   'env.fix.details': 'Details (for troubleshooting)',
+  'env.log': 'Detailed output',
   'env.retry': 'Retry',
   'env.wake': 'Open browser',
   'env.wake.opening': 'Opening the browser…',

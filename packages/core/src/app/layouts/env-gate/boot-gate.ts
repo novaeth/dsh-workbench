@@ -120,6 +120,10 @@ export function createBootGate(
   const rawAllBody = el('pre', styles.error);
   rawAll.append(el('summary', styles.rawSummary, t('env.fix.details')), rawAllBody);
   rawAll.hidden = true;
+  const liveLog = el('details', styles.raw) as HTMLDetailsElement;
+  const liveLogBody = el('pre', styles.error);
+  liveLog.append(el('summary', styles.rawSummary, t('env.log')), liveLogBody);
+  liveLog.hidden = true;
   const actions = el('div', styles.actions);
   actions.hidden = true;
   const fixTitle = el('h2', styles.fixTitle, t('env.fix.title'));
@@ -177,7 +181,7 @@ export function createBootGate(
   diyRaw.append(el('summary', styles.rawSummary, t('env.fix.details')), diyRawText);
   diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons, diyRaw);
 
-  card.append(title, hint, list, progressRow, actions, bridge, diy, rawAll);
+  card.append(title, hint, list, progressRow, actions, bridge, diy, rawAll, liveLog);
   overlay.append(card);
   document.body.append(overlay);
 
@@ -359,6 +363,10 @@ export function createBootGate(
 
     const panelShown = !actions.hidden || !bridge.hidden || !diy.hidden;
     rawAll.hidden = !showsRawAll(snapshot, panelShown) || rawLines.length === 0;
+    const logText = (snapshot.log ?? []).join('\n');
+    liveLog.hidden = logText === '';
+    liveLogBody.textContent = logText;
+    if (liveLog.open) liveLogBody.scrollTop = liveLogBody.scrollHeight;
   }
 
   async function poll(): Promise<void> {

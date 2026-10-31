@@ -29,4 +29,5 @@ export interface PreflightSnapshot {
   readonly bridgeIssues?: readonly PreflightBridgeIssue[];
   readonly diyGap?: PreflightDiyGap;
   readonly canWakeBrowser?: boolean;
+  readonly log?: readonly string[];
 }
