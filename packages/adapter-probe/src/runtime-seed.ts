@@ -191,12 +191,13 @@ export function prependPath(entryDir: string, env: NodeJS.ProcessEnv = process.e
 
 export function seedWorkbenchToolchain(root: string, log: SeedLog): void {
   const bundledPnpm = desktopPnpmPath();
-  const bundledVersion = desktopPnpmVersion()?.split('.')[0];
-  if (bundledPnpm !== undefined && bundledVersion === '10') {
+  const bundledMajor = Number(desktopPnpmVersion()?.split('.')[0] ?? '0');
+  const bundledUsable = bundledPnpm !== undefined && bundledMajor >= 10;
+  if (bundledPnpm !== undefined && bundledUsable) {
     process.env.DSH_WB_PNPM = `node ${quoteShellArgFor(bundledPnpm, process.platform)}`;
     log(`pnpm 用 Desktop 自带的：${bundledPnpm}`);
   } else if (bundledPnpm !== undefined) {
-    log(`Desktop 自带 pnpm 版本不是 10，优先用 PATH 上的 pnpm`);
+    log(`Desktop 自带 pnpm 版本低于 10，优先用 PATH 上的 pnpm`);
   }
   const toolchain = ensureToolchain({ root, log });
   for (const file of toolchain.files) log(`工具链写下 ${file}`);
@@ -211,8 +212,8 @@ export function seedWorkbenchToolchain(root: string, log: SeedLog): void {
   }
   if (toolchain.pnpmDir !== undefined) {
     if (prependPath(toolchain.pnpmDir)) log(`PATH 前插 ${toolchain.pnpmDir}`);
-    process.env.DSH_WB_PNPM = localPnpmCommand(root);
-  } else if (toolchain.pathDir !== undefined) {
+    if (!bundledUsable) process.env.DSH_WB_PNPM = localPnpmCommand(root);
+  } else if (!bundledUsable && toolchain.pathDir !== undefined) {
     const installed = provisionLocalPnpmSync({ root });
     if (installed.ok && installed.binDir !== undefined) {
       if (prependPath(installed.binDir)) log(`PATH 前插 ${installed.binDir}`);

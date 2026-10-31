@@ -29,7 +29,7 @@ describe('Desktop 工具链步骤', () => {
     }
   });
 
-  it('★ 真实探测：node 好、npm 缺、pnpm 11 → warn 的理由分开说', async () => {
+  it('★ 真实探测：node 好、npm 缺、pnpm 11 → pnpm 11 可直接用', async () => {
     const fake = createFakeShell([
       { stdout: 'v24.21.0\n' },
       { exitCode: 127, stderr: 'npm: command not found\n' },
@@ -40,7 +40,7 @@ describe('Desktop 工具链步骤', () => {
     expect(report.ok).toBe(true);
     expect(report.nodeMissing).toBe(false);
     expect(report.npmMissing).toBe(true);
-    expect(report.pnpmProblem).toBe(true);
+    expect(report.pnpmProblem).toBe(false);
     expect(report.detail).toContain('node v24.21.0');
     expect(report.detail).toContain('npm 缺');
     expect(report.detail).toContain('pnpm 11.28.5');

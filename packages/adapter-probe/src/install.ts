@@ -9,8 +9,8 @@ export function opencliInstallCommand(
   const override = process.env.DSH_WB_PNPM?.trim();
   if (override !== undefined && override !== '') return isolatedInstallCommand();
   const pnpm = desktopPnpmPath(proc, exists);
-  const major = desktopPnpmVersion(proc, exists)?.split('.')[0];
-  return pnpm === undefined || (major !== undefined && major !== '10')
+  const major = Number(desktopPnpmVersion(proc, exists)?.split('.')[0] ?? '0');
+  return pnpm === undefined || (major !== 0 && major < 10)
     ? isolatedInstallCommand()
     : isolatedPnpmInstallCommand(pnpm);
 }

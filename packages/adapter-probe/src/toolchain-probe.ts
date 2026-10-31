@@ -29,7 +29,7 @@ async function toolVersion(
 export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainReport> {
   const bundledPnpm = desktopPnpmPath();
   const bundledMajor = desktopPnpmVersion()?.split('.')[0];
-  const preferBundled = bundledPnpm !== undefined && bundledMajor === '10';
+  const preferBundled = bundledPnpm !== undefined && Number(bundledMajor ?? '0') >= 10;
   const pnpmLine = preferBundled
     ? `node ${quoteShellArg(bundledPnpm ?? '')} --version`
     : 'pnpm --version';
@@ -50,8 +50,8 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
   }
   const nodeMissing = !node.ok;
   const npmMissing = !npm.ok;
-  const pnpmMajor = /^v?(\d+)/.exec(pnpm.text)?.[1];
-  const pnpmProblem = !pnpm.ok || pnpmMajor !== '10';
+  const pnpmMajor = Number(/^v?(\d+)/.exec(pnpm.text)?.[1] ?? '0');
+  const pnpmProblem = !pnpm.ok || pnpmMajor < 10;
   const desktop = hostSurface({ proc: process }).deployment === 'desktop';
   const parts = [
     nodeMissing
