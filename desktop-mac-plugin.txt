@@ -1,0 +1,50 @@
++ cli='/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh'
++ '/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh' plugin --profile desktop add @dsh-workbench/core@1.1.13
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Progress: resolved 37, reused 0, downloaded 0, added 0
+[WARN] Issues with peer dependencies found. Run "pnpm peers check" to list them.
+Added 7 entries to minimumReleaseAgeExclude in pnpm-workspace.yaml (set minimumReleaseAgeStrict to true to gate these updates with a prompt):
+  @dsh-workbench/adapter-probe@1.1.13
+  @dsh-workbench/adapter-profile@1.1.13
+  @dsh-workbench/adapter-runtime@1.1.13
+  @dsh-workbench/adapter-supply@1.1.13
+  @dsh-workbench/adapters-default@1.1.13
+  @dsh-workbench/core@1.1.13
+  @dsh-workbench/shared@1.1.13
+Packages: +37
++++++++++++++++++++++++++++++++++++++
+Packages are cloned from the content-addressable store to the virtual store.
+  Content-addressable store is at: /Users/runner/Library/pnpm/store/v11
+  Virtual store is at:             node_modules/.pnpm
+Progress: resolved 37, reused 0, downloaded 37, added 37, done
+
+dependencies:
++ @dsh-workbench/core 1.1.13
+
+Done in 3.3s using pnpm v11.28.5
++ echo '--- profile package.json ---'
+--- profile package.json ---
++ cat /Users/runner/.dsh/profiles/desktop/package.json
+{
+  "name": "dsh-profile-desktop",
+  "private": true,
+  "dependencies": {
+    "@dsh-workbench/core": "1.1.13"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "@dsh-workbench/core"
+      ]
+    }
+  }
+}
++ echo '--- profile cordis.yml ---'
+--- profile cordis.yml ---
++ cat /Users/runner/.dsh/profiles/desktop/cordis.yml
+# dsh profile root — an empty entry list. The tree is composed as patches:
+# each bundle in package.json's dsh.profile.bundles, then cordis.patch.yml, then any
+# --patch overlays. Edit cordis.patch.yml, not this file.
+[]
