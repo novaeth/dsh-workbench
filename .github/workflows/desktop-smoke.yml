@@ -52,6 +52,9 @@ jobs:
         shell: pwsh
         run: |
           Start-Transcript -Path desktop-win-ui.txt -Force
+          $env:npm_config_registry = 'https://registry.npmmirror.com'
+          $env:NPM_CONFIG_REGISTRY = $env:npm_config_registry
+          "registry: $env:NPM_CONFIG_REGISTRY"
           $out = Join-Path $env:RUNNER_TEMP 'desktop-win-app.log'
           $err = Join-Path $env:RUNNER_TEMP 'desktop-win-app.err.log'
           $p = Start-Process -FilePath $env:DESKTOP_EXE -ArgumentList '--remote-debugging-port=9222' -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
@@ -135,6 +138,9 @@ jobs:
         shell: bash
         run: |
           exec > >(tee desktop-mac-ui.txt) 2>&1
+          export npm_config_registry='https://registry.npmmirror.com'
+          export NPM_CONFIG_REGISTRY="$npm_config_registry"
+          echo "registry: $NPM_CONFIG_REGISTRY"
           pkill -f 'DeepSeek Harness' 2>/dev/null || true
           sleep 3
           '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9222 > "$RUNNER_TEMP/desktop-mac-app.log" 2>&1 &

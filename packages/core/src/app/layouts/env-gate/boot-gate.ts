@@ -13,7 +13,7 @@ import { el, spinnerIcon, svgIcon } from './gate-dom';
 
 const POLL_MS = 400;
 
-const GIVE_UP_MS = 120_000;
+const GIVE_UP_MS = 300_000;
 
 function stepLabel(step: PreflightStep, t: Translate): string {
   const id: PreflightStepId = step.id;

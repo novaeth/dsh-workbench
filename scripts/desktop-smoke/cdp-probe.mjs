@@ -131,7 +131,7 @@ if (installViaUi) {
   console.log('AFTER_INSTALL_CLICK_END');
 
   let last = '';
-  for (let i = 0; i < 36; i += 1) {
+  for (let i = 0; i < 72; i += 1) {
     await sleep(5000);
     const current = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
     last = current.result?.value ?? '';
@@ -141,7 +141,7 @@ if (installViaUi) {
   if (/Enable now/u.test(last)) await step('enable now', clickText('Enable now'));
   await step('close dialog', `(() => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); return 'escape'; })()`);
   await sleep(5000);
-  for (let i = 0; i < 36; i += 1) {
+  for (let i = 0; i < 72; i += 1) {
     const current = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
     const body = current.result?.value ?? '';
     console.log(`health wait ${i * 5}s: ${body.slice(-700).replaceAll('\n', ' | ')}`);
