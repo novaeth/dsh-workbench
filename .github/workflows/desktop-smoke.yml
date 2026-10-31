@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 45
     env:
       HUSKY: 0
-      DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@1.1.14-beta.2'
+      DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@beta'
     steps:
       - uses: actions/checkout@v4
       - name: Install Desktop
@@ -135,7 +135,7 @@ jobs:
     timeout-minutes: 45
     env:
       HUSKY: 0
-      DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@1.1.14-beta.2'
+      DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@beta'
     steps:
       - uses: actions/checkout@v4
       - name: Install Desktop
