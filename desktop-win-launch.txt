@@ -1,0 +1,42 @@
+**********************
+PowerShell transcript start
+Start time: 20261031064842
+Username: runnervmdaln5\runneradmin
+RunAs User: runnervmdaln5\runneradmin
+Configuration Name: 
+Machine: runnervmdaln5 (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -command . 'D:\a\_temp\0f10e9e7-0f3b-4ed6-9d4f-37b5f0bce919.ps1'
+Process ID: 3588
+PSVersion: 7.6.7
+PSEdition: Core
+GitCommitId: 7.6.7
+OS: Microsoft Windows 10.0.26100
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Transcript started, output file is D:\a\dsh-workbench\dsh-workbench\desktop-win-launch.txt
+--- app stdout ---
+
+Checking for update
+Update for version 0.2.1-rc.5 is not available (latest version: 0.2.1-rc.5, downgrade is disallowed).
+dsh web: http://127.0.0.1:54826/?token=SIhRKmIsArv15XnoqkB3I-Ts4LC_jAiReFdMDjCJjKw
+--- app stderr ---
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/ec139a85-80fe-40f0-916c-415547bd3677
+workbench url: http://127.0.0.1:54826/?token=SIhRKmIsArv15XnoqkB3I-Ts4LC_jAiReFdMDjCJjKw
+http status: 200
+--- cdp ---
+Warning: Detected unsettled top-level await at file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:45
+  const skipped = await cdp.send('Runtime.evaluate', {
+                  ^
+
+
+
+node exit: 13
+**********************
+PowerShell transcript end
+End time: 20261031064920
+**********************
