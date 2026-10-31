@@ -22,7 +22,7 @@ jobs:
     timeout-minutes: 45
     env:
       HUSKY: 0
-      DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@1.1.14-beta.0'
+      DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@1.1.14-beta.1'
       DESKTOP_SMOKE_QUICK: '1'
     steps:
       - uses: actions/checkout@v4
@@ -115,8 +115,8 @@ jobs:
     timeout-minutes: 45
     env:
       HUSKY: 0
-      DESKTOP_SMOKE_QUICK: '1'
-      DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@1.1.14-beta.0'
+      DESKTOP_SMOKE_QUICK: '0'
+      DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@1.1.14-beta.1'
     steps:
       - uses: actions/checkout@v4
       - name: Install Desktop
@@ -166,6 +166,22 @@ jobs:
           sleep 60
           cat "$RUNNER_TEMP/desktop-mac-app.log"
           node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-mac.png --install-via-ui --expect-workbench
+
+      - name: Assert opencli installed
+        shell: bash
+        run: |
+          root="$HOME/.dsh/workbench/opencli"
+          manifest="$root/toolchain/node_modules/@jackwener/opencli/package.json"
+          if [ ! -f "$manifest" ]; then
+            echo "opencli missing: $manifest"
+            exit 1
+          fi
+          node -e "const p=require('$manifest'); console.log('opencli', p.version)"
+          if [ ! -x "$root/bin/opencli" ]; then
+            echo "opencli bin missing: $root/bin/opencli"
+            exit 1
+          fi
+          "$root/bin/opencli" --version
 
       - name: Inspect workbench install
         if: always()

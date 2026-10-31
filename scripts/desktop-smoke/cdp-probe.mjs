@@ -22,6 +22,20 @@ async function dumpPreflight(cdp, label) {
   console.log(`PREFLIGHT_${label}: ${(result.result?.value ?? '').slice(0, 6000)}`);
 }
 
+async function preflightOf(cdp) {
+  const result = await cdp.send('Runtime.evaluate', {
+    expression: `fetch('/workbench/api/preflight').then((r) => r.json()).then((value) => JSON.stringify(value)).catch(() => '')`,
+    awaitPromise: true,
+    returnByValue: true,
+  });
+  const raw = result.result?.value ?? '';
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 async function pagesOf() {
   const response = await fetch(`http://127.0.0.1:${port}/json`);
   return response.json();
@@ -153,17 +167,30 @@ if (installViaUi) {
     console.log(`install wait ${i + 1}s: ${last.slice(-300).replaceAll('\n', ' | ')}`);
     if (/Enable now|Installed|failed|Failed|错误|失败/u.test(last)) break;
   }
+  if (!/Enable now|Installed/u.test(last)) {
+    throw new Error(`workbench plugin install did not finish: ${last.slice(-400)}`);
+  }
   if (/Enable now/u.test(last)) await step('enable now', clickText('Enable now'));
   await step('close dialog', `(() => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); return 'escape'; })()`);
   await sleep(5000);
   const gateShot = shot.replace(/\.png$/u, '-gate.png');
   const gateOpenShot = shot.replace(/\.png$/u, '-gate-open.png');
+  const failedShot = shot.replace(/\.png$/u, '-failed.png');
+  const continueTexts = ['Enter the workbench anyway', '仍然进入工作台'];
   let gateCaptured = false;
   for (let i = 0; i < (quick ? 12 : 72); i += 1) {
     const current = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
     const body = current.result?.value ?? '';
-    console.log(`health wait ${i * 5}s: ${body.slice(-700).replaceAll('\n', ' | ')}`);
-    if (!gateCaptured && body.includes('›')) {
+    const snapshot = await preflightOf(cdp);
+    const phase = snapshot?.phase ?? '';
+    console.log(`health wait ${i * 5}s [${phase}]: ${body.slice(-700).replaceAll('\n', ' | ')}`);
+    if (phase === 'failed') {
+      const failedImage = await cdp.send('Page.captureScreenshot', { format: 'png' });
+      fs.writeFileSync(failedShot, Buffer.from(failedImage.data, 'base64'));
+      await dumpPreflight(cdp, 'FAILED');
+      throw new Error(`preflight failed: ${failedShot}`);
+    }
+    if (!gateCaptured && (body.includes('›') || /Check the environment|检查环境/u.test(body))) {
       const gateImage = await cdp.send('Page.captureScreenshot', { format: 'png' });
       fs.writeFileSync(gateShot, Buffer.from(gateImage.data, 'base64'));
       console.log(`GATE_SCREENSHOT: ${gateShot} (${fs.statSync(gateShot).size} bytes)`);
@@ -180,6 +207,12 @@ if (installViaUi) {
       gateCaptured = true;
       await dumpPreflight(cdp, 'AT_GATE');
       if (quick) break;
+    }
+    const continueText = continueTexts.find((text) => body.includes(text));
+    if (continueText !== undefined) {
+      await step('enter anyway', clickText(continueText));
+      await sleep(5000);
+      continue;
     }
     if (!/Preparing the workbench|准备工作台/u.test(body)) break;
     await sleep(5000);
@@ -199,6 +232,11 @@ if (installViaUi) {
     await sleep(5000);
   }
   await dumpPreflight(cdp, 'AFTER_GATE');
+  const finalSnapshot = await preflightOf(cdp);
+  console.log(`PREFLIGHT_FINAL_PHASE: ${finalSnapshot?.phase ?? 'unknown'}`);
+  if (finalSnapshot?.phase !== 'ready') {
+    throw new Error(`preflight not ready: ${finalSnapshot?.phase ?? 'unknown'}`);
+  }
   const final = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
   console.log('FINAL_BODY_START');
   console.log((final.result?.value ?? '').slice(-2500));
