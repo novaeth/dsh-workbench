@@ -185,7 +185,34 @@ const protocolsStayCanonical = createRule({
   },
 });
 
-const MODULE_RULES = [modelStaysPure, componentsStayBrowser, protocolsStayCanonical];
+const TEST_FILE = /\.(?:test|spec)\.[cm]?[jt]sx?(?:\.tpl)?$/;
+const TESTS_HOME = /(?:^|\/)__tests__\//;
+
+const testsLiveInFolders = createRule({
+  id: 'S74',
+  domain: 'structure',
+  level: 'L2',
+  severity: 'error',
+  title: '测试文件住在 __tests__ 目录里',
+  hint: '测试与被测代码物理分开：挪进同目录的 __tests__/，相对路径的 import 各退一级。',
+  run(ctx) {
+    const findings = [];
+    for (const record of ctx.records) {
+      if (!TEST_FILE.test(record.rel)) continue;
+      if (TESTS_HOME.test(record.rel)) continue;
+      findings.push({
+        rule: 'S74',
+        file: record.rel,
+        line: 1,
+        text: `测试文件不在 __tests__ 目录里：${record.rel}`,
+        hint: '挪进同目录的 __tests__/，相对路径的 import 各退一级。',
+      });
+    }
+    return findings;
+  },
+});
+
+const MODULE_RULES = [modelStaysPure, componentsStayBrowser, protocolsStayCanonical, testsLiveInFolders];
 
 export function moduleArch(options = {}) {
   const {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { headlineOf, runIsLive, sampleFlow, type SampleRun } from './flow';
+import { headlineOf, runIsLive, sampleFlow, type SampleRun } from '../flow';
 
 const run = (over: Partial<SampleRun> = {}): SampleRun => ({
   id: 'run-1',

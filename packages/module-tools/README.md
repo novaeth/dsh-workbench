@@ -120,12 +120,13 @@ export default moduleArch();
 | `src/components/**` | 2 | 浏览器侧视图件；样式与它同目录（`X.module.css`） |
 | `src/host.ts` · `src/client.tsx` | 10 | 两个面 |
 | `src/host/**` | 10 | 宿主侧内部实现（按需出现）：`moduleArch()` 默认就认这一层；对外仍只有 `src/host.ts` 一个面 |
-| `**/*.test.ts(x)` | 99 | 测试 |
+| `src/**/__tests__/**` | 99 | 测试：住**被测代码同目录**的 `__tests__/`；`.test.ts(x)` 散在 `src/` 里判 S74 |
 
 两个运行时靠另一条规则隔离：`src/components/**` 整片算浏览器面，宿主侧 import 一个组件是硬红
 （层号拦不住它：components 第 2 层、host 第 10 层）。`src/host/**` 与两个面同层（10），
 所以浏览器面从它 import 时层号不报红 —— 运行时边界要自己守。内置阈值比 arch-guard 默认更严：
-文件与视图各 200 行、函数 80 行；`src/model/**` 有文件就必须有测试。
+文件与视图各 200 行、函数 80 行；`src/model/**` 有文件就必须有测试（`__tests__/` 下 —— M08），
+测试文件不在 `__tests__/` 里判 S74。
 
 要开口子**从参数进**（别改判据；每条口子都有名字，评审看得见）：
 
@@ -300,7 +301,7 @@ dsh-wb-module design accept   # 在真卡片上逐条走通后打勾
 没人付，所以不再有 `minimal` 空壳；要空骨架就从 `diy` 删掉数据源那几段。
 
 它是**分层多文件**骨架：纯逻辑住 `src/model/**`、视图件与同目录样式住 `src/components/**`、
-文案住 `src/messages.ts`，两个面只剩注册与交 props；宿主侧内部实现住 `src/host/**`
+文案住 `src/messages.ts`，测试住被测代码同目录的 `__tests__/`，两个面只剩注册与交 props；宿主侧内部实现住 `src/host/**`
 （`moduleArch()` 默认就认这一层）。带一份 `arch.config.mjs` 与两行的
 `eslint.config.mjs`。
 

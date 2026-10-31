@@ -65,7 +65,7 @@ vi.mock('@deepseek-ai/dsh-client-ui-primitives', () => ({
   Button: () => null,
 }));
 
-import { OverviewCard } from './OverviewCard';
+import { OverviewCard } from '../OverviewCard';
 
 function textOf(value: unknown, out: string[] = []): string[] {
   if (typeof value === 'string') {

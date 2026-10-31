@@ -7,7 +7,7 @@ import {
   applyPrefs,
   prefsOf,
   type PrefStore,
-} from './prefs';
+} from '../prefs';
 
 function memoryStore(initial: Record<string, unknown> = {}): PrefStore & { readonly files: Map<string, unknown> } {
   const files = new Map<string, unknown>(Object.entries(initial));

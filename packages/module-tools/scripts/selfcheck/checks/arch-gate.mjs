@@ -22,7 +22,7 @@ function runCheck(probe, workspace, only) {
 export const checks = [
   {
     title:
-      '第十二条判据（arch）：带 arch.config.mjs 的模块 ✔；表外目录 / 巨文件 / 跨运行时 / 模型层没测试逐条判红；测试文件与 sync 生成物不吃 S16 / 不撞 S01；拿走配置是「不适用」不是红',
+      '第十二条判据（arch）：带 arch.config.mjs 的模块 ✔；表外目录 / 巨文件 / 跨运行时 / 模型层没测试 / 测试不在 __tests__ 逐条判红；__tests__ 下的测试不吃 S16 / 不撞 S01；sync 生成物也不吃 S16；拿走配置是「不适用」不是红',
     run(ctx, report) {
       const workspace = mkdtempSync(join(tmpdir(), 'dsh-wb-arch-'));
       const probe = join(workspace, 'packages', 'module-demo');
@@ -99,15 +99,21 @@ export const checks = [
         rmSync(big, { force: true });
 
         const bulky = `${Array.from({ length: 260 }, (_unused, index) => `export const t${String(index)} = ${String(index)};`).join('\n')}\n`;
-        const bigTest = join(probe, 'src', 'components', 'Big.test.ts');
+        mkdirSync(join(probe, 'src', 'components', '__tests__'), { recursive: true });
+        const bigTest = join(probe, 'src', 'components', '__tests__', 'Big.test.ts');
         writeFileSync(bigTest, bulky);
-        expectGreen('301 行的后缀式测试文件');
+        expectGreen('__tests__ 下的后缀式测试文件');
         rmSync(bigTest, { force: true });
 
         const renamed = join(probe, 'src', 'components', 'Big2.ts');
         writeFileSync(renamed, bulky);
         expectRed('同一份内容改名成产品代码', ['S16']);
         rmSync(renamed, { force: true });
+
+        const mislaidTest = join(probe, 'src', 'components', 'Probe.test.ts');
+        writeFileSync(mislaidTest, 'export const probe = 1;\n');
+        expectRed('测试不在 __tests__ 里', ['S74', '测试文件']);
+        rmSync(mislaidTest, { force: true });
 
         mkdirSync(join(probe, 'src', '__tests__'), { recursive: true });
         writeFileSync(join(probe, 'src', '__tests__', 'helper.ts'), bulky);
@@ -140,8 +146,8 @@ export const checks = [
         report(
           '第十二条判据（arch）的正负例都对',
           true,
-          '正例 5（模板骨架 / sync 生成的 declared-tools.ts / 后缀式测试文件 / __tests__ 下的脚手架 / 平台种子词进 dependencies）' +
-            '+ 负例 10（S01 / S16 / 改名成产品代码仍 S16 / S23 / M08 / S71 / S72 / S73 / 非种子第三方依赖 P01 / deny 库 P02）+ 无配置的「不适用」都对',
+          '正例 5（模板骨架 / sync 生成的 declared-tools.ts / __tests__ 下的后缀式测试文件 / __tests__ 下的脚手架 / 平台种子词进 dependencies）' +
+            '+ 负例 11（S01 / S16 / 改名成产品代码仍 S16 / S23 / M08 / S71 / S72 / S73 / S74 / 非种子第三方依赖 P01 / deny 库 P02）+ 无配置的「不适用」都对',
         );
       } finally {
         rmSync(workspace, { recursive: true, force: true });

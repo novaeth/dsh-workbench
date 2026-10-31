@@ -326,7 +326,7 @@ packages/core/src/
 | S68 | 跨平台能力走登记的首选方案 |
 | S71 | `kernel/host` 与 `kernel/client` 不互相 import |
 | S72 | 模块视图不碰宿主面：components 不许 import 宿主入口 / `shared/host` / dsh 原语 / `node:*` |
-| S73 | 模块不本地重声明协议；协议从 `@dsh-workbench/core/contract` 取 |
+| S73 | 测试文件住在 `__tests__` 目录里；测试与被测代码物理分开，不散在源码旁 |
 | S23 | 面文件只导出面值；跨运行时走错面当场红 |
 
 模块包不在 core 层表里；它们由模块工具链的十三条判据与各自 `check` 守。
@@ -884,12 +884,13 @@ build ──► typecheck ──► lint ──► coverage ──► check:gate
 pnpm run check:gates:target
 ```
 
-当前目标报告是 **33 绿 / 0 红**。重点判据：
+当前目标报告是 **34 绿 / 0 红**。重点判据：
 
 | 判据 | 判什么 |
 |---|---|
 | `WB-A1` | 只有组合根可以 import `adapters-default` / 具体 adapter |
 | `SH-A1` | shared 不依赖、不 import adapter / core；`shared/src/adapters` 为空 |
+| `TEST-1` | 全仓测试文件都在同目录的 `__tests__/` 下（模板 `.tpl` 也算） |
 | `SK-2 / SK-3` | skill 链接与 SKILL.md 索引 |
 | `CHAIN-1/2` | 目标报告入口与并入时机 |
 | `COV-1` | 关键文件覆盖率 |

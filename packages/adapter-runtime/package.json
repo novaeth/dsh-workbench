@@ -13,6 +13,7 @@
   "files": [
     "dist",
     "channel",
+    "!channel/__tests__/**",
     "bin"
   ],
   "scripts": {

@@ -56,13 +56,13 @@ pnpm lint         # dsh-wb-module lint（`--fix` 就地改文件；`check` 永�
 | `cordis.patch.yml` | 插进 dsh 组合的补丁 | — |
 | `design.json` | 三张表 + 状态矩阵 + 数据源记录 + 验收清单（**唯一真相**，上面那段由它生成；`dsh-wb-module design check/render/accept` 读写它） | — |
 | `src/model/overview.ts` | 纯逻辑：类型 + 五态状态机 + `formatBytes`。两个运行时都读得到，不碰 react / kit / dsh / `node:*` | 1 |
-| `src/model/overview.test.ts` | 模型层的配对测试（有 `src/model/**` 就必须有 —— `arch` 的 M08） | 99 |
+| `src/model/__tests__/overview.test.ts` | 模型层的配对测试（有 `src/model/**` 就必须有 —— `arch` 的 M08） | 99 |
 | `src/model/flow.ts` | 样板流程的纯逻辑：`FlowDefinition` + 五态标题 / 是否还在跑；不碰宿主 | 1 |
-| `src/model/flow.test.ts` | 流程模型的配对测试 | 99 |
+| `src/model/__tests__/flow.test.ts` | 流程模型的配对测试 | 99 |
 | `src/model/notes.ts` | 笔记的纯逻辑：校验 / 读回 / 最多 20 条 | 1 |
-| `src/model/notes.test.ts` | 笔记模型的配对测试 | 99 |
+| `src/model/__tests__/notes.test.ts` | 笔记模型的配对测试 | 99 |
 | `src/model/prefs.ts` | 配置的纯逻辑：按工作区存 `limit`（1..50），坏值回默认 | 1 |
-| `src/model/prefs.test.ts` | 配置模型的配对测试 | 99 |
+| `src/model/__tests__/prefs.test.ts` | 配置模型的配对测试 | 99 |
 | `src/messages.ts` | 卡片那几句文案（zh / en），键带 `<unit>.` 前缀 | 1 |
 | `src/declared-tools.ts` | 清单里工具名的生成物（`dsh-wb-module sync` 写；代码只引 `DECLARED_TOOLS.run.name` / `DECLARED_TOOLS.addNote.name`，不写字面量） | 1 |
 | `src/components/OverviewCard.tsx` | 卡片：`Card` 壳 + 五态 + 最大的几个文件 + 长任务行 + 笔记（写）/「显示几个」配置 | 2 |
@@ -72,13 +72,13 @@ pnpm lint         # dsh-wb-module lint（`--fix` 就地改文件；`check` 永�
 | `src/components/NotesSection.tsx` | 笔记那一块：输入 + 存一条 + 列表 | 2 |
 | `src/components/PrefsSection.tsx` | 「最大的几个文件」配置（`SelectField`，按工作区存） | 2 |
 | `src/components/OverviewCard.module.css` | 这个组件自己的样式（CSS Modules，构建时类名按路径哈希）—— **样式跟组件同目录** | 2 |
-| `src/components/OverviewCard.test.ts` | 这张卡五态各画得出来 + 写失败留在卡上（测试跟着被测的东西住）；流程 / 笔记 / 配置的接线由 `plugin.test.ts` 与 smoke 覆盖 | 99 |
+| `src/components/__tests__/OverviewCard.test.ts` | 这张卡五态各画得出来 + 写失败留在卡上（测试住同目录的 `__tests__/`）；流程 / 笔记 / 配置的接线由 `plugin.test.ts` 与 smoke 覆盖 | 99 |
 | `src/host.ts` | 宿主面：接线 + 三条只读路由（`overview` / `notes` / `prefs`）+ 挂工具 / 长任务 / 动作通道 / `prefs` / 审批口径 | 10 |
 | `src/host/overview.ts` | 宿主侧内部实现：`readOverview()`（真读目录）+ 路由回答 | 10 |
 | `src/host/sample.ts` | 宿主侧内部实现：样板流程的动作、长任务、只读工具 | 10 |
 | `src/host/notes.ts` | 宿主侧内部实现：笔记读写（`deps.store`）+ 写工具 + 动作通道 | 10 |
 | `src/client.tsx` | 浏览器面：**只剩面** —— 注册 + 把 props 交给 `components/OverviewCard` | 10 |
-| `src/plugin.test.ts` | 面注册 + 路由真读 + 工具注册 + 流程真跑 + 笔记/配置/审批 | 99 |
+| `src/__tests__/plugin.test.ts` | 面注册 + 路由真读 + 工具注册 + 流程真跑 + 笔记/配置/审批 | 99 |
 | `scripts/smoke.mjs` | 接线自检：卡片进没进外壳、工具注册、流程真跑、笔记真写、配置存得住；真读断言在 `smoke.assert.mjs` | — |
 | `scripts/smoke.assert.mjs` | **这个模块自己的**真读断言：换数据源时改这份，别删 smoke 里的调用 | — |
 | `CHANGELOG.md` | 版本记录（`dsh-wb-module release` 追加；`package.json.files` 里带它） | — |
@@ -160,8 +160,8 @@ GET /api/__UNIT__/overview?path=<绝对路径>&limit=<1..50>
 ## 卡片画哪五态
 
 `src/model/overview.ts` 的 `overviewStateOf({ phase, value, error })` 是一条纯函数，
-每个分支各对应一屏（`src/model/overview.test.ts` 直接断言这条函数，
-`src/components/OverviewCard.test.ts` 再把每一屏画一遍）：
+每个分支各对应一屏（`src/model/__tests__/overview.test.ts` 直接断言这条函数，
+`src/components/__tests__/OverviewCard.test.ts` 再把每一屏画一遍）：
 
 | 态 | 什么时候 | 画什么 |
 |---|---|---|

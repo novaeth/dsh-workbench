@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -207,8 +207,9 @@ export function missingModelTests(files, base = ROOT) {
   for (const file of files) {
     const rel = relOf(file, base);
     if (!/(?:^|\/)src\/model\/[^/]+\.ts(?:\.tpl)?$/.test(rel)) continue;
-    const test = file.replace(/\.ts(\.tpl)?$/, '.test.ts$1');
-    if (!existsSync(test)) out.push(rel);
+    const sibling = file.replace(/\.ts(\.tpl)?$/, '.test.ts$1');
+    const nested = join(dirname(file), '__tests__', basename(file).replace(/\.ts(\.tpl)?$/, '.test.ts$1'));
+    if (!existsSync(sibling) && !existsSync(nested)) out.push(rel);
   }
   return out;
 }

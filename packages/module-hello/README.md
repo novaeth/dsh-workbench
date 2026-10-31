@@ -26,7 +26,7 @@ dsh plugin --profile workbench add @dsh-workbench/module-hello
 | 浏览器面 | `src/client.tsx` | 把 `{ unit, messages, card }` 注册进外壳；卡片用 kit 的 `Card` |
 | 文案 | `src/messages.ts` | zh / en 两份字典，键名以前缀分域 |
 | 接线 | `cordis.patch.yml` | 把自己插进 profile 的组合图 |
-| 测试 | `src/plugin.test.ts` | 断言插件名、注入面、两个面各注册一次 |
+| 测试 | `src/__tests__/plugin.test.ts` | 断言插件名、注入面、两个面各注册一次 |
 
 两个面都只 `inject: ['workbenchUnits']` —— 外壳交出来的那个服务。宿主侧拿不到服务时打一条
 warn 就退，不会把整个 entry 拖挂。
@@ -38,7 +38,7 @@ src/
   host.ts        宿主面：注册单元
   client.tsx     浏览器面：注册卡片
   messages.ts    文案（zh / en）
-  plugin.test.ts 两个面的注册测试
+  __tests__/plugin.test.ts 两个面的注册测试
 scripts/smoke.mjs  构建后冒烟：产物能 require、导出齐全
 cordis.patch.yml   把自己插进 profile 组合图
 arch.config.mjs    一行：moduleArch()

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatBytes, overviewStateOf } from './overview';
+import { formatBytes, overviewStateOf } from '../overview';
 
 describe('overviewStateOf', () => {
   it('待机就是待机', () => {

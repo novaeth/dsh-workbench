@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addNoteOf, noteProblemOf, notesOf } from './notes';
+import { addNoteOf, noteProblemOf, notesOf } from '../notes';
 
 describe('notesOf', () => {
   it('没存过就是空数组', () => {

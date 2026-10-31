@@ -43,12 +43,12 @@ vi.mock('@deepseek-ai/dsh-client-ui-primitives', () => ({
   Button: () => null,
 }));
 
-import { apply, inject, name, OVERVIEW_ROUTE, readOverview } from './host';
-import { apply as applyClient, inject as injectClient } from './client';
-import { DECLARED_TOOLS } from './declared-tools';
-import { RUN_RESOURCE } from './model/flow';
-import { NOTES_ROUTE, NOTE_RESOURCE } from './model/notes';
-import { PREFS_RESOURCE, PREFS_ROUTE } from './model/prefs';
+import { apply, inject, name, OVERVIEW_ROUTE, readOverview } from '../host';
+import { apply as applyClient, inject as injectClient } from '../client';
+import { DECLARED_TOOLS } from '../declared-tools';
+import { RUN_RESOURCE } from '../model/flow';
+import { NOTES_ROUTE, NOTE_RESOURCE } from '../model/notes';
+import { PREFS_RESOURCE, PREFS_ROUTE } from '../model/prefs';
 
 interface Mounted {
   readonly routes: Record<string, (search: URLSearchParams) => Promise<unknown>>;

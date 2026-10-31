@@ -471,29 +471,6 @@ const sizeFamilyHasNoLiterals = createRule({
   },
 });
 
-const testsLiveInFolders = {
-  id: 'S73',
-  title: '测试文件住在 __tests__ 目录里',
-  level: 'L2',
-  domain: 'structure',
-  severity: 'error',
-  run(ctx) {
-    const findings = [];
-    for (const record of ctx.records) {
-      if (!/\.test\.(ts|tsx)$/.test(record.rel)) continue;
-      if (record.rel.includes('__tests__/')) continue;
-      findings.push({
-        rel: record.rel,
-        line: 1,
-        message: `测试文件不在 __tests__ 目录里：${record.rel}`,
-        hint: '测试与被测代码分开放：把文件挪进同目录的 __tests__/，相对路径的 import 各退一级。',
-      });
-    }
-    return findings;
-  },
-};
-
-
 const shellNamesNoRuntime = {
   id: 'S74',
   title: '外壳的文案里不点名运行时（话与命令面都跟着适配器走）',
@@ -536,7 +513,6 @@ export const unitRules = [
   shellBranchesOnRuntimeId,
   shellTestsUseFakeSet,
   sizeFamilyHasNoLiterals,
-  testsLiveInFolders,
   shellNamesNoRuntime,
 ];
 

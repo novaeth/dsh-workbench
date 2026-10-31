@@ -9,7 +9,7 @@
 1. `pnpm build` —— 产出 `dist/host.js` + 套了 loader 壳的 `client.js`；产物由它生成。
 2. `pnpm check` —— 十三条判据，读的就是上一步的产物。单跑一条用 `pnpm check --only <判据名>`；
    **全绿**才算这件活做完。怎么读红、常见红：`@dsh-workbench/core/skills/workbench-module-diy/REVIEW.md`。
-3. `pnpm test` —— 与改动同目录的 `*.test.ts`；新逻辑配对应用例，**全绿**才算完。
+3. `pnpm test` —— `src/**/__tests__/` 下、与改动同目录的 `*.test.ts`；新逻辑配对应用例，**全绿**才算完。
 
 `pnpm selfcheck` = build + `design check` + smoke；`design.json` 里的（待填）填完才绿。
 

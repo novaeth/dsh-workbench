@@ -1,4 +1,5 @@
 import { deps, hygiene, library } from '@arch-guard/core/presets';
+import { testsLiveInFolders } from './rules/tests-in-folders.mjs';
 
 export const STACK_CAPABILITIES = {
   'cli-args': 'commander',
@@ -78,6 +79,7 @@ export function stackArch(options = {}) {
         ...roles,
       ],
       exceptions: [...exceptions],
+      customRules: [testsLiveInFolders],
       ...overrides,
     },
   };

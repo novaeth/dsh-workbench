@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { apiProblemOf, headersOf, jarOf, perform, placeOf, urlOf } from '../channel/core.js';
+import { apiProblemOf, headersOf, jarOf, perform, placeOf, urlOf } from '../core.js';
 
 function stubFetch(reply) {
   const calls = [];

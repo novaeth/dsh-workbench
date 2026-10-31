@@ -2,6 +2,7 @@ import { createRule } from '@arch-guard/core';
 import { deps, designSystem, i18n, library, noneI18nKit } from '@arch-guard/core/presets';
 import { kernelRules } from './arch/rules/kernel.mjs';
 import { STACK_CAPABILITIES } from '../../scripts/arch/stack.mjs';
+import { testsLiveInFolders } from '../../scripts/arch/rules/tests-in-folders.mjs';
 
 const entryKeepsHostOut = createRule({
   id: 'S70',
@@ -70,7 +71,7 @@ export default {
   ],
   overrides: {
     include: ['src/**'],
-    customRules: [entryKeepsHostOut, ...kernelRules],
+    customRules: [entryKeepsHostOut, ...kernelRules, testsLiveInFolders],
     exceptions: [
       {
         rule: 'S16',

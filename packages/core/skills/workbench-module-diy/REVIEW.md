@@ -15,7 +15,7 @@
 | `markers` | 私有源 / 私网地址 / 内网域名进入公开包 | 不进包；配置落到模块配置面；组织特有的词表由 `DSH_WB_INTERNAL_MARKERS` 提供 |
 | `alias` | `@/` 指向工作台源码 | `@/` 只指自己 `src/` |
 | `style` | 模块定义 `.wb-*`；手写行 / 操作区 / 表单（F1–F4）；`--dsw-*` / `--wb-*` 不在现读的令牌清单 | 样式走 `*.module.css`（无 `wb-` 前缀）；借外壳类用 `:global(.wb-…)`；行 / 操作区用 `FormRow(s)` / `FormActions`，表单用 `Form`（[KIT.md](KIT.md) §5）。F4：裸 `<form` 或手写 `wb-formRow` / `wb-formRows` / `wb-field`。令牌名现查：`workbench_diy_components` `scope: 'tokens'` |
-| `arch` | 结构：巨文件 / 反向依赖 / 跨运行时 / 表外目录 / 模型无测试；依赖白名单（含 execa / which / proper-lockfile / write-file-atomic / dayjs / zod）+ `shell-quote` / `shelljs` / `zx` deny；能力首选 dayjs / structuredClone / URLSearchParams / zod（日期已是硬门禁） | 见「第十二条」 |
+| `arch` | 结构：巨文件 / 反向依赖 / 跨运行时 / 表外目录 / 模型无测试 / 测试住 `__tests__`；依赖白名单（含 execa / which / proper-lockfile / write-file-atomic / dayjs / zod）+ `shell-quote` / `shelljs` / `zx` deny；能力首选 dayjs / structuredClone / URLSearchParams / zod（日期已是硬门禁） | 见「第十二条」 |
 | `lint` | 语法：`as any` / `console` / `debugger` / 颜色字面量 / `!important` / **直接读 `process.platform` / `versions.electron` / `dshDesktop` / `navigator.userAgent`** / react-hooks | 见「第十三条」 |
 
 ## 第十二条 `arch`
@@ -35,7 +35,8 @@ export default moduleArch();
 | `S21` 反向依赖 | 低层引高层（组件引 `../host`） | 被引项下沉 `model/`；只依赖层号 ≤ 自身 |
 | `S23` 跨运行时 | 宿主 import `src/components/**` 或反向 | 组件归 client 面；两侧经服务名 |
 | `S16` 超长 | 文件 >200 行 / 函数 >80（测试豁免） | 拆；或传 `fileLines` / `functionLines`；单文件用 `exceptions` |
-| `M08` 无测试 | `src/model/**` 无配对测试 | 补 `src/model/X.test.ts` |
+| `S74` 测试不在 `__tests__` | 测试文件散在 `src/` 里 | 挪进同目录的 `__tests__/`，相对路径的 import 各退一级 |
+| `M08` 无测试 | `src/model/**` 无配对测试 | 补 `src/model/__tests__/X.test.ts` |
 | `D12` 刻度外值 | 手写不在刻度的尺寸 | 用 `--dsw-*` 或刻度值 |
 | `D09` `!important` | 只允许 `src/components/vendor/` | 改选择器 / 层级 |
 | `D17` 未使用类 | `*.module.css` 定义未使用 | 删除 |

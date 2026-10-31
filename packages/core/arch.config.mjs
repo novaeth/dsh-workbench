@@ -1,6 +1,7 @@
 import { unitRules } from './arch/rules/units.mjs';
 import { kernelRules } from './arch/rules/kernel.mjs';
 import { STACK_CAPABILITIES } from '../../scripts/arch/stack.mjs';
+import { testsLiveInFolders } from '../../scripts/arch/rules/tests-in-folders.mjs';
 import {
   callSites,
   cssModulesKit,
@@ -159,7 +160,7 @@ export default {
 
     addRoles: [{ id: 'core:test-setup', pattern: 'vitest.setup.ts', layer: 99, exclusive: true }],
 
-    customRules: [...unitRules, ...kernelRules],
+    customRules: [...unitRules, ...kernelRules, testsLiveInFolders],
 
     structure: {
       runtimes: [

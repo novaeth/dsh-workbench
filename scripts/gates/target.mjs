@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, statSync, writ
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 
+import { misplacedTests } from '../arch/rules/tests-in-folders.mjs';
 import {
   ROOT,
   SHARED_SRC,
@@ -31,10 +32,29 @@ const CORE_CONTRACT = join(WORKBENCH_SRC, 'kernel/contract/index.ts');
 const MODULE_TOOLS_SRC = join(ROOT, 'packages/module-tools/src');
 const ARCHITECTURE = join(ROOT, 'ARCHITECTURE.md');
 const ADAPTER_PACKAGES = ['adapter-runtime', 'adapter-supply', 'adapter-profile', 'adapter-probe', 'adapters-default'].map((name) => join(ROOT, 'packages', name));
+const TEST_SCAN_ROOTS = [join(ROOT, 'packages'), join(ROOT, 'scripts')];
+const TEST_SCAN_SKIP = new Set(['node_modules', 'dist', 'coverage', 'site-dist', '.git', '.verify']);
 
 
 function finding(file, line, text, fix) {
   return { file, line, text, fix };
+}
+
+function repoFiles() {
+  const out = [];
+  const visit = (here) => {
+    for (const entry of readdirSync(here, { withFileTypes: true })) {
+      if (TEST_SCAN_SKIP.has(entry.name)) continue;
+      const full = join(here, entry.name);
+      if (entry.isDirectory()) {
+        visit(full);
+        continue;
+      }
+      out.push(relative(ROOT, full).split('\\').join('/'));
+    }
+  };
+  for (const base of TEST_SCAN_ROOTS) visit(base);
+  return out;
 }
 
 function pass(note = '') {
@@ -485,7 +505,7 @@ const GATES = [
     title: '模块 model 有配对测试',
     run() {
       const findings = missingModelTests(moduleSources()).map((rel) =>
-        finding(rel, 1, 'model 没有配对测试', '加 model.test.ts；不要用空断言凑覆盖率'),
+        finding(rel, 1, 'model 没有配对测试', '加 src/model/__tests__/model.test.ts；不要用空断言凑覆盖率'),
       );
       return findings.length === 0 ? pass('model 都有测试') : fail(findings);
     },
@@ -495,10 +515,27 @@ const GATES = [
         const file = join(tmp, 'src/model/probe.ts');
         mkdirSync(dirname(file), { recursive: true });
         writeFileSync(file, 'export const probe = 1;\n');
-        return missingModelTests([file], tmp).length === 1;
+        const missing = missingModelTests([file], tmp).length;
+        const nested = join(tmp, 'src/model/__tests__/probe.test.ts');
+        mkdirSync(dirname(nested), { recursive: true });
+        writeFileSync(nested, '');
+        return missing === 1 && missingModelTests([file], tmp).length === 0;
       } finally {
         rmSync(tmp, { recursive: true, force: true });
       }
+    },
+  },
+  {
+    id: 'TEST-1',
+    title: '测试文件住在 __tests__ 目录里',
+    run() {
+      const findings = misplacedTests(repoFiles()).map((rel) =>
+        finding(rel, 1, '测试文件不在 __tests__ 目录里', '挪进同目录的 __tests__/，相对路径的 import 各退一级'),
+      );
+      return findings.length === 0 ? pass('测试文件都在 __tests__ 里') : fail(findings);
+    },
+    selfTest() {
+      return misplacedTests(['src/a/b.test.ts', 'src/a/__tests__/b.test.ts']).length === 1;
     },
   },
   {
