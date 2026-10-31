@@ -167,11 +167,19 @@ jobs:
           echo '--- logs ---'
           find "$HOME/.dsh" "$HOME/Library/Logs" -maxdepth 4 -type f -iname '*dsh*' -o -iname '*deepseek*' 2>/dev/null | head -40 || true
 
-      - name: Assert opencli installed
+      - name: Wait for opencli install
         shell: bash
         run: |
-          test -f "$HOME/.dsh/workbench/opencli/toolchain/node_modules/@jackwener/opencli/package.json"
-          echo 'opencli toolchain ok'
+          for i in $(seq 1 30); do
+            if test -f "$HOME/.dsh/workbench/opencli/toolchain/node_modules/@jackwener/opencli/package.json"; then
+              echo "opencli toolchain ok after ${i}0s"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo 'opencli toolchain missing after 300s'
+          find "$HOME/.dsh/workbench/opencli" -maxdepth 4 -print 2>/dev/null | head -50
+          exit 1
       - name: Stop Desktop
         if: always()
         shell: bash
