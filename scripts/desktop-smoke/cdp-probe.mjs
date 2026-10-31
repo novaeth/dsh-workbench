@@ -43,13 +43,11 @@ const welcome = pages.find((one) => one.type === 'page' && one.url.includes('wel
 if (welcome !== undefined) {
   const cdp = await connect(welcome.webSocketDebuggerUrl);
   const skipped = await cdp.send('Runtime.evaluate', {
-    expression: `(async () => {
+    expression: `(() => {
       document.querySelector('#api-key')?.click();
-      await new Promise((resolve) => setTimeout(resolve, 700));
-      document.querySelector('#skip-key')?.click();
-      return 'clicked';
+      setTimeout(() => document.querySelector('#skip-key')?.click(), 700);
+      return 'scheduled';
     })()`,
-    awaitPromise: true,
     returnByValue: true,
   });
   console.log(`welcome skip: ${skipped.result?.value ?? 'unknown'}`);
