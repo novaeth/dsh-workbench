@@ -1,0 +1,16 @@
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +17
++++++++++++++++++
+Packages are cloned from the content-addressable store to the virtual store.
+  Content-addressable store is at: /Users/runner/work/_temp/opencli-probe/pnpm-store/v11
+  Virtual store is at:             node_modules/.pnpm
+Progress: resolved 17, reused 0, downloaded 17, added 16
+Progress: resolved 17, reused 0, downloaded 17, added 17, done
+.../node_modules/@jackwener/opencli postinstall$ node scripts/postinstall.js || true; node scripts/fetch-adapters.js || true
+.../node_modules/@jackwener/opencli postinstall: Done
+
+dependencies:
++ @jackwener/opencli 1.8.8 (2.0.2 is available)
+
+Done in 2.4s using pnpm v11.28.5
+elapsed=2s
