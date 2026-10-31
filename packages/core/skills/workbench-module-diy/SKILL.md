@@ -40,7 +40,8 @@ description: 在工作台里把当前面板调明白，或者给它造一块新�
    → `dsh-wb-module sync` → `data.request`），配方盖不住的写 `custom: { why }`；写三态。
    写操作先读 [WRITES.md](WRITES.md) 四步 + 执行体；有写工具就把审批屏画进 ASCII（[DESIGN.md](DESIGN.md) §3 末节）。
 4. **套模板** —— [BUILD.md](BUILD.md) §1–§2：`pnpm exec dsh-wb-module init <unit> --template diy`，
-   先把 `design.json` 改成问出来的那份，再改数据源与渲染。init 后 `pnpm install`。不从零写。
+   先把 `design.json` 改成问出来的那份，再改数据源与渲染。依赖由 setup 装好，一般不用再装；
+   确实要装就在**工作区根**跑 `pnpm install`（会话沙箱里跑会 EPERM：link 目标在可写根之外）。不从零写。
    改渲染时文案按 [COPY.md](COPY.md)：先判读者（卡片给人 / 描述给 agent / 原始输出进 detail）。
 5. **过门禁** —— `dsh-wb-module build` + `check` + `design check`；红了自己修（[REVIEW.md](REVIEW.md)），
    不把报错贴给用户。
@@ -83,7 +84,7 @@ description: 在工作台里把当前面板调明白，或者给它造一块新�
 1. `dsh-wb-module check --only <判据>` 的报错原文。
 2. kit / dsh 原语 / CSS 令牌：`workbench_diy_components`（DIY 会话；令牌给 `scope: 'tokens'`，现读现给）；
    工程域 `check --only kit` / `--only primitives`。
-3. 模板：`node_modules/@dsh-workbench/module-tools/template-diy/` 与 `template/`。
+3. 模板：`node_modules/@dsh-workbench/module-tools/template-diy/`。
 4. 安装包的类型面：`node_modules/@dsh-workbench/core/dist/types/**`；本指引：`node_modules/@dsh-workbench/core/skills/workbench-module-diy/**`。
 
 ## 硬约束

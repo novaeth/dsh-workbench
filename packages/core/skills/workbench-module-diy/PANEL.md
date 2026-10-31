@@ -117,7 +117,7 @@ write.send({ ignored, timeoutSeconds, workspace });   // 控件：Field + TextFi
 
 ## 8 范例
 
-`template-diy/`（带数据源）与 `template/`（空壳）。
+`template-diy/`（唯一模板：真数据源 + 五态卡 + 可跑流程 / 工具样板）。
 
 ## 9 kit 不够时
 

@@ -1,84 +1,106 @@
-import { readdirSync, statSync } from 'node:fs';
-import { join } from 'node:path';
-import type { HostContext, UnitModuleFace, UnitRegistry } from '@dsh-workbench/core/contract';
-import type { OverviewFile, OverviewPayload } from './model/overview';
+import type { DshToolRegistry, UnitModuleFace } from '@dsh-workbench/core/contract';
+import {
+  defineUnitHostPlugin,
+  factOfRoute,
+  recordOf,
+  textOf,
+  writeApprovalOf,
+} from '@dsh-workbench/shared/host';
+import { DECLARED_TOOLS } from './declared-tools';
+import { RUN_RESOURCE } from './model/flow';
+import { NOTE_RESOURCE, NOTES_ROUTE, UNIT_ID } from './model/notes';
+import { PREFS_RESOURCE, PREFS_ROUTE, applyPrefs, prefsOf } from './model/prefs';
+import { createNotes } from './host/notes';
+import { createSample } from './host/sample';
+import { overviewAnswer } from './host/overview';
 
-const UNIT_ID = '__UNIT__';
+export { readOverview } from './host/overview';
+
 const PLUGIN_ID = '__NAME__';
-const DEFAULT_LIMIT = 5;
-const MAX_LIMIT = 50;
 
 export const OVERVIEW_ROUTE = `${UNIT_ID}/overview`;
 
 export type RouteHandler = (search: URLSearchParams) => Promise<unknown> | unknown;
 
-export function readOverview(path: string, limit: number): OverviewPayload {
-  const entries = readdirSync(path, { withFileTypes: true });
-  const files: OverviewFile[] = [];
-  let dirs = 0;
-  let bytes = 0;
-  for (const entry of entries) {
-    if (entry.isDirectory()) {
-      dirs += 1;
-      continue;
-    }
-    if (!entry.isFile()) continue;
-    const info = statSync(join(path, entry.name));
-    bytes += info.size;
-    files.push({ name: entry.name, bytes: info.size, mtime: new Date(info.mtimeMs).toISOString() });
-  }
-  files.sort((a, b) => b.bytes - a.bytes || a.name.localeCompare(b.name));
-  return { path, files: files.length, dirs, bytes, largest: files.slice(0, limit) };
-}
-
-function searchParam(search: URLSearchParams, name: string): string | undefined {
-  const raw = search.get(name);
-  return raw === null || raw === '' ? undefined : raw;
-}
-
-function limitOf(search: URLSearchParams): number {
-  const raw = searchParam(search, 'limit');
-  if (raw === undefined) return DEFAULT_LIMIT;
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed)) return DEFAULT_LIMIT;
-  return Math.min(MAX_LIMIT, Math.max(1, Math.trunc(parsed)));
+function pathOf(search: URLSearchParams): string {
+  return search.get('path') ?? '';
 }
 
 const face: UnitModuleFace = {
   unit: UNIT_ID,
-  mount: () => ({
-    routes: {
-      [OVERVIEW_ROUTE]: async (search: URLSearchParams) => {
-        const target = searchParam(search, 'path');
-        if (target === undefined) {
-          return { ok: false, error: { code: 'no-path', message: '没告诉我要看哪个目录' } };
-        }
-        try {
-          return { ok: true, ...readOverview(target, limitOf(search)) };
-        } catch (error) {
-          return {
-            ok: false,
-            error: {
-              code: 'overview-unreadable',
-              message: error instanceof Error ? error.message : String(error),
-            },
-          };
-        }
+  mount: (deps) => {
+    const sample = createSample(deps);
+    const notes = createNotes(deps);
+    const storeAt = (workspace: string) => deps.store.for(UNIT_ID, workspace === '' ? null : workspace);
+
+    return {
+      routes: {
+        [OVERVIEW_ROUTE]: (search: URLSearchParams) => overviewAnswer(search),
+        [NOTES_ROUTE]: (search: URLSearchParams) => {
+          const path = pathOf(search);
+          if (path === '') {
+            return { ok: false, error: { code: 'no-path', message: '没告诉我要看哪个目录' } };
+          }
+          return { ok: true, notes: notes.list(path) };
+        },
+        [PREFS_ROUTE]: (search: URLSearchParams) => ({
+          ok: true,
+          prefs: prefsOf(storeAt(search.get('workspace') ?? pathOf(search))),
+        }),
       },
-    },
-    registerTools: () => [],
-  }),
+      prefs: {
+        resource: PREFS_RESOURCE,
+        handle: (payload: unknown) => {
+          const body = recordOf(payload);
+          const workspace = textOf(body['workspace']) || textOf(body['path']);
+          if (workspace === '') {
+            return { ok: false, error: { code: 'no-workspace', message: '没告诉我要存到哪个工作区' } };
+          }
+          return { ok: true, ...applyPrefs(storeAt(workspace), payload) };
+        },
+      },
+      registerTools: () => {
+        const tools = deps.ctx.get<DshToolRegistry>('tools');
+        if (tools === undefined) {
+          deps.logger?.warn?.(`[${UNIT_ID}] 外壳没有提供 tools 服务：这两把工具注册不进去`);
+          return [];
+        }
+        return [tools.register(sample.runTool), tools.register(notes.tool)];
+      },
+      actions: [
+        {
+          resource: RUN_RESOURCE,
+          handle: (payload: unknown) => sample.startFromPayload(payload),
+        },
+        {
+          resource: NOTE_RESOURCE,
+          handle: (payload: unknown) => notes.handle(payload),
+        },
+      ],
+      factsOf: (call: { readonly source: string }) => {
+        if (call.source === DECLARED_TOOLS.addNote.name || call.source === NOTE_RESOURCE) {
+          return [factOfRoute(NOTES_ROUTE)];
+        }
+        if (call.source === PREFS_RESOURCE) return [factOfRoute(PREFS_ROUTE)];
+        if (call.source === DECLARED_TOOLS.run.name) return [];
+        return undefined;
+      },
+      ...writeApprovalOf({
+        tools: [DECLARED_TOOLS.addNote.name],
+        reason: '会往这个模块的笔记里加一条',
+        question: { zh: '把这条笔记写进去吗？', en: 'Write this note?' },
+        fallback: { zh: '只写本模块的笔记文件，不动平台', en: 'Writes only this module’s notes file' },
+        detail: { zh: '新增 1 条笔记', en: 'Add 1 note' },
+      }),
+      ...(sample.runs === undefined ? {} : { longTasks: sample.runs }),
+    };
+  },
 };
 
-export const name = PLUGIN_ID;
+const plugin = defineUnitHostPlugin({ name: PLUGIN_ID, unit: UNIT_ID, face });
 
-export const inject = ['workbenchUnits'];
+export const name = plugin.name;
 
-export function apply(ctx: HostContext): void {
-  const units = ctx.get<UnitRegistry>('workbenchUnits');
-  if (units === undefined) {
-    ctx.logger?.warn?.(`[${UNIT_ID}] 外壳没有提供 workbenchUnits 服务：这个模块装不进来`);
-    return;
-  }
-  ctx.effect(() => units.register(face), `${PLUGIN_ID}: 注册 ${UNIT_ID}`);
-}
+export const inject = plugin.inject;
+
+export const apply = plugin.apply;

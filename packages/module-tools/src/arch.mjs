@@ -17,7 +17,7 @@ import { SEED_SPECIFIERS } from './seed.mjs';
 const HOST_FACE = 'src/host.ts';
 const CLIENT_FACE = 'src/client.tsx';
 
-const LAYERS = { model: 1, components: 2 };
+const LAYERS = { model: 1, components: 2, host: 10 };
 
 const MESSAGES_ROLE = { id: 'lib:messages', pattern: 'src/messages.ts', layer: 1 };
 

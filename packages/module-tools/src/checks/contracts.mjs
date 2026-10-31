@@ -3,7 +3,13 @@ import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import { join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { buildSupplyIndex, readDeclaration, recipeProblemOf } from '@dsh-workbench/shared/host';
+import {
+  buildSupplyIndex,
+  createHostKit,
+  hostSurface,
+  readDeclaration,
+  recipeProblemOf,
+} from '@dsh-workbench/shared/host';
 import {
   DECLARED_TOOLS_FILE,
   declaredToolsProblemOf,
@@ -62,9 +68,15 @@ async function unitFaceOf(dir) {
 const OPENCLI_CATALOG_ENV = 'DSH_WB_OPENCLI_CATALOG';
 const OPENCLI_NPM_PACKAGE = '@jackwener/opencli';
 
-function isolatedRootOf() {
+function workbenchRootOf() {
+  const configured = process.env.DSH_WORKBENCH_HOME?.trim();
+  if (configured !== undefined && configured !== '') return configured;
   const home = process.env.DSH_HOME?.trim();
-  return `${home === undefined || home === '' ? join(homedir(), '.dsh') : home}/workbench/opencli`;
+  return `${home === undefined || home === '' ? join(homedir(), '.dsh') : home}/workbench`;
+}
+
+function isolatedRootOf() {
+  return `${workbenchRootOf()}/opencli`;
 }
 
 function catalogPathOf() {
@@ -225,8 +237,26 @@ function fakeWorkspaceRegistry() {
   };
 }
 
+function fakeDataReader() {
+  const missing = async () => ({
+    ok: false,
+    error: { code: 'invalid-request', message: 'gate: 没有注入 DataReader（模块只能走 deps.data 读数据）' },
+  });
+  return {
+    read: missing,
+    request: missing,
+    requestMany: async (_recipe, calls) => {
+      const out = {};
+      for (const name of Object.keys(calls)) out[name] = await missing();
+      return out;
+    },
+    submit: missing,
+  };
+}
+
 function mountOf(face, created, manifest, tools) {
-  if (face === undefined || typeof face.mount !== 'function') return undefined;
+  if (face === undefined) return {};
+  if (typeof face.mount !== 'function') return { error: '宿主面没有 mount(deps)' };
 
   const shell = fakeShell();
   const workspaceRegistry = fakeWorkspaceRegistry();
@@ -237,39 +267,45 @@ function mountOf(face, created, manifest, tools) {
     },
   };
   try {
-    return face.mount({
-      manifest,
-      ctx: {
-        get: (key) => {
-          if (key === 'tools') return toolRegistry;
-          if (key === 'shell') return shell;
-          if (key === 'workspaceRegistry') return workspaceRegistry;
-          return undefined;
+    return {
+      result: face.mount({
+        manifest,
+        ctx: {
+          get: (key) => {
+            if (key === 'tools') return toolRegistry;
+            if (key === 'shell') return shell;
+            if (key === 'workspaceRegistry') return workspaceRegistry;
+            return undefined;
+          },
+          effect: (fn) => {
+            fn();
+          },
+          provide: () => {},
+          logger: { warn: () => {}, info: () => {} },
         },
-        effect: (fn) => {
-          fn();
+        manifests: () => [],
+        ownedUnits: () => [],
+        data: fakeDataReader(),
+        ...createHostKit({ libInstallCommand: () => '', surface: hostSurface() }),
+        opencliCommand: 'opencli',
+        env: {},
+        git: {
+          origin: async () => ({ kind: 'no-origin' }),
+          branch: async () => ({ kind: 'no-branch' }),
+          head: async () => ({ kind: 'no-head' }),
         },
-        provide: () => {},
-        logger: { warn: () => {}, info: () => {} },
-      },
-      manifests: () => [],
-      opencliCommand: 'opencli',
-      env: {},
-      git: {
-        origin: async () => ({ kind: 'no-origin' }),
-        branch: async () => ({ kind: 'no-branch' }),
-        head: async () => ({ kind: 'no-head' }),
-      },
-      libs: {
-        load: async () => {
-          throw new Error('gate: libs 未装');
+        libs: {
+          load: async () => {
+            throw new Error('gate: libs 未装');
+          },
         },
-      },
-      store: fakeStore(),
-      longTasks: fakeLongTasks(created),
-    });
-  } catch {
-    return undefined;
+        store: fakeStore(),
+        longTasks: fakeLongTasks(created),
+        longTaskRuns: () => new Map(),
+      }),
+    };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : String(error) };
   }
 }
 
@@ -503,7 +539,8 @@ export async function run() {
       if (typeof rel !== 'string') {
         problems.push(
           `${name}: dsh.workbenchFaces.${face} 没声明 —— 这两个源码入口是工具链字段` +
-            `（不在 dsh.workbench 协议里）：source 判据靠它们判"哪一半"，缺了它判不了`,
+            `（不在 dsh.workbench 协议里）：source 判据靠它们判"哪一半"，缺了它判不了` +
+            `（\`dsh-wb-module migrate\` 会补默认的 ${face === 'host' ? 'src/host.ts' : 'src/client.tsx'}）`,
         );
       } else if (!existsSync(join(pkg.dir, rel))) {
         problems.push(`${name}: dsh.workbenchFaces.${face} 指的文件不存在 —— ${rel}`);
@@ -541,7 +578,9 @@ export async function run() {
 
     const tools = [];
     const face = await unitFaceOf(pkg.dir);
-    const mounted = face === undefined ? undefined : mountOf(face, created, manifest, tools);
+    const mountedOf = face === undefined ? undefined : mountOf(face, created, manifest, tools);
+    const mounted = mountedOf?.result;
+    const mountError = mountedOf?.error;
     const needs = manifest?.needs;
     warnings.push(...read.warnings);
     if (manifest === undefined) {
@@ -556,6 +595,11 @@ export async function run() {
         problems.push(
           `${name}: 声明了 ${manifest.tools.length} 个能力，但宿主面挂不起来（dist/host.js 缺、或 apply 抛了）` +
             `—— 声明的能力对不了账，先把面修好`,
+        );
+      } else if (mountError !== undefined) {
+        problems.push(
+          `${name}: 宿主面 mount(deps) 抛了 —— ${mountError}。` +
+            `先修 mount 里用到的那份 deps（宿主交的服务）与初始化，能力才对得了账`,
         );
       } else {
         try {
@@ -785,10 +829,12 @@ export async function run() {
     const writeTools = (manifest?.tools ?? []).filter((one) => one?.writes === true);
     if (writeTools.length > 0) {
       if (mounted === undefined) {
-        problems.push(
-          `${name}: 清单里有会写的工具，但宿主面挂不起来（apply / mount 抛了）—— ` +
-            `这条审批口径验不了，先把挂载依赖修好（模块自己的 smoke 也是这么挂的）`,
-        );
+        if (mountError === undefined) {
+          problems.push(
+            `${name}: 清单里有会写的工具，但宿主面挂不起来（apply / mount 抛了）—— ` +
+              `这条审批口径验不了，先把挂载依赖修好（模块自己的 smoke 也是这么挂的）`,
+          );
+        }
         continue;
       }
       const registered = new Map(tools.map((tool) => [text(tool?.name), tool]));
@@ -949,7 +995,7 @@ export async function run() {
       notes.push(
         `上面有 ${bare.length} 个包是**裸**的：它上面没有 pnpm-workspace.yaml、自己也没有 node_modules —— ` +
           `那几条 inject/external 正是因为找不到任何同伴包才落不到图里。` +
-          `做法：在工坊里造（$DSH_HOME/workbench/diy/packages/module-<名字>），或者先在这个工作区里 pnpm install。`,
+          `它上面既没有 pnpm-workspace.yaml、自己也没有 node_modules —— 所以找不到任何同伴包。`,
       );
     }
     return { status: 'fail', notes: [...notes, ...warnings.map((one) => `（警告）${one}`)], problems };

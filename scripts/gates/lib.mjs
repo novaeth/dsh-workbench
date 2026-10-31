@@ -250,7 +250,6 @@ export function protocolDeclarationsOf(text) {
 export function moduleSources() {
   const dirs = [
     join(ROOT, 'packages/module-hello/src'),
-    join(ROOT, 'packages/module-tools/template/src'),
     join(ROOT, 'packages/module-tools/template-diy/src'),
   ];
   const out = [];

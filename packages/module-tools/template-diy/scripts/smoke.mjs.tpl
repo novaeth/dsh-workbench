@@ -5,19 +5,22 @@
 // 于是"模块注册的卡片到底进没进外壳"变成一条机器判据，而不再是人的眼睛。
 //
 // ★ 这份脚本验的是**形状**：它认不出成员名，所以换数据源、换卡片内容都不用改它。
-//   下面那一段"那条只读路由真读盘"是**这份模板自己的故事**（`<unit>/overview`）：你把数据源换成
-//   别的之后，它会自动跳过并提醒你，在同一个位置补一条**你自己的**真读断言 —— 卡片画的数从哪来，
-//   `check` 的十条判据一条都不碰，只有这里会真的去调一次。
+//   模板自己的"真读"与"真跑"在 `scripts/smoke.assert.mjs` 里：换数据源时改那一份，
+//   不要删这里的调用 —— 卡片画的数从哪来，`check` 的十三条判据一条都不碰，只有这里会真调一次。
 //
 // 负例在最后一段：服务不在的时候必须**报出来**，不许静默通过 —— 静默的模块是最难查的那种坏。
 
 import { readFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createFlowHost, createLongTaskHost } from '@dsh-workbench/shared/host';
 
 const PLUGIN_ID = '__NAME__';
 const UNIT_ID = '__UNIT__';
-const OVERVIEW_ROUTE = `${UNIT_ID}/overview`;
+const RUN_TOOL = `${UNIT_ID}_run`;
+const ADD_TOOL = `${UNIT_ID}_add_note`;
+const RUN_RESOURCE = `${UNIT_ID}-run`;
+const moduleDir = dirname(dirname(fileURLToPath(import.meta.url)));
 const failures = [];
 
 function check(name, ok, detail) {
@@ -62,12 +65,23 @@ function fakeKit() {
   };
 }
 
+const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+const externals = new Set([
+  '@dsh-workbench/core/client',
+  ...(manifest.dsh?.client?.inject ?? []),
+  ...(manifest.dsh?.client?.external ?? []),
+]);
+
 function moduleRequire(name) {
   if (name === 'react') {
     // 必须是**真的元素对象**：返回 null 的话，"卡片画得出来"这类断言会永远假红。
-    return { createElement: (type, props, ...children) => ({ type, props: props ?? {}, children }) };
+    return {
+      createElement: (type, props, ...children) => ({ type, props: props ?? {}, children }),
+      useState: (initial) => [typeof initial === 'function' ? initial() : initial, () => {}],
+    };
   }
   if (name === '@dsh-workbench/core/client') return { kit: fakeKit() };
+  if (externals.has(name)) return anyStub(`require(${name})`);
   throw new Error(`模块包不该 require ${JSON.stringify(name)}：模块表里只有外壳的 seed 词与外部声明`);
 }
 
@@ -178,11 +192,79 @@ hostExports.apply({
 });
 
 check('宿主面注册进了外壳', hostFaces.length === 1, `注册了 ${hostFaces.length} 个`);
-// 给一份最小 deps：宿主面的 `mount(deps)` 会去 `deps.ctx.get('shell')` 拿服务，
-// 不给 deps 的话**任何真的用了 `mount(deps)` 的模块**都会在这里崩 —— 而那不是模块的错。
+// 给一份最小 deps：宿主面的 `mount(deps)` 会去 `deps.ctx.get('tools')` / `deps.flow` /
+// `deps.longTasks` 拿东西，少一个都可能在这里崩 —— 而那不是模块的错。
+// 这几项与外壳真正交出去的 `UnitMountDeps`（HostKit）对齐；模块要用更多成员，就在这里补。
+const registeredTools = [];
+const moduleFiles = new Map();
+function moduleStore(workspace) {
+  const at = moduleFiles.get(workspace) ?? new Map();
+  moduleFiles.set(workspace, at);
+  return {
+    read: (name) => at.get(name) ?? null,
+    write: (name, value) => {
+      at.set(name, value);
+    },
+    remove: (name) => {
+      at.delete(name);
+    },
+    list: () => [...at.keys()],
+  };
+}
+const flowHost = createFlowHost();
+const longTaskHost = createLongTaskHost({ scope: `smoke-${UNIT_ID}`, unit: UNIT_ID, bump: () => {} });
+const hostDeps = {
+  ctx: {
+    get: (name) =>
+      name === 'tools'
+        ? {
+            register(tool) {
+              registeredTools.push(tool);
+              return () => {};
+            },
+          }
+        : undefined,
+    effect: (fn) => {
+      fn();
+    },
+    provide: () => {},
+    logger: { warn: () => {} },
+  },
+  logger: { warn: () => {} },
+  manifest: { id: UNIT_ID },
+  manifests: () => [],
+  ownedUnits: () => [],
+  data: (() => {
+    const missing = async () => ({ ok: false, error: { code: 'invalid-request', message: 'smoke: 没有 DataReader' } });
+    return { read: missing, request: missing, requestMany: async () => ({}), submit: missing };
+  })(),
+  flow: flowHost,
+  sessionIdOf: () => null,
+  sessionWorkspace: () => null,
+  libInstallCommand: () => '',
+  surface: anyStub('surface'),
+  env: {},
+  store: {
+    for: (_unit, workspace) => moduleStore(workspace ?? ''),
+    machine: () => moduleStore(''),
+    scan: () => [],
+  },
+  longTasks: longTaskHost.host,
+  longTaskRuns: () => new Map(),
+  git: {
+    origin: async () => ({ kind: 'no-origin' }),
+    branch: async () => ({ kind: 'no-branch' }),
+    head: async () => ({ kind: 'no-head' }),
+  },
+  libs: {
+    load: async () => {
+      throw new Error('smoke: libs 未装');
+    },
+  },
+};
 let mounted = {};
 try {
-  mounted = hostFaces[0]?.mount({ ctx: { get: () => undefined }, logger: { warn: () => {} } }) ?? {};
+  mounted = hostFaces[0]?.mount(hostDeps) ?? {};
 } catch (error) {
   failures.push(`宿主面的 mount(deps) 抛了：${error.message}`);
 }
@@ -190,32 +272,70 @@ try {
 const routes = mounted.routes ?? {};
 const strays = Object.keys(routes).filter((key) => key !== UNIT_ID && !key.startsWith(`${UNIT_ID}/`));
 check(`每条路由都住在自己那一格（${UNIT_ID} 或 ${UNIT_ID}/…）`, strays.length === 0, strays.join(', '));
+const disposers = mounted.registerTools?.();
+check('registerTools() 交得出一份清理函数清单', Array.isArray(disposers) && disposers.length === 2);
 check(
-  'registerTools() 交得出一份清单（这份模块没有工具时是空数组）',
-  Array.isArray(mounted.registerTools?.()),
+  `工具清单里有 ${RUN_TOOL} 与 ${ADD_TOOL}`,
+  registeredTools.some((tool) => tool?.name === RUN_TOOL) && registeredTools.some((tool) => tool?.name === ADD_TOOL),
+  JSON.stringify(registeredTools.map((tool) => tool?.name)),
 );
 
-// ── 这份模板自己的故事：那条只读路由**真读了本目录** ──────────────────────
-//
-// 换了数据源的模块在这里会落到 else 那一支：**跳过**而不是假绿 —— 并且在同一条路径上提醒你
-// 补一条自己的真读断言（不然"卡片画的数从哪来"就没人验了）。
-if (typeof routes[OVERVIEW_ROUTE] === 'function') {
-  const here = dirname(dirname(fileURLToPath(import.meta.url)));
-  const answer = await routes[OVERVIEW_ROUTE](new URLSearchParams({ path: here, limit: '3' }));
-  check('路由真读了本目录：ok 且数得出文件', answer?.ok === true, JSON.stringify(answer?.error ?? answer?.path));
-  check(
-    '读到的文件数与最大的几个文件都是真的（不是写死的）',
-    answer?.files >= 1 && answer?.largest?.length >= 1,
-    `files=${answer?.files} largest=${answer?.largest?.length}`,
-  );
-  check(
-    '读不到时回 ok:false 的 error，而不是抛',
-    (await routes[OVERVIEW_ROUTE](new URLSearchParams({ path: `${here}/不存在的目录` })))?.ok === false,
-  );
-} else {
-  console.log(`○ 跳过「真读本目录」那一组：这份模块已经没有 ${OVERVIEW_ROUTE}（换过数据源了）。`);
-  console.log('  在同一个位置补上**你自己那条读**的断言 —— 卡片画的数从哪来，只有这里能真调一次。');
+// ── 模板自己的故事：流程真跑一遍，长任务最后落到 ok ──────────────────────
+const startAction = (mounted.actions ?? []).find((one) => one.resource === RUN_RESOURCE);
+check('动作通道里有起流程的入口（卡片那颗钮走的就是它）', typeof startAction?.handle === 'function');
+const started = startAction?.handle({ path: moduleDir });
+check('起一趟流程拿得到 runId', started?.ok === true && typeof started?.runId === 'string', JSON.stringify(started));
+let snapshot = started?.runId === undefined ? null : (mounted.longTasks?.snapshot(started.runId) ?? null);
+const deadline = Date.now() + 5000;
+while (snapshot !== null && snapshot.status === 'running' && Date.now() < deadline) {
+  await new Promise((resolve) => {
+    setTimeout(resolve, 20);
+  });
+  snapshot = mounted.longTasks?.snapshot(started.runId);
 }
+check('流程整条跑到 ok', snapshot?.status === 'ok', String(snapshot?.status));
+check(
+  '流水里有「读目录」',
+  (snapshot?.steps ?? []).some((step) => step.includes('读目录')),
+  (snapshot?.steps ?? []).join(' | '),
+);
+
+// ── 写通道：笔记（动作通道 + 写工具）+ 审批；配置按工作区存 ──────────────
+const NOTES_ROUTE = `${UNIT_ID}/notes`;
+const PREFS_ROUTE = `${UNIT_ID}/prefs`;
+const NOTE_RESOURCE = `${UNIT_ID}-add-note`;
+const noteTool = registeredTools.find((tool) => tool?.name === `${UNIT_ID}_add_note`);
+const noteDecl = (manifest.dsh?.workbench?.tools ?? []).find((tool) => tool?.name === `${UNIT_ID}_add_note`);
+check('写工具注册上了，清单里也声明成 writes: true（壳才会走审批）', noteTool !== undefined && noteDecl?.writes === true);
+check(
+  '写工具要点头，审批屏说得出会写什么',
+  mounted.needsApproval?.({ name: `${UNIT_ID}_add_note`, arguments: { text: 'x' } })?.kind === 'ask' &&
+    typeof mounted.approvalDetail?.({ name: `${UNIT_ID}_add_note`, arguments: { text: 'x' } })?.zh === 'string',
+);
+const noteAction = mounted.actions?.find((one) => one.resource === NOTE_RESOURCE);
+const noteAdded = noteAction?.handle({ path: moduleDir, text: 'smoke 记的一条' });
+check('动作通道能写一条笔记（点击即确认）', noteAdded?.ok === true, JSON.stringify(noteAdded?.error));
+const notesAnswer = await routes[NOTES_ROUTE](new URLSearchParams({ path: moduleDir }));
+check(
+  '笔记读得回来，且就是刚写的那条',
+  notesAnswer?.ok === true && notesAnswer?.notes?.some((one) => one.text === 'smoke 记的一条'),
+  JSON.stringify(notesAnswer?.notes),
+);
+const prefsBefore = await routes[PREFS_ROUTE](new URLSearchParams({ path: moduleDir }));
+check('配置默认是 5', prefsBefore?.prefs?.limit === 5, JSON.stringify(prefsBefore?.prefs));
+const prefsWrote = mounted.prefs?.handle({ workspace: moduleDir, limit: 10 });
+const prefsAfter = await routes[PREFS_ROUTE](new URLSearchParams({ path: moduleDir }));
+check(
+  '配置按工作区存得住（写 10 后读回 10）',
+  prefsWrote?.prefs?.limit === 10 && prefsAfter?.prefs?.limit === 10,
+  JSON.stringify(prefsAfter?.prefs),
+);
+const otherPrefs = await routes[PREFS_ROUTE](new URLSearchParams({ path: `${moduleDir}/src` }));
+check('另一个工作区没被带上（还是默认 5）', otherPrefs?.prefs?.limit === 5, JSON.stringify(otherPrefs?.prefs));
+
+// ── 这个模块自己的真读断言：换数据源时改 scripts/smoke.assert.mjs ──────────
+const { assertModule } = await import('./smoke.assert.mjs');
+await assertModule({ check, routes, mounted, UNIT_ID });
 
 // ── 需求底稿在不在：这份骨架的"设计记录"住 README，别只留在对话里 ──────────
 //

@@ -168,6 +168,7 @@ longTasks.create({ key, run, step, outcome, view, stopped })
 ```
 
 - 来源：在工具里 `runs.start({ …, session: deps.sessionIdOf(exec) ?? undefined })`。不记 = 用户按的 → 停止需审批。
+- 流程事件默认用 `longTaskStepOf(event)`。
 - 浏览器侧：`useLongTask` → `feed.runs` / `feed.stop(id)` / `feed.stopping` / `feed.stopFailed`；
   画 `LongTaskRow`（五态：`running` / `needs-login` / `stopped` / `ok` / `failed`）。
 
@@ -196,6 +197,29 @@ longTasks.create({ key, run, step, outcome, view, stopped })
   产物含 `useLongTask` / `LongTaskRow` 之一。是否真响应 signal 不在射程内。
 - 左栏 loading 点由外壳按 `live()` 驱动，模块不做。
 - 用 `stop` / `session` / 外壳长任务工具需把 `@dsh-workbench/core` peer 下限抬到含它们的版本（`check --only kit` 查）。
+
+长任务与工具在 `mount` 里长这样（类型从 `@dsh-workbench/core/contract` 取，`TEXT_OUTPUT` 从 `@dsh-workbench/shared/host` 取）：
+
+```ts
+mount(deps) {
+  const runs = deps.longTasks?.create<LongTaskBase>({ key, run, step, outcome, view, stopped });
+  const tool: DshToolDefinition = {
+    name: RUN_TOOL, description: '…', parameters: { type: 'object', properties: {} },
+    output: TEXT_OUTPUT, async execute(args, exec) { /* runs.start(...) → { ok, runId, text } */ },
+  };
+  return {
+    routes: {},
+    registerTools: () => {
+      const tools = deps.ctx.get<DshToolRegistry>('tools');
+      return tools === undefined ? [] : [tools.register(tool)];
+    },
+    ...(runs === undefined ? {} : { longTasks: runs }),
+  };
+}
+```
+
+`registerTools()` 是**调用时才注册**、返回清理函数；工具名必须与 `dsh.workbench.tools` 一字不差，
+没有工具就 `() => []`。可跑样板：`dsh-wb-module init` 生成的模块。
 
 ## 9.1 多步流程（workflow）
 

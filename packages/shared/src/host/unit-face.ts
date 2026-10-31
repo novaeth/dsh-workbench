@@ -53,6 +53,11 @@ export interface UnitCall {
   readonly result: unknown;
 }
 
+/**
+ * 挂载结果：路由表 + 工具注册。
+ * `registerTools()` 是**调用时才注册**，返回一组清理函数（卸载 / 热换时外壳逐个调）；
+ * 工具名必须与清单 `dsh.workbench.tools` 一字不差，没有工具就 `() => []`。
+ */
 export interface UnitMountResult {
   readonly routes: RouteTable;
   registerTools(): Array<() => void>;

@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, symlinkSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -55,4 +55,20 @@ export function findToolchain() {
         existsSync(join(dir, 'node_modules', '@dsh-workbench', 'module-tools')) &&
         existsSync(join(dir, 'node_modules', '.bin', 'vitest')),
     );
+}
+
+const PENDING = '（待填）';
+
+export function fillPending(value) {
+  if (typeof value === 'string') return value === PENDING ? '填好' : value;
+  if (Array.isArray(value)) return value.map(fillPending);
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, fillPending(item)]));
+  }
+  return value;
+}
+
+export function fillPendingDesign(dir) {
+  const file = join(dir, 'design.json');
+  writeFileSync(file, `${JSON.stringify(fillPending(JSON.parse(readFileSync(file, 'utf8'))), null, 2)}\n`);
 }

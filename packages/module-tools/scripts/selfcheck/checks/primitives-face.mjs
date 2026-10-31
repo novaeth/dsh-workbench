@@ -38,7 +38,7 @@ function writeProbe(probe, external) {
 
 export const checks = [
   {
-    title: '模板默认带 dsh 原语：init 盖上外壳 manifest 钉的那版，external 里也声明（两个模板各一遍）',
+    title: '模板默认带 dsh 原语：init 盖上外壳 manifest 钉的那版，external 里也声明（模板）',
     run(_ctx, report) {
 
       const root = mkdtempSync(join(PACKAGES_DIR, '.primface-pin-'));
@@ -49,34 +49,32 @@ export const checks = [
           join(coreDir, 'package.json'),
           `${JSON.stringify({ name: '@dsh-workbench/core', version: '9.9.9', devDependencies: { [PRIMITIVES]: PINNED } }, null, 2)}\n`,
         );
-        for (const template of ['minimal', 'diy']) {
-          const target = join(root, `pkg-${template}`);
-          execFileSync(process.execPath, [BIN, 'init', `demo${template === 'diy' ? 'd' : 'm'}`, '--dir', target, '--template', template], {
-            cwd: root,
-            stdio: 'pipe',
-          });
-          const manifest = JSON.parse(read(join(target, 'package.json')));
-          const declared = manifest.devDependencies?.[PRIMITIVES];
-          if (declared !== PINNED) {
-            return report(
-              '模板默认带 dsh 原语：init 盖上外壳 manifest 钉的那版，external 里也声明（两个模板各一遍）',
-              false,
-              `模板 ${template}：devDependencies 里是 ${JSON.stringify(declared)}，应该盖成外壳 manifest 钉的 ${PINNED}`,
-            );
-          }
-          const external = manifest.dsh?.client?.external ?? [];
-          if (!external.includes(PRIMITIVES)) {
-            return report(
-              '模板默认带 dsh 原语：init 盖上外壳 manifest 钉的那版，external 里也声明（两个模板各一遍）',
-              false,
-              `模板 ${template}：dsh.client.external 里没有 ${PRIMITIVES}（external=${JSON.stringify(external)}）`,
-            );
-          }
+        const target = join(root, 'pkg-diy');
+        execFileSync(process.execPath, [BIN, 'init', 'demod', '--dir', target, '--template', 'diy'], {
+          cwd: root,
+          stdio: 'pipe',
+        });
+        const manifest = JSON.parse(read(join(target, 'package.json')));
+        const declared = manifest.devDependencies?.[PRIMITIVES];
+        if (declared !== PINNED) {
+          return report(
+            '模板默认带 dsh 原语：init 盖上外壳 manifest 钉的那版，external 里也声明（模板）',
+            false,
+            `devDependencies 里是 ${JSON.stringify(declared)}，应该盖成外壳 manifest 钉的 ${PINNED}`,
+          );
         }
-        report('模板默认带 dsh 原语：init 盖上外壳 manifest 钉的那版，external 里也声明（两个模板各一遍）', true);
+        const external = manifest.dsh?.client?.external ?? [];
+        if (!external.includes(PRIMITIVES)) {
+          return report(
+            '模板默认带 dsh 原语：init 盖上外壳 manifest 钉的那版，external 里也声明（模板）',
+            false,
+            `dsh.client.external 里没有 ${PRIMITIVES}（external=${JSON.stringify(external)}）`,
+          );
+        }
+        report('模板默认带 dsh 原语：init 盖上外壳 manifest 钉的那版，external 里也声明（模板）', true);
       } catch (error) {
         report(
-          '模板默认带 dsh 原语：init 盖上外壳 manifest 钉的那版，external 里也声明（两个模板各一遍）',
+          '模板默认带 dsh 原语：init 盖上外壳 manifest 钉的那版，external 里也声明（模板）',
           false,
           `${error.message}${tail(`${error.stdout ?? ''}${error.stderr ?? ''}`)}`,
         );
@@ -88,7 +86,7 @@ export const checks = [
   {
     title: '模板两处都在：external 一行 + devDependencies 用 __DSH_UI_VERSION__ 精确版（不是 ^）',
     run(_ctx, report) {
-      for (const template of ['template', 'template-diy']) {
+      for (const template of ['template-diy']) {
         const text = read(join(PACKAGES_DIR, 'module-tools', template, 'package.json.tpl'));
         if (!text.includes(`"${PRIMITIVES}": "__DSH_UI_VERSION__"`)) {
           return report(

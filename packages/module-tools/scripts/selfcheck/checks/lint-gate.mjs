@@ -7,11 +7,11 @@ import { join, relative } from 'node:path';
 import { CHECKS } from '../../../src/check.mjs';
 import { BIN, REPO_ROOT, linkToolchain, read } from '../lib.mjs';
 
-function runCheck(probe, workshop, only) {
+function runCheck(probe, workspace, only) {
   try {
     const out = execFileSync(process.execPath, [BIN, 'check', '--only', only], {
       cwd: probe,
-      env: { ...process.env, DSH_WB_ROOT: workshop },
+      env: { ...process.env, DSH_WB_ROOT: workspace },
       encoding: 'utf8',
       stdio: 'pipe',
     });
@@ -21,8 +21,8 @@ function runCheck(probe, workshop, only) {
   }
 }
 
-function initTemplate(workshop, unit, template) {
-  const dir = join(workshop, 'packages', `module-${unit}`);
+function initTemplate(workspace, unit, template) {
+  const dir = join(workspace, 'packages', `module-${unit}`);
   execFileSync(process.execPath, [BIN, 'init', unit, '--dir', dir, '--template', template], { stdio: 'pipe' });
   return dir;
 }
@@ -108,24 +108,20 @@ const DIALECT_CONFIGS = {
 export const checks = [
   {
     title:
-      '第十三条判据（lint）：两个模板开箱 ✔；console / as any / 条件 hook / 颜色字面量 / !important 逐条点名规则；vendor 仍绿；'
+      '第十三条判据（lint）：模板开箱 ✔；console / as any / 条件 hook / 颜色字面量 / !important 逐条点名规则；vendor 仍绿；'
       + '方言逐块比整份（基础块 + 四块 dsh-wb/module-lint*，全局 ignores 按超集：只抄名字 / 筛掉基础块 / 少一条 ignores 都红）；'
       + '手写空配置与跑不起来的配置判红；拿走配置是「不适用」；只有 warn 不判红；跑完文件一个字节没变',
     run(ctx, report) {
-      const workshop = mkdtempSync(join(tmpdir(), 'dsh-wb-lint-'));
+      const workspace = mkdtempSync(join(tmpdir(), 'dsh-wb-lint-'));
       try {
-        const diyDir = initTemplate(workshop, 'diy', 'diy');
-        const minimalDir = initTemplate(workshop, 'minimal', 'minimal');
+        const diyDir = initTemplate(workspace, 'diy', 'diy');
         linkToolchain(ctx.toolchain, join(diyDir, 'node_modules'));
-        linkToolchain(ctx.toolchain, join(minimalDir, 'node_modules'));
 
         const configPath = join(diyDir, 'eslint.config.mjs');
-        const minimalConfigPath = join(minimalDir, 'eslint.config.mjs');
         const diyConfig = readFileSync(configPath, 'utf8');
-        const minimalConfig = readFileSync(minimalConfigPath, 'utf8');
 
         const expectGreen = (what, needles = []) => {
-          const result = runCheck(diyDir, workshop, 'lint');
+          const result = runCheck(diyDir, workspace, 'lint');
           if (result.failed) throw new Error(`${what}：该绿却红了\n${result.out}`);
           if (!result.out.includes('✔ 模块代码卫生')) throw new Error(`${what}：没有 ✔ 那一行\n${result.out}`);
           for (const needle of needles) {
@@ -133,7 +129,7 @@ export const checks = [
           }
         };
         const expectRed = (what, needs) => {
-          const result = runCheck(diyDir, workshop, 'lint');
+          const result = runCheck(diyDir, workspace, 'lint');
           if (!result.failed) throw new Error(`${what}：该红却绿了\n${result.out}`);
           for (const need of needs) {
             const said = need instanceof RegExp ? need.test(result.out) : result.out.includes(need);
@@ -143,7 +139,7 @@ export const checks = [
         const write = (file, text) => writeFileSync(join(diyDir, file), text);
         const drop = (file) => rmSync(join(diyDir, file), { force: true });
 
-        expectGreen('两个模板开箱', ['2/2 个模块包带 eslint.config.mjs', '0 error']);
+        expectGreen('模板开箱', ['1/1 个模块包带 eslint.config.mjs', '0 error']);
 
         write('src/model/noisy.ts', NOISY);
         expectRed('src 里的 console.log', [/src\/model\/noisy\.ts:2:\d+ no-console/, 'no-console']);
@@ -250,8 +246,7 @@ export const checks = [
         writeFileSync(configPath, diyConfig);
 
         rmSync(configPath, { force: true });
-        rmSync(minimalConfigPath, { force: true });
-        const skipped = runCheck(diyDir, workshop, 'lint');
+        const skipped = runCheck(diyDir, workspace, 'lint');
         if (skipped.failed) throw new Error(`没有配置的模块不该红：\n${skipped.out}`);
         for (const needle of ['○ 模块代码卫生', '不适用', 'eslint.config.mjs', 'moduleLint']) {
           if (!skipped.out.includes(needle)) {
@@ -259,18 +254,17 @@ export const checks = [
           }
         }
         writeFileSync(configPath, diyConfig);
-        writeFileSync(minimalConfigPath, minimalConfig);
 
         report(
           '第十三条判据（lint）的正负例都对',
           true,
-          '正例 9（两个模板开箱 / vendor / 只有 warn / 裸方言 / 带 rootDir / 带 rules / 多忽略一条 / 展开再追加 / 带 rules 再追加）'
+          '正例 9（模板开箱 / vendor / 只有 warn / 裸方言 / 带 rootDir / 带 rules / 多忽略一条 / 展开再追加 / 带 rules 再追加）'
             + '+ 负例 15（console / any / 条件 hook / 颜色 / !important / 平台原始事实 / 空配置 / 只抄名字 / 只留带名字的块 / 筛掉 js recommended / '
             + '筛掉 ts base / ignores 少一条 / 少 react-hooks / 改规则 / 同名两块）'
             + '+ 只看不写（内容哈希前后一致）+ 拿走配置的「不适用」+ 配置跑不起来的人话',
         );
       } finally {
-        rmSync(workshop, { recursive: true, force: true });
+        rmSync(workspace, { recursive: true, force: true });
       }
     },
   },

@@ -648,10 +648,32 @@ EOF
 - 造一个新模块：`dsh-wb-module init <名字> --dir packages/module-<名字>`
   （`dsh-wb-module` 挂在 PATH 上、与 cwd 无关；写成 `pnpm exec dsh-wb-module …` 也对）
 - 每个模块自己的四件事：`pnpm build` / `pnpm typecheck` / `pnpm test` / `pnpm selfcheck`，
-  外加 `dsh-wb-module check` 的十条判据。
+  外加 `dsh-wb-module check` 的十三条判据。
 
 不要手改这个目录下的 `package.json` / `pnpm-workspace.yaml` / `.npmrc`：
 它们是 `dsh-workbench setup` 生成的，模块要加依赖就加在**模块自己**的 `package.json` 里。
+EOF
+  cat >"$DIY_DIR/AGENTS.md" <<'EOF'
+# DIY 工坊 · agent 说明
+
+模块住在 `packages/`，一个模块一个目录。开新模块：
+
+    dsh-wb-module init <名字> --dir packages/module-<名字>
+
+## 依赖
+
+依赖装在这个工坊根（`packages/` 的上一层），已经装好；模块包里不要再 `pnpm install`：
+
+- 缺依赖 / 工具链换代：在**宿主终端**到工坊根跑 `pnpm install`；`dsh-workbench setup` 也做这件事。
+- 会话沙箱里直接跑 `pnpm install` 会 EPERM：link 目标在可写根之外。
+- 模块自己加依赖，写进**模块自己**的 `package.json`，再在工坊根装一次。
+
+## 每个模块
+
+`pnpm build` / `pnpm typecheck` / `pnpm test` / `pnpm selfcheck`，外加 `dsh-wb-module check`
+（十三条判据）；单跑一条：`dsh-wb-module check --only <判据>`。
+
+这个目录的 `package.json` / `pnpm-workspace.yaml` / `.npmrc` 由 setup 生成，手改会被覆盖。
 EOF
 fi
 
@@ -665,17 +687,24 @@ fi
 # 用 pnpm 的 overrides 而不是改模块模板：模板里写死 link 路径会把"装到别人机器上"这条弄坏，
 # overrides 活在**这个工坊**里，模块的 package.json 仍旧是干净的 `^0.1.x`。
 # 放在第一次 `pnpm install` **之前**，这样一次装就是对的；已存在的工坊再跑一次 setup 也会被修好。
+#
+# devDependencies 与 overrides **必须同一套值、一起重写**：只刷 overrides 的话，老清单里的
+# devDependencies 会永远停在旧路径（实测：dev 指向早已不存在的 `packages/workbench`、overrides
+# 指向 `packages/core`），`init` 读外壳 manifest 时还会踩到悬空链接。
 if [ "$IN_REPO" = "1" ] && [ -f "$DIY_DIR/package.json" ]; then
   node - "$DIY_DIR/package.json" "$CORE_SPEC" "$TOOLS_SPEC" "$SHARED_SPEC" <<'NODE'
 const [file, core, tools, shared] = process.argv.slice(2);
 const fs = require('node:fs');
 const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
+const want = {
+  '@dsh-workbench/core': core,
+  '@dsh-workbench/module-tools': tools,
+  '@dsh-workbench/shared': shared,
+};
+manifest.devDependencies = { ...(manifest.devDependencies ?? {}), ...want };
 manifest.pnpm = {
-  overrides: {
-    '@dsh-workbench/core': core,
-    '@dsh-workbench/module-tools': tools,
-    '@dsh-workbench/shared': shared,
-  },
+  ...(manifest.pnpm ?? {}),
+  overrides: { ...(manifest.pnpm?.overrides ?? {}), ...want },
 };
 fs.writeFileSync(file, `${JSON.stringify(manifest, null, 2)}\n`);
 NODE
@@ -688,7 +717,16 @@ elif ! command -v pnpm >/dev/null 2>&1; then
   echo "     cd $DIY_DIR && pnpm install" >&2
 else
   echo "→ 装工坊依赖（第一次会下载 react / typescript / vitest，几百 MB，之后不再下）"
-  (cd "$DIY_DIR" && pnpm install 2>&1 | tail -6)
+  install_log="${TMPDIR:-/tmp}/dsh-wb-install.$$.log"
+  if (cd "$DIY_DIR" && pnpm install >"$install_log" 2>&1); then
+    tail -6 "$install_log"
+    rm -f "$install_log"
+  else
+    tail -20 "$install_log" >&2
+    rm -f "$install_log"
+    echo "→ ⚠️ 装工坊依赖失败。若上面报 EPERM：link 目标在可写根之外 —— 到宿主终端重跑 setup（它由人跑、不受会话沙箱）。" >&2
+    echo "   装好前工坊里的模块跑不了 pnpm build / check；恢复后在工坊根重跑 pnpm install 即可。" >&2
+  fi
 fi
 
 # 完整的这一趟跑完：先挂指引（不管有没有基准 —— setup 那趟也要建起来），再看要不要自愈。

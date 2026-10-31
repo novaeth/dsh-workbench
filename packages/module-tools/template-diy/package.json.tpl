@@ -16,7 +16,7 @@
     "selfcheck": "dsh-wb-module build && dsh-wb-module design check && node scripts/smoke.mjs",
     "check": "dsh-wb-module check",
     "lint": "dsh-wb-module lint",
-    "design": "dsh-wb-module design check",
+    "design": "dsh-wb-module design",
     "prepack": "dsh-wb-module build"
   },
   "dsh": {
@@ -31,11 +31,15 @@
       "unit": "__UNIT__",
       "title": { "zh": "__UNIT__ 模块", "en": "__UNIT__ module" },
       "card": { "order": 90 },
-      "tools": [],
+      "tools": [
+        { "name": "__UNIT___run", "writes": false, "key": "run" },
+        { "name": "__UNIT___add_note", "writes": true, "key": "addNote" }
+      ],
       "host": { "inject": [] }
     },
     "workbenchFaces": { "host": "src/host.ts", "client": "src/client.tsx" }
   },
+  "dependencies": { "@dsh-workbench/shared": "__SHELL_RANGE__" },
   "peerDependencies": { "@dsh-workbench/core": "__SHELL_RANGE__", "react": "*" },
   "peerDependenciesMeta": { "react": { "optional": true } },
   "devDependencies": {

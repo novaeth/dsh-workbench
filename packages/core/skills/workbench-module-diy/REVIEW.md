@@ -44,7 +44,7 @@ export default moduleArch();
 
 ```js
 export default moduleArch({
-  layers: { host: 10 },
+  layers: { data: 3 },
   roles: [{ id: 'lib:platform', pattern: 'src/platform/**', layer: 1 }],
   exceptions: [{ rule: 'S16', glob: 'src/host/service.ts', reason: '…' }],
 });

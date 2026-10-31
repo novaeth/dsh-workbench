@@ -11,7 +11,7 @@ const HOW_TO_JOIN =
   `在模块包里放一份 ${CONFIG_FILE}，内容一行就够：\n` +
   `    import { moduleArch } from '@dsh-workbench/module-tools/arch';\n` +
   '    export default moduleArch();\n' +
-  '  形状（层序表 / 两个运行时 / 阈值）见 packages/module-tools/src/arch.mjs；' +
+  '  形状（层序表 / 两个运行时 / 阈值）见 @dsh-workbench/module-tools/arch 的文档与 README；' +
   '要开口子就从 moduleArch() 的参数进（deps / layers / roles / exceptions）。';
 
 const severityIndex = (rules) => new Map(rules.map((rule) => [rule.id, rule.severity]));
@@ -69,7 +69,7 @@ export async function run() {
       const message = error instanceof Error ? error.message : String(error);
       problems.push(
         `${name}: ${CONFIG_FILE} 跑不起来 —— ${message}（先确认这份配置能 import、没有语法错，` +
-          '再确认它 import 的东西在工坊里解析得到）',
+          '再确认它 import 的东西在工作区里解析得到）',
       );
       continue;
     }

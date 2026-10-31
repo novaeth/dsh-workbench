@@ -415,7 +415,7 @@ export function resolveIndexPlan({ args = [], home, exec }) {
   if (plan === undefined) {
     if (asked === 'auto' || asked === '') return undefined;
     throw new MarketIndexError(
-      `这个工坊还没配可写的 git 索引源。给我一个能推的 git 仓库（或它在本机的 clone 路径），我配成索引源并建一份 ${MARKET_DIR}/。`,
+      `这台机器还没配可写的 git 索引源。给我一个能推的 git 仓库（或它在本机的 clone 路径），我配成索引源并建一份 ${MARKET_DIR}/。`,
       'index-write',
     );
   }

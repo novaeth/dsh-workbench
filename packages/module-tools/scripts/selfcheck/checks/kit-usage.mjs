@@ -149,8 +149,8 @@ export const checks = [
       const title =
         'kit 的样式不进产物：从 shared 根入口取运行期值 → 产物 0 条外壳规则、判据绿；手喂一条 .wb-activityBlock → 红并点名；干净产物 → 绿';
 
-      const workshop = mkdtempSync(join(tmpdir(), 'dsh-wb-kitcss-'));
-      const probe = join(workshop, 'packages', 'kitcss-module');
+      const workspace = mkdtempSync(join(tmpdir(), 'dsh-wb-kitcss-'));
+      const probe = join(workspace, 'packages', 'kitcss-module');
       const clientFile = join(probe, 'client.js');
       const run = (args) => {
         try {
@@ -159,7 +159,7 @@ export const checks = [
             out: String(
               execFileSync(process.execPath, [BIN, ...args], {
                 cwd: probe,
-                env: { ...process.env, DSH_WB_ROOT: workshop },
+                env: { ...process.env, DSH_WB_ROOT: workspace },
                 encoding: 'utf8',
                 stdio: 'pipe',
               }),
@@ -247,7 +247,7 @@ export const checks = [
         if (good.failed) return report(title, false, `不含外壳规则的产物被误报了：${tail(good.out)}`);
         report(title, true);
       } finally {
-        rmSync(workshop, { recursive: true, force: true });
+        rmSync(workspace, { recursive: true, force: true });
       }
     },
   },

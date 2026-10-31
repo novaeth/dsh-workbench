@@ -120,7 +120,8 @@ export function declarationProblemsOf(subject: string, raw: unknown): readonly s
   if (version === undefined) {
     return [
       `${subject}: dsh.workbench 没有 apiVersion —— 协议从 v${WORKBENCH_API_VERSION} 起，` +
-        `写 \`"apiVersion": ${WORKBENCH_API_VERSION}\`。缺它 = 外壳不认这个模块`,
+        `写 \`"apiVersion": ${WORKBENCH_API_VERSION}\`。缺它 = 外壳不认这个模块` +
+        '（`dsh-wb-module migrate` 能自动补这一项）',
     ];
   }
   if (!Number.isInteger(version) || !SUPPORTED_API_VERSIONS.includes(version as number)) {
@@ -128,7 +129,7 @@ export function declarationProblemsOf(subject: string, raw: unknown): readonly s
       version === 2
         ? ' —— v3 把卡片标题挪成了顶层 `title`（`{ "zh": "…", "en": "…" }` 字面量）：' +
           '把 `card.titleKey` 删掉、在顶层写 title，再把 apiVersion 改成 3'
-        : '';
+        : ' —— 先跑 `dsh-wb-module migrate` 把版本号改到 3，再按 check 的提示改源码';
     return [
       `${subject}: dsh.workbench.apiVersion 是 ${JSON.stringify(version)}，这里只认 ` +
         `${SUPPORTED_API_VERSIONS.join(' / ')}（要整数）${hint}`,

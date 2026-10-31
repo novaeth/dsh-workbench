@@ -3,9 +3,9 @@ import { mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync } from 'node:f
 import { join } from 'node:path';
 
 import { CHECKS } from '../../../src/check.mjs';
-import { BIN, PACKAGES_DIR, linkToolchain, read } from '../lib.mjs';
+import { BIN, PACKAGES_DIR, fillPendingDesign, linkToolchain, read } from '../lib.mjs';
 
-const SCAFFOLD_TITLE = `init 生成的骨架开箱全绿（两个模板各一遍）：${Object.keys(CHECKS).length} 条判据 + build / typecheck / test / selfcheck（loader 壳与包名都对）`;
+const SCAFFOLD_TITLE = `init 生成的骨架：${Object.keys(CHECKS).length} 条判据 + build / typecheck / test / selfcheck 全绿；design.json 开箱是「（待填）」（填好才绿）`;
 const LEFTOVER_TITLE = '探针清理干净（packages/ 下没有 .init-* 残留）';
 
 export const checks = [
@@ -47,6 +47,24 @@ export const checks = [
           }
 
           execFileSync(process.execPath, [BIN, 'check', '--cwd', scaffold], { stdio: 'pipe', env });
+
+          if (template === 'diy') {
+            let designFailure;
+            try {
+              execFileSync(process.execPath, [BIN, 'design', 'check', '--cwd', scaffold], { stdio: 'pipe', env });
+            } catch (error) {
+              designFailure = `${error.stdout ?? ''}${error.stderr ?? ''}`;
+            }
+            if (designFailure === undefined) {
+              throw new Error('diy 模板的 design.json 没打「（待填）」哨兵：init 完 design check 就绿了');
+            }
+            if (!designFailure.includes('还空着')) {
+              throw new Error(`diy 的 design check 没报「还空着」：${designFailure.trim().split('\n').slice(-2).join(' | ')}`);
+            }
+            fillPendingDesign(scaffold);
+            execFileSync(process.execPath, [BIN, 'design', 'render', '--cwd', scaffold], { stdio: 'pipe', env });
+          }
+
           for (const script of ['typecheck', 'test', 'selfcheck']) {
             execFileSync('pnpm', ['run', '--silent', script], { cwd: scaffold, stdio: 'pipe', env });
           }
@@ -57,7 +75,7 @@ export const checks = [
       };
 
       let scaffoldFailure;
-      for (const template of ['minimal', 'diy']) {
+      for (const template of ['diy']) {
         try {
           runScaffold(template);
         } catch (error) {

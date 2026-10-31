@@ -904,6 +904,7 @@ pnpm run check:gates:target
 - `ARCHITECTURE.md`：当前架构
 - `CONTRIBUTING.md`：开发与门禁
 - `packages/*/README.md`：包自己的使用与边界
+- `CONTENT-BOUNDARIES.md`：全仓内容边界（谁写什么、不写什么、怎么守）
 - `packages/core/skills/workbench-module-diy/`：模块作者指引
 
 内部：

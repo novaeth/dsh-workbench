@@ -159,7 +159,7 @@ export function registryInfoOf(root, manifest, args, target, fallbackRegistry) {
     if (registry === '') {
       throw new NeedsUser(
         'registry',
-        '这个工坊还没配团队源。让公司把 registry 和 token 写进 `.npmrc`；或者我先给你打一个安装包。',
+        '这台机器还没配团队源。让公司把 registry 和 token 写进 `.npmrc`；或者我先给你打一个安装包。',
         undefined,
         { target },
       );

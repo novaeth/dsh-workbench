@@ -12,8 +12,8 @@ export const checks = [
 
       const title =
         '新判据的负例与正例都对（dsh 的包：客户端侧放行 / 宿主侧、内联、漏声明都判红；样式：:global 判红、自己的类放行、令牌名对现读清单校验）';
-      const workshop = mkdtempSync(join(tmpdir(), 'dsh-wb-neg-'));
-      const negDir = join(workshop, 'packages', 'neg-module');
+      const workspace = mkdtempSync(join(tmpdir(), 'dsh-wb-neg-'));
+      const negDir = join(workspace, 'packages', 'neg-module');
       const manifest = (external) =>
         JSON.stringify(
           {
@@ -56,7 +56,7 @@ export const checks = [
           try {
             const out = execFileSync(process.execPath, [BIN, 'check', '--only', only], {
               cwd: negDir,
-              env: { ...process.env, DSH_WB_ROOT: workshop },
+              env: { ...process.env, DSH_WB_ROOT: workspace },
               encoding: 'utf8',
               stdio: 'pipe',
             });
@@ -173,7 +173,7 @@ export const checks = [
       } catch (error) {
         report(title, false, `判据负例坏了：${error.message}`);
       } finally {
-        rmSync(workshop, { recursive: true, force: true });
+        rmSync(workspace, { recursive: true, force: true });
       }
     },
   },

@@ -32,7 +32,9 @@ export interface OverviewInput {
   readonly error: Failure | undefined;
 }
 
-export const LIST_LIMIT = 5;
+import { LIMIT_DEFAULT } from './prefs';
+
+export const LIST_LIMIT = LIMIT_DEFAULT;
 
 const KB = 1024;
 

@@ -1,3 +1,5 @@
+import { discoverPackages } from './discover.mjs';
+
 export const CHECKS = {
   contracts: {
     title: '模块契约',
@@ -135,6 +137,29 @@ export async function check({ only, args = [] } = {}) {
   }
   const names = only === undefined ? Object.keys(CHECKS) : [only];
   const jsonMode = args.includes('--json');
+  const packageAt = args.indexOf('--package');
+  const wanted = packageAt === -1 ? undefined : args[packageAt + 1];
+  let filter;
+  let moduleNames = [];
+  if (wanted !== undefined) {
+    const packages = discoverPackages({ root: process.cwd() }).filter(
+      (pkg) => pkg.manifest.dsh?.workbench !== undefined,
+    );
+    const matched = packages.filter((pkg) => {
+      const name = pkg.manifest.name;
+      const unit = pkg.manifest.dsh?.workbench?.unit;
+      return name === wanted || name.endsWith(`/${wanted}`) || unit === wanted;
+    });
+    if (matched.length === 0) {
+      const available = packages.map((pkg) => `${pkg.manifest.name}（${String(pkg.manifest.dsh?.workbench?.unit ?? '')}）`);
+      console.error(`没有这个模块：${wanted}（这个工作区里有：${available.join(' / ')}）`);
+      process.exit(2);
+    }
+    filter = new Set(matched.map((pkg) => pkg.manifest.name));
+    moduleNames = packages.map((pkg) => pkg.manifest.name).filter((name) => !filter.has(name));
+    console.log(`（只查 ${[...filter].join(' / ')}：问题按包名过滤；完整门禁别带 --package）`);
+  }
+  process.env.DSH_WB_PACKAGE_FILTER = filter === undefined ? '' : '' + [...filter].length;
   const tally = { pass: 0, skip: 0, fail: 0 };
   const skipped = [];
   let ran = 0;
@@ -149,7 +174,26 @@ export async function check({ only, args = [] } = {}) {
 
       process.env.DSH_WB_ONLY = only === undefined ? '' : name;
       const module = await entry.load();
-      const result = await module.run();
+      let result = await module.run();
+      if (filter !== undefined && result.status === 'fail') {
+        const kept = result.problems.filter((problem) => {
+          const own = [...filter].some(
+            (pkgName) => problem.startsWith(`${pkgName}:`) || problem.startsWith(`${pkgName} `),
+          );
+          if (own) return true;
+          return !moduleNames.some(
+            (pkgName) => problem.startsWith(`${pkgName}:`) || problem.startsWith(`${pkgName} `),
+          );
+        });
+        const notes = [
+          ...result.notes,
+          `（--package：只列 ${[...filter].join(' / ')} 的问题，其余模块的问题这次不算）`,
+        ];
+        result =
+          kept.length === 0
+            ? { ...result, status: 'pass', problems: [], notes }
+            : { ...result, problems: kept, notes };
+      }
 
       const title = typeof module.title === 'string' && module.title !== '' ? module.title : entry.title;
       ran += 1;
@@ -178,11 +222,14 @@ export async function check({ only, args = [] } = {}) {
   }
 
   console.log(`${ran} 条判据：${tally.pass} 通过 · ${tally.skip} 不适用 · ${tally.fail} 不过`);
+  if (filter !== undefined) {
+    console.log(`  这次只报 ${[...filter].join(' / ')}；其余模块的红被过滤掉了 —— 门禁 / 发布请不带 --package 重跑。`);
+  }
 
   if (skipped.length > 0) {
     console.log(`  这 ${skipped.length} 条这次一条都没查（不是"没问题"）：`);
     for (const one of skipped) console.log(`  ○ ${one}`);
-    console.log('  换个 cwd 它们才跑得起来（工坊里「独立构建」扫不到外壳源码、「公开包无内部标识」只扫');
+    console.log('  换个 cwd 它们才跑得起来（工作区里「独立构建」扫不到外壳源码、「公开包无内部标识」只扫');
     console.log('  要发出去的包）—— 想验这两条，回工作台仓库根跑 `dsh-wb-module check`。');
   }
   if (tally.fail > 0) process.exit(1);

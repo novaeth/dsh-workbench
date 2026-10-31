@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { BIN, PACKAGES_DIR } from '../lib.mjs';
+import { BIN, PACKAGES_DIR, fillPendingDesign } from '../lib.mjs';
 import { datasourceProblemOf, renderDatasource } from '../../../src/datasource-file.mjs';
 
 const TITLE =
@@ -42,6 +42,8 @@ export const checks = [
       try {
         const init = run(['init', 'demo', '--dir', probe, '--template', 'diy']);
         if (init.failed) throw new Error(`init 起不来：${init.out}`);
+
+        fillPendingDesign(probe);
 
         edit((design) => {
           design.datasource.key = 'balance';

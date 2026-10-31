@@ -2,6 +2,8 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
+import { workbenchRootOf } from './release-util.mjs';
+
 const FINGERPRINT_FILES = [
   'package.json',
   'design.json',
@@ -13,7 +15,7 @@ const FINGERPRINT_FILES = [
 ];
 
 function statePathOf(home, unit) {
-  return join(home, 'workbench', 'releases', `${unit}.json`);
+  return join(workbenchRootOf(home), 'releases', `${unit}.json`);
 }
 
 export function readState(home, unit) {

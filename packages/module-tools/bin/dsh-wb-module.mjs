@@ -8,6 +8,7 @@ import { changelog } from '../src/changelog.mjs';
 import { design } from '../src/design.mjs';
 import { init } from '../src/init.mjs';
 import { marketInit } from '../src/market-init.mjs';
+import { migrate } from '../src/migrate.mjs';
 import { publish } from '../src/publish.mjs';
 import { release } from '../src/release.mjs';
 import { sync } from '../src/sync.mjs';
@@ -45,14 +46,25 @@ async function lint({ root, args }) {
   if (failed > 0) process.exit(1);
 }
 
-const commands = { build, check, init, 'market-init': marketInit, design, publish, release, sync, lint, changelog };
+const commands = { build, check, init, 'market-init': marketInit, design, migrate, publish, release, sync, lint, changelog };
 
 const CHECK_HELP = `
 查询口：
   check --only kit [--file <名字>]                      这份外壳的 kit 里有什么
   check --only primitives [--all|--files|--json] [--file <名字>]
                                                         这份外壳的 dsh 原语里有什么
-  check --list [--json|--markdown]                      只列判据元数据`;
+  check --list [--json|--markdown]                      只列判据元数据
+
+范围：
+  check --package <包名|unit>                           只报这个模块的问题（开发期便利，不是门禁）
+                                                        全量扫描、只过滤报告与退出码`;
+
+const MIGRATE_HELP = `
+用法：
+  migrate [--cwd <模块目录>] [--dry-run]
+
+把模块清单迁到当前代：apiVersion → 3、缺/空的 workbenchFaces 补默认入口。
+源码类问题（kit 成员移除、裸控件、card: null 对账）不自动改 —— check 会逐条点名。`;
 
 const RELEASE_HELP = `
 选项：
@@ -86,9 +98,10 @@ release --changelog-note "这一版改了什么"（文件不在会先建）。`;
 const COMMANDS = {
   build: '出 dist/host.js（单文件 ESM）与 client.js（套 loader 壳）',
   check: '十三条判据；--only 单跑，也当查询口用；--list 只列判据元数据',
-  init: '建模块骨架（--dir / --template minimal|diy / --description）',
+  init: '建模块骨架（--dir / --template diy / --description；只有 diy 一个模板）',
   'market-init': '初始化市场索引仓库（写 market/ 与 README，推首个 commit）',
   design: '设计底稿：init 填 / check 查空格 / render 生成 README / accept 打勾',
+  migrate: '把模块清单迁到当前代（apiVersion / workbenchFaces）；源码类问题只给提示',
   publish: '发货前清单：门禁 + files + npm pack（只 dry run）',
   release: '真发布：全门禁 + 验收闸 + 预检接管 + 发到出口 + 发后核包 + 更新市场索引（中断可 --resume）',
   sync: '按清单生成 src/declared-tools.ts，按 design.json 生成 src/datasource.ts',
@@ -121,7 +134,7 @@ const program = new Command('dsh-wb-module')
   .helpOption('-h, --help', '打印帮助')
   .addHelpText(
     'after',
-    '\n  --cwd <目录>  指定包目录（默认当前目录；也可用 DSH_WB_MODULE_CWD）\n  任何命令后跟 --help 都只打印帮助。\n',
+    '\n  --cwd <目录>  指定工作目录（默认当前目录；判据仍按工作区发现，可用 DSH_WB_MODULE_CWD）\n  任何命令后跟 --help 都只打印帮助。\n',
   );
 
 for (const [name, description] of Object.entries(COMMANDS)) {
@@ -135,6 +148,7 @@ for (const [name, description] of Object.entries(COMMANDS)) {
   if (name === 'release') sub.addHelpText('after', `${RELEASE_HELP}\n`);
   if (name === 'market-init') sub.addHelpText('after', `${MARKET_INIT_HELP}\n`);
   if (name === 'changelog') sub.addHelpText('after', `${CHANGELOG_HELP}\n`);
+  if (name === 'migrate') sub.addHelpText('after', `${MIGRATE_HELP}\n`);
   sub.action(async (_options, command) => {
     await dispatch(name, command.args);
   });

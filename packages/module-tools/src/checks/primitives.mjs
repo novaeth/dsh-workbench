@@ -115,9 +115,9 @@ function faceOf(modulePackages) {
     const notes = [
       `这份工程里没装 ${PRIMITIVES_SPECIFIER} —— 列不出清单。`,
       `  它在 @deepseek-ai/dsh-client-ui-primitives 那个包的 lib/types/**/*.d.ts 里（源码不随包发布）。`,
-      `  先加一行再 pnpm install：`,
+      `  在模块清单里加这一行：`,
       `    "devDependencies": { "${PRIMITIVES_SPECIFIER}": "${want}" }`,
-      `  两个模板默认带这一行；加完在 dsh.client.external 里也声明 "${PRIMITIVES_SPECIFIER}"（两处都要）。`,
+      `  模板默认带这一行；加完在 dsh.client.external 里也声明 "${PRIMITIVES_SPECIFIER}"（两处都要）。`,
     ];
     if (pinned !== undefined) notes.push(`  外壳（${SHELL}${shellVersion === undefined ? '' : `@${shellVersion}`}）钉的是 ${pinned} —— 对齐它。`);
     return { notes, payload: { installed: null, pinned: pinned ?? null, modules, snippet: devDependencySnippet(want) } };

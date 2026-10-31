@@ -111,7 +111,7 @@ async function loadConfig(pkg) {
     return {
       error:
         `${pkg.manifest.name}: ${CONFIG_FILE} 跑不起来 —— ${messageOf(error)}` +
-        '（先确认这份配置能 import、没有语法错，再确认它 import 的东西在工坊里解析得到）',
+        '（先确认这份配置能 import、没有语法错，再确认它 import 的东西在工作区里解析得到）',
     };
   }
 
@@ -251,7 +251,7 @@ export async function run() {
 
   if (problems.length > 0) {
 
-    const only = process.env.DSH_WB_ONLY === 'lint';
+    const only = process.env.DSH_WB_ONLY === 'lint' || process.env.DSH_WB_PACKAGE_FILTER !== '';
     const shown = only ? problems : problems.slice(0, MAX_PROBLEMS);
     const notes = [
       '红了怎么修：先看位置与规则名，再决定"改代码"还是"就地 eslint-disable-next-line"；' +

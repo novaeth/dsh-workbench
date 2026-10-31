@@ -18,12 +18,15 @@ import * as negativeProbe from './checks/negative-probe.mjs';
 import * as archGate from './checks/arch-gate.mjs';
 import * as lintGate from './checks/lint-gate.mjs';
 import * as protocol from './checks/protocol.mjs';
+import * as discover from './checks/discover.mjs';
+import * as packageFilter from './checks/package-filter.mjs';
 import * as approval from './checks/approval.mjs';
 import * as runtimeShape from './checks/runtime-shape.mjs';
 import * as artifacts from './checks/artifacts.mjs';
 import * as meta from './checks/meta.mjs';
 import * as commentGate from './checks/comment-gate.mjs';
 import * as recipes from './checks/recipes.mjs';
+import * as migrate from './checks/migrate.mjs';
 import * as marketIndex from './checks/market-index.mjs';
 
 const MODULES = [
@@ -43,12 +46,15 @@ const MODULES = [
   archGate,
   lintGate,
   protocol,
+  discover,
+  packageFilter,
   approval,
   runtimeShape,
   artifacts,
   meta,
   commentGate,
   recipes,
+  migrate,
   marketIndex,
 ];
 

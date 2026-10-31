@@ -80,8 +80,14 @@ export function dshHomeOf(home) {
   return home ?? process.env.DSH_HOME?.trim() ?? join(homedir(), '.dsh');
 }
 
+export function workbenchRootOf(home) {
+  const configured = process.env.DSH_WORKBENCH_HOME?.trim();
+  if (configured !== undefined && configured !== '') return configured;
+  return join(dshHomeOf(home), 'workbench');
+}
+
 export function artifactsDirOf(home, unit) {
-  return join(dshHomeOf(home), 'workbench', 'artifacts', unit);
+  return join(workbenchRootOf(home), 'artifacts', unit);
 }
 
 export function publishTagOf(version) {

@@ -170,8 +170,9 @@ export async function run() {
           if (missing.length > 0) {
             problems.push(
               `${name}: 产物用了这份外壳（${shellClient}）里没有的 ${missing.join('、')} —— ` +
-                `顶层解构不会抛（拿到 undefined），卡片首帧渲染才炸 "Element type is invalid"，` +
-                `而外壳没有错误边界 ⇒ 整块面板会跟着没。要么去掉/换掉这些成员，要么把 peer 下限提到真正需要的那版`,
+                `顶层解构不会抛（拿到 undefined），卡片首帧渲染才炸 "Element type is invalid"；` +
+                `外壳会把这张卡收进错误态（只炸这一张，但用户看到的是错误页而不是你的卡）。` +
+                `要么去掉/换掉这些成员，要么把 peer 下限提到真正需要的那版`,
             );
           }
         }

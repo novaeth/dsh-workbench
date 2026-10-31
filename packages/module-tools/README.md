@@ -6,8 +6,7 @@
 ## 六条命令走一遍
 
 ```bash
-pnpm exec dsh-wb-module init my-unit --template diy   # 建骨架（minimal 是默认）
-cd my-unit && pnpm install
+pnpm exec dsh-wb-module init my-unit                    # 建骨架（唯一模板，已默认）
 pnpm build        # dist/host.js + 套了 loader 壳的 client.js
 pnpm check        # 十三条判据
 pnpm design check # 设计底稿有没有空格、README 有没有落后
@@ -23,7 +22,7 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 空仓库先跑 `dsh-wb-module market-init <git 地址>`：生成索引目录 `market/` 与 README 并推首个 commit
 （用仓库声明的默认分支，读不到时用 `--ref` 指定）。在工作台里配了可写索引源之后，
 `release` 默认出口就是 `market`：产物与索引一起进那个仓库。
-发布过程中每一步都写进 `~/.dsh/workbench/releases/<unit>.json`；中断后带 `--resume` 接着发
+发布过程中每一步都写进 `$DSH_WORKBENCH_HOME/releases/<unit>.json`（默认 `~/.dsh/workbench`）；中断后带 `--resume` 接着发
 （沿用记录里的出口、版本与索引计划，产物没变就不重跑门禁）。
 这一版在 `CHANGELOG.md` 里没有记录时，带 `--changelog-note "这一版改了什么"`
 （`--changelog-type` 选分类，缺省 changed）发一次就写进去，文件不在会先建骨架；
@@ -48,18 +47,26 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 
 | 命令 | 作用 |
 |---|---|
-| `dsh-wb-module init <unit> [--dir <目录>] [--template minimal\|diy] [--description "一句话"]` | 建模块骨架 |
+| `dsh-wb-module init <unit> [--dir <目录>] [--template diy] [--description "一句话"]` | 建模块骨架（只有 `diy` 一个模板，也是默认） |
 | `dsh-wb-module market-init <git 地址\|目录> [--ref <分支>] [--path <索引路径>]` | 初始化市场索引仓库：写 `market/` + README，推首个 commit |
 | `dsh-wb-module build` | 出 `dist/host.js`（单文件 ESM）与 `client.js`（套 loader 壳） |
-| `dsh-wb-module check [--only <判据>]` | 十三条判据；`--only` 单跑，也当查询口用；`--list [--json\|--markdown]` 只列判据元数据 |
+| `dsh-wb-module check [--only <判据>] [--package <包名或 unit>]` | 十三条判据；`--only` 单跑，也当查询口用；`--package` 只报这个模块的问题（见下）；`--list [--json\|--markdown]` 只列判据元数据 |
 | `dsh-wb-module lint [--fix]` | 用模块自己那份 `eslint.config.mjs`；`--fix` 写回文件 |
 | `dsh-wb-module sync` | 按清单生成 `src/declared-tools.ts`，按 `design.json` 的 `key + recipe` 生成 `src/datasource.ts` |
 | `dsh-wb-module design <init\|check\|render\|accept>` | 设计底稿：填、查空格、生成 README、验收打勾 |
+| `dsh-wb-module migrate [--dry-run]` | 把模块清单迁到当前代：`apiVersion` → 3、缺/空的 `workbenchFaces` 补默认；源码类问题只给提示（check 会点名） |
 | `dsh-wb-module changelog check [版本]` | 查这一版有没有记录；发布时用 `release --changelog-note` 写进去 |
 | `dsh-wb-module publish` | 发货前清单：门禁 + `files` + `npm pack`（只 dry run） |
 | `dsh-wb-module release` | 真发布：team / public / tarball / git；全门禁 + 验收闸 + 预检接管 + 发后核包 + 更新市场索引（`--dry-run` / `--verify`） |
 
-`--cwd <目录>` 指定包目录，默认当前目录。
+`--cwd <目录>` 指定**工作目录**，默认当前目录。注意判据仍按**工作区**发现模块：往上找
+`pnpm-workspace.yaml`（或 `package.json` 的 `workspaces`），按它声明的 glob 展开包目录
+（`packages/**`、`apps/*`、多层目录都行；没有声明时退回 `packages/*`）——`--cwd` 不会把范围缩到一个模块。
+只想看自己那个模块用 `check --package <包名或 unit>`。
+
+`--package` 是**开发期便利**，不是门禁：它仍全量扫描、只过滤报告与退出码，所以
+「我这个模块绿」不等于「工作区绿」。门禁 / 发布 / release 不要带它。要只让判据看见一个包，
+用环境变量 `DSH_WB_ROOT=<包目录>`（工具链自己的自检就是这么隔离的）。
 
 ## 十三条判据
 
@@ -112,10 +119,12 @@ export default moduleArch();
 | `src/messages.ts` | 1 | 文案（zh / en） |
 | `src/components/**` | 2 | 浏览器侧视图件；样式与它同目录（`X.module.css`） |
 | `src/host.ts` · `src/client.tsx` | 10 | 两个面 |
+| `src/host/**` | 10 | 宿主侧内部实现（按需出现）：`moduleArch()` 默认就认这一层；对外仍只有 `src/host.ts` 一个面 |
 | `**/*.test.ts(x)` | 99 | 测试 |
 
 两个运行时靠另一条规则隔离：`src/components/**` 整片算浏览器面，宿主侧 import 一个组件是硬红
-（层号拦不住它：components 第 2 层、host 第 10 层）。内置阈值比 arch-guard 默认更严：
+（层号拦不住它：components 第 2 层、host 第 10 层）。`src/host/**` 与两个面同层（10），
+所以浏览器面从它 import 时层号不报红 —— 运行时边界要自己守。内置阈值比 arch-guard 默认更严：
 文件与视图各 200 行、函数 80 行；`src/model/**` 有文件就必须有测试。
 
 要开口子**从参数进**（别改判据；每条口子都有名字，评审看得见）：
@@ -133,6 +142,10 @@ export default moduleArch({
 `exceptions` 每条必须写 `reason`。怎么读红、常见红、还有哪些口子，见
 [REVIEW.md](../core/skills/workbench-module-diy/REVIEW.md)。
 
+宿主面写到 200 行还收不住时，把内部实现拆到 `src/host/**`（`diy` 模板就这么做，
+`moduleArch()` 默认就认这一层）。**不要**把它做成第三个
+`dsh.workbenchFaces` 入口 —— 两个面不可调。
+
 ### `lint`：模块包的语法卫生方言
 
 `arch` 管结构，`lint` 管单文件：`as any` 绕过契约、残留的 `console.log` / `debugger`、
@@ -145,7 +158,7 @@ export default moduleLint({ rootDir: import.meta.dirname });
 
 `moduleLint()` 返回一份**标准 flat config**：它同时是判据跑的那份与编辑器 / `eslint` 认的那份，
 没有第二份真相。依赖（`eslint`、`typescript-eslint`、两个 react 插件）装在 module-tools 一家，
-模块与工坊根的清单一个字都不用改。
+模块清单一个字都不用改（依赖由 module-tools 自己带）。
 
 要开口子从命令参数进：`moduleLint({ rootDir, ignores, rules })`，或者展开它再追自己的一块：
 
@@ -280,16 +293,15 @@ dsh-wb-module design accept   # 在真卡片上逐条走通后打勾
 5. **`dsh.workbenchFaces` 不是协议的一部分，但门禁必填**：它指向两半的**源码**，不能指向出货
    产物 —— 从 `dist/host.js` 反推不出是哪份源码把 dsh 的包拖进来的。
 
-## 两个模板
+## 模板
 
-| 模板 | 是什么 |
-|---|---|
-| `minimal`（默认） | 空壳：卡壳、文案、测试都接好了，没有数据源 |
-| `diy` | 一份真能跑的样板：宿主侧一条只读路由真读盘、卡片五态、三张表也是填好的 |
+只有**一个**模板（`diy`，也是默认）：一份真能跑的样板 —— 宿主侧三条只读路由真读盘、卡片五态与写失败提示、
+开箱（`（待填）`）的 `design.json`（填完 `design check` 才绿），外加一条可跑的长任务 / 两把工具（一只读一读写）/ 动作通道 / prefs。维护两份模板的成本
+没人付，所以不再有 `minimal` 空壳；要空骨架就从 `diy` 删掉数据源那几段。
 
-两个模板都是**分层多文件**骨架：纯逻辑住 `src/model/**`、视图件与同目录样式住
-`src/components/**`、文案住 `src/messages.ts`，两个面只剩注册与交 props。目录按需要出现 ——
-`minimal` 没有纯逻辑就不硬造 `model/`。各自带一份一行工厂的 `arch.config.mjs` 与两行的
+它是**分层多文件**骨架：纯逻辑住 `src/model/**`、视图件与同目录样式住 `src/components/**`、
+文案住 `src/messages.ts`，两个面只剩注册与交 props；宿主侧内部实现住 `src/host/**`
+（`moduleArch()` 默认就认这一层）。带一份 `arch.config.mjs` 与两行的
 `eslint.config.mjs`。
 
 `init` 连模板里的 `*.tpl` 一起拷、按已知 token 名逐个盖章（`__UNIT__` / `__NAME__` / `__DESC__` /
@@ -303,7 +315,7 @@ dsh-wb-module design accept   # 在真卡片上逐条走通后打勾
 node scripts/selfcheck/index.mjs
 ```
 
-工具箱的回归网：两个模板各 `init` 一遍、各跑全套；判据的正例与负例都要对；打包清单不含
+工具箱的回归网：模板 `init` 一遍、跑全套；判据的正例与负例都要对；打包清单不含
 `.tpl` 残留；`design` 的空格、README 同步、`accept`；`publish` 的清单；`release` 的验收闸、
 dry-run、真发后的元数据与发布失败回滚。
 

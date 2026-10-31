@@ -1,33 +1,25 @@
 # __NAME__ · agent 工作说明
 
-这个包是工作台模块（单元 `__UNIT__`）。`README.md` 讲模块本身；这份讲 agent 在这份代码里怎么干活。
+工作台模块（单元 `__UNIT__`）。模块行为与数据看 `README.md`；这份只说工具链怎么用。
 
-## 命令
+## 干活循环
 
-```bash
-pnpm install
-pnpm build        # dist/host.js + client.js
-pnpm typecheck
-pnpm test
-pnpm selfcheck
-pnpm check        # 十三条模块判据
-pnpm lint
-pnpm design check
-```
+改 `src/**` 后：
 
-发布（维护者确认之后）：
+1. `pnpm build` —— 产出 `dist/host.js` + 套了 loader 壳的 `client.js`；产物由它生成。
+2. `pnpm check` —— 十三条判据，读的就是上一步的产物。单跑一条用 `pnpm check --only <判据名>`；
+   **全绿**才算这件活做完。怎么读红、常见红：`@dsh-workbench/core/skills/workbench-module-diy/REVIEW.md`。
+3. `pnpm test` —— 与改动同目录的 `*.test.ts`；新逻辑配对应用例，**全绿**才算完。
 
-```bash
-dsh-wb-module release --target team|public|tarball|git
-```
+`pnpm selfcheck` = build + `design check` + smoke；`design.json` 里的（待填）填完才绿。
 
-`--dry-run` 只预览，`--verify` 只核已发布的包。
+## 工具链约定
 
-## 不要
-
-- 手改 `client.js` / `dist/**`：构建产物，改 `src/**` 后重新 build。
+- 清单是工具名唯一真相：`dsh-wb-module sync` 生成 `src/declared-tools.ts`，代码引 `DECLARED_TOOLS`。
+- 判据读构建产物：改了 `src/**` 先 build 再 check。
+- 发布：`dsh-wb-module release --target team|public|tarball|git`；`--dry-run` 只预览，`--verify` 只核已发布的包。
 
 ## 先读
 
-- `README.md`：模块行为与数据源。
-- 工作台模块指引：`@dsh-workbench/core/skills/workbench-module-diy/`（dsh / 工作台的约束随外壳出货）。
+- `README.md`：模块行为、数据源、三张表。
+- `@dsh-workbench/core/skills/workbench-module-diy/`：路由 / 工具 / 卡片 / 文案的写法与约定（随外壳出货）。

@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { BIN, PACKAGES_DIR, linkToolchain } from '../lib.mjs';
+import { BIN, PACKAGES_DIR, fillPendingDesign, linkToolchain } from '../lib.mjs';
 
 export const checks = [
   {
@@ -15,6 +15,9 @@ export const checks = [
       const env = { ...process.env, DSH_WB_ROOT: probe };
       try {
         execFileSync(process.execPath, [BIN, 'init', 'demo', '--dir', probe, '--template', 'diy'], { stdio: 'pipe' });
+        fillPendingDesign(probe);
+        execFileSync(process.execPath, [BIN, 'design', 'render', '--cwd', probe], { stdio: 'pipe', env });
+        execFileSync(process.execPath, [BIN, 'design', 'accept', '--cwd', probe], { stdio: 'pipe', env });
         linkToolchain(ctx.toolchain, join(probe, 'node_modules'));
         symlinkSync(join(PACKAGES_DIR, 'shared'), join(probe, 'node_modules', '@dsh-workbench', 'shared'), 'dir');
         execFileSync(process.execPath, [BIN, 'publish', '--cwd', probe], { stdio: 'pipe', env });

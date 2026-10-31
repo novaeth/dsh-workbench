@@ -97,6 +97,7 @@ pnpm run check                        # 门禁：整仓那一套（= `pnpm -w ru
 | 模块的构建、十三条判据、模板、设计底稿 | [`packages/module-tools/README.md`](packages/module-tools/README.md) |
 | 共享契约、哑组件、宿主工具、收录判据 | [`packages/shared/README.md`](packages/shared/README.md) |
 | 最小可安装模块样本 | [`packages/module-hello/README.md`](packages/module-hello/README.md) |
+| 想理清“什么内容写在哪、边界在哪” | [`CONTENT-BOUNDARIES.md`](CONTENT-BOUNDARIES.md) |
 | 改文档站、加一页、换配色 | [`packages/docs/README.md`](packages/docs/README.md) |
 | 对某个术语拿不准 | [`CONTEXT.md`](CONTEXT.md) |
 | 想知道某个选择为什么是这样 | `private-docs/docs/adr/`（需要私有仓权限） |

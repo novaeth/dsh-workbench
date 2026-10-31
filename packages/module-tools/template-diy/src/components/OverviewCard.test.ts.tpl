@@ -7,7 +7,19 @@ const shell = vi.hoisted(() => ({
     readonly error?: { readonly code: string; readonly message: string };
   },
   readEnabled: undefined as boolean | undefined,
+  writeFailed: null as string | null,
 }));
+
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react')>();
+  return {
+    ...actual,
+    useState: (initial: unknown) => [
+      typeof initial === 'function' ? (initial as () => unknown)() : initial,
+      () => {},
+    ],
+  };
+});
 
 vi.mock('@dsh-workbench/core/client', () => ({
   kit: {
@@ -16,17 +28,41 @@ vi.mock('@dsh-workbench/core/client', () => ({
         shell.readEnabled = options?.enabled;
         return shell.resource;
       },
+      useHostWrite: () => ({
+        busy: false,
+        failed: shell.writeFailed,
+        detail: null,
+        send: async () => ({ ok: true, value: {} }),
+        fail: () => {},
+        clear: () => {},
+      }),
+      useLongTask: () => ({
+        runs: [],
+        stop: async () => ({ ok: true }),
+        stopping: null,
+        stopFailed: null,
+        refresh: () => {},
+      }),
     },
     components: {
       Card: () => null,
       CenteredState: () => null,
       EmptyState: () => null,
+      Field: () => null,
       StateBlock: () => null,
       IconPanelScreen: () => null,
       Rows: () => null,
       Row: () => null,
+      LongTaskRow: () => null,
+      Note: () => null,
+      SelectField: () => null,
+      TextField: () => null,
     },
   },
+}));
+
+vi.mock('@deepseek-ai/dsh-client-ui-primitives', () => ({
+  Button: () => null,
 }));
 
 import { OverviewCard } from './OverviewCard';
@@ -47,6 +83,10 @@ function textOf(value: unknown, out: string[] = []): string[] {
   }
   if (typeof value === 'object') {
     const record = value as Record<string, unknown>;
+    if (typeof record['type'] === 'function' && record['props'] !== undefined) {
+      const rendered = (record['type'] as (props: unknown) => unknown)(record['props']);
+      if (rendered !== null && rendered !== undefined) return textOf(rendered, out);
+    }
     const source = 'type' in record && 'props' in record ? (record.props as Record<string, unknown>) : record;
     for (const one of Object.values(source)) {
       if (typeof one !== 'function') textOf(one, out);
@@ -114,5 +154,15 @@ describe('OverviewCard：待机 / 加载 / 就绪 / 就绪但空 / 出错', () =
     const text = textOf(OverviewCard(cardProps)).join(' ');
     expect(text).toContain('/real/workbench');
     expect(text).not.toContain('__UNIT__.loading');
+  });
+
+  it('写失败留在卡上（不静默）', () => {
+    shell.resource = {
+      phase: 'ready',
+      value: { ok: true, path: '/real/workbench', files: 1, dirs: 0, bytes: 10, largest: [] },
+    };
+    shell.writeFailed = '网络不通，没发出去';
+    expect(textOf(OverviewCard(cardProps)).join(' ')).toContain('网络不通，没发出去');
+    shell.writeFailed = null;
   });
 });

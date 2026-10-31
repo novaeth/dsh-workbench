@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { BIN, FACES, PACKAGES_DIR } from '../lib.mjs';
+import { BIN, FACES, PACKAGES_DIR, fillPendingDesign } from '../lib.mjs';
 
 const DESIGN_SHAPE =
   'design：填好的绿 / 挖空一格红（点名叫哪一格）/ README 落后也红 / accept 逐条打勾 / ' +
@@ -26,9 +26,11 @@ export const checks = [
       const probe = mkdtempSync(join(PACKAGES_DIR, '.design-'));
       try {
         execFileSync(process.execPath, [BIN, 'init', 'demo', '--dir', probe, '--template', 'diy'], { stdio: 'pipe' });
+        fillPendingDesign(probe);
         const design = join(probe, 'design.json');
         const run = (action) => execFileSync(process.execPath, [BIN, 'design', action, '--cwd', probe], { stdio: 'pipe' });
 
+        run('render');
         run('check');
 
         const parsed = JSON.parse(readFileSync(design, 'utf8'));
@@ -196,6 +198,7 @@ export function apply(ctx) {
       const probe = mkdtempSync(join(PACKAGES_DIR, '.writes-'));
       try {
         execFileSync(process.execPath, [BIN, 'init', 'demo', '--dir', probe, '--template', 'diy'], { stdio: 'pipe' });
+        fillPendingDesign(probe);
         const design = join(probe, 'design.json');
         const readmeFile = join(probe, 'README.md');
         const run = (action) => execFileSync(process.execPath, [BIN, 'design', action, '--cwd', probe], { stdio: 'pipe' });
@@ -222,11 +225,11 @@ export function apply(ctx) {
           ...over,
         });
 
+        run('render');
         run('check');
         if (readFileSync(readmeFile, 'utf8').includes('### 写通道探明记录')) {
           throw new Error('没有 writes 的骨架，README 里却长出了写通道那一节');
         }
-
         const one = parsed();
         one.writes = [write()];
         save(one);

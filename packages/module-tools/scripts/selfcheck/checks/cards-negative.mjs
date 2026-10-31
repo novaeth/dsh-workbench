@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { BIN, FACES, PACKAGES_DIR, REPO_ROOT, declaration, read } from '../lib.mjs';
+import { BIN, FACES, PACKAGES_DIR, REPO_ROOT, declaration, fillPendingDesign, read } from '../lib.mjs';
 
 const STATES_TITLE =
   '逐态卡片二十一刀各自判红并点名到态：loading 崩 / 冒 undefined / 冒 NaN / zh 缺键 / en 缺键 / loading 空屏 / 没套卡壳 + 刷新崩 / 刷新 NaN / 刷新缺键 / 能力闸缺插件 undefined / NaN / 缺键 + 刷新 at 崩 / at undefined / at NaN / at 缺键 + 缺命令崩 / 缺命令 undefined / 缺命令 NaN / 缺命令缺键（红都只红对应那条）';
@@ -511,6 +511,7 @@ export function apply(ctx) {
       const problems = [];
       try {
         execFileSync(process.execPath, [BIN, 'init', 'demo', '--dir', probe, '--template', 'diy'], { stdio: 'pipe' });
+        fillPendingDesign(probe);
         const design = join(probe, 'design.json');
         const run = (action) => execFileSync(process.execPath, [BIN, 'design', action, '--cwd', probe], { stdio: 'pipe' });
 

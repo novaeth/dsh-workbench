@@ -181,3 +181,34 @@ export async function approvalFor(
     displayReason: compose(facts, verdict, note),
   };
 }
+
+/**
+ * 「写工具要点头」那一对的默认口径：点名的工具一律 `ask` + 同一份明细，其余一律 `read`。
+ * 把它直接摊在 `mount()` 的返回值里：`...writeApprovalOf({ … })`。
+ * @param options.tools 需要点头的工具名。
+ * @param options.reason 为什么问（给 agent 看的理由）。
+ * @param options.question 问句（zh / en，≤40 字）。
+ * @param options.fallback 没有明细时的整句（zh / en，≤40 字）。
+ * @param options.detail 审批屏头行那句明细（zh / en，≤20 字）。
+ * @returns `{ needsApproval, approvalDetail }`。
+ */
+export function writeApprovalOf(options: {
+  readonly tools: readonly string[];
+  readonly reason: string;
+  readonly question: ApprovalDetail;
+  readonly fallback: ApprovalDetail;
+  readonly detail: ApprovalDetail;
+}): {
+  needsApproval(call: ApprovalCall): ApprovalVerdict;
+  approvalDetail(call: ApprovalCall): ApprovalFacts | undefined;
+} {
+  const tools = new Set(options.tools);
+  const named = (call: ApprovalCall): boolean => call.name !== undefined && tools.has(call.name);
+  return {
+    needsApproval: (call) =>
+      named(call)
+        ? { kind: 'ask', reason: options.reason, question: options.question, fallback: options.fallback }
+        : { kind: 'read' },
+    approvalDetail: (call) => (named(call) ? options.detail : undefined),
+  };
+}
