@@ -80,7 +80,8 @@ export const GATE_MOCKS: readonly GateMock[] = [
     '第一步在跑（转圈 + 它正在执行的命令），第二步还没轮到（短横）。',
     {
       phase: 'checking',
-      steps: [{ id: 'cli', status: 'running', action: 'opencli --version' }, BRIDGE_PENDING],
+      steps: [{ id: 'cli', status: 'running', action: '检查 opencli 版本' }, BRIDGE_PENDING],
+      log: ['> opencli --version', '1.8.8'],
     },
     { hint: 'checking', command: false },
   ),
@@ -90,7 +91,8 @@ export const GATE_MOCKS: readonly GateMock[] = [
     '缺命令行：正在装。右边会**数秒**（静止的圆点看不出在干活）。',
     {
       phase: 'installing',
-      steps: [{ id: 'cli', status: 'running', action: INSTALL_COMMAND, command: INSTALL_COMMAND }, BRIDGE_PENDING],
+      steps: [{ id: 'cli', status: 'running', action: '安装 opencli', command: INSTALL_COMMAND }, BRIDGE_PENDING],
+      log: ['> 安装 opencli', 'added 1 package'],
     },
     { hint: 'installing', command: false },
   ),
@@ -105,6 +107,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
         { id: 'cli', status: 'pending' },
         BRIDGE_PENDING,
       ],
+      log: ['> 安装本地 npm', 'added 1 package'],
     },
     { hint: 'installingToolchain', command: false },
   ),
