@@ -21,6 +21,7 @@ jobs:
     timeout-minutes: 45
     env:
       HUSKY: 0
+      DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@1.1.14-beta.0'
     steps:
       - uses: actions/checkout@v4
       - name: Install Desktop
@@ -91,7 +92,7 @@ jobs:
         run: |
           git config user.name ci
           git config user.email ci@example.com
-          git add -f desktop-win-ui.txt desktop-win-cdp.txt desktop-win-inspect.txt desktop-win.png || true
+          git add -f desktop-win-ui.txt desktop-win-cdp.txt desktop-win-inspect.txt desktop-win.png desktop-win-gate.png || true
           git commit -m "ci: windows desktop ui probe [skip ci]" || true
           git push origin HEAD:desktop-ui-log-win-${{ github.run_id }}
 
@@ -101,6 +102,7 @@ jobs:
           name: desktop-smoke-windows
           path: |
             desktop-win.png
+            desktop-win-gate.png
             desktop-win-app.log
             desktop-win-app.err.log
 
@@ -110,6 +112,7 @@ jobs:
     timeout-minutes: 45
     env:
       HUSKY: 0
+      DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@1.1.14-beta.0'
     steps:
       - uses: actions/checkout@v4
       - name: Install Desktop
@@ -170,7 +173,7 @@ jobs:
         run: |
           git config user.name ci
           git config user.email ci@example.com
-          git add -f desktop-mac-ui.txt desktop-mac-inspect.txt desktop-mac.png || true
+          git add -f desktop-mac-ui.txt desktop-mac-inspect.txt desktop-mac.png desktop-mac-gate.png || true
           git commit -m "ci: macos desktop ui probe [skip ci]" || true
           git push origin HEAD:desktop-ui-log-mac-${{ github.run_id }}
 
@@ -180,4 +183,5 @@ jobs:
           name: desktop-smoke-macos
           path: |
             desktop-mac.png
+            desktop-mac-gate.png
             desktop-mac-app.log

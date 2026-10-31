@@ -4,6 +4,7 @@ const port = process.argv[2] ?? '9222';
 const shot = process.argv[3] ?? 'desktop-smoke.png';
 const expectWorkbench = process.argv.includes('--expect-workbench');
 const installViaUi = process.argv.includes('--install-via-ui');
+const workbenchSpec = process.env.DESKTOP_WORKBENCH_SPEC ?? '@dsh-workbench/core';
 
 const sleep = (ms) =>
   new Promise((resolve) => {
@@ -110,7 +111,7 @@ if (installViaUi) {
     returnByValue: true,
   });
   console.log(`focus: ${JSON.stringify(focus.result?.value)}`);
-  await cdp.send('Input.insertText', { text: '@dsh-workbench/core' });
+  await cdp.send('Input.insertText', { text: workbenchSpec });
   await sleep(500);
   const filled = await cdp.send('Runtime.evaluate', {
     expression: `document.querySelector('input[aria-label="Package name or address"]')?.value ?? ''`,
@@ -144,6 +145,10 @@ if (installViaUi) {
   if (/Enable now/u.test(last)) await step('enable now', clickText('Enable now'));
   await step('close dialog', `(() => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); return 'escape'; })()`);
   await sleep(5000);
+  const gateShot = shot.replace(/\.png$/u, '-gate.png');
+  const gateImage = await cdp.send('Page.captureScreenshot', { format: 'png' });
+  fs.writeFileSync(gateShot, Buffer.from(gateImage.data, 'base64'));
+  console.log(`GATE_SCREENSHOT: ${gateShot} (${fs.statSync(gateShot).size} bytes)`);
   for (let i = 0; i < 72; i += 1) {
     const current = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
     const body = current.result?.value ?? '';
