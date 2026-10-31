@@ -17,13 +17,11 @@ concurrency:
 jobs:
   windows:
     name: desktop / windows x64
-    if: github.event_name != 'push'
     runs-on: windows-latest
     timeout-minutes: 45
     env:
       HUSKY: 0
-      DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@1.1.14-beta.1'
-      DESKTOP_SMOKE_QUICK: '1'
+      DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@1.1.14-beta.2'
     steps:
       - uses: actions/checkout@v4
       - name: Install Desktop
@@ -51,7 +49,7 @@ jobs:
           Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
           Start-Sleep -Seconds 3
           Get-Content "$env:USERPROFILE\.dsh\profiles\desktop\package.json" -Raw
-      - name: Launch and assert workbench panel
+      - name: Install workbench from plugin page, wait for the gate, assert panel
         shell: pwsh
         run: |
           Start-Transcript -Path desktop-win-ui.txt -Force
@@ -69,7 +67,18 @@ jobs:
           Get-Content $cdp -ErrorAction SilentlyContinue
           Stop-Transcript
           if ($code -ne 0) { throw "cdp probe failed: $code" }
-
+      - name: Assert opencli installed
+        shell: pwsh
+        run: |
+          $root = "$env:USERPROFILE\.dsh\workbench\opencli"
+          $manifest = Join-Path $root 'toolchain\node_modules\@jackwener\opencli\package.json'
+          if (!(Test-Path $manifest)) { throw "opencli missing: $manifest" }
+          $version = (Get-Content $manifest -Raw | ConvertFrom-Json).version
+          "opencli $version"
+          $bin = Join-Path $root 'bin\opencli.cmd'
+          if (!(Test-Path $bin)) { throw "opencli bin missing: $bin" }
+          & $bin --version
+          if ($LASTEXITCODE -ne 0) { throw "opencli --version failed: $LASTEXITCODE" }
       - name: Inspect workbench install
         if: always()
         shell: pwsh
@@ -80,10 +89,17 @@ jobs:
             "workbench root: $root"
             if (Test-Path $root) { Get-ChildItem $root -Recurse -Depth 3 -ErrorAction SilentlyContinue | Select-Object FullName, Length | Format-Table -AutoSize | Out-String -Width 400 }
             $opencli = @("$root\opencli", "$root\opencli\toolchain", "$root\opencli\bin")
-            foreach ($dir in $opencli) { "== $dir"; if (Test-Path $dir) { Get-ChildItem $dir -Force -ErrorAction SilentlyContinue | Select-Object Name } else { 'missing' } }
-            Get-ChildItem "$env:USERPROFILE\.dsh" -Filter '*.log' -Recurse -ErrorAction SilentlyContinue | Select-Object FullName, Length
+            foreach ($dir in $opencli) {
+              "== $dir"
+              if (Test-Path $dir) { Get-ChildItem $dir -Force -ErrorAction SilentlyContinue | Select-Object Name } else { 'missing' }
+            }
+            "== seed.log"
+            Get-Content "$root\seed.log" -ErrorAction SilentlyContinue
+            "== profile patch"
+            Get-Content "$env:USERPROFILE\.dsh\profiles\desktop\cordis.patch.yml" -ErrorAction SilentlyContinue
+            "== app stdout"
+            Get-Content (Join-Path $env:RUNNER_TEMP 'desktop-win-app.log') -ErrorAction SilentlyContinue | Select-Object -Last 200
           } finally { Stop-Transcript }
-
       - name: Stop Desktop
         if: always()
         shell: pwsh
@@ -101,7 +117,6 @@ jobs:
             git commit -m "ci: windows desktop ui probe [skip ci]" || true
           fi
           git push origin HEAD:desktop-ui-log-win-${{ github.run_id }}
-
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -110,8 +125,9 @@ jobs:
             desktop-win.png
             desktop-win-gate.png
             desktop-win-gate-open.png
-            desktop-win-app.log
-            desktop-win-app.err.log
+            desktop-win-cdp.txt
+            desktop-win-ui.txt
+            desktop-win-inspect.txt
 
   macos:
     name: desktop / macos arm64
@@ -119,8 +135,7 @@ jobs:
     timeout-minutes: 45
     env:
       HUSKY: 0
-      DESKTOP_SMOKE_QUICK: '0'
-      DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@1.1.14-beta.1'
+      DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@1.1.14-beta.2'
     steps:
       - uses: actions/checkout@v4
       - name: Install Desktop
@@ -145,35 +160,7 @@ jobs:
           pkill -f 'DeepSeek Harness' 2>/dev/null || true
           sleep 3
           cat "$HOME/.dsh/profiles/desktop/package.json"
-      - name: Probe pnpm opencli install
-        shell: bash
-        timeout-minutes: 4
-        run: |
-          set -x
-          root="$RUNNER_TEMP/opencli-probe"
-          mkdir -p "$root/toolchain"
-          printf '{"name":"dsh-workbench-toolchain","private":true,"dependencies":{"@jackwener/opencli":"1.8.8"}}\n' > "$root/toolchain/package.json"
-          export npm_config_registry='https://registry.npmmirror.com'
-          export NPM_CONFIG_REGISTRY="$npm_config_registry"
-          start=$(date +%s)
-          set +e
-          node "/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs" add --dir "$root/toolchain" @jackwener/opencli@1.8.8 --store-dir "$root/npm-cache" --allow-build=@jackwener/opencli > desktop-mac-pnpm-probe.txt 2>&1
-          code=$?
-          set -e
-          end=$(date +%s)
-          echo "elapsed=$((end-start))s exit=$code" >> desktop-mac-pnpm-probe.txt
-          tail -60 desktop-mac-pnpm-probe.txt
-      - name: Pre-apply writable-root patch
-        shell: bash
-        run: |
-          patch="$HOME/.dsh/profiles/desktop/cordis.patch.yml"
-          printf '%s\n' \
-            '- id: sandbox-policy' \
-            '  config:' \
-            '    mode: workspace-write' \
-            "    workspaceRoot: $HOME/.dsh/workbench" > "$patch"
-          cat "$patch"
-      - name: Launch and assert workbench panel
+      - name: Install workbench from plugin page, wait for the gate, assert panel
         shell: bash
         run: |
           exec > >(tee desktop-mac-ui.txt) 2>&1
@@ -186,27 +173,8 @@ jobs:
           pwd
           '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9222 > "$RUNNER_TEMP/desktop-mac-app.log" 2>&1 &
           sleep 60
-          (
-            cd "$GITHUB_WORKSPACE"
-            for i in 1 2 3 4 5 6 7 8; do
-              sleep 30
-              echo "=== t=$((i * 30))s"
-              ps -ef | grep -Ei 'pnpm|sandbox-exec|opencli|dsh-desktop-host' | grep -v grep || true
-              for pid in $(pgrep -f 'dsh-desktop-host' 2>/dev/null); do
-                echo "--- sample $pid"
-                sample "$pid" 1 -file "desktop-mac-sample-$i.txt" 2>&1 | tail -3 || true
-              done
-              for pid in $(pgrep -f 'pnpm.cjs add' 2>/dev/null); do
-                echo "--- child $pid"
-                lsof -a -p "$pid" -d cwd -Fn 2>/dev/null || true
-                lsof -p "$pid" 2>/dev/null | grep -Ei 'TCP|opencli|npm-cache' | head -20 || true
-                sample "$pid" 1 -file "desktop-mac-pnpm-sample-$i.txt" 2>&1 | tail -3 || true
-              done
-            done
-          ) > "$GITHUB_WORKSPACE/desktop-mac-ps.txt" 2>&1 &
           cat "$RUNNER_TEMP/desktop-mac-app.log"
           ( cd "$GITHUB_WORKSPACE" && node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-mac.png --install-via-ui --expect-workbench )
-
       - name: Assert opencli installed
         shell: bash
         run: |
@@ -222,20 +190,11 @@ jobs:
             exit 1
           fi
           "$root/bin/opencli" --version
-
       - name: Inspect workbench install
         if: always()
         shell: bash
         run: |
           exec > >(tee desktop-mac-inspect.txt) 2>&1
-          echo '--- pwd ---'
-          pwd
-          echo '--- processes ---'
-          ps -ef | grep -Ei 'pnpm|opencli|deepseek|node' | grep -v grep | head -80 || true
-          echo '--- app cwd ---'
-          for pid in $(pgrep -f 'DeepSeek Harness' 2>/dev/null); do
-            echo "pid $pid: $(lsof -a -p "$pid" -d cwd -Fn 2>/dev/null | tr '\n' ' ')"
-          done
           echo '--- workbench tree ---'
           find "$HOME/.dsh/workbench" -maxdepth 4 -print 2>/dev/null | head -150 || true
           echo '--- opencli tree ---'
@@ -244,21 +203,13 @@ jobs:
           cat "$HOME/.dsh/workbench/seed.log" 2>/dev/null || true
           echo '--- desktop profile patch ---'
           cat "$HOME/.dsh/profiles/desktop/cordis.patch.yml" 2>/dev/null || true
-          echo '--- desktop profile package ---'
-          cat "$HOME/.dsh/profiles/desktop/package.json" 2>/dev/null || true
           echo '--- app stdout ---'
-          cat "$RUNNER_TEMP/desktop-mac-app.log" 2>/dev/null | tail -400 || true
+          cat "$RUNNER_TEMP/desktop-mac-app.log" 2>/dev/null | tail -300 || true
           echo '--- library logs ---'
           find "$HOME/Library/Logs/DeepSeek Harness" -type f 2>/dev/null | while read -r file; do
             echo "=== $file"
-            tail -300 "$file" 2>/dev/null || true
-          done || true
-          echo '--- dsh logs ---'
-          find "$HOME/.dsh/logs" -type f 2>/dev/null | while read -r file; do
-            echo "=== $file"
             tail -200 "$file" 2>/dev/null || true
           done || true
-
       - name: Stop Desktop
         if: always()
         shell: bash
@@ -276,7 +227,6 @@ jobs:
             git commit -m "ci: macos desktop ui probe [skip ci]" || true
           fi
           git push origin HEAD:desktop-ui-log-mac-${{ github.run_id }}
-
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -285,4 +235,5 @@ jobs:
             desktop-mac.png
             desktop-mac-gate.png
             desktop-mac-gate-open.png
-            desktop-mac-app.log
+            desktop-mac-ui.txt
+            desktop-mac-inspect.txt

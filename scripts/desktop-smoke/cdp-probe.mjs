@@ -5,7 +5,6 @@ const shot = process.argv[3] ?? 'desktop-smoke.png';
 const expectWorkbench = process.argv.includes('--expect-workbench');
 const installViaUi = process.argv.includes('--install-via-ui');
 const workbenchSpec = process.env.DESKTOP_WORKBENCH_SPEC ?? '@dsh-workbench/core';
-const quick = process.env.DESKTOP_SMOKE_QUICK === '1';
 
 const sleep = (ms) =>
   new Promise((resolve) => {
@@ -178,7 +177,7 @@ if (installViaUi) {
   const failedShot = shot.replace(/\.png$/u, '-failed.png');
   const continueTexts = ['Enter the workbench anyway', '仍然进入工作台'];
   let gateCaptured = false;
-  for (let i = 0; i < (quick ? 12 : 72); i += 1) {
+  for (let i = 0; i < 72; i += 1) {
     const current = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
     const body = current.result?.value ?? '';
     const snapshot = await preflightOf(cdp);
@@ -206,7 +205,6 @@ if (installViaUi) {
       }
       gateCaptured = true;
       await dumpPreflight(cdp, 'AT_GATE');
-      if (quick) break;
     }
     const continueText = continueTexts.find((text) => body.includes(text));
     if (continueText !== undefined) {
@@ -216,13 +214,6 @@ if (installViaUi) {
     }
     if (!/Preparing the workbench|准备工作台/u.test(body)) break;
     await sleep(5000);
-  }
-  if (quick) {
-    const quickImage = await cdp.send('Page.captureScreenshot', { format: 'png' });
-    fs.writeFileSync(shot, Buffer.from(quickImage.data, 'base64'));
-    console.log(`SCREENSHOT: ${shot} (${fs.statSync(shot).size} bytes)`);
-    cdp.close();
-    process.exit(0);
   }
   for (let i = 0; i < 90; i += 1) {
     const current = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
