@@ -1,0 +1,139 @@
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/43d13086-a68f-472b-b1a2-a169061858f9
+Checking for update
+Update for version 0.2.1-rc.5 is not available (latest version: 0.2.1-rc.5, downgrade is disallowed).
+dsh web: http://127.0.0.1:49190/?token=eBOQr2_jL_NXTigm-fIccBVR_8ypLvkNk66QsVIh4to
+pages: 2
+- page file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/renderer/welcome.html
+- page dsh-app://app/
+welcome skip: scheduled
+pages after skip: 1
+- page dsh-app://app/
+target: dsh-app://app/
+open plugins: "Plugins"
+PLUGINS_BODY_START
+New Session
+⌘
+N
+Plugins
+Automation tasks
+More
+Workspaces
+Default workspace
+New Session
+More
+Plugins
+Install, enable, and configure plugins
+Add plugin
+Built-in plugin settings
+Subagent
+Set Subagent recursion depth, count, and models.
+Web search
+Set up the DeepSeek search provider.
+Agent loop
+Control how the Agent dispatches tool calls.
+Shell
+Limit how long each command may run and how much it may output.
+Experimental plugins
+More
+Agent Teams
+Experimental
+Enable team collaboration, team tools, the member roster, and the shared task board.
+Voice input
+Experimental
+Transcribe recordings locally with SenseVoice; first use requires installing dependencies
+Auto Authorization Review
+Experimental
+Add an Auto review permission mode that uses the model to assess authorization before each tool call.
+Developer Tools
+Experimental
+Inspect and debug raw session data, grouped chat messages, and the NodeJS backend.
+PLUGINS_BODY_END
+add plugin: "Add plugin"
+FIELDS: [{"index":0,"tag":"INPUT","type":"text","placeholder":"Search session names","aria":null,"visible":true},{"index":1,"tag":"INPUT","type":"text","placeholder":"for example dsh-plugin-whale-pet","aria":"Package name or address","visible":true}]
+fill: "@dsh-workbench/core"
+install: "Install"
+install wait 1s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 2s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 3s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 4s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 5s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 6s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 7s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 8s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 9s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 10s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 11s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 12s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 13s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 14s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 15s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 16s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 17s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 18s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 19s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 20s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 21s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 22s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 23s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 24s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 25s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 26s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 27s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 28s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 29s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 30s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 31s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 32s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 33s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 34s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 35s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+install wait 36s:  and examples | Registry | Official npm registry |  | Install only plugins you trust: they run with your permissions and can damage DeepSeek Harness or leak your data. | On-demand Official plugins offer Update when their version differs from DSH. To update other plugins, uninstall and reinstall them. |  | Install
+close dialog: "escape"
+BODY_START
+New Session
+⌘
+N
+Plugins
+Automation tasks
+More
+Workspaces
+No matching sessions
+More
+Plugins
+Install, enable, and configure plugins
+Add plugin
+Built-in plugin settings
+Subagent
+Set Subagent recursion depth, count, and models.
+Web search
+Set up the DeepSeek search provider.
+Agent loop
+Control how the Agent dispatches tool calls.
+Shell
+Limit how long each command may run and how much it may output.
+Experimental plugins
+More
+Agent Teams
+Experimental
+Enable team collaboration, team tools, the member roster, and the shared task board.
+Voice input
+Experimental
+Transcribe recordings locally with SenseVoice; first use requires installing dependencies
+Auto Authorization Review
+Experimental
+Add an Auto review permission mode that uses the model to assess authorization before each tool call.
+Developer Tools
+Experimental
+Inspect and debug raw session data, grouped chat messages, and the NodeJS backend.
+BODY_END
+TITLE: DeepSeek Harness
+SCREENSHOT: desktop-mac.png (79682 bytes)
+file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:144
+  throw new Error('workbench panel not found in Desktop renderer');
+        ^
+
+Error: workbench panel not found in Desktop renderer
+    at file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:144:9
+
+Node.js v24.22.1
