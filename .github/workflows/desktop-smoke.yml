@@ -2,227 +2,131 @@ name: desktop-smoke
 
 "on":
   workflow_dispatch:
-  push:
-    branches: [desktop-smoke]
+  schedule:
+    - cron: '17 2 * * 1'
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: desktop-smoke-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   windows:
     name: desktop / windows x64
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
+    env:
+      HUSKY: 0
     steps:
       - uses: actions/checkout@v4
-      - name: Probe Windows Desktop
+      - name: Install Desktop
         shell: pwsh
-        continue-on-error: true
         run: |
-          $log = Join-Path $env:GITHUB_WORKSPACE 'desktop-win-probe.txt'
-          Start-Transcript -Path $log -Force
-          try {
-            $installer = Join-Path $env:RUNNER_TEMP 'dsh-desktop-win.exe'
-            Invoke-WebRequest -Uri 'https://download.deepseek.com/desktop/dsh-latest-windows-x64.exe' -OutFile $installer
-            Get-Item $installer | Select-Object FullName, Length | Format-List
-            $install = Start-Process -FilePath $installer -ArgumentList '/S' -Wait -PassThru
-            "install exit: $($install.ExitCode)"
-            Start-Sleep -Seconds 10
-            $roots = @("$env:LOCALAPPDATA\Programs", "$env:ProgramFiles", "${env:ProgramFiles(x86)}")
-            $exe = Get-ChildItem -Path $roots -Filter 'DeepSeek Harness.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($null -eq $exe) { throw 'DeepSeek Harness.exe not found after install' }
-            "install dir: $($exe.DirectoryName)"
-            Get-ChildItem "$($exe.DirectoryName)\resources" | Select-Object Name, Length | Format-Table
-            $cli = Join-Path $exe.DirectoryName 'resources\runtime\cli\bin\dsh.cmd'
-            "cli: $cli"
-            & $cli --version 2>&1
-            & $cli --help 2>&1 | Select-Object -First 20
-            $p = Start-Process -FilePath $exe.FullName -PassThru
-            Start-Sleep -Seconds 20
-            "process still running: $(-not $p.HasExited)"
-            Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Select-Object Id, ProcessName, MainWindowTitle | Format-Table
-            "--- profiles ---"
-            foreach ($dir in @("$env:USERPROFILE\.dsh", "$env:APPDATA\dsh", "$env:LOCALAPPDATA\DeepSeek Harness", "$env:APPDATA\DeepSeek Harness")) {
-              "== $dir"
-              if (Test-Path $dir) { Get-ChildItem $dir -Force -Depth 3 -ErrorAction SilentlyContinue | Select-Object FullName | Format-Table -HideTableHeaders } else { 'missing' }
-            }
-            Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
-          } finally {
-            Stop-Transcript
-          }
-
-
-      - name: Baseline - no opencli (Windows)
+          $installer = Join-Path $env:RUNNER_TEMP 'dsh-desktop-win.exe'
+          Invoke-WebRequest -Uri 'https://download.deepseek.com/desktop/dsh-latest-windows-x64.exe' -OutFile $installer
+          $install = Start-Process -FilePath $installer -ArgumentList '/S' -Wait -PassThru
+          if ($install.ExitCode -ne 0) { throw "installer failed: $($install.ExitCode)" }
+          Start-Sleep -Seconds 10
+          $exe = Get-ChildItem -Path @("$env:LOCALAPPDATA\Programs", "$env:ProgramFiles", "${env:ProgramFiles(x86)}") -Filter 'DeepSeek Harness.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -eq $exe) { throw 'DeepSeek Harness.exe not found' }
+          "DESKTOP_EXE=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "DESKTOP_CLI=$(Join-Path $exe.DirectoryName 'resources\runtime\cli\bin\dsh.cmd')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Assert default user has no opencli
         shell: pwsh
-        continue-on-error: true
         run: |
-          $chrome = @("$env:ProgramFiles\Google\Chrome\Application\chrome.exe", "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
-          "chrome: $chrome"
-          $opencli = Get-Command opencli -ErrorAction SilentlyContinue
-          "opencli: $($opencli.Source)"
-          if ($null -ne $opencli) { throw 'opencli must not be preinstalled for this smoke' }
-
-      - name: Install workbench plugin (Windows)
+          if (Get-Command opencli -ErrorAction SilentlyContinue) { throw 'opencli is preinstalled; this smoke must start without it' }
+          'opencli: missing (expected)'
+      - name: Initialize Desktop profile
         shell: pwsh
-        continue-on-error: true
         run: |
-          $log = Join-Path $env:GITHUB_WORKSPACE 'desktop-win-plugin.txt'
-          Start-Transcript -Path $log -Force
-          try {
-            $exe = Get-ChildItem -Path @("$env:LOCALAPPDATA\Programs", "$env:ProgramFiles", "${env:ProgramFiles(x86)}") -Filter 'DeepSeek Harness.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($null -eq $exe) { throw 'DeepSeek Harness.exe not found' }
-            $cli = Join-Path $exe.DirectoryName 'resources\runtime\cli\bin\dsh.cmd'
-            & $cli plugin --profile desktop add '@dsh-workbench/core@1.1.13' 2>&1
-            "--- profile package.json ---"
-            Get-Content "$env:USERPROFILE\.dsh\profiles\desktop\package.json" -Raw
-            "--- profile cordis.yml ---"
-            Get-Content "$env:USERPROFILE\.dsh\profiles\desktop\cordis.yml" -Raw
-          } finally {
-            Stop-Transcript
-          }
-      - name: Launch with workbench (Windows)
+          $p = Start-Process -FilePath $env:DESKTOP_EXE -PassThru
+          Start-Sleep -Seconds 25
+          Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 3
+          Get-Content "$env:USERPROFILE\.dsh\profiles\desktop\package.json" -Raw
+      - name: Install workbench bundle
         shell: pwsh
-        continue-on-error: true
         run: |
-          $log = Join-Path $env:GITHUB_WORKSPACE 'desktop-win-launch.txt'
-          Start-Transcript -Path $log -Force
-          try {
-            $exe = Get-ChildItem -Path @("$env:LOCALAPPDATA\Programs", "$env:ProgramFiles", "${env:ProgramFiles(x86)}") -Filter 'DeepSeek Harness.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($null -eq $exe) { throw 'DeepSeek Harness.exe not found' }
-            $out = Join-Path $env:RUNNER_TEMP 'win-app-out.log'
-            $err = Join-Path $env:RUNNER_TEMP 'win-app-err.log'
-            $p = Start-Process -FilePath $exe.FullName -ArgumentList '--remote-debugging-port=9222' -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
-            Start-Sleep -Seconds 60
-            "--- app stdout ---"
-            Get-Content $out -ErrorAction SilentlyContinue
-            "--- app stderr ---"
-            Get-Content $err -ErrorAction SilentlyContinue
-            $line = Select-String -Path $out -Pattern 'dsh web: (http\S+)' -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($null -ne $line) {
-              $url = $line.Matches[0].Groups[1].Value
-              "workbench url: $url"
-              try {
-                $r = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 15
-                "http status: $($r.StatusCode)"
-              } catch {
-                "http probe failed: $($_.Exception.Message)"
-              }
-            } else {
-              'workbench url not found in app stdout'
-            }
-            Start-Sleep -Seconds 5
-            "--- cdp ---"
-            $cdp = Join-Path $env:GITHUB_WORKSPACE 'desktop-win-cdp.txt'
-            & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win.png *> $cdp
-            "node exit: $LASTEXITCODE"
-            Get-Content $cdp -ErrorAction SilentlyContinue
-            Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
-          } finally {
-            Stop-Transcript
-          }
-
-      - name: Commit probe log
+          & $env:DESKTOP_CLI plugin --profile desktop add '@dsh-workbench/core@latest'
+          if ($LASTEXITCODE -ne 0) { throw "plugin install failed: $LASTEXITCODE" }
+          Get-Content "$env:USERPROFILE\.dsh\profiles\desktop\package.json" -Raw
+      - name: Launch and assert workbench panel
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'desktop-win-app.log'
+          $err = Join-Path $env:RUNNER_TEMP 'desktop-win-app.err.log'
+          $p = Start-Process -FilePath $env:DESKTOP_EXE -ArgumentList '--remote-debugging-port=9222' -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
+          Start-Sleep -Seconds 60
+          Get-Content $out, $err -ErrorAction SilentlyContinue
+          & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win.png --expect-workbench
+          if ($LASTEXITCODE -ne 0) { throw "cdp probe failed: $LASTEXITCODE" }
+      - name: Stop Desktop
         if: always()
-        shell: bash
-        run: |
-          git config user.name ci
-          git config user.email ci@example.com
-          git add -f desktop-win-probe.txt desktop-win-plugin.txt desktop-win-launch.txt desktop-win-cdp.txt || true
-          git commit -m "ci: windows desktop probe [skip ci]" || true
-          git push origin HEAD:desktop-log-win-${{ github.run_id }}
+        shell: pwsh
+        run: Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-smoke-windows
+          path: |
+            desktop-win.png
+            desktop-win-app.log
+            desktop-win-app.err.log
 
   macos:
     name: desktop / macos arm64
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
+    env:
+      HUSKY: 0
     steps:
       - uses: actions/checkout@v4
-      - name: Probe macOS Desktop
+      - name: Install Desktop
         shell: bash
-        continue-on-error: true
         run: |
-          set -x
-          log=desktop-mac-probe.txt
-          exec > >(tee "$log") 2>&1
           curl -fL --retry 2 -o "$RUNNER_TEMP/dsh-desktop-mac.dmg" "https://download.deepseek.com/desktop/dsh-latest-macos-arm64.dmg"
-          ls -lh "$RUNNER_TEMP/dsh-desktop-mac.dmg"
           hdiutil attach -nobrowse -readonly -mountpoint "$RUNNER_TEMP/dsh-mnt" "$RUNNER_TEMP/dsh-desktop-mac.dmg"
           cp -R "$RUNNER_TEMP/dsh-mnt/DeepSeek Harness.app" /Applications/
           hdiutil detach "$RUNNER_TEMP/dsh-mnt"
-          app="/Applications/DeepSeek Harness.app"
-          xattr -dr com.apple.quarantine "$app" || true
-          "$app/Contents/Resources/runtime/cli/bin/dsh" --version
-          "$app/Contents/Resources/runtime/cli/bin/dsh" --help | head -20
-          "$app/Contents/MacOS/DeepSeek Harness" > "$RUNNER_TEMP/desktop-mac-app.log" 2>&1 &
-          pid=$!
-          sleep 20
-          ps -p "$pid" -o pid,stat,command || true
-          pgrep -fl "DeepSeek Harness" || true
-          echo '--- app log ---'
-          cat "$RUNNER_TEMP/desktop-mac-app.log" || true
-          echo '--- profiles ---'
-          for dir in "$HOME/.dsh" "$HOME/Library/Application Support/DeepSeek Harness" "$HOME/Library/Application Support/dsh"; do
-            echo "== $dir"
-            if [ -e "$dir" ]; then find "$dir" -maxdepth 4 -print | head -80; else echo missing; fi
-          done
-          kill "$pid" 2>/dev/null || true
-
-
-      - name: Baseline - no opencli (macOS)
+          xattr -dr com.apple.quarantine '/Applications/DeepSeek Harness.app'
+      - name: Assert default user has no opencli
         shell: bash
-        continue-on-error: true
         run: |
-          set -x
-          ls -l "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" || true
-          if command -v opencli >/dev/null 2>&1; then echo "unexpected opencli: $(command -v opencli)"; exit 1; else echo 'opencli: missing (expected)'; fi
-
-      - name: Install workbench plugin (macOS)
+          if command -v opencli >/dev/null 2>&1; then echo "unexpected opencli: $(command -v opencli)"; exit 1; fi
+          echo 'opencli: missing (expected)'
+      - name: Initialize Desktop profile
         shell: bash
-        continue-on-error: true
         run: |
-          set -x
-          log=desktop-mac-plugin.txt
-          exec > >(tee "$log") 2>&1
-          cli="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh"
-          "$cli" plugin --profile desktop add '@dsh-workbench/core@1.1.13'
-          echo '--- profile package.json ---'
-          cat "$HOME/.dsh/profiles/desktop/package.json"
-          echo '--- profile cordis.yml ---'
-          cat "$HOME/.dsh/profiles/desktop/cordis.yml"
-      - name: Launch with workbench (macOS)
-        shell: bash
-        continue-on-error: true
-        run: |
-          set -x
-          log=desktop-mac-launch.txt
-          exec > >(tee "$log") 2>&1
+          pkill -f 'DeepSeek Harness' 2>/dev/null || true
+          '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' > "$RUNNER_TEMP/desktop-mac-init.log" 2>&1 &
+          sleep 25
           pkill -f 'DeepSeek Harness' 2>/dev/null || true
           sleep 3
-          app="/Applications/DeepSeek Harness.app"
-          "$app/Contents/MacOS/DeepSeek Harness" --remote-debugging-port=9222 > "$RUNNER_TEMP/desktop-mac-app2.log" 2>&1 &
-          pid=$!
-          sleep 60
-          echo '--- app log ---'
-          cat "$RUNNER_TEMP/desktop-mac-app2.log" || true
-          url=$(grep -oE 'http://127\.0\.0\.1:[0-9]+/\?token=[^ ]+' "$RUNNER_TEMP/desktop-mac-app2.log" | head -1 || true)
-          if [ -n "$url" ]; then
-            echo "workbench url: $url"
-            curl -s -o /dev/null -w 'http status: %{http_code}\n' "$url"
-          else
-            echo 'workbench url not found in app log'
-          fi
-          sleep 5
-          echo '--- cdp ---'
-          node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-mac.png 2>&1 || true
-          ps -p "$pid" -o pid,stat,command || true
-          kill "$pid" 2>/dev/null || true
-
-      - name: Commit probe log
-        if: always()
+          cat "$HOME/.dsh/profiles/desktop/package.json"
+      - name: Install workbench bundle
         shell: bash
         run: |
-          git config user.name ci
-          git config user.email ci@example.com
-          git add -f desktop-mac-probe.txt desktop-mac-plugin.txt desktop-mac-launch.txt || true
-          git commit -m "ci: macos desktop probe [skip ci]" || true
-          git push origin HEAD:desktop-log-mac-${{ github.run_id }}
+          '/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh' plugin --profile desktop add '@dsh-workbench/core@latest'
+          cat "$HOME/.dsh/profiles/desktop/package.json"
+      - name: Launch and assert workbench panel
+        shell: bash
+        run: |
+          pkill -f 'DeepSeek Harness' 2>/dev/null || true
+          sleep 3
+          '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9222 > "$RUNNER_TEMP/desktop-mac-app.log" 2>&1 &
+          sleep 60
+          cat "$RUNNER_TEMP/desktop-mac-app.log"
+          node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-mac.png --expect-workbench
+      - name: Stop Desktop
+        if: always()
+        shell: bash
+        run: pkill -f 'DeepSeek Harness' 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-smoke-macos
+          path: |
+            desktop-mac.png
+            desktop-mac-app.log

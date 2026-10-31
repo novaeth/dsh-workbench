@@ -2,6 +2,7 @@ import fs from 'node:fs';
 
 const port = process.argv[2] ?? '9222';
 const shot = process.argv[3] ?? 'desktop-smoke.png';
+const expectWorkbench = process.argv.includes('--expect-workbench');
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -78,4 +79,7 @@ console.log(`TITLE: ${title.result?.value ?? ''}`);
 const capture = await cdp.send('Page.captureScreenshot', { format: 'png' });
 fs.writeFileSync(shot, Buffer.from(capture.data, 'base64'));
 console.log(`SCREENSHOT: ${shot} (${fs.statSync(shot).size} bytes)`);
+if (expectWorkbench && !/Workbench panel|工作台DIY/u.test(body)) {
+  throw new Error('workbench panel not found in Desktop renderer');
+}
 cdp.close();
