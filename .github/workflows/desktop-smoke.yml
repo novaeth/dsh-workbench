@@ -101,7 +101,8 @@ jobs:
             }
             Start-Sleep -Seconds 5
             "--- cdp ---"
-            node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win.png 2>&1
+            & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win.png 2>&1
+            "node exit: $LASTEXITCODE"
             Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
           } finally {
             Stop-Transcript
