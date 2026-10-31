@@ -52,14 +52,15 @@ jobs:
           }
 
 
-      - name: Install Chrome/OpenCLI (Windows)
+      - name: Baseline - no opencli (Windows)
         shell: pwsh
         continue-on-error: true
         run: |
           $chrome = @("$env:ProgramFiles\Google\Chrome\Application\chrome.exe", "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
           "chrome: $chrome"
-          npm install -g '@jackwener/opencli@1.8.8'
-          opencli --version
+          $opencli = Get-Command opencli -ErrorAction SilentlyContinue
+          "opencli: $($opencli.Source)"
+          if ($null -ne $opencli) { throw 'opencli must not be preinstalled for this smoke' }
 
       - name: Install workbench plugin (Windows)
         shell: pwsh
@@ -111,8 +112,10 @@ jobs:
             }
             Start-Sleep -Seconds 5
             "--- cdp ---"
-            & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win.png 2>&1
+            $cdp = Join-Path $env:GITHUB_WORKSPACE 'desktop-win-cdp.txt'
+            & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win.png *> $cdp
             "node exit: $LASTEXITCODE"
+            Get-Content $cdp -ErrorAction SilentlyContinue
             Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
           } finally {
             Stop-Transcript
@@ -124,7 +127,7 @@ jobs:
         run: |
           git config user.name ci
           git config user.email ci@example.com
-          git add -f desktop-win-probe.txt desktop-win-plugin.txt desktop-win-launch.txt || true
+          git add -f desktop-win-probe.txt desktop-win-plugin.txt desktop-win-launch.txt desktop-win-cdp.txt || true
           git commit -m "ci: windows desktop probe [skip ci]" || true
           git push origin HEAD:desktop-log-win-${{ github.run_id }}
 
@@ -165,14 +168,13 @@ jobs:
           kill "$pid" 2>/dev/null || true
 
 
-      - name: Install Chrome/OpenCLI (macOS)
+      - name: Baseline - no opencli (macOS)
         shell: bash
         continue-on-error: true
         run: |
           set -x
           ls -l "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" || true
-          npm install -g '@jackwener/opencli@1.8.8'
-          opencli --version || true
+          if command -v opencli >/dev/null 2>&1; then echo "unexpected opencli: $(command -v opencli)"; exit 1; else echo 'opencli: missing (expected)'; fi
 
       - name: Install workbench plugin (macOS)
         shell: bash
