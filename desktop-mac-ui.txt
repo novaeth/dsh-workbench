@@ -1,0 +1,114 @@
+registry: https://registry.npmmirror.com
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/59d7bb7b-c8db-464a-be78-8d166b3b4a35
+Checking for update
+Update for version 0.2.1-rc.5 is not available (latest version: 0.2.1-rc.5, downgrade is disallowed).
+dsh web: http://127.0.0.1:49189/?token=WHaRVpyrBmcJd0NrK4ED64uHYJvnBoUbyt6Nk4istdo
+pages: 2
+- page file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/renderer/welcome.html
+- page dsh-app://app/
+welcome skip: scheduled
+pages after skip: 1
+- page dsh-app://app/
+target: dsh-app://app/
+open plugins: "Plugins"
+PLUGINS_BODY_START
+New Session
+⌘
+N
+Plugins
+Automation tasks
+More
+Workspaces
+Default workspace
+New Session
+More
+Plugins
+Install, enable, and configure plugins
+Add plugin
+Built-in plugin settings
+Subagent
+Set Subagent recursion depth, count, and models.
+Web search
+Set up the DeepSeek search provider.
+Agent loop
+Control how the Agent dispatches tool calls.
+Shell
+Limit how long each command may run and how much it may output.
+Experimental plugins
+More
+Agent Teams
+Experimental
+Enable team collaboration, team tools, the member roster, and the shared task board.
+Voice input
+Experimental
+Transcribe recordings locally with SenseVoice; first use requires installing dependencies
+Auto Authorization Review
+Experimental
+Add an Auto review permission mode that uses the model to assess authorization before each tool call.
+Developer Tools
+Experimental
+Inspect and debug raw session data, grouped chat messages, and the NodeJS backend.
+PLUGINS_BODY_END
+add plugin: "Add plugin"
+FIELDS: [{"index":0,"tag":"INPUT","type":"text","placeholder":"Search session names","aria":null,"visible":true},{"index":1,"tag":"INPUT","type":"text","placeholder":"for example dsh-plugin-whale-pet","aria":"Package name or address","visible":true}]
+focus: "for example dsh-plugin-whale-pet"
+filled: "@dsh-workbench/core@1.1.14-beta.0"
+install click: {"disabled":false}
+AFTER_INSTALL_CLICK_START
+New Session
+⌘
+N
+Plugins
+Automation tasks
+More
+Workspaces
+Default workspace
+New Session
+More
+Plugins
+Install, enable, and configure plugins
+View installation
+Built-in plugin settings
+Subagent
+Set Subagent recursion depth, count, and models.
+Web search
+Set up the DeepSeek search provider.
+Agent loop
+Control how the Agent dispatches tool calls.
+Shell
+Limit how long each command may run and how much it may output.
+Experimental plugins
+More
+Agent Teams
+Experimental
+Enable team collaboration, team tools, the member roster, and the shared task board.
+Voice input
+Experimental
+Transcribe recordings locally with SenseVoice; first use requires installing dependencies
+Auto Authorization Review
+Experimental
+Add an Auto review permission mode that uses the model to assess authorization before each tool call.
+Developer Tools
+Experimental
+Inspect and debug raw session data, grouped chat messages, and the NodeJS backend.
+Cancel installation and return to editing
+Installing the plugin…
+
+@dsh-workbench/core
+
+个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+
+Version 1.1.14-beta.0
+
+Show install details
+Cancel install
+AFTER_INSTALL_CLICK_END
+install wait 1s:  | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Installed |  | @dsh-workbench/core |  | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 |  | Version 1.1.14-beta.0 |  | Show install details | Enable now
+enable now: "Enable now"
+close dialog: "escape"
+health wait 0s: ental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode
+health wait 5s: ibe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+GATE_SCREENSHOT: desktop-mac-gate.png (16982 bytes)
+PREFLIGHT_AT_GATE: {"ok":true,"phase":"installing","steps":[{"id":"toolchain","status":"ok","log":["node v24.21.0（Desktop 自带） · npm 11.19.1 · pnpm 10.32.1"],"detail":"node v24.21.0（Desktop 自带） · npm 11.19.1 · pnpm 10.32.1"},{"id":"cli","status":"running","action":"安装 opencli","log":["> /Users/runner/.dsh/workbench/opencli/bin/opencli --version","dsh-workbench: opencli 的隔离运行时还没装好（/Users/runner/.dsh/workbench/opencli/toolchain）。","  打开工作台：启动体检会给出一条能直接照做的安装命令。","> node '/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs' add --dir '/Users/runner/.dsh/workbench/opencli/toolchain' @jackwener/opencli@1.8.8 --store-dir '/Users/runner/.dsh/workbench/opencli/pnpm-store' --allow-build=@jackwener/opencli"],"command":"node '/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs' add --dir '/Users/runner/.dsh/workbench/opencli/toolchain' @jackwener/opencli@1.8.8 --store-dir '/Users/runner/.dsh/workbench/opencli/pnpm-store' --allow-build=@jackwener/opencli"},{"id":"bridge","status":"pending"},{"id":"diy","status":"running"}],"at":1793449824682,"log":["node v24.21.0（Desktop 自带） · npm 11.19.1 · pnpm 10.32.1","> /Users/runner/.dsh/workbench/opencli/bin/opencli --version","dsh-workbench: opencli 的隔离运行时还没装好（/Users/runner/.dsh/workbench/opencli/toolchain）。","  打开工作台：启动体检会给出一条能直接照做的安装命令。","> node '/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs' add --dir '/Users/runner/.dsh/workbench/opencli/toolchain' @jackwener/opencli@1.8.8 --store-dir '/Users/runner/.dsh/workbench/opencli/pnpm-store' --allow-build=@jackwener/opencli"],"canWakeBrowser":true}
+SCREENSHOT: desktop-mac.png (16982 bytes)
