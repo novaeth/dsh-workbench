@@ -52,7 +52,7 @@ describe('probeLibs：交叉依赖（env.libs）', () => {
 
     expect(state).toMatchObject({ name: 'opencli-workflow', status: 'missing' });
     expect(state?.command).toContain('opencli-workflow@1.1.23');
-    expect(state?.command).toContain("opencli/libs'");
+    expect(state?.command).toContain(`${path.join('opencli', 'libs')}'`);
     expect(state?.command).toContain('https://registry.invalid/internal/');
   });
 
