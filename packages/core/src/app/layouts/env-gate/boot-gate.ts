@@ -194,7 +194,7 @@ export function createBootGate(
 
   function paintLog(): void {
     const text = [snapshotLog, waitingLine].filter((line) => line !== '').join('\n');
-    liveLog.hidden = text === '';
+    liveLog.hidden = snapshotLog === '';
     liveLogBody.textContent = text;
     if (liveLog.open) liveLogBody.scrollTop = liveLogBody.scrollHeight;
   }
