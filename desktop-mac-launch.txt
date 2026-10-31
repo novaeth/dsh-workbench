@@ -1,0 +1,25 @@
++ pkill -f 'DeepSeek Harness'
++ true
++ sleep 3
++ app='/Applications/DeepSeek Harness.app'
++ pid=3716
++ sleep 30
++ '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness'
++ echo '--- app log ---'
+--- app log ---
++ cat /Users/runner/work/_temp/desktop-mac-app2.log
+Checking for update
+dsh web: http://127.0.0.1:49226/?token=8NpKP0EGJLHzMvp5a6E8cw9Sp3mIbKXduEKJWNMzLHM
+Update for version 0.2.1-rc.5 is not available (latest version: 0.2.1-rc.5, downgrade is disallowed).
+++ grep -oE 'http://127\.0\.0\.1:[0-9]+/\?token=[^ ]+' /Users/runner/work/_temp/desktop-mac-app2.log
+++ head -1
++ url='http://127.0.0.1:49226/?token=8NpKP0EGJLHzMvp5a6E8cw9Sp3mIbKXduEKJWNMzLHM'
++ '[' -n 'http://127.0.0.1:49226/?token=8NpKP0EGJLHzMvp5a6E8cw9Sp3mIbKXduEKJWNMzLHM' ']'
++ echo 'workbench url: http://127.0.0.1:49226/?token=8NpKP0EGJLHzMvp5a6E8cw9Sp3mIbKXduEKJWNMzLHM'
+workbench url: http://127.0.0.1:49226/?token=8NpKP0EGJLHzMvp5a6E8cw9Sp3mIbKXduEKJWNMzLHM
++ curl -s -o /dev/null -w 'http status: %{http_code}\n' 'http://127.0.0.1:49226/?token=8NpKP0EGJLHzMvp5a6E8cw9Sp3mIbKXduEKJWNMzLHM'
+http status: 303
++ ps -p 3716 -o pid,stat,command
+  PID STAT COMMAND
+ 3716 S<   /Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness
++ kill 3716
