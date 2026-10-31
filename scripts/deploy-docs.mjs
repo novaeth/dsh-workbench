@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
+import { execaSync } from "execa";
 import ghpages from "gh-pages";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -9,14 +9,14 @@ const siteDir = path.join(rootDir, "packages", "docs", "site-dist");
 const dryRun = process.argv.includes("--dry-run");
 
 console.log("▸ 构建文档站");
-const build = spawnSync("pnpm", ["run", "build:docs"], {
+const build = execaSync("pnpm", ["run", "build:docs"], {
   cwd: rootDir,
   stdio: "inherit",
-  shell: process.platform === "win32",
+  reject: false,
 });
-if (build.status !== 0) {
+if (build.failed) {
   console.error("✖ 构建失败，没有发布");
-  process.exit(build.status ?? 1);
+  process.exit(build.exitCode ?? 1);
 }
 
 const entry = path.join(siteDir, "index.html");

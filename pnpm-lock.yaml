@@ -32,6 +32,9 @@ importers:
       eslint-plugin-react-hooks:
         specifier: ^7.1.1
         version: 7.1.1(eslint@10.11.0(jiti@2.7.0))
+      execa:
+        specifier: ^10.2.0
+        version: 10.2.0
       gh-pages:
         specifier: ^6.3.0
         version: 6.3.0
@@ -143,6 +146,9 @@ importers:
       '@dsh-workbench/shared':
         specifier: workspace:*
         version: link:../shared
+      execa:
+        specifier: ^10.2.0
+        version: 10.2.0
     devDependencies:
       '@types/node':
         specifier: ^24.19.0

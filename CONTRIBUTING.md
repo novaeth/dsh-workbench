@@ -91,7 +91,7 @@ they cover — never scattered next to it (S73).
 ## Documentation facts
 
 Some document blocks are generated from code, not hand-written. Change the source
-(for example `package.json`'s `scripts.check` or `packages/core/arch.config.mjs`) and run
+(for example `package.json`'s `scripts.check`, `arch.config.mjs`, or a package's `arch.config.mjs`) and run
 `pnpm run doc-facts:write`; `pnpm run check:doc-facts` fails when a block is stale.
 `pnpm run check:docs` runs it together with the other document checks.
 Husky also runs `pnpm run check:docs` plus the `DOC-3` link/§N gate on every

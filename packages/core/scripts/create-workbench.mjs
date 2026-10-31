@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { spawnSync } from 'node:child_process';
+import { execaSync } from 'execa';
 import { existsSync, readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -56,9 +56,12 @@ function nameProblem(value, source, profiles) {
 }
 
 function runSetup(args) {
-  const child = spawnSync('bash', [join(PKG_ROOT, 'bin', 'dsh-workbench'), ...args], { stdio: 'inherit' });
-  if (child.error !== undefined) fail(child.error.message);
-  process.exit(child.status ?? 1);
+  const child = execaSync('bash', [join(PKG_ROOT, 'bin', 'dsh-workbench'), ...args], {
+    stdio: 'inherit',
+    reject: false,
+  });
+  if (child.failed) fail(child.shortMessage ?? `bash 起不来（退出码 ${child.exitCode ?? '未知'}）`);
+  process.exit(child.exitCode ?? 1);
 }
 
 if (!process.stdin.isTTY || !process.stdout.isTTY) {

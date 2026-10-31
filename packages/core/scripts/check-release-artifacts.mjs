@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { execFileSync } from 'node:child_process';
+import { execaSync } from 'execa';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -236,7 +236,7 @@ function report(findings) {
 }
 
 function runNode(script, env) {
-  execFileSync(process.execPath, [join(PKG_ROOT, script)], { cwd: PKG_ROOT, stdio: 'inherit', env });
+  execaSync(process.execPath, [join(PKG_ROOT, script)], { cwd: PKG_ROOT, stdio: 'inherit', env });
 }
 
 function typesBuildHonoursStaging() {

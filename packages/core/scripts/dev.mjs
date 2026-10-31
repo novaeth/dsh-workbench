@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { execa } from 'execa';
 import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
 
@@ -49,10 +49,13 @@ function reportDesktopProfile() {
   console.log('     先把本目录装进 desktop profile（Desktop 的插件页，或 app 自带 CLI 的 plugin add），再开这条命令。');
 }
 
-function exitCodeOf(child) {
-  return new Promise((resolve) => {
-    child.on('exit', (code, signal) => resolve(code ?? (signal === undefined ? 0 : 1)));
-  });
+async function exitCodeOf(run) {
+  try {
+    const result = await run;
+    return result.exitCode ?? 0;
+  } catch {
+    return 1;
+  }
 }
 
 async function ensureProfile() {
@@ -66,7 +69,7 @@ async function ensureProfile() {
 
   console.log(`dev：先跑一次 setup —— ${why.join('；')}`);
   console.log(`     （${path.relative(pkgRoot, bin)} setup，幂等，可重复跑）`);
-  const setup = spawn('bash', [bin, 'setup'], { cwd: pkgRoot, stdio: 'inherit' });
+  const setup = execa('bash', [bin, 'setup'], { cwd: pkgRoot, stdio: 'inherit', reject: false });
   const code = await exitCodeOf(setup);
   if (code !== 0) {
     console.error(`dev：setup 失败（退出码 ${code}）——先手动跑一次看它怎么说：${bin} setup`);
@@ -158,7 +161,7 @@ async function watchShared() {
   if (!fs.existsSync(src)) return;
 
   const build = () =>
-    exitCodeOf(spawn('pnpm', ['run', 'build'], { cwd: sharedRoot, stdio: 'inherit' }));
+    exitCodeOf(execa('pnpm', ['run', 'build'], { cwd: sharedRoot, stdio: 'inherit', reject: false }));
 
   if (newestMtime(src) > newestMtime(path.join(sharedRoot, 'dist'))) {
     console.log('dev：packages/shared 的产物比源码旧（多半刚 pull 过）——先重建它');
@@ -213,10 +216,10 @@ if (desktop) {
   console.log('     浏览器里那个页面不用刷新，客户端改动会自己换。');
 } else {
   console.log(`dev：起工作台 :${port} …`);
-  app = spawn(bin, [], { cwd: pkgRoot, stdio: 'inherit', env: process.env });
-  app.on('exit', (code, signal) => {
+  app = execa(bin, [], { cwd: pkgRoot, stdio: 'inherit', env: process.env, reject: false });
+  void app.then((result) => {
     if (closing) return;
-    console.log(`dev：工作台退出了（${code ?? signal}）——关掉监听。`);
-    shutdown(code ?? 1);
+    console.log(`dev：工作台退出了（${result.exitCode ?? result.signal ?? 1}）——关掉监听。`);
+    shutdown(result.exitCode ?? 1);
   });
 }

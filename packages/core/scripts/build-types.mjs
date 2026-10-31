@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { execaSync } from 'execa';
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
@@ -59,7 +59,7 @@ const rewriteAliases = (text, file, emitRoot) =>
 
 const EMIT = mkdtempSync(join(tmpdir(), 'dsh-wb-types-'));
 try {
-  execFileSync(
+  execaSync(
     'npx',
     ['tsc', '-p', 'tsconfig.json', '--noEmit', 'false', '--emitDeclarationOnly', '--declaration', '--outDir', EMIT],
     { cwd: ROOT, stdio: 'inherit' },

@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import which from 'which';
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
@@ -56,7 +56,7 @@ function standardPresetPath() {
   }
 
   try {
-    const bin = execFileSync('which', ['dsh'], { encoding: 'utf8' }).trim();
+    const bin = which.sync('dsh', { nothrow: true }) ?? '';
     if (bin !== '') {
       const entry = realpathSync(bin);
       for (const guess of [dirname(entry), join(dirname(entry), '..')]) {

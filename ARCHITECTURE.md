@@ -337,6 +337,18 @@ packages/core/src/
 
 模块包不在 core 层表里；它们由模块工具链的十三条判据与各自 `check` 守。
 
+### 3.4 脚本与 bin 也进 arch
+
+`src/` 由各包自己的 `arch.config.mjs` 管；仓库根还有一份
+[`arch.config.mjs`](arch.config.mjs)，把 `scripts/**`、`packages/*/scripts/**`、
+`packages/*/bin/**`、`packages/*/arch/**` 收进同一条门禁：
+
+- 它只启用 `P06`（能力必须用登记方案），能力表只保留 `process-spawn`（execa）与
+  `cli-locate`（which）——脚本不是产品界面，不套组件 / i18n / 设计令牌那套。
+- `**/selfcheck/**` 是检查基建（与测试同档，层号 95），仍被扫描，但不按产品规则判。
+- 于是 `build-types.mjs` 里 `execFileSync('npx')` 这类绕过 execa 的写法会在 `pnpm run arch`
+  处直接红；包的 `arch.config.mjs` 仍只负责 `src/**`，两者合起来覆盖全仓 JS/TS。
+
 ## 4. 适配器与端口
 
 ### 4.1 端口

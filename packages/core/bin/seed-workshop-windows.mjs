@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { spawn } from 'node:child_process';
+import { execa } from 'execa';
 import {
   existsSync,
   lstatSync,
@@ -250,20 +250,17 @@ function manifestCoreSpec() {
 
 function install() {
   say('装工坊依赖（第一次会下载 react / typescript / vitest）...');
-  return new Promise((resolve) => {
-    const child = spawn(`"${pnpm}" install`, {
-      cwd: diy,
-      stdio: 'inherit',
-      shell: true,
-      env: process.env,
-      windowsHide: true,
-    });
-    child.on('error', (error) => {
+  return execa(pnpm, ['install'], {
+    cwd: diy,
+    stdio: 'inherit',
+    env: process.env,
+    reject: false,
+  })
+    .then((result) => result.exitCode ?? 1)
+    .catch((error) => {
       say(`pnpm 没跑起来：${String(error)}`);
-      resolve(1);
+      return 1;
     });
-    child.on('close', (code) => resolve(code ?? 1));
-  });
 }
 
 const version = shellVersion();

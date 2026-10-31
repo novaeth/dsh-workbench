@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
+import { execaSync } from "execa";
 import enquirer from "enquirer";
 import semver from "semver";
 
@@ -55,15 +55,14 @@ function sh(
   args,
   { cwd = rootDir, capture = false, quiet = false, allowFailure = false } = {},
 ) {
-  const result = spawnSync(command, args, {
+  const result = execaSync(command, args, {
     cwd,
     stdio: capture ? ["inherit", "pipe", "pipe"] : "inherit",
-    encoding: "utf-8",
+    reject: false,
   });
   const output = capture ? `${result.stdout ?? ""}${result.stderr ?? ""}` : "";
   if (capture && !quiet) process.stdout.write(output);
-  if (result.error) throw result.error;
-  const status = result.status ?? 1;
+  const status = result.exitCode ?? 1;
   if (!allowFailure && status !== 0) {
     throw new ReleaseError(
       `命令失败（exit ${status}）：${command} ${args.join(" ")}${output.trim() ? `\n${output.trim()}` : ""}`,
