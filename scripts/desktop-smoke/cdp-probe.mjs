@@ -12,6 +12,16 @@ const sleep = (ms) =>
     setTimeout(resolve, ms);
   });
 
+
+async function dumpPreflight(cdp, label) {
+  const result = await cdp.send('Runtime.evaluate', {
+    expression: `fetch('/workbench/api/preflight').then((r) => r.json()).then((value) => JSON.stringify(value)).catch((error) => 'ERR ' + String(error))`,
+    awaitPromise: true,
+    returnByValue: true,
+  });
+  console.log(`PREFLIGHT_${label}: ${(result.result?.value ?? '').slice(0, 6000)}`);
+}
+
 async function pagesOf() {
   const response = await fetch(`http://127.0.0.1:${port}/json`);
   return response.json();
@@ -168,6 +178,7 @@ if (installViaUi) {
         console.log(`GATE_OPEN_SCREENSHOT: ${gateOpenShot} (${fs.statSync(gateOpenShot).size} bytes)`);
       }
       gateCaptured = true;
+      await dumpPreflight(cdp, 'AT_GATE');
       if (quick) break;
     }
     if (!/Preparing the workbench|准备工作台/u.test(body)) break;
@@ -187,6 +198,7 @@ if (installViaUi) {
     if (!/Preparing the workbench|准备工作台/u.test(body) && /Workbench panel|工作台面板/u.test(body)) break;
     await sleep(5000);
   }
+  await dumpPreflight(cdp, 'AFTER_GATE');
   const final = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
   console.log('FINAL_BODY_START');
   console.log((final.result?.value ?? '').slice(-2500));
