@@ -1,0 +1,41 @@
++ pkill -f 'DeepSeek Harness'
++ true
++ sleep 3
++ app='/Applications/DeepSeek Harness.app'
++ pid=5729
++ sleep 60
++ '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9222
++ echo '--- app log ---'
+--- app log ---
++ cat /Users/runner/work/_temp/desktop-mac-app2.log
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/b9afcf88-2f76-4e49-b99a-210636b4a468
+Checking for update
+Update for version 0.2.1-rc.5 is not available (latest version: 0.2.1-rc.5, downgrade is disallowed).
+dsh web: http://127.0.0.1:49244/?token=i1IRA7-g43opaegqR8H4H25PsTZAbwct3TFyf8dsJVk
+++ grep -oE 'http://127\.0\.0\.1:[0-9]+/\?token=[^ ]+' /Users/runner/work/_temp/desktop-mac-app2.log
+++ head -1
++ url='http://127.0.0.1:49244/?token=i1IRA7-g43opaegqR8H4H25PsTZAbwct3TFyf8dsJVk'
++ '[' -n 'http://127.0.0.1:49244/?token=i1IRA7-g43opaegqR8H4H25PsTZAbwct3TFyf8dsJVk' ']'
++ echo 'workbench url: http://127.0.0.1:49244/?token=i1IRA7-g43opaegqR8H4H25PsTZAbwct3TFyf8dsJVk'
+workbench url: http://127.0.0.1:49244/?token=i1IRA7-g43opaegqR8H4H25PsTZAbwct3TFyf8dsJVk
++ curl -s -o /dev/null -w 'http status: %{http_code}\n' 'http://127.0.0.1:49244/?token=i1IRA7-g43opaegqR8H4H25PsTZAbwct3TFyf8dsJVk'
+http status: 303
++ sleep 5
++ echo '--- cdp ---'
+--- cdp ---
++ node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-mac.png
+pages: 2
+- page file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/renderer/welcome.html
+- page dsh-app://app/
+Warning: Detected unsettled top-level await at file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:45
+  const skipped = await cdp.send('Runtime.evaluate', {
+                  ^
+
+
+
++ true
++ ps -p 5729 -o pid,stat,command
+  PID STAT COMMAND
+ 5729 R<   /Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness --remote-debugging-port=9222
++ kill 5729
