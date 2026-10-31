@@ -28,6 +28,7 @@ for (const key of Object.keys(env)) {
   if (key.toLowerCase() === 'npm_config_cache') delete env[key];
 }
 env.npm_config_cache = join(root, 'npm-cache');
+env.NPM_CONFIG_CACHE = env.npm_config_cache;
 const userConfig = join(realHome, '.npmrc');
 if (existsSync(userConfig)) env.NPM_CONFIG_USERCONFIG = userConfig;
 if (process.versions.electron !== undefined) env.ELECTRON_RUN_AS_NODE = '1';
@@ -35,6 +36,7 @@ if (process.versions.electron !== undefined) env.ELECTRON_RUN_AS_NODE = '1';
 const child = execa(process.execPath, ['--require', preload, main, ...process.argv.slice(2)], {
   stdio: 'inherit',
   env,
+  extendEnv: false,
   reject: false,
 });
 void child

@@ -63,7 +63,7 @@ describe('quoteShellArgFor', () => {
 });
 
 describe.skipIf(process.platform !== 'win32')('quoteShellArg（Windows pwsh）', () => {
-  it('经真 pwsh 解析后原样往返', () => {
+  it('经真 pwsh 解析后原样往返', { timeout: 30000 }, () => {
     for (const raw of ["it's", '$HOME', 'a;b', 'a && b']) {
       const out = execFileSync(
         'pwsh',
