@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const HERE = new URL('../', import.meta.url);
-const read = (name: string): string => readFileSync(new URL(name, HERE), 'utf8');
+const read = (name: string): string => readFileSync(new URL(name, HERE), 'utf8').replaceAll('\r\n', '\n');
 
 const ROW = read('LongTaskRow.tsx');
 const CSS = read('LongTaskRow.css');

@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { workbenchRoot } from './data-root.js';
 
 export interface RuntimeLayout {
@@ -11,20 +12,20 @@ export interface RuntimeLayout {
 }
 
 export function runtimeRootOf(id: string): string {
-  return `${workbenchRoot()}/${id}`;
+  return join(workbenchRoot(), id);
 }
 
 export function runtimeLayoutOf(id: string): RuntimeLayout {
   const root = runtimeRootOf(id);
-  const vendorPrefix = `${root}/plugins-npm`;
-  const libsPrefix = `${root}/libs`;
+  const vendorPrefix = join(root, 'plugins-npm');
+  const libsPrefix = join(root, 'libs');
   return {
     root,
-    home: `${root}/home`,
+    home: join(root, 'home'),
     vendorPrefix,
-    vendorPluginsDir: `${vendorPrefix}/node_modules`,
+    vendorPluginsDir: join(vendorPrefix, 'node_modules'),
     libsPrefix,
-    libsBinDir: `${libsPrefix}/node_modules/.bin`,
-    npmCacheDir: `${root}/npm-cache`,
+    libsBinDir: join(libsPrefix, 'node_modules', '.bin'),
+    npmCacheDir: join(root, 'npm-cache'),
   };
 }

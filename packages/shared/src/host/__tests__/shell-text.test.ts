@@ -8,7 +8,7 @@ function shellSees(value: string): string {
   });
 }
 
-describe('quoteShellArg', () => {
+describe.skipIf(process.platform === 'win32')('quoteShellArg（POSIX /bin/sh）', () => {
   it('普通值原样往返', () => {
     expect(shellSees('example-monorepo')).toBe('example-monorepo');
   });
@@ -59,6 +59,19 @@ describe('quoteShellArgFor', () => {
 
   it('POSIX 仍用单引号加反斜杠逃逸', () => {
     expect(quoteShellArgFor("it's", 'darwin')).toBe("'it'\\''s'");
+  });
+});
+
+describe.skipIf(process.platform !== 'win32')('quoteShellArg（Windows pwsh）', () => {
+  it('经真 pwsh 解析后原样往返', () => {
+    for (const raw of ["it's", '$HOME', 'a;b', 'a && b', '中文 路径']) {
+      const out = execFileSync(
+        'pwsh',
+        ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', `[Console]::Out.Write(${quoteShellArg(raw)})`],
+        { encoding: 'utf8' },
+      );
+      expect(out, raw).toBe(raw);
+    }
   });
 });
 

@@ -40,8 +40,9 @@ describe('artifactsDirOf（截图与录制的落点）', () => {
   it('目录名里的怪字符收成短横；收完为空就退回 workspace', () => {
     const ctx = ctxWithHome('/Users/x/.dsh');
 
-    expect(artifactsDirOf(ctx, '/w/我的 项目')).toMatch(/\/artifacts\/workspace-[0-9a-f]{8}$/u);
-    expect(artifactsDirOf(ctx, '/')).toMatch(/\/artifacts\/workspace-[0-9a-f]{8}$/u);
+    const slash = (value: string): string => value.replaceAll('\\', '/');
+    expect(slash(artifactsDirOf(ctx, '/w/我的 项目'))).toMatch(/\/artifacts\/workspace-[0-9a-f]{8}$/u);
+    expect(slash(artifactsDirOf(ctx, '/'))).toMatch(/\/artifacts\/workspace-[0-9a-f]{8}$/u);
   });
 
   it('★ 没有 dshHomePath 服务 ⇒ 当场拒（不猜一个可写目录）', () => {

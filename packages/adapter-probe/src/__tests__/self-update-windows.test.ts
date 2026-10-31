@@ -36,7 +36,7 @@ const request = (over: Partial<SelfUpdateRequest> = {}): SelfUpdateRequest => ({
 describe('Windows 自更新（Node，不依赖 bash）', () => {
   it('★ win32 脚本落点是 .mjs，plan 用当前 node 起它', () => {
     const paths = selfUpdatePaths('/tmp/dsh-home', 'win32');
-    expect(paths.script).toBe('/tmp/dsh-home/workbench/self-update.mjs');
+    expect(paths.script).toBe(join('/tmp/dsh-home', 'workbench', 'self-update.mjs'));
 
     const plan = planSelfUpdate(
       request({ dshHome: '/tmp/dsh-home' }),

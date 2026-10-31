@@ -1,9 +1,13 @@
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { opencliInstallCommand } from '../install.js';
 import { desktopPnpmPath } from '../toolchain.js';
 
-const resources = '/Applications/Test.app/Contents/Resources';
-const pnpm = `${resources}/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs`;
+const resources =
+  process.platform === 'win32'
+    ? 'C:\\Applications\\Test.app\\Contents\\Resources'
+    : '/Applications/Test.app/Contents/Resources';
+const pnpm = join(resources, 'runtime', 'primary-runtime', 'dependencies', 'pnpm', 'bin', 'pnpm.cjs');
 const desktop = { versions: { electron: '44.7.0', node: '24.15.0' }, resourcesPath: resources };
 
 describe('Desktop opencli 安装命令', () => {

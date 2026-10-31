@@ -15,6 +15,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DshHostContext } from '@dsh-workbench/shared';
 import { coversWritableRoot, isInstalledCopy, opencliWrapperScript, packageRootOf, prependPath, runDetached, runtimeSeedPaths, runtimeSeedRootOf, seedRuntimeFiles, warnUnwritableRoot, workshopSeedPlan } from '../index.js';
 
+const describePosix = process.platform === 'win32' ? describe.skip : describe;
+
 const roots: string[] = [];
 
 function tempRoot(): string {
@@ -35,7 +37,7 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-describe('runtimeSeedPaths', () => {
+describePosix('runtimeSeedPaths', () => {
   it('全部落点都从工作台根推出来（与启动器那份一致）', () => {
     const root = '/dsh/workbench';
     const paths = runtimeSeedPaths(root);
@@ -51,7 +53,7 @@ describe('runtimeSeedPaths', () => {
   });
 });
 
-describe('runtimeSeedRootOf', () => {
+describePosix('runtimeSeedRootOf', () => {
   it('工作台根走 DSH_WORKBENCH_HOME，没设时退回 $DSH_HOME/workbench', () => {
     vi.stubEnv('DSH_HOME', '/home/dsh');
     const ctx = {
@@ -68,7 +70,7 @@ describe('runtimeSeedRootOf', () => {
   });
 });
 
-describe('coversWritableRoot', () => {
+describePosix('coversWritableRoot', () => {
   it('工作台根等于可写根、或在它下面，才算盖住', () => {
     expect(coversWritableRoot('/home/dsh/workbench', '/home/dsh/workbench')).toBe(true);
     expect(coversWritableRoot('/home/dsh', '/home/dsh/workbench')).toBe(true);
@@ -82,7 +84,7 @@ describe('coversWritableRoot', () => {
   });
 });
 
-describe('warnUnwritableRoot', () => {
+describePosix('warnUnwritableRoot', () => {
   const ctxWith = (workspaceRoot: string, warn: ReturnType<typeof vi.fn>) =>
     ({
       get: (name: string) => {
@@ -114,14 +116,14 @@ describe('warnUnwritableRoot', () => {
   });
 });
 
-describe('packageRootOf', () => {
+describePosix('packageRootOf', () => {
   it('源码入口与打包产物入口推出来的是同一个包根', () => {
     expect(packageRootOf('file:///pkg/src/app/host.ts')).toBe('/pkg');
     expect(packageRootOf('file:///pkg/dist/host/index.js')).toBe('/pkg');
   });
 });
 
-describe('isInstalledCopy', () => {
+describePosix('isInstalledCopy', () => {
   it('路径里有 node_modules 段 = 安装包副本（自举的重活只对它做）', () => {
     expect(isInstalledCopy('/Users/x/.dsh/profiles/web/node_modules/@dsh-workbench/core')).toBe(true);
     expect(isInstalledCopy('/Users/x/npm/_npx/abc/node_modules/@dsh-workbench/core')).toBe(true);
@@ -129,7 +131,7 @@ describe('isInstalledCopy', () => {
   });
 });
 
-describe('opencliWrapperScript', () => {
+describePosix('opencliWrapperScript', () => {
   it('是一份 sh 脚本，exec 到运行时适配器那份 bin/opencli-isolated.mjs（隔离靠它换 HOME）', () => {
     const script = opencliWrapperScript('/pkg', '/home/.dsh');
     const expected = fileURLToPath(new URL('../../../adapter-runtime/bin/opencli-isolated.mjs', import.meta.url));
@@ -158,7 +160,7 @@ describe('opencliWrapperScript', () => {
   });
 });
 
-describe('workshopSeedPlan', () => {
+describePosix('workshopSeedPlan', () => {
   it('跑随包那份 seed-workshop.sh，不把骨架抄进 TS；DSH_HOME 与外壳基准走 env，输出落一份日志', () => {
     expect(workshopSeedPlan('/pkg', '/home/.dsh', '/home/.dsh/workbench')).toEqual({
       entry: {
@@ -186,7 +188,7 @@ describe('workshopSeedPlan', () => {
   });
 });
 
-describe('runDetached', () => {
+describePosix('runDetached', () => {
   it('脱离父进程跑，把 DSH_HOME 合进 env，输出写进日志文件（后台跑的东西不许无声）', () => {
     const root = tempRoot();
     const logPath = join(root, 'seed.log');
@@ -247,7 +249,7 @@ describe('runDetached', () => {
   });
 });
 
-describe('prependPath', () => {
+describePosix('prependPath', () => {
   it('前插一次；已经在里面就不再插第二遍', () => {
     const env: NodeJS.ProcessEnv = { PATH: ['/usr/bin', '/bin'].join(delimiter) };
     expect(prependPath('/dsh/bin', env)).toBe(true);
@@ -266,7 +268,7 @@ describe('prependPath', () => {
   });
 });
 
-describe('seedRuntimeFiles', () => {
+describePosix('seedRuntimeFiles', () => {
   it('建目录 + 写隔离 opencli 入口，并报出自己做了什么', () => {
     const root = tempRoot();
     const pkg = fakePackageRoot(root);

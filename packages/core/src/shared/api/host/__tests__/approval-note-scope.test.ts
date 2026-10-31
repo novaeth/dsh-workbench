@@ -211,7 +211,7 @@ describe('★ 附注的射程：装配期一格都不加，只有插件命令族
       .filter((path) => readFileSync(path, 'utf8').includes('approvalFor('))
       .map((path) => relative(join(PKG_ROOT, 'src'), path));
 
-    expect(callers).toEqual(['shared/api/host/approval-gate.ts']);
+    expect(callers).toEqual([join('shared', 'api', 'host', 'approval-gate.ts')]);
     expect(readFileSync(join(PKG_ROOT, 'src/shared/api/host/approval-gate.ts'), 'utf8')).toContain('declaredNote');
   });
 

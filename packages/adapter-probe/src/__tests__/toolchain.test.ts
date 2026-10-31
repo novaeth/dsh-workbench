@@ -32,6 +32,10 @@ afterEach(() => {
 
 const desktop = { versions: { electron: '44.7.0', node: '24.15.0' }, execPath: '/Applications/Test.app/Contents/MacOS/Test' };
 const web = { versions: { node: '24.15.0' }, execPath: '/usr/local/bin/node' };
+const resources =
+  process.platform === 'win32'
+    ? 'C:\\Applications\\Test.app\\Contents\\Resources'
+    : '/Applications/Test.app/Contents/Resources';
 
 describe('desktopNodeShim', () => {
   it('★ Desktop 用 Electron 的 Node 模式跑同一个 runtime；web 不生成', () => {
@@ -49,8 +53,8 @@ describe('desktopNodeShim', () => {
   });
 
   it('★ Desktop 自带真 Node 时直接 exec 它：Electron 会把子进程注册成第二个 app 实例（Dock 里第二个图标）', () => {
-    const resourcesPath = '/Applications/Test.app/Contents/Resources';
-    const nodeBin = `${resourcesPath}/runtime/primary-runtime/dependencies/node/bin/node`;
+    const resourcesPath = resources;
+    const nodeBin = join(resourcesPath, 'runtime', 'primary-runtime', 'dependencies', 'node', 'bin', 'node');
     const proc = { ...desktop, resourcesPath };
 
     const shim = desktopNodeShim(proc, 'darwin', (path) => path === nodeBin);
@@ -78,7 +82,7 @@ describe('ensureToolchain', () => {
     expect(first.files).toHaveLength(1);
     const file = join(first.pathDir ?? '', 'node');
     expect(readFileSync(file, 'utf8')).toContain('ELECTRON_RUN_AS_NODE=1');
-    expect(statSync(file).mode & 0o777).toBe(0o755);
+    if (process.platform !== 'win32') expect(statSync(file).mode & 0o777).toBe(0o755);
 
     expect(ensureToolchain({ root, proc: desktop, platform: 'darwin' }).files).toEqual([]);
   });
@@ -94,8 +98,7 @@ describe('ensureToolchain', () => {
   });
 });
 
-const resources = '/Applications/Test.app/Contents/Resources';
-const pnpmCjs = `${resources}/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs`;
+const pnpmCjs = join(resources, 'runtime', 'primary-runtime', 'dependencies', 'pnpm', 'bin', 'pnpm.cjs');
 const desktopPnpm = { versions: { electron: '44.7.0', node: '24.15.0' }, resourcesPath: resources };
 
 describe('本地 npm', () => {

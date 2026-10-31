@@ -12,7 +12,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { delimiter, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -37,13 +37,29 @@ function fakeShellRoot(root: string): string {
   return shellRoot;
 }
 
-function fakePnpm(root: string, pause = ''): string {
+function fakePnpm(root: string, pauseMs = 0): string {
   const bin = join(root, 'bin');
   mkdirSync(bin, { recursive: true });
+  if (process.platform === 'win32') {
+    writeFileSync(
+      join(bin, 'pnpm-fake.mjs'),
+      `import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+if (${pauseMs} > 0) await new Promise((resolve) => setTimeout(resolve, ${pauseMs}));
+appendFileSync(join(process.env.DSH_HOME, 'pnpm-calls.log'), process.cwd() + '\\n');
+const dir = join(process.cwd(), 'node_modules', '@dsh-workbench', 'core');
+mkdirSync(dir, { recursive: true });
+writeFileSync(join(dir, 'package.json'), '{"version":"9.9.9"}');
+`,
+      'utf8',
+    );
+    writeFileSync(join(bin, 'pnpm.cmd'), '@echo off\r\nnode "%~dp0pnpm-fake.mjs" %*\r\n', 'utf8');
+    return bin;
+  }
   const file = join(bin, 'pnpm');
   writeFileSync(
     file,
-    `#!/bin/sh\n${pause}\nprintf "%s\\n" "$PWD" >> "$DSH_HOME/pnpm-calls.log"\nmkdir -p node_modules/@dsh-workbench/core\nprintf '{"version":"9.9.9"}' > node_modules/@dsh-workbench/core/package.json\n`,
+    `#!/bin/sh\n${pauseMs > 0 ? `sleep ${pauseMs / 1000}` : ''}\nprintf "%s\\n" "$PWD" >> "$DSH_HOME/pnpm-calls.log"\nmkdir -p node_modules/@dsh-workbench/core\nprintf '{"version":"9.9.9"}' > node_modules/@dsh-workbench/core/package.json\n`,
     'utf8',
   );
   chmodSync(file, 0o755);
@@ -63,7 +79,7 @@ describe('Windows 工坊 Node seed', () => {
         ...process.env,
         DSH_HOME: root,
         DSH_WB_SHELL_ROOT: shellRoot,
-        PATH: `${bin}:${process.env.PATH ?? ''}`,
+        PATH: [bin, process.env.PATH].filter(Boolean).join(delimiter),
       },
     });
 
@@ -110,7 +126,7 @@ describe('Windows 工坊 Node seed', () => {
       ...process.env,
       DSH_HOME: root,
       DSH_WB_SHELL_ROOT: shellRoot,
-      PATH: `${bin}:${process.env.PATH ?? ''}`,
+      PATH: [bin, process.env.PATH].filter(Boolean).join(delimiter),
     };
 
     execFileSync(process.execPath, [launcher, 'full', '/unused/seed.sh'], { encoding: 'utf8', env });
@@ -149,12 +165,12 @@ describe('Windows 工坊 Node seed', () => {
     const root = mkdtempSync(join(tmpdir(), 'wb-seed-win-'));
     roots.push(root);
     const shellRoot = fakeShellRoot(root);
-    const bin = fakePnpm(root, 'sleep 2');
+    const bin = fakePnpm(root, 2000);
     const env = {
       ...process.env,
       DSH_HOME: root,
       DSH_WB_SHELL_ROOT: shellRoot,
-      PATH: `${bin}:${process.env.PATH ?? ''}`,
+      PATH: [bin, process.env.PATH].filter(Boolean).join(delimiter),
     };
     const stateFile = join(root, 'workbench', 'diy', '.sync.json');
     const child = spawn(process.execPath, [launcher, 'full', '/unused/seed.sh'], {
@@ -184,7 +200,7 @@ describe('Windows 工坊 Node seed', () => {
       ...process.env,
       DSH_HOME: root,
       DSH_WB_SHELL_ROOT: shellRoot,
-      PATH: `${bin}:${process.env.PATH ?? ''}`,
+      PATH: [bin, process.env.PATH].filter(Boolean).join(delimiter),
     };
 
     execFileSync(process.execPath, [launcher, 'full', '/unused/seed.sh'], { encoding: 'utf8', env });
@@ -222,7 +238,7 @@ describe('Windows 工坊 Node seed', () => {
         ...process.env,
         DSH_HOME: root,
         DSH_WB_SHELL_ROOT: shellRoot,
-        PATH: `${bin}:${process.env.PATH ?? ''}`,
+        PATH: [bin, process.env.PATH].filter(Boolean).join(delimiter),
       },
     });
 
@@ -245,7 +261,7 @@ describe('Windows 工坊 Node seed', () => {
       ...process.env,
       DSH_HOME: root,
       DSH_WB_SHELL_ROOT: shellRoot,
-      PATH: `${bin}:${process.env.PATH ?? ''}`,
+      PATH: [bin, process.env.PATH].filter(Boolean).join(delimiter),
     };
 
     execFileSync(process.execPath, [launcher, 'full', '/unused/seed.sh'], { encoding: 'utf8', env });

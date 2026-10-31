@@ -19,6 +19,8 @@ import {
   type SelfUpdateRequest,
 } from '../index.js';
 
+const describePosix = process.platform === 'win32' ? describe.skip : describe;
+
 const home = (): string => mkdtempSync(join(tmpdir(), 'wb-self-update-'));
 
 const request = (over: Partial<SelfUpdateRequest> = {}): SelfUpdateRequest => ({
@@ -31,7 +33,7 @@ const request = (over: Partial<SelfUpdateRequest> = {}): SelfUpdateRequest => ({
   ...over,
 });
 
-describe('工作台自更新：交给外面那个进程，而且一行都不摘自己', () => {
+describePosix('工作台自更新：交给外面那个进程，而且一行都不摘自己', () => {
   it('★ 脚本里没有卸载 —— 自己那一行不会掉', () => {
     const script = selfUpdateScript(request(), selfUpdatePaths('/tmp/dsh-home'));
 
@@ -134,7 +136,7 @@ describe('工作台自更新：交给外面那个进程，而且一行都不摘�
 
 const PKG = '@dsh-workbench/core';
 
-describe('desktop：保留 profile 只认 Desktop 自带的那份 CLI', () => {
+describePosix('desktop：保留 profile 只认 Desktop 自带的那份 CLI', () => {
   const entry = join('/app', 'app.asar', 'dsh', 'node_modules', '@deepseek-ai', 'dsh-desktop-host', 'lib', 'index.js');
   const proc = {
     execPath: '/app/Electron',
@@ -258,7 +260,7 @@ function runScript(root: string, cli?: SelfUpdateCli): number | null {
   return ran.status;
 }
 
-describe('真跑一遍那个脚本（假 dsh + 沙箱 profile）', () => {
+describePosix('真跑一遍那个脚本（假 dsh + 沙箱 profile）', () => {
   const maybe = process.platform === 'win32' ? it.skip : it;
 
   maybe('★ 正常：换到新版、marker=ok，而且调用记录里一条 remove 都没有', () => {
@@ -337,7 +339,7 @@ describe('真跑一遍那个脚本（假 dsh + 沙箱 profile）', () => {
   });
 });
 
-describe('运行中那一版：加载那一刻定住，盘上后来被换掉也不改口', () => {
+describePosix('运行中那一版：加载那一刻定住，盘上后来被换掉也不改口', () => {
   it('★ 按加载它的那份产物定位 package.json（dist/host/index.js → 包根）', () => {
     const root = mkdtempSync(join(tmpdir(), 'wb-running-'));
     try {
@@ -366,7 +368,7 @@ describe('运行中那一版：加载那一刻定住，盘上后来被换掉也�
   });
 });
 
-describe('自更新现场：界面要知道外面那个进程跑成什么样', () => {
+describePosix('自更新现场：界面要知道外面那个进程跑成什么样', () => {
   it('★ 读 marker + 日志尾最后几行（最多 4 行、800 字）', () => {
     const root = home();
     try {
