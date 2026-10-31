@@ -1,0 +1,258 @@
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/ccd1a839-c82b-4146-9109-95bd14f9ef26
+Checking for update
+Update for version 0.2.1-rc.5 is not available (latest version: 0.2.1-rc.5, downgrade is disallowed).
+dsh web: http://127.0.0.1:49181/?token=9V7rmYBjagNSq_VXqJRFLhYUi0UzIQSqusLBdFtfZK8
+pages: 2
+- page file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/renderer/welcome.html
+- page dsh-app://app/
+welcome skip: scheduled
+pages after skip: 1
+- page dsh-app://app/
+target: dsh-app://app/
+open plugins: "Plugins"
+PLUGINS_BODY_START
+New Session
+⌘
+N
+Plugins
+Automation tasks
+More
+Workspaces
+Default workspace
+New Session
+More
+Plugins
+Install, enable, and configure plugins
+Add plugin
+Built-in plugin settings
+Subagent
+Set Subagent recursion depth, count, and models.
+Web search
+Set up the DeepSeek search provider.
+Agent loop
+Control how the Agent dispatches tool calls.
+Shell
+Limit how long each command may run and how much it may output.
+Experimental plugins
+More
+Agent Teams
+Experimental
+Enable team collaboration, team tools, the member roster, and the shared task board.
+Voice input
+Experimental
+Transcribe recordings locally with SenseVoice; first use requires installing dependencies
+Auto Authorization Review
+Experimental
+Add an Auto review permission mode that uses the model to assess authorization before each tool call.
+Developer Tools
+Experimental
+Inspect and debug raw session data, grouped chat messages, and the NodeJS backend.
+PLUGINS_BODY_END
+add plugin: "Add plugin"
+FIELDS: [{"index":0,"tag":"INPUT","type":"text","placeholder":"Search session names","aria":null,"visible":true},{"index":1,"tag":"INPUT","type":"text","placeholder":"for example dsh-plugin-whale-pet","aria":"Package name or address","visible":true}]
+focus: "for example dsh-plugin-whale-pet"
+filled: "@dsh-workbench/core"
+install click: {"disabled":false}
+AFTER_INSTALL_CLICK_START
+New Session
+⌘
+N
+Plugins
+Automation tasks
+More
+Workspaces
+Default workspace
+New Session
+More
+Plugins
+Install, enable, and configure plugins
+View installation
+Built-in plugin settings
+Subagent
+Set Subagent recursion depth, count, and models.
+Web search
+Set up the DeepSeek search provider.
+Agent loop
+Control how the Agent dispatches tool calls.
+Shell
+Limit how long each command may run and how much it may output.
+Experimental plugins
+More
+Agent Teams
+Experimental
+Enable team collaboration, team tools, the member roster, and the shared task board.
+Voice input
+Experimental
+Transcribe recordings locally with SenseVoice; first use requires installing dependencies
+Auto Authorization Review
+Experimental
+Add an Auto review permission mode that uses the model to assess authorization before each tool call.
+Developer Tools
+Experimental
+Inspect and debug raw session data, grouped chat messages, and the NodeJS backend.
+Cancel installation and return to editing
+Installing the plugin…
+
+@dsh-workbench/core
+
+个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+
+Version 1.1.13
+
+Show install details
+Cancel install
+AFTER_INSTALL_CLICK_END
+install wait 1s: r Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Installed |  | @dsh-workbench/core |  | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 |  | Version 1.1.13 |  | Show install details | Enable now
+enable now: "Enable now"
+close dialog: "escape"
+health wait 0s:  dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Installing background tools — the first run takes a moment… |  | ✓ | Check the environment | Looks good | Install background tools | - | Connect your browser | Check DIY mode | Waiting 6s
+health wait 5s: e; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Getting the runtime ready… |  | ✓ | Check the environment | Looks good | Install background tools | - | Connect your browser | Check DIY mode | Waiting 11s
+health wait 10s: SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Getting the runtime ready… |  | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode | Waiting 16s
+health wait 15s: dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Installing background tools — the first run takes a moment… |  | ✓ | Check the environment | Looks good | Install background tools | - | Connect your browser | Check DIY mode | Waiting 21s
+health wait 20s: SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Getting the runtime ready… |  | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode | Waiting 26s
+health wait 25s: dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Installing background tools — the first run takes a moment… |  | ✓ | Check the environment | Looks good | Install background tools | - | Connect your browser | Check DIY mode | Waiting 31s
+health wait 30s: SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Getting the runtime ready… |  | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode | Waiting 36s
+health wait 35s: SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Getting the runtime ready… |  | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode | Waiting 41s
+health wait 40s: SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Getting the runtime ready… |  | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode | Waiting 46s
+health wait 45s: dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Installing background tools — the first run takes a moment… |  | ✓ | Check the environment | Looks good | Install background tools | - | Connect your browser | Check DIY mode | Waiting 51s
+health wait 50s: dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Installing background tools — the first run takes a moment… |  | ✓ | Check the environment | Looks good | Install background tools | - | Connect your browser | Check DIY mode | Waiting 56s
+health wait 55s: e; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Getting the runtime ready… |  | ✓ | Check the environment | Looks good | Install background tools | - | Connect your browser | Check DIY mode | Waiting 61s
+health wait 60s: SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Getting the runtime ready… |  | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode | Waiting 66s
+health wait 65s: SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Getting the runtime ready… |  | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode | Waiting 71s
+health wait 70s: dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Installing background tools — the first run takes a moment… |  | ✓ | Check the environment | Looks good | Install background tools | - | Connect your browser | Check DIY mode | Waiting 76s
+health wait 75s: SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Getting the runtime ready… |  | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode | Waiting 81s
+health wait 80s: dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Installing background tools — the first run takes a moment… |  | ✓ | Check the environment | Looks good | Install background tools | - | Connect your browser | Check DIY mode | Waiting 86s
+health wait 85s: dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Installing background tools — the first run takes a moment… |  | ✓ | Check the environment | Looks good | Install background tools | - | Connect your browser | Check DIY mode | Waiting 91s
+health wait 90s: dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Installing background tools — the first run takes a moment… |  | ✓ | Check the environment | Looks good | Install background tools | - | Connect your browser | Check DIY mode | Waiting 96s
+health wait 95s: enseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Getting the runtime ready… |  | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode | Waiting 101s
+health wait 100s: ependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Installing background tools — the first run takes a moment… |  | ✓ | Check the environment | Looks good | Install background tools | - | Connect your browser | Check DIY mode | Waiting 106s
+health wait 105s: enseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Getting the runtime ready… |  | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode | Waiting 111s
+health wait 110s: ependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench |  | Installing background tools — the first run takes a moment… |  | ✓ | Check the environment | Looks good | Install background tools | - | Connect your browser | Check DIY mode | Waiting 116s
+health wait 115s: rimental | Enable team collaboration, team tools, the member roster, and the shared task board. | Voice input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+health wait 120s: rimental | Enable team collaboration, team tools, the member roster, and the shared task board. | Voice input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+health wait 125s: rimental | Enable team collaboration, team tools, the member roster, and the shared task board. | Voice input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+health wait 130s: rimental | Enable team collaboration, team tools, the member roster, and the shared task board. | Voice input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+health wait 135s: rimental | Enable team collaboration, team tools, the member roster, and the shared task board. | Voice input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+health wait 140s: rimental | Enable team collaboration, team tools, the member roster, and the shared task board. | Voice input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+health wait 145s: rimental | Enable team collaboration, team tools, the member roster, and the shared task board. | Voice input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+health wait 150s: rimental | Enable team collaboration, team tools, the member roster, and the shared task board. | Voice input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+health wait 155s: rimental | Enable team collaboration, team tools, the member roster, and the shared task board. | Voice input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+health wait 160s: rimental | Enable team collaboration, team tools, the member roster, and the shared task board. | Voice input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+health wait 165s: rimental | Enable team collaboration, team tools, the member roster, and the shared task board. | Voice input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+health wait 170s: rimental | Enable team collaboration, team tools, the member roster, and the shared task board. | Voice input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+health wait 175s: rimental | Enable team collaboration, team tools, the member roster, and the shared task board. | Voice input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+install background tools: "missing"
+tools wait 0s: input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+tools wait 5s: input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+tools wait 10s: input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+tools wait 15s: input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+tools wait 20s: input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+tools wait 25s: input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+tools wait 30s: input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+tools wait 35s: input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+tools wait 40s: input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+tools wait 45s: input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+tools wait 50s: input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+tools wait 55s: input | Experimental | Transcribe recordings locally with SenseVoice; first use requires installing dependencies | Auto Authorization Review | Experimental | Add an Auto review permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+connect browser: "missing"
+FINAL_BODY_START
+New Session
+⌘
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Plugins
+Install, enable, and configure plugins
+Add plugin
+Built-in plugin settings
+Subagent
+Set Subagent recursion depth, count, and models.
+Web search
+Set up the DeepSeek search provider.
+Agent loop
+Control how the Agent dispatches tool calls.
+Shell
+Limit how long each command may run and how much it may output.
+Experimental plugins
+More
+Agent Teams
+Experimental
+Enable team collaboration, team tools, the member roster, and the shared task board.
+Voice input
+Experimental
+Transcribe recordings locally with SenseVoice; first use requires installing dependencies
+Auto Authorization Review
+Experimental
+Add an Auto review permission mode that uses the model to assess authorization before each tool call.
+Developer Tools
+Experimental
+Inspect and debug raw session data, grouped chat messages, and the NodeJS backend.
+Installed plugins
+@dsh-workbench/core
+个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+Workbench panel
+No modules on the panel yet
+You can also just tell the agent: “add a module to the panel”.
+Build a module
+Choose modules
+Browse the module market
+FINAL_BODY_END
+BODY_START
+New Session
+⌘
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Plugins
+Install, enable, and configure plugins
+Add plugin
+Built-in plugin settings
+Subagent
+Set Subagent recursion depth, count, and models.
+Web search
+Set up the DeepSeek search provider.
+Agent loop
+Control how the Agent dispatches tool calls.
+Shell
+Limit how long each command may run and how much it may output.
+Experimental plugins
+More
+Agent Teams
+Experimental
+Enable team collaboration, team tools, the member roster, and the shared task board.
+Voice input
+Experimental
+Transcribe recordings locally with SenseVoice; first use requires installing dependencies
+Auto Authorization Review
+Experimental
+Add an Auto review permission mode that uses the model to assess authorization before each tool call.
+Developer Tools
+Experimental
+Inspect and debug raw session data, grouped chat messages, and the NodeJS backend.
+Installed plugins
+@dsh-workbench/core
+个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+Workbench panel
+No modules on the panel yet
+You can also just tell the agent: “add a module to the panel”.
+Build a module
+Choose modules
+Browse the module market
+BODY_END
+TITLE: DeepSeek Harness
+SCREENSHOT: desktop-mac.png (100892 bytes)
