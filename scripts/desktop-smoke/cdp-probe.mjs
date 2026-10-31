@@ -146,13 +146,28 @@ if (installViaUi) {
   await step('close dialog', `(() => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); return 'escape'; })()`);
   await sleep(5000);
   const gateShot = shot.replace(/\.png$/u, '-gate.png');
-  const gateImage = await cdp.send('Page.captureScreenshot', { format: 'png' });
-  fs.writeFileSync(gateShot, Buffer.from(gateImage.data, 'base64'));
-  console.log(`GATE_SCREENSHOT: ${gateShot} (${fs.statSync(gateShot).size} bytes)`);
+  const gateOpenShot = shot.replace(/\.png$/u, '-gate-open.png');
+  let gateCaptured = false;
   for (let i = 0; i < 72; i += 1) {
     const current = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
     const body = current.result?.value ?? '';
     console.log(`health wait ${i * 5}s: ${body.slice(-700).replaceAll('\n', ' | ')}`);
+    if (!gateCaptured && body.includes('›')) {
+      const gateImage = await cdp.send('Page.captureScreenshot', { format: 'png' });
+      fs.writeFileSync(gateShot, Buffer.from(gateImage.data, 'base64'));
+      console.log(`GATE_SCREENSHOT: ${gateShot} (${fs.statSync(gateShot).size} bytes)`);
+      const opened = await cdp.send('Runtime.evaluate', {
+        expression: `(() => { const head = document.querySelector('li[data-expandable="true"] .head'); if (head === null) return false; head.click(); return true; })()`,
+        returnByValue: true,
+      });
+      if (opened.result?.value === true) {
+        await sleep(800);
+        const openImage = await cdp.send('Page.captureScreenshot', { format: 'png' });
+        fs.writeFileSync(gateOpenShot, Buffer.from(openImage.data, 'base64'));
+        console.log(`GATE_OPEN_SCREENSHOT: ${gateOpenShot} (${fs.statSync(gateOpenShot).size} bytes)`);
+      }
+      gateCaptured = true;
+    }
     if (/Looks good/u.test(body) && !/Installing background tools|Waiting \d+s/u.test(body)) break;
     await sleep(5000);
   }
