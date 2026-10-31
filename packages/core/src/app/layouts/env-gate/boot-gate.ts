@@ -118,14 +118,13 @@ export function createBootGate(
   const fixWhy = el('p', styles.hint);
   const fixStep = el('p', styles.hint);
   const fixAdvice = el('p', styles.hint);
-  const errorBox = el('pre', styles.error);
   const buttons = el('div', styles.buttons);
   const retry = el('button', styles.button, t('env.retry'));
   retry.setAttribute('type', 'button');
   const fixCommand = commandRow(t);
 
   buttons.append(retry);
-  actions.append(fixTitle, fixWhy, fixStep, fixCommand.row, fixAdvice, buttons, errorBox);
+  actions.append(fixTitle, fixWhy, fixStep, fixCommand.row, fixAdvice, buttons);
 
   const bridge = el('div', styles.bridge);
   bridge.hidden = true;
@@ -292,9 +291,6 @@ diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
     actions.hidden = !failed;
     retry.removeAttribute('disabled');
     bridgeRetry.removeAttribute('disabled');
-    errorBox.textContent = snapshot.error ?? '';
-    errorBox.hidden = snapshot.error === undefined;
-
     const fix = snapshot.steps.find((step) => step.status === 'failed' && step.command !== undefined);
     const commandText = fix?.command;
 
