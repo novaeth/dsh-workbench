@@ -5,7 +5,13 @@ import type { ClientUnitRegistry } from '@/kernel/client/registry';
 
 export interface UnitManifestLoaderOptions {
   readonly subscribeFacts?: (fact: string, listener: () => void) => () => void;
+  readonly retryDelayMs?: number;
+  readonly maxRetries?: number;
 }
+
+const DEFAULT_RETRY_DELAY_MS = 1000;
+
+const DEFAULT_MAX_RETRIES = 30;
 
 export function createUnitManifestLoader(
   options: UnitManifestLoaderOptions = {},
@@ -13,6 +19,10 @@ export function createUnitManifestLoader(
   let inFlight = false;
   let queued = false;
   let watching = false;
+  let retries = 0;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const retryDelayMs = options.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS;
+  const maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
   const subscribeFacts = options.subscribeFacts ?? subscribeFactRevision;
 
   const load = async (registry: ClientUnitRegistry): Promise<void> => {
@@ -21,6 +31,7 @@ export function createUnitManifestLoader(
       return;
     }
     inFlight = true;
+    let settled = false;
     try {
       const response = await apiGet<UnitManifestsPayload>(UNIT_MANIFESTS_ROUTE).catch(() => null);
       if (response?.ok === true && Array.isArray(response.manifests)) {
@@ -28,9 +39,19 @@ export function createUnitManifestLoader(
           response.manifests,
           Array.isArray(response.installable) ? response.installable : undefined,
         );
+        settled = !registry.refusals().some((item) => item.kind === 'no-manifest');
       }
     } finally {
       inFlight = false;
+      if (settled) {
+        retries = 0;
+      } else if (retries < maxRetries && timer === null) {
+        retries += 1;
+        timer = setTimeout(() => {
+          timer = null;
+          void load(registry);
+        }, retryDelayMs);
+      }
       if (queued) {
         queued = false;
         void load(registry);
@@ -41,7 +62,10 @@ export function createUnitManifestLoader(
   return (registry) => {
     if (!watching) {
       watching = true;
-      subscribeFacts(factOfRoute(UNIT_MANIFESTS_ROUTE), () => void load(registry));
+      subscribeFacts(factOfRoute(UNIT_MANIFESTS_ROUTE), () => {
+        retries = 0;
+        void load(registry);
+      });
     }
     void load(registry);
   };
