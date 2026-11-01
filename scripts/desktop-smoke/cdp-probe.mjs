@@ -122,6 +122,7 @@ async function connect(wsUrl) {
   let nextId = 1;
   const pending = new Map();
   const timers = new Map();
+  const events = [];
   const settle = (id, work) => {
     const waiter = pending.get(id);
     pending.delete(id);
@@ -132,7 +133,12 @@ async function connect(wsUrl) {
   };
   socket.addEventListener('message', (event) => {
     const data = JSON.parse(event.data);
-    if (data.id === undefined) return;
+    if (data.id === undefined) {
+      if (['Runtime.consoleAPICalled', 'Runtime.exceptionThrown', 'Log.entryAdded'].includes(data.method)) {
+        if (events.length < 300) events.push({ method: data.method, params: data.params });
+      }
+      return;
+    }
     settle(data.id, (waiter) => {
       if (data.error !== undefined) waiter.reject(new Error(JSON.stringify(data.error)));
       else waiter.resolve(data.result);
@@ -155,7 +161,7 @@ async function connect(wsUrl) {
       );
       socket.send(JSON.stringify({ id, method, params }));
     });
-  return { send, close: () => socket.close() };
+  return { send, close: () => socket.close(), events: () => events };
 }
 
 async function bodyOf(cdp) {
@@ -197,6 +203,7 @@ async function capture(cdp, file) {
 
 async function fail(cdp, reason, body, snapshot) {
   log(`FAIL ${reason}`);
+  if (activeCdp !== null) writeText(`${prefix}-console-events.json`, `${JSON.stringify(activeCdp.events(), null, 2)}\n`);
   if (snapshot !== undefined) log(`PREFLIGHT_FAILED: ${JSON.stringify(snapshot).slice(0, 8000)}`);
   writeText(`${prefix}-failed-body.txt`, body);
   if (snapshot !== undefined) writeText(`${prefix}-failed-preflight.json`, `${JSON.stringify(snapshot, null, 2)}\n`);
@@ -374,6 +381,11 @@ async function waitForGateAndReady(cdp) {
     const phase = snapshot?.phase ?? '';
     log(`ready wait [${phase}] ${stepStates(snapshot)} :: ${tailBody(readyBody, 220)}`);
     if (phase === 'failed') await fail(cdp, 'preflight failed', readyBody, snapshot);
+    const continueText = continueTexts.find((text) => readyBody.includes(text));
+    if (continueText !== undefined) {
+      await click(cdp, [continueText], 3000);
+      continue;
+    }
     if (phase === 'ready' && !/Preparing the workbench|准备工作台/u.test(readyBody) && /Workbench panel|工作台面板/u.test(readyBody)) {
       mark('ready');
       return snapshot;
@@ -470,12 +482,38 @@ async function smokeMarket(cdp) {
   return result;
 }
 
+async function unitsOf(cdp) {
+  const result = await cdp.send('Runtime.evaluate', {
+    expression: `fetch('/workbench/api/unit-manifests').then((r) => r.json()).then((value) => JSON.stringify(value)).catch(() => '')`,
+    awaitPromise: true,
+    returnByValue: true,
+  });
+  const raw = result.result?.value ?? '';
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 async function verifyFeatures(cdp) {
   const body = await bodyOf(cdp);
   writeText(`${prefix}-verify-body.txt`, body);
+  const units = await unitsOf(cdp);
+  writeText(`${prefix}-units.json`, `${JSON.stringify(units, null, 2)}\n`);
+  const scripts = await cdp.send('Runtime.evaluate', {
+    expression: `JSON.stringify([...document.querySelectorAll('script[src]')].map((node) => node.src))`,
+    returnByValue: true,
+  });
+  writeText(`${prefix}-scripts.json`, `${scripts.result?.value ?? '[]'}\n`);
+  writeText(`${prefix}-console-events.json`, `${JSON.stringify(cdp.events(), null, 2)}\n`);
+  const ids = Array.isArray(units?.manifests) ? units.manifests.map((one) => one.id) : [];
+  log(`host units: ${ids.join(',') || '（空）'}`);
   const card = /Sample module|示例模块|hello, workbench/u.test(body);
-  if (!card) await fail(cdp, '装上模块后面板里没有示例模块的卡片', body);
-  return { card };
+  if (!card) {
+    await fail(cdp, `装上模块后面板里没有示例模块的卡片（host units: ${ids.join(',') || '空'}）`, body);
+  }
+  return { card, units: ids };
 }
 
 async function main() {
@@ -511,6 +549,8 @@ async function main() {
   const cdp = await connect(target.webSocketDebuggerUrl);
   activeCdp = cdp;
   await cdp.send('Page.enable');
+  await cdp.send('Runtime.enable');
+  await cdp.send('Log.enable');
   mark('cdp-connected');
 
   if (installViaUi) await installFromPluginPage(cdp);

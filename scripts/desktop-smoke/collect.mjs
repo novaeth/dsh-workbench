@@ -262,6 +262,19 @@ async function main() {
     push(tailFile(join(cwd, name), 80));
   }
 
+  section('units and client injection');
+  for (const name of [
+    `${prefix}-units.json`,
+    `${prefix}-after-restart-units.json`,
+    `${prefix}-scripts.json`,
+    `${prefix}-after-restart-scripts.json`,
+    `${prefix}-console-events.json`,
+    `${prefix}-after-restart-console-events.json`,
+  ]) {
+    push(`${name}:`);
+    push(readAll(join(cwd, name), 40_000));
+  }
+
   section('dsh startup logs');
   const startupDir = join(dshHome, 'logs');
   if (existsSync(startupDir)) {
@@ -291,6 +304,9 @@ async function main() {
 
   section('profile cordis.patch.yml');
   push(readAll(join(profileDir, 'cordis.patch.yml')));
+
+  section('profile cordis.yml');
+  push(readAll(join(profileDir, 'cordis.yml')));
 
   section('workbench browser.json');
   push(readAll(join(workbenchHome, 'browser.json')));
