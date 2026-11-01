@@ -234,8 +234,13 @@ export function preflightHandler(preflight: {
   snapshot(): unknown;
 }): RouteHandler {
   return (search) => {
-    void preflight.run({ hard: flag(search, 'hard') });
-    return { ok: true, ...(preflight.snapshot() as Record<string, unknown>) };
+    if (flag(search, 'hard')) {
+      void preflight.run({ hard: true });
+      return { ok: true, ...(preflight.snapshot() as Record<string, unknown>) };
+    }
+    const snapshot = preflight.snapshot() as Record<string, unknown>;
+    void preflight.run({ hard: false });
+    return { ok: true, ...snapshot };
   };
 }
 

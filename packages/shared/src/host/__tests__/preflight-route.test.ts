@@ -30,4 +30,33 @@ describe('preflightHandler（体检那一拍带什么参数）', () => {
 
     expect(handler(new URLSearchParams(''))).toEqual({ ok: true, ...SNAPSHOT });
   });
+
+  it('★ 先回上一轮的结果再起新一轮：run 一上来就把快照重置成 checking，也不许把它顶掉', () => {
+    let current = { phase: 'failed', steps: [], at: 1 };
+    const run = vi.fn(async () => {
+      current = { phase: 'checking', steps: [], at: 2 };
+      return current;
+    });
+    const handler = preflightHandler({ run, snapshot: () => current });
+
+    const reply = handler(new URLSearchParams(''));
+
+    expect(reply).toEqual({ ok: true, phase: 'failed', steps: [], at: 1 });
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(current.phase).toBe('checking');
+  });
+
+  it('★ 重试（hard）回的是新一轮的进度：别把上一轮的 failed 又顶回画面', () => {
+    let current = { phase: 'failed', steps: [], at: 1 };
+    const run = vi.fn(async () => {
+      current = { phase: 'checking', steps: [], at: 2 };
+      return current;
+    });
+    const handler = preflightHandler({ run, snapshot: () => current });
+
+    const reply = handler(new URLSearchParams('hard=1'));
+
+    expect(reply).toEqual({ ok: true, phase: 'checking', steps: [], at: 2 });
+    expect(run).toHaveBeenCalledWith({ hard: true });
+  });
 });
