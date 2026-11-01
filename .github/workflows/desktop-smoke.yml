@@ -18,9 +18,12 @@ jobs:
   windows:
     name: desktop / windows x64
     runs-on: windows-latest
-    timeout-minutes: 45
+    timeout-minutes: 25
     env:
       HUSKY: 0
+      DESKTOP_SMOKE_OS: win
+      DESKTOP_SMOKE_MARKET: https://github.com/novaeth/dsh-workbench-market.git
+      DESKTOP_SMOKE_MODULE: '@dsh-workbench/module-hello'
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -30,9 +33,9 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - name: Install (immutable)
+      - name: Install build deps (immutable)
         run: pnpm install --frozen-lockfile
-      - name: Build workbench (except docs)
+      - name: Build local workbench (except docs)
         run: pnpm --filter "./packages/*" --filter "!@dsh-workbench/docs" --if-present run build
       - name: Install Desktop
         shell: pwsh
@@ -45,40 +48,38 @@ jobs:
           $exe = Get-ChildItem -Path @("$env:LOCALAPPDATA\Programs", "$env:ProgramFiles", "${env:ProgramFiles(x86)}") -Filter 'DeepSeek Harness.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($null -eq $exe) { throw 'DeepSeek Harness.exe not found' }
           "DESKTOP_EXE=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          "DESKTOP_CLI=$(Join-Path $exe.DirectoryName 'resources\runtime\cli\bin\dsh.cmd')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Assert default user has no opencli
         shell: pwsh
         run: |
           if (Get-Command opencli -ErrorAction SilentlyContinue) { throw 'opencli is preinstalled; this smoke must start without it' }
           'opencli: missing (expected)'
-      - name: Initialize Desktop profile
-        shell: pwsh
-        run: |
-          $p = Start-Process -FilePath $env:DESKTOP_EXE -PassThru
-          Start-Sleep -Seconds 25
-          Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
-          Start-Sleep -Seconds 3
-          Get-Content "$env:USERPROFILE\.dsh\profiles\desktop\package.json" -Raw
-      - name: Install workbench from plugin page, wait for the gate, assert panel
+      - name: Open Desktop, install workbench and market module, restart once
         shell: pwsh
         env:
           DESKTOP_WORKBENCH_SPEC: ${{ github.workspace }}\packages\core
         run: |
-          Start-Transcript -Path desktop-win-ui.txt -Force
-          $env:npm_config_registry = 'https://registry.npmmirror.com'
-          $env:NPM_CONFIG_REGISTRY = $env:npm_config_registry
-          "registry: $env:NPM_CONFIG_REGISTRY"
+          Start-Transcript -Path desktop-win-probe.log -Force
           $out = Join-Path $env:RUNNER_TEMP 'desktop-win-app.log'
           $err = Join-Path $env:RUNNER_TEMP 'desktop-win-app.err.log'
-          $p = Start-Process -FilePath $env:DESKTOP_EXE -ArgumentList '--remote-debugging-port=9222' -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
-          Start-Sleep -Seconds 60
-          Get-Content $out, $err -ErrorAction SilentlyContinue
-          $cdp = Join-Path $env:GITHUB_WORKSPACE 'desktop-win-cdp.txt'
-          & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win.png --install-via-ui --expect-workbench *> $cdp
+          $out2 = Join-Path $env:RUNNER_TEMP 'desktop-win-app2.log'
+          $err2 = Join-Path $env:RUNNER_TEMP 'desktop-win-app2.err.log'
+          "DESKTOP_SMOKE_APP_LOG=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "DESKTOP_SMOKE_APP_ERR=$err" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "DESKTOP_SMOKE_APP_LOG_2=$out2" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "DESKTOP_SMOKE_APP_ERR_2=$err2" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $app = Start-Process -FilePath $env:DESKTOP_EXE -ArgumentList '--remote-debugging-port=9222' -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
+          "desktop pid: $($app.Id)"
+          & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win.png --install-via-ui
           $code = $LASTEXITCODE
-          Get-Content $cdp -ErrorAction SilentlyContinue
+          if ($code -ne 0) { Stop-Transcript; throw "cdp probe failed: $code" }
+          Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 3
+          $app2 = Start-Process -FilePath $env:DESKTOP_EXE -ArgumentList '--remote-debugging-port=9222' -RedirectStandardOutput $out2 -RedirectStandardError $err2 -PassThru
+          "restarted desktop pid: $($app2.Id)"
+          & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win-after-restart.png --verify-only --expect-workbench
+          $code2 = $LASTEXITCODE
           Stop-Transcript
-          if ($code -ne 0) { throw "cdp probe failed: $code" }
+          if ($code2 -ne 0) { throw "cdp verify probe failed: $code2" }
       - name: Assert opencli installed
         shell: pwsh
         run: |
@@ -91,62 +92,62 @@ jobs:
           if (!(Test-Path $bin)) { throw "opencli bin missing: $bin" }
           & $bin --version
           if ($LASTEXITCODE -ne 0) { throw "opencli --version failed: $LASTEXITCODE" }
-      - name: Inspect workbench install
-        if: always()
+      - name: Assert module installed
         shell: pwsh
         run: |
-          Start-Transcript -Path desktop-win-inspect.txt -Force
-          try {
-            $root = "$env:USERPROFILE\.dsh\workbench"
-            "workbench root: $root"
-            if (Test-Path $root) { Get-ChildItem $root -Recurse -Depth 3 -ErrorAction SilentlyContinue | Select-Object FullName, Length | Format-Table -AutoSize | Out-String -Width 400 }
-            $opencli = @("$root\opencli", "$root\opencli\toolchain", "$root\opencli\bin")
-            foreach ($dir in $opencli) {
-              "== $dir"
-              if (Test-Path $dir) { Get-ChildItem $dir -Force -ErrorAction SilentlyContinue | Select-Object Name } else { 'missing' }
-            }
-            "== seed.log"
-            Get-Content "$root\seed.log" -ErrorAction SilentlyContinue
-            "== profile patch"
-            Get-Content "$env:USERPROFILE\.dsh\profiles\desktop\cordis.patch.yml" -ErrorAction SilentlyContinue
-            "== app stdout"
-            Get-Content (Join-Path $env:RUNNER_TEMP 'desktop-win-app.log') -ErrorAction SilentlyContinue | Select-Object -Last 200
-          } finally { Stop-Transcript }
+          $env:SMOKE_MANIFEST = "$env:USERPROFILE\.dsh\profiles\desktop\package.json"
+          node -e "
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync(process.env.SMOKE_MANIFEST, 'utf8'));
+          const name = '@dsh-workbench/module-hello';
+          const spec = (manifest.dependencies ?? {})[name];
+          const bundles = (manifest.dsh && manifest.dsh.profile && manifest.dsh.profile.bundles) || [];
+          if (spec === undefined && !bundles.includes(name)) throw new Error('module-hello 没进 profile');
+          console.log('module-hello', spec ?? 'bundle');
+          "
+      - name: Collect diagnostics
+        if: always()
+        shell: bash
+        env:
+          DESKTOP_SMOKE_STATUS: ${{ job.status }}
+        run: node scripts/desktop-smoke/collect.mjs
       - name: Stop Desktop
         if: always()
         shell: pwsh
         run: Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
-      - name: Commit probe log
+      - name: Publish logs
         if: always()
         shell: bash
         run: |
           git config user.name ci
           git config user.email ci@example.com
           shopt -s nullglob
-          files=(desktop-win*.png desktop-win*.txt)
+          files=(desktop-win*.png desktop-win*.txt desktop-win*.json desktop-win-probe.log)
           if [ ${#files[@]} -gt 0 ]; then
             git add -f "${files[@]}"
-            git commit -m "ci: windows desktop ui probe [skip ci]" || true
+            git commit -m "ci: windows desktop smoke log [skip ci]" || true
           fi
           git push origin HEAD:desktop-ui-log-win-${{ github.run_id }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: desktop-smoke-windows
+          if-no-files-found: warn
           path: |
-            desktop-win.png
-            desktop-win-gate.png
-            desktop-win-gate-open.png
-            desktop-win-cdp.txt
-            desktop-win-ui.txt
-            desktop-win-inspect.txt
+            desktop-win*.png
+            desktop-win*.txt
+            desktop-win*.json
+            desktop-win-probe.log
 
   macos:
     name: desktop / macos arm64
     runs-on: macos-latest
-    timeout-minutes: 45
+    timeout-minutes: 25
     env:
       HUSKY: 0
+      DESKTOP_SMOKE_OS: mac
+      DESKTOP_SMOKE_MARKET: https://github.com/novaeth/dsh-workbench-market.git
+      DESKTOP_SMOKE_MODULE: '@dsh-workbench/module-hello'
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -156,9 +157,9 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - name: Install (immutable)
+      - name: Install build deps (immutable)
         run: pnpm install --frozen-lockfile
-      - name: Build workbench (except docs)
+      - name: Build local workbench (except docs)
         run: pnpm --filter "./packages/*" --filter "!@dsh-workbench/docs" --if-present run build
       - name: Install Desktop
         shell: bash
@@ -173,32 +174,23 @@ jobs:
         run: |
           if command -v opencli >/dev/null 2>&1; then echo "unexpected opencli: $(command -v opencli)"; exit 1; fi
           echo 'opencli: missing (expected)'
-      - name: Initialize Desktop profile
-        shell: bash
-        run: |
-          pkill -f 'DeepSeek Harness' 2>/dev/null || true
-          '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' > "$RUNNER_TEMP/desktop-mac-init.log" 2>&1 &
-          sleep 25
-          pkill -f 'DeepSeek Harness' 2>/dev/null || true
-          sleep 3
-          cat "$HOME/.dsh/profiles/desktop/package.json"
-      - name: Install workbench from plugin page, wait for the gate, assert panel
+      - name: Open Desktop, install workbench and market module, restart once
         shell: bash
         env:
           DESKTOP_WORKBENCH_SPEC: ${{ github.workspace }}/packages/core
+          DESKTOP_SMOKE_APP_LOG: ${{ runner.temp }}/desktop-mac-app.log
+          DESKTOP_SMOKE_APP_ERR: ${{ runner.temp }}/desktop-mac-app.err.log
         run: |
-          exec > >(tee desktop-mac-ui.txt) 2>&1
-          export npm_config_registry='https://registry.npmmirror.com'
-          export NPM_CONFIG_REGISTRY="$npm_config_registry"
-          echo "registry: $NPM_CONFIG_REGISTRY"
+          exec > >(tee desktop-mac-probe.log) 2>&1
+          pkill -f 'DeepSeek Harness' 2>/dev/null || true
+          sleep 2
+          cd /
+          '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9222 > "$DESKTOP_SMOKE_APP_LOG" 2> "$DESKTOP_SMOKE_APP_ERR" &
+          node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9222 desktop-mac.png --install-via-ui
           pkill -f 'DeepSeek Harness' 2>/dev/null || true
           sleep 3
-          cd /
-          pwd
-          '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9222 > "$RUNNER_TEMP/desktop-mac-app.log" 2>&1 &
-          sleep 60
-          cat "$RUNNER_TEMP/desktop-mac-app.log"
-          ( cd "$GITHUB_WORKSPACE" && node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-mac.png --install-via-ui --expect-workbench )
+          '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9222 >> "$DESKTOP_SMOKE_APP_LOG" 2>> "$DESKTOP_SMOKE_APP_ERR" &
+          node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9222 desktop-mac-after-restart.png --verify-only --expect-workbench
       - name: Assert opencli installed
         shell: bash
         run: |
@@ -214,50 +206,48 @@ jobs:
             exit 1
           fi
           "$root/bin/opencli" --version
-      - name: Inspect workbench install
-        if: always()
+      - name: Assert module installed
         shell: bash
         run: |
-          exec > >(tee desktop-mac-inspect.txt) 2>&1
-          echo '--- workbench tree ---'
-          find "$HOME/.dsh/workbench" -maxdepth 4 -print 2>/dev/null | head -150 || true
-          echo '--- opencli tree ---'
-          find "$HOME/.dsh/workbench/opencli" -maxdepth 4 -print 2>/dev/null | head -80 || true
-          echo '--- seed log ---'
-          cat "$HOME/.dsh/workbench/seed.log" 2>/dev/null || true
-          echo '--- desktop profile patch ---'
-          cat "$HOME/.dsh/profiles/desktop/cordis.patch.yml" 2>/dev/null || true
-          echo '--- app stdout ---'
-          cat "$RUNNER_TEMP/desktop-mac-app.log" 2>/dev/null | tail -300 || true
-          echo '--- library logs ---'
-          find "$HOME/Library/Logs/DeepSeek Harness" -type f 2>/dev/null | while read -r file; do
-            echo "=== $file"
-            tail -200 "$file" 2>/dev/null || true
-          done || true
+          node -e "
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync(process.env.HOME + '/.dsh/profiles/desktop/package.json', 'utf8'));
+          const name = '@dsh-workbench/module-hello';
+          const spec = (manifest.dependencies ?? {})[name];
+          const bundles = (manifest.dsh && manifest.dsh.profile && manifest.dsh.profile.bundles) || [];
+          if (spec === undefined && !bundles.includes(name)) throw new Error('module-hello 没进 profile');
+          console.log('module-hello', spec ?? 'bundle');
+          "
+      - name: Collect diagnostics
+        if: always()
+        shell: bash
+        env:
+          DESKTOP_SMOKE_STATUS: ${{ job.status }}
+        run: node scripts/desktop-smoke/collect.mjs
       - name: Stop Desktop
         if: always()
         shell: bash
         run: pkill -f 'DeepSeek Harness' 2>/dev/null || true
-      - name: Commit probe log
+      - name: Publish logs
         if: always()
         shell: bash
         run: |
           git config user.name ci
           git config user.email ci@example.com
           shopt -s nullglob
-          files=(desktop-mac*.png desktop-mac*.txt)
+          files=(desktop-mac*.png desktop-mac*.txt desktop-mac*.json desktop-mac-probe.log)
           if [ ${#files[@]} -gt 0 ]; then
             git add -f "${files[@]}"
-            git commit -m "ci: macos desktop ui probe [skip ci]" || true
+            git commit -m "ci: macos desktop smoke log [skip ci]" || true
           fi
           git push origin HEAD:desktop-ui-log-mac-${{ github.run_id }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: desktop-smoke-macos
+          if-no-files-found: warn
           path: |
-            desktop-mac.png
-            desktop-mac-gate.png
-            desktop-mac-gate-open.png
-            desktop-mac-ui.txt
-            desktop-mac-inspect.txt
+            desktop-mac*.png
+            desktop-mac*.txt
+            desktop-mac*.json
+            desktop-mac-probe.log
