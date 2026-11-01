@@ -1,7 +1,12 @@
 import type { DshShell } from '@dsh-workbench/shared';
 import { runShell } from '@dsh-workbench/shared/host';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
-import { desktopPnpmPath, desktopPnpmVersion, desktopRuntimeEnvPath } from './toolchain.js';
+import {
+  desktopNodeExecutable,
+  desktopPnpmPath,
+  desktopPnpmVersion,
+  desktopRuntimeEnvPath,
+} from './toolchain.js';
 import { hostSurface } from './platform.js';
 
 export interface ToolchainReport {
@@ -28,16 +33,18 @@ async function toolVersion(
 }
 
 export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainReport> {
+  const bundledNode = desktopNodeExecutable();
   const bundledPnpm = desktopPnpmPath();
   const bundledMajor = desktopPnpmVersion()?.split('.')[0];
   const preferBundled = bundledPnpm !== undefined && Number(bundledMajor ?? '0') >= 10;
+  const nodeCommand = bundledNode === undefined ? 'node' : quoteShellArg(bundledNode);
   const pnpmLine = preferBundled
-    ? `node ${quoteShellArg(bundledPnpm ?? '')} --version`
+    ? `${nodeCommand} ${quoteShellArg(bundledPnpm ?? '')} --version`
     : 'pnpm --version';
   const path = desktopRuntimeEnvPath(process.env.PATH);
   const env: Readonly<Record<string, string>> = path === undefined ? {} : { PATH: path };
   const [node, npm, pnpm] = await Promise.all([
-    toolVersion(shell, 'node --version', env),
+    toolVersion(shell, `${nodeCommand} --version`, env),
     toolVersion(shell, 'npm --version', env),
     toolVersion(shell, pnpmLine, env),
   ]);

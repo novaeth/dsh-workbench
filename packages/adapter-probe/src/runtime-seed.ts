@@ -16,6 +16,7 @@ import type { DshHomePath, DshHostContext } from '@dsh-workbench/shared';
 import { quoteShellArg, quoteShellArgFor } from '@dsh-workbench/shared/host';
 import {
   desktopBundledBins,
+  desktopNodeExecutable,
   desktopPnpmPath,
   desktopPnpmVersion,
   ensureToolchain,
@@ -198,8 +199,10 @@ export function seedWorkbenchToolchain(root: string, log: SeedLog): void {
   const bundledMajor = Number(desktopPnpmVersion()?.split('.')[0] ?? '0');
   const bundledUsable = bundledPnpm !== undefined && bundledMajor >= 10;
   if (bundledPnpm !== undefined && bundledUsable) {
-    process.env.DSH_WB_PNPM = `node ${quoteShellArgFor(bundledPnpm, process.platform)}`;
-    log(`pnpm 用 Desktop 自带的：${bundledPnpm}`);
+    const bundledNode = desktopNodeExecutable();
+    const nodePrefix = bundledNode === undefined ? 'node' : quoteShellArgFor(bundledNode, process.platform);
+    process.env.DSH_WB_PNPM = `${nodePrefix} ${quoteShellArgFor(bundledPnpm, process.platform)}`;
+    log(`pnpm 用 Desktop 自带的：${bundledPnpm}（node: ${nodePrefix}）`);
   } else if (bundledPnpm !== undefined) {
     log(`Desktop 自带 pnpm 版本低于 10，优先用 PATH 上的 pnpm`);
   }

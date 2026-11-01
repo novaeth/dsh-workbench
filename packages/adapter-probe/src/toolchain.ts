@@ -2,7 +2,7 @@ import { execaSync } from 'execa';
 import lockfile from 'proper-lockfile';
 import writeFileAtomic from 'write-file-atomic';
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
-import { delimiter, join } from 'node:path';
+import { delimiter, dirname, join } from 'node:path';
 import { quoteShellArg, quoteShellArgFor } from '@dsh-workbench/shared/host';
 import { bootstrapEnv } from './bootstrap-run.js';
 import { hostSurface } from './platform.js';
@@ -15,16 +15,29 @@ export interface ToolchainProcess {
 
 export interface PnpmProcess {
   readonly versions: { readonly electron?: string | undefined; readonly node?: string | undefined };
+  readonly execPath?: string | undefined;
   readonly resourcesPath?: string | undefined;
+}
+
+export function desktopResourcesDir(
+  proc: PnpmProcess = process,
+  platform: NodeJS.Platform = process.platform,
+): string | undefined {
+  const declared = proc.resourcesPath;
+  if (declared !== undefined && declared !== '') return declared;
+  if (hostSurface({ proc }).deployment !== 'desktop') return undefined;
+  const execPath = proc.execPath;
+  if (execPath === undefined || execPath === '') return undefined;
+  if (platform === 'darwin') return join(dirname(dirname(execPath)), 'Resources');
+  return join(dirname(execPath), 'resources');
 }
 
 export function desktopPnpmPath(
   proc: PnpmProcess = process,
   exists: (path: string) => boolean = existsSync,
 ): string | undefined {
-  if (hostSurface({ proc }).deployment !== 'desktop') return undefined;
-  const resources = proc.resourcesPath;
-  if (resources === undefined || resources === '') return undefined;
+  const resources = desktopResourcesDir(proc);
+  if (resources === undefined) return undefined;
   const path = join(resources, 'runtime', 'primary-runtime', 'dependencies', 'pnpm', 'bin', 'pnpm.cjs');
   return exists(path) ? path : undefined;
 }
@@ -33,11 +46,28 @@ export function desktopBundledBins(
   proc: PnpmProcess = process,
   exists: (path: string) => boolean = existsSync,
 ): readonly string[] {
-  if (hostSurface({ proc }).deployment !== 'desktop') return [];
-  const resources = proc.resourcesPath;
-  if (resources === undefined || resources === '') return [];
+  const resources = desktopResourcesDir(proc);
+  if (resources === undefined) return [];
   const dependencies = join(resources, 'runtime', 'primary-runtime', 'dependencies');
   return [join(dependencies, 'node', 'bin'), join(dependencies, 'pnpm', 'bin')].filter((dir) => exists(dir));
+}
+
+export function desktopNodeExecutable(
+  proc: PnpmProcess = process,
+  exists: (path: string) => boolean = existsSync,
+): string | undefined {
+  const resources = desktopResourcesDir(proc);
+  if (resources === undefined) return undefined;
+  const path = join(
+    resources,
+    'runtime',
+    'primary-runtime',
+    'dependencies',
+    'node',
+    'bin',
+    process.platform === 'win32' ? 'node.exe' : 'node',
+  );
+  return exists(path) ? path : undefined;
 }
 
 export function desktopRuntimeEnvPath(
@@ -53,9 +83,8 @@ export function desktopRuntimeEnvPath(
 }
 
 export function desktopPnpmVersion(proc: PnpmProcess = process, exists: (path: string) => boolean = existsSync): string | undefined {
-  if (hostSurface({ proc }).deployment !== 'desktop') return undefined;
-  const resources = proc.resourcesPath;
-  if (resources === undefined || resources === '') return undefined;
+  const resources = desktopResourcesDir(proc);
+  if (resources === undefined) return undefined;
   const manifest = join(resources, 'runtime', 'primary-runtime', 'dependencies', 'pnpm', 'package.json');
   if (!exists(manifest)) return undefined;
   try {
