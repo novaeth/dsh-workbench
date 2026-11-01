@@ -8,7 +8,6 @@ import {
   desktopPnpmPath,
   desktopPnpmVersion,
   desktopResourcesDir,
-  desktopRuntimeEnv,
   desktopRuntimeEnvPath,
 } from './toolchain.js';
 import { hostSurface } from './platform.js';
@@ -26,10 +25,9 @@ export interface ToolchainReport {
 async function toolVersion(
   shell: DshShell,
   line: string,
-  env: Readonly<Record<string, string>>,
 ): Promise<{ ok: boolean; text: string; stalled: boolean; code: number | null; raw: string }> {
   try {
-    const result = await runShell(shell, line, { timeoutMs: 10_000, env });
+    const result = await runShell(shell, line, { timeoutMs: 10_000 });
     const text = (result.stdout || result.stderr).trim().split('\n')[0] ?? '';
     return {
       ok: result.exitCode === 0 && !result.timedOut,
@@ -53,11 +51,10 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
     ? `${nodeCommand} ${quoteShellArg(bundledPnpm ?? '')} --version`
     : 'pnpm --version';
   const path = desktopRuntimeEnvPath(process.env.PATH);
-  const env: Readonly<Record<string, string>> = desktopRuntimeEnv(process.env);
   const [node, npm, pnpm] = await Promise.all([
-    toolVersion(shell, `${nodeCommand} --version`, env),
-    toolVersion(shell, 'npm --version', env),
-    toolVersion(shell, pnpmLine, env),
+    toolVersion(shell, `${nodeCommand} --version`),
+    toolVersion(shell, 'npm --version'),
+    toolVersion(shell, pnpmLine),
   ]);
   if (node.stalled || npm.stalled || pnpm.stalled) {
     return {
