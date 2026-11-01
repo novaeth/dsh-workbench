@@ -1,0 +1,56 @@
+{
+  "ok": true,
+  "phase": "failed",
+  "steps": [
+    {
+      "id": "toolchain",
+      "status": "failed",
+      "log": [
+        "宿主执行通道起不了子进程（0xC0000142 · DLL 初始化失败）——不是没装 node：node 不在 PATH（Desktop 自带 Node 的 shim 没生效） · npm 缺（已改用 pnpm） · pnpm 缺（装不了 opencli/插件/模块库）",
+        "deployment=desktop · resources=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources · execPath=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\DeepSeek Harness.exe",
+        "bundled node=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe · bundled pnpm=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin\\pnpm.cjs · bins=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\…",
+        "PATH 前两段=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin|C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin",
+        "node: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空） cmd='C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe'",
+        "pnpm: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空） cmd='C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe' 'C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin\\pnpm.cjs' --version",
+        "npm: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空）",
+        "control direct bundled node: exit=0 out=v24.21.0\r",
+        "control direct host node: exit=0 out=v24.21.0\r",
+        "control default: exit=3221225794 out=（空）",
+        "control home: exit=3221225794 out=（空）",
+        "control cwd: exit=3221225794 out=（空）"
+      ],
+      "detail": "宿主执行通道起不了子进程（0xC0000142 · DLL 初始化失败）——不是没装 node：node 不在 PATH（Desktop 自带 Node 的 shim 没生效） · npm 缺（已改用 pnpm） · pnpm 缺（装不了 opencli/插件/模块库）"
+    },
+    {
+      "id": "cli",
+      "status": "pending"
+    },
+    {
+      "id": "bridge",
+      "status": "pending"
+    },
+    {
+      "id": "diy",
+      "status": "pending"
+    }
+  ],
+  "at": 1793539487612,
+  "log": [
+    "宿主执行通道起不了子进程（0xC0000142 · DLL 初始化失败）——不是没装 node：node 不在 PATH（Desktop 自带 Node 的 shim 没生效） · npm 缺（已改用 pnpm） · pnpm 缺（装不了 opencli/插件/模块库）",
+    "deployment=desktop · resources=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources · execPath=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\DeepSeek Harness.exe",
+    "bundled node=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe · bundled pnpm=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin\\pnpm.cjs · bins=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\…",
+    "PATH 前两段=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin|C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin",
+    "node: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空） cmd='C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe'",
+    "pnpm: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空） cmd='C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe' 'C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin\\pnpm.cjs' --version",
+    "npm: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空）",
+    "control direct bundled node: exit=0 out=v24.21.0\r",
+    "control direct host node: exit=0 out=v24.21.0\r",
+    "control default: exit=3221225794 out=（空）",
+    "control home: exit=3221225794 out=（空）",
+    "control cwd: exit=3221225794 out=（空）"
+  ],
+  "canWakeBrowser": true,
+  "error": "宿主执行通道起不了子进程（0xC0000142 · DLL 初始化失败）——不是没装 node：node 不在 PATH（Desktop 自带 Node 的 shim 没生效） · npm 缺（已改用 pnpm） · pnpm 缺（装不了 opencli/插件/模块库）",
+  "failure": "host",
+  "guidance": "host"
+}

@@ -1,0 +1,26 @@
+{
+  "ok": true,
+  "phase": "checking",
+  "steps": [
+    {
+      "id": "toolchain",
+      "status": "running",
+      "action": "node --version · npm --version · pnpm --version"
+    },
+    {
+      "id": "cli",
+      "status": "pending"
+    },
+    {
+      "id": "bridge",
+      "status": "pending"
+    },
+    {
+      "id": "diy",
+      "status": "pending"
+    }
+  ],
+  "at": 1793539485941,
+  "log": [],
+  "canWakeBrowser": true
+}
