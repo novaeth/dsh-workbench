@@ -1,5 +1,4 @@
 import type { DshHostContext, DshWorkspaceRegistry, UnitManifest } from '@dsh-workbench/shared';
-import { provideWorkbenchShell } from '@/shared/api/host/workbench-shell';
 import { provideWorkbenchSeam } from '@/shared/api/host/workbench-seam';
 import { shippedAdapterSet } from '@/shared/api/host/shipped-adapter-set';
 import { dshHome } from '@dsh-workbench/shared/host';
@@ -55,7 +54,6 @@ export const name = 'dsh-workbench';
 interface ReleasedLookup { isReleased(id: string): boolean }
 export const inject = ['webServer'];
 export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Promise<void> {
-  provideWorkbenchShell(ctx);
   const seam = provideWorkbenchSeam(ctx);
   const facts = createFactLog();
   const values = createValueHandoff();

@@ -86,8 +86,8 @@ seam.run({ command, intent, session?, workdir?, timeoutMs?, env?, retry?, bestEf
   产品侧中间产物走 `/tmp`。
 - **会话只读**只挡工作区与外部路径；产品域仍按部署上限执行。
 - **`DSH_PERMISSION_MODE` 是上限**，不是答案；`danger-full-access` 时执行缝不额外收窄。
-- **旧写法**：`runShell` / `shellOf` / `withSandboxPolicy` 保留一个发布周期的兼容导出，不再在新代码里使用；
-  第三方模块若还在用，先按本文件的模块一节迁移。
+- **旧入口已删除**：`shellOf` / `WORKBENCH_SHELL` / `withSandboxPolicy` 不再存在；宿主侧只有执行缝一条路，
+  模块只有 `deps.seam`。新代码再写 `runShell` 会被 selfcheck 判红。
 
 ## 新代码的落点与验收
 

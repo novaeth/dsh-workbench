@@ -16,11 +16,6 @@ const ADAPTERS = [
 ].map((name) => join(REPO, 'packages', name, 'src'));
 
 const SEAM_OWN = ['packages/shared/src/host/shell.ts', 'packages/shared/src/host/seam/'];
-const LEGACY_OWN = [
-  'packages/shared/src/host/shell.ts',
-  'packages/shared/src/host/shell-service.ts',
-  'packages/core/src/shared/api/host/workbench-shell.ts',
-];
 const ROOT_OWN = ['packages/shared/src/host/data-root.ts'];
 
 const rel = (file) => relative(REPO, file).split('\\').join('/');
@@ -70,7 +65,7 @@ function seamCalls(source) {
 export function rawShellHits() {
   const hits = [];
   for (const file of hostFiles()) {
-    if (allowed(file, SEAM_OWN) || allowed(file, LEGACY_OWN)) continue;
+    if (allowed(file, SEAM_OWN)) continue;
     const source = read(file);
     for (const pattern of [/\brunShell\s*\(/, /\bshellOf\s*\(/, /\bwithSandboxPolicy\s*\(/]) {
       const match = pattern.exec(source);

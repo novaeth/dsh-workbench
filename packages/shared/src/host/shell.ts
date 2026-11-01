@@ -52,13 +52,6 @@ export interface DshShellSandboxPolicy {
   readonly workspaceRoot: string;
 }
 
-export function withSandboxPolicy(shell: DshShell, policy: DshShellSandboxPolicy): DshShell {
-  return {
-    resolve: (request) => shell.resolve({ ...request, sandboxPolicy: request.sandboxPolicy ?? policy }),
-    execute: (spec) => shell.execute(spec),
-  };
-}
-
 export async function runShell(
   shell: DshShell,
   command: string,

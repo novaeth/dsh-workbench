@@ -152,5 +152,5 @@ _Avoid_: 数据根（会跟共用的 `~/.dsh` 混）、沙箱、sandbox
 运行时根）/ 会话工作区 / 明确的外部路径 / 只读；执行缝模块据此合成策略（部署上限 × 会话解析）、
 注入产品环境（隔离 HOME、npm/pnpm 缓存、opencli 配置）、把沙箱拒绝变成类型化结果并记事实。
 模块起命令走 `deps.seam` 的 `unit` / `workspace` 两档，不直接拿 dsh 的 shell 服务；
-`runShell` / `shellOf` 是旧入口，只保留一个发布周期的兼容。
+`runShell` 是执行缝内部实现；`shellOf` / `withSandboxPolicy` 这类旧入口已删除。
 _Avoid_: 接缝（那是两侧各自的入口）、bash 工具（agent 的入口，最终也走它）、沙箱（那是缝后面的判定）
