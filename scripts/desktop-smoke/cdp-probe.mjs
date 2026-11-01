@@ -43,6 +43,7 @@ const log = (message) => {
 const milestones = {};
 let activeCdp = null;
 let browserState = 'pending';
+let extensionConnected = false;
 
 function mark(name) {
   milestones[name] = elapsed();
@@ -191,6 +192,15 @@ function stepStates(snapshot) {
   const steps = snapshot?.steps;
   if (!Array.isArray(steps)) return 'none';
   return steps.map((item) => `${item.id}:${item.status}${item.action === undefined ? '' : `(${item.action})`}`).join(' ');
+}
+
+function readTail(file, length) {
+  try {
+    const text = fs.readFileSync(file, 'utf8');
+    return text.replaceAll('\n', ' | ').slice(-length);
+  } catch {
+    return '';
+  }
 }
 
 function tailBody(body, length = 240) {
@@ -353,17 +363,22 @@ async function launchSmokeBrowser() {
     return browserState;
   }
   const profile = join(process.env.RUNNER_TEMP ?? outDir, 'opencli-browser-profile');
-  log(`模拟用户装扩展：起浏览器 ${binary}（--load-extension=${extension}）`);
+  const chromeLog = outPath(`${prefix}-chrome.log`);
+  log(`模拟用户装扩展：起浏览器 ${binary}（--load-extension=${extension}，日志 ${chromeLog}）`);
+  const fd = fs.openSync(chromeLog, 'a');
   const child = execa(
     binary,
     [
       `--user-data-dir=${profile}`,
       `--load-extension=${extension}`,
       '--disable-features=DisableLoadExtensionCommandLineSwitch',
+      '--disable-gpu',
+      '--disable-software-rasterizer',
+      '--window-size=1280,900',
       '--no-first-run',
       '--no-default-browser-check',
     ],
-    { detached: true, stdio: 'ignore', cleanup: false },
+    { detached: true, stdio: ['ignore', fd, fd], cleanup: false },
   );
   child.catch((error) => log(`浏览器起不来：${String(error?.message ?? error)}`));
   browserState = 'launched';
@@ -371,11 +386,56 @@ async function launchSmokeBrowser() {
   return browserState;
 }
 
+function doctorCommand() {
+  const bin = (process.env.DESKTOP_SMOKE_OPENCLI ?? '').trim();
+  if (bin === '') return null;
+  return process.platform === 'win32'
+    ? { file: process.env.ComSpec ?? 'cmd.exe', args: ['/d', '/c', bin, 'doctor'] }
+    : { file: bin, args: ['doctor'] };
+}
+
+async function doctorText() {
+  const command = doctorCommand();
+  if (command === null) return '';
+  const result = await execa(command.file, command.args, { timeout: 60_000, reject: false }).catch(() => undefined);
+  return `${result?.stdout ?? ''}\n${result?.stderr ?? ''}`;
+}
+
+async function waitExtensionConnected() {
+  const until = Date.now() + remaining('等浏览器扩展连上', BRIDGE_WAIT_MS);
+  while (Date.now() < until) {
+    const text = await doctorText();
+    const connected = /"extensionConnected":true/u.test(text) || /\[OK\] Extension:/u.test(text);
+    const lines = text
+      .split('\n')
+      .filter((one) => /Extension:|extensionConnected|Issues:/u.test(one))
+      .slice(-3)
+      .join(' | ');
+    log(`extension wait: ${connected ? 'connected' : 'not-connected'} :: ${lines}`);
+    const chromeLog = outPath(`${prefix}-chrome.log`);
+    if (!connected && fs.existsSync(chromeLog)) {
+      log(`chrome log: ${readTail(chromeLog, 400)}`);
+    }
+    if (connected) {
+      extensionConnected = true;
+      return true;
+    }
+    await sleep(3000);
+  }
+  return false;
+}
+
 async function bridgeGate(cdp, snapshot, body, state) {
   const bridge = stepStatusOf(snapshot, 'bridge');
   if (bridge === '' || bridge === 'ok') return true;
   if (browserState === 'pending') await launchSmokeBrowser();
   if (browserState === 'missing-env') return true;
+  if (!extensionConnected) {
+    const connected = await waitExtensionConnected();
+    if (!connected) {
+      await fail(cdp, '浏览器扩展没连上（doctor 一直报 not connected）', body, snapshot);
+    }
+  }
   if (state.deadline === 0) state.deadline = Date.now() + remaining('等浏览器通道', BRIDGE_WAIT_MS);
   if (Date.now() > state.deadline) {
     await fail(cdp, `浏览器通道没连上（装扩展 + Retry 之后 bridge 还是 ${bridge}）`, body, snapshot);

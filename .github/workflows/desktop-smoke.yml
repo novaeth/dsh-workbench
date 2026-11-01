@@ -59,7 +59,10 @@ jobs:
           $chrome = @("$env:ProgramFiles\Google\Chrome\Application\chrome.exe", "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
           if ($null -eq $chrome) { throw 'Chrome not found on this runner' }
           & $chrome --version
-          $url = node -e "fetch('https://api.github.com/repos/jackwener/opencli/releases/latest').then((r) => r.json()).then((d) => { const a = (d.assets || []).find((x) => x.name.startsWith('opencli-extension-v') && x.name.endsWith('.zip')); if (!a) throw new Error('no extension asset'); console.log(a.browser_download_url); })"
+          $pin = (Select-String -Path 'packages/shared/src/config/constants.ts' -Pattern 'OPENCLI_PIN\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
+          "opencli pin: $pin"
+          $script = "const v = process.argv[1]; fetch('https://api.github.com/repos/jackwener/opencli/releases/tags/v' + v).then((r) => r.json()).then((d) => { const a = (d.assets || []).find((x) => x.name.startsWith('opencli-extension-v') && x.name.endsWith('.zip')); if (!a) throw new Error('no extension asset for ' + v); console.log(a.browser_download_url); });"
+          $url = & node -e $script $pin
           "extension: $url"
           Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\opencli-ext.zip"
           $dest = "$env:RUNNER_TEMP\opencli-ext"
@@ -68,6 +71,7 @@ jobs:
           Get-ChildItem $dest | Select-Object -First 6 Name
           "DESKTOP_SMOKE_CHROME=$chrome" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "DESKTOP_SMOKE_EXTENSION=$dest" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "DESKTOP_SMOKE_OPENCLI=$env:USERPROFILE\.dsh\workbench\opencli\bin\opencli.cmd" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Open Desktop, install workbench and market module, restart once
         shell: pwsh
         env:
@@ -223,7 +227,9 @@ jobs:
           CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
           if [ ! -x "$CHROME" ]; then echo "Chrome missing: $CHROME"; exit 1; fi
           "$CHROME" --version
-          EXT_URL=$(node -e "fetch('https://api.github.com/repos/jackwener/opencli/releases/latest').then((r) => r.json()).then((d) => { const a = (d.assets || []).find((x) => x.name.startsWith('opencli-extension-v') && x.name.endsWith('.zip')); if (!a) throw new Error('no extension asset'); console.log(a.browser_download_url); })")
+          PIN=$(node -e "const t = require('node:fs').readFileSync('packages/shared/src/config/constants.ts', 'utf8'); const m = /OPENCLI_PIN\s*=\s*\"([^\"]+)\"/.exec(t); if (!m) throw new Error('OPENCLI_PIN not found'); console.log(m[1]);")
+          echo "opencli pin: $PIN"
+          EXT_URL=$(node -e "fetch('https://api.github.com/repos/jackwener/opencli/releases/tags/v${PIN}').then((r) => r.json()).then((d) => { const a = (d.assets || []).find((x) => x.name.startsWith('opencli-extension-v') && x.name.endsWith('.zip')); if (!a) throw new Error('no extension asset for v${PIN}'); console.log(a.browser_download_url); })")
           echo "extension: $EXT_URL"
           curl -fL --retry 2 -o "$RUNNER_TEMP/opencli-ext.zip" "$EXT_URL"
           rm -rf "$RUNNER_TEMP/opencli-ext"
@@ -233,6 +239,7 @@ jobs:
           {
             echo "DESKTOP_SMOKE_CHROME=$CHROME"
             echo "DESKTOP_SMOKE_EXTENSION=$RUNNER_TEMP/opencli-ext"
+            echo "DESKTOP_SMOKE_OPENCLI=$HOME/.dsh/workbench/opencli/bin/opencli"
           } >> "$GITHUB_ENV"
       - name: Open Desktop, install workbench and market module, restart once
         shell: bash
