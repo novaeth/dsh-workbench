@@ -893,11 +893,17 @@ pnpm run check
 
 <!-- doc-facts:begin gate-chain -->
 ```text
-lint:commit → build → typecheck → lint → coverage → check:gates:target --fail-on-red → arch →
-check:docs → check:runtimes → selfcheck → check:modules → check:adapter-defaults →
-scripts/check-adapter-contract.mjs → check:release-artifacts
+lint:commit → build → typecheck → lint → check:duplication → coverage →
+check:gates:target --fail-on-red → arch → check:docs → check:runtimes → selfcheck →
+check:modules → check:adapter-defaults → scripts/check-adapter-contract.mjs →
+check:release-artifacts
 ```
 <!-- doc-facts:end gate-chain -->
+
+重复代码是基线门禁：存量克隆记在 `.jscpd-baseline.json`，`check:duplication` 只红在基线之外的
+新克隆；`pnpm run duplication:accept` 重写基线（和代码一起提交），`pnpm run duplication:report`
+出 `coverage/duplication/` 下的 HTML / JSON 全量报告。扫描面（`packages/` 与 `scripts/` 的
+TS / JS，不含测试与构建产物）在 `.jscpd.json`。
 
 目标门禁：
 

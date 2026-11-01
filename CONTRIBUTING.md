@@ -30,7 +30,7 @@ pnpm run check
 `pnpm run check` runs the one gate in this order:
 
 <!-- doc-facts:begin gate-chain-inline -->
-`lint:commit` → `build` → `typecheck` → `lint` → `coverage` →
+`lint:commit` → `build` → `typecheck` → `lint` → `check:duplication` → `coverage` →
 `check:gates:target --fail-on-red` → `arch` → `check:docs` → `check:runtimes` → `selfcheck` →
 `check:modules` → `check:adapter-defaults` → `scripts/check-adapter-contract.mjs` →
 `check:release-artifacts`
@@ -97,6 +97,22 @@ Some document blocks are generated from code, not hand-written. Change the sourc
 Husky also runs `pnpm run check:docs` plus the `DOC-3` link/§N gate on every
 commit; run the full `pnpm run check` before pushing. Set `HUSKY=0` to skip
 hooks for a one-off commit.
+
+## Duplication
+
+`check:duplication` runs [jscpd](https://github.com/kucherenko/jscpd) over `packages/` and
+`scripts/` (TypeScript / JavaScript; tests and build output excluded, see `.jscpd.json`) in
+baseline mode: the clones recorded in `.jscpd-baseline.json` are accepted, and anything
+outside the baseline fails the gate with the new clones printed as `file:line ~ file:line`.
+
+- Remove the duplication, or
+- accept it explicitly with `pnpm run duplication:accept` and commit the updated
+  `.jscpd-baseline.json`.
+- `pnpm run duplication:report` writes the full HTML and JSON reports to `coverage/duplication/`.
+
+Baseline fingerprints describe clone content, not line numbers or file names, so moving code
+or renaming files does not invalidate the baseline. Re-run `duplication:accept` after changing
+the scan surface in `.jscpd.json` or after upgrading jscpd across a major version.
 
 ## CI
 

@@ -6,6 +6,7 @@ const LABELS = {
   build: '构建',
   typecheck: '类型',
   lint: 'lint',
+  'check:duplication': '重复代码',
   coverage: '覆盖率',
   'check:gates:target': '目标门禁',
   arch: '架构红线',
