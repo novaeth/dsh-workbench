@@ -288,6 +288,8 @@ async function main() {
   for (const name of [
     `${prefix}-units.json`,
     `${prefix}-after-restart-units.json`,
+    `${prefix}-client-bundles.json`,
+    `${prefix}-after-restart-client-bundles.json`,
     `${prefix}-scripts.json`,
     `${prefix}-after-restart-scripts.json`,
     `${prefix}-console-events.json`,

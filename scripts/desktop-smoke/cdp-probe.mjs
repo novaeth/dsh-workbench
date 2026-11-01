@@ -631,7 +631,28 @@ async function unitsOf(cdp) {
   }
 }
 
+async function clientBundleReport(cdp) {
+  const result = await cdp.send('Runtime.evaluate', {
+    expression: `(async () => {
+      const names = performance.getEntriesByType('resource').map((one) => one.name);
+      const targets = names.filter((name) => name.includes('plugin') || name.includes('dsh-workbench'));
+      const reports = [];
+      for (const target of targets.slice(-8)) {
+        const text = await fetch(target).then((r) => r.text()).catch(() => '');
+        reports.push({ url: target, size: text.length, retry: text.includes('maxRetries') || text.includes('retryDelayMs') });
+      }
+      return JSON.stringify({ names, reports });
+    })()`,
+    awaitPromise: true,
+    returnByValue: true,
+  });
+  return result.result?.value ?? '';
+}
+
 async function verifyFeatures(cdp) {
+  const startedAt = Date.now();
+  let reloaded = false;
+  let reloadCard = false;
   const until = Date.now() + remaining('等模块卡片', MODULE_WAIT_MS);
   let body = '';
   let ids = [];
@@ -643,27 +664,41 @@ async function verifyFeatures(cdp) {
     if (/Sample module|示例模块|hello, workbench/u.test(body)) {
       writeText(`${prefix}-verify-body.txt`, body);
       writeText(`${prefix}-units.json`, `${JSON.stringify(units, null, 2)}\n`);
-      const scripts = await cdp.send('Runtime.evaluate', {
-        expression: `JSON.stringify([...document.querySelectorAll('script[src]')].map((node) => node.src))`,
-        returnByValue: true,
-      });
-      writeText(`${prefix}-scripts.json`, `${scripts.result?.value ?? '[]'}\n`);
+      writeText(`${prefix}-client-bundles.json`, await clientBundleReport(cdp));
       writeText(`${prefix}-console-events.json`, `${JSON.stringify(cdp.events(), null, 2)}\n`);
       mark('module-card');
       return { card: true, units: ids };
+    }
+    if (!reloaded && Date.now() - startedAt > 20_000) {
+      reloaded = true;
+      log('面板 20s 没出卡片：重载页面看是不是首屏竞态');
+      await cdp.send('Page.reload');
+      await sleep(4000);
+      const reloadUntil = Date.now() + 45_000;
+      while (Date.now() < reloadUntil) {
+        const reloadBody = await bodyOf(cdp);
+        const continueText = ['Enter the workbench anyway', '仍然进入工作台'].find((text) => reloadBody.includes(text));
+        if (continueText !== undefined) await click(cdp, [continueText], 1500);
+        log(`reload wait :: ${tailBody(reloadBody, 160)}`);
+        if (/Sample module|示例模块|hello, workbench/u.test(reloadBody)) {
+          reloadCard = true;
+          break;
+        }
+        await sleep(POLL_MS);
+      }
     }
     await sleep(POLL_MS);
   }
   writeText(`${prefix}-verify-body.txt`, body);
   const units = await unitsOf(cdp);
   writeText(`${prefix}-units.json`, `${JSON.stringify(units, null, 2)}\n`);
-  const scripts = await cdp.send('Runtime.evaluate', {
-    expression: `JSON.stringify([...document.querySelectorAll('script[src]')].map((node) => node.src))`,
-    returnByValue: true,
-  });
-  writeText(`${prefix}-scripts.json`, `${scripts.result?.value ?? '[]'}\n`);
+  writeText(`${prefix}-client-bundles.json`, await clientBundleReport(cdp));
   writeText(`${prefix}-console-events.json`, `${JSON.stringify(cdp.events(), null, 2)}\n`);
-  await fail(cdp, `装上模块后面板里没有示例模块的卡片（host units: ${ids.join(',') || '空'}）`, body);
+  await fail(
+    cdp,
+    `装上模块后面板里没有示例模块的卡片（host units: ${ids.join(',') || '空'}；reload 之后${reloadCard ? '有' : '仍然没'}卡片）`,
+    body,
+  );
 }
 
 async function main() {
