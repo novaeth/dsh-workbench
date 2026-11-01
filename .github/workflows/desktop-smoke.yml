@@ -21,9 +21,19 @@ jobs:
     timeout-minutes: 45
     env:
       HUSKY: 0
-      DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@beta'
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install (immutable)
+        run: pnpm install --frozen-lockfile
+      - name: Build workbench (except docs)
+        run: pnpm --filter "./packages/*" --filter "!@dsh-workbench/docs" --if-present run build
       - name: Install Desktop
         shell: pwsh
         run: |
@@ -49,8 +59,34 @@ jobs:
           Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
           Start-Sleep -Seconds 3
           Get-Content "$env:USERPROFILE\.dsh\profiles\desktop\package.json" -Raw
+      - name: Allow the workbench runtime root in the profile sandbox
+        shell: bash
+        run: |
+          node --input-type=module -e '
+          import { readFileSync, writeFileSync } from "node:fs";
+          import { join } from "node:path";
+          import { pathToFileURL } from "node:url";
+          const { appendBlocks, parseBlocks } = await import(
+            pathToFileURL(join(process.cwd(), "packages/core/scripts/patch-blocks.mjs")).href
+          );
+          const home = process.env.USERPROFILE || process.env.HOME;
+          const file = join(home, ".dsh", "profiles", "desktop", "cordis.patch.yml");
+          const row = parseBlocks(
+            readFileSync(join(process.cwd(), "packages/core/profile/sandbox.patch.yml"), "utf8"),
+          ).find((block) => block.id === "sandbox-policy");
+          if (row === undefined) throw new Error("profile/sandbox.patch.yml 里没有 sandbox-policy");
+          const current = readFileSync(file, "utf8");
+          if (parseBlocks(current).some((block) => block.id === "sandbox-policy")) {
+            console.log(`profile 已有可写根那一行：${file}`);
+          } else {
+            writeFileSync(file, appendBlocks(current, row.body));
+            console.log(`profile 补上可写根那一行：${file}`);
+          }
+          '
       - name: Install workbench from plugin page, wait for the gate, assert panel
         shell: pwsh
+        env:
+          DESKTOP_WORKBENCH_SPEC: ${{ github.workspace }}\packages\core
         run: |
           Start-Transcript -Path desktop-win-ui.txt -Force
           $env:npm_config_registry = 'https://registry.npmmirror.com'
@@ -135,9 +171,19 @@ jobs:
     timeout-minutes: 45
     env:
       HUSKY: 0
-      DESKTOP_WORKBENCH_SPEC: '@dsh-workbench/core@beta'
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install (immutable)
+        run: pnpm install --frozen-lockfile
+      - name: Build workbench (except docs)
+        run: pnpm --filter "./packages/*" --filter "!@dsh-workbench/docs" --if-present run build
       - name: Install Desktop
         shell: bash
         run: |
@@ -160,8 +206,34 @@ jobs:
           pkill -f 'DeepSeek Harness' 2>/dev/null || true
           sleep 3
           cat "$HOME/.dsh/profiles/desktop/package.json"
+      - name: Allow the workbench runtime root in the profile sandbox
+        shell: bash
+        run: |
+          node --input-type=module -e '
+          import { readFileSync, writeFileSync } from "node:fs";
+          import { join } from "node:path";
+          import { pathToFileURL } from "node:url";
+          const { appendBlocks, parseBlocks } = await import(
+            pathToFileURL(join(process.cwd(), "packages/core/scripts/patch-blocks.mjs")).href
+          );
+          const home = process.env.USERPROFILE || process.env.HOME;
+          const file = join(home, ".dsh", "profiles", "desktop", "cordis.patch.yml");
+          const row = parseBlocks(
+            readFileSync(join(process.cwd(), "packages/core/profile/sandbox.patch.yml"), "utf8"),
+          ).find((block) => block.id === "sandbox-policy");
+          if (row === undefined) throw new Error("profile/sandbox.patch.yml 里没有 sandbox-policy");
+          const current = readFileSync(file, "utf8");
+          if (parseBlocks(current).some((block) => block.id === "sandbox-policy")) {
+            console.log(`profile 已有可写根那一行：${file}`);
+          } else {
+            writeFileSync(file, appendBlocks(current, row.body));
+            console.log(`profile 补上可写根那一行：${file}`);
+          }
+          '
       - name: Install workbench from plugin page, wait for the gate, assert panel
         shell: bash
+        env:
+          DESKTOP_WORKBENCH_SPEC: ${{ github.workspace }}/packages/core
         run: |
           exec > >(tee desktop-mac-ui.txt) 2>&1
           export npm_config_registry='https://registry.npmmirror.com'
