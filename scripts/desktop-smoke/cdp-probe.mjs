@@ -680,26 +680,48 @@ async function cardIds(cdp) {
   }
 }
 
+async function panelDialog(cdp) {
+  const result = await cdp.send('Runtime.evaluate', {
+    expression: `(() => {
+      const dialogs = [...document.querySelectorAll('[role="dialog"]')];
+      const rows = dialogs.flatMap((one) => [...one.querySelectorAll('li, [role="listitem"], [role="row"]')]);
+      return JSON.stringify({ dialogs: dialogs.length, rows: rows.map((one) => (one.textContent ?? '').slice(0, 40)) });
+    })()`,
+    returnByValue: true,
+  });
+  try {
+    return JSON.parse(result.result?.value ?? '{"dialogs":0,"rows":[]}');
+  } catch {
+    return { dialogs: 0, rows: [] };
+  }
+}
+
 async function showModuleOnPanel(cdp, unitId, titles) {
-  await click(cdp, ['选择模块', 'Choose modules'], 1200);
-  if ((await click(cdp, ['面板模块', 'Panel modules'], 1200)) === 'missing') {
-    await cdp.send('Runtime.evaluate', {
-      expression: `(() => {
-        const trigger = document.querySelector('[aria-label="面板模块"], [aria-label="Panel modules"]');
-        if (trigger !== null) trigger.click();
-        return 'pressed';
-      })()`,
-      returnByValue: true,
-    });
-    await sleep(800);
+  let state = await panelDialog(cdp);
+  if (state.dialogs === 0) {
+    const text = await click(cdp, ['选择模块', 'Choose modules'], 1500);
+    if (text === 'missing') {
+      await cdp.send('Runtime.evaluate', {
+        expression: `(() => {
+          const trigger = document.querySelector('[aria-label="面板模块"], [aria-label="Panel modules"]');
+          if (trigger !== null) trigger.click();
+          return 'pressed';
+        })()`,
+        returnByValue: true,
+      });
+      await sleep(1500);
+    }
+    state = await panelDialog(cdp);
   }
   const result = await cdp.send('Runtime.evaluate', {
     expression: `(() => {
       const unit = ${JSON.stringify(unitId)};
       const titles = ${JSON.stringify(titles)};
-      const rows = [...document.querySelectorAll('[role="dialog"] li, [role="dialog"] [role="listitem"], li')];
+      const dialogs = [...document.querySelectorAll('[role="dialog"]')];
+      if (dialogs.length === 0) return 'no-dialog';
+      const rows = dialogs.flatMap((one) => [...one.querySelectorAll('li, [role="listitem"], [role="row"]')]);
       const row = rows.find((one) => titles.some((title) => (one.textContent ?? '').includes(title)));
-      if (row === undefined) return 'row-missing';
+      if (row === undefined) return 'row-missing:' + rows.map((one) => (one.textContent ?? '').slice(0, 16)).join('/');
       const toggle = row.querySelector('[role="switch"], button[role="switch"], input[type="checkbox"]');
       if (toggle === null) return 'switch-missing';
       const on = toggle.getAttribute('aria-checked') === 'true' || toggle.checked === true;
@@ -709,10 +731,10 @@ async function showModuleOnPanel(cdp, unitId, titles) {
     })()`,
     returnByValue: true,
   });
-  const state = result.result?.value ?? '';
-  log(`STEP panel module ${unitId} [${titles.join('/')}]: ${JSON.stringify(state)}`);
+  const outcome = result.result?.value ?? '';
+  log(`STEP panel module ${unitId} [${titles.join('/')}] dialogs=${state.dialogs} rows=${JSON.stringify(state.rows)} -> ${JSON.stringify(outcome)}`);
   await sleep(1500);
-  return state;
+  return outcome;
 }
 
 function titlesOfManifests(units) {
@@ -731,7 +753,7 @@ async function verifyFeatures(cdp) {
   const startedAt = Date.now();
   let reloaded = false;
   let reloadCard = false;
-  let picked = false;
+  let pickAttempts = 0;
   const until = Date.now() + remaining('等模块卡片', MODULE_WAIT_MS);
   let body = '';
   let ids = [];
@@ -752,11 +774,13 @@ async function verifyFeatures(cdp) {
       mark('module-card');
       return { card: true, units: ids };
     }
-    if (!picked && target !== '') {
-      picked = true;
-      await showModuleOnPanel(cdp, target, titlesOfManifests(units));
+    if (pickAttempts < 8 && target !== '') {
+      pickAttempts += 1;
+      const outcome = await showModuleOnPanel(cdp, target, titlesOfManifests(units));
       await pressEscape(cdp);
       await sleep(1500);
+      if (/clicked|already-on/u.test(outcome) || pickAttempts < 3) continue;
+      await sleep(3000);
       continue;
     }
     if (!reloaded && Date.now() - startedAt > 25_000) {
