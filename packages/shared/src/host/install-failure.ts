@@ -4,7 +4,7 @@ import type { InstallFailure, InstallFailureKind } from '../contract/command.js'
 
 const TARGET_FLAGS = ['--prefix', '--cache', '--dir', '--store-dir'];
 
-const INSTALL_VERBS = /^\s*npm\s+(i|install|add)\b/;
+const INSTALL_VERBS = /^\s*(?:npm\s+(?:i|install|add)|pnpm\s+(?:add|install))\b/;
 
 const NPM_PATH = /^npm (?:error|ERR!) path (.+)$/m;
 

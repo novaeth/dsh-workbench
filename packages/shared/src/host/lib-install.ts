@@ -12,13 +12,15 @@ export function libInstallCommand(options: {
   readonly env?: NodeJS.ProcessEnv | undefined;
   readonly prefix: string;
   readonly cacheDir?: string | undefined;
+  readonly pnpm?: string | undefined;
 }): string {
   const { need, source, version } = options;
+  const pnpm = options.pnpm ?? process.env.DSH_WB_PNPM?.trim() ?? 'pnpm';
   const registry = npmRegistryOf(source, options.env ?? process.env);
   const spec = version ?? need.version ?? 'latest';
   const registryFlag = registry.ok ? ` --registry ${quoteShellArg(registry.value)}` : '';
-  const cacheFlag = options.cacheDir === undefined ? '' : ` --cache ${quoteShellArg(options.cacheDir)}`;
-  return `npm i --prefix ${quoteShellArg(options.prefix)} ${quoteShellArg(`${need.name}@${spec}`)}${registryFlag}${cacheFlag}`;
+  const storeFlag = options.cacheDir === undefined ? '' : ` --store-dir ${quoteShellArg(options.cacheDir)}`;
+  return `${pnpm} add --dir ${quoteShellArg(options.prefix)} ${quoteShellArg(`${need.name}@${spec}`)}${registryFlag}${storeFlag} --allow-build=${quoteShellArg(need.name)}`;
 }
 
 export function binInstallCommand(
@@ -52,5 +54,5 @@ export function binInstallCommand(
 }
 
 export function libUninstallCommand(options: { readonly need: LibNeed; readonly prefix: string }): string {
-  return `npm uninstall --prefix ${quoteShellArg(options.prefix)} ${quoteShellArg(options.need.name)}`;
+  return `pnpm remove --dir ${quoteShellArg(options.prefix)} ${quoteShellArg(options.need.name)}`;
 }

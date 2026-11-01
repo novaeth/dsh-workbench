@@ -36,10 +36,11 @@ describe('opencli 隔离运行时', () => {
     const command = runtime.isolatedInstallCommand();
 
     const root = join('/tmp/dshhome', 'workbench', 'opencli');
-    expect(command).toContain(`--prefix '${join(root, 'toolchain')}'`);
+    expect(command).toContain(`--dir '${join(root, 'toolchain')}'`);
     expect(command).toContain(`@jackwener/opencli@${OPENCLI_PIN}`);
     expect(command).not.toContain(' -g');
-    expect(command).toContain(`--cache '${join(root, 'npm-cache')}'`);
+    expect(command).toContain(`--store-dir '${join(root, 'npm-cache')}'`);
+    expect(command).toContain('--allow-build=@jackwener/opencli');
   });
 
   it('DSH_WORKBENCH_HOME 优先（新 profile 用自己那份隔离运行时）', async () => {

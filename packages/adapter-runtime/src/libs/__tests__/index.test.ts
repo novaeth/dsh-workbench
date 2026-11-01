@@ -38,7 +38,7 @@ describe('createLibReader', () => {
     const reader = createLibReader({ roots: [tempRoot()], env: {} });
     await expect(reader.load(NEED, 'src/hello.js')).rejects.toMatchObject({
       code: 'lib-missing',
-      hint: expect.stringContaining('npm i'),
+      hint: expect.stringContaining('pnpm add'),
     });
   });
 

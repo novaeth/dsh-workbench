@@ -13,8 +13,17 @@ import {
 } from 'node:fs';
 import { delimiter, dirname, join, sep } from 'node:path';
 import type { DshHomePath, DshHostContext } from '@dsh-workbench/shared';
-import { quoteShellArg } from '@dsh-workbench/shared/host';
-import { ensureToolchain, localNpmCache, provisionLocalPnpmSync } from './toolchain.js';
+import { quoteShellArg, quoteShellArgFor } from '@dsh-workbench/shared/host';
+import {
+  desktopBundledBins,
+  desktopNodeExecutable,
+  desktopPnpmPath,
+  desktopPnpmVersion,
+  ensureToolchain,
+  localNpmCache,
+  localPnpmCommand,
+  provisionLocalPnpmSync,
+} from './toolchain.js';
 
 export type SeedLog = (message: string) => void;
 
@@ -183,6 +192,20 @@ export function prependPath(entryDir: string, env: NodeJS.ProcessEnv = process.e
 }
 
 export function seedWorkbenchToolchain(root: string, log: SeedLog): void {
+  for (const dir of desktopBundledBins()) {
+    if (prependPath(dir)) log(`PATH 前插 Desktop 自带 ${dir}`);
+  }
+  const bundledPnpm = desktopPnpmPath();
+  const bundledMajor = Number(desktopPnpmVersion()?.split('.')[0] ?? '0');
+  const bundledUsable = bundledPnpm !== undefined && bundledMajor >= 10;
+  if (bundledPnpm !== undefined && bundledUsable) {
+    const bundledNode = desktopNodeExecutable();
+    const nodePrefix = bundledNode === undefined ? 'node' : quoteShellArgFor(bundledNode, process.platform);
+    process.env.DSH_WB_PNPM = `${nodePrefix} ${quoteShellArgFor(bundledPnpm, process.platform)}`;
+    log(`pnpm 用 Desktop 自带的：${bundledPnpm}（node: ${nodePrefix}）`);
+  } else if (bundledPnpm !== undefined) {
+    log(`Desktop 自带 pnpm 版本低于 10，优先用 PATH 上的 pnpm`);
+  }
   const toolchain = ensureToolchain({ root, log });
   for (const file of toolchain.files) log(`工具链写下 ${file}`);
   if (toolchain.pathDir !== undefined && prependPath(toolchain.pathDir)) {
@@ -196,10 +219,12 @@ export function seedWorkbenchToolchain(root: string, log: SeedLog): void {
   }
   if (toolchain.pnpmDir !== undefined) {
     if (prependPath(toolchain.pnpmDir)) log(`PATH 前插 ${toolchain.pnpmDir}`);
-  } else if (toolchain.pathDir !== undefined) {
+    if (!bundledUsable) process.env.DSH_WB_PNPM = localPnpmCommand(root);
+  } else if (!bundledUsable && toolchain.pathDir !== undefined) {
     const installed = provisionLocalPnpmSync({ root });
     if (installed.ok && installed.binDir !== undefined) {
       if (prependPath(installed.binDir)) log(`PATH 前插 ${installed.binDir}`);
+      process.env.DSH_WB_PNPM = localPnpmCommand(root);
       log(`工具链 provision ${installed.detail}`);
     } else {
       log(`本地 pnpm 10 没装成：${installed.detail}`);

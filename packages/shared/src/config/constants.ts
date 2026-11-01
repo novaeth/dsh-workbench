@@ -73,8 +73,14 @@ export const PREFLIGHT_FRESH_MS = 30_000;
 /** 装 / 卸模块包的超时（毫秒）：pnpm 与取包内容都按它算。 */
 export const INSTALL_TIMEOUT_MS = 300_000;
 
-/** 启动体检里查版本号那一条的超时（毫秒）：只印个版本号，留够 opencli 每次调用约 5 秒的开销；`doctor` 要起浏览器会话，另按 `OPENCLI_TIMEOUT_MS`。 */
+/** 启动体检里查版本号那一条的超时（毫秒）：只印个版本号，留够 opencli 每次调用约 5 秒的开销。 */
 export const PREFLIGHT_VERSION_TIMEOUT_MS = 30_000;
+
+/** 启动体检里 `opencli doctor` 那一跳的超时（毫秒）：要起浏览器会话，另按它算，不占运行时调用的默认超时。 */
+export const PREFLIGHT_DOCTOR_TIMEOUT_MS = 30_000;
+
+/** 启动体检里装 opencli / provision 本地 pnpm 的超时（毫秒）：冷装走网络，2 分钟；模块装卸仍按 `INSTALL_TIMEOUT_MS`。 */
+export const PREFLIGHT_INSTALL_TIMEOUT_MS = 120_000;
 
 /** 查 registry 版本那一次请求的超时（毫秒）。 */
 export const VERSION_CHECK_TIMEOUT_MS = 10_000;

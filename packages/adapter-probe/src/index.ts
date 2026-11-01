@@ -1,3 +1,4 @@
+export * from './bootstrap-run.js';
 export * from './browser-wake.js';
 export * from './diy-preset-health.js';
 export * from './platform.js';
@@ -8,6 +9,7 @@ export * from './probe-libs.js';
 export * from './probe-units.js';
 export * from './probe-verdict.js';
 export * from './runtime-seed.js';
+export * from './desktop-runtime.js';
 export * from './toolchain.js';
 export * from './toolchain-probe.js';
 export * from './version-range.js';

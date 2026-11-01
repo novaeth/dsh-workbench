@@ -11,6 +11,7 @@ export interface PreflightStep {
   readonly detail?: string;
   readonly action?: string;
   readonly command?: string;
+  readonly log?: readonly string[];
 }
 
 export interface PreflightDiyGap {
@@ -29,4 +30,5 @@ export interface PreflightSnapshot {
   readonly bridgeIssues?: readonly PreflightBridgeIssue[];
   readonly diyGap?: PreflightDiyGap;
   readonly canWakeBrowser?: boolean;
+  readonly log?: readonly string[];
 }

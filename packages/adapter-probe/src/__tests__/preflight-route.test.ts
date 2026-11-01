@@ -24,7 +24,12 @@ function wire(
   profileDir?: string,
   desktopBrowser?: DesktopBrowser,
 ) {
-  const fake = createFakeShell(ALL_OK.map((step) => ({ ...step })));
+  const fake = createFakeShell([
+    { stdout: 'v24.21.0\n' },
+    { stdout: '10.9.4\n' },
+    { stdout: '10.32.1\n' },
+    ...ALL_OK.map((step) => ({ ...step })),
+  ]);
   const routes: Record<string, (search: URLSearchParams) => Answer> = {};
   const ctx = {
     get: (name: string) => {

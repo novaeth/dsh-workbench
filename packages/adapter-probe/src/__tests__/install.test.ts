@@ -20,17 +20,18 @@ describe('Desktop opencli 安装命令', () => {
     expect(command).not.toContain('npm i --prefix');
   });
 
-  it('web 继续走 npm', () => {
+  it('web 走 pnpm', () => {
     const command = opencliInstallCommand({ versions: { node: '24.15.0' } }, () => true);
 
-    expect(command).toContain('npm i --prefix');
-    expect(command).not.toContain('pnpm.cjs');
+    expect(command).toContain('pnpm add --dir');
+    expect(command).not.toContain('npm i --prefix');
   });
 
-  it('Desktop 但 bundled pnpm 不在 → 回退 npm 命令', () => {
+  it('Desktop 但 bundled pnpm 不在 → 也回退 pnpm', () => {
     const command = opencliInstallCommand(desktop, () => false);
 
-    expect(command).toContain('npm i --prefix');
+    expect(command).toContain('pnpm add --dir');
+    expect(command).not.toContain('npm i --prefix');
     expect(desktopPnpmPath(desktop, () => false)).toBeUndefined();
   });
 });

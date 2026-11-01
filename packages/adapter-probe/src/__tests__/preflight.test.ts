@@ -25,7 +25,9 @@ describe('createPreflight', () => {
       async () => {
         const during = preflight.snapshot();
         expect(during.phase).toBe('installing');
-        expect(during.steps[0]?.action).toBe(opencliInstallCommandDefault());
+        expect(during.steps[0]?.action).toBe('安装 opencli');
+        expect(during.steps[0]?.log).toContain('> 安装 opencli');
+        expect(during.steps[0]?.command).toBe(opencliInstallCommandDefault());
         return { ok: true, detail: 'added 1 package' };
       },
     );

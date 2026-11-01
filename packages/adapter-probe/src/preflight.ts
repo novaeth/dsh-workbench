@@ -1,8 +1,8 @@
 import type { DshShell, RuntimeCapabilities } from '@dsh-workbench/shared';
 import {
-  INSTALL_TIMEOUT_MS,
-  OPENCLI_TIMEOUT_MS,
+  PREFLIGHT_DOCTOR_TIMEOUT_MS,
   PREFLIGHT_FRESH_MS,
+  PREFLIGHT_INSTALL_TIMEOUT_MS,
   PREFLIGHT_VERSION_TIMEOUT_MS,
   WARM_TIMEOUT_MS,
 } from '@dsh-workbench/shared/host';
@@ -12,7 +12,7 @@ import { runShell } from '@dsh-workbench/shared/host';
 import { DIY_UPGRADE_COMMAND } from './diy-preset-health.js';
 import type { DiyPresetVerdict } from './diy-preset-health.js';
 import { opencliInstallCommand } from './install.js';
-import { LOCAL_NPM_VERSION, LOCAL_PNPM_VERSION, type LocalNpmProvision, type LocalPnpmProvision } from './toolchain.js';
+import { LOCAL_PNPM_VERSION, type LocalNpmProvision, type LocalPnpmProvision } from './toolchain.js';
 import type { ToolchainReport } from './toolchain-probe.js';
 import type { DesktopBrowser } from './browser-wake.js';
 import { bridgeFixCommand } from './browser-wake.js';
@@ -39,43 +39,12 @@ export interface PreflightStep {
   readonly detail?: string;
   readonly action?: string;
   readonly command?: string;
+  readonly log?: readonly string[];
 }
 
-export type PreflightBridgeIssue = 'daemon' | 'extension' | 'profile' | 'stale' | 'unknown';
-
-export const BRIDGE_ISSUE_ORDER: readonly PreflightBridgeIssue[] = ['profile', 'stale', 'daemon', 'extension', 'unknown'];
-
-export function readBridgeReport(stdout: string): {
-  readonly ok: boolean;
-  readonly issues: readonly PreflightBridgeIssue[];
-  readonly detail: string;
-} {
-  const text = String(stdout ?? '');
-  const ok = /^\[OK\] Daemon:/m.test(text) && /^\[OK\] Extension:/m.test(text) && /^\[OK\] Connectivity:/m.test(text);
-  if (ok) {
-    const good = text.split('\n').find((line) => line.trim() === 'Everything looks good!');
-    return { ok: true, issues: [], detail: good?.trim() ?? tailLines(text, 1) };
-  }
-
-  const found = new Set<PreflightBridgeIssue>();
-  if (!/^\[OK\] Daemon:/m.test(text)) found.add('daemon');
-  if (!/^\[OK\] Extension:/m.test(text)) found.add('extension');
-  if (/Multiple Chrome profiles are connected/i.test(text)) found.add('profile');
-  if (/Default browser profile is stale|Selected browser profile is not connected/i.test(text)) {
-    found.add('stale');
-  }
-  if (found.has('profile') || found.has('stale')) found.delete('extension');
-  if (found.size === 0) found.add('unknown');
-
-  return { ok: false, issues: BRIDGE_ISSUE_ORDER.filter((issue) => found.has(issue)), detail: issuesSection(text) };
-}
-
-function issuesSection(text: string): string {
-  const lines = text.split('\n');
-  const start = lines.findIndex((line) => /^Issues:/.test(line.trim()));
-  if (start < 0) return tailLines(text, 6);
-  return lines.slice(start).join('\n').trim();
-}
+import { readBridgeReport, type PreflightBridgeIssue } from './bridge-report.js';
+export { BRIDGE_ISSUE_ORDER, readBridgeReport } from './bridge-report.js';
+export type { PreflightBridgeIssue } from './bridge-report.js';
 
 export interface PreflightDiyGap {
   readonly rows: readonly string[];
@@ -93,6 +62,7 @@ export interface PreflightSnapshot {
   readonly bridgeIssues?: readonly PreflightBridgeIssue[];
   readonly diyGap?: PreflightDiyGap;
   readonly canWakeBrowser?: boolean;
+  readonly log?: readonly string[];
 }
 
 export interface Preflight {
@@ -152,17 +122,38 @@ export function createPreflight(options: {
     ...(options.probeDiy === undefined ? [] : [step('diy')]),
     ...(warmReads().length === 0 ? [] : [step('warm')]),
   ];
+  let logLines: string[] = [];
+  const stepLogs = new Map<PreflightStepId, string[]>();
+
+  function appendLog(stepId: PreflightStepId, text: string): void {
+    const stepLines = stepLogs.get(stepId) ?? [];
+    for (const line of String(text).split('\n')) {
+      if (line.trim() === '') continue;
+      const clipped = line.length > 400 ? `${line.slice(0, 400)}…` : line;
+      stepLines.push(clipped);
+      logLines.push(clipped);
+    }
+    if (stepLines.length > 200) stepLines.splice(0, stepLines.length - 200);
+    if (logLines.length > 200) logLines = logLines.slice(-200);
+    stepLogs.set(stepId, stepLines);
+    set({
+      steps: current.steps.map((item) =>
+        item.id === stepId ? { ...item, log: [...stepLines] } : item,
+      ),
+    });
+  }
   let current: PreflightSnapshot = {
     phase: 'idle',
     steps: steps(),
     at: Date.now(),
+    log: [],
     ...(options.desktopBrowser === undefined ? {} : { canWakeBrowser: true }),
   };
   let running: Promise<PreflightSnapshot> | null = null;
   let shellStalled = false;
 
   function set(next: Partial<PreflightSnapshot> & { steps?: PreflightStep[] }): PreflightSnapshot {
-    current = { ...current, ...next, at: Date.now() };
+    current = { ...current, ...next, log: [...logLines], at: Date.now() };
     return current;
   }
 
@@ -175,6 +166,7 @@ export function createPreflight(options: {
   }
 
   async function exec(
+    stepId: PreflightStepId,
     commandLine: string,
     timeoutMs: number,
   ): Promise<
@@ -186,26 +178,32 @@ export function createPreflight(options: {
     if (shellStalled) {
       return { kind: 'stalled', detail: `前一条命令就没交回结果，这一步没跑：${commandLine}` };
     }
+    appendLog(stepId, `> ${commandLine}`);
     try {
       const result = await runShell(shell, commandLine, { timeoutMs });
       if (result.stalled) {
         shellStalled = true;
+        appendLog(stepId, `没返回：${commandLine}`);
         return { kind: 'stalled', detail: `没有返回（宿主没把结果交回来）：${commandLine}` };
       }
       if (result.timedOut) {
+        appendLog(stepId, `超时（${String(timeoutMs)} ms）：${commandLine}`);
         return { kind: 'error', detail: `超时（${String(timeoutMs)} ms）：${commandLine}` };
       }
+      const output = result.stdout || result.stderr;
+      if (output.trim() !== '') appendLog(stepId, tailLines(output, 12));
       if (result.exitCode !== 0) {
         return { kind: 'nonzero', detail: tailLines(result.stderr || result.stdout, 4) };
       }
       return { kind: 'ok', stdout: result.stdout };
     } catch (error) {
+      appendLog(stepId, String(error));
       return { kind: 'error', detail: String(error) };
     }
   }
 
   async function probeVersion(): Promise<{ ok: boolean; missing: boolean; detail: string; stalled: boolean }> {
-    const result = await exec(`${command} --version`, PREFLIGHT_VERSION_TIMEOUT_MS);
+    const result = await exec('cli', `${command} --version`, PREFLIGHT_VERSION_TIMEOUT_MS);
     if (result.kind === 'ok') {
       return { ok: true, missing: false, detail: result.stdout.trim().split('\n')[0] ?? '', stalled: false };
     }
@@ -218,7 +216,7 @@ export function createPreflight(options: {
   }
 
   async function probeBridge(): Promise<BridgeVerdict> {
-    const result = await exec(`${command} doctor`, OPENCLI_TIMEOUT_MS);
+    const result = await exec('bridge', `${command} doctor`, PREFLIGHT_DOCTOR_TIMEOUT_MS);
     if (result.kind === 'stalled') {
       return { ok: false, detail: result.detail, issues: ['unknown'], stalled: true };
     }
@@ -229,8 +227,13 @@ export function createPreflight(options: {
   }
 
   async function installOpencli(): Promise<{ ok: boolean; detail: string }> {
-    if (options.install !== undefined) return options.install();
-    const result = await exec(installCommand, INSTALL_TIMEOUT_MS);
+    if (options.install !== undefined) {
+      appendLog('cli', '> 安装 opencli');
+      const installed = await options.install();
+      if (installed.detail.trim() !== '') appendLog('cli', installed.detail);
+      return installed;
+    }
+    const result = await exec('cli', installCommand, PREFLIGHT_INSTALL_TIMEOUT_MS);
     if (result.kind !== 'ok') return { ok: false, detail: result.detail };
     return { ok: true, detail: tailLines(result.stdout, 1) };
   }
@@ -245,10 +248,10 @@ export function createPreflight(options: {
 
     patchStep('warm', {
       status: 'running',
-      action: `${command} <套件自己声明的那条读命令> --site-session persistent -f json`,
+      action: '预热浏览器站点',
     });
     const results = await Promise.all(
-      reads.map((read) => exec(opencliCommandLine(command, read), WARM_TIMEOUT_MS)),
+      reads.map((read) => exec('warm', opencliCommandLine(command, read), WARM_TIMEOUT_MS)),
     );
     const failed = reads.filter((_, index) => results[index]?.kind !== 'ok');
     patchStep('warm', {
@@ -287,6 +290,8 @@ export function createPreflight(options: {
 
   async function doRun(): Promise<PreflightSnapshot> {
     shellStalled = false;
+    logLines = [];
+    stepLogs.clear();
     set({
       phase: 'checking',
       error: undefined,
@@ -313,27 +318,17 @@ export function createPreflight(options: {
               stalled: false,
             }),
           );
-    if (toolchain !== undefined && toolchain.ok && toolchain.npmMissing && options.provisionNpm !== undefined) {
-      set({ phase: 'installing' });
-      patchStep('toolchain', { status: 'running', action: `装本地 npm@${LOCAL_NPM_VERSION}` });
-      const provisioned = await options.provisionNpm().catch((error: unknown) => ({
-        ok: false,
-        detail: String(error),
-      }));
-      if (provisioned.ok) {
-        const reprobed = await options.probeToolchain?.();
-        if (reprobed !== undefined) toolchain = reprobed;
-      } else {
-        toolchain = { ...toolchain, detail: `${toolchain.detail}；本地 npm 没装成：${provisioned.detail}` };
-      }
-    }
+    if (toolchain !== undefined && toolchain.detail.trim() !== '') appendLog('toolchain', toolchain.detail);
+    for (const line of toolchain?.diagnostics ?? []) appendLog('toolchain', line);
     if (toolchain !== undefined && toolchain.ok && toolchain.pnpmProblem && options.provisionPnpm !== undefined) {
       set({ phase: 'installing' });
       patchStep('toolchain', { status: 'running', action: `装本地 pnpm@${LOCAL_PNPM_VERSION}` });
+      appendLog('toolchain', '> 安装本地 pnpm');
       const provisioned = await options.provisionPnpm().catch((error: unknown) => ({
         ok: false,
         detail: String(error),
       }));
+      if (provisioned.detail.trim() !== '') appendLog('toolchain', provisioned.detail);
       if (provisioned.ok) {
         const reprobed = await options.probeToolchain?.();
         if (reprobed !== undefined) toolchain = reprobed;
@@ -344,30 +339,32 @@ export function createPreflight(options: {
     if (toolchain !== undefined) {
       set({ phase: 'checking' });
       patchStep('toolchain', {
-        status: toolchain.ok ? (toolchain.npmMissing || toolchain.pnpmProblem ? 'warn' : 'ok') : 'failed',
+        status: toolchain.ok && !toolchain.pnpmProblem ? 'ok' : 'failed',
         detail: toolchain.detail,
         action: undefined,
       });
-      if (!toolchain.ok) {
-        return toolchain.stalled === true
+      if (!toolchain.ok || toolchain.pnpmProblem) {
+        return toolchain.stalled === true || toolchain.hostBroken === true
           ? hostFailure(toolchain.detail)
           : set({ phase: 'failed', error: toolchain.detail, failure: 'missing', guidance: 'install' });
       }
     }
 
     if (options.runtimeCheck !== undefined) {
+      appendLog('runtime', '> 检查运行环境');
       patchStep('runtime', { status: 'running' });
       const verdict = await options.runtimeCheck().catch((error: unknown) => ({
         ok: false,
         detail: error instanceof Error ? error.message : String(error),
       }));
+      if (verdict.detail.trim() !== '') appendLog('runtime', verdict.detail);
       patchStep('runtime', { status: verdict.ok ? 'ok' : 'failed', detail: verdict.detail, action: undefined });
       if (!verdict.ok) return set({ phase: 'failed', error: verdict.detail, failure: 'missing', guidance: 'install' });
     }
 
     const diyStarted = options.probeDiy?.();
     if (withConsole) {
-      patchStep('cli', { status: 'running', action: `${command} --version` });
+      patchStep('cli', { status: 'running', action: '检查 opencli 版本' });
       if (diyStarted !== undefined) patchStep('diy', { status: 'running' });
 
       let version = await probeVersion();
@@ -395,7 +392,7 @@ export function createPreflight(options: {
           });
         }
         set({ phase: 'installing' });
-        patchStep('cli', { status: 'running', action: installCommand, command: installCommand });
+        patchStep('cli', { status: 'running', action: '安装 opencli', command: installCommand });
         const installed = await installOpencli();
         if (!installed.ok) {
           patchStep('cli', {
@@ -410,7 +407,7 @@ export function createPreflight(options: {
             guidance: 'install',
           });
         }
-        patchStep('cli', { status: 'running', action: `${command} --version` });
+        patchStep('cli', { status: 'running', action: '检查 opencli 版本' });
         version = await probeVersion();
         if (version.stalled) {
           patchStep('cli', { status: 'failed', detail: version.detail, action: undefined });
@@ -429,7 +426,7 @@ export function createPreflight(options: {
       patchStep('cli', { status: 'ok', detail: version.detail, action: undefined });
     }
 
-    patchStep('bridge', { status: 'running', action: `${command} doctor` });
+    patchStep('bridge', { status: 'running', action: '检查浏览器通道' });
     const bridge = withBridge ? await probeBridge() : { ok: true, detail: '', issues: [] };
     if (bridge.stalled === true) {
       patchStep('bridge', { status: 'failed', detail: bridge.detail, action: undefined });
