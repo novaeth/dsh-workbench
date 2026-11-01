@@ -2,7 +2,7 @@ import { execaSync } from 'execa';
 import lockfile from 'proper-lockfile';
 import writeFileAtomic from 'write-file-atomic';
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
-import { delimiter, dirname, join } from 'node:path';
+import { delimiter, join } from 'node:path';
 import { quoteShellArg, quoteShellArgFor } from '@dsh-workbench/shared/host';
 import { bootstrapEnv } from './bootstrap-run.js';
 import { hostSurface } from './platform.js';
@@ -15,21 +15,13 @@ export interface ToolchainProcess {
 
 export interface PnpmProcess {
   readonly versions: { readonly electron?: string | undefined; readonly node?: string | undefined };
-  readonly execPath?: string | undefined;
   readonly resourcesPath?: string | undefined;
 }
 
-export function desktopResourcesDir(
-  proc: PnpmProcess = process,
-  platform: NodeJS.Platform = process.platform,
-): string | undefined {
-  const declared = proc.resourcesPath;
-  if (declared !== undefined && declared !== '') return declared;
+export function desktopResourcesDir(proc: PnpmProcess = process): string | undefined {
   if (hostSurface({ proc }).deployment !== 'desktop') return undefined;
-  const execPath = proc.execPath;
-  if (execPath === undefined || execPath === '') return undefined;
-  if (platform === 'darwin') return join(dirname(dirname(execPath)), 'Resources');
-  return join(dirname(execPath), 'resources');
+  const declared = proc.resourcesPath;
+  return declared === undefined || declared === '' ? undefined : declared;
 }
 
 export function desktopPnpmPath(
@@ -58,16 +50,8 @@ export function desktopNodeExecutable(
 ): string | undefined {
   const resources = desktopResourcesDir(proc);
   if (resources === undefined) return undefined;
-  const path = join(
-    resources,
-    'runtime',
-    'primary-runtime',
-    'dependencies',
-    'node',
-    'bin',
-    process.platform === 'win32' ? 'node.exe' : 'node',
-  );
-  return exists(path) ? path : undefined;
+  const bin = join(resources, 'runtime', 'primary-runtime', 'dependencies', 'node', 'bin');
+  return ['node.exe', 'node'].map((name) => join(bin, name)).find((path) => exists(path));
 }
 
 export function desktopRuntimeEnvPath(

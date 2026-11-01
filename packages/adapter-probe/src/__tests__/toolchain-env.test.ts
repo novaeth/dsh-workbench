@@ -36,10 +36,10 @@ describe('Desktop 自带工具链的 PATH', () => {
     expect(desktopNodeExecutable(proc, existsIn([]))).toBeUndefined();
   });
 
-  it('★ 宿主进程没给 resourcesPath 时，从可执行文件位置推出来', () => {
-    const noResources = { versions: { electron: '31.0.0' }, execPath: join('/Applications', 'DeepSeek Harness.app', 'Contents', 'MacOS', 'DeepSeek Harness') };
-    expect(desktopResourcesDir(noResources, 'darwin')).toBe(join('/Applications', 'DeepSeek Harness.app', 'Contents', 'Resources'));
-    expect(desktopResourcesDir({ versions: {}, execPath: '/usr/bin/node' }, 'darwin')).toBeUndefined();
+  it('★ resourcesPath 由桌面包自己给；没给就不猜路径', () => {
+    expect(desktopResourcesDir(proc)).toBe(resources);
+    expect(desktopResourcesDir({ versions: { electron: '31.0.0' }, execPath: join(resources, 'app.asar'), resourcesPath: '' })).toBeUndefined();
+    expect(desktopResourcesDir({ versions: {}, execPath: '/usr/bin/node' })).toBeUndefined();
   });
 
   it('★ 交给 shell 的 env 要带全父进程变量，只把 PATH 换成带自带 bin 的那份', () => {
