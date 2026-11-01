@@ -668,19 +668,82 @@ async function pageInternals(cdp) {
   return result.result?.value ?? '';
 }
 
+async function cardIds(cdp) {
+  const result = await cdp.send('Runtime.evaluate', {
+    expression: `JSON.stringify([...document.querySelectorAll('[id^="wb-card-"]')].map((one) => one.id))`,
+    returnByValue: true,
+  });
+  try {
+    return JSON.parse(result.result?.value ?? '[]');
+  } catch {
+    return [];
+  }
+}
+
+async function showModuleOnPanel(cdp, unitId, titles) {
+  await click(cdp, ['选择模块', 'Choose modules'], 1200);
+  if ((await click(cdp, ['面板模块', 'Panel modules'], 1200)) === 'missing') {
+    await cdp.send('Runtime.evaluate', {
+      expression: `(() => {
+        const trigger = document.querySelector('[aria-label="面板模块"], [aria-label="Panel modules"]');
+        if (trigger !== null) trigger.click();
+        return 'pressed';
+      })()`,
+      returnByValue: true,
+    });
+    await sleep(800);
+  }
+  const result = await cdp.send('Runtime.evaluate', {
+    expression: `(() => {
+      const unit = ${JSON.stringify(unitId)};
+      const titles = ${JSON.stringify(titles)};
+      const rows = [...document.querySelectorAll('[role="dialog"] li, [role="dialog"] [role="listitem"], li')];
+      const row = rows.find((one) => titles.some((title) => (one.textContent ?? '').includes(title)));
+      if (row === undefined) return 'row-missing';
+      const toggle = row.querySelector('[role="switch"], button[role="switch"], input[type="checkbox"]');
+      if (toggle === null) return 'switch-missing';
+      const on = toggle.getAttribute('aria-checked') === 'true' || toggle.checked === true;
+      if (on) return 'already-on';
+      toggle.click();
+      return 'clicked:' + unit;
+    })()`,
+    returnByValue: true,
+  });
+  const state = result.result?.value ?? '';
+  log(`STEP panel module ${unitId} [${titles.join('/')}]: ${JSON.stringify(state)}`);
+  await sleep(1500);
+  return state;
+}
+
+function titlesOfManifests(units) {
+  const manifests = Array.isArray(units?.manifests) ? units.manifests : [];
+  const chosen = manifests.filter((one) => one.id !== 'panels');
+  const titles = [];
+  for (const manifest of chosen) {
+    if (typeof manifest.title?.zh === 'string') titles.push(manifest.title.zh);
+    if (typeof manifest.title?.en === 'string') titles.push(manifest.title.en);
+    if (typeof manifest.id === 'string') titles.push(manifest.id);
+  }
+  return titles;
+}
+
 async function verifyFeatures(cdp) {
   const startedAt = Date.now();
   let reloaded = false;
   let reloadCard = false;
+  let picked = false;
   const until = Date.now() + remaining('等模块卡片', MODULE_WAIT_MS);
   let body = '';
   let ids = [];
+  let cards = [];
   while (Date.now() < until) {
     body = await bodyOf(cdp);
     const units = await unitsOf(cdp);
     ids = Array.isArray(units?.manifests) ? units.manifests.map((one) => one.id) : [];
-    log(`verify wait :: host units ${ids.join(',') || '（空）'} :: ${tailBody(body, 180)}`);
-    if (/Sample module|示例模块|hello, workbench/u.test(body)) {
+    cards = await cardIds(cdp);
+    const target = ids.find((id) => id !== 'panels') ?? 'hello';
+    log(`verify wait :: host units ${ids.join(',') || '（空）'} :: cards ${cards.join(',') || '（无）'} :: ${tailBody(body, 140)}`);
+    if (cards.includes(`wb-card-${target}`) && /hello, workbench/u.test(body)) {
       writeText(`${prefix}-verify-body.txt`, body);
       writeText(`${prefix}-units.json`, `${JSON.stringify(units, null, 2)}\n`);
       writeText(`${prefix}-client-bundles.json`, await clientBundleReport(cdp));
@@ -689,9 +752,16 @@ async function verifyFeatures(cdp) {
       mark('module-card');
       return { card: true, units: ids };
     }
-    if (!reloaded && Date.now() - startedAt > 20_000) {
+    if (!picked && target !== '') {
+      picked = true;
+      await showModuleOnPanel(cdp, target, titlesOfManifests(units));
+      await pressEscape(cdp);
+      await sleep(1500);
+      continue;
+    }
+    if (!reloaded && Date.now() - startedAt > 25_000) {
       reloaded = true;
-      log('面板 20s 没出卡片：重载页面看是不是首屏竞态');
+      log('面板 25s 没出卡片：重载页面看是不是首屏竞态');
       await cdp.send('Page.reload');
       await sleep(4000);
       const reloadUntil = Date.now() + 45_000;
@@ -699,8 +769,8 @@ async function verifyFeatures(cdp) {
         const reloadBody = await bodyOf(cdp);
         const continueText = ['Enter the workbench anyway', '仍然进入工作台'].find((text) => reloadBody.includes(text));
         if (continueText !== undefined) await click(cdp, [continueText], 1500);
-        log(`reload wait :: ${tailBody(reloadBody, 160)}`);
-        if (/Sample module|示例模块|hello, workbench/u.test(reloadBody)) {
+        log(`reload wait :: ${tailBody(reloadBody, 140)}`);
+        if ((await cardIds(cdp)).some((id) => id === `wb-card-${target}`)) {
           reloadCard = true;
           break;
         }
@@ -717,7 +787,7 @@ async function verifyFeatures(cdp) {
   writeText(`${prefix}-console-events.json`, `${JSON.stringify(cdp.events(), null, 2)}\n`);
   await fail(
     cdp,
-    `装上模块后面板里没有示例模块的卡片（host units: ${ids.join(',') || '空'}；reload 之后${reloadCard ? '有' : '仍然没'}卡片）`,
+    `装上模块后面板里没有示例模块的卡片（host units: ${ids.join(',') || '空'}；cards: ${cards.join(',') || '无'}；reload 之后${reloadCard ? '有' : '仍然没'}卡片）`,
     body,
   );
 }
