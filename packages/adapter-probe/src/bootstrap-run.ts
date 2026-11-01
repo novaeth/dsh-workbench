@@ -5,6 +5,7 @@ import { execa } from 'execa';
 import { isolatedRoot } from '@dsh-workbench/adapter-runtime';
 import { tailLines } from '@dsh-workbench/shared/host';
 import type { ShellKind } from '@dsh-workbench/shared/host';
+import { desktopRuntimeEnvPath } from './toolchain.js';
 import { currentShellKind } from './platform.js';
 
 export interface BootstrapEnvOptions {
@@ -55,6 +56,8 @@ export function bootstrapEnv(options: BootstrapEnvOptions = {}): Record<string, 
   for (const [key, value] of Object.entries(parent)) {
     if (typeof value === 'string') env[key] = value;
   }
+  const runtimePath = desktopRuntimeEnvPath(parent.PATH);
+  if (runtimePath !== undefined) env['PATH'] = runtimePath;
   const home = join(opencliRoot, 'home');
   env['HOME'] = home;
   if (shellKind === 'pwsh') env['USERPROFILE'] = home;

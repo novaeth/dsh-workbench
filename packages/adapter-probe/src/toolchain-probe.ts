@@ -1,7 +1,7 @@
 import type { DshShell } from '@dsh-workbench/shared';
 import { runShell } from '@dsh-workbench/shared/host';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
-import { desktopPnpmPath, desktopPnpmVersion } from './toolchain.js';
+import { desktopPnpmPath, desktopPnpmVersion, desktopRuntimeEnvPath } from './toolchain.js';
 import { hostSurface } from './platform.js';
 
 export interface ToolchainReport {
@@ -16,9 +16,10 @@ export interface ToolchainReport {
 async function toolVersion(
   shell: DshShell,
   line: string,
+  env: Readonly<Record<string, string>>,
 ): Promise<{ ok: boolean; text: string; stalled: boolean }> {
   try {
-    const result = await runShell(shell, line, { timeoutMs: 10_000 });
+    const result = await runShell(shell, line, { timeoutMs: 10_000, env });
     const text = (result.stdout || result.stderr).trim().split('\n')[0] ?? '';
     return { ok: result.exitCode === 0 && !result.timedOut, text, stalled: result.stalled };
   } catch {
@@ -33,10 +34,12 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
   const pnpmLine = preferBundled
     ? `node ${quoteShellArg(bundledPnpm ?? '')} --version`
     : 'pnpm --version';
+  const path = desktopRuntimeEnvPath(process.env.PATH);
+  const env: Readonly<Record<string, string>> = path === undefined ? {} : { PATH: path };
   const [node, npm, pnpm] = await Promise.all([
-    toolVersion(shell, 'node --version'),
-    toolVersion(shell, 'npm --version'),
-    toolVersion(shell, pnpmLine),
+    toolVersion(shell, 'node --version', env),
+    toolVersion(shell, 'npm --version', env),
+    toolVersion(shell, pnpmLine, env),
   ]);
   if (node.stalled || npm.stalled || pnpm.stalled) {
     return {

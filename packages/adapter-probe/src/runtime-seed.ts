@@ -15,6 +15,7 @@ import { delimiter, dirname, join, sep } from 'node:path';
 import type { DshHomePath, DshHostContext } from '@dsh-workbench/shared';
 import { quoteShellArg, quoteShellArgFor } from '@dsh-workbench/shared/host';
 import {
+  desktopBundledBins,
   desktopPnpmPath,
   desktopPnpmVersion,
   ensureToolchain,
@@ -190,6 +191,9 @@ export function prependPath(entryDir: string, env: NodeJS.ProcessEnv = process.e
 }
 
 export function seedWorkbenchToolchain(root: string, log: SeedLog): void {
+  for (const dir of desktopBundledBins()) {
+    if (prependPath(dir)) log(`PATH 前插 Desktop 自带 ${dir}`);
+  }
   const bundledPnpm = desktopPnpmPath();
   const bundledMajor = Number(desktopPnpmVersion()?.split('.')[0] ?? '0');
   const bundledUsable = bundledPnpm !== undefined && bundledMajor >= 10;

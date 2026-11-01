@@ -2,7 +2,7 @@ import { execaSync } from 'execa';
 import lockfile from 'proper-lockfile';
 import writeFileAtomic from 'write-file-atomic';
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { delimiter, join } from 'node:path';
 import { quoteShellArg, quoteShellArgFor } from '@dsh-workbench/shared/host';
 import { bootstrapEnv } from './bootstrap-run.js';
 import { hostSurface } from './platform.js';
@@ -27,6 +27,29 @@ export function desktopPnpmPath(
   if (resources === undefined || resources === '') return undefined;
   const path = join(resources, 'runtime', 'primary-runtime', 'dependencies', 'pnpm', 'bin', 'pnpm.cjs');
   return exists(path) ? path : undefined;
+}
+
+export function desktopBundledBins(
+  proc: PnpmProcess = process,
+  exists: (path: string) => boolean = existsSync,
+): readonly string[] {
+  if (hostSurface({ proc }).deployment !== 'desktop') return [];
+  const resources = proc.resourcesPath;
+  if (resources === undefined || resources === '') return [];
+  const dependencies = join(resources, 'runtime', 'primary-runtime', 'dependencies');
+  return [join(dependencies, 'node', 'bin'), join(dependencies, 'pnpm', 'bin')].filter((dir) => exists(dir));
+}
+
+export function desktopRuntimeEnvPath(
+  parentPath: string | undefined,
+  proc: PnpmProcess = process,
+  exists: (path: string) => boolean = existsSync,
+  separator: string = delimiter,
+): string | undefined {
+  const bins = desktopBundledBins(proc, exists);
+  if (bins.length === 0) return undefined;
+  const parts = (parentPath ?? '').split(separator).filter((part) => part !== '' && !bins.includes(part));
+  return [...bins, ...parts].join(separator);
 }
 
 export function desktopPnpmVersion(proc: PnpmProcess = process, exists: (path: string) => boolean = existsSync): string | undefined {
