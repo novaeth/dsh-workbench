@@ -158,7 +158,7 @@ export default moduleLint({ rootDir: import.meta.dirname });
 ```
 
 `moduleLint()` 返回一份**标准 flat config**：它同时是判据跑的那份与编辑器 / `eslint` 认的那份，
-没有第二份真相。依赖（`eslint`、`typescript-eslint`、两个 react 插件）装在 module-tools 一家，
+没有第二份真相。依赖（`eslint`、`typescript-eslint`、两个 react 插件、`globals`）装在 module-tools 一家，
 模块清单一个字都不用改（依赖由 module-tools 自己带）。
 
 要开口子从命令参数进：`moduleLint({ rootDir, ignores, rules })`，或者展开它再追自己的一块：

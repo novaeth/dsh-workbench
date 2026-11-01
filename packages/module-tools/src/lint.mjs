@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
+import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export const FINGERPRINT = 'dsh-wb/module-lint';
@@ -62,18 +63,6 @@ const PLATFORM_READ = {
   message:
     '平台/外壳差异走能力面：宿主面读 deps.surface（HostSurface），浏览器面读 kit.hooks.usePlatform()；' +
     '模块源码不直接读 process.platform / versions.electron / dshDesktop / navigator.userAgent',
-};
-
-const NODE_GLOBALS = {
-  Buffer: 'readonly',
-  URL: 'readonly',
-  URLSearchParams: 'readonly',
-  console: 'readonly',
-  fetch: 'readonly',
-  module: 'readonly',
-  process: 'readonly',
-  setTimeout: 'readonly',
-  clearTimeout: 'readonly',
 };
 
 const SCRIPT_RULES = {
@@ -173,7 +162,7 @@ export function moduleLint(options = {}) {
     {
       name: 'dsh-wb/module-lint/scripts',
       files: SCRIPT_FILES,
-      languageOptions: { globals: NODE_GLOBALS },
+      languageOptions: { globals: { ...globals.node } },
       rules: SCRIPT_RULES,
     },
     ...overrideRules,

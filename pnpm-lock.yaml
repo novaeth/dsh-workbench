@@ -38,6 +38,9 @@ importers:
       gh-pages:
         specifier: ^6.3.0
         version: 6.3.0
+      globals:
+        specifier: ^17.13.0
+        version: 17.13.0
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -358,6 +361,9 @@ importers:
       execa:
         specifier: ^10.2.0
         version: 10.2.0
+      globals:
+        specifier: ^17.13.0
+        version: 17.13.0
       semver:
         specifier: ^7.8.5
         version: 7.8.5
@@ -3173,6 +3179,10 @@ packages:
   global-directory@5.0.0:
     resolution: {integrity: sha512-1pgFdhK3J2LeM+dVf2Pd424yHx2ou338lC0ErNP2hPx4j8eW1Sp0XqSjNxtk6Tc4Kr5wlWtSvz8cn2yb7/SG/w==}
     engines: {node: '>=20'}
+
+  globals@17.13.0:
+    resolution: {integrity: sha512-RwMTC61u7hrG3ZJMkZQOK4JLJrKS8QtoTii63EmWvFXHqycY9FObBJQCbsLxSO8kjKhWE5kV1GC+Vb1g3RI0Zg==}
+    engines: {node: '>=18'}
 
   globalthis@1.0.4:
     resolution: {integrity: sha512-DpLKbNU4WylpxJykQujfCcwYWiV/Jhm50Goo0wrVILAv5jOr9d+H+UR3PhSCD2rCCEIg0uc+G+muBTwD54JhDQ==}
@@ -8612,6 +8622,8 @@ snapshots:
   global-directory@5.0.0:
     dependencies:
       ini: 6.0.0
+
+  globals@17.13.0: {}
 
   globalthis@1.0.4:
     dependencies:
