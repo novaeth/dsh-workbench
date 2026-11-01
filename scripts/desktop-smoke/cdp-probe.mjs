@@ -521,6 +521,9 @@ async function main() {
     : installViaUi
       ? await smokeMarket(cdp)
       : { skipped: true };
+  if (installViaUi && result.installed === false) {
+    await fail(cdp, 'market module install did not finish', await bodyOf(cdp), snapshot);
+  }
   writeText(`${prefix}-smoke.json`, `${JSON.stringify({ ...result, phase: snapshot?.phase ?? 'unknown' }, null, 2)}\n`);
 
   const finalBody = await bodyOf(cdp);

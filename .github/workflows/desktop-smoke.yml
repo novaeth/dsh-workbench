@@ -74,9 +74,9 @@ jobs:
           if ($code -ne 0) { throw "cdp probe failed: $code" }
           Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
           Start-Sleep -Seconds 3
-          $app2 = Start-Process -FilePath $env:DESKTOP_EXE -ArgumentList '--remote-debugging-port=9222' -RedirectStandardOutput $out2 -RedirectStandardError $err2 -PassThru
+          $app2 = Start-Process -FilePath $env:DESKTOP_EXE -ArgumentList '--remote-debugging-port=9223' -RedirectStandardOutput $out2 -RedirectStandardError $err2 -PassThru
           "restarted desktop pid: $($app2.Id)"
-          & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win-after-restart.png --verify-only --expect-workbench
+          & node scripts/desktop-smoke/cdp-probe.mjs 9223 desktop-win-after-restart.png --verify-only --expect-workbench
           $code2 = $LASTEXITCODE
           if ($code2 -ne 0) { throw "cdp verify probe failed: $code2" }
       - name: Assert opencli installed
@@ -178,18 +178,20 @@ jobs:
         env:
           DESKTOP_WORKBENCH_SPEC: ${{ github.workspace }}/packages/core
           DESKTOP_SMOKE_OUT: ${{ github.workspace }}
-          DESKTOP_SMOKE_APP_LOG: ${{ runner.temp }}/desktop-mac-app.log
-          DESKTOP_SMOKE_APP_ERR: ${{ runner.temp }}/desktop-mac-app.err.log
         run: |
+          {
+            echo "DESKTOP_SMOKE_APP_LOG=$RUNNER_TEMP/desktop-mac-app.log"
+            echo "DESKTOP_SMOKE_APP_ERR=$RUNNER_TEMP/desktop-mac-app.err.log"
+          } >> "$GITHUB_ENV"
           pkill -f 'DeepSeek Harness' 2>/dev/null || true
           sleep 2
           cd /
-          '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9222 > "$DESKTOP_SMOKE_APP_LOG" 2> "$DESKTOP_SMOKE_APP_ERR" &
+          '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9222 > "$RUNNER_TEMP/desktop-mac-app.log" 2> "$RUNNER_TEMP/desktop-mac-app.err.log" &
           node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9222 desktop-mac.png --install-via-ui
           pkill -f 'DeepSeek Harness' 2>/dev/null || true
           sleep 3
-          '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9222 >> "$DESKTOP_SMOKE_APP_LOG" 2>> "$DESKTOP_SMOKE_APP_ERR" &
-          node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9222 desktop-mac-after-restart.png --verify-only --expect-workbench
+          '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9223 >> "$RUNNER_TEMP/desktop-mac-app.log" 2>> "$RUNNER_TEMP/desktop-mac-app.err.log" &
+          node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9223 desktop-mac-after-restart.png --verify-only --expect-workbench
       - name: Assert opencli installed
         shell: bash
         run: |

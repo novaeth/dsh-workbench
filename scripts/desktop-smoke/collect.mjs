@@ -233,12 +233,21 @@ async function main() {
   push(tailFile(verifyLog, 400));
 
   section('app stdout/stderr');
-  for (const name of ['DESKTOP_SMOKE_APP_LOG', 'DESKTOP_SMOKE_APP_ERR', 'DESKTOP_SMOKE_APP_LOG_2', 'DESKTOP_SMOKE_APP_ERR_2']) {
-    const file = process.env[name];
-    if (file === undefined || file === '') {
+  const runnerTemp = process.env.RUNNER_TEMP ?? '';
+  const appLogs = [
+    ['DESKTOP_SMOKE_APP_LOG', `${prefix}-app.log`],
+    ['DESKTOP_SMOKE_APP_ERR', `${prefix}-app.err.log`],
+    ['DESKTOP_SMOKE_APP_LOG_2', `${prefix}-app2.log`],
+    ['DESKTOP_SMOKE_APP_ERR_2', `${prefix}-app2.err.log`],
+  ];
+  for (const [name, fallback] of appLogs) {
+    const fromEnv = process.env[name];
+    const file = fromEnv !== undefined && fromEnv !== '' ? fromEnv : runnerTemp === '' ? '' : join(runnerTemp, fallback);
+    if (file === '') {
       push(`${name}: （未设置）`);
       continue;
     }
+    push(`${name}: ${file}`);
     push(tailFile(file, 300));
   }
 
