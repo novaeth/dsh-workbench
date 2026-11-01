@@ -262,6 +262,29 @@ async function main() {
     push(tailFile(join(cwd, name), 80));
   }
 
+  section('desktop install tree');
+  const desktopRoot =
+    process.platform === 'win32'
+      ? join(process.env.LOCALAPPDATA ?? home, 'Programs', 'DeepSeek Harness', 'resources')
+      : '/Applications/DeepSeek Harness.app/Contents/Resources';
+  push(`resources: ${desktopRoot}（${existsSync(desktopRoot) ? '在' : '不在'}）`);
+  if (existsSync(desktopRoot)) {
+    const walk = (dir, depth) => {
+      if (depth > 4) return;
+      const entries = safe(() => readdirSync(dir, { withFileTypes: true }), []);
+      for (const entry of entries) {
+        const next = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (/runtime|pnpm|node/i.test(entry.name) || /dependencies/.test(dir)) push(`  dir ${next.slice(desktopRoot.length + 1)}`);
+          walk(next, depth + 1);
+          continue;
+        }
+        if (/pnpm|node\.exe|npm/iu.test(entry.name)) push(`  file ${next.slice(desktopRoot.length + 1)}`);
+      }
+    };
+    walk(desktopRoot, 0);
+  }
+
   section('opencli doctor');
   const opencliBin = join(workbenchHome, 'opencli', 'bin', process.platform === 'win32' ? 'opencli.cmd' : 'opencli');
   push(`bin: ${opencliBin}（${existsSync(opencliBin) ? '在' : '不在'}）`);
