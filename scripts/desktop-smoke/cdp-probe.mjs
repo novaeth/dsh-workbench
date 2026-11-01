@@ -38,6 +38,7 @@ const log = (message) => {
   append(probeLogFile, `${line}\n`);
 };
 const milestones = {};
+let activeCdp = null;
 
 function mark(name) {
   milestones[name] = elapsed();
@@ -244,23 +245,25 @@ async function clickWaiting(cdp, texts, budgetMs = 60_000, scope = 'document') {
   throw new Error(`等不到按钮：${JSON.stringify(texts)}`);
 }
 
-async function fieldOf(cdp, selector, budgetMs = 60_000) {
-  const until = Date.now() + remaining(`等输入框 ${selector}`, budgetMs);
+async function addPluginDialog(cdp) {
+  const until = Date.now() + remaining('等 Add plugin 弹窗', 60_000);
   while (Date.now() < until) {
-    const found = await cdp.send('Runtime.evaluate', {
+    await click(cdp, ['Add plugin'], 800);
+    const state = await cdp.send('Runtime.evaluate', {
       expression: `(() => {
-        const field = document.querySelector(${JSON.stringify(selector)});
-        if (field === null) return 'missing';
-        field.focus();
-        return field.value;
+        const field = document.querySelector('input[aria-label="Package name or address"]');
+        if (field !== null) { field.focus(); return JSON.stringify({ ok: true }); }
+        const dialog = document.querySelector('[role="dialog"], [aria-modal="true"]');
+        return JSON.stringify({ ok: false, dialog: dialog !== null, body: (document.body.innerText || '').slice(-160) });
       })()`,
       returnByValue: true,
     });
-    const value = found.result?.value;
-    if (value !== 'missing') return value;
-    await sleep(1000);
+    const raw = state.result?.value ?? '{}';
+    log(`add-plugin wait: ${raw}`);
+    if (raw.includes('"ok":true')) return;
+    await sleep(1500);
   }
-  throw new Error(`等不到输入框：${selector}`);
+  throw new Error('Add plugin 弹窗没出来（60s，重试过点 Add plugin）');
 }
 
 async function waitForBody(cdp, pattern, budgetMs, label) {
@@ -280,7 +283,7 @@ async function installFromPluginPage(cdp) {
   await clickWaiting(cdp, ['Plugins'], 60_000);
   await waitForBody(cdp, /Add plugin|Loading plugins|添加插件/u, 60_000, 'plugins-page');
   writeText(`${prefix}-plugins-body.txt`, await bodyOf(cdp));
-  await clickWaiting(cdp, ['Add plugin'], 60_000);
+  await addPluginDialog(cdp);
 
   const fields = await cdp.send('Runtime.evaluate', {
     expression: `JSON.stringify([...document.querySelectorAll('input, textarea')].map((node, index) => ({ index, tag: node.tagName, type: node.type, placeholder: node.placeholder, aria: node.getAttribute('aria-label'), visible: node.offsetParent !== null })))`,
@@ -288,8 +291,6 @@ async function installFromPluginPage(cdp) {
   });
   log(`FIELDS: ${fields.result?.value ?? ''}`);
 
-  await fieldOf(cdp, 'input[aria-label="Package name or address"]', 60_000);
-  log('focus: Package name or address');
   await cdp.send('Input.insertText', { text: workbenchSpec });
   await sleep(500);
   const filled = await cdp.send('Runtime.evaluate', {
@@ -508,6 +509,7 @@ async function main() {
   log(`target: ${target.url}`);
 
   const cdp = await connect(target.webSocketDebuggerUrl);
+  activeCdp = cdp;
   await cdp.send('Page.enable');
   mark('cdp-connected');
 
@@ -539,10 +541,24 @@ const watchdog = setTimeout(() => {
   process.exit(1);
 }, Math.max(1000, deadlineAt - Date.now()));
 
+async function dumpOnFatal() {
+  if (activeCdp === null) return;
+  try {
+    writeText(`${prefix}-fatal-body.txt`, await bodyOf(activeCdp));
+  } catch {
+    return;
+  }
+  try {
+    await capture(activeCdp, `${prefix}-fatal.png`);
+  } catch {
+    return;
+  }
+}
+
 main().catch((error) => {
   log(`FATAL ${error?.stack ?? String(error)}`);
   summary('failed', { reason: String(error?.message ?? error) });
-  setTimeout(() => process.exit(1), 300);
+  void dumpOnFatal().finally(() => setTimeout(() => process.exit(1), 300));
 });
 
 watchdog.unref();
