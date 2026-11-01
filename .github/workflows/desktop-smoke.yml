@@ -57,8 +57,8 @@ jobs:
         shell: pwsh
         env:
           DESKTOP_WORKBENCH_SPEC: ${{ github.workspace }}\packages\core
+          DESKTOP_SMOKE_OUT: ${{ github.workspace }}
         run: |
-          Start-Transcript -Path desktop-win-probe.log -Force
           $out = Join-Path $env:RUNNER_TEMP 'desktop-win-app.log'
           $err = Join-Path $env:RUNNER_TEMP 'desktop-win-app.err.log'
           $out2 = Join-Path $env:RUNNER_TEMP 'desktop-win-app2.log'
@@ -71,14 +71,13 @@ jobs:
           "desktop pid: $($app.Id)"
           & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win.png --install-via-ui
           $code = $LASTEXITCODE
-          if ($code -ne 0) { Stop-Transcript; throw "cdp probe failed: $code" }
+          if ($code -ne 0) { throw "cdp probe failed: $code" }
           Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
           Start-Sleep -Seconds 3
           $app2 = Start-Process -FilePath $env:DESKTOP_EXE -ArgumentList '--remote-debugging-port=9222' -RedirectStandardOutput $out2 -RedirectStandardError $err2 -PassThru
           "restarted desktop pid: $($app2.Id)"
           & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win-after-restart.png --verify-only --expect-workbench
           $code2 = $LASTEXITCODE
-          Stop-Transcript
           if ($code2 -ne 0) { throw "cdp verify probe failed: $code2" }
       - name: Assert opencli installed
         shell: pwsh
@@ -122,7 +121,7 @@ jobs:
           git config user.name ci
           git config user.email ci@example.com
           shopt -s nullglob
-          files=(desktop-win*.png desktop-win*.txt desktop-win*.json desktop-win-probe.log)
+          files=(desktop-win*.png desktop-win*.txt desktop-win*.json desktop-win*.log)
           if [ ${#files[@]} -gt 0 ]; then
             git add -f "${files[@]}"
             git commit -m "ci: windows desktop smoke log [skip ci]" || true
@@ -137,7 +136,7 @@ jobs:
             desktop-win*.png
             desktop-win*.txt
             desktop-win*.json
-            desktop-win-probe.log
+            desktop-win*.log
 
   macos:
     name: desktop / macos arm64
@@ -178,10 +177,10 @@ jobs:
         shell: bash
         env:
           DESKTOP_WORKBENCH_SPEC: ${{ github.workspace }}/packages/core
+          DESKTOP_SMOKE_OUT: ${{ github.workspace }}
           DESKTOP_SMOKE_APP_LOG: ${{ runner.temp }}/desktop-mac-app.log
           DESKTOP_SMOKE_APP_ERR: ${{ runner.temp }}/desktop-mac-app.err.log
         run: |
-          exec > >(tee desktop-mac-probe.log) 2>&1
           pkill -f 'DeepSeek Harness' 2>/dev/null || true
           sleep 2
           cd /
@@ -235,7 +234,7 @@ jobs:
           git config user.name ci
           git config user.email ci@example.com
           shopt -s nullglob
-          files=(desktop-mac*.png desktop-mac*.txt desktop-mac*.json desktop-mac-probe.log)
+          files=(desktop-mac*.png desktop-mac*.txt desktop-mac*.json desktop-mac*.log)
           if [ ${#files[@]} -gt 0 ]; then
             git add -f "${files[@]}"
             git commit -m "ci: macos desktop smoke log [skip ci]" || true
@@ -250,4 +249,4 @@ jobs:
             desktop-mac*.png
             desktop-mac*.txt
             desktop-mac*.json
-            desktop-mac-probe.log
+            desktop-mac*.log

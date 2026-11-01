@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { join } from 'node:path';
 
 const port = process.argv[2] ?? '9222';
 const shot = process.argv[3] ?? 'desktop-smoke.png';
@@ -8,8 +9,11 @@ const verifyOnly = process.argv.includes('--verify-only');
 const workbenchSpec = process.env.DESKTOP_WORKBENCH_SPEC ?? '@dsh-workbench/core';
 const marketSource = process.env.DESKTOP_SMOKE_MARKET ?? 'https://github.com/novaeth/dsh-workbench-market.git';
 const moduleName = process.env.DESKTOP_SMOKE_MODULE ?? '@dsh-workbench/module-hello';
-const deadlineAt = Date.now() + Number(process.env.DESKTOP_SMOKE_DEADLINE_MS ?? 900_000);
+const deadlineAt = Date.now() + Number(process.env.DESKTOP_SMOKE_DEADLINE_MS ?? 720_000);
+const outDir = process.env.DESKTOP_SMOKE_OUT ?? process.cwd();
+const outPath = (name) => join(outDir, name);
 const prefix = shot.replace(/\.png$/u, '');
+const probeLogFile = process.env.DESKTOP_SMOKE_PROBE_LOG ?? outPath(`${prefix}-probe.log`);
 const CDP_WAIT_MS = 180_000;
 const PAGE_WAIT_MS = 120_000;
 const INSTALL_WAIT_MS = 360_000;
@@ -21,8 +25,17 @@ const POLL_MS = 2000;
 
 const startedAt = Date.now();
 const elapsed = () => `${((Date.now() - startedAt) / 1000).toFixed(1)}s`;
+const append = (file, text) => {
+  try {
+    fs.appendFileSync(file, text);
+  } catch {
+    return;
+  }
+};
 const log = (message) => {
-  process.stdout.write(`[${elapsed()}] ${message}\n`);
+  const line = `[${elapsed()}] ${message}`;
+  process.stdout.write(`${line}\n`);
+  append(probeLogFile, `${line}\n`);
 };
 const milestones = {};
 
@@ -32,8 +45,9 @@ function mark(name) {
 }
 
 function writeText(file, text) {
-  fs.writeFileSync(file, text);
-  log(`WROTE ${file} (${text.length} bytes)`);
+  const target = outPath(file);
+  fs.writeFileSync(target, text);
+  log(`WROTE ${target} (${text.length} bytes)`);
 }
 
 function summary(outcome, extra = {}) {
@@ -106,18 +120,38 @@ async function connect(wsUrl) {
   });
   let nextId = 1;
   const pending = new Map();
+  const timers = new Map();
+  const settle = (id, work) => {
+    const waiter = pending.get(id);
+    pending.delete(id);
+    const timer = timers.get(id);
+    timers.delete(id);
+    if (timer !== undefined) clearTimeout(timer);
+    if (waiter !== undefined) work(waiter);
+  };
   socket.addEventListener('message', (event) => {
     const data = JSON.parse(event.data);
     if (data.id === undefined) return;
-    const waiter = pending.get(data.id);
-    pending.delete(data.id);
-    if (data.error !== undefined) waiter.reject(new Error(JSON.stringify(data.error)));
-    else waiter.resolve(data.result);
+    settle(data.id, (waiter) => {
+      if (data.error !== undefined) waiter.reject(new Error(JSON.stringify(data.error)));
+      else waiter.resolve(data.result);
+    });
+  });
+  socket.addEventListener('close', () => {
+    for (const id of [...pending.keys()]) {
+      settle(id, (waiter) => waiter.reject(new Error('CDP 连接断了（页面重载或窗口关了）')));
+    }
   });
   const send = (method, params = {}) =>
     new Promise((resolve, reject) => {
       const id = nextId++;
       pending.set(id, { resolve, reject });
+      timers.set(
+        id,
+        setTimeout(() => {
+          settle(id, (waiter) => waiter.reject(new Error(`CDP ${method} 20 秒没回（页面可能正在重载）`)));
+        }, 20_000),
+      );
       socket.send(JSON.stringify({ id, method, params }));
     });
   return { send, close: () => socket.close() };
@@ -153,10 +187,11 @@ function tailBody(body, length = 240) {
 }
 
 async function capture(cdp, file) {
+  const target = outPath(file);
   const image = await cdp.send('Page.captureScreenshot', { format: 'png' });
-  fs.writeFileSync(file, Buffer.from(image.data, 'base64'));
-  log(`SHOT ${file} (${fs.statSync(file).size} bytes)`);
-  return file;
+  fs.writeFileSync(target, Buffer.from(image.data, 'base64'));
+  log(`SHOT ${target} (${fs.statSync(target).size} bytes)`);
+  return target;
 }
 
 async function fail(cdp, reason, body, snapshot) {
@@ -199,6 +234,35 @@ async function pressEscape(cdp) {
   });
 }
 
+async function clickWaiting(cdp, texts, budgetMs = 60_000, scope = 'document') {
+  const until = Date.now() + remaining(`等按钮 ${texts[0]}`, budgetMs);
+  while (Date.now() < until) {
+    const last = await click(cdp, texts, 1200, scope);
+    if (last !== 'missing') return last;
+    await sleep(1000);
+  }
+  throw new Error(`等不到按钮：${JSON.stringify(texts)}`);
+}
+
+async function fieldOf(cdp, selector, budgetMs = 60_000) {
+  const until = Date.now() + remaining(`等输入框 ${selector}`, budgetMs);
+  while (Date.now() < until) {
+    const found = await cdp.send('Runtime.evaluate', {
+      expression: `(() => {
+        const field = document.querySelector(${JSON.stringify(selector)});
+        if (field === null) return 'missing';
+        field.focus();
+        return field.value;
+      })()`,
+      returnByValue: true,
+    });
+    const value = found.result?.value;
+    if (value !== 'missing') return value;
+    await sleep(1000);
+  }
+  throw new Error(`等不到输入框：${selector}`);
+}
+
 async function waitForBody(cdp, pattern, budgetMs, label) {
   const until = Date.now() + remaining(label, budgetMs);
   let body;
@@ -212,9 +276,11 @@ async function waitForBody(cdp, pattern, budgetMs, label) {
 }
 
 async function installFromPluginPage(cdp) {
-  await click(cdp, ['Plugins']);
+  await waitForBody(cdp, /Plugins|插件/u, PAGE_WAIT_MS, 'app-shell');
+  await clickWaiting(cdp, ['Plugins'], 60_000);
+  await waitForBody(cdp, /Add plugin|Loading plugins|添加插件/u, 60_000, 'plugins-page');
   writeText(`${prefix}-plugins-body.txt`, await bodyOf(cdp));
-  await click(cdp, ['Add plugin']);
+  await clickWaiting(cdp, ['Add plugin'], 60_000);
 
   const fields = await cdp.send('Runtime.evaluate', {
     expression: `JSON.stringify([...document.querySelectorAll('input, textarea')].map((node, index) => ({ index, tag: node.tagName, type: node.type, placeholder: node.placeholder, aria: node.getAttribute('aria-label'), visible: node.offsetParent !== null })))`,
@@ -222,16 +288,8 @@ async function installFromPluginPage(cdp) {
   });
   log(`FIELDS: ${fields.result?.value ?? ''}`);
 
-  const focus = await cdp.send('Runtime.evaluate', {
-    expression: `(() => {
-      const field = document.querySelector('input[aria-label="Package name or address"]') ?? [...document.querySelectorAll('input, textarea')].filter((node) => node.offsetParent !== null).at(-1);
-      if (field === undefined) return 'no field';
-      field.focus();
-      return field.getAttribute('placeholder');
-    })()`,
-    returnByValue: true,
-  });
-  log(`focus: ${JSON.stringify(focus.result?.value)}`);
+  await fieldOf(cdp, 'input[aria-label="Package name or address"]', 60_000);
+  log('focus: Package name or address');
   await cdp.send('Input.insertText', { text: workbenchSpec });
   await sleep(500);
   const filled = await cdp.send('Runtime.evaluate', {
@@ -242,17 +300,7 @@ async function installFromPluginPage(cdp) {
   log(`filled: ${JSON.stringify(filledValue)}`);
   if (filledValue !== workbenchSpec) throw new Error(`安装规格没填进去（字段读到 ${JSON.stringify(filledValue)}）`);
 
-  const installButton = await cdp.send('Runtime.evaluate', {
-    expression: `(() => {
-      const button = [...document.querySelectorAll('button')].find((node) => node.innerText?.trim() === 'Install');
-      if (button === undefined) return 'missing';
-      button.click();
-      return { disabled: button.disabled };
-    })()`,
-    returnByValue: true,
-  });
-  log(`install click: ${JSON.stringify(installButton.result?.value)}`);
-  if (installButton.result?.value === 'missing') throw new Error('插件页上没有 Install 按钮');
+  await clickWaiting(cdp, ['Install'], 60_000);
   mark('install-clicked');
 
   let installBody = '';
@@ -485,8 +533,16 @@ async function main() {
   cdp.close();
 }
 
+const watchdog = setTimeout(() => {
+  log('FATAL 整轮 deadline 到了，强制退出');
+  summary('failed', { reason: 'deadline' });
+  process.exit(1);
+}, Math.max(1000, deadlineAt - Date.now()));
+
 main().catch((error) => {
   log(`FATAL ${error?.stack ?? String(error)}`);
   summary('failed', { reason: String(error?.message ?? error) });
-  process.exitCode = 1;
+  setTimeout(() => process.exit(1), 300);
 });
+
+watchdog.unref();

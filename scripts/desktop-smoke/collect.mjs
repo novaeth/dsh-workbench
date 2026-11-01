@@ -11,6 +11,7 @@ const dshHome = process.env.DSH_HOME?.trim() || join(home, '.dsh');
 const profileDir = join(dshHome, 'profiles', 'desktop');
 const workbenchHome = process.env.DSH_WORKBENCH_HOME?.trim() || join(dshHome, 'workbench');
 const probeLog = join(cwd, `${prefix}-probe.log`);
+const verifyLog = join(cwd, `${prefix}-after-restart-probe.log`);
 const report = join(cwd, `${prefix}-diagnostics.txt`);
 const lines = [];
 const push = (line) => lines.push(line);
@@ -151,7 +152,10 @@ async function main() {
   const status = await execa('git', ['status', '--short'], { cwd, timeout: 10_000, reject: false });
   push(`git-status: ${status.stdout.trim() || '干净'}`);
 
-  const probeText = safe(() => readFileSync(probeLog, 'utf8'), '');
+  const probeText = safe(
+    () => `${readFileSync(probeLog, 'utf8')}\n${existsSync(verifyLog) ? readFileSync(verifyLog, 'utf8') : ''}`,
+    '',
+  );
   const probeLines = probeText.split('\n');
   const pick = (pattern, limit = 6) =>
     probeLines
@@ -226,6 +230,7 @@ async function main() {
 
   section('probe log');
   push(tailFile(probeLog, 600));
+  push(tailFile(verifyLog, 400));
 
   section('app stdout/stderr');
   for (const name of ['DESKTOP_SMOKE_APP_LOG', 'DESKTOP_SMOKE_APP_ERR', 'DESKTOP_SMOKE_APP_LOG_2', 'DESKTOP_SMOKE_APP_ERR_2']) {
