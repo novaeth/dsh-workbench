@@ -1,6 +1,6 @@
 import fs from 'node:fs';
-import { join } from 'node:path';
 import { execa } from 'execa';
+import { dirname, join, resolve } from 'node:path';
 
 const port = process.argv[2] ?? '9222';
 const shot = process.argv[3] ?? 'desktop-smoke.png';
@@ -22,7 +22,7 @@ const GATE_WAIT_MS = 360_000;
 const READY_WAIT_MS = 450_000;
 const MARKET_WAIT_MS = 300_000;
 const BRIDGE_WAIT_MS = 180_000;
-const BRIDGE_RETRY_MS = 5_000;
+const BRIDGE_RETRY_MS = 15_000;
 const MODULE_WAIT_MS = 90_000;
 const POLL_MS = 2000;
 
@@ -399,9 +399,25 @@ async function launchSmokeBrowser() {
   return browserState;
 }
 
+function opencliEntryOf(bin) {
+  const nodeBin = (process.env.DESKTOP_SMOKE_NODE_BIN ?? '').trim();
+  if (process.platform !== 'win32' || nodeBin === '') return null;
+  const root = resolve(dirname(bin), '..', 'toolchain', 'node_modules', '@jackwener', 'opencli');
+  const manifest = join(root, 'package.json');
+  if (!fs.existsSync(manifest)) return null;
+  const parsed = JSON.parse(fs.readFileSync(manifest, 'utf8'));
+  const declared = typeof parsed.bin === 'string' ? parsed.bin : parsed.bin?.opencli;
+  if (typeof declared !== 'string') return null;
+  const entry = resolve(root, declared);
+  const nodeExe = join(nodeBin, 'node.exe');
+  return fs.existsSync(nodeExe) && fs.existsSync(entry) ? { file: nodeExe, args: [entry, 'doctor'] } : null;
+}
+
 function doctorCommand() {
   const bin = (process.env.DESKTOP_SMOKE_OPENCLI ?? '').trim();
   if (bin === '') return null;
+  const direct = opencliEntryOf(bin);
+  if (direct !== null) return direct;
   return process.platform === 'win32'
     ? { file: process.env.ComSpec ?? 'cmd.exe', args: ['/d', '/c', bin, 'doctor'] }
     : { file: bin, args: ['doctor'] };
@@ -419,8 +435,12 @@ async function doctorText() {
     timeout: 60_000,
     reject: false,
     env: { ...process.env, PATH: path ?? '' },
-  }).catch(() => undefined);
-  return `${result?.stdout ?? ''}\n${result?.stderr ?? ''}`;
+  }).catch((error) => ({ exitCode: null, stdout: '', stderr: String(error), failed: true }));
+  const text = `${result?.stdout ?? ''}\n${result?.stderr ?? ''}`;
+  if (text.trim() === '') {
+    log(`doctor 没输出：file=${command.file} args=${JSON.stringify(command.args)} exit=${String(result?.exitCode)}`);
+  }
+  return text;
 }
 
 async function chromeTargets() {
@@ -473,7 +493,9 @@ async function bridgeGate(cdp, snapshot, body, state) {
   if (Date.now() > state.deadline) {
     await fail(cdp, `浏览器通道没连上（装扩展 + Retry 之后 bridge 还是 ${bridge}）`, body, snapshot);
   }
-  if (Date.now() - state.retriedAt >= BRIDGE_RETRY_MS) {
+  const steps = Array.isArray(snapshot?.steps) ? snapshot.steps : [];
+  const busy = steps.some((step) => step.status === 'running' || step.status === 'pending');
+  if (!busy && Date.now() - state.retriedAt >= BRIDGE_RETRY_MS) {
     state.retriedAt = Date.now();
     await click(cdp, ['Retry', '重试'], 1200);
   }
