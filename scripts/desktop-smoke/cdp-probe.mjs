@@ -170,8 +170,13 @@ async function connect(wsUrl) {
 }
 
 async function bodyOf(cdp) {
-  const result = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
-  return result.result?.value ?? '';
+  try {
+    const result = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
+    return result.result?.value ?? '';
+  } catch (error) {
+    log(`body 读不到（页面在重载？）：${String(error?.message ?? error)}`);
+    return '';
+  }
 }
 
 async function preflightOf(cdp) {
@@ -209,10 +214,15 @@ function tailBody(body, length = 240) {
 
 async function capture(cdp, file) {
   const target = outPath(file);
-  const image = await cdp.send('Page.captureScreenshot', { format: 'png' });
-  fs.writeFileSync(target, Buffer.from(image.data, 'base64'));
-  log(`SHOT ${target} (${fs.statSync(target).size} bytes)`);
-  return target;
+  try {
+    const image = await cdp.send('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync(target, Buffer.from(image.data, 'base64'));
+    log(`SHOT ${target} (${fs.statSync(target).size} bytes)`);
+    return target;
+  } catch (error) {
+    log(`SHOT 失败（证据少一张，不影响判定）：${String(error?.message ?? error)}`);
+    return undefined;
+  }
 }
 
 async function fail(cdp, reason, body, snapshot) {
