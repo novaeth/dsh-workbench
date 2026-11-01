@@ -23,7 +23,7 @@ const READY_WAIT_MS = 450_000;
 const MARKET_WAIT_MS = 300_000;
 const BRIDGE_WAIT_MS = 180_000;
 const BRIDGE_RETRY_MS = 5_000;
-const MODULE_WAIT_MS = 240_000;
+const MODULE_WAIT_MS = 90_000;
 const POLL_MS = 2000;
 
 const startedAt = Date.now();
