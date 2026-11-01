@@ -27,12 +27,16 @@ export interface ToolchainReport {
 async function toolVersion(
   shell: DshShell,
   line: string,
-  workdir?: { readonly workdir?: string | undefined } | undefined,
+  extra?: {
+    readonly workdir?: string | undefined;
+    readonly sandbox?: { mode: 'read-only' | 'workspace-write' | 'danger-full-access'; workspaceRoot: string } | undefined;
+  } | undefined,
 ): Promise<{ ok: boolean; text: string; stalled: boolean; code: number | null; raw: string }> {
   try {
     const result = await runShell(shell, line, {
       timeoutMs: 10_000,
-      ...(workdir?.workdir === undefined ? {} : { workdir: workdir.workdir }),
+      ...(extra?.workdir === undefined ? {} : { workdir: extra.workdir }),
+      ...(extra?.sandbox === undefined ? {} : { sandbox: extra.sandbox }),
     });
     const text = (result.stdout || result.stderr).trim().split('\n')[0] ?? '';
     return {
@@ -96,6 +100,13 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
   ];
   const control: string[] = [];
   if (nodeMissing) {
+    for (const [label, sandbox] of [
+      ['policy danger-full-access', { mode: 'danger-full-access' as const, workspaceRoot: process.cwd() }],
+      ['policy workspace-write cwd', { mode: 'workspace-write' as const, workspaceRoot: process.cwd() }],
+    ] as const) {
+      const probe = await toolVersion(shell, 'echo workbench-probe', { sandbox });
+      control.push(`control ${label}: exit=${String(probe.code)} out=${probe.raw.slice(0, 80) || '（空）'}`);
+    }
     for (const [label, file] of [
       ['direct bundled node', desktopNodeExecutable()],
       ['direct host node', process.execPath],

@@ -160,6 +160,10 @@ export interface DshShell {
     stdoutMaxBytes?: number;
     signal?: AbortSignal;
     env?: Readonly<Record<string, string>>;
+    sandboxPolicy?: {
+      mode: 'read-only' | 'workspace-write' | 'danger-full-access';
+      workspaceRoot: string;
+    };
   }): unknown;
   execute(spec: unknown): Promise<DshShellExecution>;
 }
