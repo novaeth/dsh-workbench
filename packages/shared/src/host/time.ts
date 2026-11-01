@@ -20,3 +20,19 @@ export function clockOf(value: string | number | Date): string {
 export function epochOf(value: string | number | Date): number {
   return dayjs(value).valueOf();
 }
+
+/**
+ * 当前时间（毫秒）。宿主里要「现在几点」只走这里，测试可以点住 `Date.now`。
+ * @returns 毫秒时间戳。
+ */
+export function now(): number {
+  return Date.now();
+}
+
+/**
+ * 当前时间的 ISO 字符串。
+ * @returns `new Date().toISOString()` 的等价物。
+ */
+export function nowIso(): string {
+  return new Date(now()).toISOString();
+}

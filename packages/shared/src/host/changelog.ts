@@ -1,3 +1,4 @@
+import { now as clockNow } from './time.js';
 import dayjs from 'dayjs';
 
 export const CHANGELOG_FILE = 'CHANGELOG.md';
@@ -37,7 +38,7 @@ export function changelogVersion(value: string): string {
     .replace(/^v/, '');
 }
 
-export function changelogDate(now: Date = new Date()): string {
+export function changelogDate(now: Date = new Date(clockNow())): string {
   return dayjs(now).format('YYYY-MM-DD');
 }
 

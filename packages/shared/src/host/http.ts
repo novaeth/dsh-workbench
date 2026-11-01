@@ -1,3 +1,4 @@
+import { now, nowIso } from './time.js';
 import type { DshHostContext, DshRequest, DshResponse } from '../api/dsh.js';
 import { unitFactScope } from './facts.js';
 import { parseCardsReport, parseCrashReport, type PanelStateStore } from './panel-state.js';
@@ -270,7 +271,7 @@ export function healthHandler(
       profile: dir === undefined ? null : dir.split('/').pop(),
       profileDir: dir ?? null,
       pid: process.pid,
-      now: new Date().toISOString(),
+      now: nowIso(),
       ...(runtimes === undefined ? {} : { runtimes }),
     };
   };
@@ -315,7 +316,7 @@ export function registerPanelState(ctx: DshHostContext, store: PanelStateStore):
           const parsed = parseCardsReport(payload);
           if (!parsed.ok) return { ok: false, text: parsed.message };
           store.cards(parsed.value);
-          return { ok: true, at: Date.now() };
+          return { ok: true, at: now() };
         },
       },
       {
@@ -324,7 +325,7 @@ export function registerPanelState(ctx: DshHostContext, store: PanelStateStore):
           const parsed = parseCrashReport(payload);
           if (!parsed.ok) return { ok: false, text: parsed.message };
           store.crash(parsed.value);
-          return { ok: true, at: Date.now() };
+          return { ok: true, at: now() };
         },
       },
     ],

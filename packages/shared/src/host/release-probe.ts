@@ -1,3 +1,4 @@
+import { now } from './time.js';
 import type { Seam } from './seam/run.js';
 import { productWrite } from './seam/intent.js';
 import type { PluginRelease } from '../contract/unit.js';
@@ -97,7 +98,7 @@ async function latestVersionOf(latestCache: Map<string, CacheEntry>, options: {
   const { seam, name, registry, force = false, cacheDir } = options;
   const key = `${registry}|${name}`;
   const hit = latestCache.get(key);
-  if (!force && hit !== undefined && Date.now() - hit.at < VERSION_CHECK_TTL_MS)
+  if (!force && hit !== undefined && now() - hit.at < VERSION_CHECK_TTL_MS)
     return hit.value;
 
   const result = await seam
@@ -110,7 +111,7 @@ async function latestVersionOf(latestCache: Map<string, CacheEntry>, options: {
     })
     .catch(() => undefined);
   const read = result?.exitCode === 0 ? parseVersion(result.stdout) : undefined;
-  latestCache.set(key, { at: Date.now(), value: read });
+  latestCache.set(key, { at: now(), value: read });
   return read;
 }
 
@@ -133,7 +134,7 @@ async function versionExists(
   const { seam, name, version, registry, force = false, cacheDir } = options;
   const key = `${registry}|${name}@${version}`;
   const hit = existsCache.get(key);
-  if (!force && hit !== undefined && (hit.value || Date.now() - hit.at < VERSION_CHECK_TTL_MS))
+  if (!force && hit !== undefined && (hit.value || now() - hit.at < VERSION_CHECK_TTL_MS))
     return hit.value;
 
   const result = await seam
@@ -146,7 +147,7 @@ async function versionExists(
     })
     .catch(() => undefined);
   const value = result?.exitCode === 0 && parseVersion(result.stdout) !== undefined;
-  existsCache.set(key, { at: Date.now(), value });
+  existsCache.set(key, { at: now(), value });
   return value;
 }
 

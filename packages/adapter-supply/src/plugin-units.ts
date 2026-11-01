@@ -1,3 +1,4 @@
+import { now as clockNow } from '@dsh-workbench/shared/host';
 import type { DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared';
 import type { UnitManifest } from '@dsh-workbench/shared';
 import type { UnitOwnedFace, UnitMountResult } from '@dsh-workbench/shared/host';
@@ -343,13 +344,13 @@ export function createPluginUnits(options: PluginUnitsOptions): PluginUnits {
         ...probed.problems,
         '这次探测没成功：上面这些插件行的工具面维持在上一份（不是"这些插件没有命令"）',
       ];
-      report = { ok: false, at: Date.now(), plugins: report.plugins, problems };
+      report = { ok: false, at: clockNow(), plugins: report.plugins, problems };
       warn(problems);
       return snapshot();
     }
     const plan = planOf(options, registered);
     reconcile(registered, plan.units, options, note);
-    report = { ok: true, at: Date.now(), plugins: plan.rows, problems: plan.problems };
+    report = { ok: true, at: clockNow(), plugins: plan.rows, problems: plan.problems };
     warn(plan.problems);
     return snapshot();
   }
@@ -366,7 +367,7 @@ export function createPluginUnits(options: PluginUnitsOptions): PluginUnits {
   return {
     refresh,
     touch() {
-      const now = Date.now();
+      const now = clockNow();
       if (inflight !== undefined) return;
       if (now - lastTouch < PROBE_TTL_MS) return;
       lastTouch = now;

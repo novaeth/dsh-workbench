@@ -1,3 +1,4 @@
+import { now as clockNow } from '../time.js';
 import { evalPredicate, resolveInput, resolveValue } from './expr.js';
 import type {
   FlowAction,
@@ -197,7 +198,7 @@ async function runOne(options: RunOneOptions): Promise<unknown> {
 export async function runFlow(options: FlowRunOptions): Promise<FlowResult> {
   const { flow, input, actions, signal, runId, workspace, onStep } = options;
   const sleep = options.sleep ?? defaultSleep;
-  const now = options.now ?? (() => Date.now());
+  const now = options.now ?? (() => clockNow());
   const steps: Record<string, unknown> = {};
   const emit = (event: FlowStepEvent): void => {
     try {

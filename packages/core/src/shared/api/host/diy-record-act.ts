@@ -1,5 +1,6 @@
 import type { PostResource, RecordIntent, RecordState, RecordStore } from '@dsh-workbench/shared/host';
 import { parseRecordIntent } from '@dsh-workbench/shared/host';
+import { now as clockNow } from '@dsh-workbench/shared/host';
 import { deliverDebugNotice, noticeMessage, type AgentsLookup, type NoticeMessage } from './diy-debug-act';
 
 export const RECORD_NOTICE_KIND = 'workbench-diy-record';
@@ -64,7 +65,7 @@ async function releaseHeld(
 }
 
 export function recordActResource(deps: RecordActDeps): PostResource {
-  const now = (): number => deps.now?.() ?? Date.now();
+  const now = (): number => deps.now?.() ?? clockNow();
   return {
     resource: 'act',
     async handle(payload) {

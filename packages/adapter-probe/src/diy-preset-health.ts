@@ -1,3 +1,4 @@
+import { now } from '@dsh-workbench/shared/host';
 import type { DshAgentPresetRegistry, DshAgentPresetRow, DshHostContext } from '@dsh-workbench/shared';
 import { DIY_PRESET_ID } from '@dsh-workbench/shared/contract/protocol/diy';
 
@@ -38,13 +39,13 @@ export function createDiyPresetProbe(
   return async () => {
     const registry = ctx.get<DshAgentPresetRegistry>('agentPresets');
     if (registry === undefined || typeof registry.list !== 'function') return undefined;
-    const until = Date.now() + deadlineMs;
+    const until = now() + deadlineMs;
     for (;;) {
       const rows = await registry.list().catch(() => undefined);
       if (rows === undefined) return undefined;
       const verdict = diyPresetVerdictOf(rows);
       if (verdict !== undefined) return verdict;
-      if (Date.now() >= until) return undefined;
+      if (now() >= until) return undefined;
       await new Promise((resolve) => setTimeout(resolve, everyMs));
     }
   };

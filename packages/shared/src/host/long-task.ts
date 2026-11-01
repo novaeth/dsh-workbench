@@ -1,4 +1,4 @@
-import { epochOf } from './time.js';
+import { epochOf, now as clockNow, nowIso } from './time.js';
 import { runsRouteOf, type LongTaskStatus, type LongTaskStep } from '../contract/long-task.js';
 
 const LIVE: ReadonlySet<string> = new Set<LongTaskStatus>(['running', 'needs-login']);
@@ -66,9 +66,9 @@ export interface LongTaskRegistry<S extends LongTaskBase> {
 export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDeps<S>): LongTaskRegistry<S> {
   const runs = new Map<string, LongTaskBase>();
   const controls = new Map<string, AbortController>();
-  const now = deps.now ?? (() => new Date().toISOString());
+  const now = deps.now ?? (() => nowIso());
   let counter = 0;
-  const nextId = deps.nextId ?? (() => `run-${Date.now()}-${(counter += 1)}`);
+  const nextId = deps.nextId ?? (() => `run-${clockNow()}-${(counter += 1)}`);
   const recentMs = deps.recentMs ?? RECENT_MS;
   const listeners = new Set<(change: LongTaskChange<S>) => void>();
 

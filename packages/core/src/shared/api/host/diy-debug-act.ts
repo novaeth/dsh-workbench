@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { DebugIntent, DebugMove, DebugState, DebugStore, PostResource } from '@dsh-workbench/shared/host';
+import { now as clockNow } from '@dsh-workbench/shared/host';
 import { parseDebugIntent } from '@dsh-workbench/shared/host';
 
 
@@ -165,7 +166,7 @@ export interface DebugActDeps {
 }
 
 export function debugActResource(deps: DebugActDeps): PostResource {
-  const now = (): number => deps.now?.() ?? Date.now();
+  const now = (): number => deps.now?.() ?? clockNow();
   const settled = (
     intent: DebugIntent,
     delivered: NoticeDelivery,

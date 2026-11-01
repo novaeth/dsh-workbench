@@ -1,5 +1,5 @@
 
-import { quoteShellArg, workbenchRoot, writeJsonFile, writeTextFile } from '@dsh-workbench/shared/host';
+import { now as clockNow, quoteShellArg, workbenchRoot, writeJsonFile, writeTextFile } from '@dsh-workbench/shared/host';
 import type { Seam } from '@dsh-workbench/shared/host';
 import { hostSurface } from './platform.js';
 import {
@@ -274,7 +274,7 @@ export function selfUpdateNodeScript(
 
 export function planSelfUpdate(
   request: SelfUpdateRequest,
-  now = new Date(),
+  now: Date = new Date(clockNow()),
   cli: SelfUpdateCli = selfUpdateCliFor(request.profile),
   platform: NodeJS.Platform = process.platform,
 ): SelfUpdatePlan {
@@ -301,7 +301,7 @@ export function startSelfUpdate(
   seam?: Seam | undefined,
   cli: SelfUpdateCli = selfUpdateCliFor(request.profile),
 ): SelfUpdateStart {
-  const plan = planSelfUpdate(request, new Date(), cli);
+  const plan = planSelfUpdate(request, new Date(clockNow()), cli);
   mkdirSync(plan.paths.dir, { recursive: true });
   writeTextFile(plan.paths.script, plan.script, { mode: 0o755 });
   writeJsonFile(plan.paths.marker, plan.marker);

@@ -1,3 +1,4 @@
+import { now as clockNow } from './time.js';
 import { HANDOFF_TTL_MS } from '../config/constants.js';
 
 export interface HandoffEntry {
@@ -24,10 +25,10 @@ export function createValueHandoff(options: { ttlMs?: number } = {}): ValueHando
   const held = new Map<string, HandoffValue>();
 
   return {
-    hand(entry, value, now = Date.now()) {
+    hand(entry, value, now: number = clockNow()) {
       held.set(handoffId(entry), { value, at: now });
     },
-    take(entry, now = Date.now()) {
+    take(entry, now: number = clockNow()) {
       const id = handoffId(entry);
       const hit = held.get(id);
       if (hit === undefined) return undefined;

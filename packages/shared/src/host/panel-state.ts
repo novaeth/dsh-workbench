@@ -1,3 +1,4 @@
+import { now } from './time.js';
 /**
  * 一张面板卡片取数走到哪一步：`idle` 还没取、`loading` 取着、`ready` 拿到了、`error` 失败了。
  */
@@ -188,7 +189,7 @@ export function parseCrashReport(payload: unknown): PanelParse<PanelCrashReport>
   if (workspace === '') return { ok: false, message: 'workspace 不能是空的' };
   if (unit === '') return { ok: false, message: 'unit 不能是空的' };
   if (reason === '') return { ok: false, message: 'reason 不能是空的（没有原因的崩溃没法查）' };
-  return { ok: true, value: { workspace, unit, reason, at: atOf(record['at']) ?? Date.now() } };
+  return { ok: true, value: { workspace, unit, reason, at: atOf(record['at']) ?? now() } };
 }
 
 /**

@@ -1,4 +1,4 @@
-import { parseJsonLoose } from '@dsh-workbench/shared/host';
+import { now, parseJsonLoose } from '@dsh-workbench/shared/host';
 import { tailLines } from '@dsh-workbench/shared/host';
 import { backgroundLine, OPENCLI_WINDOW_ENV } from '../cli/index.js';
 import { noWrite, type Seam } from '@dsh-workbench/shared/host';
@@ -237,7 +237,7 @@ export async function browserRead(options: BrowserReadOptions): Promise<BrowserR
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const retryMs = options.retryMs ?? DEFAULT_RETRY_MS;
   const settleMs = options.settleMs ?? DEFAULT_SETTLE_MS;
-  const at = Date.now();
+  const at = now();
 
   const first = await evalOnce(seam, command, session, script, timeoutMs, retryMs);
   if (first.kind === 'failure') return { ...first.result, at };

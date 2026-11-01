@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { writeJsonFile } from '@dsh-workbench/shared/host';
+import { nowIso, writeJsonFile } from '@dsh-workbench/shared/host';
 
 
 const DISMISS_FILE = 'follow-ups.json';
@@ -30,6 +30,6 @@ export function isFollowUpDismissed(runtimeRoot: string, id: string): boolean {
 }
 
 export function dismissFollowUp(runtimeRoot: string, id: string): void {
-  const dismissed = { ...readDismissed(runtimeRoot), [id]: { at: new Date().toISOString() } };
+  const dismissed = { ...readDismissed(runtimeRoot), [id]: { at: nowIso() } };
   writeJsonFile(fileOf(runtimeRoot), { dismissed });
 }

@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, win32 } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { noWrite, quoteShellArg, writeJsonFile, type Seam } from '@dsh-workbench/shared/host';
+import { noWrite, now, quoteShellArg, type Seam, writeJsonFile } from '@dsh-workbench/shared/host';
 import type { DesktopBrowserId, WakeBrowserReply } from '@dsh-workbench/shared/contract/protocol/preflight-wake';
 
 const BROWSER_IDS = ['chrome', 'edge', 'brave', 'chromium', 'vivaldi'] as const;
@@ -201,11 +201,11 @@ export function createDesktopBrowser(options: {
   }
 
   async function waitConnected(ms: number): Promise<boolean> {
-    const deadline = Date.now() + ms;
+    const deadline = now() + ms;
     for (;;) {
       if ((await daemonStatus()) === 'connected') return true;
-      if (Date.now() >= deadline) return false;
-      await delay(Math.min(pollMs, Math.max(0, deadline - Date.now())));
+      if (now() >= deadline) return false;
+      await delay(Math.min(pollMs, Math.max(0, deadline - now())));
     }
   }
 

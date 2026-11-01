@@ -1,3 +1,4 @@
+import { now } from './time.js';
 import type { DataReader } from '../contract/data.js';
 import type { ExtensionCaller, ExtensionCallOptions, ExtensionValue } from '../contract/extension.js';
 import type { ExtensionNeed } from '../contract/needs.js';
@@ -30,7 +31,7 @@ export function extensionCallerOf(
         argv: [need.name, ...args],
         ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
       });
-      if (result.ok) return { value: result.data, at: Date.now() };
+      if (result.ok) return { value: result.data, at: now() };
       const code = result.error.pageCode ?? cliCodeOf(result.error.code);
       const command = [need.name, ...args].join(' ');
       const advice =

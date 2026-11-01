@@ -1,3 +1,4 @@
+import { now } from './time.js';
 import { productWrite } from './seam/intent.js';
 import type { Seam } from './seam/run.js';
 import { quoteShellArg } from './shell-text.js';
@@ -51,7 +52,7 @@ async function dshOf(cache: Map<string, { at: number; raw: unknown }>, options: 
   const { seam, name, registry, force = false, cacheDir } = options;
   const key = `${registry ?? ''}|${name}`;
   const hit = cache.get(key);
-  if (!force && hit !== undefined && Date.now() - hit.at < VERSION_CHECK_TTL_MS) {
+  if (!force && hit !== undefined && now() - hit.at < VERSION_CHECK_TTL_MS) {
     return { readable: true, raw: hit.raw };
   }
 
@@ -68,7 +69,7 @@ async function dshOf(cache: Map<string, { at: number; raw: unknown }>, options: 
     .catch(() => undefined);
   const parsed = result?.exitCode === 0 ? parseJsonLoose(result.stdout) : undefined;
   if (parsed === undefined) return { readable: false, raw: undefined };
-  cache.set(key, { at: Date.now(), raw: parsed });
+  cache.set(key, { at: now(), raw: parsed });
   return { readable: true, raw: parsed };
 }
 

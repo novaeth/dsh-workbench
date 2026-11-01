@@ -1,4 +1,4 @@
-import { OPENCLI_TIMEOUT_MS, parseJsonLoose, productWrite, type Seam } from '@dsh-workbench/shared/host';
+import { OPENCLI_TIMEOUT_MS, now, parseJsonLoose, productWrite, type Seam } from '@dsh-workbench/shared/host';
 
 export interface PluginCommandArg {
   readonly name: string;
@@ -237,7 +237,7 @@ export function createPluginCatalog(options: PluginCatalogOptions): PluginCatalo
   }
 
   function fail(problem: string): PluginCatalogSnapshot {
-    current = { ok: false, at: Date.now(), sets: current.sets, problems: [problem] };
+    current = { ok: false, at: now(), sets: current.sets, problems: [problem] };
     return current;
   }
 
@@ -251,7 +251,7 @@ export function createPluginCatalog(options: PluginCatalogOptions): PluginCatalo
 
     const fingerprint = fingerprintOf(plugins);
     if (!callOptions.force && heavy !== undefined && heavy.fingerprint === fingerprint) {
-      current = { ok: true, at: Date.now(), sets: heavy.sets, problems: heavy.problems };
+      current = { ok: true, at: now(), sets: heavy.sets, problems: heavy.problems };
       return current;
     }
 
@@ -264,7 +264,7 @@ export function createPluginCatalog(options: PluginCatalogOptions): PluginCatalo
 
     const attributed = attributeCommands(plugins, rows);
     heavy = { fingerprint, sets: attributed.sets, problems: attributed.problems };
-    current = { ok: true, at: Date.now(), sets: attributed.sets, problems: attributed.problems };
+    current = { ok: true, at: now(), sets: attributed.sets, problems: attributed.problems };
     return current;
   }
 

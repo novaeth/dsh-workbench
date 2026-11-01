@@ -1,4 +1,4 @@
-import { parseJsonLoose } from '@dsh-workbench/shared/host';
+import { now, parseJsonLoose } from '@dsh-workbench/shared/host';
 import { BROWSER_READ_SESSION } from './browser-read.js';
 import { backgroundLine, OPENCLI_WINDOW_ENV } from '../cli/index.js';
 import { noWrite, type Seam } from '@dsh-workbench/shared/host';
@@ -235,7 +235,7 @@ export async function browserFind(options: BrowserFindOptions): Promise<BrowserF
   const textMax = options.textMax ?? DEFAULT_TEXT_MAX;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const settleMs = options.settleMs ?? DEFAULT_SETTLE_MS;
-  const at = Date.now();
+  const at = now();
 
   const find = async (): Promise<FindOutcome | undefined> => {
     try {

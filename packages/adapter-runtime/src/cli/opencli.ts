@@ -1,4 +1,4 @@
-import { OPENCLI_MAX_CONCURRENT, OPENCLI_TIMEOUT_MS } from '@dsh-workbench/shared/host';
+import { OPENCLI_MAX_CONCURRENT, OPENCLI_TIMEOUT_MS, now } from '@dsh-workbench/shared/host';
 import { parseJsonLoose } from '@dsh-workbench/shared/host';
 import { productWrite, quoteShellArgFor, tailLines } from '@dsh-workbench/shared/host';
 import { helpUrlOf, parseCliErrorEnvelope } from '@dsh-workbench/shared/host';
@@ -158,7 +158,7 @@ export function createOpencli(options: {
 
     const once = async (): Promise<OpencliResult> => {
       const value = await call(commandLine, workdir);
-      return { value, at: Date.now() };
+      return { value, at: now() };
     };
 
     const task = runLimited(async (): Promise<OpencliResult> => {

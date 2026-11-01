@@ -1,3 +1,4 @@
+import { now } from '../time.js';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { DshShell } from '../../api/dsh.js';
@@ -266,7 +267,7 @@ export function createSeam(ports: SeamPorts): Seam {
   function spawnHost(request: SpawnRequest): SpawnHandle {
     const invocation = invocationOf(request.target, undefined);
     const logFile =
-      request.logFile ?? join(runtimeRoot, 'logs', `${request.label ?? 'spawn'}-${String(Date.now())}.log`);
+      request.logFile ?? join(runtimeRoot, 'logs', `${request.label ?? 'spawn'}-${String(now())}.log`);
     mkdirSync(dirname(logFile), { recursive: true });
     const child = processes.spawn({
       file: invocation.file,
@@ -280,7 +281,7 @@ export function createSeam(ports: SeamPorts): Seam {
     });
     child.unref();
     record({
-      at: Date.now(),
+      at: now(),
       verb: 'spawn',
       command: displayOf(request.target),
       intent: 'host',
@@ -341,7 +342,7 @@ export function createSeam(ports: SeamPorts): Seam {
       windowsHide: true,
     });
     record({
-      at: Date.now(),
+      at: now(),
       verb: 'open',
       command: displayOf(request.target),
       intent: 'host',
@@ -407,7 +408,7 @@ export function createSeam(ports: SeamPorts): Seam {
       const target = targetOf(request);
       if (request.intent.kind === 'host') {
         requireHost(request.intent);
-        const started = Date.now();
+        const started = now();
         const result = await runHost(request, target);
         record({
           at: started,
@@ -429,7 +430,7 @@ export function createSeam(ports: SeamPorts): Seam {
       let result = await attempt(request, policy, line);
       if (!sandboxDeniedOf(result.sandbox)) {
         record({
-          at: Date.now(),
+          at: now(),
           verb: 'run',
           command: line,
           intent: intent.kind,
@@ -459,7 +460,7 @@ export function createSeam(ports: SeamPorts): Seam {
         ...(healed ? { healed: true } : {}),
       };
       record({
-        at: Date.now(),
+        at: now(),
         verb: 'run',
         command: line,
         intent: intent.kind,

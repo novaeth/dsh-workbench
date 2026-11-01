@@ -1,11 +1,5 @@
 import type { RuntimeCapabilities } from '@dsh-workbench/shared';
-import {
-  PREFLIGHT_DOCTOR_TIMEOUT_MS,
-  PREFLIGHT_FRESH_MS,
-  PREFLIGHT_INSTALL_TIMEOUT_MS,
-  PREFLIGHT_VERSION_TIMEOUT_MS,
-  WARM_TIMEOUT_MS,
-} from '@dsh-workbench/shared/host';
+import { PREFLIGHT_DOCTOR_TIMEOUT_MS, PREFLIGHT_FRESH_MS, PREFLIGHT_INSTALL_TIMEOUT_MS, PREFLIGHT_VERSION_TIMEOUT_MS, WARM_TIMEOUT_MS, now } from '@dsh-workbench/shared/host';
 import { tailLines } from '@dsh-workbench/shared/host';
 import { opencliCommandLine } from '@dsh-workbench/adapter-runtime';
 import { productWrite, type Seam } from '@dsh-workbench/shared/host';
@@ -145,7 +139,7 @@ export function createPreflight(options: {
   let current: PreflightSnapshot = {
     phase: 'idle',
     steps: steps(),
-    at: Date.now(),
+    at: now(),
     log: [],
     ...(options.desktopBrowser === undefined ? {} : { canWakeBrowser: true }),
   };
@@ -153,7 +147,7 @@ export function createPreflight(options: {
   let shellStalled = false;
 
   function set(next: Partial<PreflightSnapshot> & { steps?: PreflightStep[] }): PreflightSnapshot {
-    current = { ...current, ...next, log: [...logLines], at: Date.now() };
+    current = { ...current, ...next, log: [...logLines], at: now() };
     return current;
   }
 
@@ -460,7 +454,7 @@ export function createPreflight(options: {
   }
 
   function freshReady(): boolean {
-    return current.phase === 'ready' && Date.now() - current.at < PREFLIGHT_FRESH_MS;
+    return current.phase === 'ready' && now() - current.at < PREFLIGHT_FRESH_MS;
   }
 
   async function start(runOptions: { hard?: boolean } = {}): Promise<PreflightSnapshot> {

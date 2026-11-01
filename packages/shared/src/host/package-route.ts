@@ -1,3 +1,4 @@
+import { now } from './time.js';
 import type { Seam } from './seam/run.js';
 import { VERSION_CHECK_TTL_MS } from '../config/constants.js';
 import { dshMarkersOf, splitNpmSpec, verdictOf, type PackageVerdict } from './package-kind.js';
@@ -70,7 +71,7 @@ async function routeOf(
 
   const key = `${registry}|${routeOptions.spec}`;
   const hit = cache.get(key);
-  if (routeOptions.force !== true && hit !== undefined && Date.now() - hit.at < VERSION_CHECK_TTL_MS) {
+  if (routeOptions.force !== true && hit !== undefined && now() - hit.at < VERSION_CHECK_TTL_MS) {
     return hit.route ?? undefined;
   }
 
@@ -88,6 +89,6 @@ async function routeOf(
     );
     route = verdict === undefined ? undefined : routeOfVerdict(verdict, ref.name);
   }
-  cache.set(key, { at: Date.now(), route: route ?? null });
+  cache.set(key, { at: now(), route: route ?? null });
   return route;
 }

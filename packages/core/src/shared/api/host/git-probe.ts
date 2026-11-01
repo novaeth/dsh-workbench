@@ -1,5 +1,5 @@
 import type { GitProbePayload, GitProbeStatus } from '@/kernel/contract/market-index';
-import { tailLines } from '@dsh-workbench/shared/host';
+import { now, tailLines } from '@dsh-workbench/shared/host';
 import { withoutAskpassNoise } from './git-exec.js';
 import type { GitRunner } from './git-process.js';
 import { runGitProcess } from './git-process.js';
@@ -43,8 +43,8 @@ export async function probeGitAddressCached(
   options: GitProbeOptions = {},
 ): Promise<GitProbePayload> {
   const hit = probeCache.get(url);
-  if (hit !== undefined && Date.now() - hit.at < PROBE_CACHE_MS) return hit.payload;
+  if (hit !== undefined && now() - hit.at < PROBE_CACHE_MS) return hit.payload;
   const payload = await probeGitAddress(url, options);
-  probeCache.set(url, { at: Date.now(), payload });
+  probeCache.set(url, { at: now(), payload });
   return payload;
 }

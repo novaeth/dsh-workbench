@@ -8,6 +8,7 @@ const ROOT_TITLE = '★ 产品数据根只有一份算法';
 const EXEC_TITLE = '★ 起进程只有一个入口';
 const HOST_TITLE = '★ 宿主能力只在宿主接线里打开';
 const WRITE_TITLE = '★ 宿主文件写只有一个入口';
+const TIME_TITLE = '★ 宿主时间只从 time.ts 取';
 
 const ADAPTERS = [
   'adapter-runtime',
@@ -130,6 +131,29 @@ const WRITE_CALL_OWN = [
   'packages/shared/src/host/lib-capabilities.ts',
 ];
 
+const TIME_ENTRY = 'packages/shared/src/host/time.ts';
+
+function hostSide(rel) {
+  return (
+    rel.startsWith('packages/shared/src/host/') ||
+    rel.startsWith('packages/core/src/shared/api/host/') ||
+    rel.startsWith('packages/adapter-') ||
+    rel.startsWith('packages/adapters-')
+  );
+}
+
+export function timeEntryHits() {
+  const hits = [];
+  for (const file of hostFiles()) {
+    const name = rel(file);
+    if (name === TIME_ENTRY || !hostSide(name)) continue;
+    const source = read(file);
+    const match = /\bDate\.now\s*\(/.exec(source);
+    if (match !== null) hits.push(`${name}:${String(lineOf(source, match.index))}`);
+  }
+  return hits;
+}
+
 export function writeEntryHits() {
   const hits = [];
   for (const file of hostFiles()) {
@@ -219,6 +243,12 @@ export const checks = [
     title: WRITE_TITLE,
     run(_ctx, report) {
       reportOne(report, WRITE_TITLE, writeEntryHits(), '原子写只走 fs-write 的 writeTextFile / writeJsonFile / writeBytesFile');
+    },
+  },
+  {
+    title: TIME_TITLE,
+    run(_ctx, report) {
+      reportOne(report, TIME_TITLE, timeEntryHits(), '宿主「现在几点」只走 time.ts 的 now() / nowIso()');
     },
   },
 ];
