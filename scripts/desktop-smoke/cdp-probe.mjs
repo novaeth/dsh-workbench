@@ -649,6 +649,25 @@ async function clientBundleReport(cdp) {
   return result.result?.value ?? '';
 }
 
+async function pageInternals(cdp) {
+  const result = await cdp.send('Runtime.evaluate', {
+    expression: `(() => {
+      const scripts = [...document.querySelectorAll('script')].map((node) => node.src || ('inline:' + (node.textContent || '').slice(0, 60)));
+      const boot = window.__DSH_BOOT__;
+      let bootKeys = null;
+      let entries = null;
+      if (boot !== undefined && boot !== null) {
+        bootKeys = Object.keys(boot);
+        const list = boot.entries ?? boot.modules ?? boot.plugins ?? [];
+        entries = (Array.isArray(list) ? list : []).slice(0, 12).map((one) => (typeof one === 'string' ? one : JSON.stringify(one).slice(0, 120)));
+      }
+      return JSON.stringify({ href: location.href, scripts, loader: typeof window.__ModuleLoader__, bootKeys, entries });
+    })()`,
+    returnByValue: true,
+  });
+  return result.result?.value ?? '';
+}
+
 async function verifyFeatures(cdp) {
   const startedAt = Date.now();
   let reloaded = false;
@@ -665,6 +684,7 @@ async function verifyFeatures(cdp) {
       writeText(`${prefix}-verify-body.txt`, body);
       writeText(`${prefix}-units.json`, `${JSON.stringify(units, null, 2)}\n`);
       writeText(`${prefix}-client-bundles.json`, await clientBundleReport(cdp));
+      writeText(`${prefix}-page-internals.json`, await pageInternals(cdp));
       writeText(`${prefix}-console-events.json`, `${JSON.stringify(cdp.events(), null, 2)}\n`);
       mark('module-card');
       return { card: true, units: ids };
@@ -693,6 +713,7 @@ async function verifyFeatures(cdp) {
   const units = await unitsOf(cdp);
   writeText(`${prefix}-units.json`, `${JSON.stringify(units, null, 2)}\n`);
   writeText(`${prefix}-client-bundles.json`, await clientBundleReport(cdp));
+  writeText(`${prefix}-page-internals.json`, await pageInternals(cdp));
   writeText(`${prefix}-console-events.json`, `${JSON.stringify(cdp.events(), null, 2)}\n`);
   await fail(
     cdp,

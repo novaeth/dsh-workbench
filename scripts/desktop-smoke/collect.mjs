@@ -290,6 +290,8 @@ async function main() {
     `${prefix}-after-restart-units.json`,
     `${prefix}-client-bundles.json`,
     `${prefix}-after-restart-client-bundles.json`,
+    `${prefix}-page-internals.json`,
+    `${prefix}-after-restart-page-internals.json`,
     `${prefix}-scripts.json`,
     `${prefix}-after-restart-scripts.json`,
     `${prefix}-console-events.json`,
