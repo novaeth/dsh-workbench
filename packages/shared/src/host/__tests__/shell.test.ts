@@ -24,7 +24,31 @@ function replyingShell(exitCode: number, timedOut = false): DshShell {
   };
 }
 
+function sandboxedShell(): DshShell {
+  return {
+    resolve: (request) => request,
+    execute: async () => ({
+      result: async () => ({
+        exitCode: 3_221_225_794,
+        timedOut: false,
+        aborted: false,
+        stdout: { text: '', truncated: false },
+        stderr: { text: 'windows-acl-run: token setup failed\n', truncated: false },
+        sandbox: { mode: 'workspace-write', denied: false, runnerFailed: true },
+      }),
+    }),
+  };
+}
+
 describe('runShell', () => {
+  it('★ 沙箱事实原样带回来：runnerFailed 不当成"命令自己退出"', async () => {
+    const result = await runShell(sandboxedShell(), 'echo hi');
+
+    expect(result.exitCode).toBe(3_221_225_794);
+    expect(result.sandbox?.runnerFailed).toBe(true);
+    expect(result.stderr).toContain('windows-acl-run');
+  });
+
   it('★ 宿主一直不交结果 → 到点自己收尾，不把调用方挂住', async () => {
     vi.useFakeTimers();
     try {
@@ -39,20 +63,6 @@ describe('runShell', () => {
     } finally {
       vi.useRealTimers();
     }
-  });
-
-  it('★ 沙箱把子进程打死（0xC0000142）→ 退回直接 spawn，不把"没装"安到命令头上', async () => {
-    const result = await runShell(replyingShell(3_221_225_794), 'echo workbench-fallback');
-
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain('workbench-fallback');
-  });
-
-  it('★ 普通非零退出不触发兜底（还是原样交回）', async () => {
-    const result = await runShell(replyingShell(127), 'definitely-not-a-command-xyz');
-
-    expect(result.exitCode).toBe(127);
-    expect(result.stdout).toBe('v24.21.0\n');
   });
 
   it('★ 宿主准时交结果 → stalled=false，退出码与输出原样', async () => {

@@ -1,4 +1,11 @@
-import type { DshHostContext, DshShell, DshWorkspaceRegistry, UnitManifest } from '@dsh-workbench/shared';
+import type {
+  DshHostContext,
+  DshSandboxPolicy,
+  DshShell,
+  DshWorkspaceRegistry,
+  UnitManifest,
+} from '@dsh-workbench/shared';
+import { setShellSandboxPolicy } from '@dsh-workbench/shared/host';
 import { createHostRoutes } from '@/shared/api/host/host-routes';
 import { assembleHostUnits } from '@/app/units/host';
 import { createPostChannels } from '@/shared/api/host/post-channels';
@@ -90,6 +97,15 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     adapters.libs === undefined
       ? undefined
       : withLibRunners(adapters.libs, adapters.runtime.runners(ctx, adapters.data), ctx.logger);
+  const sandboxPolicyService = ctx.get<DshSandboxPolicy>('sandboxPolicy');
+  const sandboxPolicy = sandboxPolicyService?.resolve?.({ mode: 'danger-full-access' });
+  if (sandboxPolicy?.mode === 'danger-full-access' || sandboxPolicy?.mode === 'workspace-write' || sandboxPolicy?.mode === 'read-only') {
+    setShellSandboxPolicy({
+      mode: sandboxPolicy.mode,
+      workspaceRoot: sandboxPolicy.workspaceRoot ?? process.cwd(),
+    });
+    ctx.logger?.info?.(`[dsh-workbench] shell 沙箱策略：${sandboxPolicy.mode}（写根 ${sandboxPolicy.workspaceRoot ?? process.cwd()}）`);
+  }
   const shell = ctx.get<DshShell>('shell');
   const routes: RouteTable = createHostRoutes({
     ctx,

@@ -29,7 +29,14 @@ async function toolVersion(
   shell: DshShell,
   line: string,
   extra?: { readonly workdir?: string | undefined } | undefined,
-): Promise<{ ok: boolean; text: string; stalled: boolean; code: number | null; raw: string }> {
+): Promise<{
+  ok: boolean;
+  text: string;
+  stalled: boolean;
+  code: number | null;
+  raw: string;
+  sandbox: string;
+}> {
   try {
     const result = await runShell(shell, line, {
       timeoutMs: 10_000,
@@ -42,9 +49,13 @@ async function toolVersion(
       stalled: result.stalled,
       code: result.exitCode,
       raw: `${result.stdout ?? ''}${result.stderr ?? ''}`.trim().split('\n').slice(0, 2).join(' / '),
+      sandbox:
+        result.sandbox === undefined
+          ? '（无）'
+          : `mode=${result.sandbox.mode ?? '?'} denied=${String(result.sandbox.denied)} runnerFailed=${String(result.sandbox.runnerFailed)}`,
     };
   } catch (error) {
-    return { ok: false, text: '', stalled: false, code: null, raw: String(error) };
+    return { ok: false, text: '', stalled: false, code: null, raw: String(error), sandbox: '（抛错）' };
   }
 }
 
@@ -126,9 +137,9 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
     `deployment=${desktop ? 'desktop' : 'host'} · resources=${desktopResourcesDir() ?? '（无）'} · execPath=${process.execPath}`,
     `bundled node=${bundledNode ?? '（找不到）'} · bundled pnpm=${bundledPnpm ?? '（找不到）'} · bins=${desktopBundledBins().join('|') || '（无）'}`,
     `PATH 前两段=${(path ?? '').split(delimiter).slice(0, 2).join('|') || '（空）'}`,
-    `node: exit=${String(node.code)} out=${node.raw.slice(0, 160) || '（空）'} cmd=${nodeCommand}`,
-    `pnpm: exit=${String(pnpm.code)} out=${pnpm.raw.slice(0, 160) || '（空）'} cmd=${pnpmLine}`,
-    `npm: exit=${String(npm.code)} out=${npm.raw.slice(0, 120) || '（空）'}`,
+    `node: exit=${String(node.code)} sandbox=${node.sandbox} out=${node.raw.slice(0, 160) || '（空）'} cmd=${nodeCommand}`,
+    `pnpm: exit=${String(pnpm.code)} sandbox=${pnpm.sandbox} out=${pnpm.raw.slice(0, 160) || '（空）'} cmd=${pnpmLine}`,
+    `npm: exit=${String(npm.code)} sandbox=${npm.sandbox} out=${npm.raw.slice(0, 120) || '（空）'}`,
     ...control,
   ];
   const base = parts.join(' · ');

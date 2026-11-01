@@ -1,6 +1,13 @@
 import type { DshShell } from '../api/dsh.js';
 import { GIT_TIMEOUT_MS } from '../config/constants.js';
 
+export interface ShellSandboxFacts {
+  readonly mode?: string | undefined;
+  readonly denied?: boolean | undefined;
+  readonly enforcement?: string | undefined;
+  readonly runnerFailed?: boolean | undefined;
+}
+
 export interface ShellResult {
   readonly exitCode: number | null;
   readonly timedOut: boolean;
@@ -9,6 +16,13 @@ export interface ShellResult {
   readonly stderr: string;
   readonly truncated: boolean;
   readonly stalled: boolean;
+  readonly sandbox?: ShellSandboxFacts | undefined;
+}
+
+let providedSandboxPolicy: DshShellSandboxPolicy | undefined;
+
+export function setShellSandboxPolicy(policy: DshShellSandboxPolicy | undefined): void {
+  providedSandboxPolicy = policy;
 }
 
 const DEFAULT_MAX_BYTES = 8 * 1024 * 1024;
@@ -39,6 +53,11 @@ async function settleWithin<T>(work: Promise<T>, limitMs: number): Promise<T | n
   }
 }
 
+export interface DshShellSandboxPolicy {
+  readonly mode: 'read-only' | 'workspace-write' | 'danger-full-access';
+  readonly workspaceRoot: string;
+}
+
 export async function runShell(
   shell: DshShell,
   command: string,
@@ -59,6 +78,7 @@ export async function runShell(
     stdoutMaxBytes: DEFAULT_MAX_BYTES,
     ...(signal === undefined ? {} : { signal }),
     ...(env === undefined ? {} : { env }),
+    ...(providedSandboxPolicy === undefined ? {} : { sandboxPolicy: providedSandboxPolicy }),
   });
 
   const settled = await settleWithin(
@@ -73,6 +93,7 @@ export async function runShell(
         stderr: result.stderr.text,
         truncated: result.stdout.truncated || result.stderr.truncated,
         stalled: false,
+        ...(result.sandbox === undefined ? {} : { sandbox: result.sandbox }),
       };
     })(),
     timeoutMs + GUARD_SLACK_MS,
