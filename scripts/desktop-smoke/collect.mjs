@@ -301,6 +301,9 @@ async function main() {
     push(doctor.stderr ?? '');
   }
 
+  section('extension prep');
+  push(tailFile(join(cwd, `${prefix}-prep.log`), 80));
+
   section('smoke browser');
   push(`chrome: ${process.env.DESKTOP_SMOKE_CHROME ?? '（未设置）'}`);
   push(`extension: ${process.env.DESKTOP_SMOKE_EXTENSION ?? '（未设置）'}`);

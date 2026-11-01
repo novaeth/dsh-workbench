@@ -374,6 +374,7 @@ async function launchSmokeBrowser() {
       `--disable-extensions-except=${extension}`,
       '--remote-debugging-port=9333',
       '--disable-features=DisableLoadExtensionCommandLineSwitch',
+      ...(process.platform === 'win32' ? ['--no-sandbox'] : []),
       '--disable-gpu',
       '--disable-software-rasterizer',
       '--window-size=1280,900',

@@ -56,36 +56,45 @@ jobs:
       - name: Prepare opencli browser extension
         shell: pwsh
         run: |
-          $meta = Invoke-RestMethod -Uri 'https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json'
-          $cft = ($meta.channels.Stable.downloads.chrome | Where-Object { $_.platform -eq 'win64' } | Select-Object -First 1).url
-          if ($null -eq $cft) { throw 'Chrome for Testing win64 not found' }
-          Invoke-WebRequest -Uri $cft -OutFile "$env:RUNNER_TEMP\cft.zip"
-          $cftDir = "$env:RUNNER_TEMP\cft"
-          if (Test-Path $cftDir) { Remove-Item -Recurse -Force $cftDir }
-          Expand-Archive -Path "$env:RUNNER_TEMP\cft.zip" -DestinationPath $cftDir -Force
-          $chrome = Join-Path $cftDir 'chrome-win64\chrome.exe'
-          if (!(Test-Path $chrome)) { throw "Chrome for Testing binary missing: $chrome" }
-          & $chrome --version
-          $pin = (Select-String -Path 'packages/shared/src/config/constants.ts' -Pattern 'OPENCLI_PIN\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
-          "opencli pin: $pin"
-          $script = "fetch('https://api.github.com/repos/jackwener/opencli/releases/latest').then((r) => r.json()).then((d) => { const a = (d.assets || []).find((x) => x.name.startsWith('opencli-extension-v') && x.name.endsWith('.zip')); if (!a) throw new Error('no extension asset in latest release'); console.log(a.browser_download_url); });"
-          $url = & node -e $script
-          "extension: $url"
-          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\opencli-ext.zip"
-          $dest = "$env:RUNNER_TEMP\opencli-ext"
-          if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
-          Expand-Archive -Path "$env:RUNNER_TEMP\opencli-ext.zip" -DestinationPath $dest -Force
-          if (!(Test-Path (Join-Path $dest 'manifest.json'))) {
-            $nested = Get-ChildItem -Path $dest -Recurse -Filter 'manifest.json' | Select-Object -First 1
-            if ($null -eq $nested) { throw 'extension zip has no manifest.json' }
-            $dest = $nested.DirectoryName
+          Start-Transcript -Path 'desktop-win-prep.log' -Force | Out-Null
+          try {
+            $meta = Invoke-RestMethod -Uri 'https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json'
+            $cft = ($meta.channels.Stable.downloads.chrome | Where-Object { $_.platform -eq 'win64' } | Select-Object -First 1).url
+            if ($null -eq $cft) { throw 'Chrome for Testing win64 not found' }
+            Invoke-WebRequest -Uri $cft -OutFile "$env:RUNNER_TEMP\cft.zip"
+            $cftDir = "$env:RUNNER_TEMP\cft"
+            if (Test-Path $cftDir) { Remove-Item -Recurse -Force $cftDir }
+            Expand-Archive -Path "$env:RUNNER_TEMP\cft.zip" -DestinationPath $cftDir -Force
+            $chrome = Join-Path $cftDir 'chrome-win64\chrome.exe'
+            if (!(Test-Path $chrome)) { throw "Chrome for Testing binary missing: $chrome" }
+            & $chrome --version
+            $pin = (Select-String -Path 'packages/shared/src/config/constants.ts' -Pattern 'OPENCLI_PIN\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
+            "opencli pin: $pin"
+            $latest = Invoke-WebRequest -Uri 'https://github.com/jackwener/opencli/releases/latest' -MaximumRedirection 5
+            $tag = ($latest.BaseResponse.RequestMessage.RequestUri.AbsolutePath -split '/')[-1]
+            "latest release: $tag"
+            $assets = Invoke-WebRequest -Uri "https://github.com/jackwener/opencli/releases/expanded_assets/$tag"
+            $asset = ([regex]'opencli-extension-v[0-9.]+\.zip').Match($assets.Content).Value
+            if ([string]::IsNullOrEmpty($asset)) { throw 'no extension asset in latest release' }
+            $url = "https://github.com/jackwener/opencli/releases/download/$tag/$asset"
+            "extension: $url"
+            Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\opencli-ext.zip"
+            $dest = "$env:RUNNER_TEMP\opencli-ext"
+            if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
+            Expand-Archive -Path "$env:RUNNER_TEMP\opencli-ext.zip" -DestinationPath $dest -Force
+            if (!(Test-Path (Join-Path $dest 'manifest.json'))) {
+              $nested = Get-ChildItem -Path $dest -Recurse -Filter 'manifest.json' | Select-Object -First 1
+              if ($null -eq $nested) { throw 'extension zip has no manifest.json' }
+              $dest = $nested.DirectoryName
+            }
+            $manifestPath = Join-Path $dest 'manifest.json'
+            & node -e "console.log('extension version:', require(process.argv[1]).version)" $manifestPath
+            "DESKTOP_SMOKE_CHROME=$chrome" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            "DESKTOP_SMOKE_EXTENSION=$dest" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            "DESKTOP_SMOKE_OPENCLI=$env:USERPROFILE\.dsh\workbench\opencli\bin\opencli.cmd" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          } finally {
+            Stop-Transcript | Out-Null
           }
-          $manifestPath = Join-Path $dest 'manifest.json'
-          & node -e "console.log('extension version:', require(process.argv[1]).version)" $manifestPath
-          Get-ChildItem $dest | Select-Object -First 6 Name
-          "DESKTOP_SMOKE_CHROME=$chrome" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          "DESKTOP_SMOKE_EXTENSION=$dest" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          "DESKTOP_SMOKE_OPENCLI=$env:USERPROFILE\.dsh\workbench\opencli\bin\opencli.cmd" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Open Desktop, install workbench and market module, restart once
         shell: pwsh
         env:
@@ -238,9 +247,10 @@ jobs:
       - name: Prepare opencli browser extension
         shell: bash
         run: |
-          CFT_URL=$(curl -fsSL 'https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json' | node -e "let s = ''; process.stdin.on('data', (d) => { s += d; }).on('end', () => { const j = JSON.parse(s); const u = j.channels.Stable.downloads.chrome.find((x) => x.platform === 'mac-arm64'); if (!u) throw new Error('no Chrome for Testing mac-arm64'); console.log(u.url); });")
+          exec > >(tee -a desktop-mac-prep.log) 2>&1
+          CFT_URL=$(curl -fsSL --retry 3 'https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json' | node -e "let s = ''; process.stdin.on('data', (d) => { s += d; }).on('end', () => { const j = JSON.parse(s); const u = j.channels.Stable.downloads.chrome.find((x) => x.platform === 'mac-arm64'); if (!u) throw new Error('no Chrome for Testing mac-arm64'); console.log(u.url); });")
           echo "cft: $CFT_URL"
-          curl -fL -o "$RUNNER_TEMP/cft.zip" "$CFT_URL"
+          curl -fL --retry 3 -o "$RUNNER_TEMP/cft.zip" "$CFT_URL"
           rm -rf "$RUNNER_TEMP/cft"
           mkdir -p "$RUNNER_TEMP/cft"
           unzip -q "$RUNNER_TEMP/cft.zip" -d "$RUNNER_TEMP/cft"
@@ -249,9 +259,14 @@ jobs:
           "$CHROME" --version
           PIN=$(node -e "const t = require('node:fs').readFileSync('packages/shared/src/config/constants.ts', 'utf8'); const m = /OPENCLI_PIN\s*=\s*\"([^\"]+)\"/.exec(t); if (!m) throw new Error('OPENCLI_PIN not found'); console.log(m[1]);")
           echo "opencli pin: $PIN（工作台装的 CLI 版本）"
-          EXT_URL=$(node -e "fetch('https://api.github.com/repos/jackwener/opencli/releases/latest').then((r) => r.json()).then((d) => { const a = (d.assets || []).find((x) => x.name.startsWith('opencli-extension-v') && x.name.endsWith('.zip')); if (!a) throw new Error('no extension asset in latest release'); console.log(a.browser_download_url); })")
+          TAG_URL=$(curl -fsSL --retry 3 -o /dev/null -w '%{url_effective}' 'https://github.com/jackwener/opencli/releases/latest')
+          TAG="${TAG_URL##*/}"
+          echo "latest release: $TAG"
+          ASSET=$(curl -fsSL --retry 3 "https://github.com/jackwener/opencli/releases/expanded_assets/$TAG" | grep -o 'opencli-extension-v[0-9.]*\.zip' | head -1)
+          if [ -z "$ASSET" ]; then echo 'no extension asset in latest release'; exit 1; fi
+          EXT_URL="https://github.com/jackwener/opencli/releases/download/$TAG/$ASSET"
           echo "extension: $EXT_URL"
-          curl -fL --retry 2 -o "$RUNNER_TEMP/opencli-ext.zip" "$EXT_URL"
+          curl -fL --retry 3 -o "$RUNNER_TEMP/opencli-ext.zip" "$EXT_URL"
           rm -rf "$RUNNER_TEMP/opencli-ext"
           mkdir -p "$RUNNER_TEMP/opencli-ext"
           unzip -q "$RUNNER_TEMP/opencli-ext.zip" -d "$RUNNER_TEMP/opencli-ext"
