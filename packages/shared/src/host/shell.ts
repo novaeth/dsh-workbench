@@ -66,9 +66,10 @@ export async function runShell(
     timeoutMs?: number;
     signal?: AbortSignal;
     env?: Readonly<Record<string, string>>;
+    sandboxPolicy?: DshShellSandboxPolicy | undefined;
   } = {},
 ): Promise<ShellResult> {
-  const { workdir, timeoutMs = GIT_TIMEOUT_MS, signal, env } = options;
+  const { workdir, timeoutMs = GIT_TIMEOUT_MS, signal, env, sandboxPolicy } = options;
 
   const spec = shell.resolve({
     command,
@@ -79,6 +80,7 @@ export async function runShell(
     ...(signal === undefined ? {} : { signal }),
     ...(env === undefined ? {} : { env }),
     ...(providedSandboxPolicy === undefined ? {} : { sandboxPolicy: providedSandboxPolicy }),
+    ...(sandboxPolicy === undefined ? {} : { sandboxPolicy }),
   });
 
   const settled = await settleWithin(
