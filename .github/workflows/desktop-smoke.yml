@@ -68,6 +68,12 @@ jobs:
           $dest = "$env:RUNNER_TEMP\opencli-ext"
           if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
           Expand-Archive -Path "$env:RUNNER_TEMP\opencli-ext.zip" -DestinationPath $dest -Force
+          if (!(Test-Path (Join-Path $dest 'manifest.json'))) {
+            $nested = Get-ChildItem -Path $dest -Recurse -Filter 'manifest.json' | Select-Object -First 1
+            if ($null -eq $nested) { throw 'extension zip has no manifest.json' }
+            $dest = $nested.DirectoryName
+          }
+          Get-Content (Join-Path $dest 'manifest.json') -Raw | Select-Object -First 1
           Get-ChildItem $dest | Select-Object -First 6 Name
           "DESKTOP_SMOKE_CHROME=$chrome" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "DESKTOP_SMOKE_EXTENSION=$dest" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
@@ -235,10 +241,16 @@ jobs:
           rm -rf "$RUNNER_TEMP/opencli-ext"
           mkdir -p "$RUNNER_TEMP/opencli-ext"
           unzip -q "$RUNNER_TEMP/opencli-ext.zip" -d "$RUNNER_TEMP/opencli-ext"
-          ls "$RUNNER_TEMP/opencli-ext"
+          EXT_DIR="$RUNNER_TEMP/opencli-ext"
+          if [ ! -f "$EXT_DIR/manifest.json" ]; then
+            EXT_DIR=$(dirname "$(find "$RUNNER_TEMP/opencli-ext" -name manifest.json -maxdepth 3 | head -1)")
+          fi
+          if [ ! -f "$EXT_DIR/manifest.json" ]; then echo 'extension zip has no manifest.json'; exit 1; fi
+          echo "extension dir: $EXT_DIR"
+          head -c 200 "$EXT_DIR/manifest.json"; echo
           {
             echo "DESKTOP_SMOKE_CHROME=$CHROME"
-            echo "DESKTOP_SMOKE_EXTENSION=$RUNNER_TEMP/opencli-ext"
+            echo "DESKTOP_SMOKE_EXTENSION=$EXT_DIR"
             echo "DESKTOP_SMOKE_OPENCLI=$HOME/.dsh/workbench/opencli/bin/opencli"
           } >> "$GITHUB_ENV"
       - name: Open Desktop, install workbench and market module, restart once

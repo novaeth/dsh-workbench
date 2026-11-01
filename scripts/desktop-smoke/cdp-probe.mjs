@@ -371,6 +371,8 @@ async function launchSmokeBrowser() {
     [
       `--user-data-dir=${profile}`,
       `--load-extension=${extension}`,
+      `--disable-extensions-except=${extension}`,
+      '--remote-debugging-port=9333',
       '--disable-features=DisableLoadExtensionCommandLineSwitch',
       '--disable-gpu',
       '--disable-software-rasterizer',
@@ -401,6 +403,16 @@ async function doctorText() {
   return `${result?.stdout ?? ''}\n${result?.stderr ?? ''}`;
 }
 
+async function chromeTargets() {
+  try {
+    const response = await fetch('http://127.0.0.1:9333/json', { signal: AbortSignal.timeout(3000) });
+    const pages = await response.json();
+    return pages.map((page) => `${page.type}:${page.url}`).join(' | ');
+  } catch (error) {
+    return `（读不到调试端口）${String(error?.message ?? error)}`;
+  }
+}
+
 async function waitExtensionConnected() {
   const until = Date.now() + remaining('等浏览器扩展连上', BRIDGE_WAIT_MS);
   while (Date.now() < until) {
@@ -412,6 +424,7 @@ async function waitExtensionConnected() {
       .slice(-3)
       .join(' | ');
     log(`extension wait: ${connected ? 'connected' : 'not-connected'} :: ${lines}`);
+    log(`chrome targets: ${await chromeTargets()}`);
     const chromeLog = outPath(`${prefix}-chrome.log`);
     if (!connected && fs.existsSync(chromeLog)) {
       log(`chrome log: ${readTail(chromeLog, 400)}`);
