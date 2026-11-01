@@ -1,7 +1,7 @@
-import type { DshHostContext, DshShell } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared';
 import type { DebugStore } from '@dsh-workbench/shared/host';
 import { join } from 'node:path';
-import { BROWSER_SCREEN_SESSION } from '@dsh-workbench/shared/host';
+import { BROWSER_SCREEN_SESSION, shellOf } from '@dsh-workbench/shared/host';
 import { artifactsDirOf } from '@/shared/api/host/diy-artifacts';
 import { cliCommandOf } from '@dsh-workbench/shared/host';
 import { actBrowser, stopNetworkExact, SWEEP_TIMEOUT_MS } from './diy-browser-act';
@@ -21,7 +21,7 @@ export async function stopObservers(
   workspace: string | null | undefined,
   session: string = BROWSER_SCREEN_SESSION,
 ): Promise<ObserverCleanup> {
-  const shell = ctx.get<DshShell>('shell');
+  const shell = shellOf(ctx);
   if (workspace === null || workspace === undefined || workspace === '' || shell === undefined) {
     return { net: false, logs: false };
   }

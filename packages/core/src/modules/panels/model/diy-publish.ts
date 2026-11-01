@@ -1,12 +1,11 @@
 import { join } from 'node:path';
 import type {
   DshHostContext,
-  DshShell,
   DshToolDefinition,
   DshToolRegistry,
   DshToolRunContext,
 } from '@dsh-workbench/shared';
-import { CHANGELOG_FILE, CHANGELOG_KINDS, quoteShellArg, runShell } from '@dsh-workbench/shared/host';
+import { CHANGELOG_FILE, CHANGELOG_KINDS, quoteShellArg, runShell, shellOf } from '@dsh-workbench/shared/host';
 import type { PublishPreview } from '@dsh-workbench/shared/contract/protocol/market-index';
 import type { DiyModule } from '@/shared/api/host/diy-modules';
 import { toolchainBinOf } from '@/shared/api/host/diy-components';
@@ -95,7 +94,7 @@ export function registerPublishTool(
     async execute(raw: unknown, exec: DshToolRunContext) {
       const { root } = await workspaceOf(ctx, exec);
       const found = deps.resolve(root, raw);
-      const shell = ctx.get<DshShell>('shell');
+      const shell = shellOf(ctx);
       if (shell === undefined) throw new Error('这台机器上没有 shell 服务，发布跑不起来');
       const bin = toolchainBinOf(root) ?? toolchainBinOf(found.dir);
       if (bin === null) {

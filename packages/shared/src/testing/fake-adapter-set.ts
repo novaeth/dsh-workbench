@@ -115,7 +115,6 @@ const runtimePreset = (capabilities: RuntimePort['capabilities'] extends never ?
   runners: () => ({}),
   health: () => ({}),
   seed: () => undefined,
-  warnUnwritableRoot: () => undefined,
 });
 
 const plugins: PluginSurface = {

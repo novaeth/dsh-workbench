@@ -13,17 +13,13 @@ import {
 import { randomUUID } from 'node:crypto';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { appendBlocks, parseBlocks, removeBlocks } from './patch-blocks.mjs';
+import { parseBlocks, removeBlocks } from './patch-blocks.mjs';
 
-const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const PKG_ROOT = dirname(SCRIPT_DIR);
 const HOME = process.env.DSH_HOME?.trim() || join(homedir(), '.dsh');
 const PROFILE = process.env.WORKBENCH_PROFILE?.trim() || 'workbench';
 const PROFILE_DIR = join(HOME, 'profiles', PROFILE);
 const RUNTIME_ROOT = process.env.DSH_WORKBENCH_HOME?.trim() || join(HOME, PROFILE);
 const PATCH_PATH = join(PROFILE_DIR, 'cordis.patch.yml');
-const SANDBOX_PATCH = join(PKG_ROOT, 'profile', 'sandbox.patch.yml');
 const MARKER = join(RUNTIME_ROOT, '.data-root-shared');
 
 const DATA_ROOT_IDS = new Set(['session-persistence-jsonl', 'storage-json', 'attachment-local']);
@@ -300,14 +296,19 @@ function writeMarker() {
   );
 }
 
+const STALE_SANDBOX =
+  /workspaceRoot: !!js (?:process\.env\.DSH_WORKBENCH_HOME \?\? )?dshHomePath\(\s*['"]workbench['"]\)/;
+
 function inspectProfile() {
   const patch = readText(PATCH_PATH);
   if (patch === null) return null;
   const legacy = parseBlocks(patch).filter((block) => DATA_ROOT_IDS.has(block.id));
+  const sandbox = parseBlocks(patch).filter((block) => block.id === 'sandbox-policy' && STALE_SANDBOX.test(block.body));
   return {
     patch,
     ours: legacy.filter((block) => OWN_ROOT.test(block.body)),
     custom: legacy.filter((block) => !OWN_ROOT.test(block.body)),
+    sandbox,
   };
 }
 
@@ -328,14 +329,10 @@ function applySharedConfig(state) {
     writeAtomic(PATCH_PATH, patch);
     say(`数据根改回共用：从 ${PROFILE} 的 profile 里去掉 ${state.ours.map((block) => block.id).join(' / ')}。`);
   }
-  const hasSandbox = parseBlocks(patch).some((block) => block.id === 'sandbox-policy');
-  if (!hasSandbox) {
-    const sandbox = readText(SANDBOX_PATCH);
-    const row = sandbox === null ? undefined : parseBlocks(sandbox).find((block) => block.id === 'sandbox-policy');
-    if (row !== undefined) {
-      patch = appendBlocks(patch, row.body);
-      writeAtomic(PATCH_PATH, patch);
-    }
+  if (state.sandbox.length > 0) {
+    patch = removeBlocks(patch, (block) => block.id === 'sandbox-policy' && STALE_SANDBOX.test(block.body));
+    writeAtomic(PATCH_PATH, patch);
+    say(`可写根改由工作台自己声明：从 ${PROFILE} 的 profile 里去掉 sandbox-policy 那一行。`);
   }
   repairTarget(join(HOME, 'storages', 'workspace.json'));
   return true;

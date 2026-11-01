@@ -195,7 +195,6 @@ export interface RuntimePort {
   runners(ctx: DshHostContext, data: DataReader): Readonly<Record<string, LibRunner>>;
   health(ctx: DshHostContext): Readonly<Record<string, RuntimeStatus>>;
   seed(ctx: DshHostContext, options: RuntimeSeedOptions): void;
-  warnUnwritableRoot(ctx: DshHostContext): void;
 }
 
 export interface PluginDeclarationSource {

@@ -1,6 +1,6 @@
 import type { DshHostContext, DshShell } from '@dsh-workbench/shared';
 import type { AdapterSet } from '@dsh-workbench/shared/host';
-import { ADAPTER_SET_API_VERSION, runningVersionOf } from '@dsh-workbench/shared/host';
+import { ADAPTER_SET_API_VERSION, runningVersionOf, shellOf } from '@dsh-workbench/shared/host';
 import { createCommandReader, createDataReader, createGitReader, createLibReader, opencliCommandOf } from '@dsh-workbench/adapter-runtime';
 import { dshPluginsHandler, profileDirOf } from '@dsh-workbench/adapter-supply';
 import { createHostActions } from '@dsh-workbench/adapter-profile';
@@ -16,7 +16,7 @@ export interface DefaultAdapterSetOptions {
 }
 
 export function createAdapterSet(ctx: DshHostContext, options: DefaultAdapterSetOptions = {}): AdapterSet {
-  const shell = options.shell ?? ctx.get<DshShell>('shell');
+  const shell = options.shell ?? shellOf(ctx);
   const logger = options.logger ?? ctx.logger;
   const runtime = createRuntimePort();
   const opencli = opencliCommandOf(ctx);

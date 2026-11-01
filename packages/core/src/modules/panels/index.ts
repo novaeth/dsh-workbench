@@ -1,6 +1,6 @@
-import type { DshShell, UnitManifest } from '@dsh-workbench/shared';
+import type { UnitManifest } from '@dsh-workbench/shared';
 import type { RecordStore, UnitOwnedFace } from '@dsh-workbench/shared/host';
-import { DIY_DEBUG_SERVICE, DIY_RECORD_SERVICE, createDebugStore, createRecordStore, supplyNeedsOf, PANELS_SERVICE, dshHome, supplyPortOf, workbenchRoot } from '@dsh-workbench/shared/host';
+import { DIY_DEBUG_SERVICE, DIY_RECORD_SERVICE, createDebugStore, createRecordStore, supplyNeedsOf, PANELS_SERVICE, dshHome, supplyPortOf, workbenchRoot, shellOf } from '@dsh-workbench/shared/host';
 import { basename } from 'node:path';
 import { DIY_PRESET_ID } from '@/shared/api/diy';
 import { workshopPathOf } from '@/shared/api/host/diy';
@@ -70,7 +70,7 @@ export const panelsHost: UnitOwnedFace = {
     const record: RecordStore = {
       ...base,
       release: (state) => {
-        const shellNow = ctx.get<DshShell>('shell');
+        const shellNow = shellOf(ctx);
         if (shellNow === undefined) return Promise.resolve({ tab: false, capture: false });
         return releaseQuietly({
           shell: shellNow,
@@ -84,7 +84,7 @@ export const panelsHost: UnitOwnedFace = {
     ctx.provide(DIY_RECORD_SERVICE, record);
 
     const profileDir = supply.profileDirOf(ctx);
-    const shell = ctx.get<DshShell>('shell');
+    const shell = shellOf(ctx);
     const moduleManifests = (): readonly UnitManifest[] => {
       const list = manifests();
       if (installable === undefined) return list.filter((manifest) => supplyNeedsOf(manifest).length > 0);

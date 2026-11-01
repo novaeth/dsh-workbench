@@ -5,7 +5,7 @@ import type {
   DshToolRegistry,
   DshToolRunContext,
 } from '@dsh-workbench/shared';
-import { BROWSER_READ_SESSION } from '@dsh-workbench/shared/host';
+import { BROWSER_READ_SESSION, shellOf } from '@dsh-workbench/shared/host';
 import { dirname, join } from 'node:path';
 import { cliCommandOf } from '@dsh-workbench/shared/host';
 import { cropPngFile, type PngRect } from '@/shared/api/host/png-crop';
@@ -377,7 +377,7 @@ async function runReadTool(
 ): Promise<Record<string, unknown>> {
   const refused = readRefusalOf(row, raw);
   if (refused !== '') throw new Error(refused);
-  const shell = ctx.get<DshShell>('shell');
+  const shell = shellOf(ctx);
   if (shell === undefined) throw new Error('这台机器上没有 shell 服务，驱动不了浏览器');
   const command = cliCommandOf(ctx);
   const requested = asNumber(raw['timeoutMs']);

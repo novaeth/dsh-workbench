@@ -403,27 +403,6 @@ fi
 # 现在改成：**工作台自己的 patch 是唯一真相**。想要 web 的哪几行，去
 # 设置 → 「配置同步」里勾（它读源 profile 的 cordis.patch.yml，按行搬运，
 # 见 内部设计记录 与 ADR-0044）。启动器只负责把工作台起起来。
-PATCH_ARGS=()
-
-# ── 声明工作台运行时的**可写根**（执行缝的沙箱只放行 process.cwd()）──────────
-#
-# 工作台自己要跑命令：启动体检自动装运行时、模块市场装/升插件、查源上新版。
-# 这些命令走 dsh 的执行缝，而那条缝带**文件沙箱**；插件发起的调用**没有会话**，
-# 回落到部署策略，出厂值是 `workspaceRoot: process.cwd()` —— 安装目标
-# `$DSH_HOME/workbench/...` 不在启动目录下，被拒写（EPERM），"自动装"死在第一步，
-# 界面只能退化成"让用户去终端抄一条命令"。这一层把可写根指到工作台运行时，
-# 那一整棵树（隔离工具链 + npm 缓存 + 模块专属文件夹 + 市场 prefix）就都放行了。
-#
-# 为什么是 `--patch` 叠加而不是改 profile 的 cordis.patch.yml：profile 可能是旧的
-# （交接出去的机器尤其如此），没人会回头重跑 seed；叠加层每次启动都生效。
-# ⚠️ 必须排在 profile 自己那一层**之后**：工作台的可写根要赢。
-SANDBOX_PATCH="$REPO_DIR/profile/sandbox.patch.yml"
-if [ -f "$SANDBOX_PATCH" ]; then
-  PATCH_ARGS+=(--patch "$SANDBOX_PATCH")
-else
-  echo "dsh-workbench: 提醒 —— 找不到 ${SANDBOX_PATCH}，这次不声明可写根（自动装会失败）。" >&2
-fi
-
 # DIY 工坊的目录必须**每次启动都在**：`cordis.patch.yml` 的 hmr 行把它列成一个监听根
 # （工坊里的模块是被 link 进 profile 的仓外目录，Node 解析到的是工坊里的真路径，
 # 所以不把它列进去，模块重建 dist/host.js 就不热换 —— 而且**不报错**）。
@@ -454,7 +433,4 @@ fi
 # 哪天只有一边改了源或判据就会互相改指，而软链指到哪 skill 发现都**不报错**。
 # 运行时的**稳定入口**不在这里建：它属于适配器（隔离包装随适配器出货），
 # 由宿主自举在每次启动时写到自己的隔离根里 —— 写口只有那一处。
-# ⚠️ 顺序有讲究：`--patch` 是 **dsh 本体**的选项，必须排在 `--port`（应用参数）**之前** ——
-# 参数一旦进了应用的透传区（第一个应用自己的选项开始），后面的都直接交给应用，
-# `--patch` 会被应用当成未知选项（实测：`--port` 在前时报 `unknown option '--patch'`）。
-exec dsh "$PROFILE" ${PATCH_ARGS[@]+"${PATCH_ARGS[@]}"} --port "$PORT" ${DSH_ARGS[@]+"${DSH_ARGS[@]}"}
+exec dsh "$PROFILE" --port "$PORT" ${DSH_ARGS[@]+"${DSH_ARGS[@]}"}

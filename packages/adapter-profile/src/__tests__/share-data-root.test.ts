@@ -136,7 +136,7 @@ describe('share-data-root：旧数据由用户显式迁移', () => {
     expect(patch).not.toContain('storage-json');
     expect(patch).not.toContain('attachment-local');
     expect(patch).toContain('id: llm-deepseek');
-    expect(patch.match(/id: sandbox-policy/g)).toHaveLength(1);
+    expect(patch).not.toContain('sandbox-policy');
     expect(existsSync(join(home, 'workbench', '.data-root-shared'))).toBe(false);
   });
 
@@ -177,7 +177,7 @@ describe('share-data-root：旧数据由用户显式迁移', () => {
     const patch = patchOf(home);
     expect(patch).not.toContain('session-persistence-jsonl');
     expect(patch).toContain('id: llm-deepseek');
-    expect(patch.match(/id: sandbox-policy/g)).toHaveLength(1);
+    expect(patch).not.toContain('sandbox-policy');
     expect(existsSync(join(home, 'workbench', '.data-root-shared'))).toBe(true);
     expect(readFileSync(join(home, 'sessions', 'w1', 's1.jsonl'), 'utf8')).toBe('old\n');
     expect(readFileSync(join(home, 'attachments', 'v1', 'objects', 'aa', 'o'), 'utf8')).toBe('obj\n');

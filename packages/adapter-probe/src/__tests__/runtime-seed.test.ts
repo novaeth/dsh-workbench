@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DshHostContext } from '@dsh-workbench/shared';
-import { coversWritableRoot, isInstalledCopy, opencliWrapperScript, packageRootOf, prependPath, runDetached, runtimeSeedPaths, runtimeSeedRootOf, seedRuntimeFiles, warnUnwritableRoot, workshopSeedPlan } from '../index.js';
+import { isInstalledCopy, opencliWrapperScript, packageRootOf, prependPath, runDetached, runtimeSeedPaths, runtimeSeedRootOf, seedRuntimeFiles, workshopSeedPlan } from '../index.js';
 
 const describePosix = process.platform === 'win32' ? describe.skip : describe;
 
@@ -67,52 +67,6 @@ describePosix('runtimeSeedRootOf', () => {
 
   it('没有 dshHomePath 服务时回 null（自举宁可不做，也不带崩宿主）', () => {
     expect(runtimeSeedRootOf({ get: () => undefined } as unknown as DshHostContext)).toBeNull();
-  });
-});
-
-describePosix('coversWritableRoot', () => {
-  it('工作台根等于可写根、或在它下面，才算盖住', () => {
-    expect(coversWritableRoot('/home/dsh/workbench', '/home/dsh/workbench')).toBe(true);
-    expect(coversWritableRoot('/home/dsh', '/home/dsh/workbench')).toBe(true);
-    expect(coversWritableRoot('/home/', '/home/workbench')).toBe(true);
-  });
-
-  it('同名前缀不算（/home/dsh2 不在 /home/dsh 下面）、父目录也不算', () => {
-    expect(coversWritableRoot('/home/dsh', '/home/dsh2/workbench')).toBe(false);
-    expect(coversWritableRoot('/home/dsh/workbench', '/home/dsh')).toBe(false);
-    expect(coversWritableRoot('/home/dsh/workbench', '/tmp/workbench')).toBe(false);
-  });
-});
-
-describePosix('warnUnwritableRoot', () => {
-  const ctxWith = (workspaceRoot: string, warn: ReturnType<typeof vi.fn>) =>
-    ({
-      get: (name: string) => {
-        if (name === 'dshHomePath') return (rel: string) => join('/home/dsh', rel);
-        if (name === 'sandboxPolicy') return { workspaceRoot };
-        return undefined;
-      },
-      logger: { warn },
-    }) as unknown as DshHostContext;
-
-  it('可写根盖住工作台根时不说一句', () => {
-    vi.stubEnv('DSH_WORKBENCH_HOME', '/home/dsh/workbench');
-    const warn = vi.fn();
-    warnUnwritableRoot(ctxWith('/home/dsh', warn));
-    expect(warn).not.toHaveBeenCalled();
-  });
-
-  it('盖不住时打一条带修复指向的 warn', () => {
-    vi.stubEnv('DSH_WORKBENCH_HOME', '/home/dsh/workbench');
-    const warn = vi.fn();
-    warnUnwritableRoot(ctxWith('/tmp/other', warn));
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('cordis.patch.yml'));
-  });
-
-  it('没有 sandboxPolicy 服务时沉默（桩宿主 / 只跑自举的场景）', () => {
-    const warn = vi.fn();
-    warnUnwritableRoot({ get: () => undefined, logger: { warn } } as unknown as DshHostContext);
-    expect(warn).not.toHaveBeenCalled();
   });
 });
 

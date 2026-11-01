@@ -2,7 +2,7 @@
 #
 # 一次性引导：从 shipped 的 web 模板创建 workbench profile，
 # 继承 web 的 **bundle 清单**（这台机器上装了哪些 bundle），
-# 补上可写根那一行；新 profile 直接跟 web 共用数据根，旧 profile 保持原状，等用户跑 migrate。
+# 清掉旧版留下的可写根那一行（现在由产品代码声明）；新 profile 直接跟 web 共用数据根，旧 profile 保持原状，等用户跑 migrate。
 #
 # **设置不在这里继承**（这里曾经把 web 的 cordis.patch.yml 快照一份过来）：
 # 工作台自己的 patch 是唯一真相，想同步 web 的哪几行由用户走「设置 → 配置同步」。
@@ -176,7 +176,7 @@ console.log("→ profile 里那条 link: 指的是我这份装出来的副本（
 '
 fi
 
-# ── 第 3 步：数据根配置 + 可写根那一行 ─────────────────────────────────
+# ── 第 3 步：数据根配置（顺手清掉旧版塞进来的可写根那一行）─────────────
 #
 # 新 profile 跟 `dsh web` / Desktop 一样只分 profile，数据落在 `$DSH_HOME`。
 # 旧 profile 如果还有没迁的数据，这里只打印 migrate 提示，保持隔离、不动数据；
@@ -203,7 +203,7 @@ fi
 
 cat <<EOF
 
-profile '$DST_PROFILE' 的骨架好了（bundle 清单 + 可写根）。
+profile '$DST_PROFILE' 的骨架好了（bundle 清单）。
 旧实例如果还有数据没迁，启动时会提示；要切共用根并并旧数据，跑 dsh-workbench migrate。
 
 设置按创建时的勾选从 $SRC_PROFILE_NAME 继承（只同步改已有插件的行；挂新插件的行不同步）；

@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-import { pkg, read } from '../lib.mjs';
+import { PKG, pkg, read } from '../lib.mjs';
 
 const bundlePatch = () =>
   read(pkg('cordis.patch.yml'))
@@ -93,27 +93,26 @@ export const checks = [
   },
   {
 
-    title: '★ 可写根不进 bundle 层（在线启用会撞 session-controller 的重组竞态）',
+    title: '★ 可写根由产品代码声明，不进 profile / bundle 任何一层',
     run(_ctx, report) {
       const inBundle = bundlePatch()
         .split(/^-\s+/m)
         .some((item) => /^id:\s*sandbox-policy\s*$/m.test(item));
-      const hasRow = (text) =>
-        /^-\s*id:\s*sandbox-policy\s*$/m.test(text) &&
-        (text.includes("workspaceRoot: !!js dshHomePath('workbench')") ||
-          text.includes("workspaceRoot: !!js process.env.DSH_WORKBENCH_HOME ?? dshHomePath('workbench')"));
-      const inLauncher = hasRow(read(pkg('profile/sandbox.patch.yml')));
-      const seed = read(pkg('scripts/seed-profile.sh'));
-      const seedCalls = seed.includes('scripts/share-data-root.mjs');
+      const host = `${read(pkg('src/app/host.ts'))}\n${read(pkg('src/shared/api/host/workbench-shell.ts'))}`;
+      const declares =
+        host.includes('withSandboxPolicy(') &&
+        host.includes("mode: 'workspace-write'") &&
+        host.includes('workspaceRoot: dshHome()') &&
+        read(join(PKG, '../shared/src/host/shell.ts')).includes('export function withSandboxPolicy');
+      const fileGone = !existsSync(pkg('profile/sandbox.patch.yml'));
       report(
-        '★ 可写根不进 bundle 层（在线启用会撞 session-controller 的重组竞态）',
-        !inBundle && inLauncher && seedCalls,
-        `bundle 层${inBundle ? '仍有' : '没有'} · 启动器那份${inLauncher ? '在' : '缺了'} · seed ${seedCalls ? '会把这一行补进 profile' : '没走 share-data-root'}`,
+        '★ 可写根由产品代码声明，不进 profile / bundle 任何一层',
+        !inBundle && declares && fileGone,
+        `bundle 层${inBundle ? '仍有' : '没有'} · 产品代码${declares ? '声明了' : '没声明'} · profile/sandbox.patch.yml ${fileGone ? '已删' : '还在'}`,
       );
     },
   },
   {
-
     title: '★ 随包脚本都在 package.json 的 files 里（漏了 = 装出去那台静默什么都不做）',
     run(_ctx, report) {
       report(

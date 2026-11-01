@@ -134,11 +134,10 @@
 # `file-upload` 注销 resolver 赛跑 —— 启用当场把 session-controller 打成 failed，
 # 之后每次新建会话都是 `gateway/service-unavailable`（连 toggle 都救不回来，只能重启）。
 #
-# 证据与 A/B：ADR-0037 的 2026-10-22 补记。自带 profile 的可写根仍有两处：启动器每次启动
-# 叠的 `--patch profile/sandbox.patch.yml`，以及 `profile/isolation.patch.yml` 里同值的那一行
-# （seed-profile.sh 追加进 profile，给不带启动器的 `dsh workbench`）。装进别人的 profile 时，
-# 请把那一行写进那个 profile 的 `cordis.patch.yml` 再**重启**（在线写同一行也会撞同一个竞态）。
-# 少了它只会让"无会话的插件命令"被沙箱挡，不会再动会话接口；宿主启动时会就此打一条 warn
+# 现在可写根由**产品代码自己声明**（`src/app/host.ts` 的 `setShellSandboxPolicy`，
+# `workspaceRoot` = `$DSH_HOME`），既不在 bundle、也不在 profile、也不需要启动器的
+# `--patch`：三条安装路径（独立实例 / `dsh web` / Desktop 插件页）行为一致。
+# 证据与 A/B：ADR-0037 的 2026-10-22 补记；宿主启动时会打一行 info 说明实际可写根
 # （见 runtime-seed 的 coversWritableRoot）。
 
 - insert:

@@ -141,7 +141,7 @@ spec="$(node -p "require('$home/profiles/wb3/package.json').dependencies['@dsh-w
 [ "$spec" = "$PKG_DIR" ] || fail "⑤ 目标 profile 没装对（装的是 ${spec}）"
 grep -q -- "--profile wb3" "$work/flags.out" || fail "⑤ 没说清怎么启动新 profile"
 patch="$home/profiles/wb3/cordis.patch.yml"
-grep -q 'id: sandbox-policy' "$patch" || fail "⑤ 可写根那一行没补进 profile"
+grep -q 'id: sandbox-policy' "$patch" && fail "⑤ setup 还在往 profile 里塞可写根（该由产品代码声明了）"
 grep -q 'session-persistence-jsonl\|storage-json\|attachment-local' "$patch" &&
   fail "⑤ setup 还在往 profile 里写数据隔离层"
 

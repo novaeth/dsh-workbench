@@ -60,7 +60,6 @@ export function createRuntimePort(options: { readonly server?: McpClientOptions 
       [CHROME_MCP_RUNTIME]: { command: mcpServerCommand(), source: 'path', isolated: null },
     }),
     seed: () => undefined,
-    warnUnwritableRoot: () => undefined,
     check: async () => {
       const client = createMcpClient(
         options.server ?? { command: mcpServerCommand(), args: [], timeoutMs: 10_000 },

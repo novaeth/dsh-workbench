@@ -1,6 +1,6 @@
-import type { DshHostContext, DshShell, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared';
 import type { RecordExpect, RecordStore } from '@dsh-workbench/shared/host';
-import { sessionIdOf } from '@dsh-workbench/shared/host';
+import { sessionIdOf, shellOf } from '@dsh-workbench/shared/host';
 import { BROWSER_RECORD_SESSION } from '@dsh-workbench/shared/host';
 
 import { cliCommandOf } from '@dsh-workbench/shared/host';
@@ -105,7 +105,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
       const method = asText(rawExpect['method']).toUpperCase();
       const urlContains = asText(rawExpect['urlContains']);
       const expect: RecordExpect | null = method === '' && urlContains === '' ? null : { method, urlContains };
-      const shell = ctx.get<DshShell>('shell');
+      const shell = shellOf(ctx);
       if (shell === undefined) throw new Error('这台机器上没有 shell 服务，开不了录制窗');
       const command = cliCommandOf(ctx);
       const sessionId = sessionIdOf(exec) ?? '';
@@ -176,7 +176,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
     },
     output: OUTPUT,
     async execute(raw: unknown, exec: DshToolRunContext) {
-      const shell = ctx.get<DshShell>('shell');
+      const shell = shellOf(ctx);
       if (shell === undefined) throw new Error('这台机器上没有 shell 服务，读不了录制');
       const sessionId = sessionIdOf(exec) ?? '';
       const held = store.live(Date.now());
@@ -310,7 +310,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
     async execute(raw: unknown, exec: DshToolRunContext) {
       const { root } = await workspaceOf(ctx, exec);
       const artifactsDir = artifactsDirOf(ctx, root);
-      const shell = ctx.get<DshShell>('shell');
+      const shell = shellOf(ctx);
       if (shell === undefined) throw new Error('这台机器上没有 shell 服务，取不了详情');
       const args = asRecord(raw);
       const unit = asText(args['unit']);
@@ -405,7 +405,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
     parameters: { type: 'object', properties: {}, additionalProperties: false },
     output: OUTPUT,
     async execute(_raw: unknown, exec: DshToolRunContext) {
-      const shell = ctx.get<DshShell>('shell');
+      const shell = shellOf(ctx);
       if (shell === undefined) throw new Error('这台机器上没有 shell 服务，收不了工');
       const sessionId = sessionIdOf(exec) ?? '';
       const held = store.live(Date.now());

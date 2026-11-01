@@ -14,7 +14,6 @@ import {
   runtimeSeedRootOf,
   seedRuntimeFiles,
   seedWorkbenchToolchain,
-  warnUnwritableRoot,
   workshopSeedPlan,
 } from '@dsh-workbench/adapter-probe';
 
@@ -40,7 +39,6 @@ const OPENCLI_RUNNER_TIMEOUT_MS = 30 * 60_000;
 export function createRuntimePort(): RuntimePort {
   return {
     packageRoot: packageRootOf,
-    warnUnwritableRoot,
 
     capabilities() {
       return {

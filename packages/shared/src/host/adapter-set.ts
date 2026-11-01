@@ -85,7 +85,6 @@ const FULL_METHODS = [
   ['runtime', 'runners'],
   ['runtime', 'health'],
   ['runtime', 'seed'],
-  ['runtime', 'warnUnwritableRoot'],
   ['plugins', 'declarationLookup'],
   ['plugins', 'createUnits'],
   ['actions', 'configSyncHandler'],

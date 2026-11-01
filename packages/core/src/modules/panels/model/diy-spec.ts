@@ -1,11 +1,10 @@
 import type {
   DshHostContext,
-  DshShell,
   DshToolDefinition,
   DshToolRegistry,
   DshToolRunContext,
 } from '@dsh-workbench/shared';
-import { runShell } from '@dsh-workbench/shared/host';
+import { runShell, shellOf } from '@dsh-workbench/shared/host';
 import { plainLine } from './diy-browser';
 import { cliCommandOf } from '@dsh-workbench/shared/host';
 import { asNumber, asRecord, asText, OUTPUT, plainJson } from './diy-context';
@@ -46,7 +45,7 @@ export function specTool(ctx: DshHostContext): DshToolDefinition {
       if (argv.length === 0) {
         throw new Error('给一条命令，site 与名字两个词 —— 例 `inventory publish`（`inventory/publish` 也认）。');
       }
-      const shell = ctx.get<DshShell>('shell');
+      const shell = shellOf(ctx);
       if (shell === undefined) throw new Error('这台机器上没有 shell 服务，问不了命令的形状');
       const asked = asNumber(args['timeoutMs']);
       const timeoutMs = asked !== undefined && asked > 0 ? asked : SPEC_TIMEOUT_MS;

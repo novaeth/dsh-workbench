@@ -76,6 +76,7 @@ export * from './host/cli-error.js';
 export * from './host/data-root.js';
 export * from './host/shell-text.js';
 export * from './host/shell.js';
+export * from './host/shell-service.js';
 export * from './host/data-error.js';
 export * from './host/install-failure.js';
 export * from './host/provision.js';

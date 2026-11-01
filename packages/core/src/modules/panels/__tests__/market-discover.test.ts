@@ -225,7 +225,7 @@ describe('模块文档', () => {
 });
 
 describe('发现域 · 沙箱拦住时给得出怎么修', () => {
-  it('★ 读索引被沙箱拦住：错误里带上要补的文件与那一段', async () => {
+  it('★ 读索引被沙箱拦住：说清是工作台自己可写根的问题，不教用户改 profile', async () => {
     const sources = [SOURCE];
     const store: MarketSourcesStore = {
       read: () => ({ sources, selected: SOURCE.id }),
@@ -253,7 +253,8 @@ describe('发现域 · 沙箱拦住时给得出怎么修', () => {
 
     expect(payload.state).toBe('unreadable');
     expect(payload.problem?.kind).toBe('sandbox');
-    expect(payload.problem?.detail).toContain(join('/home/u', '.dsh', 'profiles', 'desktop', 'cordis.patch.yml'));
-    expect(payload.problem?.detail).toContain("workspaceRoot: !!js dshHomePath('workbench')");
+    expect(payload.problem?.detail).toContain('$DSH_HOME');
+    expect(payload.problem?.detail).toContain(join('/home/u', '.dsh', 'profiles', 'desktop'));
+    expect(payload.problem?.detail).toContain('不用改 profile');
   });
 });

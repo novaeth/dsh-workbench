@@ -11,6 +11,7 @@ import {
   type BundleManager,
   type RouteHandler,
   type UnitTitle,
+  shellOf,
 } from '@dsh-workbench/shared/host';
 import type { UnitRefusal } from '@/kernel/host/unit-registry';
 import {
@@ -278,7 +279,7 @@ async function declarationRefusal(
     return refusedInspection(supply.declarationRefusalOf(inspection.name, supply.pathDeclarationOf(spec)));
   }
   if (inspection.kind !== 'registry') return undefined;
-  const shell = ctx.get<DshShell>('shell');
+  const shell = shellOf(ctx);
   if (shell === undefined) return undefined;
   const registry =
     typeof inspection.registry === 'string'
@@ -297,7 +298,7 @@ async function packageOverride(
   manager: BundleManager,
   asked: BundleRegistry | undefined,
 ): Promise<BundleInspection | undefined> {
-  const shell = ctx.get<DshShell>('shell');
+  const shell = shellOf(ctx);
   const fromInspection =
     inspection.status === 'accepted' && typeof inspection.registry === 'string' ? inspection.registry : undefined;
   const registry =

@@ -80,21 +80,6 @@ export function runtimeSeedRootOf(ctx: DshHostContext): string | null {
   }
 }
 
-export function coversWritableRoot(workspaceRoot: string, root: string): boolean {
-  const prefix = workspaceRoot.endsWith(sep) ? workspaceRoot : `${workspaceRoot}${sep}`;
-  return root === workspaceRoot || root.startsWith(prefix);
-}
-
-export function warnUnwritableRoot(ctx: DshHostContext): void {
-  const root = runtimeSeedRootOf(ctx);
-  if (root === null) return;
-  const workspaceRoot = ctx.get<{ readonly workspaceRoot?: string }>('sandboxPolicy')?.workspaceRoot;
-  if (workspaceRoot === undefined || coversWritableRoot(workspaceRoot, root)) return;
-  ctx.logger?.warn?.(
-    `[dsh-workbench] 可写根 ${workspaceRoot} 盖不住 ${root}：市场装插件、自举命令可能被沙箱挡（把 profile/sandbox.patch.yml 那一行写进这个 profile 的 cordis.patch.yml 再重启）`,
-  );
-}
-
 export function wrapperRootOf(fallbackRoot: string): string {
   try {
     return dirname(createRequire(import.meta.url).resolve('@dsh-workbench/adapter-runtime/package.json'));

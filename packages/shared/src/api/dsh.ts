@@ -144,6 +144,7 @@ export interface DshShellExecution {
     aborted: boolean;
     stdout: { text: string; truncated: boolean };
     stderr: { text: string; truncated: boolean };
+    sandbox?: { mode?: string; denied?: boolean; enforcement?: string; runnerFailed?: boolean } | undefined;
   }>;
 }
 
@@ -160,6 +161,10 @@ export interface DshShell {
     stdoutMaxBytes?: number;
     signal?: AbortSignal;
     env?: Readonly<Record<string, string>>;
+    sandboxPolicy?: {
+      mode: 'read-only' | 'workspace-write' | 'danger-full-access';
+      workspaceRoot: string;
+    };
   }): unknown;
   execute(spec: unknown): Promise<DshShellExecution>;
 }
@@ -244,7 +249,9 @@ export interface DshApprovalService {
  * 方法可选：服务缺席或老版本没有它时，调用方必须当成「不知道」而不是「完全放行」。
  */
 export interface DshSandboxPolicy {
-  resolve?(request?: { readonly session?: unknown }): { readonly mode?: string } | undefined;
+  resolve?(request?: { readonly session?: unknown; readonly mode?: string }):
+    | { readonly mode?: string; readonly workspaceRoot?: string }
+    | undefined;
 }
 
 /**

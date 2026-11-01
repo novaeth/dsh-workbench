@@ -1,5 +1,5 @@
 import type { DshHostContext, DshShell, DshToolRunContext } from '@dsh-workbench/shared';
-import { BROWSER_SCREEN_SESSION } from '@dsh-workbench/shared/host';
+import { BROWSER_SCREEN_SESSION, shellOf } from '@dsh-workbench/shared/host';
 import { DIY_DEBUG_SERVICE, sessionIdOf } from '@dsh-workbench/shared/host';
 import type { DebugState, DebugStore } from '@dsh-workbench/shared/host';
 import { boardFactOf, boardSituation, type BoardFactState, type BoardProbe, type BoardSituation } from '@dsh-workbench/shared/host';
@@ -148,7 +148,7 @@ export async function pageAt(
   if (wanted === '' && options.requireUnit !== false) {
     throw new Error(`看一眼要一个 unit（装过的：${pool.join(', ') || '（空）'}）`);
   }
-  const shell = ctx.get<DshShell>('shell');
+  const shell = shellOf(ctx);
   if (shell === undefined) throw new Error('这台机器上没有 shell 服务，动不了浏览器');
   const store = ctx.get<DebugStore>(DIY_DEBUG_SERVICE);
   const held = store?.live(Date.now()) ?? null;

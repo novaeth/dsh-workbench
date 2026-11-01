@@ -1,4 +1,7 @@
-import type { DshHostContext, DshShell, DshWorkspaceRegistry, UnitManifest } from '@dsh-workbench/shared';
+import type { DshHostContext, DshWorkspaceRegistry, UnitManifest } from '@dsh-workbench/shared';
+import { provideWorkbenchShell } from '@/shared/api/host/workbench-shell';
+import { shippedAdapterSet } from '@/shared/api/host/shipped-adapter-set';
+import { dshHome } from '@dsh-workbench/shared/host';
 import { createHostRoutes } from '@/shared/api/host/host-routes';
 import { assembleHostUnits } from '@/app/units/host';
 import { createPostChannels } from '@/shared/api/host/post-channels';
@@ -14,7 +17,6 @@ import {
 } from '@dsh-workbench/shared/host';
 import { PANEL_STATE_SERVICE, createFactLog, createPanelStateStore, toolUnits, wroteNow } from '@dsh-workbench/shared/host';
 import { basename } from 'node:path';
-import { readFileSync } from 'node:fs';
 import { registerFactStream } from '@/shared/api/host/events';
 import { applyPlanFailures } from '@/kernel/host/mount-units';
 import { WORKSHOP_TITLE } from '@/kernel/contract/diy';
@@ -37,7 +39,7 @@ import {
 } from '@/kernel/host/unit-registry';
 import { bindRosterFacts } from '@/shared/api/host/unit-roster-facts';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
-import { dshHome, withLibRunners } from '@dsh-workbench/shared/host';
+import { withLibRunners } from '@dsh-workbench/shared/host';
 import { CONFIG_SYNC_ROUTE } from '@/kernel/contract/config-sync';
 import { PROFILE_CREATE_ROUTE } from '@/kernel/contract/profile-create';
 import { SIDEBAR_EDITION_ROUTE } from '@/kernel/contract/sidebar-edition';
@@ -51,26 +53,8 @@ import { notifyLongTaskStop } from '@/shared/api/host/long-task-notice';
 export const name = 'dsh-workbench';
 interface ReleasedLookup { isReleased(id: string): boolean }
 export const inject = ['webServer'];
-function shippedAdapterSetSpec(moduleUrl: string): string {
-  const read = JSON.parse(readFileSync(new URL('../../package.json', moduleUrl), 'utf8')) as {
-    readonly workbench?: { readonly adapterSet?: unknown };
-  };
-  const spec = read.workbench?.adapterSet;
-  if (typeof spec !== 'string' || spec.trim() === '')
-    throw new Error('package.json 没写 workbench.adapterSet：外壳不知道该装哪份适配器集合');
-  return spec.trim();
-}
-
-async function shippedAdapterSet(ctx: DshHostContext): Promise<AdapterSet> {
-  const spec = shippedAdapterSetSpec(import.meta.url);
-  const mod = (await import(spec)) as {
-    readonly createAdapterSet?: (context: DshHostContext) => AdapterSet | Promise<AdapterSet>;
-  };
-  const factory = mod.createAdapterSet;
-  if (typeof factory !== 'function') throw new Error(`随包的适配器集合 ${spec} 没导出 createAdapterSet(ctx)`);
-  return await factory(ctx);
-}
 export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Promise<void> {
+  const shell = provideWorkbenchShell(ctx);
   const facts = createFactLog();
   const values = createValueHandoff();
   const panelState = createPanelStateStore();
@@ -78,7 +62,6 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   const adapters: AdapterSet = resolved.set;
   const loaded = resolved.load;
   adapters.runtime.seed(ctx, { corePackageUrl: import.meta.url, log: (message) => warn(ctx, message) });
-  adapters.runtime.warnUnwritableRoot(ctx);
   if (loaded.ok) {
     ctx.logger?.info?.(`[dsh-workbench] 适配器集合：${adapters.id}@${adapters.version}（${loaded.spec}）`);
   } else if (loaded.failure !== 'not-configured') {
@@ -90,7 +73,6 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     adapters.libs === undefined
       ? undefined
       : withLibRunners(adapters.libs, adapters.runtime.runners(ctx, adapters.data), ctx.logger);
-  const shell = ctx.get<DshShell>('shell');
   const routes: RouteTable = createHostRoutes({
     ctx,
     facts,

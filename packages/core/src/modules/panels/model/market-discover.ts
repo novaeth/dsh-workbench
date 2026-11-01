@@ -53,19 +53,11 @@ export interface MarketDiscoverOptions {
   readonly logger?: { warn?(message: string): void } | undefined;
 }
 
-const SANDBOX_BLOCK = [
-  '- id: sandbox-policy',
-  '  config:',
-  "    mode: !!js process.env.DSH_PERMISSION_MODE ?? 'workspace-write'",
-  "    workspaceRoot: !!js dshHomePath('workbench')",
-].join('\n');
-
 function explainProblem(problem: DiscoverProblem, profilePath: string | undefined): DiscoverProblem {
   if (problem.kind !== 'sandbox' || profilePath === undefined || profilePath === '') return problem;
-  const file = join(profilePath, 'cordis.patch.yml');
   return {
     ...problem,
-    detail: `被系统拦住了：这个 profile 的可写根盖不住工作台的缓存目录。\n退出 dsh 后，把下面这段加进 ${file}，再启动：\n${SANDBOX_BLOCK}`,
+    detail: `被系统拦住了：工作台按 $DSH_HOME 声明的可写根没盖住它的缓存目录，这条命令被沙箱挡下了。\n这是工作台自己的问题，不用改 profile —— 把这一屏和 $DSH_HOME 报给工作台维护者，或先在工作台外面手动加这个源（${profilePath}）。`,
   };
 }
 

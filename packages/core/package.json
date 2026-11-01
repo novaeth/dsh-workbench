@@ -31,7 +31,6 @@
     "cordis.patch.yml",
     "icon.svg",
     "bin",
-    "profile",
     "skills",
     "preset",
     "scripts/create-workbench.mjs",
