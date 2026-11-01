@@ -1,10 +1,13 @@
 import type { DshShell } from '@dsh-workbench/shared';
 import { runShell } from '@dsh-workbench/shared/host';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
+import { delimiter } from 'node:path';
 import {
+  desktopBundledBins,
   desktopNodeExecutable,
   desktopPnpmPath,
   desktopPnpmVersion,
+  desktopResourcesDir,
   desktopRuntimeEnvPath,
 } from './toolchain.js';
 import { hostSurface } from './platform.js';
@@ -16,6 +19,7 @@ export interface ToolchainReport {
   readonly npmMissing: boolean;
   readonly pnpmProblem: boolean;
   readonly stalled?: boolean | undefined;
+  readonly diagnostics?: readonly string[] | undefined;
 }
 
 async function toolVersion(
@@ -80,5 +84,10 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
         ? `pnpm ${pnpm.text}（Desktop 自带）`
         : `pnpm ${pnpm.text}`,
   ];
-  return { ok: !nodeMissing, detail: parts.join(' · '), nodeMissing, npmMissing, pnpmProblem };
+  const diagnostics = [
+    `deployment=${desktop ? 'desktop' : 'host'} · resources=${desktopResourcesDir() ?? '（无）'} · execPath=${process.execPath}`,
+    `bundled node=${bundledNode ?? '（找不到）'} · bundled pnpm=${bundledPnpm ?? '（找不到）'} · bins=${desktopBundledBins().join('|') || '（无）'}`,
+    `PATH 前两段=${(path ?? '').split(delimiter).slice(0, 2).join('|') || '（空）'}`,
+  ];
+  return { ok: !nodeMissing, detail: parts.join(' · '), nodeMissing, npmMissing, pnpmProblem, diagnostics };
 }

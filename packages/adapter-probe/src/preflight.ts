@@ -319,6 +319,7 @@ export function createPreflight(options: {
             }),
           );
     if (toolchain !== undefined && toolchain.detail.trim() !== '') appendLog('toolchain', toolchain.detail);
+    for (const line of toolchain?.diagnostics ?? []) appendLog('toolchain', line);
     if (toolchain !== undefined && toolchain.ok && toolchain.pnpmProblem && options.provisionPnpm !== undefined) {
       set({ phase: 'installing' });
       patchStep('toolchain', { status: 'running', action: `装本地 pnpm@${LOCAL_PNPM_VERSION}` });
