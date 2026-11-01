@@ -100,15 +100,19 @@ hooks for a one-off commit.
 
 ## CI
 
-GitHub Actions runs two workflows on pull requests and pushes to `main`:
+GitHub Actions runs two workflows:
 
-- `.github/workflows/docs.yml` (ubuntu): `pnpm run check:docs`, the `DOC-3` link/§N gate, and `pnpm run lint`.
-- `.github/workflows/platform-ci.yml` (Windows Server 2025 + macOS): install, build, typecheck, and the
-  full test suite via `pnpm run coverage`. The Windows lane skips the docs site build (Pagoda), which is
-  platform-independent and still built by the macOS lane.
+- `.github/workflows/docs.yml` (ubuntu, pull requests and pushes to `main`): `pnpm run check:docs`,
+  the `DOC-3` link/§N gate, and `pnpm run lint`.
+- `.github/workflows/desktop-smoke.yml` (pushes to `main`, a weekly cron, and manual dispatch; macOS
+  plus Windows Server 2022/2025 through `desktop-smoke-windows.yml`): installs the shipped Desktop
+  build, installs the workbench from the plugin page, runs preflight, loads the opencli extension,
+  installs `module-hello` from the market, restarts once and asserts the card. A failing run publishes
+  the page/log evidence to a `desktop-ui-log-*` branch; a green one only uploads the run artifacts.
 
-The full `pnpm run check` is still the release gate and is expected before pushing; the docs
-workflow keeps document facts from silently drifting in PRs.
+The full `pnpm run check` is still the release gate and is expected before pushing. Nothing in CI runs
+the typecheck or the test suite on Windows/macOS any more, so run the gate locally (or in a worktree)
+before pushing.
 
 ## Docs site
 
