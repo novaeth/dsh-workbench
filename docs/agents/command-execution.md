@@ -4,17 +4,17 @@
 
 ## 默认：执行缝
 
-`ctx.get<DshShell>('shell')` 拿到 shell 服务，再调 `runShell(shell, 命令行, 选项)`（[shell.ts](../../packages/shared/src/host/shell.ts)）。直接 `resolve` / `execute` 只发生在 `shell.ts` 里。模块要用 shell，就在 manifest 的 `host.optional` 里登记；可选消费方处理拿到 `undefined` 的情况。
+`shellOf(ctx)` 拿到 shell 服务（拿到的是产品代码声明过可写根的那个 `workbenchShell`；没声明过才退回原始的 `shell` 服务），再调 `runShell(shell, 命令行, 选项)`（[shell.ts](../../packages/shared/src/host/shell.ts)、[shell-service.ts](../../packages/shared/src/host/shell-service.ts)）。直接 `resolve` / `execute` 只发生在 `shell.ts` 里。模块要用 shell，就在 manifest 的 `host.optional` 里登记；可选消费方处理拿到 `undefined` 的情况。
 
 平台差异（OS、Desktop/Electron、shell 种类）走 [`platform.ts`](../../packages/adapter-probe/src/platform.ts)（`hostSurface` / `currentShellKind`）；业务代码读的是能力，不是 `process.platform`。
 
-`runShell` 返回 `ShellResult`：`exitCode` / `timedOut` / `aborted` / `stdout` / `stderr` / `truncated` / `stalled`。非零退出、超时、中止都是**结果**；只有起不来（`spawn ENOENT` 之类）才抛。
+`runShell` 返回 `ShellResult`：`exitCode` / `timedOut` / `aborted` / `stdout` / `stderr` / `truncated` / `stalled` / `sandbox`（沙箱事实：mode / denied / runnerFailed）。非零退出、超时、中止都是**结果**；只有起不来（`spawn ENOENT` 之类）才抛。
 
 命令从这儿跑，同时拿到这几样：
 
 | 拿到什么 | 预算与事实 |
 |---|---|
-| 文件沙箱 | 带会话的调用由调用方把该会话的 policy 塞进请求；直接调用（插件、无会话）回落到部署策略的 mode 与 `workspaceRoot` |
+| 文件沙箱 | 带会话的调用由调用方把该会话的 policy 塞进请求；直接调用（插件、无会话）用产品代码声明的那份 `SHELL_SANDBOX_POLICY`（见「已知边界」） |
 | 超时 | 调用方给；不传时 `runShell` 缺省 10s。执行器对单次调用设上限（默认 600s），安装/打包类传 300s，在限内 |
 | 输出 | stdout 请求上限 8MB；stderr 每流 64KB 内存、溢出落 spill 文件，读到的都是尾部 |
 | 环境 | `env` 叠加在宿主环境上；凭据先被清、`DSH_*` 先被剥，所以 `DSH_HOME` 这类值自己钉进 `env` |
@@ -45,7 +45,7 @@
 ## 已知边界：无会话时的可写根
 
 - 有会话：根是该会话**创建时**记下的 cwd，不是单次调用的 `workdir`。
-- 无会话：根是调用方在 `shell.resolve` 的 `sandboxPolicy` 里声明的那个。工作台不再依赖部署默认值：`src/app/host.ts` 启动时调 `setShellSandboxPolicy({ mode: 'workspace-write', workspaceRoot: dshHome() })`，所有经缝的命令都带上它 —— 三条安装路径（独立实例 / `dsh web` / Desktop 插件页）一致，不需要改 profile，也没有启动器 `--patch` 了。
+- 无会话：根是调用方在 `shell.resolve` 的 `sandboxPolicy` 里声明的那个。工作台不依赖部署默认值：`src/shared/api/host/workbench-shell.ts` 的 `provideWorkbenchShell` 用 `SHELL_SANDBOX_POLICY`（`{ mode: 'workspace-write', workspaceRoot: dshHome() }`）经 `withSandboxPolicy` 包一层，host 启动时 provide —— 所有经缝的命令都带上它，三条安装路径（独立实例 / `dsh web` / Desktop 插件页）一致，不需要改 profile，也没有启动器 `--patch` 了。
 - `workspace-write` 的可写范围 = 根 + `/tmp` + `os.tmpdir()`。`$DSH_HOME` 之外的 HOME 缓存（pnpm 的 `cacheDir` / `stateDir` 等）仍在范围外，所以自举走具名例外。
 - 旧 profile 里如果还留着 `sandbox-policy` 那行（`workspaceRoot` 指 `$DSH_HOME/workbench`），`seed-profile` 会把它清掉；留着也不会赢过产品代码声明的策略。
 
