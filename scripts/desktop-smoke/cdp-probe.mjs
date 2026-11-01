@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { join } from 'node:path';
+import { execa } from 'execa';
 
 const port = process.argv[2] ?? '9222';
 const shot = process.argv[3] ?? 'desktop-smoke.png';
@@ -20,6 +21,8 @@ const INSTALL_WAIT_MS = 360_000;
 const GATE_WAIT_MS = 360_000;
 const READY_WAIT_MS = 450_000;
 const MARKET_WAIT_MS = 300_000;
+const BRIDGE_WAIT_MS = 180_000;
+const BRIDGE_RETRY_MS = 5_000;
 const MODULE_WAIT_MS = 240_000;
 const POLL_MS = 2000;
 
@@ -39,6 +42,7 @@ const log = (message) => {
 };
 const milestones = {};
 let activeCdp = null;
+let browserState = 'pending';
 
 function mark(name) {
   milestones[name] = elapsed();
@@ -334,6 +338,39 @@ async function installFromPluginPage(cdp) {
   await sleep(3000);
 }
 
+function stepStatusOf(snapshot, id) {
+  const steps = snapshot?.steps;
+  if (!Array.isArray(steps)) return '';
+  return String(steps.find((item) => item.id === id)?.status ?? '');
+}
+
+async function launchSmokeBrowser() {
+  const binary = (process.env.DESKTOP_SMOKE_CHROME ?? '').trim();
+  const extension = (process.env.DESKTOP_SMOKE_EXTENSION ?? '').trim();
+  if (binary === '' || extension === '') {
+    log('浏览器扩展：没给 DESKTOP_SMOKE_CHROME / DESKTOP_SMOKE_EXTENSION，跳过"装扩展再重试"');
+    browserState = 'missing-env';
+    return browserState;
+  }
+  const profile = join(process.env.RUNNER_TEMP ?? outDir, 'opencli-browser-profile');
+  log(`模拟用户装扩展：起浏览器 ${binary}（--load-extension=${extension}）`);
+  const child = execa(
+    binary,
+    [
+      `--user-data-dir=${profile}`,
+      `--load-extension=${extension}`,
+      '--disable-features=DisableLoadExtensionCommandLineSwitch',
+      '--no-first-run',
+      '--no-default-browser-check',
+    ],
+    { detached: true, stdio: 'ignore', cleanup: false },
+  );
+  child.catch((error) => log(`浏览器起不来：${String(error?.message ?? error)}`));
+  browserState = 'launched';
+  mark('browser-launched');
+  return browserState;
+}
+
 async function waitForGateAndReady(cdp) {
   const gateShot = `${prefix}-gate.png`;
   const gateOpenShot = `${prefix}-gate-open.png`;
@@ -375,12 +412,28 @@ async function waitForGateAndReady(cdp) {
   }
 
   const readyUntil = Date.now() + remaining('等体检 ready', READY_WAIT_MS);
+  let bridgeRetriedAt = 0;
+  let bridgeDeadline = 0;
   while (Date.now() < readyUntil) {
     readyBody = await bodyOf(cdp);
     snapshot = await preflightOf(cdp);
     const phase = snapshot?.phase ?? '';
+    const bridge = stepStatusOf(snapshot, 'bridge');
     log(`ready wait [${phase}] ${stepStates(snapshot)} :: ${tailBody(readyBody, 220)}`);
     if (phase === 'failed') await fail(cdp, 'preflight failed', readyBody, snapshot);
+    if (bridge !== '' && bridge !== 'ok') {
+      if (browserState === 'pending') await launchSmokeBrowser();
+      if (browserState === 'launched') {
+        if (bridgeDeadline === 0) bridgeDeadline = Date.now() + remaining('等浏览器通道', BRIDGE_WAIT_MS);
+        if (Date.now() > bridgeDeadline) {
+          await fail(cdp, `浏览器通道没连上（装扩展 + Retry 之后 bridge 还是 ${bridge}）`, readyBody, snapshot);
+        }
+        if (Date.now() - bridgeRetriedAt >= BRIDGE_RETRY_MS) {
+          bridgeRetriedAt = Date.now();
+          await click(cdp, ['Retry', '重试'], 1200);
+        }
+      }
+    }
     const continueText = continueTexts.find((text) => readyBody.includes(text));
     if (continueText !== undefined) {
       await click(cdp, [continueText], 3000);
@@ -579,7 +632,14 @@ async function main() {
   if (installViaUi && result.installed === false) {
     await fail(cdp, 'market module install did not finish', await bodyOf(cdp), snapshot);
   }
-  writeText(`${prefix}-smoke.json`, `${JSON.stringify({ ...result, phase: snapshot?.phase ?? 'unknown' }, null, 2)}\n`);
+  writeText(
+    `${prefix}-smoke.json`,
+    `${JSON.stringify(
+      { ...result, phase: snapshot?.phase ?? 'unknown', bridge: stepStatusOf(snapshot, 'bridge') || 'none' },
+      null,
+      2,
+    )}\n`,
+  );
 
   const finalBody = await bodyOf(cdp);
   writeText(`${prefix}-final-body.txt`, finalBody);
@@ -591,6 +651,7 @@ async function main() {
   }
   summary('passed', result);
   cdp.close();
+  setTimeout(() => process.exit(0), 300);
 }
 
 const watchdog = setTimeout(() => {

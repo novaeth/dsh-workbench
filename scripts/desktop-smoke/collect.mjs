@@ -262,6 +262,22 @@ async function main() {
     push(tailFile(join(cwd, name), 80));
   }
 
+  section('opencli doctor');
+  const opencliBin = join(workbenchHome, 'opencli', 'bin', process.platform === 'win32' ? 'opencli.cmd' : 'opencli');
+  push(`bin: ${opencliBin}（${existsSync(opencliBin) ? '在' : '不在'}）`);
+  if (existsSync(opencliBin)) {
+    const doctor =
+      process.platform === 'win32'
+        ? await execa(process.env.ComSpec ?? 'cmd.exe', ['/d', '/c', opencliBin, 'doctor'], {
+            timeout: 60_000,
+            reject: false,
+          })
+        : await execa(opencliBin, ['doctor'], { timeout: 60_000, reject: false });
+    push(`exit: ${String(doctor.exitCode)}`);
+    push(doctor.stdout ?? '');
+    push(doctor.stderr ?? '');
+  }
+
   section('units and client injection');
   for (const name of [
     `${prefix}-units.json`,

@@ -53,6 +53,21 @@ jobs:
         run: |
           if (Get-Command opencli -ErrorAction SilentlyContinue) { throw 'opencli is preinstalled; this smoke must start without it' }
           'opencli: missing (expected)'
+      - name: Prepare opencli browser extension
+        shell: pwsh
+        run: |
+          $chrome = @("$env:ProgramFiles\Google\Chrome\Application\chrome.exe", "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if ($null -eq $chrome) { throw 'Chrome not found on this runner' }
+          & $chrome --version
+          $url = node -e "fetch('https://api.github.com/repos/jackwener/opencli/releases/latest').then((r) => r.json()).then((d) => { const a = (d.assets || []).find((x) => x.name.startsWith('opencli-extension-v') && x.name.endsWith('.zip')); if (!a) throw new Error('no extension asset'); console.log(a.browser_download_url); })"
+          "extension: $url"
+          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\opencli-ext.zip"
+          $dest = "$env:RUNNER_TEMP\opencli-ext"
+          if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
+          Expand-Archive -Path "$env:RUNNER_TEMP\opencli-ext.zip" -DestinationPath $dest -Force
+          Get-ChildItem $dest | Select-Object -First 6 Name
+          "DESKTOP_SMOKE_CHROME=$chrome" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "DESKTOP_SMOKE_EXTENSION=$dest" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Open Desktop, install workbench and market module, restart once
         shell: pwsh
         env:
@@ -202,6 +217,23 @@ jobs:
         run: |
           if command -v opencli >/dev/null 2>&1; then echo "unexpected opencli: $(command -v opencli)"; exit 1; fi
           echo 'opencli: missing (expected)'
+      - name: Prepare opencli browser extension
+        shell: bash
+        run: |
+          CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+          if [ ! -x "$CHROME" ]; then echo "Chrome missing: $CHROME"; exit 1; fi
+          "$CHROME" --version
+          EXT_URL=$(node -e "fetch('https://api.github.com/repos/jackwener/opencli/releases/latest').then((r) => r.json()).then((d) => { const a = (d.assets || []).find((x) => x.name.startsWith('opencli-extension-v') && x.name.endsWith('.zip')); if (!a) throw new Error('no extension asset'); console.log(a.browser_download_url); })")
+          echo "extension: $EXT_URL"
+          curl -fL --retry 2 -o "$RUNNER_TEMP/opencli-ext.zip" "$EXT_URL"
+          rm -rf "$RUNNER_TEMP/opencli-ext"
+          mkdir -p "$RUNNER_TEMP/opencli-ext"
+          unzip -q "$RUNNER_TEMP/opencli-ext.zip" -d "$RUNNER_TEMP/opencli-ext"
+          ls "$RUNNER_TEMP/opencli-ext"
+          {
+            echo "DESKTOP_SMOKE_CHROME=$CHROME"
+            echo "DESKTOP_SMOKE_EXTENSION=$RUNNER_TEMP/opencli-ext"
+          } >> "$GITHUB_ENV"
       - name: Open Desktop, install workbench and market module, restart once
         shell: bash
         env:
