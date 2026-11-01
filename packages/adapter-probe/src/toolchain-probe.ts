@@ -27,13 +27,19 @@ async function toolVersion(
   shell: DshShell,
   line: string,
   env: Readonly<Record<string, string>>,
-): Promise<{ ok: boolean; text: string; stalled: boolean }> {
+): Promise<{ ok: boolean; text: string; stalled: boolean; code: number | null; raw: string }> {
   try {
     const result = await runShell(shell, line, { timeoutMs: 10_000, env });
     const text = (result.stdout || result.stderr).trim().split('\n')[0] ?? '';
-    return { ok: result.exitCode === 0 && !result.timedOut, text, stalled: result.stalled };
-  } catch {
-    return { ok: false, text: '', stalled: false };
+    return {
+      ok: result.exitCode === 0 && !result.timedOut,
+      text,
+      stalled: result.stalled,
+      code: result.exitCode,
+      raw: `${result.stdout ?? ''}${result.stderr ?? ''}`.trim().split('\n').slice(0, 2).join(' / '),
+    };
+  } catch (error) {
+    return { ok: false, text: '', stalled: false, code: null, raw: String(error) };
   }
 }
 
@@ -89,6 +95,9 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
     `deployment=${desktop ? 'desktop' : 'host'} · resources=${desktopResourcesDir() ?? '（无）'} · execPath=${process.execPath}`,
     `bundled node=${bundledNode ?? '（找不到）'} · bundled pnpm=${bundledPnpm ?? '（找不到）'} · bins=${desktopBundledBins().join('|') || '（无）'}`,
     `PATH 前两段=${(path ?? '').split(delimiter).slice(0, 2).join('|') || '（空）'}`,
+    `node: exit=${String(node.code)} out=${node.raw.slice(0, 160) || '（空）'} cmd=${nodeCommand}`,
+    `pnpm: exit=${String(pnpm.code)} out=${pnpm.raw.slice(0, 160) || '（空）'} cmd=${pnpmLine}`,
+    `npm: exit=${String(npm.code)} out=${npm.raw.slice(0, 120) || '（空）'}`,
   ];
   return { ok: !nodeMissing, detail: parts.join(' · '), nodeMissing, npmMissing, pnpmProblem, diagnostics };
 }
