@@ -53,48 +53,7 @@ jobs:
           if (Get-Command opencli -ErrorAction SilentlyContinue) { throw 'opencli is preinstalled; this smoke must start without it' }
           'opencli: missing (expected)'
       - name: Prepare opencli browser extension
-        shell: pwsh
-        run: |
-          Start-Transcript -Path 'desktop-${{ inputs.label }}-prep.log' -Force | Out-Null
-          try {
-            $meta = Invoke-RestMethod -Uri 'https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json'
-            $cft = ($meta.channels.Stable.downloads.chrome | Where-Object { $_.platform -eq 'win64' } | Select-Object -First 1).url
-            if ($null -eq $cft) { throw 'Chrome for Testing win64 not found' }
-            Invoke-WebRequest -Uri $cft -OutFile "$env:RUNNER_TEMP\cft.zip"
-            $cftDir = "$env:RUNNER_TEMP\cft"
-            if (Test-Path $cftDir) { Remove-Item -Recurse -Force $cftDir }
-            Expand-Archive -Path "$env:RUNNER_TEMP\cft.zip" -DestinationPath $cftDir -Force
-            $chrome = Join-Path $cftDir 'chrome-win64\chrome.exe'
-            if (!(Test-Path $chrome)) { throw "Chrome for Testing binary missing: $chrome" }
-            "chrome: $((Get-Item $chrome).VersionInfo.FileVersion)"
-            $pin = (Select-String -Path 'packages/shared/src/config/constants.ts' -Pattern 'OPENCLI_PIN\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
-            "opencli pin: $pin"
-            $latest = Invoke-WebRequest -Uri 'https://github.com/jackwener/opencli/releases/latest' -MaximumRedirection 5
-            $tag = ($latest.BaseResponse.RequestMessage.RequestUri.AbsolutePath -split '/')[-1]
-            "latest release: $tag"
-            $assets = Invoke-WebRequest -Uri "https://github.com/jackwener/opencli/releases/expanded_assets/$tag"
-            $asset = ([regex]'opencli-extension-v[0-9.]+\.zip').Match($assets.Content).Value
-            if ([string]::IsNullOrEmpty($asset)) { throw 'no extension asset in latest release' }
-            $url = "https://github.com/jackwener/opencli/releases/download/$tag/$asset"
-            "extension: $url"
-            Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\opencli-ext.zip"
-            $dest = "$env:RUNNER_TEMP\opencli-ext"
-            if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
-            Expand-Archive -Path "$env:RUNNER_TEMP\opencli-ext.zip" -DestinationPath $dest -Force
-            if (!(Test-Path (Join-Path $dest 'manifest.json'))) {
-              $nested = Get-ChildItem -Path $dest -Recurse -Filter 'manifest.json' | Select-Object -First 1
-              if ($null -eq $nested) { throw 'extension zip has no manifest.json' }
-              $dest = $nested.DirectoryName
-            }
-            $manifestPath = Join-Path $dest 'manifest.json'
-            & node -e "console.log('extension version:', require(process.argv[1]).version)" $manifestPath
-            "DESKTOP_SMOKE_CHROME=$chrome" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-            "DESKTOP_SMOKE_EXTENSION=$dest" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-            "DESKTOP_SMOKE_OPENCLI=$env:USERPROFILE\.dsh\workbench\opencli\bin\opencli.cmd" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-            "DESKTOP_SMOKE_NODE_BIN=$env:LOCALAPPDATA\Programs\DeepSeek Harness\resources\runtime\primary-runtime\dependencies\node\bin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          } finally {
-            Stop-Transcript | Out-Null
-          }
+        run: node scripts/desktop-smoke/prepare-browser.mjs
       - name: Open Desktop, install workbench and market module, restart once
         shell: pwsh
         env:

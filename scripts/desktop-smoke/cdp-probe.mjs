@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { execa } from 'execa';
-import { dirname, join, resolve } from 'node:path';
+import { delimiter, join } from 'node:path';
 
 const port = process.argv[2] ?? '9222';
 const shot = process.argv[3] ?? 'desktop-smoke.png';
@@ -384,7 +384,7 @@ async function launchSmokeBrowser() {
       `--disable-extensions-except=${extension}`,
       '--remote-debugging-port=9333',
       '--disable-features=DisableLoadExtensionCommandLineSwitch',
-      ...(process.platform === 'win32' ? ['--no-sandbox'] : []),
+      '--no-sandbox',
       '--disable-gpu',
       '--disable-software-rasterizer',
       '--window-size=1280,900',
@@ -399,28 +399,10 @@ async function launchSmokeBrowser() {
   return browserState;
 }
 
-function opencliEntryOf(bin) {
-  const nodeBin = (process.env.DESKTOP_SMOKE_NODE_BIN ?? '').trim();
-  if (process.platform !== 'win32' || nodeBin === '') return null;
-  const root = resolve(dirname(bin), '..', 'toolchain', 'node_modules', '@jackwener', 'opencli');
-  const manifest = join(root, 'package.json');
-  if (!fs.existsSync(manifest)) return null;
-  const parsed = JSON.parse(fs.readFileSync(manifest, 'utf8'));
-  const declared = typeof parsed.bin === 'string' ? parsed.bin : parsed.bin?.opencli;
-  if (typeof declared !== 'string') return null;
-  const entry = resolve(root, declared);
-  const nodeExe = join(nodeBin, 'node.exe');
-  return fs.existsSync(nodeExe) && fs.existsSync(entry) ? { file: nodeExe, args: [entry, 'doctor'] } : null;
-}
-
 function doctorCommand() {
   const bin = (process.env.DESKTOP_SMOKE_OPENCLI ?? '').trim();
   if (bin === '') return null;
-  const direct = opencliEntryOf(bin);
-  if (direct !== null) return direct;
-  return process.platform === 'win32'
-    ? { file: process.env.ComSpec ?? 'cmd.exe', args: ['/d', '/c', bin, 'doctor'] }
-    : { file: bin, args: ['doctor'] };
+  return { file: bin, args: ['doctor'] };
 }
 
 async function doctorText() {
@@ -430,7 +412,7 @@ async function doctorText() {
   const path =
     nodeBin === ''
       ? process.env.PATH
-      : [nodeBin, process.env.PATH ?? ''].filter((one) => one !== '').join(process.platform === 'win32' ? ';' : ':');
+      : [nodeBin, process.env.PATH ?? ''].filter((one) => one !== '').join(delimiter);
   const result = await execa(command.file, command.args, {
     timeout: 60_000,
     reject: false,

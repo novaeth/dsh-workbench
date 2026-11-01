@@ -65,43 +65,7 @@ jobs:
           if command -v opencli >/dev/null 2>&1; then echo "unexpected opencli: $(command -v opencli)"; exit 1; fi
           echo 'opencli: missing (expected)'
       - name: Prepare opencli browser extension
-        shell: bash
-        run: |
-          exec > >(tee -a desktop-mac-prep.log) 2>&1
-          CFT_URL=$(curl -fsSL --retry 3 'https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json' | node -e "let s = ''; process.stdin.on('data', (d) => { s += d; }).on('end', () => { const j = JSON.parse(s); const u = j.channels.Stable.downloads.chrome.find((x) => x.platform === 'mac-arm64'); if (!u) throw new Error('no Chrome for Testing mac-arm64'); console.log(u.url); });")
-          echo "cft: $CFT_URL"
-          curl -fL --retry 3 -o "$RUNNER_TEMP/cft.zip" "$CFT_URL"
-          rm -rf "$RUNNER_TEMP/cft"
-          mkdir -p "$RUNNER_TEMP/cft"
-          unzip -q "$RUNNER_TEMP/cft.zip" -d "$RUNNER_TEMP/cft"
-          CHROME="$RUNNER_TEMP/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
-          if [ ! -x "$CHROME" ]; then echo "Chrome for Testing missing: $CHROME"; exit 1; fi
-          "$CHROME" --version
-          PIN=$(node -e "const t = require('node:fs').readFileSync('packages/shared/src/config/constants.ts', 'utf8'); const m = /OPENCLI_PIN\s*=\s*\"([^\"]+)\"/.exec(t); if (!m) throw new Error('OPENCLI_PIN not found'); console.log(m[1]);")
-          echo "opencli pin: $PIN（工作台装的 CLI 版本）"
-          TAG_URL=$(curl -fsSL --retry 3 -o /dev/null -w '%{url_effective}' 'https://github.com/jackwener/opencli/releases/latest')
-          TAG="${TAG_URL##*/}"
-          echo "latest release: $TAG"
-          ASSET=$(curl -fsSL --retry 3 "https://github.com/jackwener/opencli/releases/expanded_assets/$TAG" | grep -o 'opencli-extension-v[0-9.]*\.zip' | head -1)
-          if [ -z "$ASSET" ]; then echo 'no extension asset in latest release'; exit 1; fi
-          EXT_URL="https://github.com/jackwener/opencli/releases/download/$TAG/$ASSET"
-          echo "extension: $EXT_URL"
-          curl -fL --retry 3 -o "$RUNNER_TEMP/opencli-ext.zip" "$EXT_URL"
-          rm -rf "$RUNNER_TEMP/opencli-ext"
-          mkdir -p "$RUNNER_TEMP/opencli-ext"
-          unzip -q "$RUNNER_TEMP/opencli-ext.zip" -d "$RUNNER_TEMP/opencli-ext"
-          EXT_DIR="$RUNNER_TEMP/opencli-ext"
-          if [ ! -f "$EXT_DIR/manifest.json" ]; then
-            EXT_DIR=$(dirname "$(find "$RUNNER_TEMP/opencli-ext" -name manifest.json -maxdepth 3 | head -1)")
-          fi
-          if [ ! -f "$EXT_DIR/manifest.json" ]; then echo 'extension zip has no manifest.json'; exit 1; fi
-          echo "extension dir: $EXT_DIR"
-          node -e "console.log('extension version:', require(process.argv[1]).version)" "$EXT_DIR/manifest.json"
-          {
-            echo "DESKTOP_SMOKE_CHROME=$CHROME"
-            echo "DESKTOP_SMOKE_EXTENSION=$EXT_DIR"
-            echo "DESKTOP_SMOKE_OPENCLI=$HOME/.dsh/workbench/opencli/bin/opencli"
-          } >> "$GITHUB_ENV"
+        run: node scripts/desktop-smoke/prepare-browser.mjs
       - name: Open Desktop, install workbench and market module, restart once
         shell: bash
         env:
