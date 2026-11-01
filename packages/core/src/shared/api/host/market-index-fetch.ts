@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import writeFileAtomic from 'write-file-atomic';
+
 import type {
   DiscoverProblem,
   IndexSourceSpec,
@@ -14,6 +14,8 @@ import {
   httpUrlProblem,
   marketSourceKey,
   parseMarketIndexJson,
+  writeJsonFileAsync,
+  writeTextFileAsync,
 } from '@dsh-workbench/shared/host';
 import { withoutAskpassNoise } from './git-exec.js';
 import type { GitRunner } from './git-process.js';
@@ -80,7 +82,7 @@ function repoOf(root: string, source: IndexSourceSpec): string {
 }
 
 function writeMeta(path: string, meta: { readonly fetchedAt: number; readonly commit?: string }): Promise<void> {
-  return writeFileAtomic(path, `${JSON.stringify(meta, null, 2)}\n`);
+  return writeJsonFileAsync(path, meta);
 }
 
 function readMeta(path: string): { readonly fetchedAt: number; readonly commit?: string } | undefined {
@@ -198,7 +200,7 @@ export function createMarketIndexReader(options: MarketIndexReaderOptions): Mark
     }
     const fetchedAt = now();
     mkdirSync(directoryOf(options.root, source), { recursive: true });
-    await writeFileAtomic(indexFileOf(options.root, source), text);
+    await writeTextFileAsync(indexFileOf(options.root, source), text);
     await writeMeta(metaFileOf(options.root, source), { fetchedAt });
     return { ok: true, index: parsed.index, fetchedAt };
   }
@@ -305,7 +307,7 @@ export function createMarketIndexReader(options: MarketIndexReaderOptions): Mark
     );
     const finish = async (index: MarketIndex, text: string): Promise<IndexRead> => {
       const fetchedAt = now();
-      await writeFileAtomic(indexFileOf(options.root, source), text);
+      await writeTextFileAsync(indexFileOf(options.root, source), text);
       await writeMeta(metaFileOf(options.root, source), { fetchedAt, commit });
       return { ok: true, index, fetchedAt, commit };
     };

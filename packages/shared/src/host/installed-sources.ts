@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { writeTextFile } from './fs-write.js';
 
 export interface InstalledSource {
   readonly version: string;
@@ -50,11 +51,9 @@ export function packageSourceOf(profileDir: string | null, pkg: string): Install
 }
 
 function writeInstalledSources(profileDir: string, sources: InstalledSourceMap): void {
-  const file = installedSourcesFile(profileDir);
-  const temp = `${file}.tmp`;
-  const text = `${JSON.stringify({ version: FILE_VERSION, packages: sources }, null, 2)}\n`;
-  fs.writeFileSync(temp, text, { mode: 0o600 });
-  fs.renameSync(temp, file);
+  writeTextFile(installedSourcesFile(profileDir), `${JSON.stringify({ version: FILE_VERSION, packages: sources }, null, 2)}\n`, {
+    mode: 0o600,
+  });
 }
 
 export function rememberPackageSource(profileDir: string, pkg: string, source: InstalledSource): void {

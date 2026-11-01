@@ -2,6 +2,7 @@ import type { RegistryEntry, RegistryNotebook } from './adapter-types.js';
 import { normalizeRegistry, sameRegistry, scopeOf } from './adapter-types.js';
 import fs from 'node:fs';
 import path from 'node:path';
+import { writeTextFile } from './fs-write.js';
 export const REGISTRY_MARKER =
   '# dsh-workbench 写的：这一行的包只在这个源上（dsh 卸载没有源参数，pnpm 得问得到）';
 
@@ -93,9 +94,7 @@ function readNpmrc(file: string): string {
 }
 
 function writeNpmrc(file: string, text: string): void {
-  const temp = `${file}.dsh-workbench.tmp`;
-  fs.writeFileSync(temp, text, { mode: 0o600 });
-  fs.renameSync(temp, file);
+  writeTextFile(file, text, { mode: 0o600 });
 }
 
 export function createRegistryNotebook(dir: string | null): RegistryNotebook {

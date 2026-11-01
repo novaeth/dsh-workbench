@@ -424,6 +424,7 @@ const GATES = [
         one({ imports: [['src/a.ts', '@dsh-workbench/adapter-supply']] }) === 1 &&
         one({ imports: [['src/a.ts', 'execa']] }) === 1 &&
         one({ imports: [['packages/shared/src/host/seam/process.ts', 'execa']] }) === 0 &&
+        one({ imports: [['packages/shared/src/host/fs-write.ts', 'write-file-atomic']] }) === 0 &&
         one({}) === 0
       );
     },
@@ -863,6 +864,7 @@ function checksMetadataFindings(text) {
 const SHARED_IMPLEMENTATION_IMPORTS = new Set(['opencli', 'execa', 'proper-lockfile', 'write-file-atomic']);
 
 const SEAM_PROCESS_HOST = 'packages/shared/src/host/seam/process.ts';
+const FS_WRITE_ENTRY = 'packages/shared/src/host/fs-write.ts';
 
 function sharedAdapterFindings({ hasAdaptersDir, deps, imports }) {
   const findings = [];
@@ -880,6 +882,7 @@ function sharedAdapterFindings({ hasAdaptersDir, deps, imports }) {
       continue;
     }
     if (file === SEAM_PROCESS_HOST && spec === 'execa') continue;
+    if (file === FS_WRITE_ENTRY && spec === 'write-file-atomic') continue;
     if (SHARED_IMPLEMENTATION_IMPORTS.has(spec)) {
       findings.push(finding(file, 1, `shared import 了 ${spec}`, '执行 / 锁 / 原子写属于适配器实现'));
     }

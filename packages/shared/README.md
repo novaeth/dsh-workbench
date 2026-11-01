@@ -47,7 +47,7 @@ CSS 处理。
 | `src/config/` | 常量与存储键 |
 | `src/i18n/` | zh / en 字典、合并与设置 |
 | `src/lib/` | 纯函数：文本、忙碌态、表单问题、看板事实 |
-| `src/host/` | 宿主侧内核与领域：http、facts、面板状态、workspace、单元声明 |
+| `src/host/` | 宿主侧内核与领域：http、facts、面板状态、workspace、单元声明、执行缝、文件写（`fs-write`：原子写 / JSON / 权限） |
 | `src/testing/` | 测试假件与声明读取 |
 
 `src/index.ts` 与 `src/host.ts` 是**生成的 barrel**：新增文件后跑 `pnpm run barrels`，别手抄。

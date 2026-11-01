@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type {
@@ -6,7 +6,7 @@ import type {
   CommandRequest,
   CommandResult,
 } from '@dsh-workbench/shared';
-import { noWrite, quoteShellArg, type Seam } from '@dsh-workbench/shared/host';
+import { noWrite, quoteShellArg, writeTextFile, type Seam } from '@dsh-workbench/shared/host';
 
 export interface CommandReaderOptions {
   readonly seam: Seam;
@@ -28,7 +28,7 @@ function writeFiles(request: CommandRequest, tmpRoot: string): TempFiles | undef
   const paths = request.files.map((file, index) => {
     const suffix = file.suffix === undefined || file.suffix === '' ? '' : `.${file.suffix}`;
     const path = join(dir, `file-${String(index)}${suffix}`);
-    writeFileSync(path, file.content, 'utf8');
+    writeTextFile(path, file.content);
     return path;
   });
   return { dir, paths };

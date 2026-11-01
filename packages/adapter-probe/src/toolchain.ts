@@ -1,8 +1,8 @@
 import lockfile from 'proper-lockfile';
-import writeFileAtomic from 'write-file-atomic';
-import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
+
+import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { quoteShellArg, quoteShellArgFor } from '@dsh-workbench/shared/host';
+import { quoteShellArg, quoteShellArgFor, writeTextFile } from '@dsh-workbench/shared/host';
 import type { Seam } from '@dsh-workbench/shared/host';
 import { bootstrapEnv, runBootstrapCommand } from './bootstrap-run.js';
 import { hostSurface } from './platform.js';
@@ -262,8 +262,7 @@ export function ensureToolchain(options: ToolchainOptions): ToolchainResult {
     release = lockfile.lockSync(pathDir, { realpath: false });
     if (readText(file) !== shim) {
       rmSync(file, { force: true });
-      writeFileAtomic.sync(file, shim, 'utf8');
-      chmodSync(file, 0o755);
+      writeTextFile(file, shim, { mode: 0o755 });
       files.push(file);
     }
   } catch (error) {

@@ -1,13 +1,13 @@
 import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import writeFileAtomic from 'write-file-atomic';
+
 import type {
   GitTransportKind,
   MarketSourceConfig,
   MarketSourcesAction,
   MarketSourcesPayload,
 } from '@dsh-workbench/shared/contract/protocol/market-index';
-import { parseSourceConfig } from '@dsh-workbench/shared/host';
+import { parseSourceConfig, writeJsonFileAsync } from '@dsh-workbench/shared/host';
 
 export type MarketSourcesWrite = Exclude<
   MarketSourcesAction,
@@ -67,7 +67,7 @@ function readPayload(path: string, logger?: { warn?(message: string): void }): M
 
 async function writePayload(path: string, payload: MarketSourcesPayload): Promise<void> {
   mkdirSync(dirname(path), { recursive: true });
-  await writeFileAtomic(path, `${JSON.stringify(payload, null, 2)}\n`);
+  await writeJsonFileAsync(path, payload);
 }
 
 function upsert(sources: readonly MarketSourceConfig[], source: MarketSourceConfig): MarketSourceConfig[] {

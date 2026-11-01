@@ -48,6 +48,7 @@ export * from './host/context-ref.js';
 export * from './host/diy-debug.js';
 export * from './host/diy-record.js';
 export * from './host/facts.js';
+export * from './host/fs-write.js';
 export * from './host/git.js';
 export * from './host/http.js';
 export * from './host/lib-capabilities.js';

@@ -1,9 +1,8 @@
-import writeFileAtomic from 'write-file-atomic';
-import { quoteShellArg, workbenchRoot } from '@dsh-workbench/shared/host';
+
+import { quoteShellArg, workbenchRoot, writeJsonFile, writeTextFile } from '@dsh-workbench/shared/host';
 import type { Seam } from '@dsh-workbench/shared/host';
 import { hostSurface } from './platform.js';
 import {
-  chmodSync,
   closeSync,
   existsSync,
   mkdirSync,
@@ -304,9 +303,8 @@ export function startSelfUpdate(
 ): SelfUpdateStart {
   const plan = planSelfUpdate(request, new Date(), cli);
   mkdirSync(plan.paths.dir, { recursive: true });
-  writeFileAtomic.sync(plan.paths.script, plan.script, { mode: 0o755 });
-  chmodSync(plan.paths.script, 0o755);
-  writeFileAtomic.sync(plan.paths.marker, `${JSON.stringify(plan.marker)}\n`);
+  writeTextFile(plan.paths.script, plan.script, { mode: 0o755 });
+  writeJsonFile(plan.paths.marker, plan.marker);
   runDetached(plan.command, onError, seam);
   const forward = recoveryCommand({
     profile: request.profile,

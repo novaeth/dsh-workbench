@@ -7,6 +7,7 @@ const SWALLOW_TITLE = '★ 沙箱拒绝不被吞';
 const ROOT_TITLE = '★ 产品数据根只有一份算法';
 const EXEC_TITLE = '★ 起进程只有一个入口';
 const HOST_TITLE = '★ 宿主能力只在宿主接线里打开';
+const WRITE_TITLE = '★ 宿主文件写只有一个入口';
 
 const ADAPTERS = [
   'adapter-runtime',
@@ -123,6 +124,26 @@ export function execEntryHits() {
   return hits;
 }
 
+const WRITE_ENTRY = 'packages/shared/src/host/fs-write.ts';
+const WRITE_CALL_OWN = [
+  'packages/adapter-probe/src/self-update.ts',
+  'packages/shared/src/host/lib-capabilities.ts',
+];
+
+export function writeEntryHits() {
+  const hits = [];
+  for (const file of hostFiles()) {
+    if (allowed(file, [WRITE_ENTRY])) continue;
+    const source = read(file);
+    const importMatch = /^\s*import[^\n]*from\s+['"]write-file-atomic['"]/m.exec(source);
+    if (importMatch !== null) hits.push(`${rel(file)}:${String(lineOf(source, importMatch.index))}`);
+    if (allowed(file, WRITE_CALL_OWN)) continue;
+    const callMatch = /\b(writeFileAtomic|writeFileSync|writeBytesFileSync)\b/.exec(source);
+    if (callMatch !== null) hits.push(`${rel(file)}:${String(lineOf(source, callMatch.index))}`);
+  }
+  return hits;
+}
+
 export function hostCapabilityHits() {
   const hits = [];
   const allowHostFiles = ['packages/core/src/shared/api/host/workbench-seam.ts', 'packages/shared/src/host/seam/'];
@@ -192,6 +213,12 @@ export const checks = [
     title: HOST_TITLE,
     run(_ctx, report) {
       reportOne(report, HOST_TITLE, hostCapabilityHits(), 'allowHost 只在宿主接线与执行缝内部出现');
+    },
+  },
+  {
+    title: WRITE_TITLE,
+    run(_ctx, report) {
+      reportOne(report, WRITE_TITLE, writeEntryHits(), '原子写只走 fs-write 的 writeTextFile / writeJsonFile / writeBytesFile');
     },
   },
 ];

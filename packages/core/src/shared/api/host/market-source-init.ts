@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { MarketSourceConfig } from '@dsh-workbench/shared/contract/protocol/market-index';
 import { MARKET_INDEX_DIR } from '@dsh-workbench/shared/contract/protocol/market-index';
@@ -10,6 +10,7 @@ import {
   marketBranchOk,
   marketSourceKey,
   tailLines,
+  writeTextFile,
 } from '@dsh-workbench/shared/host';
 import type { GitRunner } from './git-process';
 import { runGitProcess } from './git-process';
@@ -143,8 +144,7 @@ export function createMarketSourceInitializer(options: MarketSourceInitOptions):
         if (migrated !== undefined) {
           for (const file of migrated) {
             const target = join(workdir, ...file.path.split('/'));
-            mkdirSync(dirname(target), { recursive: true });
-            writeFileSync(target, file.text);
+            writeTextFile(target, file.text);
             written.push(file.path);
           }
           rmSync(legacyFile);
@@ -153,12 +153,12 @@ export function createMarketSourceInitializer(options: MarketSourceInitOptions):
       }
       if (!existsSync(indexMarker)) {
         mkdirSync(indexDir, { recursive: true });
-        writeFileSync(indexMarker, MARKET_ENTRIES_README_LINES.join('\n'));
+        writeTextFile(indexMarker, MARKET_ENTRIES_README_LINES.join('\n'));
         written.push(`${indexPath}/README.md`);
       }
       const readmeFile = join(workdir, 'README.md');
       if (!existsSync(readmeFile)) {
-        writeFileSync(readmeFile, MARKET_INDEX_README_LINES.join('\n'));
+        writeTextFile(readmeFile, MARKET_INDEX_README_LINES.join('\n'));
         written.push('README.md');
       }
     }

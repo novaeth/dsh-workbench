@@ -1,4 +1,4 @@
-import { renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { writeTextFile } from './fs-write.js';
 
 export interface PatchBlock {
   readonly key: string;
@@ -68,26 +68,7 @@ export function patchBlocks(text: string): PatchBlock[] {
   return spannedBlocks(text).map(({ from: _from, to: _to, ...block }) => block);
 }
 
-function patchMode(path: string): number {
-  try {
-    return statSync(path).mode & 0o777;
-  } catch {
-    return 0o644;
-  }
-}
-
+/** 把 patch 文本写回原文件：原子写，保留已有权限位（新文件 0644）。 */
 export function writePatchFile(path: string, text: string): void {
-  const mode = patchMode(path);
-  const tmp = `${path}.wb-sync-${String(process.pid)}`;
-  writeFileSync(tmp, text, { mode });
-  try {
-    renameSync(tmp, path);
-  } catch (error) {
-    try {
-      unlinkSync(tmp);
-    } catch {
-      throw error;
-    }
-    throw error;
-  }
+  writeTextFile(path, text, { mode: 'keep' });
 }

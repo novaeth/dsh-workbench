@@ -1,8 +1,9 @@
-import { existsSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { PostResource, RouteHandler } from './http.js';
 import type { ConfigSyncProfile, ConfigSyncRow, ConfigSyncSnapshot } from '../contract/protocol/config-sync.js';
 import { CONFIG_SYNC_RESOURCE } from '../contract/protocol/config-sync.js';
+import { writePatchFile } from './patch.js';
 
 export interface PatchBlock {
   readonly key: string;
@@ -184,29 +185,6 @@ export function readPatchBlocks(
   }
 }
 
-function patchMode(path: string): number {
-  try {
-    return statSync(path).mode & 0o777;
-  } catch {
-    return 0o644;
-  }
-}
-
-export function writePatchFile(path: string, text: string): void {
-  const mode = patchMode(path);
-  const tmp = `${path}.wb-sync-${String(process.pid)}`;
-  writeFileSync(tmp, text, { mode });
-  try {
-    renameSync(tmp, path);
-  } catch (error) {
-    try {
-      unlinkSync(tmp);
-    } catch {
-      throw error;
-    }
-    throw error;
-  }
-}
 
 export interface ConfigSyncDeps {
   readonly home: string;

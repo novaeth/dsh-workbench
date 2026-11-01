@@ -1,6 +1,7 @@
-import { mkdirSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import writeFileAtomic from 'write-file-atomic';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { writeJsonFile } from '@dsh-workbench/shared/host';
+
 
 const DISMISS_FILE = 'follow-ups.json';
 
@@ -29,8 +30,6 @@ export function isFollowUpDismissed(runtimeRoot: string, id: string): boolean {
 }
 
 export function dismissFollowUp(runtimeRoot: string, id: string): void {
-  const file = fileOf(runtimeRoot);
-  mkdirSync(dirname(file), { recursive: true });
   const dismissed = { ...readDismissed(runtimeRoot), [id]: { at: new Date().toISOString() } };
-  writeFileAtomic.sync(file, `${JSON.stringify({ dismissed }, null, 2)}\n`);
+  writeJsonFile(fileOf(runtimeRoot), { dismissed });
 }

@@ -1,8 +1,8 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join, win32 } from 'node:path';
+import { join, win32 } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { noWrite, quoteShellArg, type Seam } from '@dsh-workbench/shared/host';
+import { noWrite, quoteShellArg, writeJsonFile, type Seam } from '@dsh-workbench/shared/host';
 import type { DesktopBrowserId, WakeBrowserReply } from '@dsh-workbench/shared/contract/protocol/preflight-wake';
 
 const BROWSER_IDS = ['chrome', 'edge', 'brave', 'chromium', 'vivaldi'] as const;
@@ -150,8 +150,7 @@ export function createDesktopBrowser(options: {
 
   function save(id: DesktopBrowserId): void {
     try {
-      mkdirSync(dirname(options.stateFile), { recursive: true });
-      writeFileSync(options.stateFile, `${JSON.stringify({ browser: id }, null, 2)}\n`, 'utf8');
+      writeJsonFile(options.stateFile, { browser: id });
     } catch {
       return;
     }

@@ -87,9 +87,6 @@ importers:
       proper-lockfile:
         specifier: ^4.1.2
         version: 4.1.2
-      write-file-atomic:
-        specifier: ^8.0.0
-        version: 8.0.0
     devDependencies:
       '@types/node':
         specifier: ^24.19.0
@@ -97,9 +94,6 @@ importers:
       '@types/proper-lockfile':
         specifier: ^4.1.4
         version: 4.1.4
-      '@types/write-file-atomic':
-        specifier: ^4.0.3
-        version: 4.0.3
       '@vitest/coverage-v8':
         specifier: ^5.0.2
         version: 5.0.2(vitest@5.0.2)
@@ -118,9 +112,6 @@ importers:
       proper-lockfile:
         specifier: ^4.1.2
         version: 4.1.2
-      write-file-atomic:
-        specifier: ^8.0.0
-        version: 8.0.0
     devDependencies:
       '@types/node':
         specifier: ^24.19.0
@@ -128,9 +119,6 @@ importers:
       '@types/proper-lockfile':
         specifier: ^4.1.4
         version: 4.1.4
-      '@types/write-file-atomic':
-        specifier: ^4.0.3
-        version: 4.0.3
       '@vitest/coverage-v8':
         specifier: ^5.0.2
         version: 5.0.2(vitest@5.0.2)
@@ -259,9 +247,6 @@ importers:
       '@types/which':
         specifier: ^3.0.4
         version: 3.0.4
-      '@types/write-file-atomic':
-        specifier: ^4.0.3
-        version: 4.0.3
       '@vitest/coverage-v8':
         specifier: ^5.0.2
         version: 5.0.2(vitest@5.0.2)
@@ -374,6 +359,9 @@ importers:
       semver:
         specifier: ^7.8.5
         version: 7.8.5
+      write-file-atomic:
+        specifier: ^8.0.0
+        version: 8.0.0
     devDependencies:
       '@arch-guard/core':
         specifier: ^0.11.3
@@ -390,6 +378,9 @@ importers:
       '@types/semver':
         specifier: ^7.8.0
         version: 7.8.0
+      '@types/write-file-atomic':
+        specifier: ^4.0.3
+        version: 4.0.3
       '@vitest/coverage-v8':
         specifier: ^5.0.2
         version: 5.0.2(vitest@5.0.2)

@@ -1,10 +1,10 @@
 import { toolchainManifestOf } from '@dsh-workbench/adapter-runtime';
 import { createRequire } from 'node:module';
-import writeFileAtomic from 'write-file-atomic';
-import { chmodSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
+
+import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { delimiter, dirname, join, sep } from 'node:path';
 import type { DshHostContext } from '@dsh-workbench/shared';
-import { quoteShellArg, quoteShellArgFor, workbenchRoot } from '@dsh-workbench/shared/host';
+import { quoteShellArg, quoteShellArgFor, workbenchRoot, writeTextFile } from '@dsh-workbench/shared/host';
 import type { Seam } from '@dsh-workbench/shared/host';
 import {
   desktopBundledBins,
@@ -203,15 +203,14 @@ export function seedRuntimeFiles(options: RuntimeSeedOptions): readonly string[]
     const manifest = join(paths.opencliRoot, 'toolchain', 'package.json');
     mkdirSync(dirname(manifest), { recursive: true });
     if (readText(manifest) !== toolchainManifestOf()) {
-      writeFileAtomic.sync(manifest, toolchainManifestOf(), 'utf8');
+      writeTextFile(manifest, toolchainManifestOf());
       done.push(manifest);
     }
     rmSync(join(paths.opencliRoot, 'toolchain', 'pnpm-workspace.yaml'), { force: true });
     const wanted = opencliWrapperScript(options.packageRoot, options.home, platform);
     if (readText(paths.opencliBin) !== wanted) {
       rmSync(paths.opencliBin, { force: true });
-      writeFileAtomic.sync(paths.opencliBin, wanted, 'utf8');
-      chmodSync(paths.opencliBin, 0o755);
+      writeTextFile(paths.opencliBin, wanted, { mode: 0o755 });
       done.push(paths.opencliBin);
     }
   } catch (error) {

@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { workspacesRoot } from '../host/data-root.js';
+import { writeJsonFile } from './fs-write.js';
 
 export interface ModuleStore {
   readonly dir: string;
@@ -73,9 +74,6 @@ function memoryStore(dir: string): ModuleStore {
 }
 
 function fileStore(dir: string): ModuleStore {
-  const ensureFor = (file: string): void => {
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-  };
   return {
     dir,
     read: (name) => {
@@ -87,11 +85,7 @@ function fileStore(dir: string): ModuleStore {
       }
     },
     write: (name, value) => {
-      const file = inside(dir, name);
-      ensureFor(file);
-      const tmp = `${file}.tmp`;
-      fs.writeFileSync(tmp, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
-      fs.renameSync(tmp, file);
+      writeJsonFile(inside(dir, name), value);
     },
     remove: (name) => {
       const file = inside(dir, name);
