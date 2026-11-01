@@ -4,6 +4,7 @@ import {
   desktopBundledBins,
   desktopNodeExecutable,
   desktopResourcesDir,
+  desktopRuntimeEnv,
   desktopRuntimeEnvPath,
 } from '../index.js';
 
@@ -39,6 +40,14 @@ describe('Desktop 自带工具链的 PATH', () => {
     const noResources = { versions: { electron: '31.0.0' }, execPath: join('/Applications', 'DeepSeek Harness.app', 'Contents', 'MacOS', 'DeepSeek Harness') };
     expect(desktopResourcesDir(noResources, 'darwin')).toBe(join('/Applications', 'DeepSeek Harness.app', 'Contents', 'Resources'));
     expect(desktopResourcesDir({ versions: {}, execPath: '/usr/bin/node' }, 'darwin')).toBeUndefined();
+  });
+
+  it('★ 交给 shell 的 env 要带全父进程变量，只把 PATH 换成带自带 bin 的那份', () => {
+    const env = desktopRuntimeEnv({ PATH: '/usr/bin', HOME: '/home/u', TERM: 'xterm' }, proc, existsIn([nodeBin, pnpmBin]));
+    expect(env['PATH']).toBe([nodeBin, pnpmBin, '/usr/bin'].join(':'));
+    expect(env['HOME']).toBe('/home/u');
+    expect(env['TERM']).toBe('xterm');
+    expect(desktopRuntimeEnv({ PATH: '/usr/bin' }, { versions: {}, execPath: '/usr/bin/node' }, existsIn([nodeBin]))).toEqual({});
   });
 
   it('★ 不是 Desktop（web 部署）就不动 PATH', () => {

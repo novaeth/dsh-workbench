@@ -82,6 +82,21 @@ export function desktopRuntimeEnvPath(
   return [...bins, ...parts].join(separator);
 }
 
+export function desktopRuntimeEnv(
+  parent: NodeJS.ProcessEnv = process.env,
+  proc: PnpmProcess = process,
+  exists: (path: string) => boolean = existsSync,
+): Record<string, string> {
+  const merged = desktopRuntimeEnvPath(parent.PATH, proc, exists);
+  if (merged === undefined) return {};
+  const env: Record<string, string> = {};
+  for (const [key, value] of Object.entries(parent)) {
+    if (typeof value === 'string') env[key] = value;
+  }
+  env['PATH'] = merged;
+  return env;
+}
+
 export function desktopPnpmVersion(proc: PnpmProcess = process, exists: (path: string) => boolean = existsSync): string | undefined {
   const resources = desktopResourcesDir(proc);
   if (resources === undefined) return undefined;

@@ -8,6 +8,7 @@ import {
   desktopPnpmPath,
   desktopPnpmVersion,
   desktopResourcesDir,
+  desktopRuntimeEnv,
   desktopRuntimeEnvPath,
 } from './toolchain.js';
 import { hostSurface } from './platform.js';
@@ -46,7 +47,7 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
     ? `${nodeCommand} ${quoteShellArg(bundledPnpm ?? '')} --version`
     : 'pnpm --version';
   const path = desktopRuntimeEnvPath(process.env.PATH);
-  const env: Readonly<Record<string, string>> = path === undefined ? {} : { PATH: path };
+  const env: Readonly<Record<string, string>> = desktopRuntimeEnv(process.env);
   const [node, npm, pnpm] = await Promise.all([
     toolVersion(shell, `${nodeCommand} --version`, env),
     toolVersion(shell, 'npm --version', env),
