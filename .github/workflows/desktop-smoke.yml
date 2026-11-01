@@ -1,0 +1,180 @@
+name: desktop-smoke
+
+"on":
+  workflow_dispatch:
+  push:
+    branches: [desktop-smoke]
+  schedule:
+    - cron: '17 2 * * 1'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: desktop-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-11:
+    name: desktop / windows 11 (server 2025)
+    uses: ./.github/workflows/desktop-smoke-windows.yml
+    with:
+      image: windows-2025
+      label: win11
+
+  windows-10:
+    name: desktop / windows 10-class (server 2022)
+    uses: ./.github/workflows/desktop-smoke-windows.yml
+    with:
+      image: windows-2022
+      label: win10
+
+  macos:
+    name: desktop / macos arm64
+    runs-on: macos-latest
+    timeout-minutes: 25
+    env:
+      HUSKY: 0
+      DESKTOP_SMOKE_OS: mac
+      DESKTOP_SMOKE_MARKET: https://github.com/novaeth/dsh-workbench-market.git
+      DESKTOP_SMOKE_MODULE: '@dsh-workbench/module-hello'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install build deps (immutable)
+        run: pnpm install --frozen-lockfile
+      - name: Build local workbench (except docs)
+        run: pnpm --filter "./packages/*" --filter "!@dsh-workbench/docs" --if-present run build
+      - name: Install Desktop
+        shell: bash
+        run: |
+          curl -fL --retry 2 -o "$RUNNER_TEMP/dsh-desktop-mac.dmg" "https://download.deepseek.com/desktop/dsh-latest-macos-arm64.dmg"
+          hdiutil attach -nobrowse -readonly -mountpoint "$RUNNER_TEMP/dsh-mnt" "$RUNNER_TEMP/dsh-desktop-mac.dmg"
+          cp -R "$RUNNER_TEMP/dsh-mnt/DeepSeek Harness.app" /Applications/
+          hdiutil detach "$RUNNER_TEMP/dsh-mnt"
+          xattr -dr com.apple.quarantine '/Applications/DeepSeek Harness.app'
+      - name: Assert default user has no opencli
+        shell: bash
+        run: |
+          if command -v opencli >/dev/null 2>&1; then echo "unexpected opencli: $(command -v opencli)"; exit 1; fi
+          echo 'opencli: missing (expected)'
+      - name: Prepare opencli browser extension
+        run: node scripts/desktop-smoke/prepare-browser.mjs
+      - name: Open Desktop, install workbench and market module, restart once
+        shell: bash
+        env:
+          DESKTOP_WORKBENCH_SPEC: ${{ github.workspace }}/packages/core
+          DESKTOP_SMOKE_OUT: ${{ github.workspace }}
+        run: |
+          {
+            echo "DESKTOP_SMOKE_APP_LOG=$RUNNER_TEMP/desktop-mac-app.log"
+            echo "DESKTOP_SMOKE_APP_ERR=$RUNNER_TEMP/desktop-mac-app.err.log"
+          } >> "$GITHUB_ENV"
+          APP_LOG="$RUNNER_TEMP/desktop-mac-app.log"
+          APP_ERR="$RUNNER_TEMP/desktop-mac-app.err.log"
+          BIN='/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness'
+          stop_app() {
+            pkill -f 'DeepSeek Harness' 2>/dev/null || true
+            for _ in $(seq 1 30); do
+              if ! pgrep -f 'DeepSeek Harness' >/dev/null 2>&1; then return 0; fi
+              sleep 1
+            done
+            pkill -9 -f 'DeepSeek Harness' 2>/dev/null || true
+            sleep 2
+          }
+          start_app() {
+            ( cd / && exec "$BIN" --remote-debugging-port="$1" >> "$APP_LOG" 2>> "$APP_ERR" ) &
+          }
+          wait_page() {
+            for _ in $(seq 1 60); do
+              if curl -fsS -m 2 "http://127.0.0.1:$1/json" 2>/dev/null | grep -Eq '"type": ?"page"'; then return 0; fi
+              sleep 1
+            done
+            return 1
+          }
+          stop_app
+          sleep 2
+          start_app 9222
+          if ! wait_page 9222; then echo 'first instance produced no page'; exit 1; fi
+          node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9222 desktop-mac.png --install-via-ui
+          stop_app
+          sleep 2
+          start_app 9223
+          if ! wait_page 9223; then
+            echo 'restart produced no page; trying once more'
+            stop_app
+            sleep 3
+            start_app 9223
+            wait_page 9223 || { echo 'restart still produced no page'; exit 1; }
+          fi
+          node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9223 desktop-mac-after-restart.png --verify-only --expect-workbench
+      - name: Assert opencli installed
+        shell: bash
+        run: |
+          root="$HOME/.dsh/workbench/opencli"
+          manifest="$root/toolchain/node_modules/@jackwener/opencli/package.json"
+          if [ ! -f "$manifest" ]; then
+            echo "opencli missing: $manifest"
+            exit 1
+          fi
+          node -e "const p=require('$manifest'); console.log('opencli', p.version)"
+          if [ ! -x "$root/bin/opencli" ]; then
+            echo "opencli bin missing: $root/bin/opencli"
+            exit 1
+          fi
+          "$root/bin/opencli" --version
+      - name: Assert module installed
+        shell: bash
+        run: |
+          node -e "
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync(process.env.HOME + '/.dsh/profiles/desktop/package.json', 'utf8'));
+          const name = '@dsh-workbench/module-hello';
+          const spec = (manifest.dependencies ?? {})[name];
+          const bundles = (manifest.dsh && manifest.dsh.profile && manifest.dsh.profile.bundles) || [];
+          if (spec === undefined && !bundles.includes(name)) throw new Error('module-hello 没进 profile');
+          console.log('module-hello', spec ?? 'bundle');
+          "
+      - name: Collect diagnostics
+        if: always()
+        continue-on-error: true
+        shell: bash
+        env:
+          DESKTOP_SMOKE_STATUS: ${{ job.status }}
+        run: node scripts/desktop-smoke/collect.mjs
+      - name: Stop Desktop
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: pkill -f 'DeepSeek Harness' 2>/dev/null || true
+      - name: Publish logs
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          git config user.name ci
+          git config user.email ci@example.com
+          shopt -s nullglob
+          files=(desktop-mac*.png desktop-mac*.txt desktop-mac*.json desktop-mac*.log)
+          if [ ${#files[@]} -gt 0 ]; then
+            git add -f "${files[@]}"
+            git commit -m "ci: macos desktop smoke log [skip ci]" || true
+          fi
+          git push origin HEAD:desktop-ui-log-mac-${{ github.run_id }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        continue-on-error: true
+        with:
+          name: desktop-smoke-macos
+          if-no-files-found: warn
+          path: |
+            desktop-mac*.png
+            desktop-mac*.txt
+            desktop-mac*.json
+            desktop-mac*.log

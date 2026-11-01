@@ -25,6 +25,13 @@ export default {
     exceptions: [
       {
         rule: 'P06',
+        glob: 'scripts/desktop-smoke/cdp-probe.mjs',
+        reason:
+          '探针给得子进程 env 里前插 Desktop 自带 node 的 bin 目录（opencli 的 .cmd 包装器要靠它找到 node），' +
+          '不是在扫 PATH 找命令；`.cmd` 也只能由 cmd.exe 解析，用 which 定位不到。',
+      },
+      {
+        rule: 'P06',
         glob: 'packages/shared/scripts/check-state.mjs',
         reason: '这条正则就是「禁 node:child_process」的判据本体；文件本身没有起进程。',
       },
