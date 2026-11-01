@@ -67,7 +67,7 @@ jobs:
             Expand-Archive -Path "$env:RUNNER_TEMP\cft.zip" -DestinationPath $cftDir -Force
             $chrome = Join-Path $cftDir 'chrome-win64\chrome.exe'
             if (!(Test-Path $chrome)) { throw "Chrome for Testing binary missing: $chrome" }
-            & $chrome --version
+            "chrome: $((Get-Item $chrome).VersionInfo.FileVersion)"
             $pin = (Select-String -Path 'packages/shared/src/config/constants.ts' -Pattern 'OPENCLI_PIN\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
             "opencli pin: $pin"
             $latest = Invoke-WebRequest -Uri 'https://github.com/jackwener/opencli/releases/latest' -MaximumRedirection 5
@@ -92,6 +92,7 @@ jobs:
             "DESKTOP_SMOKE_CHROME=$chrome" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
             "DESKTOP_SMOKE_EXTENSION=$dest" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
             "DESKTOP_SMOKE_OPENCLI=$env:USERPROFILE\.dsh\workbench\opencli\bin\opencli.cmd" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            "DESKTOP_SMOKE_NODE_BIN=$env:LOCALAPPDATA\Programs\DeepSeek Harness\resources\runtime\primary-runtime\dependencies\node\bin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           } finally {
             Stop-Transcript | Out-Null
           }

@@ -400,7 +400,16 @@ function doctorCommand() {
 async function doctorText() {
   const command = doctorCommand();
   if (command === null) return '';
-  const result = await execa(command.file, command.args, { timeout: 60_000, reject: false }).catch(() => undefined);
+  const nodeBin = (process.env.DESKTOP_SMOKE_NODE_BIN ?? '').trim();
+  const path =
+    nodeBin === ''
+      ? process.env.PATH
+      : [nodeBin, process.env.PATH ?? ''].filter((one) => one !== '').join(process.platform === 'win32' ? ';' : ':');
+  const result = await execa(command.file, command.args, {
+    timeout: 60_000,
+    reject: false,
+    env: { ...process.env, PATH: path ?? '' },
+  }).catch(() => undefined);
   return `${result?.stdout ?? ''}\n${result?.stderr ?? ''}`;
 }
 
