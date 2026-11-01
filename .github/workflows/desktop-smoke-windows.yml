@@ -1,0 +1,174 @@
+name: desktop-smoke-windows
+
+"on":
+  workflow_call:
+    inputs:
+      image:
+        type: string
+        required: true
+      label:
+        type: string
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  smoke:
+    name: desktop / windows (${{ inputs.label }})
+    runs-on: ${{ inputs.image }}
+    timeout-minutes: 25
+    env:
+      HUSKY: 0
+      DESKTOP_SMOKE_OS: ${{ inputs.label }}
+      DESKTOP_SMOKE_MARKET: https://github.com/novaeth/dsh-workbench-market.git
+      DESKTOP_SMOKE_MODULE: '@dsh-workbench/module-hello'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install build deps (immutable)
+        run: pnpm install --frozen-lockfile
+      - name: Build local workbench (except docs)
+        run: pnpm --filter "./packages/*" --filter "!@dsh-workbench/docs" --if-present run build
+      - name: Install Desktop
+        shell: pwsh
+        run: |
+          $installer = Join-Path $env:RUNNER_TEMP 'dsh-desktop-${{ inputs.label }}.exe'
+          Invoke-WebRequest -Uri 'https://download.deepseek.com/desktop/dsh-latest-windows-x64.exe' -OutFile $installer
+          $install = Start-Process -FilePath $installer -ArgumentList '/S' -Wait -PassThru
+          if ($install.ExitCode -ne 0) { throw "installer failed: $($install.ExitCode)" }
+          Start-Sleep -Seconds 10
+          $exe = Get-ChildItem -Path @("$env:LOCALAPPDATA\Programs", "$env:ProgramFiles", "${env:ProgramFiles(x86)}") -Filter 'DeepSeek Harness.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -eq $exe) { throw 'DeepSeek Harness.exe not found' }
+          "DESKTOP_EXE=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Assert default user has no opencli
+        shell: pwsh
+        run: |
+          if (Get-Command opencli -ErrorAction SilentlyContinue) { throw 'opencli is preinstalled; this smoke must start without it' }
+          'opencli: missing (expected)'
+      - name: Prepare opencli browser extension
+        run: node scripts/desktop-smoke/prepare-browser.mjs
+      - name: Open Desktop, install workbench and market module, restart once
+        shell: pwsh
+        env:
+          DESKTOP_WORKBENCH_SPEC: ${{ github.workspace }}\packages\core
+          DESKTOP_SMOKE_OUT: ${{ github.workspace }}
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app.log'
+          $err = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app.err.log'
+          $out2 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app2.log'
+          $err2 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app2.err.log'
+          "DESKTOP_SMOKE_APP_LOG=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "DESKTOP_SMOKE_APP_ERR=$err" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "DESKTOP_SMOKE_APP_LOG_2=$out2" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "DESKTOP_SMOKE_APP_ERR_2=$err2" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          function Stop-App {
+            Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
+            for ($i = 0; $i -lt 30; $i++) {
+              $left = Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -like '*DeepSeek*' }
+              if ($null -eq $left) { return }
+              Start-Sleep -Seconds 1
+            }
+          }
+          function Start-App([int]$port, [string]$log, [string]$logErr) {
+            Start-Process -FilePath $env:DESKTOP_EXE -ArgumentList "--remote-debugging-port=$port" -RedirectStandardOutput $log -RedirectStandardError $logErr -PassThru
+          }
+          function Wait-Page([int]$port) {
+            for ($i = 0; $i -lt 60; $i++) {
+              try {
+                $json = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$port/json" -TimeoutSec 2
+                if ($json.Content -match '"type": ?"page"') { return $true }
+              } catch { }
+              Start-Sleep -Seconds 1
+            }
+            return $false
+          }
+          Stop-App
+          Start-Sleep -Seconds 2
+          $app = Start-App 9222 $out $err
+          "desktop pid: $($app.Id)"
+          if (-not (Wait-Page 9222)) { throw 'first instance produced no page' }
+          & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-${{ inputs.label }}.png --install-via-ui
+          if ($LASTEXITCODE -ne 0) { throw "cdp probe failed: $LASTEXITCODE" }
+          Stop-App
+          Start-Sleep -Seconds 3
+          $app2 = Start-App 9223 $out2 $err2
+          "restarted desktop pid: $($app2.Id)"
+          if (-not (Wait-Page 9223)) {
+            'restart produced no page; trying once more'
+            Stop-App
+            Start-Sleep -Seconds 3
+            $app2 = Start-App 9223 $out2 $err2
+            if (-not (Wait-Page 9223)) { throw 'restart still produced no page' }
+          }
+          & node scripts/desktop-smoke/cdp-probe.mjs 9223 desktop-${{ inputs.label }}-after-restart.png --verify-only --expect-workbench
+          if ($LASTEXITCODE -ne 0) { throw "cdp verify probe failed: $LASTEXITCODE" }
+      - name: Assert opencli installed
+        shell: pwsh
+        run: |
+          $root = "$env:USERPROFILE\.dsh\workbench\opencli"
+          $manifest = Join-Path $root 'toolchain\node_modules\@jackwener\opencli\package.json'
+          if (!(Test-Path $manifest)) { throw "opencli missing: $manifest" }
+          $version = (Get-Content $manifest -Raw | ConvertFrom-Json).version
+          "opencli $version"
+          $bin = Join-Path $root 'bin\opencli.cmd'
+          if (!(Test-Path $bin)) { throw "opencli bin missing: $bin" }
+          & $bin --version
+          if ($LASTEXITCODE -ne 0) { throw "opencli --version failed: $LASTEXITCODE" }
+      - name: Assert module installed
+        shell: pwsh
+        run: |
+          $env:SMOKE_MANIFEST = "$env:USERPROFILE\.dsh\profiles\desktop\package.json"
+          node -e "
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync(process.env.SMOKE_MANIFEST, 'utf8'));
+          const name = '@dsh-workbench/module-hello';
+          const spec = (manifest.dependencies ?? {})[name];
+          const bundles = (manifest.dsh && manifest.dsh.profile && manifest.dsh.profile.bundles) || [];
+          if (spec === undefined && !bundles.includes(name)) throw new Error('module-hello 没进 profile');
+          console.log('module-hello', spec ?? 'bundle');
+          "
+      - name: Collect diagnostics
+        if: always()
+        continue-on-error: true
+        shell: bash
+        env:
+          DESKTOP_SMOKE_STATUS: ${{ job.status }}
+        run: node scripts/desktop-smoke/collect.mjs
+      - name: Stop Desktop
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
+      - name: Publish logs
+        if: failure()
+        continue-on-error: true
+        shell: bash
+        run: |
+          git config user.name ci
+          git config user.email ci@example.com
+          shopt -s nullglob
+          files=(desktop-${{ inputs.label }}*.png desktop-${{ inputs.label }}*.txt desktop-${{ inputs.label }}*.json desktop-${{ inputs.label }}*.log)
+          if [ ${#files[@]} -gt 0 ]; then
+            git add -f "${files[@]}"
+            git commit -m "ci: windows desktop smoke log [skip ci]" || true
+          fi
+          git push origin HEAD:desktop-ui-log-${{ inputs.label }}-${{ github.run_id }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        continue-on-error: true
+        with:
+          name: desktop-smoke-windows-${{ inputs.label }}
+          if-no-files-found: warn
+          path: |
+            desktop-${{ inputs.label }}*.png
+            desktop-${{ inputs.label }}*.txt
+            desktop-${{ inputs.label }}*.json
+            desktop-${{ inputs.label }}*.log
+

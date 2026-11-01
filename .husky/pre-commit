@@ -1,0 +1,2 @@
+pnpm run check:docs
+node scripts/gates/target.mjs --only=DOC-3 --fail-on-red
