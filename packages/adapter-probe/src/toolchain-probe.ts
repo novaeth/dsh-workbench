@@ -3,6 +3,7 @@ import { runShell } from '@dsh-workbench/shared/host';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
 import { delimiter } from 'node:path';
 import { homedir } from 'node:os';
+import { execaSync } from 'execa';
 import {
   desktopBundledBins,
   desktopNodeExecutable,
@@ -95,6 +96,21 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
   ];
   const control: string[] = [];
   if (nodeMissing) {
+    for (const [label, file] of [
+      ['direct bundled node', desktopNodeExecutable()],
+      ['direct host node', process.execPath],
+    ] as const) {
+      if (file === undefined) {
+        control.push(`control ${label}: （没有可执行文件）`);
+        continue;
+      }
+      try {
+        const out = execaSync(file, ['--version'], { timeout: 10_000, reject: false });
+        control.push(`control ${label}: exit=${String(out.exitCode)} out=${(out.stdout || out.stderr).slice(0, 80)}`);
+      } catch (error) {
+        control.push(`control ${label}: 起不来 ${String(error).slice(0, 120)}`);
+      }
+    }
     for (const [label, workdir] of [
       ['default', undefined],
       ['home', homedir()],
