@@ -67,18 +67,47 @@ jobs:
           "DESKTOP_SMOKE_APP_ERR=$err" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "DESKTOP_SMOKE_APP_LOG_2=$out2" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "DESKTOP_SMOKE_APP_ERR_2=$err2" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          $app = Start-Process -FilePath $env:DESKTOP_EXE -ArgumentList '--remote-debugging-port=9222' -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
+          function Stop-App {
+            Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
+            for ($i = 0; $i -lt 30; $i++) {
+              $left = Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -like '*DeepSeek*' }
+              if ($null -eq $left) { return }
+              Start-Sleep -Seconds 1
+            }
+          }
+          function Start-App([int]$port, [string]$log, [string]$logErr) {
+            Start-Process -FilePath $env:DESKTOP_EXE -ArgumentList "--remote-debugging-port=$port" -RedirectStandardOutput $log -RedirectStandardError $logErr -PassThru
+          }
+          function Wait-Page([int]$port) {
+            for ($i = 0; $i -lt 60; $i++) {
+              try {
+                $json = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:$port/json" -TimeoutSec 2
+                if ($json.Content -match '"type": ?"page"') { return $true }
+              } catch { }
+              Start-Sleep -Seconds 1
+            }
+            return $false
+          }
+          Stop-App
+          Start-Sleep -Seconds 2
+          $app = Start-App 9222 $out $err
           "desktop pid: $($app.Id)"
+          if (-not (Wait-Page 9222)) { throw 'first instance produced no page' }
           & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-win.png --install-via-ui
-          $code = $LASTEXITCODE
-          if ($code -ne 0) { throw "cdp probe failed: $code" }
-          Get-Process | Where-Object { $_.ProcessName -like '*DeepSeek*' } | Stop-Process -Force -ErrorAction SilentlyContinue
+          if ($LASTEXITCODE -ne 0) { throw "cdp probe failed: $LASTEXITCODE" }
+          Stop-App
           Start-Sleep -Seconds 3
-          $app2 = Start-Process -FilePath $env:DESKTOP_EXE -ArgumentList '--remote-debugging-port=9223' -RedirectStandardOutput $out2 -RedirectStandardError $err2 -PassThru
+          $app2 = Start-App 9223 $out2 $err2
           "restarted desktop pid: $($app2.Id)"
+          if (-not (Wait-Page 9223)) {
+            'restart produced no page; trying once more'
+            Stop-App
+            Start-Sleep -Seconds 3
+            $app2 = Start-App 9223 $out2 $err2
+            if (-not (Wait-Page 9223)) { throw 'restart still produced no page' }
+          }
           & node scripts/desktop-smoke/cdp-probe.mjs 9223 desktop-win-after-restart.png --verify-only --expect-workbench
-          $code2 = $LASTEXITCODE
-          if ($code2 -ne 0) { throw "cdp verify probe failed: $code2" }
+          if ($LASTEXITCODE -ne 0) { throw "cdp verify probe failed: $LASTEXITCODE" }
       - name: Assert opencli installed
         shell: pwsh
         run: |
@@ -183,14 +212,43 @@ jobs:
             echo "DESKTOP_SMOKE_APP_LOG=$RUNNER_TEMP/desktop-mac-app.log"
             echo "DESKTOP_SMOKE_APP_ERR=$RUNNER_TEMP/desktop-mac-app.err.log"
           } >> "$GITHUB_ENV"
-          pkill -f 'DeepSeek Harness' 2>/dev/null || true
+          APP_LOG="$RUNNER_TEMP/desktop-mac-app.log"
+          APP_ERR="$RUNNER_TEMP/desktop-mac-app.err.log"
+          BIN='/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness'
+          stop_app() {
+            pkill -f 'DeepSeek Harness' 2>/dev/null || true
+            for _ in $(seq 1 30); do
+              if ! pgrep -f 'DeepSeek Harness' >/dev/null 2>&1; then return 0; fi
+              sleep 1
+            done
+            pkill -9 -f 'DeepSeek Harness' 2>/dev/null || true
+            sleep 2
+          }
+          start_app() {
+            ( cd / && exec "$BIN" --remote-debugging-port="$1" >> "$APP_LOG" 2>> "$APP_ERR" ) &
+          }
+          wait_page() {
+            for _ in $(seq 1 60); do
+              if curl -fsS -m 2 "http://127.0.0.1:$1/json" 2>/dev/null | grep -Eq '"type": ?"page"'; then return 0; fi
+              sleep 1
+            done
+            return 1
+          }
+          stop_app
           sleep 2
-          cd /
-          '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9222 > "$RUNNER_TEMP/desktop-mac-app.log" 2> "$RUNNER_TEMP/desktop-mac-app.err.log" &
+          start_app 9222
+          if ! wait_page 9222; then echo 'first instance produced no page'; exit 1; fi
           node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9222 desktop-mac.png --install-via-ui
-          pkill -f 'DeepSeek Harness' 2>/dev/null || true
-          sleep 3
-          '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' --remote-debugging-port=9223 >> "$RUNNER_TEMP/desktop-mac-app.log" 2>> "$RUNNER_TEMP/desktop-mac-app.err.log" &
+          stop_app
+          sleep 2
+          start_app 9223
+          if ! wait_page 9223; then
+            echo 'restart produced no page; trying once more'
+            stop_app
+            sleep 3
+            start_app 9223
+            wait_page 9223 || { echo 'restart still produced no page'; exit 1; }
+          fi
           node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9223 desktop-mac-after-restart.png --verify-only --expect-workbench
       - name: Assert opencli installed
         shell: bash
