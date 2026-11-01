@@ -68,8 +68,8 @@ jobs:
           & $chrome --version
           $pin = (Select-String -Path 'packages/shared/src/config/constants.ts' -Pattern 'OPENCLI_PIN\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
           "opencli pin: $pin"
-          $script = "const v = process.argv[1]; fetch('https://api.github.com/repos/jackwener/opencli/releases/tags/v' + v).then((r) => r.json()).then((d) => { const a = (d.assets || []).find((x) => x.name.startsWith('opencli-extension-v') && x.name.endsWith('.zip')); if (!a) throw new Error('no extension asset for ' + v); console.log(a.browser_download_url); });"
-          $url = & node -e $script $pin
+          $script = "fetch('https://api.github.com/repos/jackwener/opencli/releases/latest').then((r) => r.json()).then((d) => { const a = (d.assets || []).find((x) => x.name.startsWith('opencli-extension-v') && x.name.endsWith('.zip')); if (!a) throw new Error('no extension asset in latest release'); console.log(a.browser_download_url); });"
+          $url = & node -e $script
           "extension: $url"
           Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\opencli-ext.zip"
           $dest = "$env:RUNNER_TEMP\opencli-ext"
@@ -80,7 +80,8 @@ jobs:
             if ($null -eq $nested) { throw 'extension zip has no manifest.json' }
             $dest = $nested.DirectoryName
           }
-          Get-Content (Join-Path $dest 'manifest.json') -Raw | Select-Object -First 1
+          $manifestPath = Join-Path $dest 'manifest.json'
+          & node -e "console.log('extension version:', require(process.argv[1]).version)" $manifestPath
           Get-ChildItem $dest | Select-Object -First 6 Name
           "DESKTOP_SMOKE_CHROME=$chrome" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "DESKTOP_SMOKE_EXTENSION=$dest" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
@@ -247,8 +248,8 @@ jobs:
           if [ ! -x "$CHROME" ]; then echo "Chrome for Testing missing: $CHROME"; exit 1; fi
           "$CHROME" --version
           PIN=$(node -e "const t = require('node:fs').readFileSync('packages/shared/src/config/constants.ts', 'utf8'); const m = /OPENCLI_PIN\s*=\s*\"([^\"]+)\"/.exec(t); if (!m) throw new Error('OPENCLI_PIN not found'); console.log(m[1]);")
-          echo "opencli pin: $PIN"
-          EXT_URL=$(node -e "fetch('https://api.github.com/repos/jackwener/opencli/releases/tags/v${PIN}').then((r) => r.json()).then((d) => { const a = (d.assets || []).find((x) => x.name.startsWith('opencli-extension-v') && x.name.endsWith('.zip')); if (!a) throw new Error('no extension asset for v${PIN}'); console.log(a.browser_download_url); })")
+          echo "opencli pin: $PIN（工作台装的 CLI 版本）"
+          EXT_URL=$(node -e "fetch('https://api.github.com/repos/jackwener/opencli/releases/latest').then((r) => r.json()).then((d) => { const a = (d.assets || []).find((x) => x.name.startsWith('opencli-extension-v') && x.name.endsWith('.zip')); if (!a) throw new Error('no extension asset in latest release'); console.log(a.browser_download_url); })")
           echo "extension: $EXT_URL"
           curl -fL --retry 2 -o "$RUNNER_TEMP/opencli-ext.zip" "$EXT_URL"
           rm -rf "$RUNNER_TEMP/opencli-ext"
@@ -260,7 +261,7 @@ jobs:
           fi
           if [ ! -f "$EXT_DIR/manifest.json" ]; then echo 'extension zip has no manifest.json'; exit 1; fi
           echo "extension dir: $EXT_DIR"
-          head -c 200 "$EXT_DIR/manifest.json"; echo
+          node -e "console.log('extension version:', require(process.argv[1]).version)" "$EXT_DIR/manifest.json"
           {
             echo "DESKTOP_SMOKE_CHROME=$CHROME"
             echo "DESKTOP_SMOKE_EXTENSION=$EXT_DIR"
