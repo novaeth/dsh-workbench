@@ -36,7 +36,7 @@ function knownUpstreamGap() {
   if (!/0xC0000142|3221225794|宿主执行通道起不了子进程/u.test(`${body}${probe}`)) return undefined;
   if (osLabel === 'mac') return undefined;
   return (
-    'deepseek-harness#11722 — Windows 上 windows-acl 的 workspace-write 受限令牌让子进程在 DLL 初始化就死' +
+    'deepseek-harness#9083 / #11722 — Windows 上 windows-acl 的 workspace-write 受限令牌让子进程在 DLL 初始化就死' +
     '（0xC0000142）；mac 不受影响；等上游把能力 SID 从 S-1-4 换成 S-1-5 的修复，工作台按规矩不绕、不提权'
   );
 }
