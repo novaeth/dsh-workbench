@@ -1,8 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
-import { basename, dirname, relative, resolve } from 'node:path';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 
-import { pkg, read } from '../lib.mjs';
+import { PKG, pkg, read } from '../lib.mjs';
 
 const SKILL_CHAR_BUDGET = 8192;
 const skillsDir = pkg('skills');
@@ -15,10 +15,8 @@ const markdownUnder = (dir) =>
 
 export const checks = [
   {
-    title: '★ 干净机器兜底：启动器自愈工坊骨架 + 挂上 dsh-wb-module 入口（幂等）',
+    title: '★ 工坊骨架与入口只由一处写（seed-workshop.sh 幂等；启动器只保 hmr 目录）',
     run(_ctx, report) {
-
-      const launcher = read(pkg('bin/dsh-workbench'));
       const seed = pkg('scripts/seed-workshop.sh');
       let probe;
       try {
@@ -42,13 +40,19 @@ echo ok`,
       } catch (error) {
         probe = `${error.stdout ?? ''}${error.stderr ?? ''}`.trim();
       }
+      const launcher = read(pkg('bin/dsh-workbench'));
+      const runtimePort = join(PKG, '../adapters-default/src/runtime-port.ts');
+      const seededByHost = existsSync(runtimePort) && read(runtimePort).includes('runDetached(plan.entry');
+      const launcherSlim =
+        launcher.includes('mkdir -p "$WORKBENCH_HOME/diy/packages"') &&
+        !launcher.includes('seed-workshop.sh" entry') &&
+        !launcher.includes('seed-workshop.sh" ||');
       report(
-        '★ 干净机器兜底：启动器自愈工坊骨架 + 挂上 dsh-wb-module 入口（幂等）',
-        probe === 'ok' &&
-          launcher.includes('seed-workshop.sh" entry') &&
-          launcher.includes('export PATH="$WORKBENCH_HOME/bin:$PATH"') &&
-          launcher.includes('scripts/seed-workshop.sh" || {'),
-        probe === 'ok' ? '骨架建起来、入口可执行、再跑一遍不炸 ✅' : `探针输出：${probe}`,
+        '★ 工坊骨架与入口只由一处写（seed-workshop.sh 幂等；启动器只保 hmr 目录）',
+        probe === 'ok' && launcherSlim && seededByHost,
+        probe === 'ok'
+          ? `骨架建起来、入口可执行、再跑一遍不炸 ✅ · 启动器${launcherSlim ? '只保目录' : '还在自建工坊'} · 宿主自举${seededByHost ? '会跑 entry' : '没跑'}`
+          : `探针输出：${probe}`,
       );
     },
   },

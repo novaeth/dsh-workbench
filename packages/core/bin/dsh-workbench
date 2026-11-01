@@ -403,34 +403,12 @@ fi
 # 现在改成：**工作台自己的 patch 是唯一真相**。想要 web 的哪几行，去
 # 设置 → 「配置同步」里勾（它读源 profile 的 cordis.patch.yml，按行搬运，
 # 见 内部设计记录 与 ADR-0044）。启动器只负责把工作台起起来。
-# DIY 工坊的目录必须**每次启动都在**：`cordis.patch.yml` 的 hmr 行把它列成一个监听根
-# （工坊里的模块是被 link 进 profile 的仓外目录，Node 解析到的是工坊里的真路径，
-# 所以不把它列进去，模块重建 dist/host.js 就不热换 —— 而且**不报错**）。
-# chokidar 对不存在的根收不到事件，所以这里保住它，不必等用户重跑 setup。
-# 只建目录：骨架与依赖是 seed-profile.sh 第 6 步的事。
+#
+# 工坊骨架 / `dsh-wb-module` 入口 / DIY 指引软链 / 隔离运行时的稳定入口：**一个写口**，
+# 全在宿主自举里（`runtime.seed()` → `scripts/seed-workshop.sh`），三条安装路径每次启动都跑它
+# （独立实例 / `dsh web` / Desktop 插进任意 profile 是同一份实现）。启动器在这里**只保目录**：
+# hmr 行把它当监听根，而 chokidar 对不存在的根收不到事件（模块重建 dist/host.js 就不热换，
+# 而且不报错）。骨架与依赖在建 profile 那一步装（`seed-profile.sh` → `seed-workshop.sh` 完整档）。
 mkdir -p "$WORKBENCH_HOME/diy/packages"
 
-# 工坊的**稳定入口**：每次启动都重写一遍（幂等、几乎不花时间），挂进 PATH。
-# 于是 agent 在工坊里（或任何目录里）都能直接叫 `dsh-wb-module`，不必记着 `pnpm exec` 前缀 ——
-# 指令里那句"工坊里没有全局 dsh-wb-module"是**旧**状态，现在有一个我们自己的转发脚本。
-bash "$REPO_DIR/scripts/seed-workshop.sh" entry || true
-export PATH="$WORKBENCH_HOME/bin:$PATH"
-
-# 骨架不在就**当场建**（不是只提醒）：工坊看着"能用"，可模块的 build / check 会把
-# "不在 workspace 里"说成"声明写错了"——实测就是在这一步卡住过（干净机器上 seed 第 6 步没跑）。
-# 提醒是对人说的，而先撞上它的是 agent：它读到的报错指着别的地方，于是开始自由发挥。
-if [ ! -f "$WORKBENCH_HOME/diy/package.json" ]; then
-  bash "$REPO_DIR/scripts/seed-workshop.sh" || {
-    echo "dsh-workbench: 提醒 —— DIY 工坊的骨架没建起来（$WORKBENCH_HOME/diy/package.json）。" >&2
-    echo "  跑一次 dsh-workbench setup；在那之前工坊里的模块 build / check 都会报错。" >&2
-  }
-fi
-
-# 工坊**自己带着** DIY 的指引（软链到随包出货的那份 `skills/workbench-module-diy/`）。
-# 这条链**不在这里挂** —— 写口只有一处，在 `scripts/seed-workshop.sh` 的 `link_workshop_skills`
-# （上面那次 `entry` 已经跑过它）。为什么收成一处：启动器与宿主自举都跑那个脚本，从前两处
-# 各写一遍（这里一段 bash + 宿主 TS 的 `linkSkills`），目标虽一致，却是**同一件事两个实现** ——
-# 哪天只有一边改了源或判据就会互相改指，而软链指到哪 skill 发现都**不报错**。
-# 运行时的**稳定入口**不在这里建：它属于适配器（隔离包装随适配器出货），
-# 由宿主自举在每次启动时写到自己的隔离根里 —— 写口只有那一处。
 exec dsh "$PROFILE" --port "$PORT" ${DSH_ARGS[@]+"${DSH_ARGS[@]}"}
