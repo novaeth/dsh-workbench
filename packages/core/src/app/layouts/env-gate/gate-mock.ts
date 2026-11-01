@@ -87,27 +87,27 @@ export const GATE_MOCKS: readonly GateMock[] = [
   ),
   mock(
     'installing',
-    '安装中（npm 在跑）',
-    '缺命令行：正在装。右边会**数秒**（静止的圆点看不出在干活）。',
+    '安装中（pnpm 在跑）',
+    '缺命令行：正在装。行内日志会一直长出来（静止的圆点看不出在干活）。',
     {
       phase: 'installing',
-      steps: [{ id: 'cli', status: 'running', action: '安装 opencli', command: INSTALL_COMMAND, log: ['> 安装 opencli', 'added 1 package'] }, BRIDGE_PENDING],
-      log: ['> 安装 opencli', 'added 1 package'],
+      steps: [{ id: 'cli', status: 'running', action: '安装 opencli', command: INSTALL_COMMAND, log: ['> 安装 opencli', '+ @jackwener/opencli 1.8.8'] }, BRIDGE_PENDING],
+      log: ['> 安装 opencli', '+ @jackwener/opencli 1.8.8'],
     },
     { hint: 'installing', command: false },
   ),
   mock(
     'toolchain-installing',
     '运行环境在装',
-    'Desktop 上 npm / pnpm 不对时，这一行会自己装：顶上那句换成"在装 npm / pnpm"，底下照旧数秒 —— 几分钟的下载不该看起来像卡死。',
+    'Desktop 上 pnpm 低于 10 时，这一行会自己装本地 pnpm：顶上那句换成"在装 pnpm"，行内日志照旧长出来 —— 几分钟的下载不该看起来像卡死。',
     {
       phase: 'installing',
       steps: [
-        { id: 'toolchain', status: 'running', action: '装本地 npm@10.9.4', log: ['> 安装本地 npm', 'added 1 package'] },
+        { id: 'toolchain', status: 'running', action: '装本地 pnpm@10.32.1', log: ['> 安装本地 pnpm', '+ pnpm 10.32.1'] },
         { id: 'cli', status: 'pending' },
         BRIDGE_PENDING,
       ],
-      log: ['> 安装本地 npm', 'added 1 package'],
+      log: ['> 安装本地 pnpm', '+ pnpm 10.32.1'],
     },
     { hint: 'installingToolchain', command: false },
   ),
@@ -198,7 +198,8 @@ export const GATE_MOCKS: readonly GateMock[] = [
     {
       phase: 'failed',
       steps: [{ id: 'cli', status: 'failed', detail: 'ERR_PNPM_EACCES: permission denied', command: INSTALL_COMMAND }, BRIDGE_PENDING],
-      error: 'npm ERR! code EACCES\nnpm ERR! syscall mkdir\nnpm ERR! path /usr/local/lib/node_modules',
+      error:
+        "ERR_PNPM_EACCES: EACCES: permission denied, mkdir '/Users/you/.dsh/workbench/opencli/toolchain'",
       failure: 'permission',
       guidance: 'install',
     },
@@ -211,7 +212,8 @@ export const GATE_MOCKS: readonly GateMock[] = [
     {
       phase: 'failed',
       steps: [{ id: 'cli', status: 'failed', detail: 'ERR_PNPM_META_FETCH_FAIL: EAI_AGAIN', command: INSTALL_COMMAND }, BRIDGE_PENDING],
-      error: 'npm ERR! code EAI_AGAIN\nnpm ERR! network request to https://registry.npmjs.org failed',
+      error:
+        'ERR_PNPM_META_FETCH_FAIL: GET https://registry.npmjs.org/@jackwener%2Fopencli: request failed, reason: getaddrinfo EAI_AGAIN',
       failure: 'network',
       guidance: 'install',
     },

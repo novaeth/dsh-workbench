@@ -49,15 +49,6 @@ export function gateHintOf(snapshot: PreflightSnapshot, t: Translate): string {
   return t('env.checking');
 }
 
-export function showsRawDetails(snapshot: PreflightSnapshot): boolean {
-  if (snapshot.phase === 'failed') return true;
-  return snapshot.steps.some((step) => step.status === 'warn' || step.status === 'failed');
-}
-
-export function showsRawAll(snapshot: PreflightSnapshot, panelShown: boolean): boolean {
-  return !panelShown && showsRawDetails(snapshot);
-}
-
 export interface BridgeAdvice {
   readonly text: string;
   readonly link?: { readonly label: string; readonly href: string };
