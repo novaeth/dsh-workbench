@@ -617,6 +617,7 @@ export const zh = {
   'env.fix.permission': '权限不够：在命令前加 sudo 重跑，或先把 npm 的全局目录配到你的用户目录。',
   'env.fix.network': '网络不通：检查网络或代理设置后重试。',
   'env.fix.details': '详细输出（排障用）',
+  'env.log': '详细输出',
   'env.retry': '重试',
   'env.wake': '打开浏览器',
   'env.wake.opening': '正在打开浏览器…',

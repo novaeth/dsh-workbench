@@ -7,13 +7,13 @@ import { apiGet } from '@dsh-workbench/shared';
 import { LOCALE_NS } from '@dsh-workbench/shared';
 import { devSurface } from '@/shared/dev-surface';
 import { runtimeProfileValue } from '@/shared/hooks/use-runtime-capabilities';
-import { bridgeAdvice, gateHintOf, guidanceTextOf, showsRawAll, stepDetailText } from './gate-text';
+import { bridgeAdvice, guidanceTextOf, stepDetailText } from './gate-text';
 import { createGateDeadline } from './gate-deadline';
 import { el, spinnerIcon, svgIcon } from './gate-dom';
 
 const POLL_MS = 400;
 
-const GIVE_UP_MS = 120_000;
+const GIVE_UP_MS = 300_000;
 
 function stepLabel(step: PreflightStep, t: Translate): string {
   const id: PreflightStepId = step.id;
@@ -110,33 +110,21 @@ export function createBootGate(
   overlay.setAttribute('aria-label', t('env.title'));
   const card = el('div', styles.card);
   const title = el('h1', styles.title, t('env.title'));
-  const hint = el('p', styles.hint, t('env.checking'));
+  const bootHint = el('p', styles.hint, t('env.checking'));
   const list = el('ul', styles.steps);
-  const progressRow = el('div', styles.progress);
-  progressRow.hidden = true;
-  const elapsed = el('span', styles.elapsed);
-  progressRow.append(elapsed);
-  const rawAll = el('details', styles.raw);
-  const rawAllBody = el('pre', styles.error);
-  rawAll.append(el('summary', styles.rawSummary, t('env.fix.details')), rawAllBody);
-  rawAll.hidden = true;
   const actions = el('div', styles.actions);
   actions.hidden = true;
   const fixTitle = el('h2', styles.fixTitle, t('env.fix.title'));
   const fixWhy = el('p', styles.hint);
   const fixStep = el('p', styles.hint);
   const fixAdvice = el('p', styles.hint);
-  const raw = el('details', styles.raw);
-  const rawSummary = el('summary', styles.rawSummary, t('env.fix.details'));
-  const errorBox = el('pre', styles.error);
-  raw.append(rawSummary, errorBox);
   const buttons = el('div', styles.buttons);
   const retry = el('button', styles.button, t('env.retry'));
   retry.setAttribute('type', 'button');
   const fixCommand = commandRow(t);
 
   buttons.append(retry);
-  actions.append(fixTitle, fixWhy, fixStep, fixCommand.row, fixAdvice, buttons, raw);
+  actions.append(fixTitle, fixWhy, fixStep, fixCommand.row, fixAdvice, buttons);
 
   const bridge = el('div', styles.bridge);
   bridge.hidden = true;
@@ -154,10 +142,7 @@ export function createBootGate(
   bridgeSkip.setAttribute('type', 'button');
   const bridgeButtons = el('div', styles.buttons);
   bridgeButtons.append(bridgeWake, bridgeRetry, bridgeSkip);
-  const bridgeRaw = el('details', styles.raw);
-  const bridgeRawText = el('pre', styles.error);
-  bridgeRaw.append(el('summary', styles.rawSummary, t('env.fix.details')), bridgeRawText);
-  bridge.append(bridgeTitle, bridgeWhy, bridgeLines, bridgeCommand.row, wakeNote, bridgeButtons, bridgeRaw);
+bridge.append(bridgeTitle, bridgeWhy, bridgeLines, bridgeCommand.row, wakeNote, bridgeButtons);
 
   const diy = el('div', styles.bridge);
   diy.hidden = true;
@@ -172,42 +157,18 @@ export function createBootGate(
   diySkip.setAttribute('type', 'button');
   const diyButtons = el('div', styles.buttons);
   diyButtons.append(diyRetry, diySkip);
-  const diyRaw = el('details', styles.raw);
-  const diyRawText = el('pre', styles.error);
-  diyRaw.append(el('summary', styles.rawSummary, t('env.fix.details')), diyRawText);
-  diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons, diyRaw);
+diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
 
-  card.append(title, hint, list, progressRow, actions, bridge, diy, rawAll);
+  card.append(title, bootHint, list, actions, bridge, diy);
   overlay.append(card);
   document.body.append(overlay);
 
   const previousInert = root?.inert ?? false;
   if (root !== null) root.inert = true;
 
+  let bootHintShown = true;
   let closed = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  let waitingSince: number | null = null;
-  let ticker: ReturnType<typeof setInterval> | undefined;
-
-  function startElapsed(): void {
-    if (waitingSince === null) waitingSince = Date.now();
-    if (ticker !== undefined) return;
-    const paint = (): void => {
-      const seconds = Math.max(0, Math.floor((Date.now() - (waitingSince ?? Date.now())) / 1000));
-      elapsed.textContent = t('env.elapsed', { seconds });
-      progressRow.hidden = seconds < 1;
-    };
-    paint();
-    ticker = setInterval(paint, 500);
-  }
-
-  function stopElapsed(): void {
-    if (ticker !== undefined) clearInterval(ticker);
-    ticker = undefined;
-    waitingSince = null;
-    elapsed.textContent = '';
-    progressRow.hidden = true;
-  }
   let cancelled = false;
   const forcePlan = createForcePlan();
   let pinned: PreflightSnapshot | null = null;
@@ -217,7 +178,6 @@ export function createBootGate(
     closed = true;
     cancelled = true;
     if (timer !== undefined) clearTimeout(timer);
-    if (ticker !== undefined) clearInterval(ticker);
     deadline.disarm();
     overlay.remove();
     if (root !== null) root.inert = previousInert;
@@ -227,9 +187,14 @@ export function createBootGate(
 
   interface StepRow {
     readonly item: HTMLElement;
+    readonly head: HTMLElement;
     readonly mark: HTMLElement;
     readonly detail: HTMLElement;
+    readonly arrow: HTMLElement;
+    readonly log: HTMLElement;
     status: string;
+    expandable: boolean;
+    expanded: boolean;
   }
 
   const rows = new Map<PreflightStepId, StepRow>();
@@ -239,17 +204,52 @@ export function createBootGate(
     const existing = rows.get(step.id);
     if (existing !== undefined) return existing;
     const item = el('li', styles.step);
+    const head = el('div', styles.head);
+    head.setAttribute('role', 'button');
+    head.setAttribute('tabindex', '0');
+    head.setAttribute('aria-expanded', 'false');
     const mark = el('span', styles.mark);
     mark.setAttribute('aria-hidden', 'true');
-    const row: StepRow = { item, mark, detail: el('span', styles.detail), status: '' };
-    item.append(mark, el('span', styles.label, stepLabel(step, t)), row.detail);
+    const row: StepRow = {
+      item,
+      head,
+      mark,
+      detail: el('span', styles.detail),
+      arrow: el('span', styles.arrow, '›'),
+      log: el('pre', styles.stepLog),
+      status: '',
+      expandable: false,
+      expanded: false,
+    };
+    row.arrow.setAttribute('aria-hidden', 'true');
+    row.arrow.hidden = true;
+    row.log.hidden = true;
+    head.append(mark, el('span', styles.label, stepLabel(step, t)), row.detail, row.arrow);
+    item.append(head, row.log);
+    const toggle = (): void => {
+      if (!row.expandable) return;
+      row.expanded = !row.expanded;
+      row.log.hidden = !row.expanded;
+      head.setAttribute('aria-expanded', row.expanded ? 'true' : 'false');
+      item.dataset.expanded = row.expanded ? 'true' : 'false';
+      if (row.expanded) row.log.scrollTop = row.log.scrollHeight;
+    };
+    head.addEventListener('click', toggle);
+    head.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      toggle();
+    });
     rows.set(step.id, row);
     return row;
   }
 
   function render(snapshot: PreflightSnapshot): void {
     wakeNote.hidden = true;
-    hint.textContent = gateHintOf(snapshot, t);
+    if (bootHintShown && (snapshot.phase !== 'idle' || snapshot.steps.length > 0)) {
+      bootHintShown = false;
+      bootHint.hidden = true;
+    }
 
     const items = snapshot.steps.map((step) => {
       const row = ensureRow(step);
@@ -264,6 +264,20 @@ export function createBootGate(
         }
       }
       row.detail.textContent = stepDetailText(step, snapshot, t);
+      const logText = step.log?.length
+        ? step.log.join('\n')
+        : (step.detail?.trim() ?? '');
+      row.expandable = logText !== '';
+      row.item.dataset.expandable = row.expandable ? 'true' : 'false';
+      row.arrow.hidden = !row.expandable;
+      row.log.textContent = logText;
+      if (!row.expandable && row.expanded) {
+        row.expanded = false;
+        row.log.hidden = true;
+        row.head.setAttribute('aria-expanded', 'false');
+        row.item.dataset.expanded = 'false';
+      }
+      if (row.expanded) row.log.scrollTop = row.log.scrollHeight;
       return row.item;
     });
 
@@ -273,23 +287,10 @@ export function createBootGate(
       list.replaceChildren(...items);
     }
 
-    const rawLines = snapshot.steps.flatMap((step) => {
-      const detail = step.detail ?? '';
-      return detail === '' ? [] : [`${stepLabel(step, t)}: ${detail}`];
-    });
-    rawAllBody.textContent = rawLines.join('\n');
-
-    const waiting = snapshot.phase !== 'ready' && snapshot.phase !== 'failed';
-    if (waiting) startElapsed();
-    else stopElapsed();
-
     const failed = snapshot.phase === 'failed';
     actions.hidden = !failed;
     retry.removeAttribute('disabled');
     bridgeRetry.removeAttribute('disabled');
-    errorBox.textContent = snapshot.error ?? '';
-    errorBox.hidden = snapshot.error === undefined;
-
     const fix = snapshot.steps.find((step) => step.status === 'failed' && step.command !== undefined);
     const commandText = fix?.command;
 
@@ -334,8 +335,6 @@ export function createBootGate(
         }),
       );
       bridgeCommand.set(bridgeStep?.command);
-      bridgeRawText.textContent = bridgeStep?.detail ?? '';
-      bridgeRaw.hidden = (bridgeStep?.detail ?? '') === '';
       const canWake =
         snapshot.canWakeBrowser === true && bridgeIssues.includes('extension');
       bridgeWake.hidden = !canWake;
@@ -349,12 +348,8 @@ export function createBootGate(
         gap.rows.length === 0 ? [t('env.diy.noRow')] : [t('env.diy.rows', { rows: gap.rows.join('、') })];
       diyLines.replaceChildren(...lines.map((text) => el('li', styles.bridgeLine, text)));
       diyCommand.set(gap.command);
-      diyRawText.textContent = gap.detail;
-      diyRaw.hidden = gap.detail === '';
     }
 
-    const panelShown = !actions.hidden || !bridge.hidden || !diy.hidden;
-    rawAll.hidden = !showsRawAll(snapshot, panelShown) || rawLines.length === 0;
   }
 
   async function poll(): Promise<void> {
@@ -389,7 +384,6 @@ export function createBootGate(
     retry.setAttribute('disabled', '');
     bridgeRetry.setAttribute('disabled', '');
     diyRetry.setAttribute('disabled', '');
-    hint.textContent = t('env.checking');
     if (pinned !== null) {
       render(pinned);
       return;
