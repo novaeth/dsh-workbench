@@ -21,7 +21,7 @@ const INSTALL_WAIT_MS = 360_000;
 const GATE_WAIT_MS = 360_000;
 const READY_WAIT_MS = 450_000;
 const MARKET_WAIT_MS = 300_000;
-const BRIDGE_WAIT_MS = 180_000;
+const BRIDGE_WAIT_MS = 600_000;
 const BRIDGE_RETRY_MS = 15_000;
 const MODULE_WAIT_MS = 90_000;
 const POLL_MS = 2000;
@@ -461,6 +461,12 @@ async function waitExtensionConnected() {
 }
 
 async function bridgeGate(cdp, snapshot, body, state) {
+  const steps = Array.isArray(snapshot?.steps) ? snapshot.steps : [];
+  const busy = steps.some((step) => step.status === 'running' || step.status === 'pending');
+  if (busy) {
+    log(`体检还在跑，先等它：${steps.map((step) => `${step.id}:${step.status ?? '?'}`).join(' · ')}`);
+    return false;
+  }
   const bridge = stepStatusOf(snapshot, 'bridge');
   if (bridge === '' || bridge === 'ok') return true;
   if (browserState === 'pending') await launchSmokeBrowser();
@@ -475,9 +481,7 @@ async function bridgeGate(cdp, snapshot, body, state) {
   if (Date.now() > state.deadline) {
     await fail(cdp, `浏览器通道没连上（装扩展 + Retry 之后 bridge 还是 ${bridge}）`, body, snapshot);
   }
-  const steps = Array.isArray(snapshot?.steps) ? snapshot.steps : [];
-  const busy = steps.some((step) => step.status === 'running' || step.status === 'pending');
-  if (!busy && Date.now() - state.retriedAt >= BRIDGE_RETRY_MS) {
+  if (Date.now() - state.retriedAt >= BRIDGE_RETRY_MS) {
     state.retriedAt = Date.now();
     await click(cdp, ['Retry', '重试'], 1200);
   }

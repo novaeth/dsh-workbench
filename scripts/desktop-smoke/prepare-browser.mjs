@@ -5,7 +5,13 @@ import { execa } from 'execa';
 
 const temp = process.env.RUNNER_TEMP ?? tmpdir();
 const platform = process.platform === 'win32' ? 'win64' : process.platform === 'darwin' ? 'mac-arm64' : 'linux64';
-const log = (line) => process.stdout.write(`${line}\n`);
+const label = process.env.DESKTOP_SMOKE_OS ?? '';
+const logFile = label === '' ? undefined : `desktop-${label}-prep.log`;
+if (logFile !== undefined) writeFileSync(logFile, '');
+const log = (line) => {
+  process.stdout.write(`${line}\n`);
+  if (logFile !== undefined) appendFileSync(logFile, `${line}\n`);
+};
 
 async function download(url, file) {
   const response = await fetch(url, { redirect: 'follow' });
