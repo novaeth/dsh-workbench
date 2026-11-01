@@ -1,0 +1,308 @@
+
+=== meta ===
+collected-at: 2026-11-01T12:26:35.514Z
+platform: win32 x64 · node v24.22.1
+cwd: D:\a\dsh-workbench\dsh-workbench
+home: C:\Users\runneradmin
+dsh-home: C:\Users\runneradmin\.dsh
+workbench-home: C:\Users\runneradmin\.dsh\workbench
+GITHUB_RUN_ID: 41306232252
+GITHUB_RUN_ATTEMPT: 1
+GITHUB_SHA: 5e2479f920696285ba948be13c557f4215747fa9
+GITHUB_JOB: smoke
+DESKTOP_SMOKE_STATUS: failure
+probe-log: D:\a\dsh-workbench\dsh-workbench\desktop-win11-probe.log
+git: 5e2479f refactor(seam): 删除旧兼容层 shellOf / WORKBENCH_SHELL / withSandboxPolicy
+git-status: M packages/module-hello/client.js
+ M packages/shared/src/host/release-packages.generated.ts
+?? desktop-win11-console-events.json
+?? desktop-win11-failed-body.txt
+?? desktop-win11-failed-preflight.json
+?? desktop-win11-fatal-body.txt
+?? desktop-win11-fatal.png
+?? desktop-win11-gate-body.txt
+?? desktop-win11-gate-preflight.json
+?? desktop-win11-gate.png
+?? desktop-win11-plugins-body.txt
+
+=== triage ===
+探针总结: [44.7s] SMOKE_SUMMARY {"outcome":"failed","elapsed":"44.7s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.2s","install-clicked":"12.5s","installed":"14.5s","gate-seen":"22.6s"},"reason":"preflight failed（现场：desktop-win11-failed-body.txt / desktop-win11-failed-preflight.json）"}
+已知上游缺口: deepseek-harness#9083 / #11722 — Windows 上 windows-acl 的 workspace-write 受限令牌让子进程在 DLL 初始化就死（0xC0000142）；mac 不受影响；等上游把能力 SID 从 S-1-4 换成 S-1-5 的修复，工作台按规矩不绕、不提权
+第一处错误: [44.7s] FATAL Error: preflight failed（现场：desktop-win11-failed-body.txt / desktop-win11-failed-preflight.json）
+
+里程碑:
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] MILESTONE app-page @ 0.1s
+[0.2s] MILESTONE cdp-connected @ 0.2s
+[12.5s] MILESTONE install-clicked @ 12.5s
+[14.5s] MILESTONE installed @ 14.5s
+[22.6s] MILESTONE gate-seen @ 22.6s
+
+现场文件:
+[9.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-plugins-body.txt (903 bytes)
+[22.6s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win11-gate.png (27129 bytes)
+[22.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-gate-body.txt (1755 bytes)
+[22.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-gate-preflight.json (427 bytes)
+[24.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-console-events.json (3 bytes)
+[24.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-failed-body.txt (1755 bytes)
+[24.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-failed-preflight.json (4976 bytes)
+[44.7s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+[44.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-fatal-body.txt (1755 bytes)
+[44.7s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win11-fatal.png (27129 bytes)
+
+体检失败快照:
+[24.7s] PREFLIGHT_FAILED: {"ok":true,"phase":"failed","steps":[{"id":"toolchain","status":"failed","log":["宿主执行通道起不了子进程（0xC0000142 · DLL 初始化失败）——不是没装 node：node 不在 PATH（Desktop 自带 Node 的 shim 没生效） · npm 缺（已改用 pnpm） · pnpm 缺（装不了 opencli/插件/模块库）","deployment=desktop · resources=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources · execPath=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\DeepSeek Harness.exe","bundled node=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe · bundled pnpm=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin\\pnpm.cjs · bins=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\…","PATH 前两段=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin|C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin","node: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空） cmd='C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe'","pnpm: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空） cmd='C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe' 'C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin\\pnpm.cjs' --version","npm: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空）","control direct bundled node: exit=0 out=v24.21.0","control direct host node: exit=0 out=v24.21.0","control default: exit=3221225794 out=（空）","control home: exit=3221225794 out=（空）","control cwd: exit=3221225794 out=（空）"],"detail":"宿主执行通道起不了子进程（0xC0000142 · DLL 初始化失败）——不是没装 node：node 不在 PATH（Desktop 自带 Node 的 shim 没生效） · npm 缺（已改用 pnpm） · pnpm 缺（装不了 opencli/插件/模块库）"},{"id":"cli","status":"pending"},{"id":"bridge","status":"pending"},{"id":"diy","status":"pending"}],"at":1793535966059,"log":["宿主执行通道起不了子进程（0xC0000142 · DLL 初始化失败）——不是没装 node：node 不在 PATH（Desktop 自带 Node 的 shim 没生效） · npm 缺（已改用 pnpm） · pnpm 缺（装不了 opencli/插件/模块库）","deployment=desktop · resources=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources · execPath=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\DeepSeek Harness.exe","bundled node=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe · bundled pnpm=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin\\pnpm.cjs · bins=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\…","PATH 前两段=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin|C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin","node: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空） cmd='C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe'","pnpm: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空） cmd='C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe' 'C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin\\pnpm.cjs' --version","npm: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空）","control direct bundled node: exit=0 out=v24.21.0","control direct host node: exit=0 out=v24.21.0","control default: exit=3221225794 out=（空）","control home: exit=3221225794 out=（空）","control cwd: exit=3221225794 out=（空）"],"canWakeBrowser":true,"error":"宿主执行通道起不了子进程（0xC0000142 · DLL 初始化失败）——不是没装 node：node 不在 PATH（Desktop 自带 Node 的 shim 没生效） · npm 缺（已改用 pnpm） · pnpm 缺（装不了 opencli/插件/模块库）","failure":"host","guidance":"host"}
+
+=== smoke results ===
+desktop-win11-smoke.json:
+（读不出 JSON）: ENOENT: no such file or directory, open 'D:\a\dsh-workbench\dsh-workbench\desktop-win11-smoke.json'
+desktop-win11-after-restart-smoke.json:
+（读不出 JSON）: ENOENT: no such file or directory, open 'D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-smoke.json'
+
+=== checklist ===
+profile 里有 @dsh-workbench/core: 是（link:D:/a/dsh-workbench/dsh-workbench/packages/core）
+profile 里有 @dsh-workbench/module-hello: 否
+opencli 装上了: 否（C:\Users\runneradmin\.dsh\workbench\opencli\toolchain\node_modules\@jackwener\opencli\package.json）
+市场索引列出模块: 否: ENOENT: no such file or directory, open 'D:\a\dsh-workbench\dsh-workbench\desktop-win11-market-body.txt'
+市场装上了模块: 否: ENOENT: no such file or directory, open 'D:\a\dsh-workbench\dsh-workbench\desktop-win11-market-installed.txt'
+重启后看到了模块卡片: 否: ENOENT: no such file or directory, open 'D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-verify-body.txt'
+截图: desktop-win11-fatal.png (27129) · desktop-win11-gate.png (27129)
+
+=== probe log ===
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-probe.log（9458 字节，末尾 44 行）
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.2s] MILESTONE cdp-connected @ 0.2s
+[0.2s] app-shell: HARNESS | Loading plugins…
+[2.2s] app-shell: HARNESS | Loading plugins…
+[4.2s] app-shell: HARNESS | Loading plugins…
+[6.5s] app-shell: HARNESS | Loading plugins…
+[8.5s] app-shell: New Session | Ctrl | + | N | Plugins | Automation tasks | More | Workspaces | No sessions yet | More | Into the Unknown | Preview | Choose workspace | Standard mode | Choose a workspace to start
+[8.5s] STEP click ["Plugins"]: "Plugins"
+[9.8s] plugins-page: permission mode that uses the model to assess authorization before each tool call. | Developer Tools | Experimental | Inspect and debug raw session data, grouped chat messages, and the NodeJS backend.
+[9.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-plugins-body.txt (903 bytes)
+[9.9s] STEP click ["Add plugin"]: "Add plugin"
+[10.7s] add-plugin wait: {"ok":true}
+[10.7s] FIELDS: [{"index":0,"tag":"INPUT","type":"text","placeholder":"Search session names","aria":null,"visible":true},{"index":1,"tag":"INPUT","type":"text","placeholder":"for example dsh-plugin-whale-pet","aria":"Package name or address","visible":true}]
+[11.2s] filled: "D:\\a\\dsh-workbench\\dsh-workbench\\packages\\core"
+[11.2s] STEP click ["Install"]: "Install"
+[12.5s] MILESTONE install-clicked @ 12.5s
+[14.5s] install wait:  data, grouped chat messages, and the NodeJS backend. | Installed |  | @dsh-workbench/core |  | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 |  | Version 1.1.14-beta.2 |  | Show install details | Enable now
+[14.5s] MILESTONE installed @ 14.5s
+[14.5s] STEP click ["Enable now"]: "Enable now"
+[19.6s] health wait [checking] toolchain:running(node --version · npm --version · pnpm --version) cli:pending bridge:pending diy:pending :: will not help. |  | Quit the workbench completely (including the tray icon), clear the dsh-* leftovers in the system temp folder, then open it again. If it keeps happening, update dsh. |  | Retry | Enter workbench anyway
+[22.6s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win11-gate.png (27129 bytes)
+[22.6s] MILESTONE gate-seen @ 22.6s
+[22.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-gate-body.txt (1755 bytes)
+[22.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-gate-preflight.json (427 bytes)
+[22.6s] 体检还在跑，先等它：toolchain:running · cli:pending · bridge:pending · diy:pending
+[24.7s] health wait [failed] toolchain:failed cli:pending bridge:pending diy:pending :: will not help. |  | Quit the workbench completely (including the tray icon), clear the dsh-* leftovers in the system temp folder, then open it again. If it keeps happening, update dsh. |  | Retry | Enter workbench anyway
+[24.7s] FAIL preflight failed
+[24.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-console-events.json (3 bytes)
+[24.7s] PREFLIGHT_FAILED: {"ok":true,"phase":"failed","steps":[{"id":"toolchain","status":"failed","log":["宿主执行通道起不了子进程（0xC0000142 · DLL 初始化失败）——不是没装 node：node 不在 PATH（Desktop 自带 Node 的 shim 没生效） · npm 缺（已改用 pnpm） · pnpm 缺（装不了 opencli/插件/模块库）","deployment=desktop · resources=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources · execPath=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\DeepSeek Harness.exe","bundled node=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe · bundled pnpm=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin\\pnpm.cjs · bins=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\…","PATH 前两段=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin|C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin","node: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空） cmd='C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe'","pnpm: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空） cmd='C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe' 'C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin\\pnpm.cjs' --version","npm: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空）","control direct bundled node: exit=0 out=v24.21.0","control direct host node: exit=0 out=v24.21.0","control default: exit=3221225794 out=（空）","control home: exit=3221225794 out=（空）","control cwd: exit=3221225794 out=（空）"],"detail":"宿主执行通道起不了子进程（0xC0000142 · DLL 初始化失败）——不是没装 node：node 不在 PATH（Desktop 自带 Node 的 shim 没生效） · npm 缺（已改用 pnpm） · pnpm 缺（装不了 opencli/插件/模块库）"},{"id":"cli","status":"pending"},{"id":"bridge","status":"pending"},{"id":"diy","status":"pending"}],"at":1793535966059,"log":["宿主执行通道起不了子进程（0xC0000142 · DLL 初始化失败）——不是没装 node：node 不在 PATH（Desktop 自带 Node 的 shim 没生效） · npm 缺（已改用 pnpm） · pnpm 缺（装不了 opencli/插件/模块库）","deployment=desktop · resources=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources · execPath=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\DeepSeek Harness.exe","bundled node=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe · bundled pnpm=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin\\pnpm.cjs · bins=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\…","PATH 前两段=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin|C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin","node: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空） cmd='C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe'","pnpm: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空） cmd='C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe' 'C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin\\pnpm.cjs' --version","npm: exit=3221225794 sandbox=mode=workspace-write root=C:\\Users\\runneradmin\\.dsh\\workbench out=（空）","control direct bundled node: exit=0 out=v24.21.0","control direct host node: exit=0 out=v24.21.0","control default: exit=3221225794 out=（空）","control home: exit=3221225794 out=（空）","control cwd: exit=3221225794 out=（空）"],"canWakeBrowser":true,"error":"宿主执行通道起不了子进程（0xC0000142 · DLL 初始化失败）——不是没装 node：node 不在 PATH（Desktop 自带 Node 的 shim 没生效） · npm 缺（已改用 pnpm） · pnpm 缺（装不了 opencli/插件/模块库）","failure":"host","guidance":"host"}
+[24.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-failed-body.txt (1755 bytes)
+[24.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-failed-preflight.json (4976 bytes)
+[44.7s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+[44.7s] FATAL Error: preflight failed（现场：desktop-win11-failed-body.txt / desktop-win11-failed-preflight.json）
+    at fail (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:235:9)
+    at async waitForGateAndReady (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:507:29)
+    at async main (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:885:20)
+[44.7s] SMOKE_SUMMARY {"outcome":"failed","elapsed":"44.7s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.2s","install-clicked":"12.5s","installed":"14.5s","gate-seen":"22.6s"},"reason":"preflight failed（现场：desktop-win11-failed-body.txt / desktop-win11-failed-preflight.json）"}
+[44.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-fatal-body.txt (1755 bytes)
+[44.7s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win11-fatal.png (27129 bytes)
+
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-probe.log（不存在）
+
+=== app stdout/stderr ===
+DESKTOP_SMOKE_APP_LOG: D:\a\_temp\desktop-win11-app.log
+D:\a\_temp\desktop-win11-app.log（275 字节，末尾 6 行）
+
+Checking for update
+Generated new staging user ID: 6ec4741a-f3e5-53e8-b32c-3c6af2ea8a6e
+Update for version 0.2.1-rc.5 is not available (latest version: 0.2.1-rc.5, downgrade is disallowed).
+dsh web: http://127.0.0.1:62724/?token=coIpEFGmO_Bgbb_9FXb2Yb_ZynsMiX12TCLtxKZsx14
+
+DESKTOP_SMOKE_APP_ERR: D:\a\_temp\desktop-win11-app.err.log
+D:\a\_temp\desktop-win11-app.err.log（99 字节，末尾 3 行）
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/ec434fef-6176-4fd9-aecd-c66d8285a230
+
+DESKTOP_SMOKE_APP_LOG_2: D:\a\_temp\desktop-win11-app2.log
+D:\a\_temp\desktop-win11-app2.log（不存在）
+DESKTOP_SMOKE_APP_ERR_2: D:\a\_temp\desktop-win11-app2.err.log
+D:\a\_temp\desktop-win11-app2.err.log（不存在）
+
+=== market artifacts ===
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-market-body.txt（不存在）
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-market-installed.txt（不存在）
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-verify-body.txt（不存在）
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-verify-body.txt（不存在）
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-final-body.txt（不存在）
+
+=== desktop install tree ===
+resources: C:\Users\runneradmin\AppData\Local\Programs\DeepSeek Harness\resources（在）
+  dir app.asar.unpacked\dsh\node_modules
+  file app.asar.unpacked\dsh\node_modules\clone\.npmignore
+  dir app.asar.unpacked\dsh\node_modules\node-addon-require-builtin-win32-x64-msvc
+  dir app.asar.unpacked\dsh\node_modules\node-pty
+  dir runtime
+  dir runtime\primary-runtime
+  dir runtime\primary-runtime\dependencies\node
+  dir runtime\primary-runtime\dependencies\node\bin
+  dir runtime\primary-runtime\dependencies\node\node_modules
+  dir runtime\primary-runtime\dependencies\pnpm
+  dir runtime\primary-runtime\dependencies\pnpm\bin
+  dir runtime\primary-runtime\dependencies\pnpm\dist
+  dir runtime\primary-runtime\dependencies\python
+  dir runtime\primary-runtime\dependencies\python\DLLs
+  dir runtime\primary-runtime\dependencies\python\include
+  dir runtime\primary-runtime\dependencies\python\Lib
+  dir runtime\primary-runtime\dependencies\python\libs
+  dir runtime\primary-runtime\dependencies\python\Scripts
+  dir runtime\primary-runtime\dependencies\python\tcl
+
+=== opencli doctor ===
+bin: C:\Users\runneradmin\.dsh\workbench\opencli\bin\opencli.cmd（在）
+exit: 127
+
+dsh-workbench: opencli 的隔离运行时还没装好（C:\Users\runneradmin\.dsh\workbench\opencli\toolchain）。
+  打开工作台：启动体检会给出一条能直接照做的安装命令。
+
+=== runner os ===
+platform: win32 · release: 10.0.26100 · version: Windows Server 2025 Datacenter
+OS env: Windows_NT
+Microsoft Windows [Version 10.0.26100.33650]
+
+=== extension prep ===
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-prep.log（666 字节，末尾 8 行）
+cft: https://storage.googleapis.com/chrome-for-testing-public/156.0.8078.80/win64/chrome-win64.zip
+chrome: 156.0.8078.80
+opencli pin: 1.8.8
+latest release: v2.0.2
+extension: https://github.com/jackwener/opencli/releases/download/v2.0.2/opencli-extension-v1.0.26.zip
+extension version: 1.0.26 · dir: D:\a\_temp\opencli-ext
+env: DESKTOP_SMOKE_CHROME=D:\a\_temp\cft\chrome-win64\chrome.exe · DESKTOP_SMOKE_EXTENSION=D:\a\_temp\opencli-ext · DESKTOP_SMOKE_OPENCLI=C:\Users\runneradmin\.dsh\workbench\opencli\bin\opencli.cmd · DESKTOP_SMOKE_NODE_BIN=C:\Users\runneradmin\AppData\Local\Programs\DeepSeek Harness\resources\runtime\primary-runtime\dependencies\node\bin
+
+
+=== smoke browser ===
+chrome: D:\a\_temp\cft\chrome-win64\chrome.exe
+extension: D:\a\_temp\opencli-ext
+opencli bin: C:\Users\runneradmin\.dsh\workbench\opencli\bin\opencli.cmd
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-chrome.log（不存在）
+
+=== units and client injection ===
+desktop-win11-units.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-units.json（不存在）
+desktop-win11-after-restart-units.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-units.json（不存在）
+desktop-win11-client-bundles.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-client-bundles.json（不存在）
+desktop-win11-after-restart-client-bundles.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-client-bundles.json（不存在）
+desktop-win11-page-internals.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-page-internals.json（不存在）
+desktop-win11-after-restart-page-internals.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-page-internals.json（不存在）
+desktop-win11-scripts.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-scripts.json（不存在）
+desktop-win11-after-restart-scripts.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-scripts.json（不存在）
+desktop-win11-console-events.json:
+[]
+
+desktop-win11-after-restart-console-events.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-console-events.json（不存在）
+
+=== dsh startup logs ===
+C:\Users\runneradmin\.dsh\logs（不存在）
+
+=== desktop app logs ===
+（没找到 Desktop 自己的日志文件）
+
+=== workbench home tree（C:\Users\runneradmin\.dsh\workbench） ===
+[D] bin
+  [D] desktop
+    [F] node.cmd (143)
+[D] diy
+  [D] packages
+[D] opencli
+  [D] bin
+    [F] opencli.cmd (147)
+  [D] home
+  [D] toolchain
+    [F] package.json (118)
+[F] seed.log (62)
+
+=== seed.log ===
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+
+
+=== diy/.sync.json ===
+C:\Users\runneradmin\.dsh\workbench\diy\.sync.json（不存在）
+
+=== profile package.json ===
+{
+  "name": "dsh-profile-desktop",
+  "private": true,
+  "dependencies": {
+    "@dsh-workbench/core": "link:D:/a/dsh-workbench/dsh-workbench/packages/core"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "@dsh-workbench/core"
+      ]
+    }
+  }
+}
+
+
+=== profile cordis.patch.yml ===
+# Your patch layer for this dsh profile, applied after every bundle layer:
+# a top-level YAML array of loader patch entries (id-targeted config
+# overrides, disables, and insert lists; `!!js` expressions allowed).
+[]
+
+
+=== profile cordis.yml ===
+# dsh profile root — an empty entry list. The tree is composed as patches:
+# each bundle in package.json's dsh.profile.bundles, then cordis.patch.yml, then any
+# --patch overlays. Edit cordis.patch.yml, not this file.
+[]
+
+
+=== workbench browser.json ===
+C:\Users\runneradmin\.dsh\workbench\browser.json（不存在）
+
+=== dsh home tree（C:\Users\runneradmin\.dsh） ===
+[F] .anonymous-user-id (37)
+[F] .credentials.yaml (161)
+[D] profiles
+  [D] desktop
+    [D] .plugin-manager
+    [F] cordis.patch.yml (217)
+    [F] cordis.yml (223)
+    [D] node_modules
+    [F] package.json (326)
+    [F] pnpm-lock.yaml (299)
+    [F] pnpm-workspace.yaml (61)
+[D] storages
+  [F] workspace.json (978)
+[D] workbench
+  [D] bin
+    [D] desktop
+  [D] diy
+    [D] packages
+  [D] opencli
+    [D] bin
+    [D] home
+    [D] toolchain
+  [F] seed.log (62)
+
+=== processes ===
+
