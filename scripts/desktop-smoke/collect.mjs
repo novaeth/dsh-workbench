@@ -29,6 +29,18 @@ function safe(work, fallback) {
   }
 }
 
+function knownUpstreamGap() {
+  const preflight = `${prefix}-failed-preflight.json`;
+  const body = safe(() => readFileSync(join(cwd, preflight), 'utf8'), '');
+  const probe = safe(() => readFileSync(probeLog, 'utf8'), '');
+  if (!/0xC0000142|3221225794|宿主执行通道起不了子进程/u.test(`${body}${probe}`)) return undefined;
+  if (osLabel === 'mac') return undefined;
+  return (
+    'deepseek-harness#11722 — Windows 上 windows-acl 的 workspace-write 受限令牌让子进程在 DLL 初始化就死' +
+    '（0xC0000142）；mac 不受影响；等上游把能力 SID 从 S-1-4 换成 S-1-5 的修复，工作台按规矩不绕、不提权'
+  );
+}
+
 function tailFile(file, maxLines = 200, maxBytes = 262_144) {
   if (!existsSync(file)) return `${file}（不存在）`;
   const stat = safe(() => statSync(file), undefined);
@@ -171,6 +183,8 @@ async function main() {
 
   section('triage');
   push(`探针总结: ${lastLine(/SMOKE_SUMMARY/u)}`);
+  const knownGap = knownUpstreamGap();
+  if (knownGap !== undefined) push(`已知上游缺口: ${knownGap}`);
   push(`第一处错误: ${lastLine(/FATAL|Error:|FAIL /u)}`);
   push('');
   push('里程碑:');
@@ -387,6 +401,7 @@ async function main() {
     `### desktop / ${osLabel} — ${process.env.DESKTOP_SMOKE_STATUS ?? 'unknown'}`,
     '',
     `- 探针总结：\`${lastLine(/SMOKE_SUMMARY/u)}\``,
+    ...(knownUpstreamGap() === undefined ? [] : [`- 已知上游：${knownUpstreamGap()}`]),
     `- 第一处错误：\`${lastLine(/FATAL|Error:|FAIL /u) || '（没有）'}\``,
     `- profile 里有 core：${dependency.installed ? '是' : '否'} · module-hello：${moduleState.installed ? '是' : '否'}`,
     `- 市场列出模块：${marketListed} · 装了模块：${marketInstalled} · 卡片可见：${cardVisible}`,
