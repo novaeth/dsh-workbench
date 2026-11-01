@@ -1,5 +1,5 @@
 import { basename, dirname } from 'node:path';
-import type { DshHostContext, DshShell } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared';
 import {
   declarationApiVersionOf,
   declarationProblemsOf,
@@ -11,7 +11,8 @@ import {
   type BundleManager,
   type RouteHandler,
   type UnitTitle,
-  shellOf,
+  seamOf,
+  type Seam,
 } from '@dsh-workbench/shared/host';
 import type { UnitRefusal } from '@/kernel/host/unit-registry';
 import {
@@ -81,12 +82,12 @@ async function latestIfReleaseReady(supply: ReturnType<typeof supplyPortOf>, inp
   readonly pkg: string;
   readonly version: string;
   readonly registry: string;
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly force: boolean;
   readonly logger?: { warn?(message: string): void } | undefined;
 }): Promise<string | undefined> {
   const missing = await supply.missingReleaseParts({
-    shell: input.shell,
+    seam: input.seam,
     name: input.pkg,
     registry: input.registry,
     version: input.version,
@@ -108,7 +109,7 @@ async function latestIfReleaseReady(supply: ReturnType<typeof supplyPortOf>, inp
 
 async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: {
   readonly dir: string | null;
-  readonly shell: DshShell | undefined;
+  readonly seam: Seam | undefined;
   readonly fallback: string | undefined;
   readonly force: boolean;
   readonly check: boolean;
@@ -120,14 +121,14 @@ async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: 
   if (read === undefined) return undefined;
   const spec = dependencyReader(input.dir)(PLUGIN_ID);
   const registry = read.registry ?? input.fallback;
-  const shell = input.shell;
+  const seam = input.seam;
   const queried =
-    read.local === true || !input.check || shell === undefined || registry === undefined
+    read.local === true || !input.check || seam === undefined || registry === undefined
       ? undefined
-      : await supply.latestVersion({ shell, name: read.pkg, registry, force: input.force });
+      : await supply.latestVersion({ seam, name: read.pkg, registry, force: input.force });
   const latest =
     queried === undefined ||
-    shell === undefined ||
+    seam === undefined ||
     registry === undefined ||
     !supply.isNewerVersion(queried, read.version)
       ? undefined
@@ -135,7 +136,7 @@ async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: 
           pkg: read.pkg,
           version: queried,
           registry,
-          shell,
+          seam,
           force: input.force,
           logger: input.logger,
         });
@@ -153,7 +154,7 @@ async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: 
 
 export function moduleVersionsHandler(
   ctx: DshHostContext,
-  shell: DshShell | undefined,
+  seam: Seam | undefined,
   running?: string | undefined,
   selfUpdate?: (() => WorkbenchSelfUpdate | undefined) | undefined,
 ): RouteHandler {
@@ -182,17 +183,17 @@ export function moduleVersionsHandler(
         const registry = fromRegistry ? (module.registry ?? fallback) : undefined;
         const spec = dependencyOf(module.pkg);
         const latest =
-          local || !fromRegistry || !check || shell === undefined || registry === undefined
+          local || !fromRegistry || !check || seam === undefined || registry === undefined
             ? undefined
-            : await supply.latestVersion({ shell, name: module.pkg, registry, force });
+            : await supply.latestVersion({ seam, name: module.pkg, registry, force });
         const raw = supply.moduleDeclarationOf(dir, module.pkg);
         const declared = raw === undefined ? [] : declarationProblemsOf(module.pkg, raw);
         const title = titleOf(raw);
         const refused = refusals.get(module.unit) ?? (declared.length === 0 ? undefined : declared);
         const latestRaw =
-          latest === undefined || latest === module.version || shell === undefined || registry === undefined
+          latest === undefined || latest === module.version || seam === undefined || registry === undefined
             ? undefined
-            : await supply.registryDeclarationOf({ shell, name: module.pkg, registry, force });
+            : await supply.registryDeclarationOf({ seam, name: module.pkg, registry, force });
         const latestBlocked =
           latestRaw === undefined
             ? undefined
@@ -245,7 +246,7 @@ export function moduleVersionsHandler(
           });
     const workbench = await workbenchVersion(supply, {
       dir,
-      shell,
+      seam,
       fallback,
       force,
       check,
@@ -279,14 +280,14 @@ async function declarationRefusal(
     return refusedInspection(supply.declarationRefusalOf(inspection.name, supply.pathDeclarationOf(spec)));
   }
   if (inspection.kind !== 'registry') return undefined;
-  const shell = shellOf(ctx);
-  if (shell === undefined) return undefined;
+  const seam = seamOf(ctx);
+  if (seam === undefined) return undefined;
   const registry =
     typeof inspection.registry === 'string'
       ? inspection.registry
       : ((await manager.registries())?.resolved ?? undefined);
   if (registry === undefined) return undefined;
-  const raw = await supply.registryDeclarationOf({ shell, name: inspection.name, registry });
+  const raw = await supply.registryDeclarationOf({ seam, name: inspection.name, registry });
   return refusedInspection(supply.declarationRefusalOf(inspection.name, raw));
 }
 
@@ -298,7 +299,7 @@ async function packageOverride(
   manager: BundleManager,
   asked: BundleRegistry | undefined,
 ): Promise<BundleInspection | undefined> {
-  const shell = shellOf(ctx);
+  const seam = seamOf(ctx);
   const fromInspection =
     inspection.status === 'accepted' && typeof inspection.registry === 'string' ? inspection.registry : undefined;
   const registry =
@@ -306,7 +307,7 @@ async function packageOverride(
     (typeof asked === 'string' ? asked : ((await manager.registries())?.resolved ?? undefined));
   const route = await supply.packageRouteOf({
     spec,
-    ...(shell === undefined ? {} : { shell }),
+    ...(seam === undefined ? {} : { seam }),
     ...(registry === undefined ? {} : { registry }),
   });
   if (route !== undefined && route.kind === 'runtime-plugin') {

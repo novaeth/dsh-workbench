@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { createPluginCatalog } from '../plugin-catalog.js';
 import { createPluginUnits } from '../plugin-units.js';
 import type { UnitRegistry } from '../unit-registry-types.js';
@@ -67,7 +68,10 @@ function unitsOf(options: {
   const problems: string[] = [];
   const manager = createPluginUnits({
     registry,
-    catalog: createPluginCatalog({ shell: shell.shell, command: 'opencli' }),
+    catalog: createPluginCatalog({
+      seam: createSeam({ shell: shell.shell, runtimeRoot: '/tmp/wb-seam-test' }),
+      command: 'opencli',
+    }),
     rows: () => options.plugins.map((plugin) => ({ id: `plugin:opencli-plugin-${plugin.name}`, pkg: `opencli-plugin-${plugin.name}`, name: plugin.name })),
     declared: (plugin) => options.declared?.get(plugin) ?? new Set<string>(),
     opencliFor: () => ({ json: async () => ({ value: {}, at: 0 }) }) as never,

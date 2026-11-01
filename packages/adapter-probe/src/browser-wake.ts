@@ -2,8 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, win32 } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import type { DshShell } from '@dsh-workbench/shared';
-import { quoteShellArg, runShell } from '@dsh-workbench/shared/host';
+import { noWrite, quoteShellArg, type Seam } from '@dsh-workbench/shared/host';
 import type { DesktopBrowserId, WakeBrowserReply } from '@dsh-workbench/shared/contract/protocol/preflight-wake';
 
 const BROWSER_IDS = ['chrome', 'edge', 'brave', 'chromium', 'vivaldi'] as const;
@@ -74,7 +73,7 @@ function specOf(id: DesktopBrowserId): BrowserSpec {
 }
 
 export function createDesktopBrowser(options: {
-  shell: DshShell;
+  seam: Seam;
   command: string;
   stateFile: string;
   platform?: string;
@@ -96,12 +95,10 @@ export function createDesktopBrowser(options: {
   const command = options.command;
 
   async function run(line: string, timeoutMs: number): Promise<{ ok: boolean; stdout: string }> {
-    try {
-      const result = await runShell(options.shell, line, { timeoutMs });
-      return { ok: result.exitCode === 0 && !result.timedOut, stdout: result.stdout };
-    } catch {
-      return { ok: false, stdout: '' };
-    }
+    const result = await options.seam
+      .run({ command: line, intent: noWrite(), retry: 'safe', timeoutMs, bestEffort: true })
+      .catch(() => undefined);
+    return { ok: result !== undefined && result.exitCode === 0 && !result.timedOut, stdout: result?.stdout ?? '' };
   }
 
   function winCandidates(id: DesktopBrowserId): string[] {

@@ -25,6 +25,12 @@ export const CHECKS = {
     layer: 'source',
     load: () => import('./checks/source.mjs'),
   },
+  seam: {
+    title: '模块执行缝（写入域）',
+    summary: '子进程只走 deps.seam 门面；不取原始 shell / 不裸 child_process；清单 writes 与请求一致',
+    layer: 'source',
+    load: () => import('./checks/seam.mjs'),
+  },
   arch: {
     title: '模块架构（分层 / 边界 / 设计系统）',
     summary: '模块自己的层序、运行时边界与设计系统配置',

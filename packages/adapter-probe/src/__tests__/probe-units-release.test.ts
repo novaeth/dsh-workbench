@@ -2,6 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { probeUnitCommands } from '../index.js';
 import { resetReleaseCache } from '../release-port.js';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { createSeam } from '@dsh-workbench/shared/host';
+
+function seamFor(shell: Parameters<typeof createSeam>[0]['shell']) {
+  return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
+
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -46,7 +52,7 @@ describe('版本信号（源上有新版）', () => {
     const fake = shellWith('1.0.39', '1.0.40');
 
     const result = await probeUnitCommands({
-      shell: fake.shell,
+      seam: seamFor(fake.shell),
       runtimeCommands: { opencli: 'opencli' },
       unit,
       force: true,
@@ -67,7 +73,7 @@ describe('版本信号（源上有新版）', () => {
     const fake = shellWith('1.0.40', '1.0.40');
 
     const result = await probeUnitCommands({
-      shell: fake.shell,
+      seam: seamFor(fake.shell),
       runtimeCommands: { opencli: 'opencli' },
       unit,
       force: true,
@@ -82,7 +88,7 @@ describe('版本信号（源上有新版）', () => {
     const fake = shellWith('1.0.39', '1.0.40');
 
     const result = await probeUnitCommands({
-      shell: fake.shell,
+      seam: seamFor(fake.shell),
       runtimeCommands: { opencli: 'opencli' },
       unit,
       force: true,

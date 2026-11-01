@@ -48,7 +48,8 @@
       },
       "tools": [],
       "host": {
-        "inject": []
+        "inject": [],
+        "writes": []
       }
     },
     "workbenchFaces": {

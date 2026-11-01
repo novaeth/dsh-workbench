@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { brokenRowsOf, createDiyPresetProbe, diyPresetVerdictOf } from '../index.js';
 import { createPreflight } from '../preflight.js';
+
+function seamFor(shell: Parameters<typeof createSeam>[0]['shell']) {
+  return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
+
 
 const GOOD_BRIDGE_REPORT = [
   'opencli v1.8.7 doctor (node v24.15.0)',
@@ -122,6 +128,6 @@ describe('启动体检把 DIY 那一行接进来', () => {
 
 function buildPreflight(probe: () => Promise<ReturnType<typeof diyPresetVerdictOf>>) {
   const fake = createFakeShell(ALL_OK.map((step) => ({ ...step })));
-  const preflight = createPreflight({ shell: fake.shell, probeDiy: probe });
+  const preflight = createPreflight({ seam: seamFor(fake.shell), probeDiy: probe });
   return { fake, preflight };
 }

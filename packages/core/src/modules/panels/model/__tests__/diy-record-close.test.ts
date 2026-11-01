@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { BROWSER_RECORD_SESSION } from '@dsh-workbench/shared/host';
 import type { DshHostContext, DshShell } from '@dsh-workbench/shared';
+import { fakeSeamOf } from '../../__tests__/seam-fake';
 import { takeHeldNotices } from '@/shared/api/host/diy-debug-act';
 import { createDiyRig } from '../../__tests__/diy-harness';
 import type { ProbeStep } from '../../__tests__/diy-harness';
@@ -76,7 +77,7 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
       },
     };
     const ctx = { get: (key: string) => (key === 'agents' ? agents : undefined) } as unknown as DshHostContext;
-    const shell = recordingShell(
+    const seam = fakeSeamOf(recordingShell(
       [
         { stdout: finishedPayload() },
         { stdout: '' },
@@ -84,11 +85,11 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
         { stdout: '{"closed":"p1"}' },
       ],
       order,
-    );
+    ));
 
     const out = await watchFinishStepOf({
       ctx,
-      shell,
+      seam,
       command: '',
       sessionId: 's1',
       store: record,
@@ -105,7 +106,7 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
     const record = held();
     const order: string[] = [];
     const ctx = { get: () => undefined } as unknown as DshHostContext;
-    const shell = recordingShell(
+    const seam = fakeSeamOf(recordingShell(
       [
         { stdout: finishedPayload() },
         { stdout: '' },
@@ -119,11 +120,11 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
         { stdout: '{"closed":"blank"}' },
       ],
       order,
-    );
+    ));
 
     const out = await watchFinishStepOf({
       ctx,
-      shell,
+      seam,
       command: '',
       sessionId: 's1',
       store: record,
@@ -148,7 +149,7 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
 
     const failed = await watchFinishStepOf({
       ctx,
-      shell: recordingShell(
+      seam: fakeSeamOf(recordingShell(
         [
           { stdout: finishedPayload() },
           { stdout: '' },
@@ -156,7 +157,7 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
           { stdout: '', stderr: '整会话 close 也没成', exitCode: 1 },
         ],
         order,
-      ),
+      )),
       command: '',
       sessionId: 's1',
       store: held(),
@@ -189,7 +190,7 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
     } as unknown as DshShell;
     const boom = await watchFinishStepOf({
       ctx,
-      shell: throwing,
+      seam: fakeSeamOf(throwing),
       command: '',
       sessionId: 's1',
       store: held(),
@@ -232,14 +233,14 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
 
     const out = await watchFinishStepOf({
       ctx,
-      shell: recordingShell(
+      seam: fakeSeamOf(recordingShell(
         [
           { stdout: finishedPayload() },
           { stdout: '' },
           { stdout: '[]' },
         ],
         order,
-      ),
+      )),
       command: '',
       sessionId: 's1',
       store: record,
@@ -258,7 +259,7 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
 
     const out = await watchFinishStepOf({
       ctx,
-      shell: recordingShell(
+      seam: fakeSeamOf(recordingShell(
         [
           {
             stdout: JSON.stringify({
@@ -277,7 +278,7 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
           { stdout: '[]' },
         ],
         [],
-      ),
+      )),
       command: '',
       sessionId: 's1',
       store: record,
@@ -296,11 +297,11 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
     record.started('s1', at, at);
     record.finished('s1', at + 5, at + 5);
     const order: string[] = [];
-    const shell = recordingShell([{ stdout: '[]' }], order);
+    const seam = fakeSeamOf(recordingShell([{ stdout: '[]' }], order));
 
     const out = await watchFinishStepOf({
       ctx: { get: () => undefined } as unknown as DshHostContext,
-      shell,
+      seam,
       command: '',
       sessionId: 's1',
       store: record,
@@ -316,7 +317,7 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
     const fake = rig.fakeShell([{ stdout: '' }, { stdout: '[]' }]);
 
     const cleaned = await releaseRecord({
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       command: '',
       session: BROWSER_RECORD_SESSION,
       url: URL,

@@ -4,7 +4,8 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync }
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import {
   desktopSelfUpdateCli,
   planSelfUpdate,
@@ -21,6 +22,15 @@ import {
 
 const describePosix = process.platform === 'win32' ? describe.skip : describe;
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+function pathsOf(dshHome: string) {
+  vi.stubEnv('DSH_HOME', dshHome);
+  return selfUpdatePaths(dshHome);
+}
+
 const home = (): string => mkdtempSync(join(tmpdir(), 'wb-self-update-'));
 
 const request = (over: Partial<SelfUpdateRequest> = {}): SelfUpdateRequest => ({
@@ -35,7 +45,7 @@ const request = (over: Partial<SelfUpdateRequest> = {}): SelfUpdateRequest => ({
 
 describePosix('工作台自更新：交给外面那个进程，而且一行都不摘自己', () => {
   it('★ 脚本里没有卸载 —— 自己那一行不会掉', () => {
-    const script = selfUpdateScript(request(), selfUpdatePaths('/tmp/dsh-home'));
+    const script = selfUpdateScript(request(), pathsOf('/tmp/dsh-home'));
 
     expect(script).not.toMatch(/remove/);
     expect(script).not.toMatch(/plugin --profile \S+ remove/);
@@ -43,7 +53,7 @@ describePosix('工作台自更新：交给外面那个进程，而且一行都�
   });
 
   it('★ 成功判定看盘上那份的版本，不信 CLI 的退出码', () => {
-    const script = selfUpdateScript(request(), selfUpdatePaths('/tmp/dsh-home'));
+    const script = selfUpdateScript(request(), pathsOf('/tmp/dsh-home'));
 
     expect(script).toContain('is_to() { [ "$(on_disk)" = "$TO" ]; }');
     expect(script).toContain('if install "$TO" && is_to; then');
@@ -51,7 +61,7 @@ describePosix('工作台自更新：交给外面那个进程，而且一行都�
   });
 
   it('★ 目标版本不是钉死的（问不到 latest）→ 只要"盘上换成了别的版本"就算成', () => {
-    const script = selfUpdateScript(request({ to: '', pinned: false }), selfUpdatePaths('/tmp/dsh-home'));
+    const script = selfUpdateScript(request({ to: '', pinned: false }), pathsOf('/tmp/dsh-home'));
 
     expect(script).toContain("TO='latest'");
     expect(script).toContain('if install "$TO" && is_other; then');
@@ -59,14 +69,14 @@ describePosix('工作台自更新：交给外面那个进程，而且一行都�
   });
 
   it('★ 换版没成 → 把旧版本装回去，并记 rolled-back', () => {
-    const script = selfUpdateScript(request(), selfUpdatePaths('/tmp/dsh-home'));
+    const script = selfUpdateScript(request(), pathsOf('/tmp/dsh-home'));
 
     expect(script).toContain('if install "$FROM" && [ "$(on_disk)" = "$FROM" ]; then');
     expect(script).toContain('write_marker rolled-back "$FROM"');
   });
 
   it('★ 真出事时，日志里给的那条救法就是 recoveryCommand（不另写一份）', () => {
-    const paths = selfUpdatePaths('/tmp/dsh-home');
+    const paths = pathsOf('/tmp/dsh-home');
     const script = selfUpdateScript(request(), paths);
     const rescue = recoveryCommand({ profile: 'workbench', pkg: '@dsh-workbench/core', version: '0.2.6' });
 
@@ -76,14 +86,14 @@ describePosix('工作台自更新：交给外面那个进程，而且一行都�
   });
 
   it('★ dsh 不在 PATH：一句人话 + failed，不硬装', () => {
-    const script = selfUpdateScript(request(), selfUpdatePaths('/tmp/dsh-home'));
+    const script = selfUpdateScript(request(), pathsOf('/tmp/dsh-home'));
 
     expect(script).toContain('command -v dsh');
     expect(script).toContain('write_marker failed "$FROM"');
   });
 
   it('★ 现场落在 DSH_HOME 外面那一份（不随工作台被换掉而消失）', () => {
-    const paths = selfUpdatePaths('/tmp/dsh-home');
+    const paths = pathsOf('/tmp/dsh-home');
 
     expect(paths.script).toBe('/tmp/dsh-home/workbench/self-update.sh');
     expect(paths.marker).toBe('/tmp/dsh-home/workbench/self-update.json');
@@ -99,8 +109,8 @@ describePosix('工作台自更新：交给外面那个进程，而且一行都�
         return { on: () => undefined, unref: () => undefined };
       }) as unknown as typeof import('node:child_process').spawn;
 
+      const paths = pathsOf(root);
       const started = startSelfUpdate(request({ dshHome: root }), () => undefined, fakeSpawn);
-      const paths = selfUpdatePaths(root);
 
       expect(started.started).toBe(true);
       expect(readFileSync(paths.script, 'utf8')).toBe(selfUpdateScript(request({ dshHome: root }), paths));
@@ -175,7 +185,7 @@ describePosix('desktop：保留 profile 只认 Desktop 自带的那份 CLI', () 
   it('★ 脚本用 Electron + host CLI，不再去 PATH 上找 dsh', () => {
     const script = selfUpdateScript(
       request({ profile: 'desktop' }),
-      selfUpdatePaths('/tmp/dsh-home'),
+      pathsOf('/tmp/dsh-home'),
       cli,
     );
 
@@ -240,6 +250,7 @@ function runScript(root: string, cli?: SelfUpdateCli): number | null {
   writeFileSync(join(bin, 'dsh'), FAKE_DSH, { mode: 0o755 });
   mkdirSync(join(root, 'profiles', 'wb', 'node_modules', PKG), { recursive: true });
   writeFileSync(join(root, 'profiles', 'wb', 'node_modules', PKG, 'package.json'), '{"version":"0.2.6"}');
+  vi.stubEnv('DSH_HOME', root);
   const plan = planSelfUpdate(
     {
       dshHome: root,
@@ -315,6 +326,7 @@ describePosix('真跑一遍那个脚本（假 dsh + 沙箱 profile）', () => {
   maybe('★ PATH 上没有 dsh → marker=failed，一句人话，不假装装上了', () => {
     const root = mkdtempSync(join(tmpdir(), 'wb-su-run-'));
     try {
+      vi.stubEnv('DSH_HOME', root);
       const plan = planSelfUpdate({
         dshHome: root,
         profile: 'wb',
@@ -373,7 +385,7 @@ describePosix('自更新现场：界面要知道外面那个进程跑成什么�
     const root = home();
     try {
       mkdirSync(join(root, 'workbench'), { recursive: true });
-      const paths = selfUpdatePaths(root);
+      const paths = pathsOf(root);
       writeFileSync(
         paths.marker,
         JSON.stringify({
@@ -408,9 +420,10 @@ describePosix('自更新现场：界面要知道外面那个进程跑成什么�
   it('没跑过 / marker 坏了 / 状态不认识 → undefined（不许瞎说）', () => {
     const root = home();
     try {
+      pathsOf(root);
       expect(readSelfUpdateView(root)).toBeUndefined();
       mkdirSync(join(root, 'workbench'), { recursive: true });
-      const paths = selfUpdatePaths(root);
+      const paths = pathsOf(root);
       writeFileSync(paths.marker, '{ not json');
       expect(readSelfUpdateView(root)).toBeUndefined();
       writeFileSync(paths.marker, JSON.stringify({ state: 'vibes' }));

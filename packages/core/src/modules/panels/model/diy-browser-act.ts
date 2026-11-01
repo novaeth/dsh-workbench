@@ -1,5 +1,4 @@
-import type { DshShell } from '@dsh-workbench/shared';
-import { quoteShellArg, runShell } from '@dsh-workbench/shared/host';
+import { productWrite, quoteShellArg, type Seam } from '@dsh-workbench/shared/host';
 import { jsonOf, runBrowserStep, type LineMaker, textOf, type BrowserStep } from './diy-browser';
 
 export const ACT_TIMEOUT_MS = 15000;
@@ -9,14 +8,14 @@ export interface ActStep extends BrowserStep {
 }
 
 export async function actBrowser(
-  shell: DshShell,
+  seam: Seam,
   command: string,
   session: string,
   argv: readonly string[],
   timeoutMs = ACT_TIMEOUT_MS,
   line?: LineMaker,
 ): Promise<ActStep> {
-  const step = await runBrowserStep(shell, command, ['browser', session, ...argv, '--window', 'background'], timeoutMs, line);
+  const step = await runBrowserStep(seam, command, ['browser', session, ...argv, '--window', 'background'], timeoutMs, line);
   return { ...step, payload: jsonOf(step.stdout) };
 }
 
@@ -34,7 +33,7 @@ export function actErrorOf(step: ActStep): string {
 export const SWEEP_TIMEOUT_MS = 4000;
 
 export async function stopNetworkExact(
-  shell: DshShell,
+  seam: Seam,
   file: string,
   timeoutMs = SWEEP_TIMEOUT_MS,
 ): Promise<boolean> {
@@ -50,6 +49,6 @@ export async function stopNetworkExact(
     `if [ "$(cat ${pidFile} 2>/dev/null)" = "$p" ]; then rm -f ${pidFile} ${reaperFile}; fi`,
     'true',
   ].join('; ');
-  const step = await runShell(shell, line, { timeoutMs });
+  const step = await seam.run({ command: line, intent: productWrite(), timeoutMs });
   return step.exitCode === 0;
 }

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { fakeSeamOf } from './seam-fake';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 import type { UnitCapability } from '@dsh-workbench/shared/host';
 import type { BundleManager } from '@dsh-workbench/shared/host';
@@ -176,7 +177,7 @@ export function harness(options: {
       const table = after ? (options.statusesAfter ?? options.statuses ?? {}) : (options.statuses ?? {});
       return probeOf(table, options.manifests)(id);
     },
-    ...(options.withShell === false ? {} : { shell: fake.shell }),
+    ...(options.withShell === false ? {} : { seam: fakeSeamOf(fake.shell) }),
     ...(options.bundles === undefined ? {} : { bundles: options.bundles }),
     ...(options.installed === undefined ? {} : { installed: options.installed }),
     ...(options.modules === undefined ? {} : { modules: options.modules }),

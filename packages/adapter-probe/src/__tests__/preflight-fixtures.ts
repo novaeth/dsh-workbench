@@ -1,5 +1,11 @@
 import { createPreflight } from '../index.js';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { createSeam } from '@dsh-workbench/shared/host';
+
+function seamFor(shell: Parameters<typeof createSeam>[0]['shell']) {
+  return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
+
 
 export const GOOD_BRIDGE_REPORT = [
   'opencli v1.8.7 doctor (node v24.15.0)',
@@ -59,7 +65,7 @@ export function build(
 ) {
   const fake = createFakeShell(replies);
   const preflight = createPreflight({
-    shell: fake.shell,
+    seam: seamFor(fake.shell),
     ...(install === undefined ? {} : { install }),
     ...(warmReads === undefined ? {} : { warmReads }),
   });

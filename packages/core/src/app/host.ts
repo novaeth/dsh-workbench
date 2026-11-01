@@ -1,5 +1,6 @@
 import type { DshHostContext, DshWorkspaceRegistry, UnitManifest } from '@dsh-workbench/shared';
 import { provideWorkbenchShell } from '@/shared/api/host/workbench-shell';
+import { provideWorkbenchSeam } from '@/shared/api/host/workbench-seam';
 import { shippedAdapterSet } from '@/shared/api/host/shipped-adapter-set';
 import { dshHome } from '@dsh-workbench/shared/host';
 import { createHostRoutes } from '@/shared/api/host/host-routes';
@@ -54,7 +55,8 @@ export const name = 'dsh-workbench';
 interface ReleasedLookup { isReleased(id: string): boolean }
 export const inject = ['webServer'];
 export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Promise<void> {
-  const shell = provideWorkbenchShell(ctx);
+  provideWorkbenchShell(ctx);
+  const seam = provideWorkbenchSeam(ctx);
   const facts = createFactLog();
   const values = createValueHandoff();
   const panelState = createPanelStateStore();
@@ -160,10 +162,10 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   const releasedOf = (unit: string): boolean =>
     ctx.get<ReleasedLookup>(PANELS_SERVICE)?.isReleased(unit) ?? false;
   const probeOne = async (unit: string, force = false): Promise<UnitCapability | undefined> => {
-    if (shell === undefined) return undefined;
+    if (seam === undefined) return undefined;
     const manifest = manifestOf(unit);
     if (manifest === undefined || !hasEnvNeeds(manifest)) return undefined;
-    const common = { shell, runtimeCommands, force };
+    const common = { seam, runtimeCommands, force };
     const found = (await adapters.probe.probeUnits({ ...common, units: declaredNow().map(probeInput) })).find(
       (row) => row.unit === unit,
     );
@@ -177,7 +179,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     logger: ctx.logger,
   });
   const pluginTools: PluginUnitsPort | undefined =
-    shell === undefined
+    seam === undefined
       ? undefined
       : adapters.plugins.createUnits({
           registry: units,
@@ -255,6 +257,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
         commands: adapters.commands,
         probe: (unit, options) => probeOne(unit, options?.force ?? false),
         values, surface,
+        ...(seam === undefined ? {} : { seam }),
         longTasks: {
           scope: process.env['DSH_HOME'] ?? '',
           bump: (names) => facts.bump([...names, LONG_TASKS_ROUTE]),
@@ -341,13 +344,13 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     }
     rebindPost();
   }
-  if (shell === undefined) {
+  if (seam === undefined) {
     ctx.logger?.warn?.('[dsh-workbench] 没有 shell 服务：需要执行缝的套件会降级');
   } else {
     adapters.probe.registerPreflight({
       routes,
       ctx,
-      shell,
+      seam,
       runtimeCommands,
       runtimeCapabilities: capabilities,
       ...(runtimeCheck === undefined ? {} : { runtimeCheck: () => runtimeCheck(ctx) }),
@@ -357,7 +360,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     routes.capability = capabilityHandler(async (unit, force) => {
       if (unit === undefined) {
         const common = {
-          shell,
+          seam,
           runtimeCommands,
           force,
         };

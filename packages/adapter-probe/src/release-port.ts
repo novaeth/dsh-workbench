@@ -1,7 +1,7 @@
 import { createReleasePort } from '@dsh-workbench/adapter-profile';
-import { npmCacheDir, vendorPrefix } from '@dsh-workbench/adapter-runtime';
+import { vendorPrefix } from '@dsh-workbench/adapter-runtime';
 
-const port = createReleasePort({ cacheDir: npmCacheDir(), prefix: vendorPrefix() });
+const port = createReleasePort({ prefix: vendorPrefix() });
 
 export const latestVersion = port.latestVersion;
 export const missingReleaseParts = port.missingReleaseParts;

@@ -1,5 +1,5 @@
-import type { DshShell } from '../api/dsh.js';
-import { runShell } from './shell.js';
+import { productWrite } from './seam/intent.js';
+import type { Seam } from './seam/run.js';
 import { quoteShellArg } from './shell-text.js';
 import { parseJsonLoose } from '../lib/text.js';
 import { VERSION_CHECK_TIMEOUT_MS, VERSION_CHECK_TTL_MS } from '../config/constants.js';
@@ -19,7 +19,7 @@ export interface RegistryLookup {
 }
 
 interface RegistryDshOptions {
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly name: string;
   readonly registry?: string | undefined;
   readonly force?: boolean;
@@ -42,13 +42,13 @@ export function createRegistryLookup(): RegistryLookup {
 }
 
 async function dshOf(cache: Map<string, { at: number; raw: unknown }>, options: {
-  shell: DshShell;
+  seam: Seam;
   name: string;
   registry?: string | undefined;
   force?: boolean;
   cacheDir?: string | undefined;
 }): Promise<RegistryDshLookup> {
-  const { shell, name, registry, force = false, cacheDir } = options;
+  const { seam, name, registry, force = false, cacheDir } = options;
   const key = `${registry ?? ''}|${name}`;
   const hit = cache.get(key);
   if (!force && hit !== undefined && Date.now() - hit.at < VERSION_CHECK_TTL_MS) {
@@ -57,11 +57,15 @@ async function dshOf(cache: Map<string, { at: number; raw: unknown }>, options: 
 
   const at = registry === undefined ? '' : ` --registry ${quoteShellArg(registry)}`;
   const cached = cacheDir === undefined ? '' : ` --cache ${quoteShellArg(cacheDir)}`;
-  const result = await runShell(
-    shell,
-    `npm view ${quoteShellArg(name)} dsh --json${at}${cached}`,
-    { timeoutMs: VERSION_CHECK_TIMEOUT_MS },
-  ).catch(() => undefined);
+  const result = await seam
+    .run({
+      command: `npm view ${quoteShellArg(name)} dsh --json${at}${cached}`,
+      intent: productWrite(),
+      retry: 'safe',
+      timeoutMs: VERSION_CHECK_TIMEOUT_MS,
+      bestEffort: true,
+    })
+    .catch(() => undefined);
   const parsed = result?.exitCode === 0 ? parseJsonLoose(result.stdout) : undefined;
   if (parsed === undefined) return { readable: false, raw: undefined };
   cache.set(key, { at: Date.now(), raw: parsed });

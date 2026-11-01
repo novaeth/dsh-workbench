@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared';
-import { DIY_DEBUG_SERVICE, UNITS_SERVICE, WORKBENCH_ADAPTERS, createDebugStore } from '@dsh-workbench/shared/host';
+import { DIY_DEBUG_SERVICE, UNITS_SERVICE, WORKBENCH_ADAPTERS, createDebugStore, createSeam } from '@dsh-workbench/shared/host';
 import { opencliSurface } from './test-adapters';
 import { registerBrowserTools } from '../model/diy-browser-tools';
 import { fakeWorkspace, fakeWorkspaceRegistry } from './fake-workspace-registry';
@@ -51,6 +51,7 @@ export function createBrowserRig() {
       const root = roots.pop();
       if (root !== undefined) rmSync(root, { recursive: true, force: true });
     }
+    delete process.env.DSH_WORKBENCH_HOME;
   });
 
   function browserRig(plan: {
@@ -60,6 +61,7 @@ export function createBrowserRig() {
   }) {
     const root = mkdtempSync(join(tmpdir(), 'wb-browser-tools-'));
     roots.push(root);
+    process.env.DSH_WORKBENCH_HOME = join(root, 'workbench');
     const workshop = join(root, 'workbench', 'diy');
     const profile = join(root, 'profiles', 'workbench');
     const packages = join(workshop, 'packages');
@@ -100,6 +102,11 @@ export function createBrowserRig() {
         };
       },
     };
+    const seam = createSeam({
+      shell: shell as never,
+      runtimeRoot: join(root, 'workbench'),
+      grantOf: () => ({ mode: 'workspace-write', workspaceRoot: workshop }),
+    });
     const registered: DshToolDefinition[] = [];
     const registry = {
       register(definition: DshToolDefinition) {
@@ -123,6 +130,7 @@ export function createBrowserRig() {
       get: (key: string) => {
         if (key === 'tools') return registry as unknown as DshToolRegistry;
         if (key === 'shell') return shell;
+        if (key === 'workbenchSeam') return seam;
         if (key === UNITS_SERVICE) {
           return { all: () => [{ unit: 'demo' }], refusals: () => [], failureOf: () => undefined };
         }

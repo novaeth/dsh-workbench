@@ -1,8 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { DshShell, DshShellExecution } from '@dsh-workbench/shared';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { createPreflight, probeDesktopToolchain } from '../index.js';
 import { ALL_OK } from './preflight-fixtures';
+
+function seamFor(shell: Parameters<typeof createSeam>[0]['shell']) {
+  return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
+
 
 function hangingShell(): DshShell {
   return {
@@ -15,7 +21,7 @@ describe('Desktop 工具链步骤', () => {
   it('★ 命令没返回 → 报 stalled，不把"没装"三个字安到 node 头上', async () => {
     vi.useFakeTimers();
     try {
-      const pending = probeDesktopToolchain(hangingShell());
+      const pending = probeDesktopToolchain(seamFor(hangingShell()));
       await vi.advanceTimersByTimeAsync(11_000);
       const report = await pending;
 
@@ -35,7 +41,7 @@ describe('Desktop 工具链步骤', () => {
       { exitCode: 127, stderr: 'npm: command not found\n' },
       { stdout: '11.28.5\n' },
     ]);
-    const report = await probeDesktopToolchain(fake.shell);
+    const report = await probeDesktopToolchain(seamFor(fake.shell));
 
     expect(report.ok).toBe(true);
     expect(report.nodeMissing).toBe(false);
@@ -49,7 +55,7 @@ describe('Desktop 工具链步骤', () => {
   it('★ node 好、npm/pnpm 缺 → pnpm 是安装器，直接 failed', async () => {
     const fake = createFakeShell(ALL_OK);
     const preflight = createPreflight({
-      shell: fake.shell,
+      seam: seamFor(fake.shell),
       probeToolchain: async () => ({
         ok: true,
         detail: 'node v24.21.0（Desktop 自带）· npm 缺（已改用 pnpm）· pnpm 缺（装不了 opencli/插件/模块库）',
@@ -69,7 +75,7 @@ describe('Desktop 工具链步骤', () => {
   it('★ node 缺 → toolchain=failed，一条 opencli 命令都不发', async () => {
     const fake = createFakeShell(ALL_OK);
     const preflight = createPreflight({
-      shell: fake.shell,
+      seam: seamFor(fake.shell),
       probeToolchain: async () => ({
         ok: false,
         detail: 'node 不在 PATH（Desktop 自带 Node 的 shim 没生效）',
@@ -89,7 +95,7 @@ describe('Desktop 工具链步骤', () => {
   it('★ 命令没返回 → 停住并走 host 那档：一条 opencli 命令不发，也不提"装 Node"', async () => {
     const fake = createFakeShell(ALL_OK);
     const preflight = createPreflight({
-      shell: fake.shell,
+      seam: seamFor(fake.shell),
       probeToolchain: async () => ({
         ok: false,
         detail: '版本探测没有返回：node / npm / pnpm 的命令都没把结果交回来（不是没装）',
@@ -113,7 +119,7 @@ describe('Desktop 工具链步骤', () => {
     const fake = createFakeShell(ALL_OK);
     const provision = vi.fn(async () => ({ ok: true, binDir: '/tmp/npm-bin', detail: 'should not run' }));
     const preflight = createPreflight({
-      shell: fake.shell,
+      seam: seamFor(fake.shell),
       probeToolchain: async () => ({
         ok: true,
         detail: 'node v24 · npm 缺（已改用 pnpm）· pnpm 10.32.1',
@@ -135,7 +141,7 @@ describe('Desktop 工具链步骤', () => {
     const fake = createFakeShell(ALL_OK);
     const provision = vi.fn(async () => ({ ok: true, detail: 'should not run' }));
     const preflight = createPreflight({
-      shell: fake.shell,
+      seam: seamFor(fake.shell),
       probeToolchain: async () => ({
         ok: true,
         detail: 'node v24 · pnpm 10.32.1',
@@ -156,7 +162,7 @@ describe('Desktop 工具链步骤', () => {
     let probes = 0;
     const provision = vi.fn(async () => ({ ok: true, binDir: '/tmp/pnpm-bin', detail: 'pnpm@10.32.1' }));
     const preflight = createPreflight({
-      shell: fake.shell,
+      seam: seamFor(fake.shell),
       probeToolchain: async () => {
         probes += 1;
         return probes === 1
@@ -178,7 +184,7 @@ describe('Desktop 工具链步骤', () => {
   it('★ pnpm provision 失败 → 仍放行 opencli，原因留在 toolchain 里', async () => {
     const fake = createFakeShell(ALL_OK);
     const preflight = createPreflight({
-      shell: fake.shell,
+      seam: seamFor(fake.shell),
       probeToolchain: async () => ({
         ok: true,
         detail: 'node v24 · pnpm 11',
@@ -200,7 +206,7 @@ describe('Desktop 工具链步骤', () => {
     const fake = createFakeShell(ALL_OK);
     const provision = vi.fn(async () => ({ ok: true, detail: 'should not run' }));
     const preflight = createPreflight({
-      shell: fake.shell,
+      seam: seamFor(fake.shell),
       probeToolchain: async () => ({
         ok: true,
         detail: 'node v24 · pnpm 10.32.1',

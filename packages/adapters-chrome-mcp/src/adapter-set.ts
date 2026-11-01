@@ -1,5 +1,5 @@
 import type { DshHostContext } from '@dsh-workbench/shared';
-import type { AdapterSet } from '@dsh-workbench/shared/host';
+import type { AdapterSet, Seam } from '@dsh-workbench/shared/host';
 import { ADAPTER_SET_API_VERSION, runningVersionOf } from '@dsh-workbench/shared/host';
 
 import { createHostActions } from '@dsh-workbench/shared/host';
@@ -13,6 +13,8 @@ import { createSupplyPort } from './supply-port.js';
 export const CHROME_MCP_ADAPTER_SET_ID = '@dsh-workbench/adapters-chrome-mcp';
 
 export interface McpAdapterSetOptions {
+  readonly seam?: Seam | undefined;
+  readonly logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
   readonly server?: string | undefined;
   readonly args?: readonly string[] | undefined;
   readonly env?: NodeJS.ProcessEnv | undefined;

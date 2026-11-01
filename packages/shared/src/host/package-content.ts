@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import type { DshShell } from '../api/dsh.js';
+import { productWrite } from './seam/intent.js';
+import type { Seam } from './seam/run.js';
 import { INSTALL_TIMEOUT_MS } from '../config/constants.js';
 import { parseJsonLoose } from '../lib/text.js';
 import { quoteShellArg } from './shell-text.js';
-import { runShell } from './shell.js';
 import { splitNpmSpec } from './package-kind.js';
 import { localDirOf } from './local-declaration.js';
 
@@ -34,7 +34,7 @@ function packedFileFrom(stdout: string, root: string): string | undefined {
 
 export async function withPackageDir<T>(
   options: {
-    readonly shell?: DshShell | undefined;
+    readonly seam?: Seam | undefined;
     readonly spec: string;
     readonly registry?: string | undefined;
     readonly cacheDir?: string | undefined;
@@ -44,8 +44,8 @@ export async function withPackageDir<T>(
   const local = localDirOf(options.spec);
   if (local !== undefined) return visit(local);
   if (splitNpmSpec(options.spec) === undefined) return undefined;
-  const shell = options.shell;
-  if (shell === undefined) return undefined;
+  const seam = options.seam;
+  if (seam === undefined) return undefined;
 
   let root: string;
   try {
@@ -55,17 +55,27 @@ export async function withPackageDir<T>(
   }
   try {
     const at = options.registry === undefined ? '' : ` --registry ${quoteShellArg(options.registry)}`;
-    const packed = await runShell(
-      shell,
-      `npm pack ${quoteShellArg(options.spec)} --ignore-scripts --json --pack-destination ${quoteShellArg(root)}${cacheFlag(options.cacheDir)}${at}`,
-      { timeoutMs: INSTALL_TIMEOUT_MS },
-    ).catch(() => undefined);
+    const packed = await seam
+      .run({
+        command: `npm pack ${quoteShellArg(options.spec)} --ignore-scripts --json --pack-destination ${quoteShellArg(root)}${cacheFlag(options.cacheDir)}${at}`,
+        intent: productWrite(),
+        retry: 'safe',
+        timeoutMs: INSTALL_TIMEOUT_MS,
+        bestEffort: true,
+      })
+      .catch(() => undefined);
     if (packed === undefined || packed.exitCode !== 0) return undefined;
     const file = packedFileFrom(packed.stdout, root);
     if (file === undefined) return undefined;
-    const unpacked = await runShell(shell, `tar -xzf ${quoteShellArg(file)} -C ${quoteShellArg(root)}`, {
-      timeoutMs: INSTALL_TIMEOUT_MS,
-    }).catch(() => undefined);
+    const unpacked = await seam
+      .run({
+        command: `tar -xzf ${quoteShellArg(file)} -C ${quoteShellArg(root)}`,
+        intent: productWrite(),
+        retry: 'safe',
+        timeoutMs: INSTALL_TIMEOUT_MS,
+        bestEffort: true,
+      })
+      .catch(() => undefined);
     if (unpacked === undefined || unpacked.exitCode !== 0) return undefined;
     const dir = path.join(root, 'package');
     if (!fs.existsSync(dir)) return undefined;

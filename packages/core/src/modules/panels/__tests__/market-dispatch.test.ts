@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { fakeSeamOf } from './seam-fake';
 import { createWorkspaceStore, PROVISION_ACTIONS } from '@dsh-workbench/shared/host';
 import type { ProvisionAction, ProvisionRequest } from '@dsh-workbench/shared/host';
 import type { UnitManifest } from '@dsh-workbench/shared';
@@ -118,7 +119,7 @@ describe('市场动作分发（HTTP 通道与 agent 工具共用同一套动作�
 
       command: 'opencli',      manifests: [unit('issues')],
       probe: probeOf('missing'),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
     });
 
     const result = await dispatchMarket(market, { action: 'install', unit: 'issues' });
@@ -157,7 +158,7 @@ describe('市场动作分发（HTTP 通道与 agent 工具共用同一套动作�
         supply: pluginSupply(),
       command: 'opencli',        manifests: [unit('issues')],
         probe: probeOf('missing'),
-        shell: fake.shell,
+        seam: fakeSeamOf(fake.shell),
         bundles: fakeBundles(),
         installed: (pkg) => ({ kind: 'unknown', pkg }),
         modules: () => [{ pkg: '@a/issues', unit: 'issues', version: '0.1.0' }],

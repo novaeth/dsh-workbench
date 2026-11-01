@@ -25,7 +25,7 @@
 | **L2 契约 shared** | 协议与纯代码：类型、纯函数、i18n、哑组件、host 工厂 | 协议只有一份；浏览器 / 宿主两个入口的分界 | `@dsh-workbench/shared`、`/host`、`/testing` | 外壳运行时；适配器实现；业务逻辑 |
 | **L3 适配器 AdapterSet** | 平台接缝的实现：opencli、浏览器读、DataReader、profile / 配置同步、供给 / registry、preflight / 自更新、市场 | 怎么跟外部系统说话 | `AdapterSet` / `RuntimeCapabilities` / `RuntimeProfile`，契约在 `shared/host` | 工作台域逻辑；模块；界面 |
 | **L4 模块** | 业务单元：两个面 + `model` / `components` + 清单 + `design.json` + 文案 + 测试 | 这个业务的数据、卡片、工具、写路径、验收 | `dsh.workbench` 清单、`host.ts` / `client.tsx`、`UnitMountResult` 成员（routes / tools / prefs / actions / provision / context / longTasks / facts） | 外壳内部；别的模块；工具链实现；环境搭建 |
-| **L5 工具链 module-tools** | 开发期契约与门禁：`init` / `build` / `check`（13 判据）/ `design` / `sync` / `migrate` / `lint` / `release` + 唯一模板 | 模块该长什么样、怎么算过、怎么发；工具自己的行为 | `dsh-wb-module` 命令、`@dsh-workbench/module-tools/arch` 与 `/lint` 方言、模板产物 | 运行时行为；模块业务；工作区 / 工坊环境；模块源码的归属 |
+| **L5 工具链 module-tools** | 开发期契约与门禁：`init` / `build` / `check`（14 判据）/ `design` / `sync` / `migrate` / `lint` / `release` + 唯一模板 | 模块该长什么样、怎么算过、怎么发；工具自己的行为 | `dsh-wb-module` 命令、`@dsh-workbench/module-tools/arch` 与 `/lint` 方言、模板产物 | 运行时行为；模块业务；工作区 / 工坊环境；模块源码的归属 |
 | **L6 环境 / 实例** | 部署与工作区：profile、`$DSH_WORKBENCH_HOME`、DIY 工坊目录、`adapterSet` 选择、配置同步、依赖安装 | 环境事实：目录布局、依赖装在哪、沙箱 / EPERM、怎么起实例 | 磁盘布局 + 由脚本生成的 `README.md` / `AGENTS.md` | 代码、判据、工具实现 |
 | **L7 发布与市场** | 产物与分发：`npm pack` / team 源 / tarball / git、市场索引、安装 / 升级 / 回滚 | 包怎么发、索引怎么写、装哪份 | `release` 命令、索引格式、`CHANGELOG` | 运行时行为；开发期判据 |
 
@@ -60,7 +60,7 @@
 | L1 外壳 | `packages/core/README.md`、`ARCHITECTURE.md`、`packages/docs/**` 的使用文档、`CONTRIBUTING.md` 的门禁纪律 | core 单测、`arch`、`check:runtimes`、core selfcheck、`WB-A1` | `arch.config.mjs`；界面文案与 kit JSDoc |
 | L2 契约 | `ARCHITECTURE.md` §5–§6、源码 JSDoc | `SH-A1`、`check-state`、typecheck | 入口 `exports`；i18n 字典 |
 | L3 适配器 | `ADAPTERS.md`、各 adapter 包 README | `check:adapter-defaults`、`node scripts/check-adapter-contract.mjs`、集成夹具 | `AdapterSet` 版本；profile 解析规则 |
-| L4 模块 | 模块 `README.md`（`design render` 生成需求段）、模板 `AGENTS.md`（只讲 tools 用法） | 13 条判据、`check:modules`、模块测试、smoke | `design.json`、清单、`messages.ts` |
+| L4 模块 | 模块 `README.md`（`design render` 生成需求段）、模板 `AGENTS.md`（只讲 tools 用法） | 14 条判据、`check:modules`、模块测试、smoke | `design.json`、清单、`messages.ts` |
 | L5 工具链 | `packages/module-tools/README.md`（判据表由命令生成）、`template-diy/AGENTS.md` | module-tools selfcheck（128）、`check:docs` 的判据表校验 | 模板文件、`arch` / `lint` 方言 |
 | L6 环境 | 工坊 `README.md` / `AGENTS.md`（`seed-workshop.sh` 生成）、core README 的 profile / 排障段 | `check-workshop-generation.sh`、seed 行为自检 | `.npmrc`、`pnpm-workspace.yaml`、profile 配置 |
 | L7 发布 | `module-tools/README.md` 的发布段、`CHANGELOG.md` | `check:release-artifacts`、release / publish 自检 | 索引格式、`files` 清单 |
@@ -111,7 +111,7 @@
 | L1 | `arch`（S69 不出现 adapter 包名、S72 按能力不按 id）、`check:runtimes`、`WB-A1`、core selfcheck |
 | L2 | `SH-A1`（shared 不依赖 core / adapter）、shared `check-state`、typecheck |
 | L3 | `check:adapter-defaults`、`node scripts/check-adapter-contract.mjs`、集成夹具 |
-| L4 | module-tools 13 判据（contracts / source / arch / kit / cards / style / primitives / standalone …）；模块 arch 的 S01 / S16 / S23 / S71–S74（S74：测试住 `__tests__/`）；`check:modules` |
+| L4 | module-tools 14 判据（contracts / source / arch / kit / cards / style / primitives / standalone …）；模块 arch 的 S01 / S16 / S23 / S71–S74（S74：测试住 `__tests__/`）；`check:modules` |
 | L5 | module-tools selfcheck（128 条：golden / scaffold / arch-gate / lint-gate / discover / migrate / meta …）、`check:docs` 的判据表一致性 |
 | L6 | `check-workshop-generation.sh`、seed / 入口自检、工坊生成探针 |
 | L7 | `check:release-artifacts`、release / publish 自检 |

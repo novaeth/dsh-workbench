@@ -21,7 +21,7 @@ dsh plugin --profile workbench add @dsh-workbench/module-hello
 
 | 东西 | 在哪 | 说明 |
 |---|---|---|
-| 模块声明 | `package.json` 的 `dsh.workbench` | `apiVersion: 3`、单元 id `hello`、中英名字、一张卡（只有排序位）、零工具、不注入外壳服务 |
+| 模块声明 | `package.json` 的 `dsh.workbench` | `apiVersion: 3`、单元 id `hello`、中英名字、一张卡（只有排序位）、零工具、不注入外壳服务、不声明写入域（`host.writes: []`，也就不用执行缝门面） |
 | 宿主面 | `src/host.ts` | 把 `{ unit: 'hello', mount }` 注册进外壳的 `workbenchUnits`；`routes` 空、`registerTools` 空 |
 | 浏览器面 | `src/client.tsx` | 把 `{ unit, messages, card }` 注册进外壳；卡片用 kit 的 `Card` |
 | 文案 | `src/messages.ts` | zh / en 两份字典，键名以前缀分域 |
@@ -52,7 +52,7 @@ client.js          构建产物（随仓提交，npm 包要带；dist/ 不进 gi
 pnpm install
 pnpm build     # dist/host.js + client.js
 pnpm test      # 单元测试
-pnpm check     # 十三条模块判据（契约 / 产物边界 / 源码边界 / 卡片渲染 / arch / lint …）
+pnpm check     # 十四条模块判据（契约 / 产物边界 / 源码边界 / 执行缝 / 卡片渲染 / arch / lint …）
 pnpm selfcheck # build + 产物冒烟
 ```
 
@@ -76,5 +76,5 @@ pnpm exec dsh-wb-module init my-unit --template diy
 |---|---|
 | 模块怎么写、怎么装、怎么验收 | [DIY 指引](../core/skills/workbench-module-diy/SKILL.md) |
 | 构建、接线、注册的细节 | [BUILD.md](../core/skills/workbench-module-diy/BUILD.md) · [WIRING.md](../core/skills/workbench-module-diy/WIRING.md) |
-| 十三条判据、模板、设计底稿 | [module-tools](../module-tools/README.md) |
+| 十四条判据、模板、设计底稿 | [module-tools](../module-tools/README.md) |
 | 契约类型与共享组件 | [shared](../shared/README.md) |

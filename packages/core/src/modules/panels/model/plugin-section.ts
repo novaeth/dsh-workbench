@@ -1,5 +1,4 @@
-import type { DshShell } from '@dsh-workbench/shared';
-import { requireSupply, param, type RouteTable, type SupplyPort } from '@dsh-workbench/shared/host';
+import { requireSupply, param, type RouteTable, type Seam, type SupplyPort } from '@dsh-workbench/shared/host';
 import type { InstalledPlugin, InstalledPluginsPayload } from '@/shared/api/installed-plugins';
 import { INSTALLED_PLUGINS_ROUTE } from '@/shared/api/installed-plugins';
 import type { PluginLedger } from './plugin-ledger';
@@ -7,19 +6,19 @@ import { pluginOnDisk } from './plugin-name';
 
 export async function installedPlugins(options: {
   readonly ledger: PluginLedger;
-  readonly shell?: DshShell | undefined;
+  readonly seam?: Seam | undefined;
   readonly force?: boolean;
   readonly check?: boolean;
   readonly supply?: SupplyPort | undefined;
 }): Promise<readonly InstalledPlugin[]> {
-  const { ledger, shell, force = false, check = true } = options;
+  const { ledger, seam, force = false, check = true } = options;
   const supply = options.supply ?? requireSupply();
   const rows: InstalledPlugin[] = [];
   for (const entry of ledger.list()) {
     const release =
-      shell === undefined || entry.local === true || entry.registry === undefined
+      seam === undefined || entry.local === true || entry.registry === undefined
         ? undefined
-        : await supply.probeRelease({ shell, package: entry.package, registry: entry.registry, force, check });
+        : await supply.probeRelease({ seam, package: entry.package, registry: entry.registry, force, check });
     rows.push({
       pkg: entry.package,
       ...(entry.name === undefined ? {} : { name: entry.name }),
@@ -40,14 +39,14 @@ export async function installedPlugins(options: {
 
 export function pluginRoutes(options: {
   readonly ledger: PluginLedger;
-  readonly shell?: DshShell | undefined;
+  readonly seam?: Seam | undefined;
   readonly supply?: SupplyPort | undefined;
 }): RouteTable {
   return {
     [INSTALLED_PLUGINS_ROUTE]: async (search) => {
       const plugins = await installedPlugins({
         ledger: options.ledger,
-        ...(options.shell === undefined ? {} : { shell: options.shell }),
+        ...(options.seam === undefined ? {} : { seam: options.seam }),
         ...(options.supply === undefined ? {} : { supply: options.supply }),
         force: param(search, 'force') === '1',
         check: param(search, 'check') !== '0',

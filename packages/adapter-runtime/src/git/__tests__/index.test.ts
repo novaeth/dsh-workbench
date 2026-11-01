@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { DshShell } from '@dsh-workbench/shared';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+
+function seamFor(shell: DshShell) {
+  return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
 import { createGitReader } from '../index.js';
 
 describe('createGitReader', () => {
@@ -9,7 +15,7 @@ describe('createGitReader', () => {
       { stdout: 'develop\n' },
       { stdout: 'abc123\n' },
     ]);
-    const git = createGitReader({ shell: fake.shell });
+    const git = createGitReader({ seam: seamFor(fake.shell) });
     await expect(git.origin('/w/x')).resolves.toEqual({
       kind: 'ok',
       remote: 'git@example.com:a/b/c.git',
@@ -35,7 +41,7 @@ describe('createGitReader', () => {
       { exitCode: 2, stderr: 'fatal: no branch' },
       { exitCode: 2, stderr: 'fatal: no head' },
     ]);
-    const git = createGitReader({ shell: fake.shell });
+    const git = createGitReader({ seam: seamFor(fake.shell) });
     await expect(git.origin('/w/x')).resolves.toMatchObject({
       kind: 'no-origin',
       detail: expect.stringContaining('no origin'),
@@ -46,10 +52,29 @@ describe('createGitReader', () => {
     await expect(git.head('/w/x')).resolves.toMatchObject({ kind: 'no-head' });
   });
 
+  it('★ 产品域内的拒绝 → 只读查询自愈重试一次，拒绝进事实', async () => {
+    const fake = createFakeShell([
+      {
+        exitCode: 1,
+        stderr: "EPERM: operation not permitted, open '/tmp/wb-seam-test/opencli/npm-cache/x'",
+        sandbox: { denied: true },
+      },
+      { stdout: 'git@example.com:a/b/c.git\n' },
+    ]);
+    const seam = seamFor(fake.shell);
+    const git = createGitReader({ seam });
+
+    await expect(git.origin('/w/x')).resolves.toEqual({
+      kind: 'ok',
+      remote: 'git@example.com:a/b/c.git',
+    });
+    expect(seam.facts().at(-1)?.denial).toMatchObject({ scope: 'product', healed: true });
+  });
+
   it('执行故障给 unknown/exec-failed 并 warn', async () => {
     const warn = vi.fn();
     const fake = createFakeShell([{ failWith: new Error('boom') }]);
-    const git = createGitReader({ shell: fake.shell, logger: { warn } });
+    const git = createGitReader({ seam: seamFor(fake.shell), logger: { warn } });
     await expect(git.origin('/w/x')).resolves.toMatchObject({
       kind: 'unknown',
       reason: 'exec-failed',

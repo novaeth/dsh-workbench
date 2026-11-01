@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { canWarm, createPreflight } from '../index.js';
 import type { Preflight } from '../index.js';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { ALL_OK, BROKEN_BRIDGE, GOOD_BRIDGE_REPORT, STALE_DAEMON_BRIDGE, build } from './preflight-fixtures';
+
+function seamFor(shell: Parameters<typeof createSeam>[0]['shell']) {
+  return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
+
 
 describe('启动预热站点登录态（ADR-0024）', () => {
   const TWO_READS = (): readonly (readonly string[])[] => [
@@ -89,7 +95,7 @@ describe('启动预热站点登录态（ADR-0024）', () => {
       if (index === 2) midflight.push(holder.preflight?.snapshot().steps[1]?.status ?? '?');
       return replies[index] ?? {};
     });
-    const preflight = createPreflight({ shell: fake.shell, warmReads: () => [['inventory', 'enterprises']] });
+    const preflight = createPreflight({ seam: seamFor(fake.shell), warmReads: () => [['inventory', 'enterprises']] });
     holder.preflight = preflight;
 
     const snapshot = await preflight.run();

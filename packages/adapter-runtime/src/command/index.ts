@@ -1,16 +1,15 @@
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { DshShell } from '@dsh-workbench/shared';
 import type {
   CommandReader,
   CommandRequest,
   CommandResult,
 } from '@dsh-workbench/shared';
-import { quoteShellArg, runShell } from '@dsh-workbench/shared/host';
+import { noWrite, quoteShellArg, type Seam } from '@dsh-workbench/shared/host';
 
 export interface CommandReaderOptions {
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly tmpRoot?: string | undefined;
 }
 
@@ -36,7 +35,7 @@ function writeFiles(request: CommandRequest, tmpRoot: string): TempFiles | undef
 }
 
 export function createCommandReader(options: CommandReaderOptions): CommandReader {
-  const { shell } = options;
+  const { seam } = options;
   const tmpRoot = options.tmpRoot ?? tmpdir();
 
   return {
@@ -48,7 +47,9 @@ export function createCommandReader(options: CommandReaderOptions): CommandReade
         if (temp !== undefined && request.appendFileArgs !== undefined) {
           for (const path of temp.paths) argv.push(request.appendFileArgs, path);
         }
-        const result = await runShell(shell, quoteAll(argv), {
+        const result = await seam.run({
+          command: quoteAll(argv),
+          intent: noWrite(),
           ...(request.timeoutMs === undefined ? {} : { timeoutMs: request.timeoutMs }),
           ...(request.cwd === undefined ? {} : { workdir: request.cwd }),
           ...(request.env === undefined ? {} : { env: request.env }),

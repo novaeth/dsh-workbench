@@ -1,7 +1,7 @@
 import { basename, join } from 'node:path';
-import type { DshHostContext, DshShell, RuntimeCapabilities } from '@dsh-workbench/shared';
+import type { DshHostContext, RuntimeCapabilities } from '@dsh-workbench/shared';
 import type { RouteTable } from '@dsh-workbench/shared/host';
-import { PREFLIGHT_INSTALL_TIMEOUT_MS, preflightHandler, workbenchRoot } from '@dsh-workbench/shared/host';
+import { PREFLIGHT_INSTALL_TIMEOUT_MS, preflightHandler, type Seam, workbenchRoot } from '@dsh-workbench/shared/host';
 import { WAKE_BROWSER_ROUTE } from '@dsh-workbench/shared/contract/protocol/preflight-wake';
 import { runBootstrapCommand } from './bootstrap-run.js';
 import { createDiyPresetProbe } from './diy-preset-health.js';
@@ -16,14 +16,14 @@ import { localPnpmCommand, provisionLocalPnpm } from './toolchain.js';
 
 function desktopBrowserOf(input: {
   ctx: DshHostContext;
-  shell: DshShell;
+  seam: Seam;
   command: string;
 }): DesktopBrowser | undefined {
   const dir = profileDirOf(input.ctx);
   const surface = hostSurface({ profile: dir === null ? undefined : basename(dir) });
   if (!surface.capabilities.browserWake) return undefined;
   return createDesktopBrowser({
-    shell: input.shell,
+    seam: input.seam,
     command: input.command,
     stateFile: join(workbenchRoot(), 'browser.json'),
     ...(input.ctx.logger === undefined ? {} : { logger: input.ctx.logger }),
@@ -33,7 +33,7 @@ function desktopBrowserOf(input: {
 export function registerPreflight(input: {
   routes: RouteTable;
   ctx: DshHostContext;
-  shell: DshShell;
+  seam: Seam;
   runtimeCommands: Readonly<Record<string, string>>;
   runtimeCapabilities?: RuntimeCapabilities | undefined;
   runtimeCheck?: (() => Promise<{ ok: boolean; detail: string }>) | undefined;
@@ -52,11 +52,11 @@ export function registerPreflight(input: {
     input.desktopBrowser ??
     desktopBrowserOf({
       ctx: input.ctx,
-      shell: input.shell,
+      seam: input.seam,
       command,
     });
   const preflight = createPreflight({
-    shell: input.shell,
+    seam: input.seam,
     command,
     installCommand,
     install: () => runBootstrapCommand(installCommand, { timeoutMs: PREFLIGHT_INSTALL_TIMEOUT_MS }),
@@ -66,7 +66,7 @@ export function registerPreflight(input: {
     ...(input.runtimeCheck === undefined ? {} : { runtimeCheck: input.runtimeCheck }),
     ...(input.runtimeLabel === undefined ? {} : { runtimeLabel: input.runtimeLabel }),
     probeDiy: createDiyPresetProbe(input.ctx),
-    probeToolchain: () => probeDesktopToolchain(input.shell),
+    probeToolchain: () => probeDesktopToolchain(input.seam),
     provisionPnpm: async () => {
       const root = runtimeSeedRootOf(input.ctx);
       if (root === null) return { ok: false, detail: '找不到工作台根' };

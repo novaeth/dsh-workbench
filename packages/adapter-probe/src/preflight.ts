@@ -1,4 +1,4 @@
-import type { DshShell, RuntimeCapabilities } from '@dsh-workbench/shared';
+import type { RuntimeCapabilities } from '@dsh-workbench/shared';
 import {
   PREFLIGHT_DOCTOR_TIMEOUT_MS,
   PREFLIGHT_FRESH_MS,
@@ -8,7 +8,7 @@ import {
 } from '@dsh-workbench/shared/host';
 import { tailLines } from '@dsh-workbench/shared/host';
 import { opencliCommandLine } from '@dsh-workbench/adapter-runtime';
-import { runShell } from '@dsh-workbench/shared/host';
+import { productWrite, type Seam } from '@dsh-workbench/shared/host';
 import { DIY_UPGRADE_COMMAND } from './diy-preset-health.js';
 import type { DiyPresetVerdict } from './diy-preset-health.js';
 import { opencliInstallCommand } from './install.js';
@@ -93,7 +93,7 @@ function step(id: PreflightStepId, label?: string): PreflightStep {
 }
 
 export function createPreflight(options: {
-  shell: DshShell;
+  seam: Seam;
   command?: string;
   installCommand?: string;
   logger?: { warn?(message: string): void } | undefined;
@@ -108,7 +108,7 @@ export function createPreflight(options: {
   runtimeCheck?: (() => Promise<{ ok: boolean; detail: string }>) | undefined;
   runtimeLabel?: string | undefined;
 }): Preflight {
-  const { shell, command = 'opencli', logger } = options;
+  const { seam, command = 'opencli', logger } = options;
   const capabilities = options.capabilities ?? { console: true, pluginMarket: true, browserBridge: true };
   const withConsole = capabilities.console;
   const withBridge = capabilities.browserBridge;
@@ -169,6 +169,7 @@ export function createPreflight(options: {
     stepId: PreflightStepId,
     commandLine: string,
     timeoutMs: number,
+    retry: 'safe' | 'never' = 'safe',
   ): Promise<
     | { kind: 'ok'; stdout: string }
     | { kind: 'nonzero'; detail: string }
@@ -180,7 +181,7 @@ export function createPreflight(options: {
     }
     appendLog(stepId, `> ${commandLine}`);
     try {
-      const result = await runShell(shell, commandLine, { timeoutMs });
+      const result = await seam.run({ command: commandLine, intent: productWrite(), timeoutMs, retry });
       if (result.stalled) {
         shellStalled = true;
         appendLog(stepId, `没返回：${commandLine}`);
@@ -233,7 +234,7 @@ export function createPreflight(options: {
       if (installed.detail.trim() !== '') appendLog('cli', installed.detail);
       return installed;
     }
-    const result = await exec('cli', installCommand, PREFLIGHT_INSTALL_TIMEOUT_MS);
+    const result = await exec('cli', installCommand, PREFLIGHT_INSTALL_TIMEOUT_MS, 'never');
     if (result.kind !== 'ok') return { ok: false, detail: result.detail };
     return { ok: true, detail: tailLines(result.stdout, 1) };
   }

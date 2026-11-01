@@ -1,8 +1,7 @@
-import type { DshShell } from '@dsh-workbench/shared';
 import { parseJsonLoose } from '@dsh-workbench/shared/host';
 import { BROWSER_READ_SESSION } from './browser-read.js';
 import { backgroundLine, OPENCLI_WINDOW_ENV } from '../cli/index.js';
-import { runShell } from '@dsh-workbench/shared/host';
+import { noWrite, type Seam } from '@dsh-workbench/shared/host';
 
 const DEFAULT_TIMEOUT_MS = 25000;
 const DEFAULT_SETTLE_MS = 2500;
@@ -29,7 +28,7 @@ export interface BrowserFindResult {
 }
 
 export interface BrowserFindOptions {
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly css: string;
   readonly url?: string;
   readonly command?: string;
@@ -130,13 +129,19 @@ export function urlOf(stdout: string): string {
 }
 
 async function currentUrl(
-  shell: DshShell,
+  seam: Seam,
   command: string,
   session: string,
 ): Promise<string> {
   const line = backgroundLine(command, ['browser', session, 'get', 'url', '--window', 'background']);
   try {
-    const result = await runShell(shell, line, { timeoutMs: URL_TIMEOUT_MS, env: OPENCLI_WINDOW_ENV });
+    const result = await seam.run({
+      command: line,
+      intent: noWrite(),
+      retry: 'safe',
+      timeoutMs: URL_TIMEOUT_MS,
+      env: OPENCLI_WINDOW_ENV,
+    });
     if (result.exitCode !== 0) return '';
     return urlOf(result.stdout);
   } catch {
@@ -154,7 +159,7 @@ type FindOutcome =
   | { readonly kind: 'failed'; readonly detail: string; readonly hint?: string };
 
 async function findOnce(
-  shell: DshShell,
+  seam: Seam,
   command: string,
   session: string,
   css: string,
@@ -175,7 +180,13 @@ async function findOnce(
     '--window',
     'background',
   ]);
-  const result = await runShell(shell, line, { timeoutMs, env: OPENCLI_WINDOW_ENV });
+  const result = await seam.run({
+    command: line,
+    intent: noWrite(),
+    retry: 'safe',
+    timeoutMs,
+    env: OPENCLI_WINDOW_ENV,
+  });
   if (result.timedOut) {
     return { kind: 'timeout', detail: `没在 ${Math.round(timeoutMs / 1000)} 秒内返回` };
   }
@@ -191,29 +202,33 @@ async function findOnce(
 }
 
 async function openOnce(
-  shell: DshShell,
+  seam: Seam,
   command: string,
   session: string,
   url: string,
   timeoutMs: number,
 ): Promise<string | undefined> {
   const line = backgroundLine(command, ['browser', session, 'open', url, '--window', 'background']);
-  let result: Awaited<ReturnType<typeof runShell>>;
   try {
-    result = await runShell(shell, line, { timeoutMs, env: OPENCLI_WINDOW_ENV });
+    const result = await seam.run({
+      command: line,
+      intent: noWrite(),
+      timeoutMs,
+      env: OPENCLI_WINDOW_ENV,
+    });
+    if (result.timedOut) return `没在 ${Math.round(timeoutMs / 1000)} 秒内打开`;
+    if (result.exitCode !== 0) {
+      const reason = reasonOf(result.stdout, result.stderr);
+      return reason === '' ? `opencli 打开失败（退出码 ${String(result.exitCode ?? '?')}）` : reason;
+    }
+    return undefined;
   } catch (error) {
     return error instanceof Error ? error.message : String(error);
   }
-  if (result.timedOut) return `没在 ${Math.round(timeoutMs / 1000)} 秒内打开`;
-  if (result.exitCode !== 0) {
-    const reason = reasonOf(result.stdout, result.stderr);
-    return reason === '' ? `opencli 打开失败（退出码 ${String(result.exitCode ?? '?')}）` : reason;
-  }
-  return undefined;
 }
 
 export async function browserFind(options: BrowserFindOptions): Promise<BrowserFindResult> {
-  const { shell, css, url, open = true } = options;
+  const { seam, css, url, open = true } = options;
   const command = options.command ?? 'opencli';
   const session = options.session ?? BROWSER_READ_SESSION;
   const limit = options.limit ?? DEFAULT_LIMIT;
@@ -224,7 +239,7 @@ export async function browserFind(options: BrowserFindOptions): Promise<BrowserF
 
   const find = async (): Promise<FindOutcome | undefined> => {
     try {
-      return await findOnce(shell, command, session, css, limit, textMax, timeoutMs);
+      return await findOnce(seam, command, session, css, limit, textMax, timeoutMs);
     } catch (error) {
       return {
         kind: 'failed',
@@ -237,9 +252,9 @@ export async function browserFind(options: BrowserFindOptions): Promise<BrowserF
   const canMove = open && url !== undefined;
 
   if (canMove) {
-    const here = await currentUrl(shell, command, session);
+    const here = await currentUrl(seam, command, session);
     if (here !== '' && !sameOrigin(here, url)) {
-      const opened = await openOnce(shell, command, session, url, timeoutMs);
+      const opened = await openOnce(seam, command, session, url, timeoutMs);
       if (opened !== undefined) {
         return {
           ok: false,
@@ -263,7 +278,7 @@ export async function browserFind(options: BrowserFindOptions): Promise<BrowserF
   }
 
   if (outcome.kind === 'failed' && canMove) {
-    const opened = await openOnce(shell, command, session, url, timeoutMs);
+    const opened = await openOnce(seam, command, session, url, timeoutMs);
     if (opened === undefined) {
       await sleep(settleMs);
       const second = await find();

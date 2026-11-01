@@ -1,7 +1,7 @@
 import type { DshHostContext } from '@dsh-workbench/shared';
 import type { DebugStore } from '@dsh-workbench/shared/host';
 import { join } from 'node:path';
-import { BROWSER_SCREEN_SESSION, shellOf } from '@dsh-workbench/shared/host';
+import { BROWSER_SCREEN_SESSION, seamOf } from '@dsh-workbench/shared/host';
 import { artifactsDirOf } from '@/shared/api/host/diy-artifacts';
 import { cliCommandOf } from '@dsh-workbench/shared/host';
 import { actBrowser, stopNetworkExact, SWEEP_TIMEOUT_MS } from './diy-browser-act';
@@ -21,15 +21,15 @@ export async function stopObservers(
   workspace: string | null | undefined,
   session: string = BROWSER_SCREEN_SESSION,
 ): Promise<ObserverCleanup> {
-  const shell = shellOf(ctx);
-  if (workspace === null || workspace === undefined || workspace === '' || shell === undefined) {
+  const seam = seamOf(ctx);
+  if (workspace === null || workspace === undefined || workspace === '' || seam === undefined) {
     return { net: false, logs: false };
   }
-  const file = join(artifactsDirOf(ctx, workspace), `net-${session}.jsonl`);
+  const file = join(artifactsDirOf(workspace), `net-${session}.jsonl`);
   const command = cliCommandOf(ctx);
   const [net, step] = await Promise.all([
-    stopNetworkExact(shell, file),
-    actBrowser(shell, command, session, ['eval', LOGS_STOP_SCRIPT], SWEEP_TIMEOUT_MS),
+    stopNetworkExact(seam, file),
+    actBrowser(seam, command, session, ['eval', LOGS_STOP_SCRIPT], SWEEP_TIMEOUT_MS),
   ]);
   return { net, logs: typeof step.payload?.['unhooked'] === 'number' };
 }

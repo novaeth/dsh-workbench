@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { fakeSeamOf } from './seam-fake';
 import { unitTitleKey } from '@dsh-workbench/shared';
 import type { SupplySource, UnitManifest } from '@dsh-workbench/shared';
 import type { NeedState, UnitCapability } from '@dsh-workbench/shared/host';
@@ -102,7 +103,7 @@ describe('createMarketService：install', () => {
   it('★ 装之前**强探** —— 幂等判断不许拿缓存的旧结论', async () => {
     const probe = probeWith({ issues: { unit: 'issues', status: 'missing', needs: [missingState()] } });
     const fake = createFakeShell([{ stdout: '' }]);
-    const market = createMarketService({ command: 'opencli', manifests: [unit('issues')], probe, shell: fake.shell });
+    const market = createMarketService({ command: 'opencli', manifests: [unit('issues')], probe, seam: fakeSeamOf(fake.shell) });
 
     await market.install('issues');
 
@@ -116,7 +117,7 @@ describe('createMarketService：install', () => {
 
       command: 'opencli',      manifests: [unit('issues')],
       probe: probeWith({ issues: { unit: 'issues', status: 'missing', needs: [missingState()] } }),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       onInstalled,
     });
 
@@ -133,7 +134,7 @@ describe('createMarketService：install', () => {
 
       command: 'opencli',      manifests: [unit('issues')],
       probe: probeWith({ issues: { unit: 'issues', status: 'ok', needs: [okState()] } }),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       onInstalled,
     });
 
@@ -155,7 +156,7 @@ describe('createMarketService：install', () => {
           needs: [missingState('demo', { provision: 'env-missing' })],
         },
       }),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
     });
 
     await expect(market.install('issues')).rejects.toThrow(/DSH_WORKBENCH_TEST_UNSET/);
@@ -180,7 +181,7 @@ describe('createMarketService：update', () => {
           needs: [status === 'outdated' ? outdatedState() : okState()],
         };
       },
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       onInstalled,
     });
 
@@ -196,7 +197,7 @@ describe('createMarketService：update', () => {
 
       command: 'opencli',      manifests: [unit('issues')],
       probe: probeWith({ issues: { unit: 'issues', status: 'outdated', needs: [outdatedState()] } }),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
     });
 
     await expect(market.update('issues')).rejects.toThrow(/还是旧的样子/);
@@ -211,7 +212,7 @@ describe('createMarketService：uninstall', () => {
 
       command: 'opencli',      manifests: [unit('issues'), unit('builds')],
       probe: probeWith({}),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       references: () => ({ trustworthy: true, unreadable: [] }),
       onUninstalled,
     });
@@ -229,7 +230,7 @@ describe('createMarketService：uninstall', () => {
 
       command: 'opencli',      manifests: [unit('issues')],
       probe: probeWith({}),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       references: () => ({ trustworthy: true, unreadable: [] }),
     });
 
@@ -245,7 +246,7 @@ describe('createMarketService：uninstall', () => {
 
       command: 'opencli',      manifests: [unit('issues'), unit('builds')],
       probe: probeWith({}),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       references: () => ({ trustworthy: true, unreadable: [] }),
       isReleased: (id) => id === 'builds',
     });
@@ -263,7 +264,7 @@ describe('createMarketService：uninstall', () => {
 
       command: 'opencli',      manifests: [unit('issues')],
       probe: probeWith({}),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       references: () => ({ trustworthy: false, unreadable: ['@a/mod'] }),
       logger: { info: (message) => logs.push(message) },
     });

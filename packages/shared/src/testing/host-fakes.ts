@@ -8,6 +8,7 @@ export interface ShellCall {
   onExpiry?: string;
   stdoutMaxBytes?: number;
   env?: Readonly<Record<string, string>>;
+  sandboxPolicy?: unknown;
 }
 
 export interface ShellReply {
@@ -18,6 +19,7 @@ export interface ShellReply {
   aborted?: boolean;
   truncated?: boolean;
   failWith?: Error;
+  sandbox?: { mode?: string; denied?: boolean; enforcement?: string; runnerFailed?: boolean } | undefined;
 }
 
 const tick = (): Promise<void> => delay(0);
@@ -53,6 +55,7 @@ export function createFakeShell(replies: ShellReply[] | ((call: ShellCall, index
             aborted: reply.aborted ?? false,
             stdout: { text: reply.stdout ?? '', truncated: reply.truncated === true },
             stderr: { text: reply.stderr ?? '', truncated: false },
+            ...(reply.sandbox === undefined ? {} : { sandbox: reply.sandbox }),
           };
         },
       };

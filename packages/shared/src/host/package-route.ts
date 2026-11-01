@@ -1,4 +1,4 @@
-import type { DshShell } from '../api/dsh.js';
+import type { Seam } from './seam/run.js';
 import { VERSION_CHECK_TTL_MS } from '../config/constants.js';
 import { dshMarkersOf, splitNpmSpec, verdictOf, type PackageVerdict } from './package-kind.js';
 import { withPackageDir } from './package-content.js';
@@ -30,7 +30,7 @@ export interface PackageRouter {
 
 interface RouteOptions {
   readonly spec: string;
-  readonly shell?: DshShell | undefined;
+  readonly seam?: Seam | undefined;
   readonly registry?: string | undefined;
   readonly force?: boolean;
 }
@@ -38,7 +38,7 @@ interface RouteOptions {
 export interface PackageRouterOptions {
   readonly manifestFile: string;
   readonly cacheDir?: string | undefined;
-  readonly dshLookup?: ((options: { shell: DshShell; name: string; registry: string }) => Promise<{ readable: boolean; raw: unknown }>) | undefined;
+  readonly dshLookup?: ((options: { seam: Seam; name: string; registry: string }) => Promise<{ readable: boolean; raw: unknown }>) | undefined;
 }
 
 export function createPackageRouter(options: PackageRouterOptions): PackageRouter {
@@ -64,9 +64,9 @@ async function routeOf(
 
   const ref = splitNpmSpec(routeOptions.spec);
   if (ref === undefined) return undefined;
-  const shell = routeOptions.shell;
+  const seam = routeOptions.seam;
   const registry = routeOptions.registry;
-  if (shell === undefined || registry === undefined) return undefined;
+  if (seam === undefined || registry === undefined) return undefined;
 
   const key = `${registry}|${routeOptions.spec}`;
   const hit = cache.get(key);
@@ -77,13 +77,13 @@ async function routeOf(
   const found =
     options.dshLookup === undefined
       ? { readable: false, raw: undefined }
-      : await options.dshLookup({ shell, name: routeOptions.spec, registry });
+      : await options.dshLookup({ seam, name: routeOptions.spec, registry });
   let route: PackageRoute | undefined;
   if (found.readable && dshMarkersOf(found.raw)) {
     route = { kind: 'dsh-bundle' };
   } else {
     const verdict = await withPackageDir(
-      { shell, spec: routeOptions.spec, registry, ...(options.cacheDir === undefined ? {} : { cacheDir: options.cacheDir }) },
+      { seam, spec: routeOptions.spec, registry, ...(options.cacheDir === undefined ? {} : { cacheDir: options.cacheDir }) },
       (dir) => verdictOf(dir, options.manifestFile),
     );
     route = verdict === undefined ? undefined : routeOfVerdict(verdict, ref.name);

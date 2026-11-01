@@ -2,7 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 import type { DshShell } from '@dsh-workbench/shared';
 import { classifyFailure, createPreflight, opencliInstallCommandDefault } from '../index.js';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { ALL_OK, BROKEN_BRIDGE, EXTENSION_ONLY_BRIDGE, GOOD_BRIDGE_REPORT, build } from './preflight-fixtures';
+
+function seamFor(shell: Parameters<typeof createSeam>[0]['shell']) {
+  return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
+
 
 describe('createPreflight', () => {
   it('环境齐了 → 两步都 ok，放行', async () => {
@@ -60,7 +66,7 @@ describe('createPreflight', () => {
   it('某一拍自己抛了 → 收成 failed 那一屏，不把 run 的 promise 甩出去（否则宿主会当致命错误退出）', async () => {
     const fake = createFakeShell([{ stdout: '1.8.8\n' }, { stdout: GOOD_BRIDGE_REPORT }]);
     const preflight = createPreflight({
-      shell: fake.shell,
+      seam: seamFor(fake.shell),
       probeDiy: () => {
         throw new Error('读套件声明的热身命令时炸了');
       },
@@ -325,7 +331,7 @@ describe('createPreflight', () => {
   it('日志里留下一行体检结果（排障用）', async () => {
     const fake = createFakeShell(ALL_OK);
     const warn = vi.fn();
-    const preflight = createPreflight({ shell: fake.shell, logger: { warn } });
+    const preflight = createPreflight({ seam: seamFor(fake.shell), logger: { warn } });
 
     await preflight.run();
 
@@ -338,7 +344,7 @@ describe('Desktop：浏览器没开时，等用户点「打开浏览器」再开
     const observe = vi.fn(async () => undefined);
     const wake = vi.fn(async () => ({ status: 'connected' as const, browser: 'chrome' as const }));
     const fake = createFakeShell([{ stdout: '1.8.8\n' }, { stdout: EXTENSION_ONLY_BRIDGE }]);
-    const preflight = createPreflight({ shell: fake.shell, desktopBrowser: { observe, wake } });
+    const preflight = createPreflight({ seam: seamFor(fake.shell), desktopBrowser: { observe, wake } });
 
     const snapshot = await preflight.run();
 
@@ -354,7 +360,7 @@ describe('Desktop：浏览器没开时，等用户点「打开浏览器」再开
     const observe = vi.fn(async () => undefined);
     const wake = vi.fn(async () => ({ status: 'connected' as const }));
     const fake = createFakeShell(ALL_OK.map((step) => ({ ...step })));
-    const preflight = createPreflight({ shell: fake.shell, desktopBrowser: { observe, wake } });
+    const preflight = createPreflight({ seam: seamFor(fake.shell), desktopBrowser: { observe, wake } });
 
     const snapshot = await preflight.run();
 
@@ -366,7 +372,7 @@ describe('Desktop：浏览器没开时，等用户点「打开浏览器」再开
 
   it('★ 不是桌面版（没有 desktopBrowser）→ 快照不带 canWakeBrowser，界面不会画那颗按钮', async () => {
     const fake = createFakeShell([{ stdout: '1.8.8\n' }, { stdout: EXTENSION_ONLY_BRIDGE }]);
-    const preflight = createPreflight({ shell: fake.shell });
+    const preflight = createPreflight({ seam: seamFor(fake.shell) });
 
     const snapshot = await preflight.run();
 
@@ -433,7 +439,7 @@ describe('宿主不交回命令结果（沙箱 / 子进程起不来）', () => {
     vi.useFakeTimers();
     try {
       const fake = scriptedShell((command) => command === 'opencli --version');
-      const preflight = createPreflight({ shell: fake.shell, probeToolchain: async () => TOOLCHAIN_OK });
+      const preflight = createPreflight({ seam: seamFor(fake.shell), probeToolchain: async () => TOOLCHAIN_OK });
       const pending = preflight.run();
       await vi.advanceTimersByTimeAsync(40_000);
       const snapshot = await pending;
@@ -452,7 +458,7 @@ describe('宿主不交回命令结果（沙箱 / 子进程起不来）', () => {
     vi.useFakeTimers();
     try {
       const fake = scriptedShell((command) => command === 'opencli doctor');
-      const preflight = createPreflight({ shell: fake.shell, probeToolchain: async () => TOOLCHAIN_OK });
+      const preflight = createPreflight({ seam: seamFor(fake.shell), probeToolchain: async () => TOOLCHAIN_OK });
       const pending = preflight.run();
       await vi.advanceTimersByTimeAsync(130_000);
       const snapshot = await pending;
@@ -470,7 +476,7 @@ describe('宿主不交回命令结果（沙箱 / 子进程起不来）', () => {
     vi.useFakeTimers();
     try {
       const fake = scriptedShell((command, seen) => command === 'opencli --version' && seen === 1);
-      const preflight = createPreflight({ shell: fake.shell, probeToolchain: async () => TOOLCHAIN_OK });
+      const preflight = createPreflight({ seam: seamFor(fake.shell), probeToolchain: async () => TOOLCHAIN_OK });
 
       const first = preflight.run();
       await vi.advanceTimersByTimeAsync(130_000);

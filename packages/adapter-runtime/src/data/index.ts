@@ -1,5 +1,4 @@
-import type { DshShell } from '@dsh-workbench/shared';
-import { callsProblemOf, recipeProblemOf, runShell, scriptOf, scriptOfMany } from '@dsh-workbench/shared/host';
+import { callsProblemOf, noWrite, recipeProblemOf, scriptOf, scriptOfMany, type Seam } from '@dsh-workbench/shared/host';
 import type {
   CallOverrides,
   DataError,
@@ -25,7 +24,7 @@ import {
 export * from './channel-plugin.js';
 
 export interface DataReaderOptions {
-  readonly shell?: DshShell | undefined;
+  readonly seam?: Seam | undefined;
   readonly command?: string | undefined;
   readonly fetch?: typeof fetch | undefined;
   readonly channel?: boolean | undefined;
@@ -164,9 +163,9 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
   }
 
   async function readBrowser(request: Extract<DataRequest, { kind: 'browser' }>): Promise<DataResult<unknown>> {
-    if (options.shell === undefined) return failure('invalid-request', '没有 shell，读不了浏览器');
+    if (options.seam === undefined) return failure('invalid-request', '没有执行缝，读不了浏览器');
     const result = await browserRead({
-      shell: options.shell,
+      seam: options.seam,
       script: request.script,
       command,
       ...(request.url === undefined ? {} : { url: request.url }),
@@ -182,11 +181,20 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
   const channelState: { value: ChannelState } = { value: 'unknown' };
 
   async function readChannel(
-    shell: DshShell,
+    seam: Seam,
     call: ChannelCall,
     recipe: RequestRecipe,
   ): Promise<DataResult<unknown> | undefined> {
-    const result = await runShell(shell, channelCommandLine(call), { timeoutMs: call.timeoutMs + 5000 });
+    const result = await seam
+      .run({
+        command: channelCommandLine(call),
+        intent: noWrite(),
+        retry: recipe.request.method === 'GET' ? 'safe' : 'never',
+        timeoutMs: call.timeoutMs + 5000,
+        bestEffort: true,
+      })
+      .catch(() => undefined);
+    if (result === undefined) return undefined;
     if (result.timedOut) return failure('timeout', `通道读超时（${call.timeoutMs}ms）`);
     if (result.exitCode !== 0) return undefined;
     let parsed: unknown;
@@ -228,13 +236,11 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
     if (mode === 'request' && recipe.request.method !== 'GET') {
       return failure('invalid-request', 'request 只读 GET；写走 submit');
     }
-    if (options.shell === undefined) return failure('invalid-request', '没有 shell，读不了浏览器');
+    if (options.seam === undefined) return failure('invalid-request', '没有执行缝，读不了浏览器');
+    const seam = options.seam;
     const call = options.channel === false ? undefined : channelCallOf(recipe, overrides ?? {}, command);
-    if (
-      call !== undefined &&
-      (await ensureChannel(options.shell, command, channelState, options.channelInstalled))
-    ) {
-      const viaChannel = await readChannel(options.shell, call, recipe);
+    if (call !== undefined && (await ensureChannel(seam, command, channelState, options.channelInstalled))) {
+      const viaChannel = await readChannel(seam, call, recipe);
       if (viaChannel !== undefined) return viaChannel;
       channelState.value = 'unavailable';
     }
@@ -245,7 +251,7 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
       return failure('invalid-request', error instanceof Error ? error.message : String(error));
     }
     const result = await browserRead({
-      shell: options.shell,
+      seam,
       script,
       command,
       url: recipe.origin,
@@ -271,7 +277,8 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
     if (recipe.request.method !== 'GET') {
       return allFailure(names, 'invalid-request', 'requestMany 只读 GET；写走 submit');
     }
-    if (options.shell === undefined) return allFailure(names, 'invalid-request', '没有 shell，读不了浏览器');
+    if (options.seam === undefined) return allFailure(names, 'invalid-request', '没有执行缝，读不了浏览器');
+    const seam = options.seam;
     let script: string;
     try {
       script = scriptOfMany(recipe, calls);
@@ -279,7 +286,7 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
       return allFailure(names, 'invalid-request', error instanceof Error ? error.message : String(error));
     }
     const result = await browserRead({
-      shell: options.shell,
+      seam,
       script,
       command,
       url: recipe.origin,
@@ -330,7 +337,7 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
     const cached = openclis.get(key);
     if (cached !== undefined) return cached;
     const created = createOpencli({
-      shell: options.shell as DshShell,
+      seam: options.seam as Seam,
       plugin,
       command,
       timeoutMs,
@@ -340,7 +347,7 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
   }
 
   async function readCommand(request: Extract<DataRequest, { kind: 'command' }>): Promise<DataResult<unknown>> {
-    if (options.shell === undefined) return failure('invalid-request', '没有 shell，跑不了命令');
+    if (options.seam === undefined) return failure('invalid-request', '没有执行缝，跑不了命令');
     if (request.adapter !== 'opencli') {
       return failure('invalid-request', `不认识的命令适配器：${request.adapter}`);
     }

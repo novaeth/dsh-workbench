@@ -1,6 +1,6 @@
-import type { DshShell } from '@dsh-workbench/shared';
 import { actBrowser } from './diy-browser-act';
 import { runBrowserStep } from './diy-browser';
+import type { Seam } from '@dsh-workbench/shared/host';
 import { OPEN_TIMEOUT_MS, SETTLE_MS, releaseQuietly } from './diy-record';
 
 const PAGE_HREF_SCRIPT = 'JSON.stringify({ href: location.href })';
@@ -11,18 +11,18 @@ export function samePageOf(here: string, want: string): boolean {
 }
 
 async function whereAtOf(input: {
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly command: string;
   readonly session: string;
 }): Promise<string> {
-  const step = await actBrowser(input.shell, input.command, input.session, ['eval', PAGE_HREF_SCRIPT]);
+  const step = await actBrowser(input.seam, input.command, input.session, ['eval', PAGE_HREF_SCRIPT]);
   const href = step.payload === undefined ? '' : step.payload['href'];
   return typeof href === 'string' ? href : '';
 }
 
-async function settleOf(input: { readonly shell: DshShell; readonly command: string; readonly session: string }): Promise<void> {
+async function settleOf(input: { readonly seam: Seam; readonly command: string; readonly session: string }): Promise<void> {
   await runBrowserStep(
-    input.shell,
+    input.seam,
     input.command,
     ['browser', input.session, 'wait', 'time', String(SETTLE_MS / 1000)],
     OPEN_TIMEOUT_MS,
@@ -30,7 +30,7 @@ async function settleOf(input: { readonly shell: DshShell; readonly command: str
 }
 
 export async function openRecordPage(input: {
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly command: string;
   readonly session: string;
   readonly url: string;
@@ -38,7 +38,7 @@ export async function openRecordPage(input: {
 }): Promise<{ readonly ok: boolean; readonly at: string; readonly why: string }> {
   await releaseQuietly(input);
   const opened = await runBrowserStep(
-    input.shell,
+    input.seam,
     input.command,
     ['browser', input.session, 'tab', 'new', input.url, '--window', 'foreground'],
     OPEN_TIMEOUT_MS,
@@ -56,7 +56,7 @@ export async function openRecordPage(input: {
   let at = await whereAtOf(input);
   if (!samePageOf(at, input.url)) {
     await runBrowserStep(
-      input.shell,
+      input.seam,
       input.command,
       ['browser', input.session, 'open', input.url],
       OPEN_TIMEOUT_MS,

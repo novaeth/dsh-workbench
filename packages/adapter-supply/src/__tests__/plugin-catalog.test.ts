@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { createSeam } from '@dsh-workbench/shared/host';
+
+function seamFor(fake: ReturnType<typeof createFakeShell>) {
+  return createSeam({ shell: fake.shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
 import {
   attributeCommands,
   createPluginCatalog,
@@ -145,7 +150,7 @@ describe('★ 一条命令归给哪个插件：join 键是 site === 插件名（
   });
 });
 
-function shellOf(plugins: () => unknown, commands: unknown = COMMANDS) {
+function catalogShell(plugins: () => unknown, commands: unknown = COMMANDS) {
   return createFakeShell((call) =>
     call.command.endsWith('plugin list -f json') ? json(plugins()) : json(commands),
   );
@@ -153,8 +158,8 @@ function shellOf(plugins: () => unknown, commands: unknown = COMMANDS) {
 
 describe('探测：只读、带超时、按插件版本缓存', () => {
   it('★ 探到 ⇒ OK，命令面按插件清单归属', async () => {
-    const fake = shellOf(() => PLUGINS);
-    const catalog = createPluginCatalog({ shell: fake.shell, command: 'opencli' });
+    const fake = catalogShell(() => PLUGINS);
+    const catalog = createPluginCatalog({ seam: seamFor(fake), command: 'opencli' });
 
     const snapshot = await catalog.refresh();
 
@@ -164,8 +169,8 @@ describe('探测：只读、带超时、按插件版本缓存', () => {
   });
 
   it('★ 缓存命中：插件清单没变 ⇒ 不再跑那条 1.6MB 的命令面', async () => {
-    const fake = shellOf(() => PLUGINS);
-    const catalog = createPluginCatalog({ shell: fake.shell, command: 'opencli' });
+    const fake = catalogShell(() => PLUGINS);
+    const catalog = createPluginCatalog({ seam: seamFor(fake), command: 'opencli' });
 
     await catalog.refresh();
     const again = await catalog.refresh();
@@ -177,8 +182,8 @@ describe('探测：只读、带超时、按插件版本缓存', () => {
 
   it('★ 版本变了 ⇒ 重探命令面（缓存是按插件版本算的）', async () => {
     let version = '1.0.25';
-    const fake = shellOf(() => [{ ...PLUGINS[0], version }, PLUGINS[1]]);
-    const catalog = createPluginCatalog({ shell: fake.shell, command: 'opencli' });
+    const fake = catalogShell(() => [{ ...PLUGINS[0], version }, PLUGINS[1]]);
+    const catalog = createPluginCatalog({ seam: seamFor(fake), command: 'opencli' });
 
     await catalog.refresh();
     version = '1.0.26';
@@ -189,8 +194,8 @@ describe('探测：只读、带超时、按插件版本缓存', () => {
   });
 
   it('force ⇒ 绕过缓存', async () => {
-    const fake = shellOf(() => PLUGINS);
-    const catalog = createPluginCatalog({ shell: fake.shell, command: 'opencli' });
+    const fake = catalogShell(() => PLUGINS);
+    const catalog = createPluginCatalog({ seam: seamFor(fake), command: 'opencli' });
 
     await catalog.refresh();
     await catalog.refresh({ force: true });
@@ -200,7 +205,7 @@ describe('探测：只读、带超时、按插件版本缓存', () => {
 
   it('★ plugin list 没跑通 ⇒ ok:false 且带原因（不冒充"没有插件"）', async () => {
     const fake = createFakeShell([{ exitCode: 1, stderr: 'opencli: command not found' }]);
-    const catalog = createPluginCatalog({ shell: fake.shell, command: 'opencli' });
+    const catalog = createPluginCatalog({ seam: seamFor(fake), command: 'opencli' });
 
     const snapshot = await catalog.refresh();
 
@@ -211,7 +216,7 @@ describe('探测：只读、带超时、按插件版本缓存', () => {
 
   it('★ 命令面读不懂 ⇒ ok:false（不冒充零工具）', async () => {
     const fake = createFakeShell([json(PLUGINS), { stdout: 'boom' }]);
-    const catalog = createPluginCatalog({ shell: fake.shell, command: 'opencli' });
+    const catalog = createPluginCatalog({ seam: seamFor(fake), command: 'opencli' });
 
     const snapshot = await catalog.refresh();
 
@@ -221,9 +226,21 @@ describe('探测：只读、带超时、按插件版本缓存', () => {
 
   it('超时也算失败，认得出是超时', async () => {
     const fake = createFakeShell([{ timedOut: true }]);
-    const catalog = createPluginCatalog({ shell: fake.shell, command: 'opencli', timeoutMs: 1000 });
+    const catalog = createPluginCatalog({ seam: seamFor(fake), command: 'opencli', timeoutMs: 1000 });
 
     expect((await catalog.refresh()).problems.join('\n')).toContain('1 秒');
+  });
+
+  it('★ 被沙箱挡住 ⇒ ok:false 且说清是被挡住（不冒充"没有插件"）', async () => {
+    const fake = createFakeShell([
+      { exitCode: 1, stderr: 'Operation not permitted', sandbox: { denied: true } },
+    ]);
+    const catalog = createPluginCatalog({ seam: seamFor(fake), command: 'opencli' });
+
+    const snapshot = await catalog.refresh();
+
+    expect(snapshot.ok).toBe(false);
+    expect(snapshot.problems.join('\n')).toContain('沙箱');
   });
 
   it('没有执行缝 ⇒ ok:false，说清是探不动不是没有', async () => {

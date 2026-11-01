@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { DshShell } from '@dsh-workbench/shared';
 import { openRecordPage, samePageOf } from '../diy-record-open';
+import { fakeSeamOf } from '../../__tests__/seam-fake';
 
 const WANT = 'https://tracker.example.com/p/DEMO/assignments/issues';
 
 type Plan = { readonly stdout?: string; readonly stderr?: string; readonly exitCode?: number };
 
-function shellOf(plan: readonly Plan[], seen: string[]) {
+function planShellOf(plan: readonly Plan[], seen: string[]) {
   let index = 0;
   return {
     resolve(request: { command: string }) {
@@ -32,12 +33,12 @@ function shellOf(plan: readonly Plan[], seen: string[]) {
 const href = (url: string): string => `{"href":${JSON.stringify(url)}}`;
 
 const call = (shell: DshShell) =>
-  openRecordPage({ shell, command: '', session: 'workbench-rec', url: WANT, captureFile: '/w/shots/rec-demo.jsonl' });
+  openRecordPage({ seam: fakeSeamOf(shell), command: '', session: 'workbench-rec', url: WANT, captureFile: '/w/shots/rec-demo.jsonl' });
 
 describe('开录制那一页：开完必须核地址，核不过就回落到 open', () => {
   it('★★ 开出来就是我们那一页 ⇒ ok，且不去发 open', async () => {
     const seen: string[] = [];
-    const out = await call(shellOf([{}, { stdout: '[]' }, {}, {}, { stdout: href(WANT) }], seen));
+    const out = await call(planShellOf([{}, { stdout: '[]' }, {}, {}, { stdout: href(WANT) }], seen));
     expect(out).toEqual({ ok: true, at: WANT, why: '' });
     expect(seen.some((one) => one.includes("'open'"))).toBe(false);
   });
@@ -45,7 +46,7 @@ describe('开录制那一页：开完必须核地址，核不过就回落到 ope
   it('★★ 开出来是空白页 ⇒ 回落 open；open 之后对了 ⇒ ok', async () => {
     const seen: string[] = [];
     const out = await call(
-      shellOf([{}, { stdout: '[]' }, {}, {}, { stdout: href('about:blank') }, {}, {}, { stdout: href(`${WANT}/`) }], seen),
+      planShellOf([{}, { stdout: '[]' }, {}, {}, { stdout: href('about:blank') }, {}, {}, { stdout: href(`${WANT}/`) }], seen),
     );
     expect(out.ok).toBe(true);
     expect(seen.some((one) => one.includes("'open'"))).toBe(true);
@@ -54,7 +55,7 @@ describe('开录制那一页：开完必须核地址，核不过就回落到 ope
   it('★★ 两次都不是 ⇒ ok:false，`at` 是它真实在哪 —— 不许假装开好了', async () => {
     const seen: string[] = [];
     const out = await call(
-      shellOf([{}, { stdout: '[]' }, {}, {}, { stdout: href('about:blank') }, {}, {}, { stdout: href('about:blank') }], seen),
+      planShellOf([{}, { stdout: '[]' }, {}, {}, { stdout: href('about:blank') }, {}, {}, { stdout: href('about:blank') }], seen),
     );
     expect(out.ok).toBe(false);
     expect(out.at).toBe('about:blank');
@@ -63,14 +64,14 @@ describe('开录制那一页：开完必须核地址，核不过就回落到 ope
 
   it('★ `tab new` 本身报错 ⇒ ok:false，说清是开不了窗', async () => {
     const seen: string[] = [];
-    const out = await call(shellOf([{}, { stdout: '[]' }, { stdout: '', stderr: 'no such window', exitCode: 1 }], seen));
+    const out = await call(planShellOf([{}, { stdout: '[]' }, { stdout: '', stderr: 'no such window', exitCode: 1 }], seen));
     expect(out.ok).toBe(false);
     expect(out.why).toContain('开不了录制窗');
   });
 
   it('★ 开之前先收这条会话的残留（否则新页会开进旧窗、不顶前台）', async () => {
     const seen: string[] = [];
-    await call(shellOf([{}, { stdout: '[]' }, {}, {}, { stdout: href(WANT) }], seen));
+    await call(planShellOf([{}, { stdout: '[]' }, {}, {}, { stdout: href(WANT) }], seen));
     expect(seen[0]).toContain('.pid');
     expect(seen.some((one) => one.includes("'tab' 'list'"))).toBe(true);
   });

@@ -1,7 +1,7 @@
 import type { DshHostContext } from '@dsh-workbench/shared';
 import { basename } from 'node:path';
 import type { FactLog, ProfilePort, RouteTable } from '@dsh-workbench/shared/host';
-import { changesHandler, healthHandler, shellOf } from '@dsh-workbench/shared/host';
+import { changesHandler, healthHandler, seamOf } from '@dsh-workbench/shared/host';
 import { dshHome } from '@dsh-workbench/shared/host';
 import type { RuntimeStatus } from '@dsh-workbench/shared/host';
 import { DSH_PLUGINS_ROUTE } from '@/kernel/contract/dsh-plugins';
@@ -34,7 +34,7 @@ export function createHostRoutes(input: {
     [MARKET_GIT_PROBE_ROUTE]: gitProbeHandler(),
     [MODULE_VERSIONS_ROUTE]: moduleVersionsHandler(
       ctx,
-      shellOf(ctx),
+      seamOf(ctx),
       running,
       () => profile.selfUpdateView(dshHome(), basename(profile.dirOf(ctx) ?? '')),
     ),

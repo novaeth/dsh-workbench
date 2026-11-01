@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { fakeSeamOf } from './seam-fake';
 import { createPluginActions } from '../model/plugin-actions';
 import { createPluginLedger, type PluginLedger } from '../model/plugin-ledger';
 import { fsSupply } from './fs-supply';
@@ -61,7 +62,7 @@ describe('用户持有的 opencli 插件：更新与卸载（台账那一笔说�
     const fake = createFakeShell([{ stdout: '1.0.25\n' }, { stdout: '' }, { stdout: '' }]);
     const actions = createPluginActions({
       ledger,
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       command: 'opencli',
       runAll: async () => {},
       supply: supplyAt(dirOf('supply')),
@@ -81,7 +82,7 @@ describe('用户持有的 opencli 插件：更新与卸载（台账那一笔说�
     const fake = createFakeShell([{ stdout: '1.0.25\n' }]);
     const actions = createPluginActions({
       ledger,
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       command: 'opencli',
       runAll: async (commands) => {
         runs.push(commands.map((step) => step.line));
@@ -123,7 +124,7 @@ describe('用户持有的 opencli 插件：更新与卸载（台账那一笔说�
     const fake = createFakeShell([{ stdout: '不是版本号\n' }]);
     const actions = createPluginActions({
       ledger,
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       command: 'opencli',
       runAll: async () => {},
       supply: supplyAt(dirOf('supply')),
@@ -191,7 +192,7 @@ describe('物理去留：谁主张谁说话（动作永远可用，删不删看�
     const runs: string[][] = [];
     const actions = createPluginActions({
       ledger,
-      shell: createFakeShell([{ stdout: '' }]).shell,
+      seam: fakeSeamOf(createFakeShell([{ stdout: '' }]).shell),
       command: 'opencli',
       claimedBy: () => [],
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -214,7 +215,7 @@ describe('物理去留：谁主张谁说话（动作永远可用，删不删看�
     const runs: string[][] = [];
     const actions = createPluginActions({
       ledger,
-      shell: createFakeShell([{ stdout: '' }]).shell,
+      seam: fakeSeamOf(createFakeShell([{ stdout: '' }]).shell),
       command: 'opencli',
       claimedBy: () => ['issues', 'inventory'],
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -243,7 +244,7 @@ describe('物理去留：谁主张谁说话（动作永远可用，删不删看�
     const runs: string[][] = [];
     const actions = createPluginActions({
       ledger,
-      shell: createFakeShell([{ stdout: '' }]).shell,
+      seam: fakeSeamOf(createFakeShell([{ stdout: '' }]).shell),
       command: 'opencli',
       claimedBy: () => [],
       references: () => ({ trustworthy: false, unreadable: ['@a/mod'] }),
@@ -267,7 +268,7 @@ describe('物理去留：谁主张谁说话（动作永远可用，删不删看�
     const runs: string[][] = [];
     const actions = createPluginActions({
       ledger,
-      shell: createFakeShell([{ stdout: '' }]).shell,
+      seam: fakeSeamOf(createFakeShell([{ stdout: '' }]).shell),
       command: 'opencli',
       runAll: async (commands) => {
         runs.push(commands.map((step) => step.line));
@@ -296,7 +297,7 @@ describe('自动清：先前放手、现在没人要的那一份，跟着删掉'
     const runs: string[][] = [];
     const actions = createPluginActions({
       ledger,
-      shell: createFakeShell([{ stdout: '' }]).shell,
+      seam: fakeSeamOf(createFakeShell([{ stdout: '' }]).shell),
       command: 'opencli',
       claimedBy: () => [],
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -317,7 +318,7 @@ describe('自动清：先前放手、现在没人要的那一份，跟着删掉'
     const ledger = releasedLedger();
     const actions = createPluginActions({
       ledger,
-      shell: createFakeShell([{ stdout: '' }]).shell,
+      seam: fakeSeamOf(createFakeShell([{ stdout: '' }]).shell),
       command: 'opencli',
       claimedBy: () => ['issues'],
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -334,7 +335,7 @@ describe('自动清：先前放手、现在没人要的那一份，跟着删掉'
     const ledger = releasedLedger();
     const actions = createPluginActions({
       ledger,
-      shell: createFakeShell([{ stdout: '' }]).shell,
+      seam: fakeSeamOf(createFakeShell([{ stdout: '' }]).shell),
       command: 'opencli',
       claimedBy: () => [],
       references: () => ({ trustworthy: false, unreadable: ['@a/mod'] }),
@@ -353,7 +354,7 @@ describe('自动清：先前放手、现在没人要的那一份，跟着删掉'
     ledger.complete(PKG, 'inventory');
     const actions = createPluginActions({
       ledger,
-      shell: createFakeShell([{ stdout: '' }]).shell,
+      seam: fakeSeamOf(createFakeShell([{ stdout: '' }]).shell),
       command: 'opencli',
       claimedBy: () => [],
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -371,7 +372,7 @@ describe('自动清：先前放手、现在没人要的那一份，跟着删掉'
     const logs: string[] = [];
     const actions = createPluginActions({
       ledger,
-      shell: createFakeShell([{ stdout: '' }]).shell,
+      seam: fakeSeamOf(createFakeShell([{ stdout: '' }]).shell),
       command: 'opencli',
       claimedBy: () => [],
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -410,7 +411,7 @@ describe('插件名：台账没记上就现读一次（名字也是主张的键�
     const runs: string[][] = [];
     const actions = createPluginActions({
       ledger,
-      shell: createFakeShell([{ stdout: '' }]).shell,
+      seam: fakeSeamOf(createFakeShell([{ stdout: '' }]).shell),
       command: 'opencli',
       claimedBy: (plugin) => (plugin === 'inventory' ? ['issues'] : []),
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -436,7 +437,7 @@ describe('插件名：台账没记上就现读一次（名字也是主张的键�
     const runs: string[][] = [];
     const actions = createPluginActions({
       ledger,
-      shell: createFakeShell([{ stdout: '' }]).shell,
+      seam: fakeSeamOf(createFakeShell([{ stdout: '' }]).shell),
       command: 'opencli',
       claimedBy: () => [],
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -457,7 +458,7 @@ describe('插件名：台账没记上就现读一次（名字也是主张的键�
     const runs: string[][] = [];
     const actions = createPluginActions({
       ledger,
-      shell: createFakeShell([{ stdout: '' }]).shell,
+      seam: fakeSeamOf(createFakeShell([{ stdout: '' }]).shell),
       command: 'opencli',
       claimedBy: () => [],
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -480,7 +481,7 @@ describe('插件名：台账没记上就现读一次（名字也是主张的键�
     ledger.release(PKG);
     const actions = createPluginActions({
       ledger,
-      shell: createFakeShell([{ stdout: '' }]).shell,
+      seam: fakeSeamOf(createFakeShell([{ stdout: '' }]).shell),
       command: 'opencli',
       claimedBy: () => [],
       references: () => ({ trustworthy: true, unreadable: [] }),
@@ -501,7 +502,7 @@ describe('插件名：台账没记上就现读一次（名字也是主张的键�
     ledger.intend({ package: at, local: true });
     const actions = createPluginActions({
       ledger,
-      shell: createFakeShell([{ stdout: '' }]).shell,
+      seam: fakeSeamOf(createFakeShell([{ stdout: '' }]).shell),
       command: 'opencli',
       claimedBy: (plugin) => (plugin === 'mine' ? ['issues'] : []),
       references: () => ({ trustworthy: true, unreadable: [] }),

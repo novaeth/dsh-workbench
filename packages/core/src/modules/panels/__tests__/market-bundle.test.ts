@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { fakeSeamOf } from './seam-fake';
 import { libNeedOf } from '@dsh-workbench/shared/testing';
 import type { NeedState, UnitManifest } from '@dsh-workbench/shared';
 import type { BundleChange } from '@/kernel/contract/bundle-install';
@@ -120,7 +121,7 @@ describe('市场装模块包：装前装后的护栏与连带供给', () => {
 
       command: 'opencli',      manifests: [unit('issues')],
       probe: async () => missingPlugin,
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       bundles: bundlesOf(),
       installed: () => isModule('issues'),
     });
@@ -136,7 +137,7 @@ describe('市场装模块包：装前装后的护栏与连带供给', () => {
 
       command: 'opencli',      manifests: [unit('issues')],
       probe: async () => missingPlugin,
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       bundles: bundlesOf(),
       installed: () => notModule,
     });
@@ -150,7 +151,7 @@ describe('市场装模块包：装前装后的护栏与连带供给', () => {
     const market = createMarketService({
 
       command: 'opencli',      manifests: [plainUnit],
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       bundles: bundlesOf(),
       installed: () => ({ kind: 'module', pkg: 'x', unit: 'hello', version: '0.1.0' }),
     });
@@ -173,7 +174,7 @@ describe('市场装模块包：装前装后的护栏与连带供给', () => {
 
       command: 'opencli',      manifests: [unit('issues')],
       probe: async () => missingPlugin,
-      shell: undefined,
+      seam: undefined,
       bundles: bundlesOf(),
       installed: () => isModule('issues'),
     });
@@ -207,7 +208,7 @@ describe('市场卸模块包：先记下它要什么，卸成功再按引用计�
 
       command: 'opencli',      manifests: [unit('issues')],
       probe: async () => capability('ok'),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       references: () => ({ trustworthy: true, unreadable: [] }),
       bundles: bundlesOf(),
       installed: () => isModule('issues'),
@@ -226,7 +227,7 @@ describe('市场卸模块包：先记下它要什么，卸成功再按引用计�
 
       command: 'opencli',      manifests: [unit('issues')],
       probe: async () => capability('ok'),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       bundles: bundlesOf({ remove: async () => change({ stage: 'remove', application: 'failed' }) }),
       installed: () => isModule('issues'),
       onUninstalled,
@@ -243,7 +244,7 @@ describe('市场卸模块包：先记下它要什么，卸成功再按引用计�
 
       command: 'opencli',      manifests: [unit('issues')],
       probe: async () => capability('ok'),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       bundles: bundlesOf(),
       installed: () => notModule,
     });
@@ -257,7 +258,7 @@ describe('市场卸模块包：先记下它要什么，卸成功再按引用计�
 
       command: 'opencli',      manifests: [unit('issues'), unit('demo-other')],
       probe: async () => capability('ok'),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       bundles: bundlesOf(),
       installed: () => isModule('issues'),
       isReleased: () => false,
@@ -275,7 +276,7 @@ describe('市场卸模块包：先记下它要什么，卸成功再按引用计�
       command: 'opencli',      manifests: live,
       manifestsNow: () => live,
       probe: async () => capability('ok'),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       references: () => ({ trustworthy: true, unreadable: [] }),
       bundles: bundlesOf({
         remove: async () => {
@@ -312,7 +313,7 @@ describe('市场卸模块包：先记下它要什么，卸成功再按引用计�
       command: 'opencli',      manifests: live,
       manifestsNow: () => live,
       probe: async () => capability('ok'),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       bundles: bundlesOf({
         remove: async () => {
           live = [];
@@ -350,7 +351,7 @@ describe('列表那行的「卸载」：已出包的模块走真卸包', () => {
 
       command: 'opencli',      manifests: [unit('issues')],
       probe: async () => capability('ok'),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       references: () => ({ trustworthy: true, unreadable: [] }),
       bundles: bundlesOf({
         remove: async (name) => {
@@ -379,7 +380,7 @@ describe('列表那行的「卸载」：已出包的模块走真卸包', () => {
 
       command: 'opencli',      manifests: [unit('issues')],
       probe: async () => capability('ok'),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       bundles: bundlesOf({ remove: async () => change({ stage: 'remove', application: 'failed' }) }),
       installed: () => isModule('issues'),
       modules: () => [mod],
@@ -401,7 +402,7 @@ describe('列表那行的「卸载」：已出包的模块走真卸包', () => {
 
       command: 'opencli',      manifests: [unit('issues')],
       probe: async () => capability('ok'),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       references: () => ({ trustworthy: true, unreadable: [] }),
       bundles: bundlesOf({
         remove: async (name) => {

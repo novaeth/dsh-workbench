@@ -107,3 +107,41 @@ export const apply = plugin.apply;
 
 `idle` 是独立态（无工作区或 `enabled: false`），不画成空态。
 卡片在任意输入下不得抛异常或出现 `undefined` / `NaN`（`check --only cards`）。
+
+## 5 起子进程：走执行缝门面
+
+模块要在宿主侧跑命令（构建、git、打包……）时，用外壳放进 `mount(deps)` 的执行缝门面 `deps.seam`。
+`ctx.get('shell')` / `ctx.get('workbenchShell')` / `ctx.get('seam')`、`runShell` / `shellOf`、裸
+`child_process` 都不给模块用，`check --only seam` 会判红。
+
+先在清单里声明要哪几档写入域（只认两档）：
+
+```json
+{ "host": { "inject": [], "writes": ["unit"] } }
+```
+
+| 档 | 可写在哪 | 什么时候给 |
+|---|---|---|
+| `unit` | `<运行时根>/units/<unit>/`（模块自己的数据目录；`HOME`、npm/pnpm 缓存与日志也注入到这里） | 声明了就常开、不用审批 |
+| `workspace` | 当前会话的工作区 | 声明了才给；调用时还要带上会话对象 |
+
+不写 `writes`（或写 `[]`）= 不拿门面：`deps.seam` 是 `undefined`，代码里按可选处理。
+
+```ts
+const result = await deps.seam?.run({
+  scope: 'unit',
+  command: 'git rev-parse --short HEAD',
+  timeoutMs: 10_000,
+});
+if (result === undefined || result.exitCode !== 0) {
+  return { ok: false, text: '这条命令没跑通' };
+}
+```
+
+- `workspace` 档的 `session` 从工具运行上下文拿（`execute(raw, exec)` 的 `exec.agent?.session`）；
+  路由 / 动作这些没有会话的调用点不要请求这一档。
+- 一条命令只声明一个写入域；要写两棵树就在步骤边界拆成两次调用。
+- `retry: 'safe'` 只给幂等 / 只读命令（查询、列清单）；写命令用默认的 `'never'`。
+- 请求没声明的档在起进程前就失败（`SeamError` 的 `scope-not-declared` / `workspace-unknown`），别吞掉。
+- 这层门面是**约定 + 门禁 + 归因**，不是进程隔离：模块宿主代码与外壳同进程。真正的安全边界仍是
+  「装不装模块 + 审批」。

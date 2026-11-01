@@ -1,5 +1,4 @@
-import { npmCacheDir } from '@dsh-workbench/adapter-runtime';
-import type { DshShell } from '@dsh-workbench/shared';
+import type { Seam } from '@dsh-workbench/shared/host';
 import { createRegistryLookup } from '@dsh-workbench/shared/host';
 
 export {
@@ -15,19 +14,19 @@ export type { RegistryDshLookup } from '@dsh-workbench/shared/host';
 const lookup = createRegistryLookup();
 
 export async function registryDshOf(options: {
-  shell: DshShell;
+  seam: Seam;
   name: string;
   registry?: string | undefined;
   force?: boolean;
 }): Promise<{ readonly readable: boolean; readonly raw: unknown }> {
-  return lookup.registryDshOf({ ...options, cacheDir: npmCacheDir() });
+  return lookup.registryDshOf(options);
 }
 
 export async function registryDeclarationOf(options: {
-  shell: DshShell;
+  seam: Seam;
   name: string;
   registry: string;
   force?: boolean;
 }): Promise<unknown | undefined> {
-  return lookup.registryDeclarationOf({ ...options, cacheDir: npmCacheDir() });
+  return lookup.registryDeclarationOf(options);
 }

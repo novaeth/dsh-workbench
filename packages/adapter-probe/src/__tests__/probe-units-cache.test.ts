@@ -2,6 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PROBE_TTL_MS } from '@dsh-workbench/shared/host';
 import { probeUnits, resetProbeCache } from '../index.js';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { createSeam } from '@dsh-workbench/shared/host';
+
+function seamFor(shell: Parameters<typeof createSeam>[0]['shell']) {
+  return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
+
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -22,8 +28,8 @@ describe('probeUnits 的保鲜期', () => {
     const fake = createFakeShell([listOf(['issues'])]);
     const units = unitsOf('cache-hit');
 
-    const first = await probeUnits({ shell: fake.shell, runtimeCommands: { opencli: 'opencli' }, units });
-    const second = await probeUnits({ shell: fake.shell, runtimeCommands: { opencli: 'opencli' }, units });
+    const first = await probeUnits({ seam: seamFor(fake.shell), runtimeCommands: { opencli: 'opencli' }, units });
+    const second = await probeUnits({ seam: seamFor(fake.shell), runtimeCommands: { opencli: 'opencli' }, units });
 
     expect(fake.calls).toHaveLength(1);
     expect(second).toEqual(first);
@@ -38,12 +44,12 @@ describe('probeUnits 的保鲜期', () => {
     ]);
     const units = unitsOf('cache-expire');
 
-    expect((await probeUnits({ shell: fake.shell, runtimeCommands: { opencli: 'opencli' }, units }))[0]?.status).toBe('missing');
-    expect((await probeUnits({ shell: fake.shell, runtimeCommands: { opencli: 'opencli' }, units }))[0]?.status).toBe('missing');
+    expect((await probeUnits({ seam: seamFor(fake.shell), runtimeCommands: { opencli: 'opencli' }, units }))[0]?.status).toBe('missing');
+    expect((await probeUnits({ seam: seamFor(fake.shell), runtimeCommands: { opencli: 'opencli' }, units }))[0]?.status).toBe('missing');
     expect(fake.calls).toHaveLength(1);
 
     now.mockReturnValue(1_000 + PROBE_TTL_MS);
-    expect((await probeUnits({ shell: fake.shell, runtimeCommands: { opencli: 'opencli' }, units }))[0]?.status).toBe('ok');
+    expect((await probeUnits({ seam: seamFor(fake.shell), runtimeCommands: { opencli: 'opencli' }, units }))[0]?.status).toBe('ok');
     expect(fake.calls).toHaveLength(2);
   });
 
@@ -54,8 +60,8 @@ describe('probeUnits 的保鲜期', () => {
     ]);
     const units = unitsOf('cache-force');
 
-    expect((await probeUnits({ shell: fake.shell, runtimeCommands: { opencli: 'opencli' }, units, force: true }))[0]?.status).toBe('missing');
-    expect((await probeUnits({ shell: fake.shell, runtimeCommands: { opencli: 'opencli' }, units, force: true }))[0]?.status).toBe('ok');
+    expect((await probeUnits({ seam: seamFor(fake.shell), runtimeCommands: { opencli: 'opencli' }, units, force: true }))[0]?.status).toBe('missing');
+    expect((await probeUnits({ seam: seamFor(fake.shell), runtimeCommands: { opencli: 'opencli' }, units, force: true }))[0]?.status).toBe('ok');
     expect(fake.calls).toHaveLength(2);
   });
 });

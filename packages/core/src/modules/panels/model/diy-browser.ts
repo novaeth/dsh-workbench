@@ -1,6 +1,4 @@
-import type { DshShell } from '@dsh-workbench/shared';
-import { quoteShellArg } from '@dsh-workbench/shared/host';
-import { runShell } from '@dsh-workbench/shared/host';
+import { productWrite, quoteShellArg, type Seam, type WriteIntent } from '@dsh-workbench/shared/host';
 import { PAGE_PROBE } from './diy-scripts';
 
 export const LOOK_TIMEOUT_MS = 30000;
@@ -21,13 +19,14 @@ export function plainLine(command: string, argv: readonly string[]): string {
 }
 
 export async function runBrowserStep(
-  shell: DshShell,
+  seam: Seam,
   command: string,
   argv: readonly string[],
   timeoutMs = LOOK_TIMEOUT_MS,
   line: LineMaker = plainLine,
+  intent: WriteIntent = productWrite(),
 ): Promise<BrowserStep> {
-  const result = await runShell(shell, line(command, argv), { timeoutMs });
+  const result = await seam.run({ command: line(command, argv), intent, timeoutMs });
   return {
     ok: result.exitCode === 0 && !result.timedOut,
     stdout: result.stdout.trim(),
@@ -62,13 +61,13 @@ export interface BoundTab {
 }
 
 export async function bindCurrentTab(
-  shell: DshShell,
+  seam: Seam,
   command: string,
   session: string,
   timeoutMs?: number,
   line?: LineMaker,
 ): Promise<BoundTab> {
-  const step = await runBrowserStep(shell, command, ['browser', session, 'bind', '--window', 'background'], timeoutMs, line);
+  const step = await runBrowserStep(seam, command, ['browser', session, 'bind', '--window', 'background'], timeoutMs, line);
   const parsed = jsonOf(step.stdout);
   if (parsed === undefined) {
     return { ok: false, url: '', title: '', reason: step.timedOut ? '没在 30 秒内返回' : step.stderr || step.stdout };
@@ -91,8 +90,8 @@ export interface WorkbenchPage {
   readonly shown: boolean;
 }
 
-export async function workbenchPageOf(shell: DshShell, command: string, session: string): Promise<WorkbenchPage> {
-  const step = await runBrowserStep(shell, command, ['browser', session, 'eval', PAGE_PROBE, '--window', 'background']);
+export async function workbenchPageOf(seam: Seam, command: string, session: string): Promise<WorkbenchPage> {
+  const step = await runBrowserStep(seam, command, ['browser', session, 'eval', PAGE_PROBE, '--window', 'background']);
   const parsed = jsonOf(step.stdout);
   if (parsed === undefined) return { ok: false, url: '', title: '', where: '', board: '', open: null, shown: false };
   const raw = parsed['open'];
@@ -107,9 +106,9 @@ export async function workbenchPageOf(shell: DshShell, command: string, session:
   };
 }
 
-export async function writeShotsDir(shell: DshShell, dir: string): Promise<boolean> {
+export async function writeShotsDir(seam: Seam, dir: string): Promise<boolean> {
   const line = ['mkdir', '-p', dir].map((one) => `'${one}'`).join(' ');
-  const result = await runShell(shell, line, { timeoutMs: LOOK_TIMEOUT_MS });
+  const result = await seam.run({ command: line, intent: productWrite(), timeoutMs: LOOK_TIMEOUT_MS });
   return result.exitCode === 0 && !result.timedOut;
 }
 
@@ -121,16 +120,16 @@ export interface PageHandshake {
 }
 
 export async function readyPageOf(
-  shell: DshShell,
+  seam: Seam,
   command: string,
   session: string,
 ): Promise<PageHandshake> {
-  const already = await workbenchPageOf(shell, command, session);
+  const already = await workbenchPageOf(seam, command, session);
   if (already.ok) return { ok: true, bound: false, page: already, reason: '' };
-  const bound = await bindCurrentTab(shell, command, session);
+  const bound = await bindCurrentTab(seam, command, session);
   if (!bound.ok) {
     return { ok: false, bound: false, page: already, reason: bound.reason };
   }
-  const after = await workbenchPageOf(shell, command, session);
+  const after = await workbenchPageOf(seam, command, session);
   return { ok: after.ok, bound: true, page: after, reason: '' };
 }

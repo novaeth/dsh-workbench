@@ -3,7 +3,8 @@ import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import {
   planSelfUpdate,
   selfUpdateNodeScript,
@@ -14,8 +15,14 @@ import {
 
 const roots: string[] = [];
 afterEach(() => {
+  vi.unstubAllEnvs();
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
+
+function pathsOf(dshHome: string, platform?: NodeJS.Platform) {
+  vi.stubEnv('DSH_HOME', dshHome);
+  return selfUpdatePaths(dshHome, platform);
+}
 
 const home = (): string => {
   const root = mkdtempSync(join(tmpdir(), 'wb-self-update-win-'));
@@ -35,7 +42,7 @@ const request = (over: Partial<SelfUpdateRequest> = {}): SelfUpdateRequest => ({
 
 describe('Windows 自更新（Node，不依赖 bash）', () => {
   it('★ win32 脚本落点是 .mjs，plan 用当前 node 起它', () => {
-    const paths = selfUpdatePaths('/tmp/dsh-home', 'win32');
+    const paths = pathsOf('/tmp/dsh-home', 'win32');
     expect(paths.script).toBe(join('/tmp/dsh-home', 'workbench', 'self-update.mjs'));
 
     const plan = planSelfUpdate(
@@ -53,7 +60,7 @@ describe('Windows 自更新（Node，不依赖 bash）', () => {
   it('★ 生成的 Node 脚本语法可执行，且不再出现 bash', () => {
     const root = home();
     const requestValue = request({ dshHome: root });
-    const paths = selfUpdatePaths(root, 'win32');
+    const paths = pathsOf(root, 'win32');
     const script = selfUpdateNodeScript(requestValue, paths);
     const file = join(root, 'self-update.mjs');
     writeFileSync(file, script, 'utf8');
@@ -66,7 +73,7 @@ describe('Windows 自更新（Node，不依赖 bash）', () => {
 
   it('★ 找不到 CLI 时先写 failed，不硬装', () => {
     const root = home();
-    const paths = selfUpdatePaths(root, 'win32');
+    const paths = pathsOf(root, 'win32');
     mkdirSync(paths.dir, { recursive: true });
     const cli: SelfUpdateCli = { file: join(root, 'missing-cli'), args: [], env: {} };
     writeFileSync(
@@ -112,7 +119,7 @@ describe('Windows 自更新（Node，不依赖 bash）', () => {
 
     const cli: SelfUpdateCli = { file: process.execPath, args: [fakeCli], env: {} };
     const requestValue = request({ dshHome: root, profile, pkg });
-    const paths = selfUpdatePaths(root, 'win32');
+    const paths = pathsOf(root, 'win32');
     mkdirSync(paths.dir, { recursive: true });
     writeFileSync(join(root, 'self-update.mjs'), selfUpdateNodeScript(requestValue, paths, cli), 'utf8');
 

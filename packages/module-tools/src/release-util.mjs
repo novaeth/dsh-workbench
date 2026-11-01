@@ -81,6 +81,8 @@ export function dshHomeOf(home) {
 }
 
 export function workbenchRootOf(home) {
+  const staging = process.env.DSH_WB_RELEASE_HOME?.trim();
+  if (staging !== undefined && staging !== '') return staging;
   const configured = process.env.DSH_WORKBENCH_HOME?.trim();
   if (configured !== undefined && configured !== '') return configured;
   return join(dshHomeOf(home), 'workbench');

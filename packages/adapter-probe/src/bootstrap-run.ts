@@ -71,7 +71,7 @@ export function bootstrapEnv(options: BootstrapEnvOptions = {}): Record<string, 
   return env;
 }
 
-function shellOf(
+function commandArgsOf(
   line: string,
   shellKind: ShellKind,
 ): { readonly file: string; readonly args: readonly string[] } {
@@ -102,7 +102,7 @@ export async function runBootstrapCommand(
   const shellKind = options.shellKind ?? currentShellKind();
   const spawn = options.spawn ?? defaultSpawn;
   const env = { ...bootstrapEnv({ shellKind }), ...(options.env ?? {}) };
-  const command = shellOf(line, shellKind);
+  const command = commandArgsOf(line, shellKind);
   try {
     const result = await spawn(command.file, command.args, {
       env,

@@ -4,12 +4,13 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createFakeShell, createNoopDataReader,
 } from '@dsh-workbench/shared/testing';
-import type { UnitManifest } from '@dsh-workbench/shared';
+import type { DshShell, UnitManifest } from '@dsh-workbench/shared';
 import { createHostKit, createWorkspaceStore, hostSurface } from '@dsh-workbench/shared/host';
 import { PANELS_FILE, PANELS_MODULE_ID, RELEASED_FILE } from '../model/service';
 import { DIY_DEBUG_TOOLS, DIY_RECORD_TOOLS, DIY_TOOLS, panelsUnit } from '../unit';
 import { WORKBENCH_ADAPTERS } from '@dsh-workbench/shared/host';
 import { testAdaptersWith } from './test-adapters';
+import { fakeSeamOf } from './seam-fake';
 import { panelsHost } from '../index';
 
 const adapters = testAdaptersWith({ root: () => dir, profile: () => profileDir });
@@ -201,10 +202,12 @@ describe('panelsHost：装/卸之后面板跟着变', () => {
   };
 
   function ctxWithShell(shell: unknown) {
+    const seam = fakeSeamOf(shell as DshShell);
     return {
       get: (name: string) =>
         name === WORKBENCH_ADAPTERS ? adapters :
-        name === 'shell' ? shell : name === 'profileContext' ? { dir: profileDir } : undefined,
+        name === 'shell' ? shell :
+        name === 'workbenchSeam' ? seam : name === 'profileContext' ? { dir: profileDir } : undefined,
       provide: () => () => {},
       logger: { info: () => {}, warn: () => {} },
     };

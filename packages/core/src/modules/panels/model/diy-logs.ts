@@ -142,7 +142,7 @@ export function registerLogTools(ctx: DshHostContext, tools: DshToolRegistry): r
 
   async function run(exec: DshToolRunContext, raw: unknown, script: string) {
     const page = await pageAt(ctx, exec, raw, { requireUnit: false, requireWorkbench: false });
-    const step = await actBrowser(page.shell, page.command, page.session, ['eval', script]);
+    const step = await actBrowser(page.seam, page.command, page.session, ['eval', script]);
     return { page, step };
   }
 

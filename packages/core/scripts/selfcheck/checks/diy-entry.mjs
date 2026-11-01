@@ -13,13 +13,12 @@ export const checks = [
     run(_ctx, report) {
       const hostEntry = read(pkg('src/app/host.ts'));
       const diyModule = read(pkg('src/shared/api/host/diy.ts'));
-      const workshopPathModule = diyConstants();
       report(
         '★ 宿主把工坊登记成工作台的工作区（少了它入口点了没反应，且不报错）',
         hostEntry.includes("'workspaceRegistry'") &&
           hostEntry.includes('workshopPathOf(') &&
-          /WORKSHOP_RELATIVE = 'workbench\/diy'/.test(workshopPathModule) &&
-          diyModule.includes("from '@/kernel/contract/diy'"),
+          /join\(workbenchRoot\(\), 'diy'\)/.test(diyModule) &&
+          !diyModule.includes('dshHomePath'),
       );
     },
   },

@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { PLUGIN_ID, RELEASE_PACKAGES } from '@dsh-workbench/shared/host';
 import { createFakeShell, type ShellCall, type ShellReply } from '@dsh-workbench/shared/testing';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { createReleasePort, isNewerVersion, parseLedgerVersion } from '../index.js';
 
-const release = createReleasePort({ cacheDir: '/tmp/wb-release-cache', prefix: '/tmp/wb-release-prefix' });
+const release = createReleasePort({ prefix: '/tmp/wb-release-prefix' });
 const { latestVersion, missingReleaseParts, probeRelease } = release;
 const resetReleaseCache = release.reset;
 
@@ -14,7 +15,7 @@ afterEach(() => {
 const PKG = 'opencli-plugin-demo';
 const REGISTRY = 'https://npm.example.com/team/repo';
 
-function shellOf(replies: {
+function releaseShell(replies: {
   ledger?: ShellReply;
   view?: ShellReply;
   seen?: string[];
@@ -25,7 +26,7 @@ function shellOf(replies: {
     if (call.command.includes('npm view')) return replies.view ?? { stdout: '' };
     return { stdout: '[]' };
   });
-  return fake;
+  return { ...fake, seam: createSeam({ shell: fake.shell, runtimeRoot: '/tmp/wb-seam-test' }) };
 }
 
 const ledgerWith = (version: string): ShellReply => ({
@@ -67,72 +68,72 @@ describe('isNewerVersion', () => {
 
 describe('latestVersion（问源）', () => {
   it('问到就用', async () => {
-    const fake = shellOf({ view: { stdout: '1.0.40\n' } });
-    expect(await latestVersion({ shell: fake.shell, name: PKG, registry: REGISTRY })).toBe('1.0.40');
+    const fake = releaseShell({ view: { stdout: '1.0.40\n' } });
+    expect(await latestVersion({ seam: fake.seam, name: PKG, registry: REGISTRY })).toBe('1.0.40');
     expect(fake.calls[0]?.command).toContain(`--registry '${REGISTRY}'`);
-    expect(fake.calls[0]?.command).toContain('--cache');
+    expect(fake.calls[0]?.command).not.toContain('--cache');
   });
 
   it('输出不是版本号 / 退出码非 0 → undefined（没有信号，不是错误）', async () => {
-    const noisy = shellOf({ view: { stdout: 'not-a-version\n' } });
-    expect(await latestVersion({ shell: noisy.shell, name: PKG, registry: REGISTRY })).toBeUndefined();
+    const noisy = releaseShell({ view: { stdout: 'not-a-version\n' } });
+    expect(await latestVersion({ seam: noisy.seam, name: PKG, registry: REGISTRY })).toBeUndefined();
 
-    const failed = shellOf({ view: { exitCode: 1, stdout: '1.0.40' } });
-    expect(await latestVersion({ shell: failed.shell, name: PKG, registry: REGISTRY })).toBeUndefined();
+    const failed = releaseShell({ view: { exitCode: 1, stdout: '1.0.40' } });
+    expect(await latestVersion({ seam: failed.seam, name: PKG, registry: REGISTRY })).toBeUndefined();
   });
 
   it('源上说最新是哪版就是哪版（预发布与否交给 dist-tag 决定）', async () => {
-    const fake = shellOf({ view: { stdout: '1.0.0-beta.0\n' } });
-    expect(await latestVersion({ shell: fake.shell, name: PKG, registry: REGISTRY })).toBe('1.0.0-beta.0');
+    const fake = releaseShell({ view: { stdout: '1.0.0-beta.0\n' } });
+    expect(await latestVersion({ seam: fake.seam, name: PKG, registry: REGISTRY })).toBe('1.0.0-beta.0');
   });
 
   it('有 TTL 记忆：第二次不再问；force 会再问', async () => {
-    const fake = shellOf({ view: { stdout: '1.0.40' } });
-    await latestVersion({ shell: fake.shell, name: PKG, registry: REGISTRY });
-    await latestVersion({ shell: fake.shell, name: PKG, registry: REGISTRY });
+    const fake = releaseShell({ view: { stdout: '1.0.40' } });
+    await latestVersion({ seam: fake.seam, name: PKG, registry: REGISTRY });
+    await latestVersion({ seam: fake.seam, name: PKG, registry: REGISTRY });
     expect(fake.calls).toHaveLength(1);
 
-    await latestVersion({ shell: fake.shell, name: PKG, registry: REGISTRY, force: true });
+    await latestVersion({ seam: fake.seam, name: PKG, registry: REGISTRY, force: true });
     expect(fake.calls).toHaveLength(2);
   });
 
   it('问失败也记住（不会每次进面板都重敲），force 才重试', async () => {
-    const fake = shellOf({ view: { exitCode: 1 } });
-    await latestVersion({ shell: fake.shell, name: PKG, registry: REGISTRY });
-    await latestVersion({ shell: fake.shell, name: PKG, registry: REGISTRY });
+    const fake = releaseShell({ view: { exitCode: 1 } });
+    await latestVersion({ seam: fake.seam, name: PKG, registry: REGISTRY });
+    await latestVersion({ seam: fake.seam, name: PKG, registry: REGISTRY });
     expect(fake.calls).toHaveLength(1);
   });
 });
 
 describe('probeRelease', () => {
   it('版本来自我们隔离 prefix 的账本，最新版来自源 → 完整信号', async () => {
-    const fake = shellOf({ ledger: ledgerWith('1.0.39'), view: { stdout: '1.0.40' } });
+    const fake = releaseShell({ ledger: ledgerWith('1.0.39'), view: { stdout: '1.0.40' } });
 
-    const release = await probeRelease({ shell: fake.shell, package: PKG, registry: REGISTRY });
+    const release = await probeRelease({ seam: fake.seam, package: PKG, registry: REGISTRY });
 
     expect(release).toEqual({ installed: '1.0.39', latest: '1.0.40' });
   });
 
   it('不是我们装的那份（账本里没有）→ **没有信号**，连源都不问', async () => {
     const seen: string[] = [];
-    const fake = shellOf({ ledger: { exitCode: 1, stdout: '{}' }, view: { stdout: '1.0.40' }, seen });
+    const fake = releaseShell({ ledger: { exitCode: 1, stdout: '{}' }, view: { stdout: '1.0.40' }, seen });
 
-    expect(await probeRelease({ shell: fake.shell, package: PKG, registry: REGISTRY })).toBeUndefined();
+    expect(await probeRelease({ seam: fake.seam, package: PKG, registry: REGISTRY })).toBeUndefined();
     expect(seen.filter((line) => line.includes('npm view'))).toHaveLength(0);
   });
 
   it('没声明源（机器没设那个环境变量）→ 只给"我们装的是哪版"，没有"最新"', async () => {
-    const fake = shellOf({ ledger: ledgerWith('1.0.39') });
+    const fake = releaseShell({ ledger: ledgerWith('1.0.39') });
 
-    const release = await probeRelease({ shell: fake.shell, package: PKG });
+    const release = await probeRelease({ seam: fake.seam, package: PKG });
 
     expect(release).toEqual({ installed: '1.0.39' });
   });
 
   it('包名是空的 → 什么都不问（连账本都不翻）', async () => {
-    const fake = shellOf({ ledger: ledgerWith('1.0.39') });
+    const fake = releaseShell({ ledger: ledgerWith('1.0.39') });
 
-    expect(await probeRelease({ shell: fake.shell, package: '' })).toBeUndefined();
+    expect(await probeRelease({ seam: fake.seam, package: '' })).toBeUndefined();
     expect(fake.calls).toHaveLength(0);
   });
 });
@@ -145,7 +146,7 @@ describe('missingReleaseParts（这一份发布在源上铺齐了没）', () => 
   const TOOLS = '@dsh-workbench/module-tools';
 
   function sourceShell(published: Readonly<Record<string, readonly string[]>>) {
-    return createFakeShell((call: ShellCall): ShellReply => {
+    const fake = createFakeShell((call: ShellCall): ShellReply => {
       const spec = (/npm view (\S+)/.exec(call.command)?.[1] ?? '').replace(/^'|'$/g, '');
       const cut = spec.lastIndexOf('@');
       const name = cut <= 0 ? spec : spec.slice(0, cut);
@@ -154,18 +155,19 @@ describe('missingReleaseParts（这一份发布在源上铺齐了没）', () => 
       const hit = asked === '' ? known.at(-1) : known.includes(asked) ? asked : undefined;
       return hit === undefined ? { exitCode: 1, stdout: '' } : { stdout: `${hit}\n` };
     });
+    return { ...fake, seam: createSeam({ shell: fake.shell, runtimeRoot: '/tmp/wb-seam-test' }) };
   }
 
   it('同一次发布的平台包都在这一版上 → 没有缺的；记住之后不再重问', async () => {
     const fake = sourceShell(Object.fromEntries(RELEASE_PACKAGES.map((name) => [name, [VERSION]])));
 
-    expect(await missingReleaseParts({ shell: fake.shell, name: ROOT, registry: REGISTRY, version: VERSION })).toEqual(
+    expect(await missingReleaseParts({ seam: fake.seam, name: ROOT, registry: REGISTRY, version: VERSION })).toEqual(
       [],
     );
     expect(fake.calls).toHaveLength(PARTS.length);
     expect(fake.commands().some((line) => line.includes(`${SHARED}@${VERSION}`))).toBe(true);
 
-    expect(await missingReleaseParts({ shell: fake.shell, name: ROOT, registry: REGISTRY, version: VERSION })).toEqual(
+    expect(await missingReleaseParts({ seam: fake.seam, name: ROOT, registry: REGISTRY, version: VERSION })).toEqual(
       [],
     );
     expect(fake.calls).toHaveLength(PARTS.length);
@@ -174,7 +176,7 @@ describe('missingReleaseParts（这一份发布在源上铺齐了没）', () => 
   it('兄弟包这一版还没铺到 → 报出名字（调用方据此先不给「更新」）', async () => {
     const fake = sourceShell({ ...Object.fromEntries(PARTS.map((name) => [name, [VERSION]])), [TOOLS]: ['0.2.0'] });
 
-    expect(await missingReleaseParts({ shell: fake.shell, name: ROOT, registry: REGISTRY, version: VERSION })).toEqual([
+    expect(await missingReleaseParts({ seam: fake.seam, name: ROOT, registry: REGISTRY, version: VERSION })).toEqual([
       TOOLS,
     ]);
   });
@@ -182,22 +184,24 @@ describe('missingReleaseParts（这一份发布在源上铺齐了没）', () => 
   it('缺的也记住（10 分钟内不重问），force 才再问一遍', async () => {
     const fake = sourceShell({ ...Object.fromEntries(PARTS.map((name) => [name, [VERSION]])), [TOOLS]: ['0.2.0'] });
 
-    await missingReleaseParts({ shell: fake.shell, name: ROOT, registry: REGISTRY, version: VERSION });
-    await missingReleaseParts({ shell: fake.shell, name: ROOT, registry: REGISTRY, version: VERSION });
+    await missingReleaseParts({ seam: fake.seam, name: ROOT, registry: REGISTRY, version: VERSION });
+    await missingReleaseParts({ seam: fake.seam, name: ROOT, registry: REGISTRY, version: VERSION });
     expect(fake.calls).toHaveLength(PARTS.length);
 
-    await missingReleaseParts({ shell: fake.shell, name: ROOT, registry: REGISTRY, version: VERSION, force: true });
+    await missingReleaseParts({ seam: fake.seam, name: ROOT, registry: REGISTRY, version: VERSION, force: true });
     expect(fake.calls).toHaveLength(PARTS.length * 2);
   });
 
   it('问炸了 / 回的不是版本号 → 算"还没铺开"（宁可晚一次提示，也不给人装半份）', async () => {
     const dead = createFakeShell(() => ({ exitCode: 1, stdout: '' }));
-    expect(await missingReleaseParts({ shell: dead.shell, name: ROOT, registry: REGISTRY, version: VERSION })).toEqual(
+    const deadSeam = createSeam({ shell: dead.shell, runtimeRoot: '/tmp/wb-seam-test' });
+    expect(await missingReleaseParts({ seam: deadSeam, name: ROOT, registry: REGISTRY, version: VERSION })).toEqual(
       PARTS,
     );
 
     const noisy = createFakeShell(() => ({ stdout: 'not-a-version\n' }));
-    expect(await missingReleaseParts({ shell: noisy.shell, name: ROOT, registry: REGISTRY, version: VERSION })).toEqual(
+    const noisySeam = createSeam({ shell: noisy.shell, runtimeRoot: '/tmp/wb-seam-test' });
+    expect(await missingReleaseParts({ seam: noisySeam, name: ROOT, registry: REGISTRY, version: VERSION })).toEqual(
       PARTS,
     );
   });

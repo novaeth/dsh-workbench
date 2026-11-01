@@ -151,6 +151,27 @@ function titleIn(segment, key) {
   return match === null ? '' : match[1].trim();
 }
 
+function writeStateKeepingRun(home, unit, value) {
+  const existing = readState(home, unit);
+  const valueRun = value !== null && typeof value === 'object' ? value.run : undefined;
+  const run = valueRun ?? existing?.run;
+  writeState(home, unit, run === undefined ? value : { ...value, run });
+}
+
+function stopSummaryOf(target, manifest, version, changes, changelog, labels) {
+  return {
+    ok: true,
+    stop: 'workspace-only',
+    target,
+    name: manifest.name,
+    version,
+    changes,
+    ...(labels.length === 0 ? {} : { labels }),
+    ...(changelog === undefined ? {} : { changelog }),
+    install: '',
+  };
+}
+
 export function cardTitleFromMessages(root, unit) {
   if (unit === '') return undefined;
   const key = `${unit}.cardTitle`;
@@ -254,6 +275,9 @@ export async function runRelease({
   const json = hasFlag(args, '--json');
   const dryRun = hasFlag(args, '--dry-run');
   const verify = hasFlag(args, '--verify');
+  const workspaceOnly = hasFlag(args, '--workspace-only');
+  const indexOnly = hasFlag(args, '--index-only');
+  if (workspaceOnly && indexOnly) throw new ReleaseError('--workspace-only 与 --index-only 不能同时用');
   const askedAuthor = argValue(args, '--author');
   const explicitAuthor = askedAuthor === undefined ? undefined : askedAuthor.trim();
   if (askedAuthor !== undefined && (explicitAuthor === '' || /[\r\n]/u.test(explicitAuthor))) {
@@ -277,9 +301,12 @@ export async function runRelease({
     throw new ReleaseError('package.json 里没有 version');
   }
   const earlyState = readState(home, unit);
-  const resume = hasFlag(args, '--resume');
-  const journal = resume ? resumableState(home, unit) : undefined;
-  if (resume && journal === undefined) {
+  const resume = hasFlag(args, '--resume') || indexOnly;
+  const journal = indexOnly ? readState(home, unit) : resume ? resumableState(home, unit) : undefined;
+  if (indexOnly && (journal === undefined || journal.run === undefined)) {
+    throw new ReleaseError('没有可续跑的发布记录 —— 先正常发一次');
+  }
+  if (resume && !indexOnly && journal === undefined) {
     throw new ReleaseError('没有可续跑的发布记录 —— 去掉 --resume 正常发一次');
   }
   const askedTarget = argValue(args, '--target');
@@ -291,7 +318,9 @@ export async function runRelease({
   const resumeTarget = resume && askedTarget === undefined ? journal?.target : undefined;
   const needPlan = !verify || stateTarget === 'market' || askedTarget === 'market';
   let indexPlan;
-  if (needPlan) {
+  if (indexOnly) {
+    indexPlan = journal?.run?.indexPlan;
+  } else if (needPlan) {
     try {
       indexPlan = resolveIndexPlan({ args, home, exec });
     } catch (error) {
@@ -306,10 +335,17 @@ export async function runRelease({
   if (resume && indexPlan === undefined && journal?.run?.indexPlan !== undefined) {
     indexPlan = journal.run.indexPlan;
   }
-  const target = resumeTarget ?? stateTarget ?? targetOf(root, manifest, args, indexPlan);
+  const target = indexOnly
+    ? typeof journal?.target === 'string'
+      ? journal.target
+      : (() => {
+          throw new ReleaseError('发布记录里没有出口 —— 重新发一次');
+        })()
+    : (resumeTarget ?? stateTarget ?? targetOf(root, manifest, args, indexPlan));
   if (target === 'local') {
     const summary = {
       ok: true,
+      ...(workspaceOnly ? { stop: 'workspace-only' } : {}),
       target: 'local',
       name: manifest.name,
       version: manifest.version,
@@ -324,7 +360,7 @@ export async function runRelease({
   const labelsForIndex = labels.length > 0 ? labels : labelsOfManifest(manifest);
   const labelsChange = verify || labels.length === 0 ? undefined : `标签 ← ${labels.join(' · ')}`;
   const explicitApplied = explicitAuthor !== undefined && !verify && !dryRun;
-  if (explicitApplied) {
+  if (explicitApplied && !indexOnly) {
     manifest.author = explicitAuthor;
     writeManifest(root, manifest);
   }
@@ -396,13 +432,13 @@ export async function runRelease({
     return summary;
   }
   const authorChange = explicitAuthor === undefined ? authored.change : 'author ← --author';
-  if (!explicitApplied && !verify && !dryRun && authored.author !== undefined) {
+  if (!explicitApplied && !indexOnly && !verify && !dryRun && authored.author !== undefined) {
     manifest.author = authored.author;
     writeManifest(root, manifest);
   }
   const publisher = authorTextOf(manifest);
   const writesIndex = indexPlan !== undefined && target !== 'local' && target !== 'tarball';
-  if (!verify && !dryRun && writesIndex) {
+  if (!workspaceOnly && !verify && !dryRun && writesIndex) {
     if (publisher === '') throw new ReleaseError(missingPublisherText());
     let claim;
     try {
@@ -417,7 +453,7 @@ export async function runRelease({
       throw new ReleaseError(claimProblemText(manifest.name, claim, unit));
     }
   }
-  const frozenVersion = resume && typeof journal?.version === 'string' ? journal.version : undefined;
+  const frozenVersion = (resume || indexOnly) && typeof journal?.version === 'string' ? journal.version : undefined;
   const info =
     target === 'market'
       ? { target: 'market', kind: 'market', url: indexPlan.source.url }
@@ -440,18 +476,20 @@ export async function runRelease({
     }
     return frozenVersion ?? nextVersion(manifest.version, askedVersion, () => false);
   };
-  const releaseVersion = verify ? undefined : targetVersionOf();
-  const changelogProblem = verify || dryRun ? undefined : changelogProblemOf(root, releaseVersion);
-  if (changelogProblem !== undefined && changelogNote === '') {
+  const releaseVersion = indexOnly ? frozenVersion : verify ? undefined : targetVersionOf();
+  if (indexOnly && releaseVersion === undefined) throw new ReleaseError('发布记录里没有版本号 —— 重新发一次');
+  const changelogProblem = verify || dryRun || indexOnly ? undefined : changelogProblemOf(root, releaseVersion);
+  if (!indexOnly && changelogProblem !== undefined && changelogNote === '') {
     throw new NeedsUser('changelog', changelogProblem.reason, changelogProblem.command, {
       target,
       version: releaseVersion,
     });
   }
   const fingerprint = artifactFingerprintOf(root);
-  const resumeMatchesTree = resume && frozenVersion !== undefined && journal?.run?.fingerprint === fingerprint;
+  const resumeMatchesTree =
+    resume && frozenVersion !== undefined && (indexOnly || journal?.run?.fingerprint === fingerprint);
   const tracking = !verify && !dryRun;
-  if (tracking) {
+  if (tracking && !indexOnly) {
     startRun(home, unit, {
       target,
       name: manifest.name,
@@ -686,7 +724,7 @@ export async function runRelease({
   }
   const earlyLicense = info.kind === 'registry' ? licenseOf(root, manifest, target, args) : undefined;
   if (info.kind === 'registry') checkLogin(exec, info);
-  const changelog = dryRun
+  const changelog = dryRun || indexOnly
     ? undefined
     : applyChangelog(root, {
         version: releaseVersion,
@@ -694,7 +732,7 @@ export async function runRelease({
         note: changelogNote,
         date: changelogDate(),
       });
-  if (!dryRun && changelog === undefined) {
+  if (!indexOnly && !dryRun && changelog === undefined) {
     const problem = changelogProblemOf(root, releaseVersion);
     throw new NeedsUser(
       'changelog',
@@ -739,6 +777,13 @@ export async function runRelease({
     const next = { ...manifest, version };
     const cardTitle = cardTitleFromMessages(root, unit);
     const titled = cardTitle === undefined ? next : { ...next, title: cardTitle };
+    if (workspaceOnly) {
+      writeManifest(root, next);
+      if (tracking) advanceRun(home, unit, { phase: 'workspace', fingerprint: artifactFingerprintOf(root) });
+      const stopSummary = stopSummaryOf(target, next, version, changesOf(version), changelogReport, labels);
+      emit(out, json, stopSummary);
+      return stopSummary;
+    }
     const index = updateMarketIndex({
       plan: indexPlan,
       root,
@@ -782,11 +827,11 @@ export async function runRelease({
         ...(index.branch === undefined ? {} : { branch: index.branch }),
       });
     }
-    writeManifest(root, next);
+    if (!indexOnly) writeManifest(root, next);
     const path = index.path ?? marketArtifactPath(manifest.name);
     const install = marketInstallOf(index.url, index.commit, path);
     const journalNow = tracking ? readState(home, unit)?.run : undefined;
-    writeState(home, unit, {
+    writeStateKeepingRun(home, unit, {
       target: 'market',
       name: next.name,
       version,
@@ -828,17 +873,22 @@ export async function runRelease({
     }
     if (!resumeMatchesTree) runCliStage(exec, root, ['check'], stageOptions);
     const next = { ...manifest, version };
-    writeManifest(root, next);
+    if (!indexOnly) writeManifest(root, next);
     if (tracking) advanceRun(home, unit, { phase: 'version', version, fingerprint: artifactFingerprintOf(root) });
-    writeState(home, unit, stateOf(info, next, version, 'intent'));
+    writeStateKeepingRun(home, unit, stateOf(info, next, version, 'intent'));
+    if (workspaceOnly) {
+      const stopSummary = stopSummaryOf(target, next, version, changesOf(version), changelogReport, labels);
+      emit(out, json, stopSummary);
+      return stopSummary;
+    }
     let packed = false;
     try {
       const file = packTarball(exec, info, version);
       packed = true;
-      writeState(home, unit, { ...stateOf(info, next, version, 'published'), file });
+      writeStateKeepingRun(home, unit, { ...stateOf(info, next, version, 'published'), file });
       const packedFiles = localFiles(exec, root);
       checkPublished(packedFiles);
-      writeState(home, unit, { ...stateOf(info, next, version, 'verified'), file });
+      writeStateKeepingRun(home, unit, { ...stateOf(info, next, version, 'verified'), file });
       if (tracking) finishRun(home, unit, { version });
       summary.file = file;
       summary.files = packedFiles;
@@ -847,7 +897,7 @@ export async function runRelease({
       return summary;
     } catch (error) {
       if (!packed) {
-        writeManifest(root, manifest);
+        if (!indexOnly) writeManifest(root, manifest);
         if (tracking) {
           interruptRun(home, unit, { code: 'tarball', text: String(error?.message ?? error) });
         } else {
@@ -881,19 +931,46 @@ export async function runRelease({
     }
     if (!resumeMatchesTree) runCliStage(exec, root, ['check'], stageOptions);
     const next = { ...manifest, version };
-    writeManifest(root, next);
+    if (!indexOnly) writeManifest(root, next);
     if (tracking) advanceRun(home, unit, { phase: 'version', version, fingerprint: artifactFingerprintOf(root) });
-    writeState(home, unit, stateOf(info, next, version, 'intent'));
+    writeStateKeepingRun(home, unit, stateOf(info, next, version, 'intent'));
+    if (indexOnly) {
+      const state = readState(home, unit);
+      const checked = verifyGit(exec, info, version);
+      summary.files = checked.files;
+      summary.git.commit = checked.commit;
+      summary.market = indexOf(next, version, {
+        git: { url: info.url, commit: checked.commit, path: info.packagePath },
+      });
+      writeStateKeepingRun(home, unit, {
+        ...stateOf(info, next, version, 'verified'),
+        commit: checked.commit,
+        ...(tracking
+          ? { run: { ...(state?.run ?? {}), state: 'done', phase: 'done', updatedAt: new Date().toISOString() } }
+          : {}),
+      });
+      emit(out, json, summary);
+      return summary;
+    }
     const progress = { committed: false };
     try {
       const commit = gitCommitOf(exec, info, version, capture, progress, identityOf(next));
-      writeState(home, unit, { ...stateOf(info, next, version, 'committed'), commit });
+      writeStateKeepingRun(home, unit, { ...stateOf(info, next, version, 'committed'), commit });
       gitPushOf(exec, info, version, capture);
       const checked = verifyGit(exec, info, version);
-      writeState(home, unit, {
+      writeStateKeepingRun(home, unit, {
         ...stateOf(info, next, version, 'verified'),
         commit: checked.commit,
       });
+      if (workspaceOnly) {
+        const stopSummary = {
+          ...stopSummaryOf(target, next, version, changesOf(version), changelogReport, labels),
+          files: checked.files,
+          git: { url: info.url, tag: info.tagOf(version), commit: checked.commit },
+        };
+        emit(out, json, stopSummary);
+        return stopSummary;
+      }
       if (tracking) finishRun(home, unit, { version });
       summary.files = checked.files;
       summary.git.commit = checked.commit;
@@ -965,12 +1042,17 @@ export async function runRelease({
     emit(out, json, summary);
     return summary;
   }
-  writeManifest(root, next);
+  if (!indexOnly) writeManifest(root, next);
   if (tracking) advanceRun(home, unit, { phase: 'version', version, fingerprint: artifactFingerprintOf(root) });
   let published = false;
   try {
     if (!resumeMatchesTree) runCliStage(exec, root, ['check'], stageOptions);
-    writeState(home, unit, stateOf(info, next, version, 'intent'));
+    writeStateKeepingRun(home, unit, stateOf(info, next, version, 'intent'));
+    if (workspaceOnly) {
+      const stopSummary = stopSummaryOf(target, next, version, changes, changelogReport, labels);
+      emit(out, json, stopSummary);
+      return stopSummary;
+    }
     publishRegistry(exec, root, info, next, version);
     published = true;
     const files = verifyRegistry(exec, info, next.name, version);
@@ -993,14 +1075,14 @@ export async function runRelease({
     return summary;
   } catch (error) {
     if (!published && !(error instanceof NeedsUser && error.step === 'otp')) {
-      writeManifest(root, original);
+      if (!indexOnly) writeManifest(root, original);
       if (tracking) {
         interruptRun(home, unit, { code: 'registry', text: String(error?.message ?? error) });
       } else {
         removeState(home, unit);
       }
     }
-    if (published) writeState(home, unit, stateOf(info, next, version, 'published'));
+    if (published) writeStateKeepingRun(home, unit, stateOf(info, next, version, 'published'));
     throw error;
   }
 }

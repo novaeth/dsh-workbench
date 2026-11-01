@@ -1,6 +1,6 @@
 import type { spawn } from 'node:child_process';
 import writeFileAtomic from 'write-file-atomic';
-import { quoteShellArg } from '@dsh-workbench/shared/host';
+import { quoteShellArg, workbenchRoot } from '@dsh-workbench/shared/host';
 import { hostSurface } from './platform.js';
 import {
   chmodSync,
@@ -114,9 +114,8 @@ export interface SelfUpdateStart {
 }
 
 
-export function selfUpdatePaths(dshHome: string, platform: NodeJS.Platform = process.platform): SelfUpdatePaths {
-  const configured = process.env.DSH_WORKBENCH_HOME?.trim();
-  const dir = configured === undefined || configured === '' ? join(dshHome, 'workbench') : configured;
+export function selfUpdatePaths(_dshHome: string, platform: NodeJS.Platform = process.platform): SelfUpdatePaths {
+  const dir = workbenchRoot();
   return {
     dir,
     script: join(dir, platform === 'win32' ? 'self-update.mjs' : 'self-update.sh'),

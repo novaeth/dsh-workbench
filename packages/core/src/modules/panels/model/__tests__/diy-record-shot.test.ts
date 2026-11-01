@@ -2,10 +2,12 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { BROWSER_RECORD_SESSION } from '@dsh-workbench/shared/host';
-import type { DshHostContext, DshShell } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared';
+import type { Seam } from '@dsh-workbench/shared/host';
 import { createDiyRig } from '../../__tests__/diy-harness';
 import { URL, heldStore } from '../../__tests__/record-fixtures';
 import { releaseRecord, shotFileOf, watchFinishStepOf } from '../diy-record';
+import { fakeSeamOf } from '../../__tests__/seam-fake';
 
 const recording = (extra: Record<string, unknown> = {}): string =>
   JSON.stringify({ ok: true, phase: 'recording', t0: 1, t1: null, shots: 0, shotsAt: null, calls: [], ...extra });
@@ -28,7 +30,7 @@ describe('录制交接：他按一下「截图」，宿主按计数落图', () =
   ) =>
     watchFinishStepOf({
       ctx: built.ctx as unknown as DshHostContext,
-      shell: built.ctx.get('shell') as unknown as DshShell,
+      seam: built.ctx.get('workbenchSeam') as unknown as Seam,
       command: '',
       sessionId,
       store: record,
@@ -158,7 +160,7 @@ describe('录制交接：他按一下「截图」，宿主按计数落图', () =
       { stdout: '{"closed":"p1"}' },
     ]);
     const cleaned = await releaseRecord({
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       command: '',
       session: BROWSER_RECORD_SESSION,
       url: URL,

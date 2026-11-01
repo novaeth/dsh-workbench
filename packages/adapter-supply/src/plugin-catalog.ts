@@ -1,5 +1,4 @@
-import type { DshShell } from '@dsh-workbench/shared';
-import { OPENCLI_TIMEOUT_MS, parseJsonLoose, runShell } from '@dsh-workbench/shared/host';
+import { OPENCLI_TIMEOUT_MS, parseJsonLoose, productWrite, type Seam } from '@dsh-workbench/shared/host';
 
 export interface PluginCommandArg {
   readonly name: string;
@@ -59,7 +58,7 @@ export interface PluginCatalog {
 }
 
 export interface PluginCatalogOptions {
-  readonly shell?: DshShell | undefined;
+  readonly seam?: Seam | undefined;
   readonly command: string;
   readonly timeoutMs?: number;
 }
@@ -220,12 +219,12 @@ export function createPluginCatalog(options: PluginCatalogOptions): PluginCatalo
   let heavy: { readonly fingerprint: string; readonly sets: readonly PluginCommandSet[]; readonly problems: readonly string[] } | undefined;
 
   async function read(line: string): Promise<{ readonly ok: true; readonly stdout: string } | { readonly ok: false; readonly problem: string }> {
-    const shell = options.shell;
-    if (shell === undefined) {
-      return { ok: false, problem: '没有执行缝（shell 服务不可用），探不了这个命令面' };
+    const seam = options.seam;
+    if (seam === undefined) {
+      return { ok: false, problem: '没有执行缝，探不了这个命令面' };
     }
     try {
-      const result = await runShell(shell, line, { timeoutMs });
+      const result = await seam.run({ command: line, intent: productWrite(), retry: 'safe', timeoutMs });
       if (result.timedOut) return { ok: false, problem: `${line} 超过 ${String(Math.round(timeoutMs / 1000))} 秒没返回` };
       if (result.exitCode !== 0) {
         const tail = result.stderr.trim() || result.stdout.trim();

@@ -1,13 +1,15 @@
 import { writeClipboard } from '@deepseek-ai/dsh-client-ui-primitives';
 import styles from './BootGate.module.css';
 import type { Translate } from '@dsh-workbench/shared';
-import type { PreflightBridgeIssue, PreflightSnapshot, PreflightStep, PreflightStepId } from '@dsh-workbench/shared/host';
+import type { PreflightSnapshot, PreflightStep, PreflightStepId } from '@dsh-workbench/shared/host';
 import { WAKE_BROWSER_ROUTE, type WakeBrowserReply } from '@/kernel/contract/preflight-wake';
 import { apiGet } from '@dsh-workbench/shared';
 import { LOCALE_NS } from '@dsh-workbench/shared';
 import { devSurface } from '@/shared/dev-surface';
 import { runtimeProfileValue } from '@/shared/hooks/use-runtime-capabilities';
-import { bridgeAdvice, guidanceTextOf, stepDetailText } from './gate-text';
+import { bridgeAdviceLines, guidanceTextOf, stepDetailText } from './gate-text';
+import type { RuntimeProfile } from '@dsh-workbench/shared';
+import { readRuntimeCapabilities } from '@/shared/hooks/runtime-queries';
 import { createGateDeadline } from './gate-deadline';
 import { el, spinnerIcon, svgIcon } from './gate-dom';
 
@@ -121,9 +123,11 @@ export function createBootGate(
   const buttons = el('div', styles.buttons);
   const retry = el('button', styles.button, t('env.retry'));
   retry.setAttribute('type', 'button');
+  const failedSkip = el('button', styles.button, t('env.failed.continue'));
+  failedSkip.setAttribute('type', 'button');
   const fixCommand = commandRow(t);
 
-  buttons.append(retry);
+  buttons.append(retry, failedSkip);
   actions.append(fixTitle, fixWhy, fixStep, fixCommand.row, fixAdvice, buttons);
 
   const bridge = el('div', styles.bridge);
@@ -172,6 +176,8 @@ diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
   let cancelled = false;
   const forcePlan = createForcePlan();
   let pinned: PreflightSnapshot | null = null;
+  let lastSnapshot: PreflightSnapshot | null = null;
+  let runtimeProfile: RuntimeProfile | undefined;
 
   function close(): void {
     if (closed) return;
@@ -245,6 +251,7 @@ diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
   }
 
   function render(snapshot: PreflightSnapshot): void {
+    lastSnapshot = snapshot;
     wakeNote.hidden = true;
     if (bootHintShown && (snapshot.phase !== 'idle' || snapshot.steps.length > 0)) {
       bootHintShown = false;
@@ -295,11 +302,11 @@ diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
     const commandText = fix?.command;
 
     const guidance = snapshot.guidance ?? 'install';
-    const advice = guidanceTextOf(guidance, t);
+    const showCommand = guidance === 'install' && commandText !== undefined;
+    const advice = guidanceTextOf(guidance, t, showCommand);
     fixWhy.textContent = advice.why;
     fixStep.textContent = advice.step;
 
-    const showCommand = guidance === 'install' && commandText !== undefined;
     fixCommand.set(showCommand ? commandText : undefined);
 
     fixAdvice.textContent = !showCommand
@@ -316,23 +323,22 @@ diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
       (bridgeStep !== undefined && (bridgeStep.status === 'warn' || bridgeStep.status === 'failed'));
     bridge.hidden = !bridgeBroken;
     if (bridgeBroken) {
-      const listed: readonly PreflightBridgeIssue[] =
-        bridgeIssues.length === 0 ? ['unknown'] : bridgeIssues;
       bridgeLines.replaceChildren(
-        ...listed.map((issue) => {
-          const advice = bridgeAdvice(issue, t, runtimeProfileValue()?.bridge);
-          const item = el('li', styles.bridgeLine, advice.text);
-          if (advice.link !== undefined) {
-            const link = document.createElement('a');
-            link.className = styles.link;
-            link.textContent = advice.link.label;
-            link.href = advice.link.href;
-            link.target = '_blank';
-            link.rel = 'noreferrer noopener';
-            item.append(link);
-          }
-          return item;
-        }),
+        ...bridgeAdviceLines(bridgeIssues, t, runtimeProfile?.bridge ?? runtimeProfileValue()?.bridge).map(
+          (advice) => {
+            const item = el('li', styles.bridgeLine, advice.text);
+            if (advice.link !== undefined) {
+              const link = document.createElement('a');
+              link.className = styles.link;
+              link.textContent = advice.link.label;
+              link.href = advice.link.href;
+              link.target = '_blank';
+              link.rel = 'noreferrer noopener';
+              item.append(link);
+            }
+            return item;
+          },
+        ),
       );
       bridgeCommand.set(bridgeStep?.command);
       const canWake =
@@ -420,6 +426,7 @@ diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
   }
 
   retry.addEventListener('click', retryNow);
+  failedSkip.addEventListener('click', close);
   bridgeWake.addEventListener('click', () => void wakeBrowserNow());
   bridgeRetry.addEventListener('click', retryNow);
   bridgeSkip.addEventListener('click', close);
@@ -440,6 +447,14 @@ diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
     });
     if (strip !== null) overlay.append(strip);
   }
+
+  void readRuntimeCapabilities()
+    .then((answer) => {
+      runtimeProfile = answer.ok ? (answer.runtimeProfile ?? undefined) : undefined;
+      if (pinned !== null) render(pinned);
+      else if (lastSnapshot !== null) render(lastSnapshot);
+    })
+    .catch(() => undefined);
 
   void poll();
 

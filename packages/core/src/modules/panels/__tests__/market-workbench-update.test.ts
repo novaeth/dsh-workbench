@@ -3,6 +3,7 @@ import { call, fakeBundles, harness } from './market-tools-harness';
 import { updateWorkbenchOnce } from '../model/market-workbench-update';
 import type { SelfUpdateRequest } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { fakeSeamOf } from './seam-fake';
 import { MODULES_UPDATE_WORKBENCH_TOOL } from '../unit';
 
 beforeEach(() => {
@@ -172,9 +173,10 @@ describe('updateWorkbenchOnce：外面那个进程收到的现场', () => {
       asked: '',
       workbench: (pkg) => ({ pkg, version: '0.1.18' }),
       installed: (pkg) => ({ kind: 'unknown', pkg }),
-      shell: createFakeShell((call) =>
-        call.command.includes('npm view') ? { stdout: '0.1.19\n' } : { stdout: '' },
-      ).shell,
+      seam: fakeSeamOf(
+        createFakeShell((call) => (call.command.includes('npm view') ? { stdout: '0.1.19\n' } : { stdout: '' }))
+          .shell,
+      ),
       profileRegistry: async () => 'https://r.example/',
       dshHome: () => '/tmp/dsh-home',
       profileName: () => 'workbench',
@@ -190,7 +192,7 @@ describe('updateWorkbenchOnce：外面那个进程收到的现场', () => {
     await updateWorkbenchOnce({
       asked: '',
       workbench: (pkg) => ({ pkg, version: '0.1.18' }),
-      shell: createFakeShell(() => ({ stdout: '0.1.19\n' })).shell,
+      seam: fakeSeamOf(createFakeShell(() => ({ stdout: '0.1.19\n' })).shell),
       profileRegistry: async () => undefined,
       dshHome: () => '/tmp/dsh-home',
       profileName: () => 'workbench',

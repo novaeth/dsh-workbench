@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { aggregate, extensionStateOf, pluginUpdateCommand } from '../index.js';
 import { extensionNeedOf, libNeedOf, needStateOf } from '@dsh-workbench/shared/testing';
 
+
 const DEMO = extensionNeedOf('inventory', { commands: ['envs'] });
 const WORKFLOW = libNeedOf('opencli-workflow', {
   version: '1.1.23',

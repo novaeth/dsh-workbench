@@ -1,6 +1,6 @@
-import type { DshHostContext, DshShell } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared';
 import type { RecordState, RecordStore } from '@dsh-workbench/shared/host';
-import { quoteShellArg, runShell, shotDueOf } from '@dsh-workbench/shared/host';
+import { productWrite, quoteShellArg, shotDueOf, type Seam } from '@dsh-workbench/shared/host';
 import { plainLine, type LineMaker } from './diy-browser';
 import { BROWSER_RECORD_SESSION } from '@dsh-workbench/shared/host';
 
@@ -69,7 +69,7 @@ export async function takeShotOf(input: WatchFinishDeps, held: RecordState, n: n
   const path = shotFileOf(input.captureFile, held.unit, n);
   const at = Date.now();
   try {
-    const step = await actBrowser(input.shell, input.command, BROWSER_RECORD_SESSION, ['screenshot', path]);
+    const step = await actBrowser(input.seam, input.command, BROWSER_RECORD_SESSION, ['screenshot', path]);
     if (step.ok) input.store.shotTaken(input.sessionId, { n, at, path }, Date.now());
     else input.store.shotFailed(input.sessionId, { n, at, path, error: actErrorOf(step) }, Date.now());
   } catch (error) {
@@ -79,7 +79,7 @@ export async function takeShotOf(input: WatchFinishDeps, held: RecordState, n: n
 }
 
 export async function startRecordCapture(
-  shell: DshShell,
+  seam: Seam,
   command: string,
   session: string,
   file: string,
@@ -97,13 +97,13 @@ export async function startRecordCapture(
     `( while kill -0 ${HOST_PID} 2>/dev/null; do if ${snap} > "$r" 2>/dev/null; then printf ok > "$f.first"; else printf fail > "$f.first"; fi; if [ -s "$r" ]; then if command -v node >/dev/null 2>&1; then tr -d '\\n' < "$r" | node -e ${quoteShellArg(DROP_STATIC_JS)} ${quoteShellArg(STATIC_URL_PATTERN)} >> "$f"; else tr -d '\\n' < "$r" >> "$f"; printf '\\n' >> "$f"; fi; fi; rm -f "$r"; sleep ${String(CAPTURE_POLL_S)}; done & echo $! > "$f.pid" ) & echo $! > "$f.reaper"`,
     'kill -0 "$(cat "$f.pid" 2>/dev/null)" 2>/dev/null',
   ].join('; ');
-  const step = await runShell(shell, line, { timeoutMs: START_TIMEOUT_MS });
+  const step = await seam.run({ command: line, intent: productWrite(), timeoutMs: START_TIMEOUT_MS });
   return step.exitCode === 0;
 }
 
 export interface WatchFinishDeps {
   readonly ctx: DshHostContext;
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly command: string;
   readonly sessionId: string;
   readonly store: RecordStore;
@@ -113,7 +113,7 @@ export interface WatchFinishDeps {
 
 async function releaseLeftoversOf(input: WatchFinishDeps): Promise<void> {
   await releaseQuietly({
-    shell: input.shell,
+    seam: input.seam,
     command: input.command,
     session: BROWSER_RECORD_SESSION,
     url: input.url,
@@ -123,7 +123,7 @@ async function releaseLeftoversOf(input: WatchFinishDeps): Promise<void> {
 
 async function stopCaptureQuiet(input: WatchFinishDeps): Promise<boolean> {
   try {
-    return await stopNetworkExact(input.shell, input.captureFile);
+    return await stopNetworkExact(input.seam, input.captureFile);
   } catch {
     return false;
   }
@@ -131,7 +131,7 @@ async function stopCaptureQuiet(input: WatchFinishDeps): Promise<boolean> {
 
 async function closeRecordTabQuiet(input: WatchFinishDeps): Promise<boolean> {
   try {
-    return await closeRecordTab(input.shell, input.command, BROWSER_RECORD_SESSION, input.url);
+    return await closeRecordTab(input.seam, input.command, BROWSER_RECORD_SESSION, input.url);
   } catch {
     return false;
   }
@@ -153,7 +153,7 @@ export async function watchFinishStepOf(
   let page: ReturnType<typeof recordPageOf>;
   const started = Date.now();
   try {
-    const step = await actBrowser(input.shell, input.command, BROWSER_RECORD_SESSION, ['eval', RECORD_READ_SCRIPT]);
+    const step = await actBrowser(input.seam, input.command, BROWSER_RECORD_SESSION, ['eval', RECORD_READ_SCRIPT]);
     page = recordPageOf(step.payload);
   } catch {
     return { stop: false, delivered: false };
@@ -233,35 +233,43 @@ export interface CaptureRead {
   readonly round: string;
 }
 
-export async function captureLinesOf(shell: DshShell, file: string, timeoutMs = START_TIMEOUT_MS): Promise<number> {
-  const step = await runShell(shell, `wc -l < ${quoteShellArg(file)} 2>/dev/null || echo 0`, { timeoutMs });
+export async function captureLinesOf(seam: Seam, file: string, timeoutMs = START_TIMEOUT_MS): Promise<number> {
+  const step = await seam.run({
+    command: `wc -l < ${quoteShellArg(file)} 2>/dev/null || echo 0`,
+    intent: productWrite(),
+    timeoutMs,
+  });
   const value = Number.parseInt(step.stdout.trim() === '' ? '0' : step.stdout.trim(), 10);
   return Number.isFinite(value) ? value : 0;
 }
 
-export async function captureRoundOf(shell: DshShell, file: string, timeoutMs = START_TIMEOUT_MS): Promise<string> {
-  const step = await runShell(shell, `cat ${quoteShellArg(`${file}.first`)} 2>/dev/null || true`, { timeoutMs });
+export async function captureRoundOf(seam: Seam, file: string, timeoutMs = START_TIMEOUT_MS): Promise<string> {
+  const step = await seam.run({
+    command: `cat ${quoteShellArg(`${file}.first`)} 2>/dev/null || true`,
+    intent: productWrite(),
+    timeoutMs,
+  });
   const value = step.stdout.trim();
   return value === 'ok' || value === 'fail' ? value : '';
 }
 
 export async function captureTextOf(
-  shell: DshShell,
+  seam: Seam,
   file: string,
   timeoutMs = START_TIMEOUT_MS,
 ): Promise<{ readonly text: string; readonly truncated: boolean }> {
-  const step = await runShell(
-    shell,
-    `tail -n ${String(CAPTURE_TAIL_LINES)} ${quoteShellArg(file)} 2>/dev/null || true`,
-    { timeoutMs },
-  );
+  const step = await seam.run({
+    command: `tail -n ${String(CAPTURE_TAIL_LINES)} ${quoteShellArg(file)} 2>/dev/null || true`,
+    intent: productWrite(),
+    timeoutMs,
+  });
   return { text: step.stdout, truncated: step.truncated };
 }
 
-export async function captureReadOf(shell: DshShell, file: string, timeoutMs = START_TIMEOUT_MS): Promise<CaptureRead> {
-  const totalLines = await captureLinesOf(shell, file, timeoutMs);
-  const read = await captureTextOf(shell, file, timeoutMs);
-  const round = await captureRoundOf(shell, file, timeoutMs);
+export async function captureReadOf(seam: Seam, file: string, timeoutMs = START_TIMEOUT_MS): Promise<CaptureRead> {
+  const totalLines = await captureLinesOf(seam, file, timeoutMs);
+  const read = await captureTextOf(seam, file, timeoutMs);
+  const round = await captureRoundOf(seam, file, timeoutMs);
   return {
     text: read.text,
     totalLines,
@@ -271,14 +279,14 @@ export async function captureReadOf(shell: DshShell, file: string, timeoutMs = S
   };
 }
 
-export async function keepCaptureOf(shell: DshShell, file: string, timeoutMs = START_TIMEOUT_MS): Promise<boolean> {
+export async function keepCaptureOf(seam: Seam, file: string, timeoutMs = START_TIMEOUT_MS): Promise<boolean> {
   const line = `[ -f ${quoteShellArg(file)} ] && mv ${quoteShellArg(file)} ${quoteShellArg(lastCaptureFileOf(file))} && [ -s ${quoteShellArg(lastCaptureFileOf(file))} ]`;
-  const step = await runShell(shell, line, { timeoutMs });
+  const step = await seam.run({ command: line, intent: productWrite(), timeoutMs });
   return step.exitCode === 0;
 }
 
 export async function captureLinesWithKeyOf(
-  shell: DshShell,
+  seam: Seam,
   file: string,
   key: string,
   timeoutMs = START_TIMEOUT_MS,
@@ -290,7 +298,7 @@ export async function captureLinesWithKeyOf(
     `[ -f ${quoted} ] || exit 0`,
     `grep -m 20 -F ${compact} ${quoted} 2>/dev/null || grep -m 20 -F ${spaced} ${quoted} 2>/dev/null || true`,
   ].join('; ');
-  const step = await runShell(shell, line, { timeoutMs });
+  const step = await seam.run({ command: line, intent: productWrite(), timeoutMs });
   return step.stdout;
 }
 
@@ -422,41 +430,41 @@ function tabsOf(raw: string): readonly Record<string, unknown>[] | null {
   }
 }
 
-async function closeRecordTab(shell: DshShell, command: string, session: string, url: string): Promise<boolean> {
-  const listed = await actBrowser(shell, command, session, ['tab', 'list']);
+async function closeRecordTab(seam: Seam, command: string, session: string, url: string): Promise<boolean> {
+  const listed = await actBrowser(seam, command, session, ['tab', 'list']);
   const pages = tabsOf(listed.stdout);
   if (pages !== null && pages.length === 0) return true;
   const exact = pages?.find((one) => typeof one['url'] === 'string' && one['url'] === url);
   const pick = exact ?? pages?.[0];
   const page = pick === undefined ? '' : typeof pick['page'] === 'string' ? pick['page'] : '';
   if (page !== '') {
-    const done = await actBrowser(shell, command, session, ['tab', 'close', page]);
+    const done = await actBrowser(seam, command, session, ['tab', 'close', page]);
     if (done.ok) {
       for (const one of blanksOf(pages, page)) {
-        await actBrowser(shell, command, session, ['tab', 'close', one]);
+        await actBrowser(seam, command, session, ['tab', 'close', one]);
       }
-      await actBrowser(shell, command, session, ['close']);
+      await actBrowser(seam, command, session, ['close']);
       return true;
     }
   }
-  const released = await actBrowser(shell, command, session, ['close']);
+  const released = await actBrowser(seam, command, session, ['close']);
   return released.ok;
 }
 
 export async function releaseRecord(input: {
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly command: string;
   readonly session: string;
   readonly url: string;
   readonly captureFile: string;
 }): Promise<{ readonly tab: boolean; readonly capture: boolean }> {
-  const capture = await stopNetworkExact(input.shell, input.captureFile);
-  const tab = await closeRecordTab(input.shell, input.command, input.session, input.url);
+  const capture = await stopNetworkExact(input.seam, input.captureFile);
+  const tab = await closeRecordTab(input.seam, input.command, input.session, input.url);
   return { tab, capture };
 }
 
 export async function releaseQuietly(input: {
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly command: string;
   readonly session: string;
   readonly url: string;

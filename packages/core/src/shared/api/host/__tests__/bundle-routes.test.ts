@@ -4,6 +4,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { DshHostContext } from '@dsh-workbench/shared';
 import { rememberPackageSource } from '@dsh-workbench/shared/host';
+import { fakeSeamOf } from './seam-fake';
 import { BUNDLE_REGISTRY_DEFAULT } from '@/kernel/contract/bundle-install';
 import {
   bundleInspectHandler,
@@ -20,14 +21,17 @@ function fakeContext(
 ): DshHostContext {
   const known: Record<string, unknown> = { pluginManager: manager };
   if (dir !== undefined) known.profileContext = { dir };
-  if (shell !== undefined) known.shell = shell;
+  if (shell !== undefined) {
+    known.shell = shell;
+    known.workbenchSeam = shell;
+  }
   return { get: (name: string) => known[name], ...(logger === undefined ? {} : { logger }) } as unknown as DshHostContext;
 }
 
 function fakeShell(
   versions: Readonly<Record<string, string>>,
   declarations: Readonly<Record<string, string>> = {},
-): { shell: unknown; commands: string[] } {
+): { seam: unknown; commands: string[] } {
   const commands: string[] = [];
   const shell = {
     resolve: (request: { readonly command: string }) => {
@@ -50,7 +54,7 @@ function fakeShell(
       };
     },
   };
-  return { shell, commands };
+  return { seam: fakeSeamOf(shell as never), commands };
 }
 
 const MANAGER = {
@@ -201,7 +205,7 @@ describe('装机预检：本地 path spec 读得到那份 package.json', () => {
     return { status: 'accepted', kind, bundle: true, registry, ...(name === undefined ? {} : { name }) };
   }
 
-  function inspectContext(inspection: unknown): { ctx: DshHostContext; asked: string[]; shell: unknown } {
+  function inspectContext(inspection: unknown): { ctx: DshHostContext; asked: string[]; seam: unknown } {
     const asked: string[] = [];
     const built = fakeShell({});
     const ctx = fakeContext(
@@ -214,9 +218,9 @@ describe('装机预检：本地 path spec 读得到那份 package.json', () => {
       },
       undefined,
       undefined,
-      built.shell,
+      built.seam,
     );
-    return { ctx, asked, shell: built };
+    return { ctx, asked, seam: built };
   }
 
   function payloadOf(result: unknown): { status: string; problem?: string; reason?: string } {
@@ -313,7 +317,7 @@ describe('装机预检：本地 path spec 读得到那份 package.json', () => {
   });
 
   it('★ registry 照旧：声明的形状有问题就拒（问源那一路一个字没动）', async () => {
-    const { shell } = fakeShell({ '@t/reg-d': JSON.stringify({ workbench: { unit: 'reg-d' } }) });
+    const { seam } = fakeShell({ '@t/reg-d': JSON.stringify({ workbench: { unit: 'reg-d' } }) });
     const ctx = fakeContext(
       {
         ...MANAGER,
@@ -321,7 +325,7 @@ describe('装机预检：本地 path spec 读得到那份 package.json', () => {
       },
       undefined,
       undefined,
-      shell,
+      seam,
     );
 
     const result = await bundleInspectHandler(ctx)(new URLSearchParams({ spec: '@t/reg-d' }));
@@ -345,11 +349,11 @@ describe('装机预检：本地 path spec 读得到那份 package.json', () => {
 
   it('★ 只有 registry 走问源那一路：git / tarball 即便带了名字也不去问源', async () => {
     for (const kind of ['git', 'tarball'] as const) {
-      const { ctx, shell } = inspectContext(accepted(kind, '@t/named-not-registry'));
+      const { ctx, seam } = inspectContext(accepted(kind, '@t/named-not-registry'));
 
       await bundleInspectHandler(ctx)(new URLSearchParams({ spec: 'github:o/r' }));
 
-      expect((shell as { commands: string[] }).commands).toEqual([]);
+      expect((seam as { commands: string[] }).commands).toEqual([]);
     }
   });
 });
@@ -412,10 +416,10 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
 
   it('★ 每个模块问一次源：有新版的带上 latest，问不到就不带（界面据此决定给不给「更新」）', async () => {
     const { dir, cleanup } = profileWith('0.1.2');
-    const { shell, commands } = fakeShell({ '@a/mod': '0.2.0' });
+    const { seam, commands } = fakeShell({ '@a/mod': '0.2.0' });
     const ctx = fakeContext({ ...MANAGER }, dir);
 
-    const result = (await moduleVersionsHandler(ctx, shell as never)(new URLSearchParams())) as {
+    const result = (await moduleVersionsHandler(ctx, seam as never)(new URLSearchParams())) as {
       modules: unknown[];
     };
 
@@ -449,10 +453,10 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
 
   it('★ 只看已安装那一趟（check=0）：一个 npm view 都不发，也不给 latest 与「问不到」', async () => {
     const { dir, cleanup } = profileWith('0.1.2');
-    const { shell, commands } = fakeShell({ '@a/mod': '0.2.0' });
+    const { seam, commands } = fakeShell({ '@a/mod': '0.2.0' });
     const ctx = fakeContext({ ...MANAGER }, dir);
 
-    const result = (await moduleVersionsHandler(ctx, shell as never)(
+    const result = (await moduleVersionsHandler(ctx, seam as never)(
       new URLSearchParams('check=0'),
     )) as { modules: { unit: string; installed: string; latest?: string; latestUnavailable?: string }[] };
 
@@ -468,9 +472,9 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
 
   it('★ 新版要更新的协议 → 标 latestBlocked', async () => {
     const { dir, cleanup } = profileWith('0.1.2');
-    const { shell } = fakeShell({ '@a/mod': '0.2.0' }, { '@a/mod': declarationOf('mod', 4) });
+    const { seam } = fakeShell({ '@a/mod': '0.2.0' }, { '@a/mod': declarationOf('mod', 4) });
 
-    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell as never)(
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam as never)(
       new URLSearchParams(),
     )) as { modules: { unit: string; latestBlocked?: string }[] };
 
@@ -480,9 +484,9 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
 
   it('★ 新版协议这一版工作台不认（更旧）→ latestBlocked: incompatible', async () => {
     const { dir, cleanup } = profileWith('0.1.2', '@c');
-    const { shell } = fakeShell({ '@c/mod': '0.2.0' }, { '@c/mod': declarationOf('mod', 1) });
+    const { seam } = fakeShell({ '@c/mod': '0.2.0' }, { '@c/mod': declarationOf('mod', 1) });
 
-    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell as never)(
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam as never)(
       new URLSearchParams(),
     )) as { modules: { unit: string; latestBlocked?: string }[] };
 
@@ -495,9 +499,9 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
 
   it('★ 新版协议能认 → 不标 latestBlocked', async () => {
     const { dir, cleanup } = profileWith('0.1.2', '@d');
-    const { shell } = fakeShell({ '@d/mod': '0.2.0' }, { '@d/mod': declarationOf('mod', 3) });
+    const { seam } = fakeShell({ '@d/mod': '0.2.0' }, { '@d/mod': declarationOf('mod', 3) });
 
-    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell as never)(
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam as never)(
       new URLSearchParams(),
     )) as { modules: { unit: string; latestBlocked?: string }[] };
 
@@ -562,9 +566,9 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
 
   it('源问炸了 → 那一条不带 latest，别的照常（一个新版查不到不该把整页拖垮）', async () => {
     const { dir, cleanup } = profileWith('0.1.2', '@b');
-    const { shell } = fakeShell({ '@b/other': '9.9.9' });
+    const { seam } = fakeShell({ '@b/other': '9.9.9' });
     const ctx = fakeContext({ ...MANAGER }, dir);
-    const result = (await moduleVersionsHandler(ctx, shell as never)(new URLSearchParams())) as {
+    const result = (await moduleVersionsHandler(ctx, seam as never)(new URLSearchParams())) as {
       modules: { unit: string; latest?: string }[];
     };
     expect(result.modules).toMatchObject([
@@ -602,8 +606,8 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
       '# dsh-workbench 写的\n@a:registry=https://private.example/npm/\n',
       'utf8',
     );
-    const { shell, commands } = fakeShell({ '@a/mod': '0.2.0' });
-    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell as never)(
+    const { seam, commands } = fakeShell({ '@a/mod': '0.2.0' });
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam as never)(
       new URLSearchParams(),
     )) as { modules: { latest?: string }[] };
 
@@ -618,8 +622,8 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
     const { dir, cleanup } = bareProfile();
     rememberPackageSource(dir, '@a/mod', { version: '0.1.2', registry: 'https://recorded.example/' });
     fs.writeFileSync(path.join(dir, '.npmrc'), '@a:registry=https://scope.example/\n', 'utf8');
-    const { shell, commands } = fakeShell({ '@a/mod': '0.2.0' });
-    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell as never)(
+    const { seam, commands } = fakeShell({ '@a/mod': '0.2.0' });
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam as never)(
       new URLSearchParams(),
     )) as { modules: { latest?: string }[] };
 
@@ -631,8 +635,8 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
 
   it('★ 源解析不出来 → 说明是没配来源，不是"没有新版"', async () => {
     const { dir, cleanup } = bareProfile();
-    const { shell, commands } = fakeShell({ '@a/mod': '0.2.0' });
-    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell as never)(
+    const { seam, commands } = fakeShell({ '@a/mod': '0.2.0' });
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam as never)(
       new URLSearchParams(),
     )) as { modules: { latestUnavailable?: string }[] };
 
@@ -644,8 +648,8 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
   it('★ 问了但没问成 → probe-failed（和"没配来源"分开）', async () => {
     const { dir, cleanup } = bareProfile();
     fs.writeFileSync(path.join(dir, '.npmrc'), 'registry=https://down.example/\n', 'utf8');
-    const { shell } = fakeShell({});
-    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell as never)(
+    const { seam } = fakeShell({});
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam as never)(
       new URLSearchParams(),
     )) as { modules: { latestUnavailable?: string }[] };
 
@@ -655,8 +659,8 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
 
   it('★ 本地 link 的那份不探源（也不该拿源上的版本劝人"更新"）', async () => {
     const { dir, cleanup } = bareProfile('link:/Users/x/module');
-    const { shell, commands } = fakeShell({ '@a/mod': '0.2.0' });
-    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell as never)(
+    const { seam, commands } = fakeShell({ '@a/mod': '0.2.0' });
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam as never)(
       new URLSearchParams(),
     )) as { modules: { latest?: string; latestUnavailable?: string; local?: boolean }[] };
 
@@ -668,8 +672,8 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
 
   it('★ 从 Git 装的不去问 registry，也不冒充"没配来源"', async () => {
     const { dir, cleanup } = bareProfile('git+ssh://git@example.com/o/r.git#main&path:/packages/mod');
-    const { shell, commands } = fakeShell({ '@a/mod': '0.2.0' });
-    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell as never)(
+    const { seam, commands } = fakeShell({ '@a/mod': '0.2.0' });
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam as never)(
       new URLSearchParams(),
     )) as { modules: { latest?: string; latestUnavailable?: string }[] };
 

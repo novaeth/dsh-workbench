@@ -1,5 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { runtimeLayoutOf } from '@dsh-workbench/shared/host';
+import { OPENCLI_RUNTIME_ID } from '../foundation/paths.js';
 
 export type OpencliSource = 'env' | 'isolated' | 'path';
 
@@ -19,14 +21,8 @@ function binName(platform: NodeJS.Platform = process.platform): string {
   return platform === 'win32' ? 'opencli.cmd' : 'opencli';
 }
 
-export function isolatedOpencliPathOf(ctx: HostContextLike): string | null {
-  const homePath = ctx.get<(path: string) => string>('dshHomePath');
-  if (typeof homePath !== 'function') return null;
-  try {
-    return join(homePath('workbench/opencli/bin'), binName());
-  } catch {
-    return null;
-  }
+export function isolatedOpencliPathOf(_ctx: HostContextLike): string | null {
+  return join(runtimeLayoutOf(OPENCLI_RUNTIME_ID).root, 'bin', binName());
 }
 
 export function opencliCommandOf(ctx: HostContextLike): OpencliResolution {

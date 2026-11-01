@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { DshShell } from '@dsh-workbench/shared';
-import type { LibNeed, NeedState, SupplyIndex } from '@dsh-workbench/shared/host';
+import type { LibNeed, NeedState, Seam, SupplyIndex } from '@dsh-workbench/shared/host';
 import { libInstallCommand } from '@dsh-workbench/adapter-runtime';
 import { needIdOf, npmSourceOf } from '@dsh-workbench/shared/host';
 import { libDir } from '@dsh-workbench/adapter-runtime';
@@ -35,11 +34,11 @@ function stateOf(need: LibNeed, status: NeedState['status'], detail: string, ext
 
 export async function probeLibs(options: {
   readonly needs: readonly LibNeed[];
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly force: boolean;
   readonly index?: SupplyIndex | undefined;
 }): Promise<ReadonlyMap<string, NeedState>> {
-  const { needs, shell, force, index } = options;
+  const { needs, seam, force, index } = options;
   const found = new Map<string, NeedState>();
   for (const need of needs) {
     if (found.has(need.name)) continue;
@@ -67,7 +66,7 @@ export async function probeLibs(options: {
     const latest =
       registry === undefined || !registry.ok
         ? undefined
-        : await latestVersion({ shell, name: need.name, registry: registry.value, force });
+        : await latestVersion({ seam, name: need.name, registry: registry.value, force });
     const behind = latest !== undefined && isNewerVersion(latest, installed);
     found.set(
       need.name,

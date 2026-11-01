@@ -330,6 +330,19 @@ describe('workbench_diy_publish · 没写作者时推断署名', () => {
   });
 });
 
+const WORKSPACE_ONLY = JSON.stringify({
+  ok: true,
+  stop: 'workspace-only',
+  target: 'team',
+  name: '@dsh-workbench/module-demo',
+  version: '0.1.0',
+  changes: [],
+});
+
+function both(final: string): readonly { readonly stdout: string }[] {
+  return [{ stdout: WORKSPACE_ONLY }, { stdout: final }];
+}
+
 describe('workbench_diy_publish · 推断的署名就是发布用的署名', () => {
   const PUBLISHED = JSON.stringify({
     ok: true,
@@ -345,7 +358,7 @@ describe('workbench_diy_publish · 推断的署名就是发布用的署名', () 
     withBin();
     const { tool, commands } = rig.harness({
       authorHint: async () => '陈康 <kang@example.com>',
-      probe: [{ stdout: PUBLISHED }],
+      probe: both(PUBLISHED),
     });
 
     await tool(DIY_PUBLISH_TOOL)?.execute({ unit: 'demo', target: 'team' }, rig.diyExec());
@@ -363,7 +376,7 @@ describe('workbench_diy_publish · 推断的署名就是发布用的署名', () 
         inferred += 1;
         return 'Ada';
       },
-      probe: [{ stdout: PUBLISHED }],
+      probe: both(PUBLISHED),
     });
 
     await tool(DIY_PUBLISH_TOOL)?.execute({ unit: 'demo', target: 'team' }, rig.diyExec());
@@ -381,7 +394,7 @@ describe('workbench_diy_publish · 推断的署名就是发布用的署名', () 
         inferred += 1;
         return '陈康 <kang@example.com>';
       },
-      probe: [{ stdout: PUBLISHED }],
+      probe: both(PUBLISHED),
     });
 
     await tool(DIY_PUBLISH_TOOL)?.execute(
@@ -398,9 +411,7 @@ describe('workbench_diy_publish · 推断的署名就是发布用的署名', () 
     rig.scaffold('demo');
     withBin();
     const { tool, commands } = rig.harness({
-      probe: [
-        {
-          stdout: JSON.stringify({
+      probe: both(JSON.stringify({
             ok: true,
             target: 'team',
             name: '@dsh-workbench/module-demo',
@@ -408,9 +419,7 @@ describe('workbench_diy_publish · 推断的署名就是发布用的署名', () 
             registry: 'https://npm.demo.test/',
             install: 'dsh plugin --profile workbench add @dsh-workbench/module-demo@0.1.0',
             changelog: { version: '0.1.0', action: 'written' },
-          }),
-        },
-      ],
+          })),
     });
 
     const result = (await tool(DIY_PUBLISH_TOOL)?.execute(
@@ -428,9 +437,7 @@ describe('workbench_diy_publish · 推断的署名就是发布用的署名', () 
     rig.scaffold('demo');
     withBin();
     const { tool } = rig.harness({
-      probe: [
-        {
-          stdout: JSON.stringify({
+      probe: both(JSON.stringify({
             ok: true,
             target: 'team',
             name: '@dsh-workbench/module-demo',
@@ -438,9 +445,7 @@ describe('workbench_diy_publish · 推断的署名就是发布用的署名', () 
             registry: 'https://npm.demo.test/',
             install: 'dsh plugin --profile workbench add @dsh-workbench/module-demo@0.1.0',
             changelog: { version: '0.1.0', action: 'kept' },
-          }),
-        },
-      ],
+          })),
     });
 
     const result = (await tool(DIY_PUBLISH_TOOL)?.execute({ unit: 'demo', target: 'team' }, rig.diyExec())) as {
@@ -454,9 +459,7 @@ describe('workbench_diy_publish · 推断的署名就是发布用的署名', () 
     rig.scaffold('demo');
     withBin();
     const { tool, commands } = rig.harness({
-      probe: [
-        {
-          stdout: JSON.stringify({
+      probe: both(JSON.stringify({
             ok: true,
             target: 'market',
             name: '@dsh-workbench/module-demo',
@@ -464,9 +467,7 @@ describe('workbench_diy_publish · 推断的署名就是发布用的署名', () 
             install: 'dsh plugin --profile workbench add git+https://git.example.com/wb/market.git&path:/artifacts/demo/0.1.0',
             market: { url: 'https://git.example.com/wb/market.git' },
             labels: ['发布编排', '构建状态'],
-          }),
-        },
-      ],
+          })),
     });
 
     const result = (await tool(DIY_PUBLISH_TOOL)?.execute(
@@ -784,18 +785,14 @@ describe('workbench_diy_publish · 真发', () => {
     const dir = rig.scaffold('demo');
     withBin();
     const { tool, commands } = rig.harness({
-      probe: [
-        {
-          stdout: JSON.stringify({
+      probe: both(JSON.stringify({
             ok: true,
             target: 'team',
             name: '@dsh-workbench/module-demo',
             version: '0.1.0',
             registry: 'https://npm.demo.test/',
             install: 'dsh plugin --profile workbench add @dsh-workbench/module-demo@0.1.0',
-          }),
-        },
-      ],
+          })),
     });
 
     const result = (await tool(DIY_PUBLISH_TOOL)?.execute({ unit: 'demo' }, rig.diyExec())) as { text: string };
@@ -812,9 +809,7 @@ describe('workbench_diy_publish · 真发', () => {
     rig.scaffold('demo');
     withBin();
     const { tool, commands } = rig.harness({
-      probe: [
-        {
-          stdout: JSON.stringify({
+      probe: [{ stdout: JSON.stringify({
             ok: true,
             target: 'market',
             refresh: true,
@@ -822,9 +817,7 @@ describe('workbench_diy_publish · 真发', () => {
             name: '@dsh-workbench/module-demo',
             version: '0.2.0',
             market: { url: 'https://git.example.com/wb/market.git', branch: 'main', commit: 'abc' },
-          }),
-        },
-      ],
+          }) }],
     });
 
     const result = (await tool(DIY_PUBLISH_TOOL)?.execute(
@@ -842,18 +835,14 @@ describe('workbench_diy_publish · 真发', () => {
     rig.scaffold('demo');
     withBin();
     const { tool, commands } = rig.harness({
-      probe: [
-        {
-          stdout: JSON.stringify({
+      probe: both(JSON.stringify({
             ok: true,
             target: 'tarball',
             name: '@dsh-workbench/module-demo',
             version: '0.2.0',
             file: '/tmp/module-demo-0.2.0.tgz',
             install: 'dsh plugin --profile workbench add /tmp/module-demo-0.2.0.tgz',
-          }),
-        },
-      ],
+          })),
     });
 
     const result = (await tool(DIY_PUBLISH_TOOL)?.execute(
@@ -871,9 +860,7 @@ describe('workbench_diy_publish · 真发', () => {
     rig.scaffold('demo');
     withBin();
     const { tool, commands } = rig.harness({
-      probe: [
-        {
-          stdout: JSON.stringify({
+      probe: both(JSON.stringify({
             ok: true,
             verified: true,
             target: 'team',
@@ -881,9 +868,7 @@ describe('workbench_diy_publish · 真发', () => {
             version: '0.1.0',
             registry: 'https://npm.demo.test/',
             install: 'dsh plugin --profile workbench add @dsh-workbench/module-demo@0.1.0',
-          }),
-        },
-      ],
+          })),
     });
 
     const result = (await tool(DIY_PUBLISH_TOOL)?.execute(
@@ -947,6 +932,32 @@ describe('workbench_diy_publish · 真发', () => {
     expect(result.text).toContain('还差一步');
     expect(result.text).toContain('npm login --registry https://npm.demo.test/');
     expect(result.text).toContain('好了');
+  });
+
+  it('★ 两段式发布：先 --workspace-only（会话工作区），再 --index-only（产品域），用后一段的结果说话', async () => {
+    rig.scaffold('demo');
+    withBin();
+    const final = JSON.stringify({
+      ok: true,
+      target: 'market',
+      name: '@dsh-workbench/module-demo',
+      version: '0.1.0',
+      install: 'dsh plugin --profile workbench add git+https://git.example.com/wb/market.git&path:/artifacts/demo',
+      market: { url: 'https://git.example.com/wb/market.git', branch: 'main', commit: 'abc' },
+      changes: ['version → 0.1.0'],
+    });
+    const { tool, commands } = rig.harness({ probe: both(final) });
+
+    const result = (await tool(DIY_PUBLISH_TOOL)?.execute({ unit: 'demo', target: 'market' }, rig.diyExec())) as {
+      text: string;
+    };
+
+    expect(commands).toHaveLength(2);
+    expect(commands[0]).toContain("'--workspace-only'");
+    expect(commands[0]).not.toContain("'--index-only'");
+    expect(commands[1]).toContain("'--index-only'");
+    expect(commands[1]).not.toContain("'--workspace-only'");
+    expect(result.text).toContain('已发到市场索引 https://git.example.com/wb/market.git');
   });
 
   it('发布没走通时把工具链最后几行原样带回来（验收没打完是常见那条）', async () => {

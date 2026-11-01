@@ -1,5 +1,5 @@
-import type { DshHostContext, DshShell, DshToolRunContext } from '@dsh-workbench/shared';
-import { BROWSER_SCREEN_SESSION, shellOf } from '@dsh-workbench/shared/host';
+import type { DshHostContext, DshToolRunContext } from '@dsh-workbench/shared';
+import { BROWSER_SCREEN_SESSION, seamOf, type Seam } from '@dsh-workbench/shared/host';
 import { DIY_DEBUG_SERVICE, sessionIdOf } from '@dsh-workbench/shared/host';
 import type { DebugState, DebugStore } from '@dsh-workbench/shared/host';
 import { boardFactOf, boardSituation, type BoardFactState, type BoardProbe, type BoardSituation } from '@dsh-workbench/shared/host';
@@ -17,7 +17,7 @@ export interface PageHandle {
   readonly artifactsDir: string;
   readonly unit: string;
   readonly args: Record<string, unknown>;
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly command: string;
   readonly session: string;
   readonly line?: LineMaker;
@@ -148,8 +148,8 @@ export async function pageAt(
   if (wanted === '' && options.requireUnit !== false) {
     throw new Error(`看一眼要一个 unit（装过的：${pool.join(', ') || '（空）'}）`);
   }
-  const shell = shellOf(ctx);
-  if (shell === undefined) throw new Error('这台机器上没有 shell 服务，动不了浏览器');
+  const seam = seamOf(ctx);
+  if (seam === undefined) throw new Error('这台机器上没有 shell 服务，动不了浏览器');
   const store = ctx.get<DebugStore>(DIY_DEBUG_SERVICE);
   const held = store?.live(Date.now()) ?? null;
   const sessionId = sessionIdOf(exec);
@@ -160,7 +160,7 @@ export async function pageAt(
   }
   const command = cliCommandOf(ctx);
   const session = asText(args['session']) || BROWSER_SCREEN_SESSION;
-  const handshake = await readyPageOf(shell, command, session);
+  const handshake = await readyPageOf(seam, command, session);
   if (!handshake.ok && options.requireWorkbench !== false && !hostSurface().capabilities.pageDebug) {
     throw new Error(desktopPageText(handshake.page));
   }
@@ -187,10 +187,10 @@ export async function pageAt(
   }
   return {
     root,
-    artifactsDir: artifactsDirOf(ctx, root),
+    artifactsDir: artifactsDirOf(root),
     unit: wanted,
     args,
-    shell,
+    seam,
     command,
     session,
     ...(surfaceOf(ctx)?.background === undefined ? {} : { line: surfaceOf(ctx)?.background }),

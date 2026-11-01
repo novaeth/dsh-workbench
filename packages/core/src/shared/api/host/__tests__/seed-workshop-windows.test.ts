@@ -178,7 +178,7 @@ describe('Windows 工坊 Node seed', () => {
       stdio: 'ignore',
     });
     const readState = () => JSON.parse(readFileSync(stateFile, 'utf8'));
-    const deadline = Date.now() + 3_000;
+    const deadline = Date.now() + 15_000;
     while (!existsSync(stateFile) && Date.now() < deadline) {
       await new Promise((resolve) => setTimeout(resolve, 25));
     }

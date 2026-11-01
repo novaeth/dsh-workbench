@@ -3,10 +3,16 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { DshShell } from '@dsh-workbench/shared';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { withPackageDir } from '../index.js';
+
+function seamFor(shell: DshShell) {
+  return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
 
 function fakeShell(options: { readonly view?: string; readonly files?: Readonly<Record<string, string>>; readonly packFails?: boolean }): {
   shell: DshShell;
+  seam: ReturnType<typeof createSeam>;
   commands: string[];
   touched: () => string[];
 } {
@@ -52,7 +58,7 @@ function fakeShell(options: { readonly view?: string; readonly files?: Readonly<
       };
     },
   } as unknown as DshShell;
-  return { shell, commands, touched: () => [...touched] };
+  return { shell, seam: seamFor(shell), commands, touched: () => [...touched] };
 }
 
 function expectAllGone(touched: readonly string[]): void {
@@ -71,9 +77,9 @@ describe('把要判的那个包弄到本地看一眼', () => {
   it('本地绝对路径 → 就是那个目录（不多下、也不删）', async () => {
     local = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-local-'));
     fs.writeFileSync(path.join(local, 'package.json'), '{"name":"@t/local"}', 'utf8');
-    const { shell, commands } = fakeShell({});
+    const { seam, commands } = fakeShell({});
 
-    const seen = await withPackageDir({ shell, spec: `file:${local}` }, (dir) => dir);
+    const seen = await withPackageDir({ seam, spec: `file:${local}` }, (dir) => dir);
 
     expect(seen).toBe(local);
     expect(commands).toEqual([]);
@@ -81,11 +87,11 @@ describe('把要判的那个包弄到本地看一眼', () => {
   });
 
   it('源上的包 → 下下来解开，看的是解出来的那份，看完把临时目录收干净', async () => {
-    const { shell, commands, touched } = fakeShell({
+    const { seam, commands, touched } = fakeShell({
       files: { 'package.json': '{"name":"@t/demo"}', 'opencli-plugin.json': '{"name":"demo"}', 'list.js': 'x' },
     });
 
-    const seen = await withPackageDir({ shell, spec: '@t/demo@1.0.0', registry: 'https://r.example/' }, (dir) => ({
+    const seen = await withPackageDir({ seam, spec: '@t/demo@1.0.0', registry: 'https://r.example/' }, (dir) => ({
       dir,
       names: fs.readdirSync(dir).sort(),
     }));
@@ -102,16 +108,16 @@ describe('把要判的那个包弄到本地看一眼', () => {
     const failing = fakeShell({ packFails: true });
     const empty = fakeShell({});
 
-    expect(await withPackageDir({ shell: failing.shell, spec: '@t/demo' }, (dir) => dir)).toBeUndefined();
-    expect(await withPackageDir({ shell: empty.shell, spec: '@t/demo' }, (dir) => dir)).toBeUndefined();
+    expect(await withPackageDir({ seam: failing.seam, spec: '@t/demo' }, (dir) => dir)).toBeUndefined();
+    expect(await withPackageDir({ seam: empty.seam, spec: '@t/demo' }, (dir) => dir)).toBeUndefined();
     expectAllGone([...failing.touched(), ...empty.touched()]);
   });
 
   it('★ 不发明下载预检：git / tarball 的 spec 不去拉（口径同 ADR-0038）', async () => {
-    const { shell, commands } = fakeShell({});
+    const { seam, commands } = fakeShell({});
 
     for (const spec of ['github:o/r', 'https://example.test/a.tgz', 'git@x:r.git']) {
-      expect(await withPackageDir({ shell, spec }, (dir) => dir), spec).toBeUndefined();
+      expect(await withPackageDir({ seam, spec }, (dir) => dir), spec).toBeUndefined();
     }
     expect(commands).toEqual([]);
   });

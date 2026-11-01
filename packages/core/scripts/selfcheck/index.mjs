@@ -17,6 +17,7 @@ import * as kernelShape from './checks/kernel-shape.mjs';
 import * as platform from './checks/platform.mjs';
 import * as marketSeam from './checks/market-seam.mjs';
 import * as bootstrapSeam from './checks/bootstrap-seam.mjs';
+import * as seamIntent from './checks/seam-intent.mjs';
 
 const MODULES = [
   host,
@@ -38,6 +39,7 @@ const MODULES = [
   platform,
   marketSeam,
   bootstrapSeam,
+  seamIntent,
 ];
 
 const results = [];

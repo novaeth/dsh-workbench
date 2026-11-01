@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { fakeSeamOf } from './seam-fake';
 import { INSTALLED_PLUGINS_ROUTE } from '@/shared/api/installed-plugins';
 import { installedPlugins, pluginRoutes } from '../model/plugin-section';
 import { createPluginLedger } from '../model/plugin-ledger';
@@ -31,7 +32,7 @@ function rig() {
   return ledger;
 }
 
-function shellOf(installed: string, latest: string) {
+function planShellOf(installed: string, latest: string) {
   return createFakeShell((call) =>
     call.command.startsWith('npm ls')
       ? { stdout: JSON.stringify({ dependencies: { [PKG]: { version: installed } } }) }
@@ -57,9 +58,9 @@ describe('「已安装 opencli 插件」那一段的数据：台账说了算', (
     ledger.intend({ package: PKG, registry: REGISTRY });
     ledger.complete(PKG, 'inventory');
     putPlugin('inventory');
-    const fake = shellOf('1.0.24', '1.0.25');
+    const fake = planShellOf('1.0.24', '1.0.25');
 
-    const rows = await installedPlugins({ ledger, shell: fake.shell });
+    const rows = await installedPlugins({ ledger, seam: fakeSeamOf(fake.shell) });
 
     expect(rows).toMatchObject([
       {
@@ -81,9 +82,9 @@ describe('「已安装 opencli 插件」那一段的数据：台账说了算', (
     ledger.intend({ package: PKG, registry: REGISTRY });
     ledger.complete(PKG, 'inventory');
     putPlugin('inventory');
-    const fake = shellOf('1.0.24', '1.0.25');
+    const fake = planShellOf('1.0.24', '1.0.25');
 
-    const rows = await installedPlugins({ ledger, shell: fake.shell, check: false });
+    const rows = await installedPlugins({ ledger, seam: fakeSeamOf(fake.shell), check: false });
 
     expect(rows).toMatchObject([{ pkg: PKG, installed: '1.0.24' }]);
     expect(rows[0]?.latest).toBeUndefined();
@@ -93,10 +94,10 @@ describe('「已安装 opencli 插件」那一段的数据：台账说了算', (
   it('★ 同一个包问两遍只问一次新版（走 release.ts 那份 TTL 缓存，不新写一个查版本器）', async () => {
     const ledger = rig();
     ledger.intend({ package: PKG, registry: REGISTRY });
-    const fake = shellOf('1.0.24', '1.0.25');
+    const fake = planShellOf('1.0.24', '1.0.25');
 
-    await installedPlugins({ ledger, shell: fake.shell });
-    await installedPlugins({ ledger, shell: fake.shell });
+    await installedPlugins({ ledger, seam: fakeSeamOf(fake.shell) });
+    await installedPlugins({ ledger, seam: fakeSeamOf(fake.shell) });
 
     const views = fake.commands().filter((line) => line.startsWith('npm view'));
     const lists = fake.commands().filter((line) => line.startsWith('npm ls'));
@@ -107,10 +108,10 @@ describe('「已安装 opencli 插件」那一段的数据：台账说了算', (
   it('强刷才再问一次新版（force 照旧传到 release.ts）', async () => {
     const ledger = rig();
     ledger.intend({ package: PKG, registry: REGISTRY });
-    const fake = shellOf('1.0.24', '1.0.25');
+    const fake = planShellOf('1.0.24', '1.0.25');
 
-    await installedPlugins({ ledger, shell: fake.shell });
-    await installedPlugins({ ledger, shell: fake.shell, force: true });
+    await installedPlugins({ ledger, seam: fakeSeamOf(fake.shell) });
+    await installedPlugins({ ledger, seam: fakeSeamOf(fake.shell), force: true });
 
     expect(fake.commands().filter((line) => line.startsWith('npm view'))).toHaveLength(2);
   });
@@ -122,9 +123,9 @@ describe('「已安装 opencli 插件」那一段的数据：台账说了算', (
     fs.writeFileSync(path.join(at, 'opencli-plugin.json'), JSON.stringify({ name: 'mine' }), 'utf8');
     fs.writeFileSync(path.join(at, 'run.js'), 'x', 'utf8');
     ledger.intend({ package: at, local: true });
-    const fake = shellOf('1.0.24', '1.0.25');
+    const fake = planShellOf('1.0.24', '1.0.25');
 
-    const rows = await installedPlugins({ ledger, shell: fake.shell });
+    const rows = await installedPlugins({ ledger, seam: fakeSeamOf(fake.shell) });
 
     expect(rows).toMatchObject([{ pkg: at, local: true, installedAt: expect.any(String) }]);
     expect(fake.commands()).toEqual([]);
@@ -135,9 +136,9 @@ describe('「已安装 opencli 插件」那一段的数据：台账说了算', (
     const other = createPluginLedger({ store: createWorkspaceStore({ root }), home: '/tmp/other/home' });
     mine.intend({ package: PKG, registry: REGISTRY });
     other.intend({ package: 'opencli-plugin-other', registry: REGISTRY });
-    const fake = shellOf('1.0.24', '1.0.25');
+    const fake = planShellOf('1.0.24', '1.0.25');
 
-    const rows = await installedPlugins({ ledger: mine, shell: fake.shell });
+    const rows = await installedPlugins({ ledger: mine, seam: fakeSeamOf(fake.shell) });
 
     expect(rows.map((row) => row.pkg)).toEqual([PKG]);
   });
@@ -145,8 +146,8 @@ describe('「已安装 opencli 插件」那一段的数据：台账说了算', (
   it('路由交出去的形状：{ ok, plugins }', async () => {
     const ledger = rig();
     ledger.intend({ package: PKG, registry: REGISTRY });
-    const fake = shellOf('1.0.24', '1.0.25');
-    const handler = pluginRoutes({ ledger, shell: fake.shell })[INSTALLED_PLUGINS_ROUTE];
+    const fake = planShellOf('1.0.24', '1.0.25');
+    const handler = pluginRoutes({ ledger, seam: fakeSeamOf(fake.shell) })[INSTALLED_PLUGINS_ROUTE];
 
     const answer = (await handler?.(new URLSearchParams())) as {
       ok: boolean;
@@ -161,9 +162,9 @@ describe('「已安装 opencli 插件」那一段的数据：台账说了算', (
     const ledger = rig();
     ledger.intend({ package: PKG, registry: REGISTRY });
     ledger.complete(PKG, 'inventory');
-    const fake = shellOf('1.0.24', '1.0.25');
+    const fake = planShellOf('1.0.24', '1.0.25');
 
-    const [row] = await installedPlugins({ ledger, shell: fake.shell });
+    const [row] = await installedPlugins({ ledger, seam: fakeSeamOf(fake.shell) });
 
     expect(row?.broken).toBe(true);
     expect(row?.name).toBe('inventory');
@@ -172,11 +173,11 @@ describe('「已安装 opencli 插件」那一段的数据：台账说了算', (
   it('★ 卸载（台账那一笔去掉）之后这一行就不在这段里了', async () => {
     const ledger = rig();
     ledger.intend({ package: PKG, registry: REGISTRY });
-    const fake = shellOf('1.0.24', '1.0.25');
-    expect((await installedPlugins({ ledger, shell: fake.shell })).map((row) => row.pkg)).toEqual([PKG]);
+    const fake = planShellOf('1.0.24', '1.0.25');
+    expect((await installedPlugins({ ledger, seam: fakeSeamOf(fake.shell) })).map((row) => row.pkg)).toEqual([PKG]);
 
     ledger.drop(PKG);
 
-    expect(await installedPlugins({ ledger, shell: fake.shell })).toEqual([]);
+    expect(await installedPlugins({ ledger, seam: fakeSeamOf(fake.shell) })).toEqual([]);
   });
 });

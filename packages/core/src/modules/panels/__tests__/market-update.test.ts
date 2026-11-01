@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { fakeSeamOf } from './seam-fake';
 import type { UnitManifest } from '@dsh-workbench/shared';
 import type { BundleChange } from '@/kernel/contract/bundle-install';
 import type { BundleManager } from '@dsh-workbench/shared/host';
@@ -247,7 +248,7 @@ describe('升模块包（行上的「更新」）：有包就升包，没包就�
         registry: 'https://npm.example.test/team/npm',
       }),
       modules: () => roster(),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
     });
 
     const outcome = await market.updateBundle('issues');
@@ -300,7 +301,7 @@ describe('升模块包（行上的「更新」）：有包就升包，没包就�
         ],
         detail: '假探测',
       }),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       bundles: bundlesOf({ install: async () => change() }),
       installed: () => ({
         kind: 'module',

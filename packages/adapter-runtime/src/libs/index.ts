@@ -2,12 +2,12 @@ export * from './links.js';
 export * from './runner.js';
 
 import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
 import { join, normalize } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { LibNeed } from '@dsh-workbench/shared/host';
-import { WorkbenchDataError } from '@dsh-workbench/shared/host';
+import { runtimeLayoutOf, WorkbenchDataError } from '@dsh-workbench/shared/host';
 import { libInstallCommand, type NpmSource } from '../foundation/install.js';
+import { OPENCLI_RUNTIME_ID } from '../foundation/paths.js';
 import type { LibReader } from '@dsh-workbench/shared/host';
 
 export interface LibReaderOptions {
@@ -15,12 +15,9 @@ export interface LibReaderOptions {
   readonly env?: Readonly<Record<string, string | undefined>> | undefined;
 }
 
-function rootsOf(env: Readonly<Record<string, string | undefined>>): readonly string[] {
-  const home = env['DSH_HOME'] ?? join(homedir(), '.dsh');
-  return [
-    join(home, 'workbench', 'opencli', 'libs', 'node_modules'),
-    join(home, 'workbench', 'opencli', 'toolchain', 'node_modules'),
-  ];
+function rootsOf(): readonly string[] {
+  const layout = runtimeLayoutOf(OPENCLI_RUNTIME_ID);
+  return [join(layout.libsPrefix, 'node_modules'), join(layout.root, 'toolchain', 'node_modules')];
 }
 
 function entryProblem(entry: string): string | null {
@@ -31,8 +28,7 @@ function entryProblem(entry: string): string | null {
 }
 
 export function createLibReader(options: LibReaderOptions = {}): LibReader {
-  const env = options.env ?? process.env;
-  const roots = options.roots ?? rootsOf(env);
+  const roots = options.roots ?? rootsOf();
 
   return {
     async load<T = unknown>(need: LibNeed, entry: string): Promise<T> {

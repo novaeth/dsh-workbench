@@ -1,6 +1,6 @@
 import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared';
 import type { RecordExpect, RecordStore } from '@dsh-workbench/shared/host';
-import { sessionIdOf, shellOf } from '@dsh-workbench/shared/host';
+import { sessionIdOf, seamOf } from '@dsh-workbench/shared/host';
 import { BROWSER_RECORD_SESSION } from '@dsh-workbench/shared/host';
 
 import { cliCommandOf } from '@dsh-workbench/shared/host';
@@ -85,7 +85,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
     output: OUTPUT,
     async execute(raw: unknown, exec: DshToolRunContext) {
       const { root } = await workspaceOf(ctx, exec);
-      const artifactsDir = artifactsDirOf(ctx, root);
+      const artifactsDir = artifactsDirOf(root);
       const args = asRecord(raw);
       const asked = asText(args['unit']);
       const { units } = unitsOf(ctx, root);
@@ -105,8 +105,8 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
       const method = asText(rawExpect['method']).toUpperCase();
       const urlContains = asText(rawExpect['urlContains']);
       const expect: RecordExpect | null = method === '' && urlContains === '' ? null : { method, urlContains };
-      const shell = shellOf(ctx);
-      if (shell === undefined) throw new Error('这台机器上没有 shell 服务，开不了录制窗');
+      const seam = seamOf(ctx);
+      if (seam === undefined) throw new Error('这台机器上没有 shell 服务，开不了录制窗');
       const command = cliCommandOf(ctx);
       const sessionId = sessionIdOf(exec) ?? '';
       const held = store.live(Date.now());
@@ -128,16 +128,16 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
       );
 
       try {
-        const opened = await openRecordPage({ shell, command, session: BROWSER_RECORD_SESSION, url, captureFile });
+        const opened = await openRecordPage({ seam, command, session: BROWSER_RECORD_SESSION, url, captureFile });
         if (!opened.ok) throw new Error(opened.why);
-        const armed = await actBrowser(shell, command, BROWSER_RECORD_SESSION, ['eval', RECORD_ARM_SCRIPT]);
+        const armed = await actBrowser(seam, command, BROWSER_RECORD_SESSION, ['eval', RECORD_ARM_SCRIPT]);
         const page = recordPageOf(armed.payload);
         if (!armed.ok || !page.ok) {
           throw new Error(`浮条没装上：${armed.stderr || armed.stdout || '那一页还在加载'} —— 等用户那一页站稳了再试。`);
         }
-        await stopNetworkExact(shell, captureFile);
-        const capture = await startRecordCapture(shell, command, BROWSER_RECORD_SESSION, captureFile);
-        watchRecordFinish({ ctx, shell, command, sessionId, store, url, captureFile });
+        await stopNetworkExact(seam, captureFile);
+        const capture = await startRecordCapture(seam, command, BROWSER_RECORD_SESSION, captureFile);
+        watchRecordFinish({ ctx, seam, command, sessionId, store, url, captureFile });
         const talk = recordTalkOf();
         return plainJson({
           workspace: root,
@@ -153,7 +153,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
           text: capture ? talk : `${talk}（捕获那条没起来 —— 这次只有页面钩子）`,
         });
       } catch (error) {
-        await releaseQuietly({ shell, command, session: BROWSER_RECORD_SESSION, url, captureFile });
+        await releaseQuietly({ seam, command, session: BROWSER_RECORD_SESSION, url, captureFile });
         store.stop(sessionId, Date.now());
         throw error;
       }
@@ -176,8 +176,8 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
     },
     output: OUTPUT,
     async execute(raw: unknown, exec: DshToolRunContext) {
-      const shell = shellOf(ctx);
-      if (shell === undefined) throw new Error('这台机器上没有 shell 服务，读不了录制');
+      const seam = seamOf(ctx);
+      if (seam === undefined) throw new Error('这台机器上没有 shell 服务，读不了录制');
       const sessionId = sessionIdOf(exec) ?? '';
       const held = store.live(Date.now());
       if (held === null) throw new Error(recordMissingText());
@@ -201,14 +201,14 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
       let stepOk = true;
       let page = recordPageOf(undefined);
       if (!over) {
-        await actBrowser(shell, command, BROWSER_RECORD_SESSION, ['eval', RECORD_ARM_SCRIPT]);
-        let step = await actBrowser(shell, command, BROWSER_RECORD_SESSION, ['eval', RECORD_READ_SCRIPT]);
+        await actBrowser(seam, command, BROWSER_RECORD_SESSION, ['eval', RECORD_ARM_SCRIPT]);
+        let step = await actBrowser(seam, command, BROWSER_RECORD_SESSION, ['eval', RECORD_READ_SCRIPT]);
         page = recordPageOf(step.payload);
         stepOk = step.ok;
         sync(page);
         while (budget > 0 && page.phase !== 'finished' && Date.now() < deadline) {
           await pauseFor(Math.min(POLL_MS, Math.max(0, deadline - Date.now())));
-          step = await actBrowser(shell, command, BROWSER_RECORD_SESSION, ['eval', RECORD_READ_SCRIPT]);
+          step = await actBrowser(seam, command, BROWSER_RECORD_SESSION, ['eval', RECORD_READ_SCRIPT]);
           const next = recordPageOf(step.payload);
           if (next.ok) page = next;
           sync(page);
@@ -228,7 +228,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
       }
       const state = store.live(Date.now()) ?? held;
       const ledger = state.shots;
-      const capture = await captureReadOf(shell, state.captureFile);
+      const capture = await captureReadOf(seam, state.captureFile);
       const bundle = bundleOf(capture, page, state);
       const hookCaught = page.calls.length;
       const nav = page.href !== '' && page.here !== '' && page.href !== page.here;
@@ -309,9 +309,9 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
     output: OUTPUT,
     async execute(raw: unknown, exec: DshToolRunContext) {
       const { root } = await workspaceOf(ctx, exec);
-      const artifactsDir = artifactsDirOf(ctx, root);
-      const shell = shellOf(ctx);
-      if (shell === undefined) throw new Error('这台机器上没有 shell 服务，取不了详情');
+      const artifactsDir = artifactsDirOf(root);
+      const seam = seamOf(ctx);
+      if (seam === undefined) throw new Error('这台机器上没有 shell 服务，取不了详情');
       const args = asRecord(raw);
       const unit = asText(args['unit']);
       const askedKey = asText(args['key']).trim();
@@ -341,9 +341,9 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
           throw new Error('收工之后只能用 key —— index 是"那一场清单里"的序号，这一场已经清掉了。');
         }
         page = recordPageOf(
-          (await actBrowser(shell, command, BROWSER_RECORD_SESSION, ['eval', RECORD_READ_SCRIPT])).payload,
+          (await actBrowser(seam, command, BROWSER_RECORD_SESSION, ['eval', RECORD_READ_SCRIPT])).payload,
         );
-        const bundle = bundleOf(await captureReadOf(shell, file), page, held);
+        const bundle = bundleOf(await captureReadOf(seam, file), page, held);
         const row = bundle.rows[index];
         if (row === undefined) {
           throw new Error(
@@ -357,7 +357,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
           if (only !== null) return detailOfCall(only, maxBytes);
         }
       }
-      const candidates = pickAllOf(captureEntriesOf(await captureLinesWithKeyOf(shell, file, key)), key);
+      const candidates = pickAllOf(captureEntriesOf(await captureLinesWithKeyOf(seam, file, key)), key);
       const fromCapture = pickOf(candidates, key, at);
       if (fromCapture !== null) {
         return detailOfEntry(fromCapture, maxBytes, candidates.length);
@@ -366,7 +366,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
       const livePage =
         page !== null || over
           ? page
-          : recordPageOf((await actBrowser(shell, command, BROWSER_RECORD_SESSION, ['eval', RECORD_READ_SCRIPT])).payload);
+          : recordPageOf((await actBrowser(seam, command, BROWSER_RECORD_SESSION, ['eval', RECORD_READ_SCRIPT])).payload);
       const call = livePage === null ? null : hookCallOf(livePage, key);
       if (call !== null) return detailOfCall(call, maxBytes);
       return plainJson({
@@ -405,23 +405,23 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
     parameters: { type: 'object', properties: {}, additionalProperties: false },
     output: OUTPUT,
     async execute(_raw: unknown, exec: DshToolRunContext) {
-      const shell = shellOf(ctx);
-      if (shell === undefined) throw new Error('这台机器上没有 shell 服务，收不了工');
+      const seam = seamOf(ctx);
+      if (seam === undefined) throw new Error('这台机器上没有 shell 服务，收不了工');
       const sessionId = sessionIdOf(exec) ?? '';
       const held = store.live(Date.now());
       if (held === null) throw new Error(recordMissingText());
       if (held.sessionId !== sessionId) moveOrThrow({ ok: false, code: 'not-owner' }, held);
       const command = cliCommandOf(ctx);
-      await actBrowser(shell, command, BROWSER_RECORD_SESSION, ['eval', RECORD_ARM_SCRIPT]);
-      const finalStep = await actBrowser(shell, command, BROWSER_RECORD_SESSION, ['eval', RECORD_STOP_SCRIPT]);
+      await actBrowser(seam, command, BROWSER_RECORD_SESSION, ['eval', RECORD_ARM_SCRIPT]);
+      const finalStep = await actBrowser(seam, command, BROWSER_RECORD_SESSION, ['eval', RECORD_STOP_SCRIPT]);
       const page = recordPageOf(finalStep.payload);
-      const capture = await captureReadOf(shell, held.captureFile);
+      const capture = await captureReadOf(seam, held.captureFile);
       const bundle = bundleOf(capture, page, held);
       const hookCaught = page.calls.length;
       const noBody = bodyMissingOf(bundle.merged);
-      const kept = await keepCaptureOf(shell, held.captureFile);
+      const kept = await keepCaptureOf(seam, held.captureFile);
       const cleaned = await releaseQuietly({
-        shell,
+        seam,
         command,
         session: BROWSER_RECORD_SESSION,
         url: held.url,

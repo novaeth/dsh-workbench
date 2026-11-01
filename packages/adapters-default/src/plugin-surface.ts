@@ -1,5 +1,4 @@
-import type { DshShell } from '@dsh-workbench/shared';
-import type { PluginSurface } from '@dsh-workbench/shared/host';
+import type { PluginSurface, Seam } from '@dsh-workbench/shared/host';
 import { createOpencli } from '@dsh-workbench/adapter-runtime';
 import {
   createDeclarationLookup,
@@ -8,7 +7,7 @@ import {
 } from '@dsh-workbench/adapter-supply';
 
 export function createPluginSurface(options: {
-  readonly shell?: DshShell | undefined;
+  readonly seam?: Seam | undefined;
   readonly command: string;
   readonly logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
 }): PluginSurface {
@@ -16,16 +15,16 @@ export function createPluginSurface(options: {
     declarationLookup: createDeclarationLookup,
 
     createUnits(input) {
-      const shell = options.shell;
-      if (shell === undefined) throw new Error('没有 shell 服务，插件的命令面起不来。');
-      const catalog = createPluginCatalog({ shell, command: options.command });
+      const seam = options.seam;
+      if (seam === undefined) throw new Error('没有执行缝，插件的命令面起不来。');
+      const catalog = createPluginCatalog({ seam, command: options.command });
       return createPluginUnits({
         registry: input.registry as never,
         catalog,
         rows: input.rows,
         declared: input.declared,
         opencliFor: (plugin) =>
-          createOpencli({ shell, plugin, command: options.command, logger: options.logger }),
+          createOpencli({ seam, plugin, command: options.command, logger: options.logger }),
         ...(input.toolNames === undefined ? {} : { toolNames: input.toolNames }),
         ...(input.logger === undefined ? {} : { logger: input.logger }),
       });

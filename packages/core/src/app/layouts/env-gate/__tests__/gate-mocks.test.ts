@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { zh } from '@dsh-workbench/shared';
+import { en, zh } from '@dsh-workbench/shared';
 import { gateActionOf } from '../boot-gate';
-import { bridgeAdvice, failedStepText, gateHintOf, guidanceTextOf, stepDetailText } from '../gate-text';
+import { bridgeAdvice, bridgeAdviceLines, failedStepText, gateHintOf, guidanceTextOf, stepDetailText } from '../gate-text';
 import { GATE_MOCKS } from '../gate-mock';
 
 const t = ((key: string) => (zh as Record<string, string>)[key] ?? key) as never;
@@ -91,6 +91,30 @@ describe('GATE_MOCKS', () => {
     );
     expect(zh['env.fix.stepHost']).toContain('完全退出');
     expect(zh['env.fix.whyHost']).not.toContain('装不上');
+  });
+
+  it('★ 装不上但没有命令可抄：别再说"运行下面这条命令"，改成重试/先进工作台；失败态永远有「先进入工作台」', () => {
+    const t = (key: string): string => key;
+
+    expect(guidanceTextOf(undefined, t, true)).toEqual({ why: 'env.fix.why', step: 'env.fix.step' });
+    expect(guidanceTextOf(undefined, t, false)).toEqual({ why: 'env.fix.why', step: 'env.fix.stepRetry' });
+    expect(zh['env.fix.stepRetry']).toContain('重试');
+    expect(zh['env.fix.stepRetry']).toContain('先进入工作台');
+    expect(zh['env.failed.continue']).toBe('先进入工作台');
+    expect(en['env.failed.continue']).toBeDefined();
+    expect(en['env.fix.stepRetry']).toBeDefined();
+  });
+
+  it('★ 桥接建议按文案去重：运行时档案还没加载时，两条 issue 不会把同一条「没认出」刷两遍', () => {
+    const simple = (key: string): string => key;
+    expect(bridgeAdviceLines(['daemon', 'extension'], simple).map((one) => one.text)).toEqual([
+      'env.bridge.unknown',
+    ]);
+    expect(bridgeAdviceLines([], simple)).toHaveLength(1);
+    const fixes = { daemon: { text: { zh: '起服务', en: 'start' } } };
+    expect(
+      bridgeAdviceLines(['daemon', 'daemon'], simple, fixes as never).map((one) => one.text),
+    ).toEqual(['起服务']);
   });
 
   it('★ 覆盖了真机上难造的那几档：安装中、装不上、装了找不到、执行缝坏、命令没返回、浏览器通道三种坏法', () => {

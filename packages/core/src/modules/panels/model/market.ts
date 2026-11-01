@@ -1,5 +1,4 @@
 import { basename } from 'node:path';
-import type { DshShell } from '@dsh-workbench/shared';
 import type { Need, UnitManifest } from '@dsh-workbench/shared';
 import { INSTALL_TIMEOUT_MS, needsOf as needsOfManifest } from '@dsh-workbench/shared/host';
 import type { BundleChange } from '@/kernel/contract/bundle-install';
@@ -8,7 +7,7 @@ import type { InstalledModule, LibNeed, ProfileModule, ProfilePackage } from '@d
 import type { RegistryNotebook } from '@dsh-workbench/shared/host';
 import type { UnitCapability } from '@dsh-workbench/shared/host';
 import { requireSupply, type SupplyPort, type UnitMountDeps } from '@dsh-workbench/shared/host';
-import { runShell } from '@dsh-workbench/shared/host';
+import { productWrite, type Seam } from '@dsh-workbench/shared/host';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
 import { diagnoseInstallFailure, installWriteProblem } from '@dsh-workbench/shared/host';
 import { installError } from './market-install-error';
@@ -59,7 +58,7 @@ export function createMarketService(options: {
   manifests: readonly UnitManifest[];
   manifestsNow?: (() => readonly UnitManifest[]) | undefined;
   probe?: UnitMountDeps['probe'];
-  shell?: DshShell | undefined;
+  seam?: Seam | undefined;
   command: string;
   onInstalled?: (unit: string) => void;
   onUninstalled?: (unit: string) => void;
@@ -83,7 +82,7 @@ export function createMarketService(options: {
     manifests,
     manifestsNow,
     probe,
-    shell,
+    seam,
     logger,
     supply: supplyOption,
     onInstalled,
@@ -149,12 +148,12 @@ export function createMarketService(options: {
   }
 
   async function run(line: string, optional = false): Promise<void> {
-    if (shell === undefined) {
+    if (seam === undefined) {
       throw new Error('没有执行缝（shell 服务不可用），装 / 卸做不了。');
     }
     const blocked = installWriteProblem({ command: line, fallback: supply.modules.isolatedRoot() });
     if (blocked !== undefined) throw installError(blocked);
-    const result = await runShell(shell, line, { timeoutMs: INSTALL_TIMEOUT_MS });
+    const result = await seam.run({ command: line, intent: productWrite(), timeoutMs: INSTALL_TIMEOUT_MS });
     if (result.exitCode !== 0 && !optional) {
       throw installError(
         diagnoseInstallFailure({
@@ -276,7 +275,7 @@ export function createMarketService(options: {
       supplyAfter,
       remove: (pkg) =>
         removeDshBundle({ manager, pkg, profileDir, registryFix, ...(logger === undefined ? {} : { logger }) }),
-      ...(shell === undefined ? {} : { shell }),
+      ...(seam === undefined ? {} : { seam }),
       ...(installed === undefined ? {} : { installed }),
       ...(ledger === undefined ? {} : { ledger }),
       ...(logger === undefined ? {} : { logger }),
@@ -285,7 +284,7 @@ export function createMarketService(options: {
 
   const plugins = createPluginActions({
     ...(ledger === undefined ? {} : { ledger }),
-    ...(shell === undefined ? {} : { shell }),
+    ...(seam === undefined ? {} : { seam }),
     command,
     runAll,
     claimedBy: (plugin) => pluginUsersOf(plugin),
@@ -439,7 +438,7 @@ export function createMarketService(options: {
         supply,
         modules,
         installed,
-        shell,
+        seam,
         manager,
         ...(profile === undefined ? {} : { profile, profileName: profile }),
         ...(home === undefined ? {} : { dshHome: home }),
@@ -459,7 +458,7 @@ export function createMarketService(options: {
         supply,
         asked: pkg,
         ...(workbench === undefined ? {} : { workbench }),
-        ...(shell === undefined ? {} : { shell }),
+        ...(seam === undefined ? {} : { seam }),
         ...(installed === undefined ? {} : { installed }),
         ...(dshHome === undefined ? {} : { dshHome }),
         ...(profileName === undefined ? {} : { profileName }),

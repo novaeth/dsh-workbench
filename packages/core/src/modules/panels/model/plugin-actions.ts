@@ -1,6 +1,5 @@
-import type { DshShell } from '@dsh-workbench/shared';
 import { pluginRetentionOf, quoteShellArg, type PluginLedgerEntry } from '@dsh-workbench/shared/host';
-import { requireSupply, type PluginSourceCommand, type SupplyPort } from '@dsh-workbench/shared/host';
+import { requireSupply, type PluginSourceCommand, type Seam, type SupplyPort } from '@dsh-workbench/shared/host';
 import { sourceProblemText } from './market-dependency';
 import { pluginNameOf, type PluginFiles } from './plugin-name';
 import type { PluginLedger } from './plugin-ledger';
@@ -62,7 +61,7 @@ export interface PluginActions {
 
 export function createPluginActions(options: {
   readonly ledger?: PluginLedger | undefined;
-  readonly shell?: DshShell | undefined;
+  readonly seam?: Seam | undefined;
   readonly command: string;
   readonly runAll: (commands: readonly PluginSourceCommand[]) => Promise<void>;
   readonly claimedBy?: ((plugin: string) => readonly string[]) | undefined;
@@ -70,7 +69,7 @@ export function createPluginActions(options: {
   readonly logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
   readonly supply?: SupplyPort | undefined;
 }): PluginActions {
-  const { ledger, shell, command, runAll, logger } = options;
+  const { ledger, seam, command, runAll, logger } = options;
   const supply = options.supply ?? requireSupply();
   const pluginFilesOf = (): PluginFiles | undefined => {
     const dir = supply.vendorPluginsDir?.();
@@ -118,7 +117,7 @@ export function createPluginActions(options: {
   }
 
   async function removeFiles(plugin: string): Promise<void> {
-    if (shell === undefined) throw new Error('没有执行缝（shell 服务不可用），删不掉插件文件。');
+    if (seam === undefined) throw new Error('没有执行缝（shell 服务不可用），删不掉插件文件。');
     await runAll([{ line: `${quoteShellArg(command)} plugin uninstall ${quoteShellArg(plugin)}` }]);
   }
 
@@ -128,9 +127,9 @@ export function createPluginActions(options: {
       if (entry.local === true || entry.registry === undefined) {
         throw new Error(`「${entry.package}」是从本地装的，没有地方查新版。`);
       }
-      if (shell === undefined) throw new Error('没有执行缝（shell 服务不可用），更新做不了。');
+      if (seam === undefined) throw new Error('没有执行缝（shell 服务不可用），更新做不了。');
       const latest = await supply.latestVersion({
-        shell,
+        seam,
         name: entry.package,
         registry: entry.registry,
         force: true,

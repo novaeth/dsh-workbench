@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createTimedMemo } from '../index.js';
 
+
 describe('createTimedMemo', () => {
   it('保鲜期内命中（同一条 key 不重算）', () => {
     const memo = createTimedMemo<number>(30_000);

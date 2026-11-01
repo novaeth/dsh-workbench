@@ -3,6 +3,7 @@ import type { DshShell } from '@dsh-workbench/shared';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
 import { bindCurrentTab, jsonOf, readyPageOf, runBrowserStep, writeShotsDir } from '../diy-browser';
 import { cardSelectorOf } from '../diy-scripts';
+import { fakeSeamOf } from '../../__tests__/seam-fake';
 
 const backgroundLine = (command: string, argv: readonly string[]): string =>
   [quoteShellArg(command), ...argv.map(quoteShellArg)].join(' ');
@@ -37,14 +38,14 @@ function fakeShell(steps: readonly Step[]) {
       };
     },
   };
-  return { shell: shell as unknown as DshShell, lines };
+  return { shell: shell as unknown as DshShell, seam: fakeSeamOf(shell as unknown as DshShell), lines };
 }
 
 describe('跑一条 opencli：argv 原样挂上背景前缀，结果原样回来', () => {
   it('★★ 每个参数各自引号，会话与子命令一个不改', async () => {
     const rig = fakeShell([{ stdout: 'ok' }]);
     const step = await runBrowserStep(
-      rig.shell,
+      rig.seam,
       'opencli',
       ['browser', 'workbench', 'state', '--source', 'ax', '--window', 'background'],
       undefined,
@@ -63,7 +64,7 @@ describe('跑一条 opencli：argv 原样挂上背景前缀，结果原样回来
     const slow = fakeShell([{ timedOut: true, exitCode: null }]);
     const cut = fakeShell([{ stdout: 'x', truncated: true }]);
 
-    expect(await runBrowserStep(failed.shell, 'opencli', ['browser', 'workbench', 'state'], undefined, backgroundLine)).toMatchObject({
+    expect(await runBrowserStep(failed.seam, 'opencli', ['browser', 'workbench', 'state'], undefined, backgroundLine)).toMatchObject({
       ok: false,
       exitCode: 3,
       timedOut: false,
@@ -71,11 +72,11 @@ describe('跑一条 opencli：argv 原样挂上背景前缀，结果原样回来
       stdout: 'out',
       stderr: 'boom',
     });
-    expect(await runBrowserStep(slow.shell, 'opencli', ['browser', 'workbench', 'state'], undefined, backgroundLine)).toMatchObject({
+    expect(await runBrowserStep(slow.seam, 'opencli', ['browser', 'workbench', 'state'], undefined, backgroundLine)).toMatchObject({
       ok: false,
       timedOut: true,
     });
-    expect(await runBrowserStep(cut.shell, 'opencli', ['browser', 'workbench', 'state'], undefined, backgroundLine)).toMatchObject({
+    expect(await runBrowserStep(cut.seam, 'opencli', ['browser', 'workbench', 'state'], undefined, backgroundLine)).toMatchObject({
       ok: true,
       truncated: true,
     });
@@ -93,7 +94,7 @@ describe('抠 JSON 与那一页的握手', () => {
 
   it('★ 连不上/不是工作台都有话说（不给用户看一句空错）', async () => {
     const bad = fakeShell([{ stdout: JSON.stringify({ error: { code: 'no-extension', message: '扩展没连上' } }) }]);
-    const bound = await bindCurrentTab(bad.shell, 'opencli', 'workbench', undefined, backgroundLine);
+    const bound = await bindCurrentTab(bad.seam, 'opencli', 'workbench', undefined, backgroundLine);
 
     expect(bound.ok).toBe(false);
     expect(bound.reason).toContain('扩展没连上');
@@ -103,7 +104,7 @@ describe('抠 JSON 与那一页的握手', () => {
     const good = fakeShell([
       { stdout: JSON.stringify({ session: 'workbench', url: 'http://127.0.0.1:3081/', title: '工作台' }) },
     ]);
-    expect(await bindCurrentTab(good.shell, 'opencli', 'workbench')).toMatchObject({
+    expect(await bindCurrentTab(good.seam, 'opencli', 'workbench')).toMatchObject({
       ok: true,
       url: 'http://127.0.0.1:3081/',
       title: '工作台',
@@ -114,7 +115,7 @@ describe('抠 JSON 与那一页的握手', () => {
     const rig = fakeShell([
       { stdout: JSON.stringify({ plugin: '@dsh-workbench/core', pid: 1, url: 'u', title: 't' }) },
     ]);
-    const handshake = await readyPageOf(rig.shell, 'opencli', 'workbench');
+    const handshake = await readyPageOf(rig.seam, 'opencli', 'workbench');
 
     expect(handshake.ok).toBe(true);
     expect(handshake.bound).toBe(false);
@@ -128,7 +129,7 @@ describe('抠 JSON 与那一页的握手', () => {
       { stdout: JSON.stringify({ session: 'workbench', url: 'http://127.0.0.1:3081/', title: '工作台' }) },
       { stdout: JSON.stringify({ plugin: '@dsh-workbench/core', pid: 1, url: 'http://127.0.0.1:3081/', title: '工作台' }) },
     ]);
-    const handshake = await readyPageOf(rig.shell, 'opencli', 'workbench');
+    const handshake = await readyPageOf(rig.seam, 'opencli', 'workbench');
 
     expect(handshake).toMatchObject({ ok: true, bound: true });
     expect(rig.lines[1]).toContain("'bind'");
@@ -137,7 +138,7 @@ describe('抠 JSON 与那一页的握手', () => {
   it('★ 建截图目录走 shell（套件不许自己 import node:fs —— arch S67）', async () => {
     const rig = fakeShell([{ stdout: 'ok' }]);
 
-    expect(await writeShotsDir(rig.shell, '/w/demo/shots')).toBe(true);
+    expect(await writeShotsDir(rig.seam, '/w/demo/shots')).toBe(true);
     expect(rig.lines[0]).toBe("'mkdir' '-p' '/w/demo/shots'");
   });
 

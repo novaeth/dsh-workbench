@@ -8,7 +8,7 @@
 ```bash
 pnpm exec dsh-wb-module init my-unit                    # 建骨架（唯一模板，已默认）
 pnpm build        # dist/host.js + 套了 loader 壳的 client.js
-pnpm check        # 十三条判据
+pnpm check        # 十四条判据
 pnpm design check # 设计底稿有没有空格、README 有没有落后
 ```
 
@@ -50,7 +50,7 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 | `dsh-wb-module init <unit> [--dir <目录>] [--template diy] [--description "一句话"]` | 建模块骨架（只有 `diy` 一个模板，也是默认） |
 | `dsh-wb-module market-init <git 地址\|目录> [--ref <分支>] [--path <索引路径>]` | 初始化市场索引仓库：写 `market/` + README，推首个 commit |
 | `dsh-wb-module build` | 出 `dist/host.js`（单文件 ESM）与 `client.js`（套 loader 壳） |
-| `dsh-wb-module check [--only <判据>] [--package <包名或 unit>]` | 十三条判据；`--only` 单跑，也当查询口用；`--package` 只报这个模块的问题（见下）；`--list [--json\|--markdown]` 只列判据元数据 |
+| `dsh-wb-module check [--only <判据>] [--package <包名或 unit>]` | 十四条判据；`--only` 单跑，也当查询口用；`--package` 只报这个模块的问题（见下）；`--list [--json\|--markdown]` 只列判据元数据 |
 | `dsh-wb-module lint [--fix]` | 用模块自己那份 `eslint.config.mjs`；`--fix` 写回文件 |
 | `dsh-wb-module sync` | 按清单生成 `src/declared-tools.ts`，按 `design.json` 的 `key + recipe` 生成 `src/datasource.ts` |
 | `dsh-wb-module design <init\|check\|render\|accept>` | 设计底稿：填、查空格、生成 README、验收打勾 |
@@ -68,7 +68,7 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 「我这个模块绿」不等于「工作区绿」。门禁 / 发布 / release 不要带它。要只让判据看见一个包，
 用环境变量 `DSH_WB_ROOT=<包目录>`（工具链自己的自检就是这么隔离的）。
 
-## 十三条判据
+## 十四条判据
 
 `dsh-wb-module check` 一次跑完，三态输出：`✔ 通过` / `○ 不适用` / `✖ 不过`；有任何不过就退出 1。
 
@@ -81,6 +81,7 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 | `protocol` | manifest | dsh.workbench 的 apiVersion、静态半形状与未知键 |
 | `bundles` | build | 宿主产物不含浏览器侧、浏览器产物不内联外壳 CSS 与夹具 |
 | `source` | source | 零注释、包与运行时入口分开、不手写进程/锁/原子写 |
+| `seam` | source | 子进程只走 deps.seam 门面；不取原始 shell / 不裸 child_process；清单 writes 与请求一致 |
 | `arch` | source | 模块自己的层序、运行时边界与设计系统配置 |
 | `lint` | source | 模块自己的 eslint.config.mjs 与规则集 |
 | `primitives` | build | dsh 包只从 kit 取，模块自己声明 external |
@@ -100,6 +101,22 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 `FormRow(s)` 与 `FormActions`），**裸 `<form>` 与手写整张表单**也判红（归 `Form`）。
 现存违规收在各自的豁免表里，是棘轮：迁一处删一行，表里已经不再命中的行也会当场报红。
 判据**故意窄** —— 模块自己用 div 拼一张不借槽类的表单不判，判宽了就是每次改界面都先撞门禁。
+
+### `seam`：模块只走执行缝门面
+
+模块在宿主侧起子进程，只能走外壳放进 `mount(deps)` 的门面 `deps.seam`。判据查三件事：
+
+- 宿主侧可达的源码里不许出现 `runShell` / `shellOf`、`ctx.get('shell')` / `ctx.get('workbenchShell')` /
+  `ctx.get('seam')`、`node:child_process` / `child_process`；
+- `dsh.workbench.host.writes` 只认 `"unit"` / `"workspace"` 两档（`protocol` 判据也查形状，这里再兜一次）；
+- 源码里以 `scope: 'unit'` / `scope: 'workspace'` 请求的档，清单 `host.writes` 里必须有。
+
+修法：清单里写 `"host": { "inject": [], "writes": ["unit"] }`，代码里
+`deps.seam?.run({ scope: 'unit', command })`。`unit` 档可写 `<运行时根>/units/<unit>/`（模块自己的数据目录，
+`HOME` 与 npm/pnpm 缓存也注入在那里），`workspace` 档写当前会话工作区、还要带上会话对象；
+不写 `writes` = 不给门面（`deps.seam` 是 `undefined`）。模块宿主代码与外壳同进程 —— 这层是
+**约定 + 门禁 + 归因**，不是安全边界。完整写法见
+[BUILD.md](../core/skills/workbench-module-diy/BUILD.md) §5。
 
 ### `arch`：模块包的分层方言
 

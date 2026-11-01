@@ -15,11 +15,15 @@ export interface GuidanceText {
   readonly step: string;
 }
 
-export function guidanceTextOf(guidance: PreflightGuidance | undefined, t: Translate): GuidanceText {
+export function guidanceTextOf(
+  guidance: PreflightGuidance | undefined,
+  t: Translate,
+  hasCommand = true,
+): GuidanceText {
   if (guidance === 'path') return { why: t('env.fix.whyPath'), step: t('env.fix.stepPath') };
   if (guidance === 'shell') return { why: t('env.fix.whyShell'), step: t('env.fix.stepShell') };
   if (guidance === 'host') return { why: t('env.fix.whyHost'), step: t('env.fix.stepHost') };
-  return { why: t('env.fix.why'), step: t('env.fix.step') };
+  return { why: t('env.fix.why'), step: hasCommand ? t('env.fix.step') : t('env.fix.stepRetry') };
 }
 
 export function stepDetailText(step: PreflightStep, snapshot: PreflightSnapshot, t: Translate): string {
@@ -69,4 +73,22 @@ export function bridgeAdvice(
     };
   }
   return { text: t('env.bridge.unknown') };
+}
+
+export function bridgeAdviceLines(
+  issues: readonly PreflightBridgeIssue[],
+  t: Translate,
+  fixes?: RuntimeProfile['bridge'],
+): readonly BridgeAdvice[] {
+  const listed: readonly PreflightBridgeIssue[] = issues.length === 0 ? ['unknown'] : issues;
+  const seen = new Set<string>();
+  const out: BridgeAdvice[] = [];
+  for (const issue of listed) {
+    const advice = bridgeAdvice(issue, t, fixes);
+    const key = `${advice.text}|${advice.link?.href ?? ''}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(advice);
+  }
+  return out;
 }

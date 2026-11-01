@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { opencliInstallCommand } from '../install.js';
 import { desktopPnpmPath } from '../toolchain.js';
 
+
 const resources =
   process.platform === 'win32'
     ? 'C:\\Applications\\Test.app\\Contents\\Resources'

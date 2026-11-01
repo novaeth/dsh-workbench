@@ -1,9 +1,8 @@
-import type { DshShell } from '@dsh-workbench/shared';
 import type { BranchRead, GitReader, HeadRead, OriginRead } from '@dsh-workbench/shared';
-import { quoteShellArg, runShell, tailLines } from '@dsh-workbench/shared/host';
+import { noWrite, quoteShellArg, tailLines, type Seam } from '@dsh-workbench/shared/host';
 
 export interface GitReaderOptions {
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly logger?: { warn?(message: string): void } | undefined;
 }
 
@@ -12,7 +11,7 @@ function keyOf(path: string): string {
 }
 
 export function createGitReader(options: GitReaderOptions): GitReader {
-  const { shell, logger } = options;
+  const { seam, logger } = options;
 
   return {
     async origin(path: string): Promise<OriginRead> {
@@ -20,7 +19,11 @@ export function createGitReader(options: GitReaderOptions): GitReader {
       if (!key) return { kind: 'unknown', reason: 'no-path' };
       let result;
       try {
-        result = await runShell(shell, `git -C ${quoteShellArg(key)} remote get-url origin`);
+        result = await seam.run({
+          command: `git -C ${quoteShellArg(key)} remote get-url origin`,
+          intent: noWrite(),
+          retry: 'safe',
+        });
       } catch (error) {
         logger?.warn?.(`[dsh-workbench] git remote 执行失败：${String(error)}`);
         return { kind: 'unknown', reason: 'exec-failed', detail: String(error) };
@@ -34,10 +37,11 @@ export function createGitReader(options: GitReaderOptions): GitReader {
       if (!key) return { kind: 'unknown', reason: 'no-path' };
       let result;
       try {
-        result = await runShell(
-          shell,
-          `git -C ${quoteShellArg(key)} rev-parse --abbrev-ref HEAD`,
-        );
+        result = await seam.run({
+          command: `git -C ${quoteShellArg(key)} rev-parse --abbrev-ref HEAD`,
+          intent: noWrite(),
+          retry: 'safe',
+        });
       } catch (error) {
         logger?.warn?.(`[dsh-workbench] git rev-parse --abbrev-ref 执行失败：${String(error)}`);
         return { kind: 'unknown', reason: 'exec-failed', detail: String(error) };
@@ -53,7 +57,11 @@ export function createGitReader(options: GitReaderOptions): GitReader {
       if (!key) return { kind: 'unknown', reason: 'no-path' };
       let result;
       try {
-        result = await runShell(shell, `git -C ${quoteShellArg(key)} rev-parse HEAD`);
+        result = await seam.run({
+          command: `git -C ${quoteShellArg(key)} rev-parse HEAD`,
+          intent: noWrite(),
+          retry: 'safe',
+        });
       } catch (error) {
         logger?.warn?.(`[dsh-workbench] git rev-parse 执行失败：${String(error)}`);
         return { kind: 'unknown', reason: 'exec-failed', detail: String(error) };

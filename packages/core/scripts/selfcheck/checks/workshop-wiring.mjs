@@ -98,12 +98,12 @@ export const checks = [
       const inBundle = bundlePatch()
         .split(/^-\s+/m)
         .some((item) => /^id:\s*sandbox-policy\s*$/m.test(item));
-      const host = `${read(pkg('src/app/host.ts'))}\n${read(pkg('src/shared/api/host/workbench-shell.ts'))}`;
+      const host = `${read(pkg('src/app/host.ts'))}\n${read(pkg('src/shared/api/host/workbench-seam.ts'))}`;
       const declares =
-        host.includes('withSandboxPolicy(') &&
-        host.includes("mode: 'workspace-write'") &&
-        host.includes('workspaceRoot: dshHome()') &&
-        read(join(PKG, '../shared/src/host/shell.ts')).includes('export function withSandboxPolicy');
+        host.includes('provideWorkbenchSeam(') &&
+        host.includes('createSeam(') &&
+        host.includes('const runtimeRoot = workbenchRoot()') &&
+        read(join(PKG, '../shared/src/host/seam/run.ts')).includes('export function createSeam');
       const fileGone = !existsSync(pkg('profile/sandbox.patch.yml'));
       report(
         '★ 可写根由产品代码声明，不进 profile / bundle 任何一层',
@@ -139,6 +139,10 @@ export const checks = [
     async run(ctx, report) {
       const fresh = execFileSync('bash', ['-c', 'mktemp -d'], { encoding: 'utf8' }).trim();
       const pathBefore = process.env.PATH;
+      const homeBefore = process.env.DSH_HOME;
+      const workbenchBefore = process.env.DSH_WORKBENCH_HOME;
+      process.env.DSH_HOME = fresh;
+      delete process.env.DSH_WORKBENCH_HOME;
       const provided = new Map();
       const probeCtx = {
         effect: (fn) => {
@@ -199,6 +203,10 @@ export const checks = [
         );
       } finally {
         process.env.PATH = pathBefore;
+        if (homeBefore === undefined) delete process.env.DSH_HOME;
+        else process.env.DSH_HOME = homeBefore;
+        if (workbenchBefore === undefined) delete process.env.DSH_WORKBENCH_HOME;
+        else process.env.DSH_WORKBENCH_HOME = workbenchBefore;
         execFileSync('bash', ['-c', `rm -rf ${JSON.stringify(fresh)}`]);
       }
     },

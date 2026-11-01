@@ -1,9 +1,9 @@
 import { fileURLToPath } from 'node:url';
-import type { DshShell } from '@dsh-workbench/shared';
 import {
   DEFAULT_RECIPE_MAX_BYTES,
+  productWrite,
   quoteShellArg,
-  runShell,
+  type Seam,
 } from '@dsh-workbench/shared/host';
 import {
   channelInstalledVersion,
@@ -124,7 +124,7 @@ export function channelAlreadyInstalled(): boolean {
 }
 
 export async function ensureChannel(
-  shell: DshShell,
+  seam: Seam,
   command: string,
   state: { value: ChannelState },
   ready: () => boolean = channelAlreadyInstalled,
@@ -140,7 +140,7 @@ export async function ensureChannel(
     state.value = 'unavailable';
     return false;
   }
-  const result = await runShell(shell, plan.line, { timeoutMs: 120_000 });
+  const result = await seam.run({ command: plan.line, intent: productWrite(), timeoutMs: 120_000 });
   state.value = result.exitCode === 0 && !result.timedOut ? 'ready' : 'unavailable';
   return state.value === 'ready';
 }

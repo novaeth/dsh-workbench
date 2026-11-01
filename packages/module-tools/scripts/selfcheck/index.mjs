@@ -25,6 +25,7 @@ import * as runtimeShape from './checks/runtime-shape.mjs';
 import * as artifacts from './checks/artifacts.mjs';
 import * as meta from './checks/meta.mjs';
 import * as commentGate from './checks/comment-gate.mjs';
+import * as seamGate from './checks/seam-gate.mjs';
 import * as recipes from './checks/recipes.mjs';
 import * as migrate from './checks/migrate.mjs';
 import * as marketIndex from './checks/market-index.mjs';
@@ -53,6 +54,7 @@ const MODULES = [
   artifacts,
   meta,
   commentGate,
+  seamGate,
   recipes,
   migrate,
   marketIndex,

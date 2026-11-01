@@ -1,4 +1,3 @@
-import type { DshShell } from '@dsh-workbench/shared';
 import { commandNamesMatch } from './command-name.js';
 import {
   OPENCLI_TIMEOUT_MS,
@@ -6,10 +5,12 @@ import {
   buildSupplyIndex,
   NEED_KIND_SPECS,
   needIdOf,
+  noWrite,
   npmSourceOf,
   parseJsonLoose,
+  productWrite,
   quoteShellArg,
-  runShell,
+  type Seam,
   type ExtensionNeed,
   type LibNeed,
   type NeedProbeInput,
@@ -39,10 +40,12 @@ export function parsePluginList(stdout: string): unknown[] | undefined {
   return /no plugins? installed/i.test(stdout) ? [] : undefined;
 }
 
-async function probeBinary(shell: DshShell, name: string): Promise<boolean> {
+async function probeBinary(seam: Seam, name: string): Promise<boolean> {
   const line =
     process.platform === 'win32' ? `where ${quoteShellArg(name)}` : `command -v ${quoteShellArg(name)}`;
-  const result = await runShell(shell, line, { timeoutMs: BINARY_PROBE_TIMEOUT_MS }).catch(() => undefined);
+  const result = await seam
+    .run({ command: line, intent: noWrite(), retry: 'safe', timeoutMs: BINARY_PROBE_TIMEOUT_MS, bestEffort: true })
+    .catch(() => undefined);
   return result?.exitCode === 0;
 }
 
@@ -52,14 +55,19 @@ interface RuntimeProbe {
 }
 
 async function runtimeList(options: {
-  shell: DshShell;
+  seam: Seam;
   command: string;
   needsPlugins: boolean;
 }): Promise<RuntimeProbe> {
   if (!options.needsPlugins) return {};
-  const result = await runShell(options.shell, `${options.command} plugin list -f json`, {
-    timeoutMs: OPENCLI_TIMEOUT_MS,
-  }).then(
+  const result = await options.seam
+    .run({
+      command: `${options.command} plugin list -f json`,
+      intent: productWrite(),
+      retry: 'safe',
+      timeoutMs: OPENCLI_TIMEOUT_MS,
+    })
+    .then(
     (value) => ({ ok: true as const, stdout: value.exitCode === 0 ? value.stdout : '', stderr: value.stderr }),
     (error: unknown) => ({ ok: false as const, stdout: '', stderr: String(error) }),
   );
@@ -79,7 +87,7 @@ function conflictOf(index: SupplyIndex, need: ExtensionNeed | LibNeed): string |
 
 async function releasesOf(
   index: SupplyIndex,
-  options: { shell: DshShell; force: boolean },
+  options: { seam: Seam; force: boolean },
 ): Promise<ReadonlyMap<string, PluginRelease>> {
   const found = new Map<string, PluginRelease>();
   for (const entry of index.entries.values()) {
@@ -88,7 +96,7 @@ async function releasesOf(
     if (source === undefined) continue;
     const registry = npmRegistryOf(source, process.env);
     const signal = await probeRelease({
-      shell: options.shell,
+      seam: options.seam,
       package: entry.package,
       ...(registry.ok ? { registry: registry.value } : {}),
       force: options.force,
@@ -116,12 +124,12 @@ function runtimeCommandOf(
 }
 
 export async function probeUnits(options: {
-  shell: DshShell;
+  seam: Seam;
   runtimeCommands: Readonly<Record<string, string>>;
   units: readonly NeedProbeInput[];
   force?: boolean;
 }): Promise<UnitCapability[]> {
-  const { shell, runtimeCommands, units, force = false } = options;
+  const { seam, runtimeCommands, units, force = false } = options;
   const commandKey = Object.values(runtimeCommands).sort().join('|');
 
   const hits = units.map((unit) => unitCache.get(cacheKeyOf(commandKey, units, unit.unit)));
@@ -135,7 +143,7 @@ export async function probeUnits(options: {
     if (shared !== undefined) return shared;
   }
 
-  const task = loadCapabilities({ shell, runtimeCommands, units, force });
+  const task = loadCapabilities({ seam, runtimeCommands, units, force });
   pendingProbes.set(key, task);
   try {
     return await task;
@@ -145,12 +153,12 @@ export async function probeUnits(options: {
 }
 
 async function loadCapabilities(options: {
-  shell: DshShell;
+  seam: Seam;
   runtimeCommands: Readonly<Record<string, string>>;
   units: readonly NeedProbeInput[];
   force: boolean;
 }): Promise<UnitCapability[]> {
-  const { shell, runtimeCommands, units, force } = options;
+  const { seam, runtimeCommands, units, force } = options;
   const index = buildSupplyIndex(units.map((unit) => ({ id: unit.unit, needs: unit.needs })), {
     env: process.env,
     packagePrefix: 'opencli-plugin-',
@@ -168,7 +176,7 @@ async function loadCapabilities(options: {
   await Promise.all(
     binNames.map(async (name) => {
       const known = runtimeNames.some((command) => commandNamesMatch(name, command));
-      binaries.set(name, known ? true : await probeBinary(shell, name));
+      binaries.set(name, known ? true : await probeBinary(seam, name));
     }),
   );
 
@@ -187,15 +195,15 @@ async function loadCapabilities(options: {
       const needsPlugins = extensionNeeds.some(
         (need) => need.runtime === runtime && conflictOf(index, need) === undefined,
       );
-      lists.set(runtime, await runtimeList({ shell, command, needsPlugins }));
+      lists.set(runtime, await runtimeList({ seam, command, needsPlugins }));
     }),
   );
 
   const libNeeds = units.flatMap((unit) =>
     unit.needs.filter((need): need is LibNeed => need.kind === 'lib'),
   );
-  const libStates = await probeLibs({ needs: libNeeds, shell, force, index });
-  const releases = await releasesOf(index, { shell, force });
+  const libStates = await probeLibs({ needs: libNeeds, seam, force, index });
+  const releases = await releasesOf(index, { seam, force });
 
   const statesOfUnit = (unit: NeedProbeInput): NeedState[] =>
     unit.needs.map((need): NeedState => {
@@ -258,7 +266,7 @@ async function loadCapabilities(options: {
 }
 
 export async function probeUnitCommands(options: {
-  shell: DshShell;
+  seam: Seam;
   runtimeCommands?: Readonly<Record<string, string>> | undefined;
   unit: NeedProbeInput;
   force?: boolean;
@@ -266,7 +274,7 @@ export async function probeUnitCommands(options: {
 }): Promise<UnitCapability> {
   const units = options.catalog === undefined ? [options.unit] : options.catalog;
   const all = await probeUnits({
-    shell: options.shell,
+    seam: options.seam,
     runtimeCommands: options.runtimeCommands ?? {},
     units,
     ...(options.force === undefined ? {} : { force: options.force }),

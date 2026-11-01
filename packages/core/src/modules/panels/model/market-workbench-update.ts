@@ -1,5 +1,4 @@
-import type { DshShell } from '@dsh-workbench/shared';
-import { PLUGIN_ID } from '@dsh-workbench/shared/host';
+import { PLUGIN_ID, type Seam } from '@dsh-workbench/shared/host';
 import { requireSupply } from '@dsh-workbench/shared/host';
 import type { InstalledModule, ProfilePackage, SupplyPort } from '@dsh-workbench/shared/host';
 import type { SelfUpdateRequest, SelfUpdateStart } from '@dsh-workbench/shared/host';
@@ -8,7 +7,7 @@ import type { BundleInstallOutcome } from './market-types';
 export interface WorkbenchUpdateDeps {
   readonly asked: string;
   readonly workbench?: ((pkg: string) => ProfilePackage | undefined) | undefined;
-  readonly shell?: DshShell | undefined;
+  readonly seam?: Seam | undefined;
   readonly installed?: ((pkg: string) => InstalledModule) | undefined;
   readonly dshHome?: (() => string) | undefined;
   readonly profileRegistry?: (() => Promise<string | undefined>) | undefined;
@@ -34,15 +33,15 @@ export async function updateWorkbenchOnce(deps: WorkbenchUpdateDeps): Promise<Bu
   if (read.local === true) {
     throw new Error('这份工作台是从源码目录装进来的（开发副本），不从源上更新。');
   }
-  const shell = deps.shell;
+  const seam = deps.seam;
   const registry = read.registry ?? (await deps.profileRegistry?.());
   const askedLatest =
-    shell === undefined || registry === undefined
+    seam === undefined || registry === undefined
       ? undefined
-      : await supply.latestVersion({ shell, name: read.pkg, registry, force: true });
-  if (shell !== undefined && registry !== undefined && askedLatest !== undefined) {
+      : await supply.latestVersion({ seam, name: read.pkg, registry, force: true });
+  if (seam !== undefined && registry !== undefined && askedLatest !== undefined) {
     const missing = await supply.missingReleaseParts({
-      shell,
+      seam,
       name: read.pkg,
       registry,
       version: askedLatest,

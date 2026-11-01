@@ -1,5 +1,4 @@
-import type { DshShell } from '@dsh-workbench/shared';
-import type { BundleManager, SupplyPort } from '@dsh-workbench/shared/host';
+import type { BundleManager, Seam, SupplyPort } from '@dsh-workbench/shared/host';
 import { quoteShellArg, requireSupply } from '@dsh-workbench/shared/host';
 import type { InstalledModule, ProfileModule } from '@dsh-workbench/shared/host';
 import type { BundleChange } from '@/kernel/contract/bundle-install';
@@ -11,7 +10,7 @@ import type { BundleInstallOutcome } from './market-types';
 export interface BundleUpdateDeps {
   readonly modules: (() => readonly ProfileModule[]) | undefined;
   readonly installed: ((pkg: string) => InstalledModule) | undefined;
-  readonly shell: DshShell | undefined;
+  readonly seam: Seam | undefined;
   readonly manager: BundleManager;
   readonly routeDeps: ReplaceBundleDeps;
   readonly sweep: () => Promise<void>;
@@ -90,12 +89,12 @@ export async function updateModuleBundle(
   const read = deps.installed?.(pkg) ?? { kind: 'unknown', pkg };
   const registry = read.kind === 'module' ? read.registry : undefined;
   const latest =
-    deps.shell === undefined || registry === undefined
+    deps.seam === undefined || registry === undefined
       ? undefined
-      : await supply.latestVersion({ shell: deps.shell, name: pkg, registry, force: true });
-  if (latest !== undefined && deps.shell !== undefined && registry !== undefined) {
+      : await supply.latestVersion({ seam: deps.seam, name: pkg, registry, force: true });
+  if (latest !== undefined && deps.seam !== undefined && registry !== undefined) {
     const declared = await supply.registryDeclarationOf({
-      shell: deps.shell,
+      seam: deps.seam,
       name: pkg,
       registry,
       force: true,

@@ -5,11 +5,26 @@ import type {
   DshToolRegistry,
   DshToolRunContext,
 } from '@dsh-workbench/shared';
-import { CHANGELOG_FILE, CHANGELOG_KINDS, quoteShellArg, runShell, shellOf } from '@dsh-workbench/shared/host';
+import {
+  CHANGELOG_FILE,
+  CHANGELOG_KINDS,
+  productWrite,
+  quoteShellArg,
+  seamOf,
+  workspaceWrite,
+  type ShellResult,
+  type WriteIntent,
+} from '@dsh-workbench/shared/host';
 import type { PublishPreview } from '@dsh-workbench/shared/contract/protocol/market-index';
 import type { DiyModule } from '@/shared/api/host/diy-modules';
 import { toolchainBinOf } from '@/shared/api/host/diy-components';
 import { jsonOf } from './diy-browser';
+import {
+  adoptTarballFile,
+  cleanupStaging,
+  mirrorJournal,
+  prepareStaging,
+} from '@/shared/api/host/diy-release-staging';
 import { asRecord, asText, OUTPUT, plainJson, workspaceOf } from './diy-context';
 import { DIY_PUBLISH_TOOL } from '../unit';
 
@@ -19,6 +34,139 @@ export interface PublishToolDeps {
   readonly resolve: (root: string, raw: unknown) => DiyModule;
   readonly previewOf: (unit: string) => PublishPreview | null;
   readonly inferredAuthorOf: (unit: string) => Promise<string | undefined>;
+}
+
+interface ReleaseRun {
+  readonly intent: WriteIntent;
+  readonly session?: unknown;
+  readonly env?: Readonly<Record<string, string>> | undefined;
+}
+
+function adoptTarball(payload: Record<string, unknown>, unit: string): Record<string, unknown> {
+  const file = asText(payload['file']);
+  const dest = adoptTarballFile(file, unit);
+  if (dest === undefined) return payload;
+  const install = asText(payload['install']);
+  return {
+    ...payload,
+    file: dest,
+    ...(install === '' ? {} : { install: install.split(file).join(dest) }),
+  };
+}
+
+function needsUserPayload(payload: Record<string, unknown>): Record<string, unknown> {
+  const needs = asRecord(payload['needsUser']);
+  const stepText = asText(needs['text']);
+  const command = asText(needs['command']);
+  return plainJson({
+    ...payload,
+    text: [
+      `还差一步：${stepText}`,
+      ...(command === '' ? [] : [`命令：${command}`]),
+      '做完跟我说「好了」，我接着发。',
+    ].join('\n'),
+  });
+}
+
+function resumablePayload(payload: Record<string, unknown>, unit: string): Record<string, unknown> {
+  const resumeInfo = asRecord(payload['resume']);
+  return plainJson({
+    ...payload,
+    text: [
+      `发布中断在第 ${asText(resumeInfo['phase'])} 步：${asText(payload['text'])}`,
+      `再调一次 workbench_diy_publish（unit=${unit}, resume=true）就能接着发。`,
+    ].join('\n'),
+  });
+}
+
+function outcomeOf(result: ShellResult, unit: string): { readonly error: Error } | { readonly payload: Record<string, unknown> } {
+  const payload = jsonOf(result.stdout);
+  if (result.exitCode === 3 && payload !== undefined) return { payload: needsUserPayload(payload) };
+  if (result.exitCode === 4 && payload !== undefined) return { payload: resumablePayload(payload, unit) };
+  if (result.exitCode !== 0 || payload === undefined) {
+    const tail = `${result.stderr}\n${result.stdout}`.trim().split('\n').slice(-6).join(' | ');
+    return { error: new Error(`发布没走通（exit ${String(result.exitCode)}）${tail === '' ? '' : `：${tail}`}`) };
+  }
+  return { payload };
+}
+
+function successPayloadOf(
+  payload: Record<string, unknown>,
+  found: DiyModule,
+  options: { readonly verify: boolean },
+): Record<string, unknown> {
+  const name = asText(payload['name']);
+  const released = asText(payload['version']);
+  const registry = asText(payload['registry']);
+  const file = asText(payload['file']);
+  const install = asText(payload['install']);
+  const git = asRecord(payload['git']);
+  const targetOfPayload = asText(payload['target']);
+  const text =
+    options.verify
+      ? [`已核过 ${name}@${released}`, `安装：${install}`, '没有重新发布。'].join('\n')
+      : payload['refresh'] === true
+        ? [
+            payload['refreshed'] === true
+              ? `已刷新 ${name} 的市集元数据（版本 ${released} 不变）`
+              : `${name} 的市集元数据本来就是这样，没动`,
+            `市场索引：${asText(asRecord(payload['market'])['url'])}`,
+          ].join('\n')
+        : targetOfPayload === 'tarball'
+          ? [`安装包在 ${file}`, `本机装：${install}`, '文件可以从对话里带走，发给同事。'].join('\n')
+          : targetOfPayload === 'git'
+            ? [
+                `已推到 ${asText(git['url'])}（tag ${asText(git['tag'])}）`,
+                `安装：${install}`,
+                '已核过 tag 里的产物。',
+              ].join('\n')
+            : targetOfPayload === 'market'
+              ? [
+                  `已发到市场索引 ${asText(asRecord(payload['market'])['url'])}`,
+                  `安装：${install}`,
+                  '已从索引仓库侧核过产物。',
+                ].join('\n')
+              : targetOfPayload === 'local'
+                ? '没发，留在本机。'
+                : [
+                    `已发布 ${name}@${released} → ${registry}`,
+                    `同事安装：${install}`,
+                    '包内容已经从源上核过（dist/host.js / client.js / cordis.patch.yml 都在）。',
+                  ].join('\n');
+  const changelog = asRecord(payload['changelog']);
+  const changelogLine =
+    asText(changelog['action']) === 'written'
+      ? `更新日志：已写进 ${CHANGELOG_FILE} 的 ${asText(changelog['version'])}`
+      : asText(changelog['action']) === 'kept'
+        ? `更新日志：这一版已有（${asText(changelog['version'])}），没动`
+        : '';
+  const labelList = Array.isArray(payload['labels'])
+    ? (payload['labels'] as readonly unknown[]).map((one) => asText(one)).filter((one) => one !== '')
+    : [];
+  const labelsLine =
+    labelList.length === 0 || (targetOfPayload !== 'market' && payload['refresh'] !== true)
+      ? ''
+      : `标签：${labelList.join(' · ')}`;
+  const tail = [changelogLine, labelsLine].filter((one) => one !== '').join('\n');
+  return plainJson({ ...payload, unit: found.unit, text: tail === '' ? text : `${text}\n${tail}` });
+}
+
+function withPhasePayloads(
+  first: Record<string, unknown>,
+  second: Record<string, unknown>,
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...first, ...second };
+  delete merged['stop'];
+  if (merged['changelog'] === undefined && first['changelog'] !== undefined) {
+    merged['changelog'] = first['changelog'];
+  }
+  if (merged['changes'] === undefined && first['changes'] !== undefined) {
+    merged['changes'] = first['changes'];
+  }
+  if (merged['labels'] === undefined && first['labels'] !== undefined) {
+    merged['labels'] = first['labels'];
+  }
+  return merged;
 }
 
 export function registerPublishTool(
@@ -94,24 +242,26 @@ export function registerPublishTool(
     async execute(raw: unknown, exec: DshToolRunContext) {
       const { root } = await workspaceOf(ctx, exec);
       const found = deps.resolve(root, raw);
-      const shell = shellOf(ctx);
-      if (shell === undefined) throw new Error('这台机器上没有 shell 服务，发布跑不起来');
+      const seam = seamOf(ctx);
+      if (seam === undefined) throw new Error('这台机器上没有 shell 服务，发布跑不起来');
       const bin = toolchainBinOf(root) ?? toolchainBinOf(found.dir);
       if (bin === null) {
         throw new Error(
           `这个工作区里没有 dsh-wb-module（${join(root, 'node_modules')} 下没有）—— 先 pnpm install`,
         );
       }
-      const target = asText(asRecord(raw)['target']);
-      const source = asText(asRecord(raw)['source']);
-      const version = asText(asRecord(raw)['version']);
-      const license = asText(asRecord(raw)['license']);
-      const changelogNote = asText(asRecord(raw)['changelogNote']);
-      const changelogType = asText(asRecord(raw)['changelogType']);
-      const labels = labelsOf(asRecord(raw)['labels']);
-      let author = asText(asRecord(raw)['author']);
-      const verify = asRecord(raw)['verify'] === true;
-      const resume = asRecord(raw)['resume'] === true;
+      const args = asRecord(raw);
+      const target = asText(args['target']);
+      const source = asText(args['source']);
+      const version = asText(args['version']);
+      const license = asText(args['license']);
+      const changelogNote = asText(args['changelogNote']);
+      const changelogType = asText(args['changelogType']);
+      const labels = labelsOf(args['labels']);
+      let author = asText(args['author']);
+      const verify = args['verify'] === true;
+      const resume = args['resume'] === true;
+      const refresh = args['refresh'] === true;
       if (!verify && target !== 'local' && author === '' && (deps.previewOf(found.unit)?.author ?? '') === '') {
         author = (await deps.inferredAuthorOf(found.unit)) ?? '';
       }
@@ -127,90 +277,43 @@ export function registerPublishTool(
       if (changelogNote !== '') argv.push('--changelog-note', changelogNote);
       if (changelogType !== '') argv.push('--changelog-type', changelogType);
       for (const label of labels) argv.push('--label', label);
-      if (asRecord(raw)['refresh'] === true) argv.push('--refresh');
-      const result = await runShell(shell, argv.map((one) => quoteShellArg(one)).join(' '), {
-        workdir: root,
-        timeoutMs: PUBLISH_TIMEOUT_MS,
+      if (refresh) argv.push('--refresh');
+      const run = async (extra: readonly string[], request: ReleaseRun): Promise<ShellResult> =>
+        seam.run({
+          command: [...argv, ...extra].map((one) => quoteShellArg(one)).join(' '),
+          intent: request.intent,
+          ...(request.session === undefined ? {} : { session: request.session }),
+          ...(request.env === undefined ? {} : { env: request.env }),
+          workdir: root,
+          timeoutMs: PUBLISH_TIMEOUT_MS,
+        });
+      if (verify || refresh) {
+        const outcome = outcomeOf(await run([], { intent: productWrite() }), found.unit);
+        if ('error' in outcome) throw outcome.error;
+        return plainJson(successPayloadOf(outcome.payload, found, { verify }));
+      }
+      const staging = prepareStaging(found.unit, resume);
+      const env = { DSH_WB_RELEASE_HOME: staging };
+      const session = exec.agent?.session;
+      const workspace = await run(['--workspace-only'], {
+        intent: workspaceWrite(),
+        ...(session === undefined ? {} : { session }),
+        env,
       });
-      const payload = jsonOf(result.stdout);
-      if (result.exitCode === 3 && payload !== undefined) {
-        const needs = asRecord(payload['needsUser']);
-        const stepText = asText(needs['text']);
-        const command = asText(needs['command']);
-        return plainJson({
-          ...payload,
-          text: [
-            `还差一步：${stepText}`,
-            ...(command === '' ? [] : [`命令：${command}`]),
-            '做完跟我说「好了」，我接着发。',
-          ].join('\n'),
-        });
+      const firstOutcome = outcomeOf(workspace, found.unit);
+      mirrorJournal(staging, found.unit);
+      if ('error' in firstOutcome) throw firstOutcome.error;
+      const first = firstOutcome.payload;
+      if (first['stop'] !== 'workspace-only' || asText(first['target']) === 'local') {
+        cleanupStaging(found.unit);
+        return plainJson(first);
       }
-      if (result.exitCode === 4 && payload !== undefined) {
-        const resumeInfo = asRecord(payload['resume']);
-        return plainJson({
-          ...payload,
-          text: [
-            `发布中断在第 ${asText(resumeInfo['phase'])} 步：${asText(payload['text'])}`,
-            `再调一次 workbench_diy_publish（unit=${found.unit}, resume=true）就能接着发。`,
-          ].join('\n'),
-        });
-      }
-      if (result.exitCode !== 0 || payload === undefined) {
-        const tail = `${result.stderr}\n${result.stdout}`.trim().split('\n').slice(-6).join(' | ');
-        throw new Error(`发布没走通（exit ${String(result.exitCode)}）${tail === '' ? '' : `：${tail}`}`);
-      }
-      const name = asText(payload['name']);
-      const released = asText(payload['version']);
-      const registry = asText(payload['registry']);
-      const file = asText(payload['file']);
-      const install = asText(payload['install']);
-      const git = asRecord(payload['git']);
-      const targetOfPayload = asText(payload['target']);
-      const text =
-        verify
-          ? [`已核过 ${name}@${released}`, `安装：${install}`, '没有重新发布。'].join('\n')
-          : payload['refresh'] === true
-            ? [
-                payload['refreshed'] === true
-                  ? `已刷新 ${name} 的市集元数据（版本 ${released} 不变）`
-                  : `${name} 的市集元数据本来就是这样，没动`,
-                `市场索引：${asText(asRecord(payload['market'])['url'])}`,
-              ].join('\n')
-            : targetOfPayload === 'tarball'
-          ? [`安装包在 ${file}`, `本机装：${install}`, '文件可以从对话里带走，发给同事。'].join('\n')
-          : targetOfPayload === 'git'
-            ? [
-                `已推到 ${asText(git['url'])}（tag ${asText(git['tag'])}）`,
-                `安装：${install}`,
-                '已核过 tag 里的产物。',
-              ].join('\n')
-            : targetOfPayload === 'market'
-              ? [
-                  `已发到市场索引 ${asText(asRecord(payload['market'])['url'])}`,
-                  `安装：${install}`,
-                  '已从索引仓库侧核过产物。',
-                ].join('\n')
-              : targetOfPayload === 'local'
-                ? '没发，留在本机。'
-                : [
-                    `已发布 ${name}@${released} → ${registry}`,
-                    `同事安装：${install}`,
-                    '包内容已经从源上核过（dist/host.js / client.js / cordis.patch.yml 都在）。',
-                  ].join('\n');
-      const changelog = asRecord(payload['changelog']);
-      const changelogLine =
-        asText(changelog['action']) === 'written'
-          ? `更新日志：已写进 ${CHANGELOG_FILE} 的 ${asText(changelog['version'])}`
-          : asText(changelog['action']) === 'kept'
-            ? `更新日志：这一版已有（${asText(changelog['version'])}），没动`
-            : '';
-      const labelsLine =
-        labels.length === 0 || (targetOfPayload !== 'market' && payload['refresh'] !== true)
-          ? ''
-          : `标签：${labels.join(' · ')}`;
-      const tail = [changelogLine, labelsLine].filter((one) => one !== '').join('\n');
-      return plainJson({ ...payload, text: tail === '' ? text : `${text}\n${tail}` });
+      const indexOutcome = outcomeOf(await run(['--index-only'], { intent: productWrite(), env }), found.unit);
+      mirrorJournal(staging, found.unit);
+      if ('error' in indexOutcome) throw indexOutcome.error;
+      cleanupStaging(found.unit);
+      const merged = adoptTarball(withPhasePayloads(first, indexOutcome.payload), found.unit);
+      return plainJson(successPayloadOf(merged, found, { verify: false }));
     },
   };
 

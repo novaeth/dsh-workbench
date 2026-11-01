@@ -4,14 +4,24 @@ import { runsRouteOf, stopRouteOf } from '@dsh-workbench/shared/host';
 import { APPROVAL_NOTE_ARG } from '@dsh-workbench/shared/host';
 import type { UnitManifest } from '@dsh-workbench/shared/host';
 import { param, type RouteTable } from '@dsh-workbench/shared/host';
-import { adaptersOf, createHostKit, createLongTaskHost, hostSurface } from '@dsh-workbench/shared/host';
+import {
+  adaptersOf,
+  createHostKit,
+  createLongTaskHost,
+  createUnitSeam,
+  hostSurface,
+  workbenchRoot,
+} from '@dsh-workbench/shared/host';
+import { homedir } from 'node:os';
 import type {
   ContextRenderer,
   LongTaskBase,
   LongTaskChange,
   LongTaskRegistry,
+  Seam,
   UnitMountDeps,
   UnitMountResult,
+  UnitSeam,
   UnitCall,
 } from '@dsh-workbench/shared/host';
 import type { DataReader } from '@dsh-workbench/shared/host';
@@ -302,6 +312,12 @@ function declaredEnvOf(manifest: UnitManifest): Readonly<Record<string, string |
   return out;
 }
 
+function unitSeamOf(seam: Seam | undefined, unit: string, manifest: UnitManifest): UnitSeam | undefined {
+  const declared = manifest.host.writes ?? [];
+  if (seam === undefined || declared.length === 0) return undefined;
+  return createUnitSeam({ seam, unit, runtimeRoot: workbenchRoot(), declared, realHome: homedir() });
+}
+
 export function mountUnits(
   units: readonly HostUnit[],
   deps: {
@@ -318,6 +334,7 @@ export function mountUnits(
     store?: UnitMountDeps['store'];
     values?: UnitMountDeps['values'];
     surface?: HostSurface | undefined;
+    seam?: Seam | undefined;
     longTasks?:
       | {
           readonly scope: string;
@@ -376,6 +393,7 @@ export function mountUnits(
           });
     let result: UnitMountResult;
     try {
+      const seam = unitSeamOf(deps.seam, unit, host.manifest);
       result = host.face.mount({
         manifest: host.manifest,
         ctx: mountCtx,
@@ -385,6 +403,7 @@ export function mountUnits(
         ...(deps.installable === undefined ? {} : { installable: deps.installable }),
         data,
         ...hostKit,
+        ...(seam === undefined ? {} : { seam }),
         env: declaredEnvOf(host.manifest),
         ...(deps.libs === undefined ? {} : { libs: deps.libs }),
         ...(deps.git === undefined ? {} : { git: deps.git }),

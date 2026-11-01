@@ -1,8 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { extensionNeedOf, envNeedOf, binNeedOf } from '@dsh-workbench/shared/testing';
 import type { Need, NeedState } from '@dsh-workbench/shared/host';
 import { parsePluginList, probeUnitCommands, probeUnits, resetProbeCache } from '../index.js';
+
+function seamFor(shell: Parameters<typeof createSeam>[0]['shell']) {
+  return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
+
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -22,7 +28,7 @@ async function probeOne(
 ) {
   const fake = createFakeShell(responses);
   const found = await probeUnits({
-    shell: fake.shell,
+    seam: seamFor(fake.shell),
     runtimeCommands: options.runtimeCommands ?? RUNTIMES,
     units: [{ unit: 'u', needs }],
     force: true,
@@ -100,7 +106,7 @@ describe('probeUnits：extension 一类', () => {
     const fake = createFakeShell([listOf(['issues'])]);
     const units = ['a', 'b', 'c'].map((unit) => ({ unit, needs: [extensionNeedOf('demo')] }));
 
-    const found = await probeUnits({ shell: fake.shell, runtimeCommands: RUNTIMES, units, force: true });
+    const found = await probeUnits({ seam: seamFor(fake.shell), runtimeCommands: RUNTIMES, units, force: true });
 
     expect(found).toHaveLength(3);
     expect(fake.calls).toHaveLength(1);
@@ -293,7 +299,7 @@ describe('probeUnits：供给索引与冲突', () => {
       { unit: 'b', needs: [extensionNeedOf('demo', { sources: [{ kind: 'git', url: 'git@x:b.git' }] })] },
     ];
 
-    const found = await probeUnits({ shell: fake.shell, runtimeCommands: RUNTIMES, units, force: true });
+    const found = await probeUnits({ seam: seamFor(fake.shell), runtimeCommands: RUNTIMES, units, force: true });
 
     for (const one of found) {
       const state = stateOf(one, 'extension', 'demo');
@@ -309,7 +315,7 @@ describe('probeUnits：供给索引与冲突', () => {
 
     const alone = createFakeShell([listOf(['demo-read'])]);
     const solo = await probeUnitCommands({
-      shell: alone.shell,
+      seam: seamFor(alone.shell),
       runtimeCommands: RUNTIMES,
       unit: { unit: 'a', needs: [mine] },
       force: true,
@@ -318,7 +324,7 @@ describe('probeUnits：供给索引与冲突', () => {
 
     const together = createFakeShell([]);
     const conflicted = await probeUnitCommands({
-      shell: together.shell,
+      seam: seamFor(together.shell),
       runtimeCommands: RUNTIMES,
       unit: { unit: 'a', needs: [mine] },
       catalog: [
@@ -336,11 +342,11 @@ describe('probeUnits：缓存与并发', () => {
     const fake = createFakeShell([listOf(['demo-read']), listOf(['demo-read'])]);
     const unit = { unit: 'u', needs: [extensionNeedOf('demo')] };
 
-    await probeUnits({ shell: fake.shell, runtimeCommands: RUNTIMES, units: [unit], force: true });
-    await probeUnits({ shell: fake.shell, runtimeCommands: RUNTIMES, units: [unit] });
+    await probeUnits({ seam: seamFor(fake.shell), runtimeCommands: RUNTIMES, units: [unit], force: true });
+    await probeUnits({ seam: seamFor(fake.shell), runtimeCommands: RUNTIMES, units: [unit] });
     expect(fake.calls).toHaveLength(1);
 
-    await probeUnits({ shell: fake.shell, runtimeCommands: RUNTIMES, units: [unit], force: true });
+    await probeUnits({ seam: seamFor(fake.shell), runtimeCommands: RUNTIMES, units: [unit], force: true });
     expect(fake.calls).toHaveLength(2);
   });
 
@@ -349,8 +355,8 @@ describe('probeUnits：缓存与并发', () => {
     const unit = { unit: 'u', needs: [extensionNeedOf('demo')] };
 
     const [first, second] = await Promise.all([
-      probeUnits({ shell: fake.shell, runtimeCommands: RUNTIMES, units: [unit], force: true }),
-      probeUnits({ shell: fake.shell, runtimeCommands: RUNTIMES, units: [unit] }),
+      probeUnits({ seam: seamFor(fake.shell), runtimeCommands: RUNTIMES, units: [unit], force: true }),
+      probeUnits({ seam: seamFor(fake.shell), runtimeCommands: RUNTIMES, units: [unit] }),
     ]);
 
     expect(fake.calls).toHaveLength(1);

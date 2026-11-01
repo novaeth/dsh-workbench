@@ -247,6 +247,6 @@ export const panelsUnit: UnitManifest = {
   ],
   host: {
     inject: [],
-    optional: ['tools', 'shell'],
+    optional: ['tools', 'workbenchSeam'],
   },
 };

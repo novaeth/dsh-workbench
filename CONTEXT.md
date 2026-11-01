@@ -148,8 +148,9 @@ _Avoid_: 环境、env
 凭据（`~/.dsh/.credentials.yaml`）跟所有 profile **有意共享**。
 _Avoid_: 数据根（会跟共用的 `~/.dsh` 混）、沙箱、sandbox
 
-**执行缝（shell seam）**：dsh 的 `shell` 服务（`ctx.get('shell')` → `resolve` / `execute`），
-`runShell` 是它外面那层薄适配。命令从这儿跑，就带上 dsh 的**文件沙箱**、超时与输出截断；
-插件发起的调用没有会话，按**部署策略**判可写根。它管的是「替 agent 跑的命令」，不是
-「插件自己的状态」—— 后者在进程内写（ADR-0093）。
+**执行缝（shell seam）**：工作台唯一起命令的路。调用点声明**写入域**——产品域（工作台自己的
+运行时根）/ 会话工作区 / 明确的外部路径 / 只读；执行缝模块据此合成策略（部署上限 × 会话解析）、
+注入产品环境（隔离 HOME、npm/pnpm 缓存、opencli 配置）、把沙箱拒绝变成类型化结果并记事实。
+模块起命令走 `deps.seam` 的 `unit` / `workspace` 两档，不直接拿 dsh 的 shell 服务；
+`runShell` / `shellOf` 是旧入口，只保留一个发布周期的兼容。
 _Avoid_: 接缝（那是两侧各自的入口）、bash 工具（agent 的入口，最终也走它）、沙箱（那是缝后面的判定）

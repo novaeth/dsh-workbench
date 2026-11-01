@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { DshShell } from '@dsh-workbench/shared';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+
+function seamFor(shell: DshShell) {
+  return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
 import { createDataReader } from '../index.js';
 
 function jsonResponse(data: unknown, status = 200): Response {
@@ -37,7 +43,7 @@ describe('DataReader', () => {
 
   it('command 读成功；没有 shell 时明确拒绝', async () => {
     const fake = createFakeShell(() => ({ stdout: '{"ok":true}' }));
-    const reader = createDataReader({ shell: fake.shell });
+    const reader = createDataReader({ seam: seamFor(fake.shell) });
     const result = await reader.read({ kind: 'command', adapter: 'opencli', argv: ['demo', 'read'] });
     expect(result).toEqual({ ok: true, data: { ok: true } });
 

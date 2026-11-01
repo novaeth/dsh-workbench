@@ -1,4 +1,5 @@
-import type { DshShell } from '../api/dsh.js';
+import type { Seam } from './seam/run.js';
+import { productWrite } from './seam/intent.js';
 import type { PluginRelease } from '../contract/unit.js';
 
 import { RELEASE_PACKAGES } from './release-packages.generated.js';
@@ -6,7 +7,6 @@ import { VERSION_CHECK_TIMEOUT_MS, VERSION_CHECK_TTL_MS } from '../config/consta
 import { isValidVersion } from './version.js';
 import { parseJsonLoose } from '../lib/text.js';
 import { quoteShellArg } from './shell-text.js';
-import { runShell } from './shell.js';
 
 function cacheFlag(cacheDir: string | undefined): string {
   return cacheDir === undefined ? '' : ` --cache ${quoteShellArg(cacheDir)}`;
@@ -61,7 +61,7 @@ export function createReleaseProbe(): ReleaseProbe {
 }
 
 interface LatestVersionOptions {
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly name: string;
   readonly registry: string;
   readonly force?: boolean;
@@ -69,7 +69,7 @@ interface LatestVersionOptions {
 }
 
 interface MissingPartsOptions {
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly name: string;
   readonly registry: string;
   readonly version: string;
@@ -78,7 +78,7 @@ interface MissingPartsOptions {
 }
 
 interface ProbeReleaseOptions {
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly package: string;
   readonly registry?: string | undefined;
   readonly force?: boolean;
@@ -88,23 +88,27 @@ interface ProbeReleaseOptions {
 }
 
 async function latestVersionOf(latestCache: Map<string, CacheEntry>, options: {
-  shell: DshShell;
+  seam: Seam;
   name: string;
   registry: string;
   force?: boolean;
   cacheDir?: string | undefined;
 }): Promise<string | undefined> {
-  const { shell, name, registry, force = false, cacheDir } = options;
+  const { seam, name, registry, force = false, cacheDir } = options;
   const key = `${registry}|${name}`;
   const hit = latestCache.get(key);
   if (!force && hit !== undefined && Date.now() - hit.at < VERSION_CHECK_TTL_MS)
     return hit.value;
 
-  const result = await runShell(
-    shell,
-    `npm view ${quoteShellArg(name)} version --registry ${quoteShellArg(registry)}${cacheFlag(cacheDir)}`,
-    { timeoutMs: VERSION_CHECK_TIMEOUT_MS },
-  ).catch(() => undefined);
+  const result = await seam
+    .run({
+      command: `npm view ${quoteShellArg(name)} version --registry ${quoteShellArg(registry)}${cacheFlag(cacheDir)}`,
+      intent: productWrite(),
+      retry: 'safe',
+      timeoutMs: VERSION_CHECK_TIMEOUT_MS,
+      bestEffort: true,
+    })
+    .catch(() => undefined);
   const read = result?.exitCode === 0 ? parseVersion(result.stdout) : undefined;
   latestCache.set(key, { at: Date.now(), value: read });
   return read;
@@ -119,24 +123,28 @@ interface ExistsEntry {
 async function versionExists(
   existsCache: Map<string, ExistsEntry>,
   options: {
-  shell: DshShell;
+  seam: Seam;
   name: string;
   version: string;
   registry: string;
   force?: boolean;
   cacheDir?: string | undefined;
 }): Promise<boolean> {
-  const { shell, name, version, registry, force = false, cacheDir } = options;
+  const { seam, name, version, registry, force = false, cacheDir } = options;
   const key = `${registry}|${name}@${version}`;
   const hit = existsCache.get(key);
   if (!force && hit !== undefined && (hit.value || Date.now() - hit.at < VERSION_CHECK_TTL_MS))
     return hit.value;
 
-  const result = await runShell(
-    shell,
-    `npm view ${quoteShellArg(`${name}@${version}`)} version --registry ${quoteShellArg(registry)}${cacheFlag(cacheDir)}`,
-    { timeoutMs: VERSION_CHECK_TIMEOUT_MS },
-  ).catch(() => undefined);
+  const result = await seam
+    .run({
+      command: `npm view ${quoteShellArg(`${name}@${version}`)} version --registry ${quoteShellArg(registry)}${cacheFlag(cacheDir)}`,
+      intent: productWrite(),
+      retry: 'safe',
+      timeoutMs: VERSION_CHECK_TIMEOUT_MS,
+      bestEffort: true,
+    })
+    .catch(() => undefined);
   const value = result?.exitCode === 0 && parseVersion(result.stdout) !== undefined;
   existsCache.set(key, { at: Date.now(), value });
   return value;
@@ -146,18 +154,18 @@ async function missingPartsOf(
   latestCache: Map<string, CacheEntry>,
   existsCache: Map<string, ExistsEntry>,
   options: {
-  shell: DshShell;
+  seam: Seam;
   name: string;
   registry: string;
   version: string;
   force?: boolean;
   cacheDir?: string | undefined;
 }): Promise<readonly string[]> {
-  const { shell, name, registry, version, force = false, cacheDir } = options;
+  const { seam, name, registry, version, force = false, cacheDir } = options;
   const checked = await Promise.all(
     RELEASE_PACKAGES.filter((part) => part !== name).map(async (part) => ({
       part,
-      present: await versionExists(existsCache, { shell, name: part, version, registry, force, cacheDir }),
+      present: await versionExists(existsCache, { seam, name: part, version, registry, force, cacheDir }),
     })),
   );
   return checked.filter((entry) => !entry.present).map((entry) => entry.part);
@@ -166,7 +174,7 @@ async function missingPartsOf(
 async function probeOf(
   latestCache: Map<string, CacheEntry>,
   options: {
-  shell: DshShell;
+  seam: Seam;
   package: string;
   registry?: string | undefined;
   force?: boolean;
@@ -174,14 +182,18 @@ async function probeOf(
   cacheDir?: string | undefined;
   prefix?: string | undefined;
 }): Promise<PluginRelease | undefined> {
-  const { shell, package: pkg, registry, force = false, check = true, cacheDir, prefix } = options;
+  const { seam, package: pkg, registry, force = false, check = true, cacheDir, prefix } = options;
   if (pkg === "") return undefined;
 
-  const ledger = await runShell(
-    shell,
-    `npm ls --prefix ${quoteShellArg(prefix ?? '')} ${quoteShellArg(pkg)} --json --depth=0${cacheFlag(cacheDir)}`,
-    { timeoutMs: VERSION_CHECK_TIMEOUT_MS },
-  ).catch(() => undefined);
+  const ledger = await seam
+    .run({
+      command: `npm ls --prefix ${quoteShellArg(prefix ?? '')} ${quoteShellArg(pkg)} --json --depth=0${cacheFlag(cacheDir)}`,
+      intent: productWrite(),
+      retry: 'safe',
+      timeoutMs: VERSION_CHECK_TIMEOUT_MS,
+      bestEffort: true,
+    })
+    .catch(() => undefined);
   const installed =
     ledger === undefined ? undefined : parseLedgerVersion(ledger.stdout, pkg);
   if (installed === undefined) return undefined;
@@ -193,7 +205,7 @@ async function probeOf(
   const latest =
     source === undefined || !check
       ? undefined
-      : await latestVersionOf(latestCache, { shell, name: pkg, registry: source, force, cacheDir });
+      : await latestVersionOf(latestCache, { seam, name: pkg, registry: source, force, cacheDir });
 
   return {
     installed,

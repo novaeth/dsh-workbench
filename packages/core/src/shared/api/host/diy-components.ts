@@ -1,8 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { DshShell } from '@dsh-workbench/shared';
-import { quoteShellArg, runShell } from '@dsh-workbench/shared/host';
+import { noWrite, quoteShellArg, type Seam } from '@dsh-workbench/shared/host';
 
 export const SURFACE_TIMEOUT_MS = 30000;
 export const EXCERPT_LINES = 60;
@@ -59,18 +58,25 @@ export function queryCommandOf(bin: string, only: 'kit' | 'primitives'): string 
 }
 
 export async function runSurfaceQuery(
-  shell: DshShell,
+  seam: Seam,
   bin: string,
   only: 'kit' | 'primitives',
   root: string,
   fallbackBin?: string,
 ): Promise<SurfacePayload> {
-  const result = await runShell(shell, queryCommandOf(bin, only), { workdir: root, timeoutMs: SURFACE_TIMEOUT_MS });
+  const result = await seam.run({
+    command: queryCommandOf(bin, only),
+    intent: noWrite(),
+    workdir: root,
+    timeoutMs: SURFACE_TIMEOUT_MS,
+  });
   const parsed = jsonOf(result.stdout);
   if (parsed !== null) return withoutProblems(parsed);
   const retry = fallbackBin === undefined || fallbackBin === bin ? undefined : fallbackBin;
   if (retry !== undefined) {
-    const second = await runShell(shell, queryCommandOf(retry, only), {
+    const second = await seam.run({
+      command: queryCommandOf(retry, only),
+      intent: noWrite(),
       workdir: root,
       timeoutMs: SURFACE_TIMEOUT_MS,
     });

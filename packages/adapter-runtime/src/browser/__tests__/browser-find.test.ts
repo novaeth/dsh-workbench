@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { BROWSER_SCREEN_SESSION } from '../browser-read.js';
 import {
   browserFind,
@@ -66,7 +67,8 @@ function fakeShell(plan: Plan) {
       };
     },
   };
-  return { shell: shell as never, commands, calls };
+  const seam = createSeam({ shell: shell as never, runtimeRoot: '/tmp/wb-seam-test' });
+  return { shell: shell as never, seam, commands, calls };
 }
 
 const FAST = { settleMs: 1, timeoutMs: 50 } as const;
@@ -84,8 +86,8 @@ const ZERO_MATCH = JSON.stringify({
 
 describe('browserFind · 停在哪一页', () => {
   it('已经在目标站点上：只问一次 get url，然后一次 find', async () => {
-    const { shell, commands } = fakeShell({ url: SITE, find: [{ stdout: MATCH }] });
-    const out = await browserFind({ shell, css: CSS, url: SITE, ...FAST });
+    const { seam, commands } = fakeShell({ url: SITE, find: [{ stdout: MATCH }] });
+    const out = await browserFind({ seam, css: CSS, url: SITE, ...FAST });
 
     expect(out.ok).toBe(true);
     expect(out.count).toBe(1);
@@ -96,11 +98,11 @@ describe('browserFind · 停在哪一页', () => {
   });
 
   it('新会话还停在 about:blank：先 open 再读，命令走 find --css', async () => {
-    const { shell, commands } = fakeShell({
+    const { seam, commands } = fakeShell({
       url: ['about:blank', SITE],
       find: [{ stdout: MATCH }],
     });
-    const out = await browserFind({ shell, css: CSS, url: SITE, ...FAST });
+    const out = await browserFind({ seam, css: CSS, url: SITE, ...FAST });
 
     expect(out.ok).toBe(true);
     expect(out.count).toBe(1);
@@ -111,19 +113,19 @@ describe('browserFind · 停在哪一页', () => {
   });
 
   it('问不出来在哪一页（get url 空）时不乱开，直接找', async () => {
-    const { shell, commands } = fakeShell({ url: '', find: [{ stdout: MATCH }] });
-    const out = await browserFind({ shell, css: CSS, url: SITE, ...FAST });
+    const { seam, commands } = fakeShell({ url: '', find: [{ stdout: MATCH }] });
+    const out = await browserFind({ seam, css: CSS, url: SITE, ...FAST });
 
     expect(out.ok).toBe(true);
     expect(commands.some((one) => one.includes("'open'"))).toBe(false);
   });
 
   it('open 失败 → cli-exec-failed，带上 helpUrl 与原因', async () => {
-    const { shell } = fakeShell({
+    const { seam } = fakeShell({
       url: 'about:blank',
       open: [{ stdout: JSON.stringify({ error: { message: 'browser session is not bound' } }), exitCode: 1 }],
     });
-    const out = await browserFind({ shell, css: CSS, url: SITE, ...FAST });
+    const out = await browserFind({ seam, css: CSS, url: SITE, ...FAST });
 
     expect(out.ok).toBe(false);
     expect(out.code).toBe('cli-exec-failed');
@@ -133,8 +135,8 @@ describe('browserFind · 停在哪一页', () => {
   });
 
   it('open 那条命令直接抛（opencli 不在）也要报出来，不许把异常漏出去', async () => {
-    const { shell } = fakeShell({ url: 'about:blank', open: [{ throws: true }] });
-    const out = await browserFind({ shell, css: CSS, url: SITE, ...FAST });
+    const { seam } = fakeShell({ url: 'about:blank', open: [{ throws: true }] });
+    const out = await browserFind({ seam, css: CSS, url: SITE, ...FAST });
 
     expect(out.ok).toBe(false);
     expect(out.code).toBe('cli-exec-failed');
@@ -144,8 +146,8 @@ describe('browserFind · 停在哪一页', () => {
 
 describe('browserFind · 找到与找不到', () => {
   it('页面上就是没有匹配元素 → ok，但 count 是 0（空不撒谎）', async () => {
-    const { shell } = fakeShell({ url: SITE, find: [{ stdout: JSON.stringify({ entries: [] }) }] });
-    const out = await browserFind({ shell, css: CSS, url: SITE, ...FAST });
+    const { seam } = fakeShell({ url: SITE, find: [{ stdout: JSON.stringify({ entries: [] }) }] });
+    const out = await browserFind({ seam, css: CSS, url: SITE, ...FAST });
 
     expect(out.ok).toBe(true);
     expect(out.count).toBe(0);
@@ -153,11 +155,11 @@ describe('browserFind · 找到与找不到', () => {
   });
 
   it('在站点上但 find 失败（会话刚重启那类）：安全网再 open 一次并重读', async () => {
-    const { shell, commands } = fakeShell({
+    const { seam, commands } = fakeShell({
       url: SITE,
       find: [{ stdout: ZERO_MATCH, exitCode: 1 }, { stdout: MATCH }],
     });
-    const out = await browserFind({ shell, css: CSS, url: SITE, ...FAST });
+    const out = await browserFind({ seam, css: CSS, url: SITE, ...FAST });
 
     expect(out.ok).toBe(true);
     expect(out.count).toBe(1);
@@ -166,11 +168,11 @@ describe('browserFind · 找到与找不到', () => {
   });
 
   it('一直失败：把 opencli 自己在 stdout JSON 里说的原因当 message（不是 stderr）', async () => {
-    const { shell } = fakeShell({
+    const { seam } = fakeShell({
       url: SITE,
       find: [{ stdout: ZERO_MATCH, exitCode: 1 }, { stdout: ZERO_MATCH, exitCode: 1 }],
     });
-    const out = await browserFind({ shell, css: CSS, url: SITE, ...FAST });
+    const out = await browserFind({ seam, css: CSS, url: SITE, ...FAST });
 
     expect(out.ok).toBe(false);
     expect(out.code).toBe('cli-exec-failed');
@@ -180,11 +182,11 @@ describe('browserFind · 找到与找不到', () => {
   });
 
   it('超时归成 cli-timeout，且不再折腾页面', async () => {
-    const { shell, commands } = fakeShell({
+    const { seam, commands } = fakeShell({
       url: SITE,
       find: [{ timedOut: true, exitCode: 124 }],
     });
-    const out = await browserFind({ shell, css: CSS, url: SITE, ...FAST });
+    const out = await browserFind({ seam, css: CSS, url: SITE, ...FAST });
 
     expect(out.ok).toBe(false);
     expect(out.code).toBe('cli-timeout');
@@ -193,8 +195,8 @@ describe('browserFind · 找到与找不到', () => {
   });
 
   it('url 没给：只 find，不问页面也不开', async () => {
-    const { shell, commands } = fakeShell({ find: [{ stdout: MATCH }] });
-    const out = await browserFind({ shell, css: CSS, ...FAST });
+    const { seam, commands } = fakeShell({ find: [{ stdout: MATCH }] });
+    const out = await browserFind({ seam, css: CSS, ...FAST });
 
     expect(out.ok).toBe(true);
     expect(commands).toHaveLength(1);
@@ -202,19 +204,19 @@ describe('browserFind · 找到与找不到', () => {
   });
 
   it('open:false：只 find（不说自己在哪一页，也不开）', async () => {
-    const { shell, commands } = fakeShell({
+    const { seam, commands } = fakeShell({
       url: SITE,
       find: [{ stdout: ZERO_MATCH, exitCode: 1 }, { stdout: MATCH }],
     });
-    const out = await browserFind({ shell, css: CSS, url: SITE, open: false, ...FAST });
+    const out = await browserFind({ seam, css: CSS, url: SITE, open: false, ...FAST });
 
     expect(out.ok).toBe(false);
     expect(commands).toHaveLength(1);
   });
 
   it('opencli 根本没起来（find 那条抛）→ cli-exec-failed，带照做的话', async () => {
-    const { shell } = fakeShell({ url: SITE, find: [{ throws: true }] });
-    const out = await browserFind({ shell, css: CSS, url: SITE, ...FAST });
+    const { seam } = fakeShell({ url: SITE, find: [{ throws: true }] });
+    const out = await browserFind({ seam, css: CSS, url: SITE, ...FAST });
 
     expect(out.ok).toBe(false);
     expect(out.code).toBe('cli-exec-failed');
@@ -223,9 +225,9 @@ describe('browserFind · 找到与找不到', () => {
   });
 
   it('session / command / limit / textMax 都能覆盖（命令行每个 token 都加引号）', async () => {
-    const { shell, commands } = fakeShell({ url: SITE, find: [{ stdout: MATCH }] });
+    const { seam, commands } = fakeShell({ url: SITE, find: [{ stdout: MATCH }] });
     await browserFind({
-      shell,
+      seam,
       css: CSS,
       url: SITE,
       session: 'dsh-fx-rate',
@@ -305,8 +307,8 @@ function envless(calls: readonly { env?: Readonly<Record<string, string>> }[]): 
 
 describe('browserFind · 后台静默（问页 + 读 + 打开都不许抢焦点）', () => {
   it('已经在目标站点上：get url + find 两条全带', async () => {
-    const { shell, commands, calls } = fakeShell({ url: SITE, find: [{ stdout: MATCH }] });
-    await browserFind({ shell, css: CSS, url: SITE, ...FAST });
+    const { seam, commands, calls } = fakeShell({ url: SITE, find: [{ stdout: MATCH }] });
+    await browserFind({ seam, css: CSS, url: SITE, ...FAST });
 
     expect(commands).toHaveLength(2);
     expect(backgroundless(commands)).toEqual([]);
@@ -314,8 +316,8 @@ describe('browserFind · 后台静默（问页 + 读 + 打开都不许抢焦点�
   });
 
   it('不在目标站点上：get url + open + find 三条全带', async () => {
-    const { shell, commands, calls } = fakeShell({ url: ['about:blank', SITE], find: [{ stdout: MATCH }] });
-    await browserFind({ shell, css: CSS, url: SITE, ...FAST });
+    const { seam, commands, calls } = fakeShell({ url: ['about:blank', SITE], find: [{ stdout: MATCH }] });
+    await browserFind({ seam, css: CSS, url: SITE, ...FAST });
 
     expect(commands.filter((one) => one.includes("'open'"))).toHaveLength(1);
     expect(backgroundless(commands)).toEqual([]);
@@ -325,8 +327,8 @@ describe('browserFind · 后台静默（问页 + 读 + 打开都不许抢焦点�
 
 describe('browserFind · 读有它自己那条会话（不许碰屏那条）', () => {
   it('默认那条命令里一条都不带屏那条会话名', async () => {
-    const { shell, commands } = fakeShell({ url: ['about:blank', SITE], find: [{ stdout: MATCH }] });
-    await browserFind({ shell, css: CSS, url: SITE, ...FAST });
+    const { seam, commands } = fakeShell({ url: ['about:blank', SITE], find: [{ stdout: MATCH }] });
+    await browserFind({ seam, css: CSS, url: SITE, ...FAST });
 
     expect(commands.length).toBeGreaterThan(0);
     expect(commands.some((one) => one.includes(`'${BROWSER_SCREEN_SESSION}'`))).toBe(false);

@@ -15,6 +15,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DshHostContext } from '@dsh-workbench/shared';
 import { isInstalledCopy, opencliWrapperScript, packageRootOf, prependPath, runDetached, runtimeSeedPaths, runtimeSeedRootOf, seedRuntimeFiles, workshopSeedPlan } from '../index.js';
 
+
 const describePosix = process.platform === 'win32' ? describe.skip : describe;
 
 const roots: string[] = [];
@@ -65,8 +66,11 @@ describePosix('runtimeSeedRootOf', () => {
     expect(runtimeSeedRootOf(ctx)).toBe('/home/dsh/workbench-2');
   });
 
-  it('没有 dshHomePath 服务时回 null（自举宁可不做，也不带崩宿主）', () => {
-    expect(runtimeSeedRootOf({ get: () => undefined } as unknown as DshHostContext)).toBeNull();
+  it('没有 dshHomePath 服务也回工作台根（根算法只有一份）', () => {
+    vi.stubEnv('DSH_HOME', '/home/dsh');
+    expect(runtimeSeedRootOf({ get: () => undefined } as unknown as DshHostContext)).toBe(
+      join('/home/dsh', 'workbench'),
+    );
   });
 });
 

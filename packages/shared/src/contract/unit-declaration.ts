@@ -71,7 +71,9 @@ const TITLE_KEYS = ['zh', 'en'];
 const TOOL_KEYS = ['name', 'writes', 'key'];
 
 const TOOL_KEY_SHAPE = /^[a-z][a-zA-Z0-9]*$/;
-const HOST_KEYS = ['inject', 'optional'];
+const HOST_KEYS = ['inject', 'optional', 'writes'];
+
+const UNIT_WRITE_SCOPES: readonly string[] = ['unit', 'workspace'];
 
 function text(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
@@ -263,6 +265,22 @@ export function declarationProblemsOf(subject: string, raw: unknown): readonly s
       if (host.optional !== undefined) {
         problems.push(...stringArrayProblems(`${subject}: dsh.workbench.host.optional`, host.optional));
       }
+      if (host.writes !== undefined) {
+        const shape = stringArrayProblems(`${subject}: dsh.workbench.host.writes`, host.writes);
+        problems.push(...shape);
+        if (shape.length === 0) {
+          const outsideScopes = (host.writes as readonly string[]).filter(
+            (scope) => !UNIT_WRITE_SCOPES.includes(scope),
+          );
+          if (outsideScopes.length > 0) {
+            problems.push(
+              `${subject}: dsh.workbench.host.writes 里有不认的写入域 ${listOf(outsideScopes)} —— ` +
+                `只认 "unit"（模块自己的数据目录）与 "workspace"（当前会话工作区）两档；` +
+                `模块拿不到产品域与任意路径，别写别的名字（缺省 [] = 不给执行缝门面）`,
+            );
+          }
+        }
+      }
     }
   }
 
@@ -308,6 +326,7 @@ export function readDeclaration(subject: string, raw: unknown): DeclarationRead 
       host: {
         inject: [...(declaration.host.inject ?? [])],
         ...(declaration.host.optional === undefined ? {} : { optional: [...declaration.host.optional] }),
+        writes: [...(declaration.host.writes ?? [])],
       },
       ...(declaration.needs === undefined ? {} : { needs: declaration.needs }),
     },

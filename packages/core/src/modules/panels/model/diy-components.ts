@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared';
-import { dshHome, readTokens, supplyPortOf, shellOf } from '@dsh-workbench/shared/host';
+import { dshHome, readTokens, seamOf, supplyPortOf } from '@dsh-workbench/shared/host';
 import {
   findFileOf,
   refusesEvery,
@@ -93,16 +93,16 @@ export function componentsTool(ctx: DshHostContext): DshToolDefinition {
             '在它根目录跑一次 pnpm install 就有了；workbench_diy_status 会告诉你卡在哪一步',
         );
       }
-      const shell = shellOf(ctx);
-      if (shell === undefined) throw new Error('这台机器没给 shell 服务，读不了组件清单');
+      const seam = seamOf(ctx);
+      if (seam === undefined) throw new Error('这台机器没给 shell 服务，读不了组件清单');
 
       const workdir = local?.dir ?? shellRoot ?? root;
       const fallbackBin = local !== null && shellBin !== null && shellBin !== bin ? shellBin : undefined;
       const [primitives, kit] = await Promise.all([
         wantsPrimitives(scope)
-          ? runSurfaceQuery(shell, bin, 'primitives', workdir, fallbackBin)
+          ? runSurfaceQuery(seam, bin, 'primitives', workdir, fallbackBin)
           : Promise.resolve(undefined),
-        wantsKit(scope) ? runSurfaceQuery(shell, bin, 'kit', workdir, fallbackBin) : Promise.resolve(undefined),
+        wantsKit(scope) ? runSurfaceQuery(seam, bin, 'kit', workdir, fallbackBin) : Promise.resolve(undefined),
       ]);
       const query: SurfaceQuery = {
         ...(primitives === undefined ? {} : { primitives }),

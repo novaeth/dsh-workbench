@@ -12,8 +12,8 @@ import {
   rmSync,
 } from 'node:fs';
 import { delimiter, dirname, join, sep } from 'node:path';
-import type { DshHomePath, DshHostContext } from '@dsh-workbench/shared';
-import { quoteShellArg, quoteShellArgFor } from '@dsh-workbench/shared/host';
+import type { DshHostContext } from '@dsh-workbench/shared';
+import { quoteShellArg, quoteShellArgFor, workbenchRoot } from '@dsh-workbench/shared/host';
 import {
   desktopBundledBins,
   desktopNodeExecutable,
@@ -68,16 +68,8 @@ export function runtimeSeedPaths(root: string, platform: NodeJS.Platform = proce
   };
 }
 
-export function runtimeSeedRootOf(ctx: DshHostContext): string | null {
-  const configured = process.env.DSH_WORKBENCH_HOME?.trim();
-  if (configured !== undefined && configured !== '') return configured;
-  const homePath = ctx.get<DshHomePath>('dshHomePath');
-  if (typeof homePath !== 'function') return null;
-  try {
-    return homePath('workbench');
-  } catch {
-    return null;
-  }
+export function runtimeSeedRootOf(_ctx: DshHostContext): string | null {
+  return workbenchRoot();
 }
 
 export function wrapperRootOf(fallbackRoot: string): string {

@@ -1,10 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { DshAgentPresetRow, DshHostContext } from '@dsh-workbench/shared';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { WAKE_BROWSER_ROUTE } from '@dsh-workbench/shared/contract/protocol/preflight-wake';
 import { registerPreflight } from '../index.js';
 import type { DesktopBrowser } from '../index.js';
 import { ALL_OK } from './preflight-fixtures';
+
+function seamFor(shell: Parameters<typeof createSeam>[0]['shell']) {
+  return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
+
 
 const BROKEN: readonly DshAgentPresetRow[] = [
   { id: 'standard' },
@@ -41,7 +47,7 @@ function wire(
   registerPreflight({
     routes: routes as never,
     ctx: ctx as unknown as DshHostContext,
-    shell: fake.shell,
+    seam: seamFor(fake.shell),
     runtimeCommands: { opencli: 'opencli' },
     warmReads: () => [],
     ...(desktopBrowser === undefined ? {} : { desktopBrowser }),

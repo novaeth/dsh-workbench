@@ -1,6 +1,4 @@
-import type { DshShell } from '@dsh-workbench/shared';
-import { runShell } from '@dsh-workbench/shared/host';
-import { quoteShellArg } from '@dsh-workbench/shared/host';
+import { productWrite, quoteShellArg, type Seam } from '@dsh-workbench/shared/host';
 import { delimiter } from 'node:path';
 import { homedir } from 'node:os';
 import { execaSync } from 'execa';
@@ -26,15 +24,9 @@ export interface ToolchainReport {
 }
 
 async function toolVersion(
-  shell: DshShell,
+  seam: Seam,
   line: string,
-  extra?: {
-    readonly workdir?: string | undefined;
-    readonly sandbox?: {
-      readonly mode: 'read-only' | 'workspace-write' | 'danger-full-access';
-      readonly workspaceRoot: string;
-    } | undefined;
-  } | undefined,
+  extra?: { readonly workdir?: string | undefined } | undefined,
 ): Promise<{
   ok: boolean;
   text: string;
@@ -44,29 +36,33 @@ async function toolVersion(
   sandbox: string;
 }> {
   try {
-    const result = await runShell(shell, line, {
+    const result = await seam.run({
+      command: line,
+      intent: productWrite(),
+      retry: 'safe',
       timeoutMs: 10_000,
       ...(extra?.workdir === undefined ? {} : { workdir: extra.workdir }),
-      ...(extra?.sandbox === undefined ? {} : { sandboxPolicy: extra.sandbox }),
     });
     const text = (result.stdout || result.stderr).trim().split('\n')[0] ?? '';
+    const fact = seam.facts().filter((entry) => entry.command === line).at(-1);
+    const sandbox =
+      fact === undefined
+        ? '（无）'
+        : `mode=${fact.mode} root=${fact.workspaceRoot}${fact.denial === undefined ? '' : ` denial=${fact.denial.scope}`}`;
     return {
       ok: result.exitCode === 0 && !result.timedOut,
       text,
       stalled: result.stalled,
       code: result.exitCode,
       raw: `${result.stdout ?? ''}${result.stderr ?? ''}`.trim().split('\n').slice(0, 2).join(' / '),
-      sandbox:
-        result.sandbox === undefined
-          ? '（无）'
-          : `mode=${result.sandbox.mode ?? '?'} denied=${String(result.sandbox.denied)} runnerFailed=${String(result.sandbox.runnerFailed)}`,
+      sandbox,
     };
   } catch (error) {
     return { ok: false, text: '', stalled: false, code: null, raw: String(error), sandbox: '（抛错）' };
   }
 }
 
-export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainReport> {
+export async function probeDesktopToolchain(seam: Seam): Promise<ToolchainReport> {
   const bundledNode = desktopNodeExecutable();
   const bundledPnpm = desktopPnpmPath();
   const bundledMajor = desktopPnpmVersion()?.split('.')[0];
@@ -77,9 +73,9 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
     : 'pnpm --version';
   const path = desktopRuntimeEnv().PATH;
   const [node, npm, pnpm] = await Promise.all([
-    toolVersion(shell, `${nodeCommand} --version`),
-    toolVersion(shell, 'npm --version'),
-    toolVersion(shell, pnpmLine),
+    toolVersion(seam, `${nodeCommand} --version`),
+    toolVersion(seam, 'npm --version'),
+    toolVersion(seam, pnpmLine),
   ]);
   if (node.stalled || npm.stalled || pnpm.stalled) {
     return {
@@ -115,18 +111,6 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
   ];
   const control: string[] = [];
   if (nodeMissing) {
-    for (const [label, policy] of [
-      ['policy danger-full-access', { mode: 'danger-full-access' as const }],
-      ['policy read-only', { mode: 'read-only' as const }],
-      ['policy workspace-write', { mode: 'workspace-write' as const }],
-    ] as const) {
-      const probe = await toolVersion(shell, 'echo workbench-probe', {
-        sandbox: { ...policy, workspaceRoot: process.cwd() },
-      });
-      control.push(
-        `control ${label}: exit=${String(probe.code)} sandbox=${probe.sandbox} out=${probe.raw.slice(0, 80) || '（空）'}`,
-      );
-    }
     for (const [label, file] of [
       ['direct bundled node', desktopNodeExecutable()],
       ['direct host node', process.execPath],
@@ -147,7 +131,7 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
       ['home', homedir()],
       ['cwd', process.cwd()],
     ] as const) {
-      const probe = await toolVersion(shell, 'echo workbench-probe', { workdir });
+      const probe = await toolVersion(seam, 'echo workbench-probe', { workdir });
       control.push(`control ${label}: exit=${String(probe.code)} out=${probe.raw.slice(0, 80) || '（空）'}`);
     }
   }

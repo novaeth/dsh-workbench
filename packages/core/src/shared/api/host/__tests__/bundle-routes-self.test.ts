@@ -2,10 +2,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { DshHostContext, DshShell } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared';
+import type { Seam } from '@dsh-workbench/shared/host';
 import { PLUGIN_ID, RELEASE_PACKAGES } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { moduleVersionsHandler, resetHoldLog } from '../bundle-routes';
+import { fakeSeamOf } from './seam-fake';
 
 beforeEach(() => {
   resetHoldLog();
@@ -26,7 +28,7 @@ function fakeContext(
 
 type Source = Readonly<Record<string, readonly string[]>>;
 
-function shellWith(source: Source): { shell: DshShell; commands: () => string[] } {
+function shellWith(source: Source): { seam: Seam; commands: () => string[] } {
   const fake = createFakeShell((call) => {
     const spec = (/npm view (\S+)/.exec(call.command)?.[1] ?? '').replace(/^'|'$/g, '');
     const cut = spec.lastIndexOf('@');
@@ -36,7 +38,7 @@ function shellWith(source: Source): { shell: DshShell; commands: () => string[] 
     const hit = asked === '' ? known.at(-1) : known.includes(asked) ? asked : undefined;
     return hit === undefined ? { exitCode: 1, stdout: '' } : { stdout: `${hit}\n` };
   });
-  return { shell: fake.shell, commands: fake.commands };
+  return { seam: fakeSeamOf(fake.shell), commands: fake.commands };
 }
 
 const MANAGER = {
@@ -85,9 +87,9 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
 
   it('★ 同批平台包都铺开了 → 同一条回包里带上它（界面据此给「更新」，不需要第二次往返）', async () => {
     const { dir, cleanup } = coreProfile({});
-    const { shell, commands } = shellWith(released('0.1.19'));
+    const { seam, commands } = shellWith(released('0.1.19'));
 
-    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell)(
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam)(
       new URLSearchParams(),
     )) as { modules: unknown[]; workbench?: Record<string, unknown> };
 
@@ -108,18 +110,18 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
   it('★ 只有外壳这一份上去了（同批平台包还没铺到这一版）→ 不给「更新」，只记一次日志', async () => {
     resetHoldLog();
     const { dir, cleanup } = coreProfile({});
-    const { shell } = shellWith({
+    const { seam } = shellWith({
       [CORE]: ['0.1.19'],
       ...Object.fromEntries(SIBLINGS.map((name) => [name, ['0.1.18']])),
     });
     const warned: string[] = [];
     const ctx = fakeContext({ ...MANAGER }, dir, { warn: (message) => warned.push(message) });
 
-    const first = (await moduleVersionsHandler(ctx, shell)(new URLSearchParams())) as {
+    const first = (await moduleVersionsHandler(ctx, seam)(new URLSearchParams())) as {
       workbench?: Record<string, unknown>;
     };
     const after = warned.length;
-    const second = (await moduleVersionsHandler(ctx, shell)(new URLSearchParams())) as {
+    const second = (await moduleVersionsHandler(ctx, seam)(new URLSearchParams())) as {
       workbench?: Record<string, unknown>;
     };
 
@@ -149,14 +151,14 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
       [CORE]: ['0.1.19'],
       ...Object.fromEntries(SIBLINGS.map((name) => [name, ['0.1.18']])),
     };
-    const { shell } = shellWith(source);
+    const { seam } = shellWith(source);
     const ctx = fakeContext({ ...MANAGER }, dir);
 
-    const before = (await moduleVersionsHandler(ctx, shell)(new URLSearchParams())) as {
+    const before = (await moduleVersionsHandler(ctx, seam)(new URLSearchParams())) as {
       workbench?: Record<string, unknown>;
     };
     for (const name of SIBLINGS) source[name] = ['0.1.18', '0.1.19'];
-    const after = (await moduleVersionsHandler(ctx, shell)(new URLSearchParams({ force: '1' }))) as {
+    const after = (await moduleVersionsHandler(ctx, seam)(new URLSearchParams({ force: '1' }))) as {
       workbench?: Record<string, unknown>;
     };
 
@@ -178,9 +180,9 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
 
   it('★ 源上那份还没盘上这份新（或一样）→ 不带 latest，也不去问同批平台包', async () => {
     const { dir, cleanup } = coreProfile({ version: '0.1.19' });
-    const { shell, commands } = shellWith({ [CORE]: ['0.1.18'] });
+    const { seam, commands } = shellWith({ [CORE]: ['0.1.18'] });
 
-    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell)(
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam)(
       new URLSearchParams(),
     )) as { workbench?: Record<string, unknown> };
 
@@ -196,9 +198,9 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
 
   it('★ 盘上那份与运行中那份都报出去（差多少由界面判，不在这里替它下结论）', async () => {
     const { dir, cleanup } = coreProfile({ version: '0.1.19' });
-    const { shell } = shellWith(released('0.1.19'));
+    const { seam } = shellWith(released('0.1.19'));
 
-    const same = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell, '0.1.19')(
+    const same = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam, '0.1.19')(
       new URLSearchParams(),
     )) as { workbench?: Record<string, unknown> };
 
@@ -210,7 +212,7 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
       registry: 'https://self.example/',
     });
 
-    const swapped = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell, '0.1.18')(
+    const swapped = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam, '0.1.18')(
       new URLSearchParams(),
     )) as { workbench?: Record<string, unknown> };
 
@@ -226,9 +228,9 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
 
   it('拿不到运行中那一版（老宿主 / 读不到 package.json）→ 少一格，不瞎说', async () => {
     const { dir, cleanup } = coreProfile({ version: '0.1.19' });
-    const { shell } = shellWith(released('0.1.19'));
+    const { seam } = shellWith(released('0.1.19'));
 
-    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell)(
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam)(
       new URLSearchParams(),
     )) as { workbench?: Record<string, unknown> };
 
@@ -243,9 +245,9 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
 
   it('★ link: 装的那份 → 记成本仓那份，**不去问源**（它不从源上取，问了也没用）', async () => {
     const { dir, cleanup } = coreProfile({ spec: 'link:/Users/x/dsh-workbench/packages/core' });
-    const { shell, commands } = shellWith(released('0.1.19'));
+    const { seam, commands } = shellWith(released('0.1.19'));
 
-    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell)(
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam)(
       new URLSearchParams(),
     )) as { workbench?: Record<string, unknown> };
 
@@ -292,7 +294,7 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
 
   it('★ 外面那个自更新进程的现场跟着工作台那一格回（没有就少一格）', async () => {
     const { dir, cleanup } = coreProfile({});
-    const { shell } = shellWith(released('0.1.18'));
+    const { seam } = shellWith(released('0.1.18'));
     const update = {
       state: 'failed' as const,
       from: '0.1.18',
@@ -304,11 +306,11 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
 
     const withUpdate = (await moduleVersionsHandler(
       fakeContext({ ...MANAGER }, dir),
-      shell,
+      seam,
       undefined,
       () => update,
     )(new URLSearchParams())) as { selfUpdate?: Record<string, unknown> };
-    const without = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), shell, undefined, () => undefined)(
+    const without = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam, undefined, () => undefined)(
       new URLSearchParams(),
     )) as { selfUpdate?: Record<string, unknown> };
 

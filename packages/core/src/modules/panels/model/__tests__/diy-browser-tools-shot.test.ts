@@ -3,7 +3,8 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fixtureOf } from '@/shared/api/host/__tests__/png-fixtures';
 import { PAGE, createBrowserRig } from '../../__tests__/browser-tools-harness';
-import { BROWSER_TOOLS, clipNote, clipOf, defaultShotPath, deviceClipRect } from '../diy-browser-tools';
+import { BROWSER_TOOLS } from '../diy-browser-tools';
+import { clipNote, clipOf, defaultShotPath, deviceClipRect } from '../diy-browser-clip';
 import {
   DIY_CLICK_TOOL,
   DIY_DIALOG_TOOL,

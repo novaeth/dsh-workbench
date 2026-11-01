@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DshShell } from '@dsh-workbench/shared';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
+import { fakeSeamOf } from '../../__tests__/seam-fake';
 import { ACT_TIMEOUT_MS, SWEEP_TIMEOUT_MS, actBrowser, actErrorOf, stopNetworkExact, type ActStep } from '../diy-browser-act';
 
 interface Step {
@@ -35,7 +36,7 @@ function fakeShell(steps: readonly Step[]) {
       };
     },
   };
-  return { shell: shell as unknown as DshShell, lines, timeouts };
+  return { shell: shell as unknown as DshShell, seam: fakeSeamOf(shell as unknown as DshShell), lines, timeouts };
 }
 
 function step(payload: Record<string, unknown> | undefined, extra: Partial<ActStep> = {}): ActStep {
@@ -48,7 +49,7 @@ const backgroundLine = (command: string, argv: readonly string[]): string =>
 describe('actBrowser：把子命令原样挂到 opencli browser <会话> 上', () => {
   it('★★ 参数各自引号、背景前缀与 --window background 都带上，超时默认 15 秒', async () => {
     const rig = fakeShell([{ stdout: 'noise {"clicked":true} tail' }]);
-    const got = await actBrowser(rig.shell, 'opencli', 'workbench', ['click', '.wb-cardOpen'], undefined, backgroundLine);
+    const got = await actBrowser(rig.seam, 'opencli', 'workbench', ['click', '.wb-cardOpen'], undefined, backgroundLine);
 
     expect(rig.lines[0]).toBe(
       "'opencli' 'browser' 'workbench' 'click' '.wb-cardOpen' '--window' 'background'",
@@ -61,8 +62,8 @@ describe('actBrowser：把子命令原样挂到 opencli browser <会话> 上', (
 
   it('★ 超时可传；抠不出 JSON 时 payload 是 undefined（不假装读到）', async () => {
     const rig = fakeShell([{ stdout: '没有什么 JSON' }, { stdout: '{"matches_n":2}' }]);
-    const first = await actBrowser(rig.shell, 'opencli', 'workbench', ['state'], 1234, backgroundLine);
-    const second = await actBrowser(rig.shell, 'opencli', 'workbench', ['find', '.a'], undefined, backgroundLine);
+    const first = await actBrowser(rig.seam, 'opencli', 'workbench', ['state'], 1234, backgroundLine);
+    const second = await actBrowser(rig.seam, 'opencli', 'workbench', ['find', '.a'], undefined, backgroundLine);
 
     expect(rig.timeouts[0]).toBe(1234);
     expect(first.payload).toBeUndefined();
@@ -71,7 +72,7 @@ describe('actBrowser：把子命令原样挂到 opencli browser <会话> 上', (
 
   it('★ truncated / exitCode 原样跟着回来', async () => {
     const rig = fakeShell([{ stdout: 'x', stderr: 'boom', exitCode: 3, truncated: true }]);
-    const got = await actBrowser(rig.shell, 'opencli', 'workbench', ['state']);
+    const got = await actBrowser(rig.seam, 'opencli', 'workbench', ['state']);
 
     expect(got.ok).toBe(false);
     expect(got.exitCode).toBe(3);
@@ -106,7 +107,7 @@ describe('actErrorOf：四档话术，先超时、再 opencli 的 error 信封',
 describe('stopNetworkExact：按文件精确收掉跟随者', () => {
   it('★★ 一条 shell 行里先读 pid/reaper，再 kill 与 pkill，最后只在 pid 没漂时删掉那两只 pid 文件 —— **数据文件一个字节都不删**', async () => {
     const rig = fakeShell([{ stdout: '' }]);
-    const ok = await stopNetworkExact(rig.shell, '/w/net.jsonl');
+    const ok = await stopNetworkExact(rig.seam, '/w/net.jsonl');
 
     expect(ok).toBe(true);
     expect(rig.lines[0]).toContain(`p="$(cat '/w/net.jsonl.pid' 2>/dev/null)"`);
@@ -123,8 +124,8 @@ describe('stopNetworkExact：按文件精确收掉跟随者', () => {
 
   it('★ 非 0 退出就是没成；超时可传', async () => {
     const rig = fakeShell([{ exitCode: 1 }, { exitCode: 0 }]);
-    const failed = await stopNetworkExact(rig.shell, '/w/net.jsonl', 999);
-    const passed = await stopNetworkExact(rig.shell, '/w/net.jsonl');
+    const failed = await stopNetworkExact(rig.seam, '/w/net.jsonl', 999);
+    const passed = await stopNetworkExact(rig.seam, '/w/net.jsonl');
 
     expect(failed).toBe(false);
     expect(rig.timeouts[0]).toBe(999);

@@ -16,7 +16,7 @@ profile**（插件页一条龙，见 ADR-0037）。
 |---|---|
 | **`packages/core/`** | **外壳**（发布为 `@dsh-workbench/core`）。`src/**`、`scripts/**`、`bin/**`、`arch.config.mjs` 都指这个包里；下面的命令也在这个包目录里跑 |
 | `packages/shared/` | 共享包（`@dsh-workbench/shared`，三个入口：`@dsh-workbench/shared`（浏览器侧）/ `@dsh-workbench/shared/host`（宿主侧）/ `@dsh-workbench/shared/testing`（测试）；另有 `@dsh-workbench/shared/contract/*` 类型子路径）：契约类型 · 纯 lib · i18n · 哑组件 · 平台解析 · host 工厂。收录判据三条（无模块级可变状态 / 不依赖外壳运行时 / 不产生全局副作用），自带 `check-state` 判据 |
-| `packages/module-tools/` | 模块工具包（`@dsh-workbench/module-tools`）：`build` · `check`（十三条判据，`--only <name>` 单跑）· `lint` · `init`，以及 `arch` / `lint` 两个方言入口 |
+| `packages/module-tools/` | 模块工具包（`@dsh-workbench/module-tools`）：`build` · `check`（十四条判据，`--only <name>` 单跑）· `lint` · `init`，以及 `arch` / `lint` 两个方言入口 |
 | `packages/module-hello/` | 最小可安装模块样本（`@dsh-workbench/module-hello`），同时是模块包模板 |
 | `packages/adapter-runtime/` | opencli、浏览器读、DataReader |
 | `packages/adapter-supply/` | 供给、已安装模块、插件来源、registry |
@@ -104,7 +104,7 @@ pnpm run check                        # 门禁：整仓那一套（= `pnpm -w ru
 | 改结构、加域、加面板模块、认清层序与两个运行时 | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
 | 起进程 / 跑 shell 命令（选执行缝还是具名例外） | [`docs/agents/command-execution.md`](docs/agents/command-execution.md) |
 | 给模块作者：加一个模块 / 过门禁 / 发布 | [`packages/core/skills/workbench-module-diy/`](packages/core/skills/workbench-module-diy/SKILL.md) |
-| 模块的构建、十三条判据、模板、设计底稿 | [`packages/module-tools/README.md`](packages/module-tools/README.md) |
+| 模块的构建、十四条判据、模板、设计底稿 | [`packages/module-tools/README.md`](packages/module-tools/README.md) |
 | 共享契约、哑组件、宿主工具、收录判据 | [`packages/shared/README.md`](packages/shared/README.md) |
 | 最小可安装模块样本 | [`packages/module-hello/README.md`](packages/module-hello/README.md) |
 | 想理清设计分层与改动落点 | [`DESIGN-BOUNDARIES.md`](DESIGN-BOUNDARIES.md) |

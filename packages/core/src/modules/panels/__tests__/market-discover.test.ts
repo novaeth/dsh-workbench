@@ -8,6 +8,8 @@ import type { MarketIndexReader } from '@/shared/api/host/market-index-fetch';
 import type { MarketDocReader } from '@/shared/api/host/market-doc';
 import type { MarketSourcesStore } from '@/shared/api/host/market-sources-store';
 import { createMarketDiscover, installTargetOf } from '../model/market-discover';
+import type { Seam } from '@dsh-workbench/shared/host';
+import { fakeSeamOf } from './seam-fake';
 
 const SOURCE: MarketSourceConfig = {
   id: 'team',
@@ -46,7 +48,7 @@ function setup(options: {
   readonly sources?: readonly MarketSourceConfig[];
   readonly selected?: string | null;
   readonly fetchImpl?: ((url: string, init: RequestInit) => Promise<Response>) | undefined;
-  readonly shell?: DshShell | undefined;
+  readonly seam?: Seam | undefined;
   readonly repoDir?: string | undefined;
 }) {
   const sources = options.sources ?? [SOURCE];
@@ -71,7 +73,7 @@ function setup(options: {
     modules: () => options.installed ?? [],
     defaultRegistry: async () => 'https://npm.company.com/',
     shellVersion: '0.3.11',
-    ...(options.shell === undefined ? {} : { shell: options.shell }),
+    ...(options.seam === undefined ? {} : { seam: options.seam }),
     ...(options.fetchImpl === undefined ? {} : { fetchImpl: options.fetchImpl }),
     now: () => 1000,
   });
@@ -175,7 +177,7 @@ describe('git 条的 peer 从缓存仓库读', () => {
         };
       },
     } as unknown as DshShell;
-    const discover = setup({ index: indexOf([entry('@a/x', '0.1.0')]), shell, repoDir });
+    const discover = setup({ index: indexOf([entry('@a/x', '0.1.0')]), seam: fakeSeamOf(shell), repoDir });
     const payload = await discover.snapshot();
     expect(payload.entries[0]?.versions[0]?.compat).toBe('ok');
     rmSync(repoDir, { recursive: true, force: true });

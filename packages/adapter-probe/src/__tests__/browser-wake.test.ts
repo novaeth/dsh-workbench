@@ -3,7 +3,13 @@ import { tmpdir } from 'node:os';
 import { join, win32 } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { createDesktopBrowser } from '../index.js';
+
+function seamFor(shell: Parameters<typeof createSeam>[0]['shell']) {
+  return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
+
 
 const CHROME_APP = '/Applications/Google Chrome.app';
 const EDGE_APP = '/Applications/Microsoft Edge.app';
@@ -41,7 +47,7 @@ function wire(script: Script) {
     return {};
   });
   const desktop = createDesktopBrowser({
-    shell: fake.shell,
+    seam: seamFor(fake.shell),
     command: 'opencli',
     stateFile,
     platform: 'darwin',
@@ -111,7 +117,7 @@ describe('Desktop 浏览器唤醒', () => {
   it('一个能开的浏览器都没有 → no-browser（不白跑 open）', async () => {
     const fake = createFakeShell(() => ({ stdout: disconnected() }));
     const desktop = createDesktopBrowser({
-      shell: fake.shell,
+      seam: seamFor(fake.shell),
       command: 'opencli',
       stateFile: join(tmpdir(), 'wb-wake-none', 'browser.json'),
       platform: 'darwin',
@@ -157,7 +163,7 @@ describe('Desktop 浏览器唤醒', () => {
       return {};
     });
     const desktop = createDesktopBrowser({
-      shell: fake.shell,
+      seam: seamFor(fake.shell),
       command: 'opencli',
       stateFile,
       platform: 'win32',
@@ -177,7 +183,7 @@ describe('Desktop 浏览器唤醒', () => {
   it('非 macOS/Linux/Windows 的平台仍然 unsupported，一条命令都不发', async () => {
     const fake = createFakeShell([]);
     const desktop = createDesktopBrowser({
-      shell: fake.shell,
+      seam: seamFor(fake.shell),
       command: 'opencli',
       stateFile: join(tmpdir(), 'wb-wake-other', 'browser.json'),
       platform: 'freebsd',

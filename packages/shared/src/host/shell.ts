@@ -54,7 +54,7 @@ export interface DshShellSandboxPolicy {
 
 export function withSandboxPolicy(shell: DshShell, policy: DshShellSandboxPolicy): DshShell {
   return {
-    resolve: (request) => shell.resolve({ ...request, sandboxPolicy: policy }),
+    resolve: (request) => shell.resolve({ ...request, sandboxPolicy: request.sandboxPolicy ?? policy }),
     execute: (spec) => shell.execute(spec),
   };
 }

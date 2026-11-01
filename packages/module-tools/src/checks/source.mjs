@@ -173,7 +173,7 @@ function resolveLocal(pkgDir, unit, fromFile, specifier) {
   return undefined;
 }
 
-function reachableFrom(pkgDir, unit, entry) {
+export function reachableFrom(pkgDir, unit, entry) {
   const seen = new Set();
   const start = join(pkgDir, entry);
   if (!existsSync(start)) return seen;

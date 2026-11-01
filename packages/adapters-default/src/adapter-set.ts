@@ -1,6 +1,6 @@
-import type { DshHostContext, DshShell } from '@dsh-workbench/shared';
-import type { AdapterSet } from '@dsh-workbench/shared/host';
-import { ADAPTER_SET_API_VERSION, runningVersionOf, shellOf } from '@dsh-workbench/shared/host';
+import type { DshHostContext } from '@dsh-workbench/shared';
+import type { AdapterSet, Seam } from '@dsh-workbench/shared/host';
+import { ADAPTER_SET_API_VERSION, runningVersionOf, seamOf } from '@dsh-workbench/shared/host';
 import { createCommandReader, createDataReader, createGitReader, createLibReader, opencliCommandOf } from '@dsh-workbench/adapter-runtime';
 import { dshPluginsHandler, profileDirOf } from '@dsh-workbench/adapter-supply';
 import { createHostActions } from '@dsh-workbench/adapter-profile';
@@ -11,12 +11,12 @@ import { createRuntimePort } from './runtime-port.js';
 export const DEFAULT_ADAPTER_SET_ID = '@dsh-workbench/adapters-default';
 
 export interface DefaultAdapterSetOptions {
-  readonly shell?: DshShell | undefined;
+  readonly seam?: Seam | undefined;
   readonly logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
 }
 
 export function createAdapterSet(ctx: DshHostContext, options: DefaultAdapterSetOptions = {}): AdapterSet {
-  const shell = options.shell ?? shellOf(ctx);
+  const seam = options.seam ?? seamOf(ctx);
   const logger = options.logger ?? ctx.logger;
   const runtime = createRuntimePort();
   const opencli = opencliCommandOf(ctx);
@@ -25,13 +25,13 @@ export function createAdapterSet(ctx: DshHostContext, options: DefaultAdapterSet
     apiVersion: ADAPTER_SET_API_VERSION,
     id: DEFAULT_ADAPTER_SET_ID,
     version: runningVersionOf(import.meta.url) ?? '0.0.0',
-    data: createDataReader({ shell, command: opencli.command }),
+    data: createDataReader({ seam, command: opencli.command }),
     libs: createLibReader(),
-    ...(shell === undefined
+    ...(seam === undefined
       ? {}
       : {
-          git: createGitReader({ shell, ...(logger === undefined ? {} : { logger }) }),
-          commands: createCommandReader({ shell }),
+          git: createGitReader({ seam, ...(logger === undefined ? {} : { logger }) }),
+          commands: createCommandReader({ seam }),
         }),
     supply,
     modules: supply,
@@ -43,7 +43,7 @@ export function createAdapterSet(ctx: DshHostContext, options: DefaultAdapterSet
     probe: createProbePort(),
     runtime,
     plugins: createPluginSurface({
-      shell,
+      seam,
       command: opencli.command,
       ...(logger === undefined ? {} : { logger }),
     }),

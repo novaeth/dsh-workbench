@@ -76,6 +76,7 @@ description: 在工作台里把当前面板调明白，或者给它造一块新�
 | DIY 工具族的参数与返回 | [FAMILY.md](FAMILY.md) |
 | 面板何时刷新、事实名 | [LINKAGE.md](LINKAGE.md) |
 | 落点、模板文件、命令、两个面 | [BUILD.md](BUILD.md) |
+| 起子进程、写入域（执行缝门面） | [BUILD.md](BUILD.md) §5 |
 | 依赖、禁区、安装、热换、发布 | [WIRING.md](WIRING.md) |
 | 门禁报错、卡片故障取证 | [REVIEW.md](REVIEW.md) |
 

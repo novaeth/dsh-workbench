@@ -1,5 +1,4 @@
-import type { DshShell } from '@dsh-workbench/shared';
-import type { PluginSourceCommand } from '@dsh-workbench/shared/host';
+import type { PluginSourceCommand, Seam } from '@dsh-workbench/shared/host';
 import type { BundleChange, BundleInstalledPlugin } from '@/kernel/contract/bundle-install';
 import type { BundleManager } from '@dsh-workbench/shared/host';
 import type { InstalledModule } from '@dsh-workbench/shared/host';
@@ -15,7 +14,7 @@ export interface BundleInstallDeps {
   readonly options?: BundleInstallOptions | undefined;
   readonly registry?: string | undefined;
   readonly command: string;
-  readonly shell?: DshShell | undefined;
+  readonly seam?: Seam | undefined;
   readonly supply?: SupplyPort | undefined;
   readonly manager: BundleManager;
   readonly installed?: ((pkg: string) => InstalledModule) | undefined;
@@ -139,11 +138,11 @@ async function settle(
 }
 
 export async function installRouted(deps: BundleInstallDeps): Promise<BundleInstallOutcome> {
-  const { spec, options, registry, shell } = deps;
+  const { spec, options, registry, seam } = deps;
   const supply = deps.supply ?? requireSupply();
   const route = await supply.packageRouteOf({
     spec,
-    ...(shell === undefined ? {} : { shell }),
+    ...(seam === undefined ? {} : { seam }),
     ...(registry === undefined ? {} : { registry }),
   });
   if (route === undefined || route.kind === 'dsh-bundle') return installDshBundle(deps, spec, options);

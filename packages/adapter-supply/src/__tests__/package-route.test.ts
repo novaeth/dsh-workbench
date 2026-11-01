@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DshShell } from '@dsh-workbench/shared';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { OPENCLI_MANIFEST_FILE } from '../index.js';
 import { LOCAL_PLUGIN_ENV, packageRouteOf, pluginInstallPlan, resetPackageRouteCache } from '../index.js';
 
@@ -27,6 +28,7 @@ function put(at: string, file: string, body: unknown): void {
 
 function shellWith(options: { readonly view?: string; readonly files?: Readonly<Record<string, string>> }): {
   shell: DshShell;
+  seam: ReturnType<typeof createSeam>;
   commands: string[];
 } {
   const commands: string[] = [];
@@ -69,7 +71,7 @@ function shellWith(options: { readonly view?: string; readonly files?: Readonly<
       };
     },
   } as unknown as DshShell;
-  return { shell, commands };
+  return { shell, seam: createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' }), commands };
 }
 
 afterEach(() => {
@@ -112,9 +114,9 @@ describe('按内容决定走哪条路', () => {
   });
 
   it('★ 源上的包：只看元数据就够的（写了 dsh）不下载内容', async () => {
-    const { shell, commands } = shellWith({ view: '{"bundle":{}}' });
+    const { seam, commands } = shellWith({ view: '{"bundle":{}}' });
 
-    await expect(packageRouteOf({ spec: '@t/mod@1.2.3', shell, registry: REGISTRY })).resolves.toEqual({
+    await expect(packageRouteOf({ seam, spec: '@t/mod@1.2.3', registry: REGISTRY })).resolves.toEqual({
       kind: 'dsh-bundle',
     });
     expect(commands).toHaveLength(1);
@@ -123,12 +125,12 @@ describe('按内容决定走哪条路', () => {
   });
 
   it('★ 源上的包：元数据里没有那个信号 → 把包拉下来看内容', async () => {
-    const { shell, commands } = shellWith({
+    const { seam, commands } = shellWith({
       view: '{}',
       files: { 'package.json': '{"name":"@t/demo"}', 'opencli-plugin.json': '{"name":"demo"}', 'list.js': 'x' },
     });
 
-    await expect(packageRouteOf({ spec: '@t/demo@1.0.0', shell, registry: REGISTRY })).resolves.toEqual({
+    await expect(packageRouteOf({ seam, spec: '@t/demo@1.0.0', registry: REGISTRY })).resolves.toEqual({
       kind: 'runtime-plugin',
       pkg: '@t/demo',
       pluginName: 'demo',
@@ -137,41 +139,41 @@ describe('按内容决定走哪条路', () => {
   });
 
   it('★ 源上的包：内容里两样都没有 → neither（这才是该拒的那一类）', async () => {
-    const { shell } = shellWith({ view: '{}', files: { 'package.json': '{"name":"@t/demo"}' } });
+    const { seam } = shellWith({ view: '{}', files: { 'package.json': '{"name":"@t/demo"}' } });
 
-    await expect(packageRouteOf({ spec: '@t/demo', shell, registry: REGISTRY })).resolves.toEqual({
+    await expect(packageRouteOf({ seam, spec: '@t/demo', registry: REGISTRY })).resolves.toEqual({
       kind: 'neither',
       pkg: '@t/demo',
     });
   });
 
   it('★ 看过的结论短期记住：同一个 spec + 同一个源不再问第二遍（先判定再装 = 只下一次）', async () => {
-    const { shell, commands } = shellWith({
+    const { seam, commands } = shellWith({
       view: '{}',
       files: { 'package.json': '{"name":"@t/demo"}', 'opencli-plugin.json': '{"name":"demo"}', 'list.js': 'x' },
     });
 
-    await packageRouteOf({ spec: '@t/demo', shell, registry: REGISTRY });
+    await packageRouteOf({ seam, spec: '@t/demo', registry: REGISTRY });
     const first = commands.length;
-    await packageRouteOf({ spec: '@t/demo', shell, registry: REGISTRY });
+    await packageRouteOf({ seam, spec: '@t/demo', registry: REGISTRY });
 
     expect(first).toBeGreaterThan(1);
     expect(commands).toHaveLength(first);
   });
 
   it('★ 没有源 / 没有执行缝 → 不去猜，交给 dsh（猜错比不判更坏）', async () => {
-    const { shell, commands } = shellWith({ view: '{}' });
+    const { seam, commands } = shellWith({ view: '{}' });
 
-    await expect(packageRouteOf({ spec: '@t/demo', shell })).resolves.toBeUndefined();
+    await expect(packageRouteOf({ seam, spec: '@t/demo' })).resolves.toBeUndefined();
     await expect(packageRouteOf({ spec: '@t/demo', registry: REGISTRY })).resolves.toBeUndefined();
     expect(commands).toEqual([]);
   });
 
   it('★ git / tarball 的 spec 不判（不发明下载预检，口径同 ADR-0038）', async () => {
-    const { shell, commands } = shellWith({ view: '{}' });
+    const { seam, commands } = shellWith({ view: '{}' });
 
     for (const spec of ['github:o/r', 'https://example.test/a.tgz']) {
-      await expect(packageRouteOf({ spec, shell, registry: REGISTRY }), spec).resolves.toBeUndefined();
+      await expect(packageRouteOf({ seam, spec, registry: REGISTRY }), spec).resolves.toBeUndefined();
     }
     expect(commands).toEqual([]);
   });

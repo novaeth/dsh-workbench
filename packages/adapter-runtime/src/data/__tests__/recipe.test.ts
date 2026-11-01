@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import type { DshShell } from '@dsh-workbench/shared';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+
+function seamFor(shell: DshShell) {
+  return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
 import type { RequestRecipe } from '@dsh-workbench/shared/host';
 import { createDataReader } from '../index.js';
 
@@ -11,7 +17,7 @@ const RECIPE: RequestRecipe = {
 
 function readerOf(plan: Parameters<typeof createFakeShell>[0]) {
   const fake = createFakeShell(plan);
-  return { reader: createDataReader({ shell: fake.shell, channel: false }), fake };
+  return { reader: createDataReader({ seam: seamFor(fake.shell), channel: false }), fake };
 }
 
 describe('DataReader.request · 配方读', () => {
@@ -21,7 +27,7 @@ describe('DataReader.request · 配方读', () => {
 
     expect(result).toEqual({ ok: true, data: { balance: 3 } });
     expect(fake.commands()[0]).toContain("'browser' 'workbench-read' 'eval'");
-    expect(fake.calls[0]?.env).toEqual({ OPENCLI_WINDOW: 'background' });
+    expect(fake.calls[0]?.env).toMatchObject({ OPENCLI_WINDOW: 'background' });
   });
 
   it('text 响应 → 解包成字符串', async () => {

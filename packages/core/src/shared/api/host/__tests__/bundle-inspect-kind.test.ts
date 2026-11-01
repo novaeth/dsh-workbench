@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { fakeSeamOf } from './seam-fake';
 import type { DshHostContext } from '@dsh-workbench/shared';
 import type { SupplyPort } from '@dsh-workbench/shared/host';
 import { createPackageRouter, splitNpmSpec } from '@dsh-workbench/shared/host';
@@ -20,7 +21,10 @@ function opencliSupply(): SupplyPort {
 
 function fakeContext(manager: unknown, shell?: unknown): DshHostContext {
   const known: Record<string, unknown> = { pluginManager: manager, workbenchAdapters: { supply: opencliSupply() } };
-  if (shell !== undefined) known.shell = shell;
+  if (shell !== undefined) {
+    known.shell = shell;
+    known.workbenchSeam = fakeSeamOf(shell as never);
+  }
   return { get: (name: string) => known[name] } as unknown as DshHostContext;
 }
 

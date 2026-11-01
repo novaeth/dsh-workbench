@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { BROWSER_RECORD_SESSION } from '@dsh-workbench/shared/host';
 import { RECORD_STALE_MS } from '@dsh-workbench/shared/host';
 import type { DshHostContext, DshShell } from '@dsh-workbench/shared';
+import type { Seam } from '@dsh-workbench/shared/host';
+import { fakeSeamOf } from '../../__tests__/seam-fake';
 import { takeHeldNotices } from '@/shared/api/host/diy-debug-act';
 import { createDiyRig } from '../../__tests__/diy-harness';
 import { ARM_OK, GET, POST, heldStore, line } from '../../__tests__/record-fixtures';
@@ -196,7 +198,7 @@ describe('录制交接：半路失败与实话（每一档都单独说）', () =
 
     await expect(
       releaseQuietly({
-        shell: broken,
+        seam: fakeSeamOf(broken),
         command: 'opencli',
         session: BROWSER_RECORD_SESSION,
         url: 'https://inventory.example.com/env',
@@ -335,12 +337,12 @@ describe('录制交接：半路失败与实话（每一档都单独说）', () =
         { stdout: JSON.stringify({ ok: true, phase: 'finished', t0: at, t1: at + 1000, calls: [POST(), GET()] }) },
       ],
     });
-    const shell = built.ctx.get('shell') as unknown as DshShell;
+    const seam = built.ctx.get('workbenchSeam') as unknown as Seam;
     const ctx = built.ctx as unknown as DshHostContext;
 
     const waiting = await watchFinishStepOf({
       ctx,
-      shell,
+      seam,
       command: '',
       sessionId: 's1',
       store: record,
@@ -349,7 +351,7 @@ describe('录制交接：半路失败与实话（每一档都单独说）', () =
     });
     const done = await watchFinishStepOf({
       ctx,
-      shell,
+      seam,
       command: '',
       sessionId: 's1',
       store: record,
@@ -375,12 +377,12 @@ describe('录制交接：半路失败与实话（每一档都单独说）', () =
     const old = Date.now() - RECORD_STALE_MS - 1000;
     record.started('s1', old, old);
     const built = rig.harness({ withTools: true, pact: false, record, probe: [] });
-    const shell = built.ctx.get('shell') as unknown as DshShell;
+    const seam = built.ctx.get('workbenchSeam') as unknown as Seam;
     const ctx = built.ctx as unknown as DshHostContext;
 
     const step = await watchFinishStepOf({
       ctx,
-      shell,
+      seam,
       command: '',
       sessionId: 's1',
       store: record,
@@ -400,12 +402,12 @@ describe('录制交接：半路失败与实话（每一档都单独说）', () =
     const at = Date.now();
     record.started('s1', at, at);
     const built = rig.harness({ withTools: true, pact: false, record, probe: [] });
-    const shell = built.ctx.get('shell') as unknown as DshShell;
+    const seam = built.ctx.get('workbenchSeam') as unknown as Seam;
     const ctx = built.ctx as unknown as DshHostContext;
 
     const step = await watchFinishStepOf({
       ctx,
-      shell,
+      seam,
       command: '',
       sessionId: 's9',
       store: record,

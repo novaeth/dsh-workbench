@@ -79,6 +79,8 @@ const RELEASE_HELP = `
   --index auto|none|<目录|git 地址>                     发布后要更新的索引源
   --index-source <id> --index-ref <分支> --index-path <索引路径> --index-policy artifacts-in-repo|catalog-only
   --resume                                              上次中断后接着发（用记录里的出口与版本）
+  --workspace-only                                      只做写工作区那几步（构建/检查/提交），索引与产物流给 --index-only
+  --index-only                                          接着 --workspace-only 的记录只做产品侧（索引/发布/产物）
   --dry-run --verify --yes --json`;
 
 const MARKET_INIT_HELP = `
@@ -97,7 +99,7 @@ release --changelog-note "这一版改了什么"（文件不在会先建）。`;
 
 const COMMANDS = {
   build: '出 dist/host.js（单文件 ESM）与 client.js（套 loader 壳）',
-  check: '十三条判据；--only 单跑，也当查询口用；--list 只列判据元数据',
+  check: '十四条判据；--only 单跑，也当查询口用；--list 只列判据元数据',
   init: '建模块骨架（--dir / --template diy / --description；只有 diy 一个模板）',
   'market-init': '初始化市场索引仓库（写 market/ 与 README，推首个 commit）',
   design: '设计底稿：init 填 / check 查空格 / render 生成 README / accept 打勾',

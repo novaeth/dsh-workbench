@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { describe, expect, it } from 'vitest';
 import { filesOf, findFileOf, installedVersionOf, queryCommandOf, renderNameText, runSurfaceQuery, toolchainBinAmong, toolchainBinOf } from '../diy-components';
+import { fakeSeamOf } from './seam-fake';
 
 const PACKAGES_DIR = join(import.meta.dirname, '..', '..', '..', '..', '..', '..');
 const MODULE_TOOL_BIN = join(PACKAGES_DIR, 'module-tools', 'bin', 'dsh-wb-module.mjs');
@@ -15,10 +16,10 @@ describe('workbench_diy_components · 工具链回话不对的时候', () => {
     const reply = () => ({ exitCode: 2, stdout: 'line-a\nline-b\nline-c\nline-d\n', stderr: 'boom\n' });
 
     await expect(
-      runSurfaceQuery(createFakeShell(reply).shell, '/w/bin/dsh-wb-module', 'primitives', '/w/root'),
+      runSurfaceQuery(fakeSeamOf(createFakeShell(reply).shell), '/w/bin/dsh-wb-module', 'primitives', '/w/root'),
     ).rejects.toThrow(/没跑通（exit 2）/);
     await expect(
-      runSurfaceQuery(createFakeShell(reply).shell, '/w/bin/dsh-wb-module', 'kit', '/w/root'),
+      runSurfaceQuery(fakeSeamOf(createFakeShell(reply).shell), '/w/bin/dsh-wb-module', 'kit', '/w/root'),
     ).rejects.toThrow(/c \| line-d/);
   });
 
@@ -26,10 +27,10 @@ describe('workbench_diy_components · 工具链回话不对的时候', () => {
     const reply = () => ({ stdout: 'Command failed\nplain text\n' });
 
     await expect(
-      runSurfaceQuery(createFakeShell(reply).shell, '/w/bin/dsh-wb-module', 'primitives', '/w/root'),
+      runSurfaceQuery(fakeSeamOf(createFakeShell(reply).shell), '/w/bin/dsh-wb-module', 'primitives', '/w/root'),
     ).rejects.toThrow(/没回 JSON/);
     await expect(
-      runSurfaceQuery(createFakeShell(reply).shell, '/w/bin/dsh-wb-module', 'kit', '/w/root'),
+      runSurfaceQuery(fakeSeamOf(createFakeShell(reply).shell), '/w/bin/dsh-wb-module', 'kit', '/w/root'),
     ).rejects.toThrow(/plain text/);
   });
 
@@ -37,7 +38,7 @@ describe('workbench_diy_components · 工具链回话不对的时候', () => {
     const payload = { buckets: { components: ['Card'] }, problems: ['@neg/module-kit: 产物用了这份外壳里没有的 kit.components.StateBlock'] };
     const fake = createFakeShell(() => ({ exitCode: 1, stdout: `${JSON.stringify(payload)}\n`, stderr: '' }));
 
-    const got = await runSurfaceQuery(fake.shell, '/w/bin/dsh-wb-module', 'kit', '/w/root');
+    const got = await runSurfaceQuery(fakeSeamOf(fake.shell), '/w/bin/dsh-wb-module', 'kit', '/w/root');
     expect(got).toEqual({ buckets: { components: ['Card'] } });
     expect('problems' in got).toBe(false);
   });
@@ -46,24 +47,24 @@ describe('workbench_diy_components · 工具链回话不对的时候', () => {
     const findings = '@neg/module-kit: 产物用了这份外壳里没有的 kit.components.StateBlock —— 卡片首帧会炸';
     const fake = createFakeShell(() => ({ exitCode: 1, stdout: `${findings}\n`, stderr: '' }));
 
-    await expect(runSurfaceQuery(fake.shell, '/w/bin/dsh-wb-module', 'kit', '/w/root')).rejects.toThrow(
+    await expect(runSurfaceQuery(fakeSeamOf(fake.shell), '/w/bin/dsh-wb-module', 'kit', '/w/root')).rejects.toThrow(
       /不是工具链坏了，是工作区里有模块过不了判据/,
     );
-    await expect(runSurfaceQuery(fake.shell, '/w/bin/dsh-wb-module', 'kit', '/w/root')).rejects.toThrow(
+    await expect(runSurfaceQuery(fakeSeamOf(fake.shell), '/w/bin/dsh-wb-module', 'kit', '/w/root')).rejects.toThrow(
       /kit.components.StateBlock/,
     );
   });
 
   it('合法 JSON 但不是对象（比如就一个 null）：当"没回 JSON"处理 —— 不假装是空表', async () => {
     await expect(
-      runSurfaceQuery(createFakeShell(() => ({ stdout: 'null' })).shell, '/w/bin/dsh-wb-module', 'kit', '/w/root'),
+      runSurfaceQuery(fakeSeamOf(createFakeShell(() => ({ stdout: 'null' })).shell), '/w/bin/dsh-wb-module', 'kit', '/w/root'),
     ).rejects.toThrow(/没回 JSON/);
   });
 
   it('★ 没回 JSON 又没给后备：报错点明"把 module-tools 升到 ^0.3.4"', async () => {
     const fake = createFakeShell(() => ({ stdout: '✔ 人话一行\n' }));
 
-    await expect(runSurfaceQuery(fake.shell, '/w/old/dsh-wb-module', 'kit', '/w/root')).rejects.toThrow(
+    await expect(runSurfaceQuery(fakeSeamOf(fake.shell), '/w/old/dsh-wb-module', 'kit', '/w/root')).rejects.toThrow(
       /把 @dsh-workbench\/module-tools 升到 \^0\.3\.4/,
     );
     expect(fake.calls).toHaveLength(1);
@@ -75,7 +76,7 @@ describe('workbench_diy_components · 工具链回话不对的时候', () => {
       stdout: String(call.command).includes('/w/old/') ? '✔ 人话一行\n' : `${JSON.stringify(payload)}\n`,
     }));
 
-    const got = await runSurfaceQuery(fake.shell, '/w/old/dsh-wb-module', 'primitives', '/w/root', '/w/new/dsh-wb-module');
+    const got = await runSurfaceQuery(fakeSeamOf(fake.shell), '/w/old/dsh-wb-module', 'primitives', '/w/root', '/w/new/dsh-wb-module');
 
     expect(got).toEqual(payload);
     expect(fake.calls).toHaveLength(2);
@@ -86,7 +87,7 @@ describe('workbench_diy_components · 工具链回话不对的时候', () => {
   it('★ 本仓那份就跑得通 ⇒ 不碰外壳自带那份（只发一条命令）', async () => {
     const fake = createFakeShell(() => ({ stdout: JSON.stringify({ kit: {} }) }));
 
-    await runSurfaceQuery(fake.shell, '/w/old/dsh-wb-module', 'kit', '/w/root', '/w/new/dsh-wb-module');
+    await runSurfaceQuery(fakeSeamOf(fake.shell), '/w/old/dsh-wb-module', 'kit', '/w/root', '/w/new/dsh-wb-module');
 
     expect(fake.calls).toHaveLength(1);
   });
@@ -95,7 +96,7 @@ describe('workbench_diy_components · 工具链回话不对的时候', () => {
     const fake = createFakeShell(() => ({ stdout: '✔ 人话一行\n' }));
 
     await expect(
-      runSurfaceQuery(fake.shell, '/w/old/dsh-wb-module', 'kit', '/w/root', '/w/new/dsh-wb-module'),
+      runSurfaceQuery(fakeSeamOf(fake.shell), '/w/old/dsh-wb-module', 'kit', '/w/root', '/w/new/dsh-wb-module'),
     ).rejects.toThrow(/连跑着的那份外壳自带的工具链也没回 JSON/);
     expect(fake.calls).toHaveLength(2);
   });
@@ -122,7 +123,7 @@ describe('workbench_diy_components · 真跑一遍工具链', () => {
           stdout: execFileSync('/bin/sh', ['-c', call.command], { cwd: call.workdir, encoding: 'utf8' }),
         }));
 
-        const payload = await runSurfaceQuery(fake.shell, bin as string, 'primitives', root);
+        const payload = await runSurfaceQuery(fakeSeamOf(fake.shell), bin as string, 'primitives', root);
 
         expect(fake.calls[0]?.workdir).toBe(root);
         expect(installedVersionOf(payload)).toMatch(/^\d+\.\d+\.\d+/);

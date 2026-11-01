@@ -1,17 +1,24 @@
 import type {
   DshHostContext,
-  DshShell,
   DshToolDefinition,
   DshToolRegistry,
   DshToolRunContext,
 } from '@dsh-workbench/shared';
-import { BROWSER_READ_SESSION, shellOf } from '@dsh-workbench/shared/host';
-import { dirname, join } from 'node:path';
+import {
+  BROWSER_READ_SESSION,
+  pathsWrite,
+  productWrite,
+  seamOf,
+  type Seam,
+  type WriteIntent,
+} from '@dsh-workbench/shared/host';
+import { dirname } from 'node:path';
 import { cliCommandOf } from '@dsh-workbench/shared/host';
-import { cropPngFile, type PngRect } from '@/shared/api/host/png-crop';
+import { cropPngFile } from '@/shared/api/host/png-crop';
 import { asNumber, asRecord, asText, OUTPUT, plainJson } from './diy-context';
 import { surfaceOf } from '@/shared/api/host/runtime-surface';
 import { jsonOf, LOOK_TIMEOUT_MS, runBrowserStep, type LineMaker } from './diy-browser';
+import { clipNote, clipOf, defaultShotPath, deviceClipRect } from './diy-browser-clip';
 import { ensureDirOf } from '@/shared/api/host/diy-artifacts';
 import { pageAt, type PageHandle } from './diy-page';
 import { UNIT_PROP } from './diy-schema';
@@ -39,13 +46,6 @@ const CARD_TAIL = ' .wb-card';
 const VIEWPORT_SCRIPT = '({ dpr: window.devicePixelRatio, width: window.innerWidth, height: window.innerHeight })';
 
 export const CARD_TOKEN = '$card';
-
-export interface PngClip {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
 
 export type CssTarget =
   | { readonly kind: 'positional'; readonly at: number; readonly onlyWhenFirst?: string | undefined }
@@ -114,49 +114,6 @@ export function argvOf(row: BrowserToolRow, raw: Record<string, unknown>, unit: 
   if (row.css === undefined || asText(raw['scope']) !== 'card') return tokens;
   if (row.css.kind === 'flag') return prefixValue(tokens, row.css.flag, card);
   return prefixPositional(tokens, row.css.at, card, row.css.onlyWhenFirst);
-}
-
-function finite(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
-
-export function clipOf(value: unknown): PngClip | undefined {
-  if (typeof value !== 'object' || value === null) return undefined;
-  const raw = value as Record<string, unknown>;
-  const x = finite(raw['x']);
-  const y = finite(raw['y']);
-  const width = finite(raw['width']);
-  const height = finite(raw['height']);
-  if (x === undefined || y === undefined || width === undefined || height === undefined) return undefined;
-  if (x < 0 || y < 0 || width <= 0 || height <= 0) return undefined;
-  return { x, y, width, height };
-}
-
-export function deviceClipRect(clip: PngClip, dpr: number): PngRect {
-  const scale = Number.isFinite(dpr) && dpr > 0 ? dpr : 1;
-  return {
-    x: Math.max(0, Math.round(clip.x * scale)),
-    y: Math.max(0, Math.round(clip.y * scale)),
-    width: Math.max(1, Math.round(clip.width * scale)),
-    height: Math.max(1, Math.round(clip.height * scale)),
-  };
-}
-
-export function clipNote(clip: PngClip, viewport: { readonly width: number; readonly height: number }): string {
-  if (viewport.width <= 0 || viewport.height <= 0) {
-    return '没读到视口尺寸（那条量 dpr / innerWidth 的 eval 没回来）—— 给的是整屏图，裁不了';
-  }
-  const inside =
-    clip.x + clip.width <= viewport.width && clip.y + clip.height <= viewport.height && viewport.width > 0;
-  if (inside) return '';
-  return (
-    `要裁的那块 ${String(clip.x)},${String(clip.y)} ${String(clip.width)}×${String(clip.height)} 不在视口里` +
-    `（视口 ${String(viewport.width)}×${String(viewport.height)}）—— 给的是整屏图`
-  );
-}
-
-export function defaultShotPath(dir: string, unit: string, stamp: number): string {
-  return join(dir, `${unit === '' ? 'page' : unit}-${String(stamp)}.png`);
 }
 
 export const BROWSER_TOOLS: readonly BrowserToolRow[] = [
@@ -298,7 +255,7 @@ function parametersOf(row: BrowserToolRow, command: string): Record<string, unkn
 
 async function viewportOf(page: PageHandle): Promise<{ dpr: number; width: number; height: number }> {
   const step = await runBrowserStep(
-    page.shell,
+    page.seam,
     page.command,
     ['browser', page.session, 'eval', VIEWPORT_SCRIPT, '--window', 'background'],
     LOOK_TIMEOUT_MS,
@@ -326,9 +283,9 @@ function hostOf(url: string): string {
   }
 }
 
-async function onSiteOnce(shell: DshShell, command: string, site: string, line?: LineMaker): Promise<boolean> {
+async function onSiteOnce(seam: Seam, command: string, site: string, line?: LineMaker): Promise<boolean> {
   const step = await runBrowserStep(
-    shell,
+    seam,
     command,
     ['browser', BROWSER_READ_SESSION, 'get', 'url', '--window', 'background'],
     LOOK_TIMEOUT_MS,
@@ -337,7 +294,7 @@ async function onSiteOnce(shell: DshShell, command: string, site: string, line?:
   const want = hostOf(site);
   if (want === '' || hostOf(step.stdout.trim()) === want) return false;
   await runBrowserStep(
-    shell,
+    seam,
     command,
     ['browser', BROWSER_READ_SESSION, 'open', site, '--window', 'background'],
     LOOK_TIMEOUT_MS,
@@ -377,16 +334,16 @@ async function runReadTool(
 ): Promise<Record<string, unknown>> {
   const refused = readRefusalOf(row, raw);
   if (refused !== '') throw new Error(refused);
-  const shell = shellOf(ctx);
-  if (shell === undefined) throw new Error('这台机器上没有 shell 服务，驱动不了浏览器');
+  const seam = seamOf(ctx);
+  if (seam === undefined) throw new Error('这台机器上没有 shell 服务，驱动不了浏览器');
   const command = cliCommandOf(ctx);
   const requested = asNumber(raw['timeoutMs']);
   const timeoutMs = requested !== undefined && requested > 0 ? requested : DEFAULT_TIMEOUT_MS;
   const argv = stringsOf(raw['args']);
   const line = surfaceOf(ctx)?.background;
-  const opened = await onSiteOnce(shell, command, site, line);
+  const opened = await onSiteOnce(seam, command, site, line);
   const step = await runBrowserStep(
-    shell,
+    seam,
     command,
     ['browser', BROWSER_READ_SESSION, ...row.verb, ...argv, '--window', 'background'],
     timeoutMs,
@@ -429,6 +386,7 @@ async function runBrowserTool(
   const clipAsked = row.clip === true && page.args['clip'] !== undefined;
   let file = '';
   let finalArgv = argv;
+  let intent: WriteIntent = productWrite();
   if (row.clip === true) {
     const given = argv[0] !== undefined && !argv[0].startsWith('-') ? argv[0] : '';
     if (given === '') {
@@ -437,14 +395,16 @@ async function runBrowserTool(
       ensureDirOf(dirname(file));
     } else {
       file = given;
+      intent = pathsWrite([file]);
     }
   }
   const step = await runBrowserStep(
-    page.shell,
+    page.seam,
     page.command,
     ['browser', page.session, ...row.verb, ...finalArgv, '--window', 'background'],
     timeoutMs,
     page.line,
+    intent,
   );
   const shot: Record<string, unknown> = {};
   if (row.clip === true) {
@@ -494,3 +454,5 @@ export function registerBrowserTools(ctx: DshHostContext, tools: DshToolRegistry
     return tools.register(definition);
   });
 }
+
+export { clipNote, clipOf, defaultShotPath, deviceClipRect, type PngClip } from './diy-browser-clip';

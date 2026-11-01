@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { hostOsOf, hostSurface, profileNameOf } from '../index.js';
 
+
 describe('profile 与宿主 OS 归一', () => {
   it('profile 名大小写不敏感，认路径；不认识的保留为 other', () => {
     expect(profileNameOf('/home/me/.dsh/profiles/Desktop')).toBe('desktop');

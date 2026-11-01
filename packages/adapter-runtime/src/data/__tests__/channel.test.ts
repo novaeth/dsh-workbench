@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import type { DshShell } from '@dsh-workbench/shared';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+
+function seamFor(shell: DshShell) {
+  return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
 import type { RequestRecipe } from '@dsh-workbench/shared/host';
 import { createDataReader } from '../index.js';
 import { channelCallOf, channelUrlOf, wireBodyOf } from '../channel.js';
@@ -33,7 +39,7 @@ function readerOf(
 ) {
   const fake = createFakeShell(plan);
   return {
-    reader: createDataReader({ shell: fake.shell, channel, channelInstalled: () => installed }),
+    reader: createDataReader({ seam: seamFor(fake.shell), channel, channelInstalled: () => installed }),
     fake,
   };
 }

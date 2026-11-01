@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { bootstrapEnv, runBootstrapCommand, type BootstrapSpawn } from '../bootstrap-run.js';
 
+
 function tempHome(): string {
   return mkdtempSync(join(tmpdir(), 'wb-bootstrap-'));
 }

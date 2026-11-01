@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { BROWSER_RECORD_SESSION } from '@dsh-workbench/shared/host';
 import type { DshHostContext, DshShell } from '@dsh-workbench/shared';
+import type { Seam } from '@dsh-workbench/shared/host';
 import { takeHeldNotices } from '@/shared/api/host/diy-debug-act';
 import { createDiyRig } from '../../__tests__/diy-harness';
 import { ARM_OK, POST, URL, heldStore, line } from '../../__tests__/record-fixtures';
 import { STATIC_URL_PATTERN, watchRecordFinish, watchRoundOf } from '../diy-record';
+import { fakeSeamOf } from '../../__tests__/seam-fake';
 import { DIY_RECORD_READ_TOOL } from '../../unit';
 
 const recording = (extra: Record<string, unknown> = {}): string =>
@@ -23,7 +25,7 @@ describe('录制交接的门铃：页面内长轮询（每一轮一条 eval，�
 
   const deps = (built: ReturnType<ReturnType<typeof createDiyRig>['harness']>, record: ReturnType<typeof heldStore>) => ({
     ctx: built.ctx as unknown as DshHostContext,
-    shell: built.ctx.get('shell') as unknown as DshShell,
+    seam: built.ctx.get('workbenchSeam') as unknown as Seam,
     command: '',
     sessionId: 's1',
     store: record,
@@ -117,7 +119,7 @@ describe('录制交接的门铃：页面内长轮询（每一轮一条 eval，�
 
     const out = await watchRoundOf({
       ctx: {} as DshHostContext,
-      shell: broken,
+      seam: fakeSeamOf(broken),
       command: '',
       sessionId: 's1',
       store: record,

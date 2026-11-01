@@ -1,5 +1,4 @@
 import { join } from 'node:path';
-import type { DshShell } from '@dsh-workbench/shared';
 import type { ProfileModule } from '@dsh-workbench/shared/host';
 import type {
   DiscoverCompat,
@@ -24,9 +23,10 @@ import {
   filterMarketIndex,
   marketEntryLabels,
   marketInstallTarget,
+  noWrite,
   quoteShellArg,
   runningVersionOf,
-  runShell,
+  type Seam,
 } from '@dsh-workbench/shared/host';
 import type { MarketIndexReader } from '@/shared/api/host/market-index-fetch';
 import type { MarketDocReader } from '@/shared/api/host/market-doc';
@@ -44,7 +44,7 @@ export interface MarketDiscoverOptions {
   readonly modules: () => readonly ProfileModule[];
   readonly defaultRegistry: () => Promise<string | undefined>;
   readonly profilePath?: string | undefined;
-  readonly shell?: DshShell | undefined;
+  readonly seam?: Seam | undefined;
   readonly shellVersion?: string | undefined;
   readonly fetchImpl?: ((url: string, init: RequestInit) => Promise<Response>) | undefined;
   readonly now?: (() => number) | undefined;
@@ -135,7 +135,7 @@ export function createMarketDiscover(options: MarketDiscoverOptions): MarketDisc
     const git = version.source;
     if (git.type !== 'git') return undefined;
     if (normalizedRepo(git.url) !== normalizedRepo(source.url)) return undefined;
-    if (options.shell === undefined) return undefined;
+    if (options.seam === undefined) return undefined;
     const key = `${git.commit}|${git.path ?? ''}`;
     const cached = peerCache.get(key);
     if (cached !== undefined && now() - cached.at < peerTtlMs) return cached.peer;
@@ -143,11 +143,12 @@ export function createMarketDiscover(options: MarketDiscoverOptions): MarketDisc
     const directory = (git.path ?? '').replace(/^\/+|\/+$/g, '');
     const file = directory === '' ? 'package.json' : `${directory}/package.json`;
     try {
-      const result = await runShell(
-        options.shell,
-        `git -C ${quoteShellArg(repo)} show ${git.commit}:${quoteShellArg(file)}`,
-        { timeoutMs },
-      );
+      const result = await options.seam.run({
+        command: `git -C ${quoteShellArg(repo)} show ${git.commit}:${quoteShellArg(file)}`,
+        intent: noWrite(),
+        retry: 'safe',
+        timeoutMs,
+      });
       if (result.exitCode !== 0) throw new Error(result.stderr.trim());
       const manifest = JSON.parse(result.stdout) as {
         readonly peerDependencies?: Readonly<Record<string, string>>;

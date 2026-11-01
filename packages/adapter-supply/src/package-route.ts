@@ -1,7 +1,7 @@
-import type { DshShell, ResolvedPluginSource, SupplySource } from '@dsh-workbench/shared';
-import type { PackageRoute } from '@dsh-workbench/shared/host';
+import type { ResolvedPluginSource, SupplySource } from '@dsh-workbench/shared';
+import type { PackageRoute, Seam } from '@dsh-workbench/shared/host';
 import { createPackageRouter, localDirOf, splitNpmSpec } from '@dsh-workbench/shared/host';
-import { npmCacheDir, OPENCLI_MANIFEST_FILE } from '@dsh-workbench/adapter-runtime';
+import { OPENCLI_MANIFEST_FILE } from '@dsh-workbench/adapter-runtime';
 import { registryDshOf } from './registry-declaration.js';
 import { resolvePluginSource } from './plugin-source.js';
 
@@ -10,13 +10,12 @@ export const PLUGIN_REGISTRY_ENV = 'DSH_WB_OPENCLI_PLUGIN_REGISTRY';
 
 const router = createPackageRouter({
   manifestFile: OPENCLI_MANIFEST_FILE,
-  cacheDir: npmCacheDir(),
   dshLookup: (options) => registryDshOf(options),
 });
 
 export async function packageRouteOf(options: {
   readonly spec: string;
-  readonly shell?: DshShell | undefined;
+  readonly seam?: Seam | undefined;
   readonly registry?: string | undefined;
   readonly force?: boolean;
 }): Promise<PackageRoute | undefined> {

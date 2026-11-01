@@ -1,8 +1,7 @@
-import type { DshShell } from '@dsh-workbench/shared';
 import { parseJsonLoose } from '@dsh-workbench/shared/host';
 import { tailLines } from '@dsh-workbench/shared/host';
 import { backgroundLine, OPENCLI_WINDOW_ENV } from '../cli/index.js';
-import { runShell } from '@dsh-workbench/shared/host';
+import { noWrite, type Seam } from '@dsh-workbench/shared/host';
 
 import { BROWSER_READ_SESSION, BROWSER_RECORD_SESSION, BROWSER_SCREEN_SESSION } from '@dsh-workbench/shared/host';
 export { BROWSER_READ_SESSION, BROWSER_RECORD_SESSION, BROWSER_SCREEN_SESSION };
@@ -36,7 +35,7 @@ export interface BrowserReadResult {
 }
 
 export interface BrowserReadOptions {
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly script: string;
   readonly url?: string;
   readonly loginUrl?: string;
@@ -101,12 +100,18 @@ type ShellOutcome =
   | { readonly kind: 'failed'; readonly detail: string; readonly stderr: string };
 
 async function shellRun(
-  shell: DshShell,
+  seam: Seam,
   command: string,
   argv: readonly string[],
   timeoutMs: number,
 ): Promise<ShellOutcome> {
-  const result = await runShell(shell, backgroundLine(command, argv), { timeoutMs, env: OPENCLI_WINDOW_ENV });
+  const result = await seam.run({
+    command: backgroundLine(command, argv),
+    intent: noWrite(),
+    retry: 'safe',
+    timeoutMs,
+    env: OPENCLI_WINDOW_ENV,
+  });
   if (result.timedOut) {
     return { kind: 'timeout', detail: `没在 ${Math.round(timeoutMs / 1000)} 秒内返回`, stderr: result.stderr };
   }
@@ -117,7 +122,7 @@ async function shellRun(
 }
 
 async function evalOnce(
-  shell: DshShell,
+  seam: Seam,
   command: string,
   session: string,
   script: string,
@@ -128,7 +133,7 @@ async function evalOnce(
     let attempt: Awaited<ReturnType<typeof shellRun>>;
     try {
       attempt = await shellRun(
-        shell,
+        seam,
         command,
         ['browser', session, 'eval', script, '--window', 'background'],
         timeoutMs,
@@ -195,7 +200,7 @@ async function evalOnce(
 }
 
 async function openOnce(
-  shell: DshShell,
+  seam: Seam,
   command: string,
   session: string,
   url: string,
@@ -203,7 +208,7 @@ async function openOnce(
 ): Promise<Omit<BrowserReadResult, 'at'> | undefined> {
   let attempt: Awaited<ReturnType<typeof shellRun>>;
   try {
-    attempt = await shellRun(shell, command, ['browser', session, 'open', url, '--window', 'background'], timeoutMs);
+    attempt = await shellRun(seam, command, ['browser', session, 'open', url, '--window', 'background'], timeoutMs);
   } catch (error) {
     return {
       ok: false,
@@ -226,7 +231,7 @@ async function openOnce(
 }
 
 export async function browserRead(options: BrowserReadOptions): Promise<BrowserReadResult> {
-  const { shell, script, url, loginUrl, open = true } = options;
+  const { seam, script, url, loginUrl, open = true } = options;
   const command = options.command ?? 'opencli';
   const session = options.session ?? BROWSER_READ_SESSION;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
@@ -234,7 +239,7 @@ export async function browserRead(options: BrowserReadOptions): Promise<BrowserR
   const settleMs = options.settleMs ?? DEFAULT_SETTLE_MS;
   const at = Date.now();
 
-  const first = await evalOnce(shell, command, session, script, timeoutMs, retryMs);
+  const first = await evalOnce(seam, command, session, script, timeoutMs, retryMs);
   if (first.kind === 'failure') return { ...first.result, at };
   let page = first.value;
 
@@ -250,10 +255,10 @@ export async function browserRead(options: BrowserReadOptions): Promise<BrowserR
         ...(url === undefined ? {} : { helpUrl: url }),
       };
     }
-    const opened = await openOnce(shell, command, session, url, timeoutMs);
+    const opened = await openOnce(seam, command, session, url, timeoutMs);
     if (opened !== undefined) return { ...opened, at };
     await sleep(settleMs);
-    const second = await evalOnce(shell, command, session, script, timeoutMs, retryMs);
+    const second = await evalOnce(seam, command, session, script, timeoutMs, retryMs);
     if (second.kind === 'failure') return { ...second.result, at };
     page = second.value;
     if (codeOf(page) === 'not-on-site') {

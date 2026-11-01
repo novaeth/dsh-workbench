@@ -2,12 +2,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DshShell } from '@dsh-workbench/shared';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 const PLUGIN_MANIFEST_FILE = 'opencli-plugin.json';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { fakeSeamOf } from './seam-fake';
+import type { DshShell } from '@dsh-workbench/shared';
 import type { BundleChange, BundleInstallRequest } from '@/kernel/contract/bundle-install';
-import type { BundleManager, SupplyPort } from '@dsh-workbench/shared/host';
+import type { BundleManager, Seam, SupplyPort } from '@dsh-workbench/shared/host';
 import { refusalReason } from '@dsh-workbench/shared/host';
 import { createMarketService } from '../model/market';
 import { bundleNameOf, installRouted, type BundleInstallDeps } from '../model/market-route';
@@ -90,7 +91,7 @@ function bundlesOf(): { manager: BundleManager; install: ReturnType<typeof vi.fn
   return { manager, install };
 }
 
-function packingShell(view: string): { shell: DshShell; commands: string[] } {
+function packingShell(view: string): { seam: Seam; commands: string[] } {
   const commands: string[] = [];
   const shell = {
     resolve: (request: { readonly command: string }) => {
@@ -134,12 +135,12 @@ function packingShell(view: string): { shell: DshShell; commands: string[] } {
       };
     },
   } as unknown as DshShell;
-  return { shell, commands };
+  return { seam: fakeSeamOf(shell), commands };
 }
 
 function rig(options: {
   readonly spec: string;
-  readonly shell?: DshShell | undefined;
+  readonly seam?: Seam | undefined;
   readonly registry?: string | undefined;
   readonly ledger?: PluginLedger | undefined;
   readonly supply?: SupplyPort | undefined;
@@ -159,7 +160,7 @@ function rig(options: {
       },
       supplyAfter: async () => ({ state: 'no-needs' }),
       rememberSource: async () => {},
-      ...(options.shell === undefined ? {} : { shell: options.shell }),
+      ...(options.seam === undefined ? {} : { seam: options.seam }),
       ...(options.registry === undefined ? {} : { registry: options.registry }),
       ...(options.ledger === undefined ? {} : { ledger: options.ledger }),
       ...(options.supply === undefined ? {} : { supply: options.supply }),
@@ -193,8 +194,8 @@ describe('添加一个 spec：按内容判它是什么，再决定走哪条路',
   });
 
   it('★ 判成 dsh 扩展包 → 交回 installBundle，原样的 spec（带版本）一个字不改', async () => {
-    const { shell, commands: shellCommands } = packingShell('{"bundle":{}}');
-    const { deps, install, commands } = rig({ spec: '@t/mod@1.2.3', shell, registry: REGISTRY });
+    const { seam, commands: shellCommands } = packingShell('{"bundle":{}}');
+    const { deps, install, commands } = rig({ spec: '@t/mod@1.2.3', seam, registry: REGISTRY });
 
     const outcome = await installRouted({ ...deps, options: { registry: REGISTRY } });
 
@@ -220,11 +221,11 @@ describe('添加一个 spec：按内容判它是什么，再决定走哪条路',
   });
 
   it('★ 源上的包判成插件 → 走 plugin-source 的 npm 分支（装进 plugins-npm 再让 opencli 认它）', async () => {
-    const { shell } = packingShell('{}');
+    const { seam } = packingShell('{}');
     const ledger = ledgerAt('/tmp/wb-route-home/workbench/opencli/home');
     const { deps, install, commands } = rig({
       spec: '@t/demo@1.0.0',
-      shell,
+      seam,
       registry: REGISTRY,
       ledger,
       supply: pluginSupply(() => ({ kind: 'runtime-plugin', pkg: '@t/demo', pluginName: 'demo' }), 'npm-then-plugin'),
@@ -309,7 +310,7 @@ describe('接线：市场那条路交给路由，且没有插件管理器时还�
     const market = createMarketService({
       command: 'opencli',
       manifests: [],
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       bundles: manager,
       supply: pluginSupply(() => ({ kind: 'runtime-plugin', pkg: '@t/plugin-a', pluginName: 'plugina' })),
     });

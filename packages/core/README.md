@@ -203,7 +203,7 @@ HMR 热换插件（不刷新页面），宿主半侧按模块路径热重载。
 | 装法、界面、适合谁 | [根 README](../../README.md) |
 | 架构、两个运行时、槽位、数据通路、门禁 | [ARCHITECTURE.md](../../ARCHITECTURE.md) |
 | 写一个模块 | [DIY 指引](skills/workbench-module-diy/SKILL.md) |
-| 模块的构建与十三条判据 | [module-tools](../module-tools/README.md) |
+| 模块的构建与十四条判据 | [module-tools](../module-tools/README.md) |
 | 共享包（契约、哑组件、宿主工具） | [shared](../shared/README.md) |
 | 最小模块样本 | [module-hello](../module-hello/README.md) |
 | 环境、门禁、提交 | [CONTRIBUTING.md](../../CONTRIBUTING.md) |

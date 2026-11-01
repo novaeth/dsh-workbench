@@ -1,10 +1,9 @@
-import type { DshShell } from '@dsh-workbench/shared';
 import { OPENCLI_MAX_CONCURRENT, OPENCLI_TIMEOUT_MS } from '@dsh-workbench/shared/host';
 import { parseJsonLoose } from '@dsh-workbench/shared/host';
-import { quoteShellArgFor, tailLines } from '@dsh-workbench/shared/host';
+import { productWrite, quoteShellArgFor, tailLines } from '@dsh-workbench/shared/host';
 import { helpUrlOf, parseCliErrorEnvelope } from '@dsh-workbench/shared/host';
 import { OPENCLI_WINDOW_ENV } from './opencli-window.js';
-import { runShell } from '@dsh-workbench/shared/host';
+import { SeamError, type Seam } from '@dsh-workbench/shared/host';
 import type { Opencli, OpencliResult, OpencliSession } from './opencli-types.js';
 import { WorkbenchDataError } from '@dsh-workbench/shared/host';
 
@@ -28,7 +27,7 @@ export function opencliCommandLine(
 }
 
 export function createOpencli(options: {
-  shell: DshShell;
+  seam: Seam;
   plugin: string;
   logger?: { warn?(message: string): void } | undefined;
   command?: string;
@@ -36,7 +35,7 @@ export function createOpencli(options: {
   maxConcurrent?: number;
 }): Opencli {
   const {
-    shell,
+    seam,
     plugin,
     logger,
     command = 'opencli',
@@ -76,12 +75,19 @@ export function createOpencli(options: {
   async function call(commandLine: string, workdir: string | undefined): Promise<unknown> {
     let result;
     try {
-      result = await runShell(shell, commandLine, {
+      result = await seam.run({
+        command: commandLine,
+        intent: productWrite(),
         ...(workdir === undefined ? {} : { workdir }),
         timeoutMs,
         env: OPENCLI_WINDOW_ENV,
       });
     } catch (error) {
+      if (error instanceof SeamError) {
+        throw new WorkbenchDataError('cli-exec-failed', error.message, {
+          hint: '这条命令被沙箱挡住了：把命令与写入域记下来交给维护者。',
+        });
+      }
       throw new WorkbenchDataError('cli-exec-failed', `执行 opencli 失败：${String(error)}`, {
         hint: '确认 opencli 已安装，并且在 PATH 里。',
       });

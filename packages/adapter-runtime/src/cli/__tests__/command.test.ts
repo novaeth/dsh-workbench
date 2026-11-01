@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isolatedOpencliPathOf, opencliCommandOf } from '../command.js';
 
 const roots: string[] = [];
@@ -12,34 +12,34 @@ function tempDir(): string {
   return dir;
 }
 
-function ctxOf(home: string | undefined): never {
-  return {
-    get: (key: string) =>
-      key === 'dshHomePath' && home !== undefined ? (relative: string) => path.join(home, relative) : undefined,
-  } as never;
+const ctx = { get: () => undefined } as never;
+
+function workbenchOf(home: string): string {
+  vi.stubEnv('DSH_WORKBENCH_HOME', path.join(home, 'workbench'));
+  return path.join(home, 'workbench');
 }
 
-function stableOf(home: string): string {
-  return path.join(home, 'workbench', 'opencli', 'bin', process.platform === 'win32' ? 'opencli.cmd' : 'opencli');
+function stableOf(workbench: string): string {
+  return path.join(workbench, 'opencli', 'bin', process.platform === 'win32' ? 'opencli.cmd' : 'opencli');
 }
 
-function installed(home: string): string {
-  const stable = stableOf(home);
+function installed(workbench: string): string {
+  const stable = stableOf(workbench);
   fs.mkdirSync(path.dirname(stable), { recursive: true });
   fs.writeFileSync(stable, '');
   return stable;
 }
 
 afterEach(() => {
+  vi.unstubAllEnvs();
   for (const dir of roots.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
-  delete process.env.DSH_WORKBENCH_OPENCLI;
 });
 
 describe('opencliCommandOf', () => {
   it('隔离运行时在：给稳定路径（不依赖 PATH），源记 isolated', () => {
-    const home = tempDir();
-    const stable = installed(home);
-    expect(opencliCommandOf(ctxOf(home))).toEqual({
+    const workbench = workbenchOf(tempDir());
+    const stable = installed(workbench);
+    expect(opencliCommandOf(ctx)).toEqual({
       command: stable,
       source: 'isolated',
       isolated: stable,
@@ -47,27 +47,19 @@ describe('opencliCommandOf', () => {
   });
 
   it('隔离运行时不在：退 PATH 上的 opencli，但把"该在哪"照实报出来', () => {
-    const home = tempDir();
-    expect(opencliCommandOf(ctxOf(home))).toEqual({
+    const workbench = workbenchOf(tempDir());
+    expect(opencliCommandOf(ctx)).toEqual({
       command: 'opencli',
       source: 'path',
-      isolated: stableOf(home),
-    });
-  });
-
-  it('没有 dshHomePath：退 PATH，且说不出候选路径', () => {
-    expect(opencliCommandOf(ctxOf(undefined))).toEqual({
-      command: 'opencli',
-      source: 'path',
-      isolated: null,
+      isolated: stableOf(workbench),
     });
   });
 
   it('环境变量在：它赢（启动器给的显式覆盖，也管改名后的 profile）', () => {
-    const home = tempDir();
-    const stable = installed(home);
-    process.env.DSH_WORKBENCH_OPENCLI = '/opt/custom/opencli';
-    expect(opencliCommandOf(ctxOf(home))).toEqual({
+    const workbench = workbenchOf(tempDir());
+    const stable = installed(workbench);
+    vi.stubEnv('DSH_WORKBENCH_OPENCLI', '/opt/custom/opencli');
+    expect(opencliCommandOf(ctx)).toEqual({
       command: '/opt/custom/opencli',
       source: 'env',
       isolated: stable,
@@ -75,21 +67,22 @@ describe('opencliCommandOf', () => {
   });
 
   it('环境变量是空串：等于没设（不能把空命令交给执行缝）', () => {
-    process.env.DSH_WORKBENCH_OPENCLI = '';
-    expect(opencliCommandOf(ctxOf(tempDir())).source).toBe('path');
+    workbenchOf(tempDir());
+    vi.stubEnv('DSH_WORKBENCH_OPENCLI', '');
+    expect(opencliCommandOf(ctx).source).toBe('path');
   });
 
   it('环境变量没设、隔离运行时也没装：**不会**拿 PATH 上那个冒充隔离份', () => {
-    const resolution = opencliCommandOf(ctxOf(tempDir()));
+    workbenchOf(tempDir());
+    const resolution = opencliCommandOf(ctx);
     expect(resolution.command).toBe('opencli');
     expect(resolution.source).not.toBe('isolated');
   });
 });
 
 describe('isolatedOpencliPathOf', () => {
-  it('给的是候选路径，存不存在都报（诊断要能区分"没配"和"没装"）', () => {
-    const home = tempDir();
-    expect(isolatedOpencliPathOf(ctxOf(home))).toBe(stableOf(home));
-    expect(isolatedOpencliPathOf(ctxOf(undefined))).toBeNull();
+  it('候选路径由运行时根推出（跟着 DSH_WORKBENCH_HOME 走，不再依赖 dshHomePath 服务）', () => {
+    const workbench = workbenchOf(tempDir());
+    expect(isolatedOpencliPathOf(ctx)).toBe(stableOf(workbench));
   });
 });

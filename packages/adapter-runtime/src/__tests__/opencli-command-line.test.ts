@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DshShell } from '@dsh-workbench/shared';
+import { createSeam } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { createOpencli, opencliCommandLine, OPENCLI_WINDOW_ENV } from '../cli/index.js';
 
@@ -34,11 +35,14 @@ describe('opencli 命令行按平台拼', () => {
       },
       execute: (spec) => fake.shell.execute(spec),
     };
-    const opencli = createOpencli({ shell, plugin: 'coding' });
+    const opencli = createOpencli({
+      seam: createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' }),
+      plugin: 'coding',
+    });
 
     await opencli.json(['list']).catch(() => undefined);
 
-    expect(seen[0]?.env).toEqual(OPENCLI_WINDOW_ENV);
+    expect(seen[0]?.env).toMatchObject(OPENCLI_WINDOW_ENV);
     expect(String(seen[0]?.command ?? '')).not.toContain('OPENCLI_WINDOW');
   });
 });

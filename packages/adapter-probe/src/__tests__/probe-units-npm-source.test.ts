@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { probeUnits } from '../index.js';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { createSeam } from '@dsh-workbench/shared/host';
 import type { SupplySource } from '@dsh-workbench/shared/host';
+
+function seamFor(shell: Parameters<typeof createSeam>[0]['shell']) {
+  return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
+}
+
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -17,7 +23,7 @@ async function probeNpmSource(sources: readonly SupplySource[]) {
   const fake = createFakeShell([pluginsOf([{ name: 'other', commands: [] }])]);
 
   const [result] = await probeUnits({
-    shell: fake.shell,
+    seam: seamFor(fake.shell),
     runtimeCommands: { opencli: 'opencli' },
     units: [
       {

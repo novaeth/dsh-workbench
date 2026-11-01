@@ -335,7 +335,7 @@ packages/core/src/
 | S74 | 外壳的文案里不点名运行时（话与命令面都跟着适配器走） |
 <!-- doc-facts:end arch-rules -->
 
-模块包不在 core 层表里；它们由模块工具链的十三条判据与各自 `check` 守。
+模块包不在 core 层表里；它们由模块工具链的十四条判据与各自 `check` 守。
 
 ### 3.4 脚本与 bin 也进 arch
 
@@ -360,7 +360,7 @@ packages/core/src/
 | `EnvSupplyPort` | `shared/host/port-types.ts` | 供给窄口：插件来源、安装/卸载命令、release（8 个方法） |
 | `ModulePort` | `shared/host/port-types.ts` | 已安装模块、registry、bundle、profile 包、自更新 |
 | `ProbePort` | `shared/host/port-types.ts` | `probeUnits` / `registerPreflight` / `declaredPluginCommands` |
-| `RuntimePort` | `shared/host/port-types.ts` | 包根、能力、运行时命令/执行器/状态（按名字给）、自举、可写根告警 |
+| `RuntimePort` | `shared/host/port-types.ts` | 包根、能力、运行时命令/执行器/状态（按名字给）、自举、运行时根 |
 | `PluginSurface` | `shared/host/port-types.ts` | 插件清单、已装插件合成单元 |
 | `HostActions` | `shared/host/port-types.ts` | config sync / profile create 的 handler 与写动作 |
 | `LibReader` / `GitReader` / `CommandReader` | `shared/contract/{lib,git,command}.ts` | 三个可选读端口：本机库 / git / 命令面；挂在 `AdapterSet.libs` / `.git` / `.commands` |
@@ -557,7 +557,7 @@ export function createAdapterSet(ctx): AdapterSet {
     "title": { "zh": "我的东西", "en": "My thing" },
     "card": { "order": 90 },
     "tools": [{ "name": "my_thing_read", "writes": false }],
-    "host": { "inject": [], "optional": ["tools", "shell"] },
+    "host": { "inject": [], "writes": [] },
     "needs": [
       {
         "kind": "extension",
@@ -583,6 +583,9 @@ export function createAdapterSet(ctx): AdapterSet {
   与面板同一份 opencli。库版本旧、没有这个接缝时退回它自己按 PATH 找，只记一条 warn。
 - `sources` 按顺序试（本地 → 私有 → 公共），没写就只探不代装。
 - `peerDependencies['@dsh-workbench/core']` 管服务面。
+- `host.writes` 声明模块会写哪一档：`unit`（运行时根下自己的数据目录，常开）或 `workspace`（当前会话工作区）；
+  没声明就不给执行缝门面。模块起命令走 `deps.seam`，不直接拿 dsh 的 shell 服务（模块判据会拦）。
+  它不是进程隔离：模块宿主代码与宿主同进程，安全边界仍是「装不装模块 + 审批」。
 - `workbenchFaces` 只给门禁算可达性，运行期不读。
 - 不认识的键会让清单被拒；拼错由 `protocol` 判据与运行时同一套拦下。
 
@@ -591,7 +594,7 @@ export function createAdapterSet(ctx): AdapterSet {
 ```ts
 const face = {
   unit: 'my-thing',
-  mount({ data, ctx, manifest, store }) {
+  mount({ data, ctx, manifest, seam, store }) {
     return {
       routes: { 'my-thing': readRoute, 'my-thing/detail': detailRoute },
       registerTools: () => [],
@@ -812,7 +815,7 @@ app/client.tsx
 
 ```text
 dsh-wb-module build     构建宿主面 / 浏览器面
-dsh-wb-module check     十三条判据
+dsh-wb-module check     十四条判据
 dsh-wb-module lint      lint
 dsh-wb-module init      从模板建模块
 ```

@@ -1,4 +1,5 @@
-import type { DshHostContext, DshShell } from '../api/dsh.js';
+import type { DshHostContext } from '../api/dsh.js';
+import type { Seam } from './seam/run.js';
 import type { RuntimeCapabilities, RuntimeProfile } from '../contract/capabilities.js';
 import type { PluginPackageKind } from '../contract/protocol/bundle-install.js';
 import type { LibNeed, SupplySource } from '../contract/needs.js';
@@ -57,14 +58,14 @@ export interface SupplyPluginInstallOptions {
 }
 
 export interface SupplyLatestOptions {
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly name: string;
   readonly registry: string;
   readonly force?: boolean;
 }
 
 export interface SupplyMissingPartsOptions {
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly name: string;
   readonly registry: string;
   readonly version: string;
@@ -72,7 +73,7 @@ export interface SupplyMissingPartsOptions {
 }
 
 export interface SupplyProbeReleaseOptions {
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly package: string;
   readonly registry?: string | undefined;
   readonly force?: boolean;
@@ -116,7 +117,7 @@ export interface ModulePort {
   declarationGaps(dir: string | null): readonly { readonly pkg: string }[] | undefined;
   moduleDeclarationOf(dir: string | null, pkg: string): unknown;
   registryDeclarationOf(options: {
-    readonly shell: DshShell;
+    readonly seam: Seam;
     readonly name: string;
     readonly registry: string;
     readonly force?: boolean;
@@ -126,7 +127,7 @@ export interface ModulePort {
   refusalReason(): string;
   packageRouteOf(options: {
     readonly spec: string;
-    readonly shell?: DshShell | undefined;
+    readonly seam?: Seam | undefined;
     readonly registry?: string | undefined;
     readonly force?: boolean;
   }): Promise<SupplyPackageRoute | undefined>;
@@ -140,7 +141,7 @@ export interface SupplyPort extends EnvSupplyPort, ModulePort {
 }
 
 export interface ProbeUnitsOptions {
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly runtimeCommands: Readonly<Record<string, string>>;
   readonly units: readonly NeedProbeInput[];
   readonly force?: boolean;
@@ -149,7 +150,7 @@ export interface ProbeUnitsOptions {
 export interface ProbePreflightInput {
   readonly routes: RouteTable;
   readonly ctx: DshHostContext;
-  readonly shell: DshShell;
+  readonly seam: Seam;
   readonly runtimeCommands: Readonly<Record<string, string>>;
   readonly runtimeCapabilities: RuntimeCapabilities;
   readonly runtimeCheck?: (() => Promise<RuntimeCheck>) | undefined;

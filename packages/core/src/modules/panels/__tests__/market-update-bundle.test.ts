@@ -2,9 +2,8 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { DshShell } from '@dsh-workbench/shared';
 import type { BundleChange } from '@/kernel/contract/bundle-install';
-import type { BundleManager, SupplyPort } from '@dsh-workbench/shared/host';
+import type { BundleManager, Seam, SupplyPort } from '@dsh-workbench/shared/host';
 import { declarationProblemsOf } from '@dsh-workbench/shared/host';
 import type { InstalledModule, ProfileModule } from '@dsh-workbench/shared/host';
 import type { ReplaceBundleDeps } from '../model/market-route';
@@ -23,7 +22,7 @@ function depsOf(input: {
   readonly installed: () => InstalledModule;
   readonly install: BundleManager['install'];
   readonly modules?: () => readonly ProfileModule[];
-  readonly shell?: DshShell;
+  readonly seam?: Seam;
   readonly supply?: SupplyPort;
   readonly profile?: string;
   readonly profileName?: string;
@@ -49,7 +48,7 @@ function depsOf(input: {
   return {
     modules: input.modules ?? (() => [{ pkg: PKG, unit: 'mod', version: '0.1.0' }]),
     installed: input.installed,
-    shell: input.shell,
+    seam: input.seam,
     ...(input.supply === undefined ? {} : { supply: input.supply }),
     ...(input.profile === undefined ? {} : { profile: input.profile }),
     ...(input.profileName === undefined ? {} : { profileName: input.profileName }),
@@ -208,7 +207,7 @@ describe('模块更新那一跳：跑完重新读盘对账', () => {
             installs += 1;
             return change();
           },
-          shell: {} as unknown as DshShell,
+          seam: {} as unknown as Seam,
           supply: supplyOf(4),
         }),
       ),
@@ -226,7 +225,7 @@ describe('模块更新那一跳：跑完重新读盘对账', () => {
           installs += 1;
           return change();
         },
-        shell: {} as unknown as DshShell,
+        seam: {} as unknown as Seam,
         supply: supplyOf(3),
       }),
     );

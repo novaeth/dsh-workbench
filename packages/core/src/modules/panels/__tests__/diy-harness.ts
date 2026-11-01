@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach } from 'vitest';
-import type { UnitManifest } from '@dsh-workbench/shared';
+import type { DshShell, UnitManifest } from '@dsh-workbench/shared';
 import type { PublishPreview } from '@dsh-workbench/shared/contract/protocol/market-index';
 import { WORKBENCH_ADAPTERS, createWorkspaceStore } from '@dsh-workbench/shared/host';
 import { testAdaptersWith } from './test-adapters';
@@ -15,6 +15,7 @@ import {
   createDebugStore,
   createPanelStateStore,
   createRecordStore,
+  createSeam,
   type DebugStore,
   type PanelStateStore,
   type RecordStore,
@@ -47,13 +48,18 @@ export { panelsUnit };
 
 export function createDiyRig() {
   let root = '';
+  let previousRuntimeRoot: string | undefined;
 
   beforeEach(() => {
     root = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-diy-tool-'));
+    previousRuntimeRoot = process.env.DSH_WORKBENCH_HOME;
+    process.env.DSH_WORKBENCH_HOME = path.join(root, 'workbench');
     fs.mkdirSync(WORKSHOP(), { recursive: true });
     fs.writeFileSync(path.join(WORKSHOP(), 'pnpm-workspace.yaml'), 'packages:\n  - packages/*\n');
   });
   afterEach(() => {
+    if (previousRuntimeRoot === undefined) delete process.env.DSH_WORKBENCH_HOME;
+    else process.env.DSH_WORKBENCH_HOME = previousRuntimeRoot;
     fs.rmSync(root, { recursive: true, force: true });
   });
 
@@ -208,6 +214,14 @@ export function createDiyRig() {
       execute: (args: unknown, exec?: unknown) => Promise<unknown>;
     }> = [];
     const probe = options.probe === undefined ? undefined : fakeShell(options.probe);
+    const seam =
+      probe === undefined
+        ? undefined
+        : createSeam({
+            shell: probe.shell as DshShell,
+            runtimeRoot: path.join(root, 'workbench'),
+            grantOf: () => ({ mode: 'workspace-write', workspaceRoot: WORKSHOP() }),
+          });
     const manifests = options.manifests ?? [panelsUnit, demoUnit];
     const mounted = options.mounted ?? manifests.map((one) => one.id);
     const registry = {
@@ -255,6 +269,7 @@ export function createDiyRig() {
         if (key === 'workspaceRegistry') return fakeWorkspaceRegistry(fakeWorkspace(WORKSHOP()));
         if (key === 'profileContext') return { dir: PROFILE() };
         if (key === 'shell') return probe?.shell;
+        if (key === 'workbenchSeam') return seam;
         return undefined;
       },
       logger: { info: () => {}, warn: () => {} },

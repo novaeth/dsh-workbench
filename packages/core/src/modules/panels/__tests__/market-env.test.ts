@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { fakeSeamOf } from './seam-fake';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 import type { UnitCapability } from '@dsh-workbench/shared/host';
 import type { NeedState, SupplySource, UnitManifest } from '@dsh-workbench/shared';
@@ -52,7 +53,7 @@ describe('模块放手（卸掉一个模块）时，它带来的那份安装谁�
 
       command: 'opencli',      manifests: [unit('issues', 'demo'), unit('builds', 'demo')],
       probe: probeOf({ issues: 'ok', builds: 'ok' }),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       references: () => ({ trustworthy: true, unreadable: [] }),
       isReleased: (id) => id === 'builds',
     });
@@ -79,7 +80,7 @@ describe('模块放手（卸掉一个模块）时，它带来的那份安装谁�
 
       command: 'opencli',      manifests: [twoNeeds, unit('builds', 'demo')],
       probe: probeOf({ issues: 'ok', builds: 'ok' }, ['demo', 'deploy']),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       references: () => ({ trustworthy: true, unreadable: [] }),
       isReleased: () => false,
     });
@@ -96,7 +97,7 @@ describe('模块放手（卸掉一个模块）时，它带来的那份安装谁�
 
       command: 'opencli',      manifests: [unit('issues', 'demo')],
       probe: probeOf({ issues: 'ok' }),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       references: () => ({ trustworthy: true, unreadable: [] }),
     });
 
@@ -112,7 +113,7 @@ describe('模块放手（卸掉一个模块）时，它带来的那份安装谁�
 
       command: 'opencli',      manifests: [unit('issues', 'demo')],
       probe: probeOf({ issues: 'ok' }),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       references: () => ({ trustworthy: false, unreadable: ['@a/mod'] }),
       logger: { info: (message) => logs.push(message) },
     });
@@ -139,7 +140,7 @@ describe('模块放手（卸掉一个模块）时，它带来的那份安装谁�
 
       command: 'opencli',      manifests: [unit('issues', 'demo')],
       probe: probeOf({ issues: 'ok' }),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       ledger,
       references: () => ({ trustworthy: true, unreadable: [] }),
       logger: { info: (message) => logs.push(message) },
@@ -165,7 +166,7 @@ describe('模块放手（卸掉一个模块）时，它带来的那份安装谁�
 
       command: 'opencli',      manifests: [unit('issues', 'demo')],
       probe: probeOf({ issues: 'ok' }),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       ledger,
       references: () => ({ trustworthy: true, unreadable: [] }),
       logger: { info: (message) => logs.push(message) },
@@ -362,7 +363,7 @@ describe('自动清的另一个时机：模块更新（它的声明可能变了�
 
       command: 'opencli',      manifests: [unit('issues', 'demo')],
       probe: probeOf({ issues: 'ok' }),
-      shell: fake.shell,
+      seam: fakeSeamOf(fake.shell),
       ledger,
       references: () => ({ trustworthy: true, unreadable: [] }),
       bundles: {
