@@ -497,7 +497,28 @@ async function unitsOf(cdp) {
 }
 
 async function verifyFeatures(cdp) {
-  const body = await bodyOf(cdp);
+  const until = Date.now() + remaining('等模块卡片', MODULE_WAIT_MS);
+  let body = '';
+  let ids = [];
+  while (Date.now() < until) {
+    body = await bodyOf(cdp);
+    const units = await unitsOf(cdp);
+    ids = Array.isArray(units?.manifests) ? units.manifests.map((one) => one.id) : [];
+    log(`verify wait :: host units ${ids.join(',') || '（空）'} :: ${tailBody(body, 180)}`);
+    if (/Sample module|示例模块|hello, workbench/u.test(body)) {
+      writeText(`${prefix}-verify-body.txt`, body);
+      writeText(`${prefix}-units.json`, `${JSON.stringify(units, null, 2)}\n`);
+      const scripts = await cdp.send('Runtime.evaluate', {
+        expression: `JSON.stringify([...document.querySelectorAll('script[src]')].map((node) => node.src))`,
+        returnByValue: true,
+      });
+      writeText(`${prefix}-scripts.json`, `${scripts.result?.value ?? '[]'}\n`);
+      writeText(`${prefix}-console-events.json`, `${JSON.stringify(cdp.events(), null, 2)}\n`);
+      mark('module-card');
+      return { card: true, units: ids };
+    }
+    await sleep(POLL_MS);
+  }
   writeText(`${prefix}-verify-body.txt`, body);
   const units = await unitsOf(cdp);
   writeText(`${prefix}-units.json`, `${JSON.stringify(units, null, 2)}\n`);
@@ -507,13 +528,7 @@ async function verifyFeatures(cdp) {
   });
   writeText(`${prefix}-scripts.json`, `${scripts.result?.value ?? '[]'}\n`);
   writeText(`${prefix}-console-events.json`, `${JSON.stringify(cdp.events(), null, 2)}\n`);
-  const ids = Array.isArray(units?.manifests) ? units.manifests.map((one) => one.id) : [];
-  log(`host units: ${ids.join(',') || '（空）'}`);
-  const card = /Sample module|示例模块|hello, workbench/u.test(body);
-  if (!card) {
-    await fail(cdp, `装上模块后面板里没有示例模块的卡片（host units: ${ids.join(',') || '空'}）`, body);
-  }
-  return { card, units: ids };
+  await fail(cdp, `装上模块后面板里没有示例模块的卡片（host units: ${ids.join(',') || '空'}）`, body);
 }
 
 async function main() {
