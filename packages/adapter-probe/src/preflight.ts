@@ -344,7 +344,7 @@ export function createPreflight(options: {
         action: undefined,
       });
       if (!toolchain.ok || toolchain.pnpmProblem) {
-        return toolchain.stalled === true
+        return toolchain.stalled === true || toolchain.hostBroken === true
           ? hostFailure(toolchain.detail)
           : set({ phase: 'failed', error: toolchain.detail, failure: 'missing', guidance: 'install' });
       }

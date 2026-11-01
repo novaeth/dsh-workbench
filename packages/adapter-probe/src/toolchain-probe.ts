@@ -22,21 +22,18 @@ export interface ToolchainReport {
   readonly pnpmProblem: boolean;
   readonly stalled?: boolean | undefined;
   readonly diagnostics?: readonly string[] | undefined;
+  readonly hostBroken?: boolean | undefined;
 }
 
 async function toolVersion(
   shell: DshShell,
   line: string,
-  extra?: {
-    readonly workdir?: string | undefined;
-    readonly sandbox?: { mode: 'read-only' | 'workspace-write' | 'danger-full-access'; workspaceRoot: string } | undefined;
-  } | undefined,
+  extra?: { readonly workdir?: string | undefined } | undefined,
 ): Promise<{ ok: boolean; text: string; stalled: boolean; code: number | null; raw: string }> {
   try {
     const result = await runShell(shell, line, {
       timeoutMs: 10_000,
       ...(extra?.workdir === undefined ? {} : { workdir: extra.workdir }),
-      ...(extra?.sandbox === undefined ? {} : { sandbox: extra.sandbox }),
     });
     const text = (result.stdout || result.stderr).trim().split('\n')[0] ?? '';
     return {
@@ -100,13 +97,6 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
   ];
   const control: string[] = [];
   if (nodeMissing) {
-    for (const [label, sandbox] of [
-      ['policy danger-full-access', { mode: 'danger-full-access' as const, workspaceRoot: process.cwd() }],
-      ['policy workspace-write cwd', { mode: 'workspace-write' as const, workspaceRoot: process.cwd() }],
-    ] as const) {
-      const probe = await toolVersion(shell, 'echo workbench-probe', { sandbox });
-      control.push(`control ${label}: exit=${String(probe.code)} out=${probe.raw.slice(0, 80) || '（空）'}`);
-    }
     for (const [label, file] of [
       ['direct bundled node', desktopNodeExecutable()],
       ['direct host node', process.execPath],
@@ -131,6 +121,7 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
       control.push(`control ${label}: exit=${String(probe.code)} out=${probe.raw.slice(0, 80) || '（空）'}`);
     }
   }
+  const hostBroken = control.some((line) => line.includes('exit=3221225794'));
   const diagnostics = [
     `deployment=${desktop ? 'desktop' : 'host'} · resources=${desktopResourcesDir() ?? '（无）'} · execPath=${process.execPath}`,
     `bundled node=${bundledNode ?? '（找不到）'} · bundled pnpm=${bundledPnpm ?? '（找不到）'} · bins=${desktopBundledBins().join('|') || '（无）'}`,
@@ -140,5 +131,9 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
     `npm: exit=${String(npm.code)} out=${npm.raw.slice(0, 120) || '（空）'}`,
     ...control,
   ];
-  return { ok: !nodeMissing, detail: parts.join(' · '), nodeMissing, npmMissing, pnpmProblem, diagnostics };
+  const base = parts.join(' · ');
+  const detail = hostBroken
+    ? `宿主执行通道起不了子进程（0xC0000142 · DLL 初始化失败）——不是没装 node：${base}`
+    : base;
+  return { ok: !nodeMissing, detail, nodeMissing, npmMissing, pnpmProblem, diagnostics, hostBroken };
 }
