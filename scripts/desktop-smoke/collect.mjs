@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { homedir } from 'node:os';
+import { homedir, release, version as osVersion } from 'node:os';
 import { execa } from 'execa';
 
 const osLabel = process.env.DESKTOP_SMOKE_OS ?? (process.platform === 'win32' ? 'win' : 'mac');
@@ -299,6 +299,14 @@ async function main() {
     push(`exit: ${String(doctor.exitCode)}`);
     push(doctor.stdout ?? '');
     push(doctor.stderr ?? '');
+  }
+
+  section('runner os');
+  push(`platform: ${process.platform} · release: ${release()} · version: ${osVersion()}`);
+  push(`OS env: ${process.env.OS ?? '（无）'}`);
+  if (process.platform === 'win32') {
+    const ver = await execa(process.env.ComSpec ?? 'cmd.exe', ['/d', '/c', 'ver'], { reject: false, timeout: 20_000 });
+    push((ver.stdout ?? '').trim());
   }
 
   section('extension prep');
