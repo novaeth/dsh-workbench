@@ -19,11 +19,7 @@ export type GitRunner = (args: readonly string[], options?: GitRunOptions) => Pr
 let gitSeam: Seam | undefined;
 
 function promptlessEnv(): Readonly<Record<string, string>> {
-  const env: Record<string, string> = {};
-  for (const [key, value] of Object.entries(gitNoPromptProcessEnv())) {
-    if (value !== undefined) env[key] = value;
-  }
-  return env;
+  return gitNoPromptProcessEnv();
 }
 
 export function provideGitProcessSeam(seam: Seam | undefined): void {

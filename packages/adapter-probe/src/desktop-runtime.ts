@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { delimiter, join } from 'node:path';
+import { inheritedEnvOf, pathWithBinsOf } from '@dsh-workbench/shared/host';
 import { hostSurface } from './platform.js';
 
 export interface PnpmProcess {
@@ -60,14 +61,9 @@ export function desktopRuntimeEnv(
   proc: PnpmProcess = process,
   exists: (path: string) => boolean = existsSync,
 ): Record<string, string> {
-  const merged = desktopRuntimeEnvPath(parent.PATH, proc, exists);
-  if (merged === undefined) return {};
-  const env: Record<string, string> = {};
-  for (const [key, value] of Object.entries(parent)) {
-    if (typeof value === 'string') env[key] = value;
-  }
-  env['PATH'] = merged;
-  return env;
+  const bins = desktopBundledBins(proc, exists);
+  if (bins.length === 0) return {};
+  return { ...inheritedEnvOf(parent), PATH: pathWithBinsOf(parent.PATH, bins) };
 }
 
 export function desktopPnpmVersion(proc: PnpmProcess = process, exists: (path: string) => boolean = existsSync): string | undefined {

@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { delimiter, dirname, join, sep } from 'node:path';
 import type { DshHostContext } from '@dsh-workbench/shared';
-import { quoteShellArg, quoteShellArgFor, workbenchRoot, writeTextFile } from '@dsh-workbench/shared/host';
+import { pathWithBinsOf, quoteShellArg, quoteShellArgFor, workbenchRoot, writeTextFile } from '@dsh-workbench/shared/host';
 import type { Seam } from '@dsh-workbench/shared/host';
 import {
   desktopBundledBins,
@@ -143,7 +143,7 @@ export function runDetached(command: SeedCommand, onError: SeedLog, seam?: Seam 
 export function prependPath(entryDir: string, env: NodeJS.ProcessEnv = process.env): boolean {
   const parts = (env.PATH ?? '').split(delimiter).filter((part) => part !== '');
   if (parts.includes(entryDir)) return false;
-  env.PATH = [entryDir, ...parts].join(delimiter);
+  env.PATH = pathWithBinsOf(env.PATH, [entryDir]);
   return true;
 }
 

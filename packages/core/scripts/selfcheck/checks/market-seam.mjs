@@ -46,9 +46,13 @@ function noPromptGaps() {
   const gaps = [];
   const runner = read(pkg('src/shared/api/host/git-process.ts'));
   const exec = read(pkg('src/shared/api/host/git-exec.ts'));
+  const policy = read(join(SHARED_SRC, 'host/env-policy.ts'));
   if (!runner.includes('gitNoPromptProcessEnv')) gaps.push('git-process 没用共用的禁交互环境');
+  if (!exec.includes('promptlessGitEnvOf') || !exec.includes('promptlessProcessEnvOf')) {
+    gaps.push('git-exec 没接 env-policy');
+  }
   for (const name of ['GIT_TERMINAL_PROMPT', 'GIT_ASKPASS', 'SSH_ASKPASS_REQUIRE']) {
-    if (!exec.includes(name)) gaps.push(`git-exec 少了 ${name}`);
+    if (!policy.includes(name)) gaps.push(`env-policy 少了 ${name}`);
   }
   return gaps;
 }

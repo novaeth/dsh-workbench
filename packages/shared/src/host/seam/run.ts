@@ -7,6 +7,7 @@ import { quoteShellArg, shellKindOf } from '../shell-text.js';
 import { runShell, type ShellResult } from '../shell.js';
 import { deniedPathOf, sandboxDeniedOf } from './denial.js';
 import { seamProductEnv } from './env.js';
+import { definedEnvOf, hostEnvOf } from './host-env.js';
 import type {
   ChannelHandle,
   ExecIntent,
@@ -141,23 +142,6 @@ function sandboxedLineOf(target: SeamTarget, shellKind: SeamShellKind | undefine
   if (shellKind === undefined) return target.line;
   const invocation = shellInvocationOf(shellKind, target.line);
   return [invocation.file, ...invocation.args].map((one) => quoteShellArg(one)).join(' ');
-}
-
-function hostEnvOf(env: Readonly<Record<string, string | undefined>> | undefined): Record<string, string | undefined> {
-  const merged: Record<string, string | undefined> = { ...process.env };
-  for (const [key, value] of Object.entries(env ?? {})) {
-    if (value === undefined) delete merged[key];
-    else merged[key] = value;
-  }
-  return merged;
-}
-
-function definedEnvOf(env: Readonly<Record<string, string | undefined>> | undefined): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const [key, value] of Object.entries(env ?? {})) {
-    if (value !== undefined) out[key] = value;
-  }
-  return out;
 }
 
 export function createSeam(ports: SeamPorts): Seam {

@@ -47,6 +47,7 @@ export * from './host/profile-create.js';
 export * from './host/context-ref.js';
 export * from './host/diy-debug.js';
 export * from './host/diy-record.js';
+export * from './host/env-policy.js';
 export * from './host/facts.js';
 export * from './host/fs-write.js';
 export * from './host/git.js';

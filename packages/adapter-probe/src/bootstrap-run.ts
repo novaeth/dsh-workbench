@@ -1,8 +1,6 @@
-import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
 import { isolatedRoot } from '@dsh-workbench/adapter-runtime';
-import { tailLines } from '@dsh-workbench/shared/host';
+import { bootstrapEnvOf, tailLines } from '@dsh-workbench/shared/host';
 import type { Seam, ShellKind } from '@dsh-workbench/shared/host';
 import { desktopRuntimeEnvPath } from './desktop-runtime.js';
 import { currentShellKind } from './platform.js';
@@ -46,27 +44,14 @@ export interface BootstrapRunResult {
 }
 
 export function bootstrapEnv(options: BootstrapEnvOptions = {}): Record<string, string> {
-  const shellKind = options.shellKind ?? currentShellKind();
-  const opencliRoot = options.opencliRoot ?? isolatedRoot();
-  const realHome = options.realHome ?? homedir();
   const parent = options.parent ?? process.env;
-  const env: Record<string, string> = {};
-  for (const [key, value] of Object.entries(parent)) {
-    if (typeof value === 'string') env[key] = value;
-  }
-  const runtimePath = desktopRuntimeEnvPath(parent.PATH);
-  if (runtimePath !== undefined) env['PATH'] = runtimePath;
-  const home = join(opencliRoot, 'home');
-  env['HOME'] = home;
-  if (shellKind === 'pwsh') env['USERPROFILE'] = home;
-  const userConfig = join(realHome, '.npmrc');
-  if (existsSync(userConfig)) env['NPM_CONFIG_USERCONFIG'] = userConfig;
-  const cache = join(opencliRoot, 'npm-cache');
-  env['npm_config_cache'] = cache;
-  env['NPM_CONFIG_CACHE'] = cache;
-  env['NO_COLOR'] = '1';
-  env['TERM'] = 'dumb';
-  return env;
+  return bootstrapEnvOf({
+    root: options.opencliRoot ?? isolatedRoot(),
+    realHome: options.realHome ?? homedir(),
+    shellKind: options.shellKind ?? currentShellKind(),
+    parent,
+    path: desktopRuntimeEnvPath(parent.PATH),
+  });
 }
 
 function commandArgsOf(
