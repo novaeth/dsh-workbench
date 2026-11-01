@@ -2,6 +2,7 @@ import type { DshShell } from '@dsh-workbench/shared';
 import { runShell } from '@dsh-workbench/shared/host';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
 import { delimiter } from 'node:path';
+import { homedir } from 'node:os';
 import {
   desktopBundledBins,
   desktopNodeExecutable,
@@ -25,9 +26,13 @@ export interface ToolchainReport {
 async function toolVersion(
   shell: DshShell,
   line: string,
+  workdir?: { readonly workdir?: string | undefined } | undefined,
 ): Promise<{ ok: boolean; text: string; stalled: boolean; code: number | null; raw: string }> {
   try {
-    const result = await runShell(shell, line, { timeoutMs: 10_000 });
+    const result = await runShell(shell, line, {
+      timeoutMs: 10_000,
+      ...(workdir?.workdir === undefined ? {} : { workdir: workdir.workdir }),
+    });
     const text = (result.stdout || result.stderr).trim().split('\n')[0] ?? '';
     return {
       ok: result.exitCode === 0 && !result.timedOut,
@@ -88,6 +93,17 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
         ? `pnpm ${pnpm.text}（Desktop 自带）`
         : `pnpm ${pnpm.text}`,
   ];
+  const control: string[] = [];
+  if (nodeMissing) {
+    for (const [label, workdir] of [
+      ['default', undefined],
+      ['home', homedir()],
+      ['cwd', process.cwd()],
+    ] as const) {
+      const probe = await toolVersion(shell, 'echo workbench-probe', { workdir });
+      control.push(`control ${label}: exit=${String(probe.code)} out=${probe.raw.slice(0, 80) || '（空）'}`);
+    }
+  }
   const diagnostics = [
     `deployment=${desktop ? 'desktop' : 'host'} · resources=${desktopResourcesDir() ?? '（无）'} · execPath=${process.execPath}`,
     `bundled node=${bundledNode ?? '（找不到）'} · bundled pnpm=${bundledPnpm ?? '（找不到）'} · bins=${desktopBundledBins().join('|') || '（无）'}`,
@@ -95,6 +111,7 @@ export async function probeDesktopToolchain(shell: DshShell): Promise<ToolchainR
     `node: exit=${String(node.code)} out=${node.raw.slice(0, 160) || '（空）'} cmd=${nodeCommand}`,
     `pnpm: exit=${String(pnpm.code)} out=${pnpm.raw.slice(0, 160) || '（空）'} cmd=${pnpmLine}`,
     `npm: exit=${String(npm.code)} out=${npm.raw.slice(0, 120) || '（空）'}`,
+    ...control,
   ];
   return { ok: !nodeMissing, detail: parts.join(' · '), nodeMissing, npmMissing, pnpmProblem, diagnostics };
 }
