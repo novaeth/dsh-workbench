@@ -10,6 +10,7 @@ const HOST_TITLE = '★ 宿主能力只在宿主接线里打开';
 const WRITE_TITLE = '★ 宿主文件写只有一个入口';
 const TIME_TITLE = '★ 宿主时间只从 time.ts 取';
 const ENV_TITLE = '★ 受控 env 只在 env-policy 里组装';
+const PATCH_TITLE = '★ patch 解析只有一份';
 
 const ADAPTERS = [
   'adapter-runtime',
@@ -146,6 +147,20 @@ function hostSide(rel) {
 const ENV_ENTRY = 'packages/shared/src/host/env-policy.ts';
 const ENV_OWN = ['packages/adapter-probe/src/runtime-seed.ts'];
 
+const PATCH_PARSE_OWN = ['packages/shared/src/host/patch-blocks.ts'];
+
+export function patchParseHits() {
+  const hits = [];
+  for (const file of hostFiles()) {
+    const name = rel(file);
+    if (!hostSide(name) || allowed(file, PATCH_PARSE_OWN)) continue;
+    const source = read(file);
+    const match = /(function patchBlocks\(|interface PatchBlock\b|function spannedBlocks\()/.exec(source);
+    if (match !== null) hits.push(`${name}:${String(lineOf(source, match.index))}`);
+  }
+  return hits;
+}
+
 export function envEntryHits() {
   const hits = [];
   for (const file of hostFiles()) {
@@ -271,6 +286,12 @@ export const checks = [
     title: ENV_TITLE,
     run(_ctx, report) {
       reportOne(report, ENV_TITLE, envEntryHits(), '受控 env（寄 HOME/缓存、关交互提示、删键）只在 env-policy 里定义');
+    },
+  },
+  {
+    title: PATCH_TITLE,
+    run(_ctx, report) {
+      reportOne(report, PATCH_TITLE, patchParseHits(), 'patch 解析只住在 patch-blocks.ts，patch / config-sync 只是用');
     },
   },
 ];
