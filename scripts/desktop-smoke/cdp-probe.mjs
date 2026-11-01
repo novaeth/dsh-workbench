@@ -371,6 +371,22 @@ async function launchSmokeBrowser() {
   return browserState;
 }
 
+async function bridgeGate(cdp, snapshot, body, state) {
+  const bridge = stepStatusOf(snapshot, 'bridge');
+  if (bridge === '' || bridge === 'ok') return true;
+  if (browserState === 'pending') await launchSmokeBrowser();
+  if (browserState === 'missing-env') return true;
+  if (state.deadline === 0) state.deadline = Date.now() + remaining('等浏览器通道', BRIDGE_WAIT_MS);
+  if (Date.now() > state.deadline) {
+    await fail(cdp, `浏览器通道没连上（装扩展 + Retry 之后 bridge 还是 ${bridge}）`, body, snapshot);
+  }
+  if (Date.now() - state.retriedAt >= BRIDGE_RETRY_MS) {
+    state.retriedAt = Date.now();
+    await click(cdp, ['Retry', '重试'], 1200);
+  }
+  return false;
+}
+
 async function waitForGateAndReady(cdp) {
   const gateShot = `${prefix}-gate.png`;
   const gateOpenShot = `${prefix}-gate-open.png`;
@@ -379,6 +395,7 @@ async function waitForGateAndReady(cdp) {
   let gateBody = '';
   let readyBody = '';
   let snapshot;
+  const bridgeState = { retriedAt: 0, deadline: 0 };
 
   const gateUntil = Date.now() + remaining('等体检画面', GATE_WAIT_MS);
   while (Date.now() < gateUntil) {
@@ -402,6 +419,10 @@ async function waitForGateAndReady(cdp) {
       writeText(`${prefix}-gate-body.txt`, gateBody);
       writeText(`${prefix}-gate-preflight.json`, `${JSON.stringify(snapshot, null, 2)}\n`);
     }
+    if (!(await bridgeGate(cdp, snapshot, gateBody, bridgeState))) {
+      await sleep(POLL_MS);
+      continue;
+    }
     const continueText = continueTexts.find((text) => gateBody.includes(text));
     if (continueText !== undefined) {
       await click(cdp, [continueText], 3000);
@@ -412,27 +433,15 @@ async function waitForGateAndReady(cdp) {
   }
 
   const readyUntil = Date.now() + remaining('等体检 ready', READY_WAIT_MS);
-  let bridgeRetriedAt = 0;
-  let bridgeDeadline = 0;
   while (Date.now() < readyUntil) {
     readyBody = await bodyOf(cdp);
     snapshot = await preflightOf(cdp);
     const phase = snapshot?.phase ?? '';
-    const bridge = stepStatusOf(snapshot, 'bridge');
     log(`ready wait [${phase}] ${stepStates(snapshot)} :: ${tailBody(readyBody, 220)}`);
     if (phase === 'failed') await fail(cdp, 'preflight failed', readyBody, snapshot);
-    if (bridge !== '' && bridge !== 'ok') {
-      if (browserState === 'pending') await launchSmokeBrowser();
-      if (browserState === 'launched') {
-        if (bridgeDeadline === 0) bridgeDeadline = Date.now() + remaining('等浏览器通道', BRIDGE_WAIT_MS);
-        if (Date.now() > bridgeDeadline) {
-          await fail(cdp, `浏览器通道没连上（装扩展 + Retry 之后 bridge 还是 ${bridge}）`, readyBody, snapshot);
-        }
-        if (Date.now() - bridgeRetriedAt >= BRIDGE_RETRY_MS) {
-          bridgeRetriedAt = Date.now();
-          await click(cdp, ['Retry', '重试'], 1200);
-        }
-      }
+    if (!(await bridgeGate(cdp, snapshot, readyBody, bridgeState))) {
+      await sleep(POLL_MS);
+      continue;
     }
     const continueText = continueTexts.find((text) => readyBody.includes(text));
     if (continueText !== undefined) {
