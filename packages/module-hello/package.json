@@ -57,7 +57,7 @@
     }
   },
   "peerDependencies": {
-    "@dsh-workbench/core": "^0.1.0",
+    "@dsh-workbench/core": "^1.0.0",
     "react": "*"
   },
   "peerDependenciesMeta": {
