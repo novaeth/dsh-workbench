@@ -1,6 +1,6 @@
-import type { spawn } from 'node:child_process';
 import writeFileAtomic from 'write-file-atomic';
 import { quoteShellArg, workbenchRoot } from '@dsh-workbench/shared/host';
+import type { Seam } from '@dsh-workbench/shared/host';
 import { hostSurface } from './platform.js';
 import {
   chmodSync,
@@ -299,7 +299,7 @@ export function planSelfUpdate(
 export function startSelfUpdate(
   request: SelfUpdateRequest,
   onError: (message: string) => void,
-  spawnImpl?: typeof spawn,
+  seam?: Seam | undefined,
   cli: SelfUpdateCli = selfUpdateCliFor(request.profile),
 ): SelfUpdateStart {
   const plan = planSelfUpdate(request, new Date(), cli);
@@ -307,7 +307,7 @@ export function startSelfUpdate(
   writeFileAtomic.sync(plan.paths.script, plan.script, { mode: 0o755 });
   chmodSync(plan.paths.script, 0o755);
   writeFileAtomic.sync(plan.paths.marker, `${JSON.stringify(plan.marker)}\n`);
-  runDetached(plan.command, onError, spawnImpl);
+  runDetached(plan.command, onError, seam);
   const forward = recoveryCommand({
     profile: request.profile,
     pkg: request.pkg,

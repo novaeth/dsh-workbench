@@ -17,6 +17,7 @@ export function provideWorkbenchSeam(ctx: DshHostContext): Seam | undefined {
     shell,
     runtimeRoot,
     realHome: homedir(),
+    allowHost: true,
     logger: ctx.logger,
     grantOf: (session): SeamPolicy | undefined => {
       const resolved = ctx.get<DshSandboxPolicy>('sandboxPolicy')?.resolve?.({ session });

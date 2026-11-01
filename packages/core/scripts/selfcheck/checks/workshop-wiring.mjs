@@ -160,6 +160,24 @@ export const checks = [
         get: (name) => (name === 'dshHomePath' ? (rel) => join(fresh, rel) : provided.get(name)),
       };
       try {
+        const { createSeam } = await import('@dsh-workbench/shared/host');
+        const seam = createSeam({
+          shell: {
+            resolve: (request) => request,
+            execute: async () => ({
+              result: async () => ({
+                exitCode: 0,
+                timedOut: false,
+                aborted: false,
+                stdout: { text: '', truncated: false },
+                stderr: { text: '', truncated: false },
+              }),
+            }),
+          },
+          runtimeRoot: join(fresh, 'workbench'),
+          allowHost: true,
+        });
+        provided.set('workbenchSeam', seam);
         await ctx.host.apply(probeCtx);
         let wrapper = '';
         for (const file of entriesUnder(fresh)) {

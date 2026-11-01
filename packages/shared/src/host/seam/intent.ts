@@ -38,9 +38,10 @@ export interface SeamDenial {
 
 export interface SeamFact {
   readonly at: number;
+  readonly verb: 'run' | 'spawn' | 'open';
   readonly command: string;
-  readonly intent: WriteIntent['kind'];
-  readonly mode: SeamMode;
+  readonly intent: WriteIntent['kind'] | 'host';
+  readonly mode: SeamMode | 'host';
   readonly workspaceRoot: string;
   readonly exitCode: number | null;
   readonly timedOut: boolean;

@@ -14,8 +14,7 @@
     "dist"
   ],
   "dependencies": {
-    "@dsh-workbench/shared": "workspace:*",
-    "execa": "^10.2.0"
+    "@dsh-workbench/shared": "workspace:*"
   },
   "license": "MIT",
   "scripts": {

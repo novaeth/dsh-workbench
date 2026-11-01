@@ -1,4 +1,4 @@
-import { execa } from 'execa';
+import type { Seam } from '@dsh-workbench/shared/host';
 import { gitNoPromptProcessEnv } from './git-exec.js';
 
 export interface GitRunResult {
@@ -16,23 +16,41 @@ export interface GitRunOptions {
 
 export type GitRunner = (args: readonly string[], options?: GitRunOptions) => Promise<GitRunResult>;
 
-const DEFAULT_MAX_BYTES = 8 * 1024 * 1024;
+let gitSeam: Seam | undefined;
+
+function promptlessEnv(): Readonly<Record<string, string>> {
+  const env: Record<string, string> = {};
+  for (const [key, value] of Object.entries(gitNoPromptProcessEnv())) {
+    if (value !== undefined) env[key] = value;
+  }
+  return env;
+}
+
+export function provideGitProcessSeam(seam: Seam | undefined): void {
+  gitSeam = seam;
+}
+
+export function createGitRunner(seam: Seam): GitRunner {
+  return async (args, options = {}) => {
+    const outcome = await seam.run({
+      argv: ['git', ...args],
+      intent: { kind: 'host' },
+      env: promptlessEnv(),
+      ...(options.cwd === undefined ? {} : { workdir: options.cwd }),
+      ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
+    });
+    return {
+      exitCode: outcome.exitCode ?? null,
+      stdout: outcome.stdout,
+      stderr: outcome.stderr,
+      timedOut: outcome.timedOut,
+    };
+  };
+}
 
 export const runGitProcess: GitRunner = async (args, options = {}) => {
-  const result = await execa('git', [...args], {
-    ...(options.cwd === undefined ? {} : { cwd: options.cwd }),
-    env: gitNoPromptProcessEnv(),
-    stdin: 'ignore',
-    reject: false,
-    ...(options.timeoutMs === undefined ? {} : { timeout: options.timeoutMs }),
-    killSignal: 'SIGKILL',
-    maxBuffer: options.maxBytes ?? DEFAULT_MAX_BYTES,
-    stripFinalNewline: false,
-  });
-  return {
-    exitCode: result.exitCode ?? null,
-    stdout: result.stdout ?? '',
-    stderr: result.stderr ?? '',
-    timedOut: result.timedOut === true,
-  };
+  if (gitSeam === undefined) {
+    throw new Error('git 命令还没接上执行缝（宿主域）—— 这个进程里没有可用的 shell 服务。');
+  }
+  return createGitRunner(gitSeam)(args, options);
 };

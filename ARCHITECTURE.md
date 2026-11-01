@@ -910,7 +910,7 @@ pnpm run check:gates:target
 | 判据 | 判什么 |
 |---|---|
 | `WB-A1` | 只有组合根可以 import `adapters-default` / 具体 adapter |
-| `SH-A1` | shared 不依赖、不 import adapter / core；`shared/src/adapters` 为空 |
+| `SH-A1` | shared 不依赖、不 import adapter / core；`shared/src/adapters` 为空（唯一例外：执行缝模块的进程实现 `src/host/seam/process.ts` 可以用 execa —— 它是执行缝统一入口的机制，不是适配器实现） |
 | `TEST-1` | 全仓测试文件都在同目录的 `__tests__/` 下（模板 `.tpl` 也算） |
 | `SK-2 / SK-3` | skill 链接与 SKILL.md 索引 |
 | `CHAIN-1/2` | 目标报告入口与并入时机 |

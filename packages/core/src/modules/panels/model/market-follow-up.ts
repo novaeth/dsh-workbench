@@ -1,7 +1,6 @@
 import { join } from 'node:path';
-import { execa } from 'execa';
 import { PLUGIN_ID } from '@dsh-workbench/shared/host';
-import type { ProfilePackage } from '@dsh-workbench/shared/host';
+import type { ProfilePackage, Seam } from '@dsh-workbench/shared/host';
 import {
   migrateWorkbench,
   type MigrationRunInput,
@@ -9,10 +8,13 @@ import {
 } from '@/shared/api/host/migrate-workbench';
 import { dismissFollowUp } from '@/shared/api/host/follow-up-dismiss';
 
+const MIGRATION_TIMEOUT_MS = 120_000;
+
 export interface WorkbenchFollowUpDeps {
   readonly dshHome: (() => string) | undefined;
   readonly profileName: (() => string | null) | undefined;
   readonly workbench: ((pkg: string) => ProfilePackage | undefined) | undefined;
+  readonly seam?: Seam | undefined;
   readonly runMigration?: ((input: MigrationRunInput) => Promise<MigrationRunResult>) | undefined;
 }
 
@@ -24,13 +26,16 @@ export interface WorkbenchFollowUpActions {
 export function createWorkbenchFollowUps(deps: WorkbenchFollowUpDeps): WorkbenchFollowUpActions {
   const runMigration =
     deps.runMigration ??
-    (async (input) => {
-      const result = await execa(process.execPath, [input.script, '--migrate', '--force'], {
-        env: { ...process.env, ELECTRON_RUN_AS_NODE: '1', ...input.env },
-        reject: false,
-        timeout: 120_000,
+    (async (input: MigrationRunInput): Promise<MigrationRunResult> => {
+      const seam = deps.seam;
+      if (seam === undefined) throw new Error('没有执行缝（shell 服务不可用），迁移跑不起来。');
+      const outcome = await seam.run({
+        argv: [process.execPath, input.script, '--migrate', '--force'],
+        intent: { kind: 'host' },
+        env: { ELECTRON_RUN_AS_NODE: '1', ...input.env },
+        timeoutMs: MIGRATION_TIMEOUT_MS,
       });
-      return { exitCode: result.exitCode ?? 1, stdout: result.stdout, stderr: result.stderr };
+      return { exitCode: outcome.exitCode ?? 1, stdout: outcome.stdout, stderr: outcome.stderr };
     });
 
   function homeAndProfile(): { readonly home: string; readonly profile: string } {

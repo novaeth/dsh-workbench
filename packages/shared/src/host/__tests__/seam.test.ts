@@ -5,7 +5,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { SeamError } from '../seam/intent.js';
 import { createSeam } from '../seam/run.js';
 import { createUnitSeam, unitDataRoot } from '../seam/unit-seam.js';
-import { createFakeShell, createFakeLogger } from '../../testing/host-fakes.js';
+import { createFakeProcesses, createFakeShell, createFakeLogger } from '../../testing/host-fakes.js';
 
 const ROOT = join(tmpdir(), 'dsh-wb-seam-root');
 const PROJECT = join(tmpdir(), 'dsh-wb-seam-project');
@@ -194,5 +194,103 @@ describe('createUnitSeam', () => {
     });
     await declared.run({ command: 'touch x', scope: 'workspace', session: {} });
     expect(policyOf(fake.calls[0])).toEqual({ mode: 'workspace-write', workspaceRoot: PROJECT });
+  });
+});
+
+describe('宿主域：run / spawn / open', () => {
+  it('host 域 run：按 argv 起宿主进程，拿回输出，记 host 事实', async () => {
+    const fake = createFakeProcesses([{ stdout: 'ok\n', exitCode: 0 }]);
+    const seam = createSeam({ shell: createFakeShell([]).shell, runtimeRoot: ROOT, allowHost: true, processes: fake.host });
+    const outcome = await seam.run({
+      argv: ['git', '-C', PROJECT, 'status'],
+      intent: { kind: 'host' },
+      env: { GIT_TERMINAL_PROMPT: '0' },
+      timeoutMs: 5_000,
+    });
+    expect(outcome.exitCode).toBe(0);
+    expect(outcome.stdout).toBe('ok\n');
+    expect(fake.calls[0]?.file).toBe('git');
+    expect(fake.calls[0]?.args).toEqual(['-C', PROJECT, 'status']);
+    expect(fake.calls[0]?.env['GIT_TERMINAL_PROMPT']).toBe('0');
+    expect(fake.calls[0]?.detached).toBe(false);
+    expect(seam.facts().at(-1)).toMatchObject({ verb: 'run', intent: 'host', mode: 'host' });
+  });
+
+  it('host 域 run：shell line 走 bash -c，超时到点 kill', async () => {
+    const fake = createFakeProcesses([{ hang: true }]);
+    const seam = createSeam({
+      shell: createFakeShell([]).shell,
+      runtimeRoot: ROOT,
+      allowHost: true,
+      processes: fake.host,
+    });
+    const outcome = await seam.run({ command: 'pnpm install', shellKind: 'posix', intent: { kind: 'host' }, timeoutMs: 10 });
+    expect(fake.calls[0]?.file).toBe('bash');
+    expect(fake.calls[0]?.args).toEqual(['-c', 'pnpm install']);
+    expect(outcome.timedOut).toBe(true);
+    expect(fake.children[0]?.killed).toContain('SIGKILL');
+  });
+
+  it('没有宿主能力时 host 域起不来，也不许 spawn/open', async () => {
+    const fake = createFakeProcesses([{}]);
+    const seam = createSeam({ shell: createFakeShell([]).shell, runtimeRoot: ROOT, processes: fake.host });
+    await expect(seam.run({ argv: ['git', 'status'], intent: { kind: 'host' } })).rejects.toMatchObject({
+      code: 'scope-not-declared',
+    });
+    expect(() =>
+      seam.spawn({ target: { argv: ['node', 'x'] }, intent: { kind: 'host' }, lifetime: 'host', logFile: join(SCRATCH, 'x.log') }),
+    ).toThrow(SeamError);
+    expect(fake.calls).toHaveLength(0);
+  });
+
+  it('spawn：detached + 日志文件 + unref，handle 能拿到 pid 与退出', async () => {
+    const fake = createFakeProcesses([{ hang: true }]);
+    const seam = createSeam({ shell: createFakeShell([]).shell, runtimeRoot: ROOT, allowHost: true, processes: fake.host });
+    const logFile = join(SCRATCH, 'spawn.log');
+    const handle = seam.spawn({
+      target: { argv: ['node', 'seed.mjs'] },
+      intent: { kind: 'host' },
+      lifetime: 'host',
+      logFile,
+      label: 'seed',
+    });
+    expect(handle.pid).toBe(4242);
+    expect(handle.logFile).toBe(logFile);
+    expect(fake.calls[0]?.detached).toBe(true);
+    expect(fake.calls[0]?.stdio).toBe('log');
+    expect(fake.calls[0]?.logFile).toBe(logFile);
+    expect(fake.children[0]?.unrefed).toBe(true);
+    expect(seam.facts().at(-1)).toMatchObject({ verb: 'spawn', intent: 'host', mode: 'host' });
+    const waiting = handle.exit();
+    fake.children[0]?.finish(0);
+    await expect(waiting).resolves.toEqual({ code: 0, signal: null });
+  });
+
+  it('open：双向流读写与退出', async () => {
+    const fake = createFakeProcesses([{ hang: true }]);
+    const seam = createSeam({ shell: createFakeShell([]).shell, runtimeRoot: ROOT, allowHost: true, processes: fake.host });
+    const channel = seam.open({
+      target: { argv: ['node', 'mcp-server.mjs'] },
+      intent: { kind: 'host' },
+      env: { MCP_TOKEN: 't' },
+    });
+    const lines: string[] = [];
+    channel.onData((chunk) => lines.push(chunk));
+    channel.write('hello\n');
+    fake.children[0]?.emitStdout('world\n');
+    expect(lines).toEqual(['world\n']);
+    expect(fake.children[0]?.writes).toEqual(['hello\n']);
+    expect(fake.calls[0]?.env['MCP_TOKEN']).toBe('t');
+    const exited = new Promise<unknown>((resolve) => channel.onExit((event) => resolve(event)));
+    fake.children[0]?.finish(3);
+    await expect(exited).resolves.toEqual({ code: 3, signal: null });
+    expect(seam.facts().at(-1)).toMatchObject({ verb: 'open', intent: 'host' });
+  });
+
+  it('沙箱域也能用 argv：内部拼成命令行交给 dsh shell', async () => {
+    const fake = createFakeShell([{}]);
+    const seam = createSeam({ shell: fake.shell, runtimeRoot: ROOT });
+    await seam.run({ argv: ['npm', 'view', 'left-pad', 'version'], intent: { kind: 'product' } });
+    expect(fake.calls[0]?.command).toBe("'npm' 'view' 'left-pad' 'version'");
   });
 });

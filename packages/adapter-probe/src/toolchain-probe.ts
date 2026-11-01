@@ -1,7 +1,6 @@
 import { productWrite, quoteShellArg, type Seam } from '@dsh-workbench/shared/host';
 import { delimiter } from 'node:path';
 import { homedir } from 'node:os';
-import { execaSync } from 'execa';
 import {
   desktopBundledBins,
   desktopNodeExecutable,
@@ -120,7 +119,11 @@ export async function probeDesktopToolchain(seam: Seam): Promise<ToolchainReport
         continue;
       }
       try {
-        const out = execaSync(file, ['--version'], { timeout: 10_000, reject: false });
+        const out = await seam.run({
+          argv: [file, '--version'],
+          intent: { kind: 'host' },
+          timeoutMs: 10_000,
+        });
         control.push(`control ${label}: exit=${String(out.exitCode)} out=${(out.stdout || out.stderr).slice(0, 80)}`);
       } catch (error) {
         control.push(`control ${label}: 起不来 ${String(error).slice(0, 120)}`);

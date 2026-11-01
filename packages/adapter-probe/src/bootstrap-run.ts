@@ -1,10 +1,9 @@
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { execa } from 'execa';
 import { isolatedRoot } from '@dsh-workbench/adapter-runtime';
 import { tailLines } from '@dsh-workbench/shared/host';
-import type { ShellKind } from '@dsh-workbench/shared/host';
+import type { Seam, ShellKind } from '@dsh-workbench/shared/host';
 import { desktopRuntimeEnvPath } from './desktop-runtime.js';
 import { currentShellKind } from './platform.js';
 
@@ -18,8 +17,6 @@ export interface BootstrapEnvOptions {
 export interface BootstrapSpawnOptions {
   readonly env: Readonly<Record<string, string>>;
   readonly timeout: number;
-  readonly reject: false;
-  readonly stripFinalNewline: false;
 }
 
 export interface BootstrapSpawnResult {
@@ -40,6 +37,7 @@ export interface BootstrapRunOptions {
   readonly env?: Readonly<Record<string, string>> | undefined;
   readonly shellKind?: ShellKind | undefined;
   readonly spawn?: BootstrapSpawn | undefined;
+  readonly seam?: Seam | undefined;
 }
 
 export interface BootstrapRunResult {
@@ -80,36 +78,41 @@ function commandArgsOf(
     : { file: 'bash', args: ['-c', line] };
 }
 
-const defaultSpawn: BootstrapSpawn = async (file, args, options) => {
-  const result = await execa(file, [...args], {
-    env: { ...options.env },
-    timeout: options.timeout,
-    reject: options.reject,
-    stripFinalNewline: options.stripFinalNewline,
+async function seamSpawn(
+  seam: Seam | undefined,
+  line: string,
+  shellKind: ShellKind,
+  env: Readonly<Record<string, string>>,
+  timeoutMs: number,
+): Promise<BootstrapSpawnResult> {
+  if (seam === undefined) throw new Error('没有执行缝，自举命令起不来');
+  const result = await seam.run({
+    command: line,
+    shellKind,
+    intent: { kind: 'host' },
+    env,
+    timeoutMs,
   });
   return {
-    exitCode: result.exitCode ?? null,
-    timedOut: result.timedOut === true,
+    exitCode: result.exitCode,
+    timedOut: result.timedOut,
     stdout: result.stdout,
     stderr: result.stderr,
   };
-};
+}
 
 export async function runBootstrapCommand(
   line: string,
   options: BootstrapRunOptions,
 ): Promise<BootstrapRunResult> {
   const shellKind = options.shellKind ?? currentShellKind();
-  const spawn = options.spawn ?? defaultSpawn;
   const env = { ...bootstrapEnv({ shellKind }), ...(options.env ?? {}) };
   const command = commandArgsOf(line, shellKind);
   try {
-    const result = await spawn(command.file, command.args, {
-      env,
-      timeout: options.timeoutMs,
-      reject: false,
-      stripFinalNewline: false,
-    });
+    const result =
+      options.spawn === undefined
+        ? await seamSpawn(options.seam, line, shellKind, env, options.timeoutMs)
+        : await options.spawn(command.file, command.args, { env, timeout: options.timeoutMs });
     if (result.timedOut === true) return { ok: false, detail: `超时（${String(options.timeoutMs)} ms）：${line}` };
     if (result.exitCode === 0) return { ok: true, detail: tailLines(result.stdout, 1) };
     const detail = tailLines(result.stderr || result.stdout, 4);

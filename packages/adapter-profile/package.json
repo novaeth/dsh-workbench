@@ -37,7 +37,6 @@
   },
   "dependencies": {
     "@dsh-workbench/shared": "workspace:*",
-    "execa": "^10.2.0",
     "proper-lockfile": "^4.1.2",
     "write-file-atomic": "^8.0.0"
   }

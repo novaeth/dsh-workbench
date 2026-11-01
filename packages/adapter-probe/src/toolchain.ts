@@ -1,10 +1,10 @@
-import { execaSync } from 'execa';
 import lockfile from 'proper-lockfile';
 import writeFileAtomic from 'write-file-atomic';
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { quoteShellArg, quoteShellArgFor } from '@dsh-workbench/shared/host';
-import { bootstrapEnv } from './bootstrap-run.js';
+import type { Seam } from '@dsh-workbench/shared/host';
+import { bootstrapEnv, runBootstrapCommand } from './bootstrap-run.js';
 import { hostSurface } from './platform.js';
 import { desktopPnpmPath } from './desktop-runtime.js';
 import type { PnpmProcess } from './desktop-runtime.js';
@@ -134,9 +134,26 @@ export interface LocalPnpmProvision {
   readonly binDir?: string | undefined;
 }
 
+const LOCAL_PNPM_PROVISION_TIMEOUT_MS = 180_000;
+
+function hostProvisionRun(
+  root: string,
+  seam: Seam | undefined,
+): (command: string) => Promise<{ ok: boolean; detail: string }> {
+  return async (command) => {
+    const result = await runBootstrapCommand(command, {
+      timeoutMs: LOCAL_PNPM_PROVISION_TIMEOUT_MS,
+      seam,
+      env: bootstrapEnv({ opencliRoot: join(root, 'opencli') }),
+    });
+    return { ok: result.ok, detail: result.detail };
+  };
+}
+
 export async function provisionLocalPnpm(options: {
   readonly root: string;
-  readonly run: (command: string) => Promise<{ ok: boolean; detail: string }>;
+  readonly seam?: Seam | undefined;
+  readonly run?: ((command: string) => Promise<{ ok: boolean; detail: string }>) | undefined;
   readonly installed?: (() => boolean) | undefined;
   readonly platform?: NodeJS.Platform | undefined;
   readonly proc?: PnpmProcess | undefined;
@@ -163,8 +180,9 @@ export async function provisionLocalPnpm(options: {
     return { ok: false, detail: `建不了 ${localPnpmRoot(options.root)}：${String(error)}` };
   }
   let detail = '';
+  const run = options.run ?? hostProvisionRun(options.root, options.seam);
   for (const command of commands) {
-    const result = await options.run(command);
+    const result = await run(command);
     if (result.ok) {
       const installed = options.installed?.() ?? existsSync(localPnpmCommand(options.root, platform));
       if (installed) {
@@ -180,50 +198,6 @@ export async function provisionLocalPnpm(options: {
     }
   }
   return { ok: false, detail };
-}
-
-export function provisionLocalPnpmSync(options: {
-  readonly root: string;
-  readonly run?: ((command: string) => void) | undefined;
-  readonly installed?: (() => boolean) | undefined;
-  readonly platform?: NodeJS.Platform | undefined;
-  readonly proc?: PnpmProcess | undefined;
-  readonly exists?: ((path: string) => boolean) | undefined;
-}): LocalPnpmProvision {
-  const command = localPnpmInstallCommand(
-    options.root,
-    options.proc ?? process,
-    options.exists ?? existsSync,
-  );
-  if (command === undefined) return { ok: false, detail: '找不到 Desktop 自带 pnpm，装不了本地 pnpm 10' };
-  try {
-    mkdirSync(localPnpmRoot(options.root), { recursive: true });
-  } catch (error) {
-    return { ok: false, detail: `建不了 ${localPnpmRoot(options.root)}：${String(error)}` };
-  }
-  try {
-    const run =
-      options.run ??
-      ((line: string) => {
-        execaSync(line, {
-          stdio: 'ignore',
-          timeout: 180_000,
-          env: bootstrapEnv({ opencliRoot: join(options.root, 'opencli') }),
-          shell: true,
-        });
-      });
-    run(command);
-  } catch (error) {
-    return { ok: false, detail: String(error) };
-  }
-  const platform = options.platform ?? process.platform;
-  const installed = options.installed?.() ?? existsSync(localPnpmCommand(options.root, platform));
-  if (!installed) return { ok: false, detail: 'pnpm 跑完但本地 pnpm 10 不在' };
-  return {
-    ok: true,
-    binDir: localPnpmBin(options.root),
-    detail: `pnpm@${LOCAL_PNPM_VERSION} 装到 ${localPnpmRoot(options.root)}`,
-  };
 }
 
 function readText(file: string): string | null {

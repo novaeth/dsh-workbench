@@ -84,9 +84,6 @@ importers:
       '@dsh-workbench/shared':
         specifier: workspace:*
         version: link:../shared
-      execa:
-        specifier: ^10.2.0
-        version: 10.2.0
       proper-lockfile:
         specifier: ^4.1.2
         version: 4.1.2
@@ -118,9 +115,6 @@ importers:
       '@dsh-workbench/shared':
         specifier: workspace:*
         version: link:../shared
-      execa:
-        specifier: ^10.2.0
-        version: 10.2.0
       proper-lockfile:
         specifier: ^4.1.2
         version: 4.1.2
@@ -149,9 +143,6 @@ importers:
       '@dsh-workbench/shared':
         specifier: workspace:*
         version: link:../shared
-      execa:
-        specifier: ^10.2.0
-        version: 10.2.0
     devDependencies:
       '@types/node':
         specifier: ^24.19.0
@@ -187,9 +178,6 @@ importers:
       '@dsh-workbench/shared':
         specifier: workspace:*
         version: link:../shared
-      execa:
-        specifier: ^10.2.0
-        version: 10.2.0
     devDependencies:
       '@types/node':
         specifier: ^24.19.0
@@ -240,9 +228,6 @@ importers:
       dayjs:
         specifier: ^1.11.23
         version: 1.11.23
-      execa:
-        specifier: ^10.2.0
-        version: 10.2.0
       prompts:
         specifier: ^2.4.2
         version: 2.4.2
@@ -383,6 +368,9 @@ importers:
       dayjs:
         specifier: ^1.11.23
         version: 1.11.23
+      execa:
+        specifier: ^10.2.0
+        version: 10.2.0
       semver:
         specifier: ^7.8.5
         version: 7.8.5

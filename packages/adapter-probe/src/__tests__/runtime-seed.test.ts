@@ -10,9 +10,10 @@ import {
 import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawn } from 'node:child_process';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DshHostContext } from '@dsh-workbench/shared';
+import { createSeam } from '@dsh-workbench/shared/host';
+import { createFakeProcesses, createFakeShell } from '@dsh-workbench/shared/testing';
 import { isInstalledCopy, opencliWrapperScript, packageRootOf, prependPath, runDetached, runtimeSeedPaths, runtimeSeedRootOf, seedRuntimeFiles, workshopSeedPlan } from '../index.js';
 
 
@@ -147,62 +148,77 @@ describePosix('workshopSeedPlan', () => {
 });
 
 describePosix('runDetached', () => {
-  it('脱离父进程跑，把 DSH_HOME 合进 env，输出写进日志文件（后台跑的东西不许无声）', () => {
+  it('★ 交给宿主域 spawn：argv 是脚本本身、日志落给定文件、env 带上自举变量、脱离父进程', () => {
     const root = tempRoot();
     const logPath = join(root, 'seed.log');
-    const calls: { file: string; args: readonly string[]; options: Record<string, unknown> }[] = [];
-    const spawnImpl = ((file: string, args: readonly string[], options: Record<string, unknown>) => {
-      calls.push({ file, args, options });
-      return { on: () => {}, unref: () => {} };
-    }) as unknown as typeof spawn;
+    const processes = createFakeProcesses([{}]);
+    const seam = createSeam({
+      shell: createFakeShell([{}]).shell,
+      runtimeRoot: '/tmp/wb-seam-test',
+      allowHost: true,
+      processes: processes.host,
+    });
     process.env.DSH_WORKBENCH_TEST_KEEP = 'kept';
-    runDetached(
-      { file: 'bash', args: ['/s.sh', 'entry'], env: { DSH_HOME: '/home/.dsh' }, log: logPath },
-      () => {},
-      spawnImpl,
-    );
+    try {
+      runDetached(
+        { file: 'bash', args: ['/s.sh', 'entry'], env: { DSH_HOME: '/home/.dsh' }, log: logPath },
+        () => {},
+        seam,
+      );
+    } finally {
+      delete process.env.DSH_WORKBENCH_TEST_KEEP;
+    }
 
-    expect(calls).toHaveLength(1);
-    expect(calls[0]?.file).toBe('bash');
-    expect(calls[0]?.args).toEqual(['/s.sh', 'entry']);
-    expect(calls[0]?.options.detached).toBe(true);
-    expect((calls[0]?.options.stdio as unknown[])[0]).toBe('ignore');
-    expect(typeof (calls[0]?.options.stdio as unknown[])[1]).toBe('number');
-    expect(existsSync(logPath)).toBe(true);
-    expect(calls[0]?.options.env).toMatchObject({ DSH_HOME: '/home/.dsh', DSH_WORKBENCH_TEST_KEEP: 'kept' });
-    delete process.env.DSH_WORKBENCH_TEST_KEEP;
+    expect(processes.calls).toHaveLength(1);
+    expect(processes.calls[0]?.file).toBe('bash');
+    expect(processes.calls[0]?.args).toEqual(['/s.sh', 'entry']);
+    expect(processes.calls[0]?.logFile).toBe(logPath);
+    expect(processes.calls[0]?.env['DSH_HOME']).toBe('/home/.dsh');
+    expect(processes.calls[0]?.env['DSH_WORKBENCH_TEST_KEEP']).toBe('kept');
+    expect(processes.children[0]?.unrefed).toBe(true);
+    expect(seam.facts().filter((fact) => fact.verb === 'spawn')).toHaveLength(1);
   });
 
-  it('子进程报错时留一句话（不是静默什么都没有）', () => {
+  it('子进程报错时留一句话（不是静默什么都没有）', async () => {
     const root = tempRoot();
-    const listeners: ((error: unknown) => void)[] = [];
-    const spawnImpl = (() => ({
-      on: (_event: string, listener: (error: unknown) => void) => {
-        listeners.push(listener);
-      },
-      unref: () => {},
-    })) as unknown as typeof spawn;
+    const processes = createFakeProcesses([{ error: new Error('boom') }]);
+    const seam = createSeam({
+      shell: createFakeShell([{}]).shell,
+      runtimeRoot: '/tmp/wb-seam-test',
+      allowHost: true,
+      processes: processes.host,
+    });
     const log = vi.fn();
-    runDetached({ file: 'bash', args: ['/s.sh'], env: {}, log: join(root, 'seed.log') }, log, spawnImpl);
-    listeners[0]?.(new Error('boom'));
+    runDetached({ file: 'bash', args: ['/s.sh'], env: {}, log: join(root, 'seed.log') }, log, seam);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
     expect(log).toHaveBeenCalledWith(expect.stringContaining('自举脚本没跑起来'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('boom'));
   });
 
-  it('连 spawn 都抛（例如 bash 不在）也留一句话、并把日志描述符收回去', () => {
+  it('连起进程都抛（例如 bash 不在）也留一句话', () => {
     const root = tempRoot();
-    const spawnImpl = (() => {
-      throw new Error('spawn failed');
-    }) as unknown as typeof spawn;
+    const seam = createSeam({
+      shell: createFakeShell([{}]).shell,
+      runtimeRoot: '/tmp/wb-seam-test',
+      allowHost: true,
+      processes: {
+        spawn() {
+          throw new Error('spawn failed');
+        },
+      },
+    });
     const log = vi.fn();
-    runDetached({ file: 'bash', args: ['/s.sh'], env: {}, log: join(root, 'seed.log') }, log, spawnImpl);
+    runDetached({ file: 'bash', args: ['/s.sh'], env: {}, log: join(root, 'seed.log') }, log, seam);
+
     expect(log).toHaveBeenCalledWith(expect.stringContaining('spawn failed'));
   });
 
-  it('日志文件打不开（目录没了）也留一句话，不带崩宿主', () => {
+  it('没有执行缝时退回「自举没跑」，不带崩宿主', () => {
     const root = tempRoot();
-    const spawnImpl = (() => ({ on: () => {}, unref: () => {} })) as unknown as typeof spawn;
     const log = vi.fn();
-    runDetached({ file: 'bash', args: ['/s.sh'], env: {}, log: join(root, 'nope', 'seed.log') }, log, spawnImpl);
+    runDetached({ file: 'bash', args: ['/s.sh'], env: {}, log: join(root, 'seed.log') }, log);
+
     expect(log).toHaveBeenCalledWith(expect.stringContaining('自举脚本没跑起来'));
   });
 });

@@ -1,5 +1,6 @@
 import type { DshHostContext, DshWorkspaceRegistry, UnitManifest } from '@dsh-workbench/shared';
 import { provideWorkbenchSeam } from '@/shared/api/host/workbench-seam';
+import { provideGitProcessSeam } from '@/shared/api/host/git-process';
 import { shippedAdapterSet } from '@/shared/api/host/shipped-adapter-set';
 import { dshHome } from '@dsh-workbench/shared/host';
 import { createHostRoutes } from '@/shared/api/host/host-routes';
@@ -55,6 +56,7 @@ interface ReleasedLookup { isReleased(id: string): boolean }
 export const inject = ['webServer'];
 export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Promise<void> {
   const seam = provideWorkbenchSeam(ctx);
+  if (seam !== undefined) provideGitProcessSeam(seam);
   const facts = createFactLog();
   const values = createValueHandoff();
   const panelState = createPanelStateStore();

@@ -59,7 +59,11 @@ export function registerPreflight(input: {
     seam: input.seam,
     command,
     installCommand,
-    install: () => runBootstrapCommand(installCommand, { timeoutMs: PREFLIGHT_INSTALL_TIMEOUT_MS }),
+    install: () =>
+      runBootstrapCommand(installCommand, {
+        timeoutMs: PREFLIGHT_INSTALL_TIMEOUT_MS,
+        seam: input.seam,
+      }),
     logger: input.ctx.logger,
     warmReads: input.warmReads,
     ...(input.runtimeCapabilities === undefined ? {} : { capabilities: input.runtimeCapabilities }),
@@ -74,7 +78,11 @@ export function registerPreflight(input: {
         root,
         pnpm: process.env.DSH_WB_PNPM?.trim() || 'pnpm',
         npm: 'npm',
-        run: (command) => runBootstrapCommand(command, { timeoutMs: PREFLIGHT_INSTALL_TIMEOUT_MS }),
+        run: (command) =>
+          runBootstrapCommand(command, {
+            timeoutMs: PREFLIGHT_INSTALL_TIMEOUT_MS,
+            seam: input.seam,
+          }),
       });
       if (result.ok && result.binDir !== undefined) {
         prependPath(result.binDir);

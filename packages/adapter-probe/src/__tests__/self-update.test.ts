@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createSeam } from '@dsh-workbench/shared/host';
+import { createFakeProcesses, createFakeShell } from '@dsh-workbench/shared/testing';
 
 import {
   desktopSelfUpdateCli,
@@ -19,6 +21,7 @@ import {
   type SelfUpdateCli,
   type SelfUpdateRequest,
 } from '../index.js';
+import { createSupplyPort } from '../supply-port.js';
 
 const describePosix = process.platform === 'win32' ? describe.skip : describe;
 
@@ -100,17 +103,19 @@ describePosix('工作台自更新：交给外面那个进程，而且一行都�
     expect(paths.log).toBe('/tmp/dsh-home/workbench/self-update.log');
   });
 
-  it('★ 起来之前先把现场写好：脚本、初始 marker（running）、然后 detached 跑', () => {
+  it('★ 起来之前先把现场写好：脚本、初始 marker（running）、然后交给宿主域 spawn 跑', () => {
     const root = home();
     try {
-      const calls: Array<{ file: string; args: readonly string[]; detached?: boolean }> = [];
-      const fakeSpawn = ((file: string, args: readonly string[], options: { detached?: boolean }) => {
-        calls.push({ file, args, detached: options.detached });
-        return { on: () => undefined, unref: () => undefined };
-      }) as unknown as typeof import('node:child_process').spawn;
+      const processes = createFakeProcesses([{}]);
+      const seam = createSeam({
+        shell: createFakeShell([{}]).shell,
+        runtimeRoot: '/tmp/wb-seam-test',
+        allowHost: true,
+        processes: processes.host,
+      });
 
       const paths = pathsOf(root);
-      const started = startSelfUpdate(request({ dshHome: root }), () => undefined, fakeSpawn);
+      const started = startSelfUpdate(request({ dshHome: root }), () => undefined, seam);
 
       expect(started.started).toBe(true);
       expect(readFileSync(paths.script, 'utf8')).toBe(selfUpdateScript(request({ dshHome: root }), paths));
@@ -121,7 +126,49 @@ describePosix('工作台自更新：交给外面那个进程，而且一行都�
         to: '0.2.7',
         state: 'running',
       });
-      expect(calls).toEqual([{ file: 'bash', args: [paths.script], detached: true }]);
+      expect(processes.calls).toHaveLength(1);
+      expect(processes.calls[0]?.file).toBe('bash');
+      expect(processes.calls[0]?.args).toEqual([paths.script]);
+      expect(processes.calls[0]?.logFile).toBe(paths.log);
+      expect(seam.facts().filter((fact) => fact.verb === 'spawn')).toHaveLength(1);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('★ 供应端口把执行缝一起带下去：startSelfUpdate 起得来那个脚本', () => {
+    const root = home();
+    try {
+      const processes = createFakeProcesses([{}]);
+      const seam = createSeam({
+        shell: createFakeShell([{}]).shell,
+        runtimeRoot: '/tmp/wb-seam-test',
+        allowHost: true,
+        processes: processes.host,
+      });
+      pathsOf(root);
+
+      const started = createSupplyPort({ seam }).startSelfUpdate(request({ dshHome: root }), () =>
+        undefined,
+      );
+
+      expect(started.started).toBe(true);
+      expect(processes.calls).toHaveLength(1);
+      expect(processes.calls[0]?.args).toEqual([started.paths.script]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('没有执行缝时自更新不假装起来了：留一句人话', () => {
+    const root = home();
+    try {
+      pathsOf(root);
+      const messages: string[] = [];
+
+      createSupplyPort().startSelfUpdate(request({ dshHome: root }), (message) => messages.push(message));
+
+      expect(messages[0]).toContain('自举脚本没跑起来');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

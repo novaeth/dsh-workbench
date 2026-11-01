@@ -1,11 +1,11 @@
-import type { SupplyPort } from '@dsh-workbench/shared/host';
+import type { Seam, SupplyPort } from '@dsh-workbench/shared/host';
 import { cliCatalogPath, ensureLibsBinOnPath, ensureLibsOpencliPeer, isolatedHome, libInstallCommand, libUninstallCommand, vendorPluginsDir } from '@dsh-workbench/adapter-runtime';
 import { isolatedRoot } from '@dsh-workbench/adapter-runtime';
 
 import { createRegistryNotebook, isNewerVersion } from '@dsh-workbench/adapter-profile';
 import { latestVersion, missingReleaseParts, probeRelease } from './release-port.js';
 import { opencliInstallCommand } from './install.js';
-import { startSelfUpdate } from './self-update.js';
+import { startSelfUpdate, type SelfUpdateRequest } from './self-update.js';
 import {
   declarationGaps,
   declarationRefusalOf,
@@ -24,7 +24,12 @@ import {
 import { readBundleManager, refusalReason } from '@dsh-workbench/shared/host';
 import { OPENCLI_MANIFEST_FILE } from '@dsh-workbench/adapter-runtime';
 
-export function createSupplyPort(): SupplyPort {
+export interface ProbeSupplyOptions {
+  readonly seam?: Seam | undefined;
+}
+
+export function createSupplyPort(options: ProbeSupplyOptions = {}): SupplyPort {
+  const seam = options.seam;
   const port = {
     isolatedRoot,
     isolatedHome,
@@ -59,7 +64,8 @@ export function createSupplyPort(): SupplyPort {
     splitNpmSpec,
     libInstallCommand,
     libUninstallCommand,
-    startSelfUpdate,
+    startSelfUpdate: (request: SelfUpdateRequest, onError: (message: string) => void) =>
+      startSelfUpdate(request, onError, seam),
   };
   return { ...port, env: port, modules: port };
 }

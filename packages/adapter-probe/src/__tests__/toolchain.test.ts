@@ -3,6 +3,8 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync, 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { createSeam } from '@dsh-workbench/shared/host';
+import { createFakeProcesses, createFakeShell } from '@dsh-workbench/shared/testing';
 
 import {
   desktopNodeShim,
@@ -16,7 +18,6 @@ import {
   LOCAL_PNPM_VERSION,
   provisionLocalNpm,
   provisionLocalPnpm,
-  provisionLocalPnpmSync,
   toolchainBinDir,
 } from '../index.js';
 
@@ -259,21 +260,29 @@ describe('本地 pnpm 10', () => {
     expect(commands[1]).toContain(`pnpm@${LOCAL_PNPM_VERSION}`);
   });
 
-  it('★ 同步 provision 也走同一条命令（启动时 seed 之前用）', () => {
+  it('★ 启动时那条 provision 走执行缝：命令原样交给宿主域一次', async () => {
     const root = tempRoot();
-    const commands: string[] = [];
-    const result = provisionLocalPnpmSync({
+    const processes = createFakeProcesses([{}]);
+    const seam = createSeam({
+      shell: createFakeShell([{}]).shell,
+      runtimeRoot: '/tmp/wb-seam-test',
+      allowHost: true,
+      processes: processes.host,
+    });
+
+    const result = await provisionLocalPnpm({
       root,
+      seam,
       proc: desktopPnpm,
       exists: (path) => path === pnpmCjs,
       installed: () => true,
-      run: (command) => commands.push(command),
     });
 
     expect(result.ok).toBe(true);
     expect(result.binDir).toBe(localPnpmBin(root));
-    expect(commands).toHaveLength(1);
-    expect(commands[0]).toContain(`pnpm@${LOCAL_PNPM_VERSION}`);
+    expect(processes.calls).toHaveLength(1);
+    expect(processes.calls[0]?.args.join(' ')).toContain(`pnpm@${LOCAL_PNPM_VERSION}`);
+    expect(seam.facts().filter((fact) => fact.verb === 'run')).toHaveLength(1);
   });
 
   it('provision 失败保留原因', async () => {
@@ -307,22 +316,6 @@ describe('本地 pnpm 10', () => {
     expect(result.ok).toBe(true);
   });
 
-  it('★ 启动时那条同步 provision 也一样先建目录（工坊 seed 之前跑的就是它）', () => {
-    const root = tempRoot();
-    let dirAtRun = false;
-    const result = provisionLocalPnpmSync({
-      root,
-      proc: desktopPnpm,
-      exists: (path) => path === pnpmCjs,
-      installed: () => true,
-      run: () => {
-        dirAtRun = existsSync(join(root, 'pnpm-10'));
-      },
-    });
-
-    expect(dirAtRun).toBe(true);
-    expect(result.ok).toBe(true);
-  });
 
   it('已装好本地 pnpm 10 时，ensureToolchain 把它的 bin 一起返回', () => {
     const root = tempRoot();

@@ -1,13 +1,24 @@
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { createSeam, type Seam } from '@dsh-workbench/shared/host';
+import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { createRuntimePort } from '../runtime-port.js';
 
 const STUB = fileURLToPath(new URL('./fixtures/chrome-mcp-server.mjs', import.meta.url));
 const ctx = { get: () => undefined } as never;
 
+function seamOf(): Seam {
+  return createSeam({
+    shell: createFakeShell([{}]).shell,
+    runtimeRoot: '/tmp/wb-seam-test',
+    allowHost: true,
+  });
+}
+
 describe('运行时自检：MCP server 起不起得来', () => {
   it('起得来 → 报工具数（这一步是「预检」里属于适配器自己的那条）', async () => {
     const port = createRuntimePort({
+      seam: seamOf(),
       server: { command: process.execPath, args: [STUB], timeoutMs: 10_000 },
     });
     const verdict = await port.check?.(ctx);
@@ -17,10 +28,20 @@ describe('运行时自检：MCP server 起不起得来', () => {
 
   it('起不来 → 说清楚装什么', async () => {
     const port = createRuntimePort({
+      seam: seamOf(),
       server: { command: '/nonexistent/chrome-devtools-mcp', args: [], timeoutMs: 2_000 },
     });
     const verdict = await port.check?.(ctx);
     expect(verdict?.ok).toBe(false);
     expect(verdict?.detail).toContain('npx -y chrome-devtools-mcp@latest');
+  });
+
+  it('★ 宿主没给执行缝 → 明说，不自己起进程', async () => {
+    const port = createRuntimePort({
+      server: { command: process.execPath, args: [STUB], timeoutMs: 10_000 },
+    });
+    const verdict = await port.check?.(ctx);
+    expect(verdict?.ok).toBe(false);
+    expect(verdict?.detail).toContain('执行缝');
   });
 });

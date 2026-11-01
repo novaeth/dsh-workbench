@@ -16,6 +16,8 @@ const RAW_SEAM = [
     what: '从外壳服务里取了原始执行缝',
   },
   { pattern: /['"](?:node:)?child_process['"]/, what: '直接引了 child_process' },
+  { pattern: /['"]execa['"]/, what: '直接引了 execa（模块不许自己起进程）' },
+  { pattern: /kind\s*:\s*['"]host['"]/, what: '请求了宿主写入域（模块只有 unit / workspace 两档）' },
 ];
 
 const SEAM_FIX =

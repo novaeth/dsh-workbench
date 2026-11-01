@@ -490,6 +490,7 @@ export function createMarketService(options: {
       dshHome,
       profileName,
       workbench,
+      ...(seam === undefined ? {} : { seam }),
       ...(options.runMigration === undefined ? {} : { runMigration: options.runMigration }),
     }),
     updateDependency: updateDependencyRow,

@@ -20,7 +20,7 @@ export function createAdapterSet(ctx: DshHostContext, options: DefaultAdapterSet
   const logger = options.logger ?? ctx.logger;
   const runtime = createRuntimePort();
   const opencli = opencliCommandOf(ctx);
-  const supply = createSupplyPort();
+  const supply = createSupplyPort(seam === undefined ? {} : { seam });
   return {
     apiVersion: ADAPTER_SET_API_VERSION,
     id: DEFAULT_ADAPTER_SET_ID,

@@ -1,5 +1,5 @@
-import type { RuntimeCapabilities, RuntimePort, RuntimeProfile } from '@dsh-workbench/shared/host';
-import { createMcpClient, type McpClientOptions } from './mcp-client.js';
+import type { RuntimeCapabilities, RuntimePort, RuntimeProfile, Seam } from '@dsh-workbench/shared/host';
+import { createMcpClient, type McpServerOptions } from './mcp-client.js';
 import { packageRootOf } from '@dsh-workbench/shared/host';
 
 export const CHROME_MCP_RUNTIME = 'chrome-mcp';
@@ -49,7 +49,12 @@ export function mcpProfile(): RuntimeProfile {
   };
 }
 
-export function createRuntimePort(options: { readonly server?: McpClientOptions } = {}): RuntimePort {
+export interface McpRuntimePortOptions {
+  readonly seam?: Seam | undefined;
+  readonly server?: McpServerOptions | undefined;
+}
+
+export function createRuntimePort(options: McpRuntimePortOptions = {}): RuntimePort {
   return {
     packageRoot: packageRootOf,
     capabilities: mcpCapabilities,
@@ -61,9 +66,11 @@ export function createRuntimePort(options: { readonly server?: McpClientOptions 
     }),
     seed: () => undefined,
     check: async () => {
-      const client = createMcpClient(
-        options.server ?? { command: mcpServerCommand(), args: [], timeoutMs: 10_000 },
-      );
+      if (options.seam === undefined) return { ok: false, detail: '宿主没给执行缝，MCP server 起不来' };
+      const client = createMcpClient({
+        seam: options.seam,
+        ...(options.server ?? { command: mcpServerCommand(), args: [], timeoutMs: 10_000 }),
+      });
       try {
         const tools = await client.listTools();
         return {

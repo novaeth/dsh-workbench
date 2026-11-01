@@ -1,15 +1,19 @@
-import { execa, type ResultPromise } from 'execa';
+import type { ChannelHandle, Seam } from '@dsh-workbench/shared/host';
 
 export interface McpToolInfo {
   readonly name: string;
   readonly description?: string | undefined;
 }
 
-export interface McpClientOptions {
+export interface McpServerOptions {
   readonly command: string;
   readonly args?: readonly string[] | undefined;
   readonly env?: NodeJS.ProcessEnv | undefined;
   readonly timeoutMs?: number | undefined;
+}
+
+export interface McpClientOptions extends McpServerOptions {
+  readonly seam: Seam;
 }
 
 export interface McpClient {
@@ -43,18 +47,32 @@ function payloadOf(value: unknown): unknown {
   }
 }
 
+function envOf(env: NodeJS.ProcessEnv | undefined): Record<string, string> | undefined {
+  if (env === undefined) return undefined;
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(env)) {
+    if (typeof value === 'string') out[key] = value;
+  }
+  return out;
+}
+
+function exitReasonOf(event: { readonly code: number | null; readonly signal: string | null }): string {
+  return event.code === null && event.signal === null ? 'MCP server 起不来' : 'MCP server 退出了';
+}
+
 export function createMcpClient(options: McpClientOptions): McpClient {
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const env = envOf(options.env);
   const pending = new Map<number, Pending>();
-  let child: ResultPromise | undefined;
+  let channel: ChannelHandle | undefined;
   let buffered = '';
   let nextId = 1;
   let ready: Promise<void> | undefined;
   let closed = false;
 
   function send(message: Record<string, unknown>): void {
-    if (child?.stdin === null || child?.stdin === undefined) throw new Error('MCP server 没起来');
-    child.stdin.write(`${JSON.stringify(message)}\n`);
+    if (channel === undefined) throw new Error('MCP server 没起来');
+    channel.write(`${JSON.stringify(message)}\n`);
   }
 
   function request(method: string, params: Record<string, unknown>): Promise<unknown> {
@@ -70,10 +88,12 @@ export function createMcpClient(options: McpClientOptions): McpClient {
   }
 
   function onLine(line: string): void {
-    if (line.trim() === '') return;
+    const text = line.trim();
+    const start = text.indexOf('{');
+    if (start < 0) return;
     let message: Record<string, unknown>;
     try {
-      message = JSON.parse(line) as Record<string, unknown>;
+      message = JSON.parse(text.slice(start)) as Record<string, unknown>;
     } catch {
       return;
     }
@@ -104,30 +124,25 @@ export function createMcpClient(options: McpClientOptions): McpClient {
   }
 
   function start(): Promise<void> {
-    const running = execa(options.command, [...(options.args ?? [])], {
-      stdin: 'pipe',
-      stdout: 'pipe',
-      stderr: 'pipe',
-      reject: false,
-      env: { ...process.env, ...options.env },
+    const running = options.seam.open({
+      target: { argv: [options.command, ...(options.args ?? [])] },
+      intent: { kind: 'host' },
+      ...(env === undefined ? {} : { env }),
+      label: 'mcp',
     });
-    child = running;
-    running.stdout?.setEncoding('utf8');
-    running.stdout?.setEncoding('utf8');
-    running.stdout?.on('data', (chunk: string) => {
-      buffered += String(chunk);
+    channel = running;
+    running.onData((chunk) => {
+      buffered += chunk;
       const lines = buffered.split('\n');
       buffered = lines.pop() ?? '';
       for (const line of lines) onLine(line);
     });
-    running.then(
-      () => {
-        if (!closed) fail('MCP server 退出了');
-      },
-      (error: unknown) => {
-        if (!closed) fail(`MCP server 起不来：${error instanceof Error ? error.message : String(error)}`);
-      },
-    );
+    running.onError((error) => {
+      if (!closed) fail(`MCP server 起不来：${error.message}`);
+    });
+    running.onExit((event) => {
+      if (!closed) fail(exitReasonOf(event));
+    });
     return request('initialize', {
       protocolVersion: PROTOCOL_VERSION,
       capabilities: {},
@@ -167,19 +182,16 @@ export function createMcpClient(options: McpClientOptions): McpClient {
 
     async close() {
       closed = true;
-      const running = child;
-      child = undefined;
+      const running = channel;
+      channel = undefined;
       ready = undefined;
       if (running === undefined) return;
       fail('MCP 客户端关了');
+      const exited = new Promise<void>((resolve) => {
+        running.onExit(() => resolve());
+      });
       running.kill('SIGTERM');
-      await Promise.race([
-        running.then(
-          () => undefined,
-          () => undefined,
-        ),
-        new Promise<void>((resolve) => setTimeout(resolve, 1000).unref()),
-      ]);
+      await Promise.race([exited, new Promise<void>((resolve) => setTimeout(resolve, 1000).unref())]);
       running.kill('SIGKILL');
     },
   };

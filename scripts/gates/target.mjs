@@ -423,6 +423,7 @@ const GATES = [
         one({ deps: ['@dsh-workbench/core'] }) === 1 &&
         one({ imports: [['src/a.ts', '@dsh-workbench/adapter-supply']] }) === 1 &&
         one({ imports: [['src/a.ts', 'execa']] }) === 1 &&
+        one({ imports: [['packages/shared/src/host/seam/process.ts', 'execa']] }) === 0 &&
         one({}) === 0
       );
     },
@@ -861,6 +862,8 @@ function checksMetadataFindings(text) {
 
 const SHARED_IMPLEMENTATION_IMPORTS = new Set(['opencli', 'execa', 'proper-lockfile', 'write-file-atomic']);
 
+const SEAM_PROCESS_HOST = 'packages/shared/src/host/seam/process.ts';
+
 function sharedAdapterFindings({ hasAdaptersDir, deps, imports }) {
   const findings = [];
   if (hasAdaptersDir) {
@@ -876,6 +879,7 @@ function sharedAdapterFindings({ hasAdaptersDir, deps, imports }) {
       findings.push(finding(file, 1, `shared import 了 ${spec}`, 'shared 不 import 外壳或适配器实现'));
       continue;
     }
+    if (file === SEAM_PROCESS_HOST && spec === 'execa') continue;
     if (SHARED_IMPLEMENTATION_IMPORTS.has(spec)) {
       findings.push(finding(file, 1, `shared import 了 ${spec}`, '执行 / 锁 / 原子写属于适配器实现'));
     }

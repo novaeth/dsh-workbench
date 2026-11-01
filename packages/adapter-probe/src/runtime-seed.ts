@@ -1,19 +1,11 @@
-import type { spawn } from 'node:child_process';
-import { execa } from 'execa';
 import { toolchainManifestOf } from '@dsh-workbench/adapter-runtime';
 import { createRequire } from 'node:module';
 import writeFileAtomic from 'write-file-atomic';
-import {
-  chmodSync,
-  closeSync,
-  mkdirSync,
-  openSync,
-  readFileSync,
-  rmSync,
-} from 'node:fs';
+import { chmodSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { delimiter, dirname, join, sep } from 'node:path';
 import type { DshHostContext } from '@dsh-workbench/shared';
 import { quoteShellArg, quoteShellArgFor, workbenchRoot } from '@dsh-workbench/shared/host';
+import type { Seam } from '@dsh-workbench/shared/host';
 import {
   desktopBundledBins,
   desktopNodeExecutable,
@@ -22,7 +14,7 @@ import {
   ensureToolchain,
   localNpmCache,
   localPnpmCommand,
-  provisionLocalPnpmSync,
+  provisionLocalPnpm,
 } from './toolchain.js';
 
 export type SeedLog = (message: string) => void;
@@ -128,36 +120,23 @@ export function workshopSeedPlan(
   };
 }
 
-const execaSpawn = ((file: string, args: readonly string[], options: object) =>
-  execa(file, [...args], { ...options, reject: false })) as unknown as typeof spawn;
-
-export function runDetached(
-  command: SeedCommand,
-  onError: SeedLog,
-  spawnImpl: typeof spawn = execaSpawn,
-): void {
-  let fd: number | null = null;
+export function runDetached(command: SeedCommand, onError: SeedLog, seam?: Seam | undefined): void {
+  if (seam === undefined) {
+    onError(`自举脚本没跑起来（${command.file}）：宿主没给执行缝`);
+    return;
+  }
   try {
-    fd = openSync(command.log, 'a');
-    const child = spawnImpl(command.file, [...command.args], {
-      env: { ...process.env, ...command.env },
-      detached: true,
-      stdio: ['ignore', fd, fd],
+    const handle = seam.spawn({
+      target: { argv: [command.file, ...command.args] },
+      intent: { kind: 'host' },
+      lifetime: 'host',
+      logFile: command.log,
+      env: command.env,
+      label: 'seed',
     });
-    child.on('error', (error: unknown) => onError(`自举脚本没跑起来（${command.file}）：${String(error)}`));
-    child.unref();
+    handle.onError((error) => onError(`自举脚本没跑起来（${command.file}）：${String(error)}`));
   } catch (error) {
     onError(`自举脚本没跑起来（${command.file}）：${String(error)}`);
-  } finally {
-    if (fd !== null) closeQuietly(fd);
-  }
-}
-
-function closeQuietly(fd: number): void {
-  try {
-    closeSync(fd);
-  } catch {
-    return;
   }
 }
 
@@ -168,7 +147,11 @@ export function prependPath(entryDir: string, env: NodeJS.ProcessEnv = process.e
   return true;
 }
 
-export function seedWorkbenchToolchain(root: string, log: SeedLog): void {
+export async function seedWorkbenchToolchain(
+  root: string,
+  log: SeedLog,
+  seam?: Seam | undefined,
+): Promise<void> {
   for (const dir of desktopBundledBins()) {
     if (prependPath(dir)) log(`PATH 前插 Desktop 自带 ${dir}`);
   }
@@ -198,7 +181,7 @@ export function seedWorkbenchToolchain(root: string, log: SeedLog): void {
     if (prependPath(toolchain.pnpmDir)) log(`PATH 前插 ${toolchain.pnpmDir}`);
     if (!bundledUsable) process.env.DSH_WB_PNPM = localPnpmCommand(root);
   } else if (!bundledUsable && toolchain.pathDir !== undefined) {
-    const installed = provisionLocalPnpmSync({ root });
+    const installed = await provisionLocalPnpm({ root, seam });
     if (installed.ok && installed.binDir !== undefined) {
       if (prependPath(installed.binDir)) log(`PATH 前插 ${installed.binDir}`);
       process.env.DSH_WB_PNPM = localPnpmCommand(root);

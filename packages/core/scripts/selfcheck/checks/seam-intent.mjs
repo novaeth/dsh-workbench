@@ -5,6 +5,8 @@ const RAW_TITLE = '★ 执行缝只有一条路';
 const INTENT_TITLE = '★ 每次执行缝调用都声明写入域';
 const SWALLOW_TITLE = '★ 沙箱拒绝不被吞';
 const ROOT_TITLE = '★ 产品数据根只有一份算法';
+const EXEC_TITLE = '★ 起进程只有一个入口';
+const HOST_TITLE = '★ 宿主能力只在宿主接线里打开';
 
 const ADAPTERS = [
   'adapter-runtime',
@@ -15,7 +17,7 @@ const ADAPTERS = [
   'adapters-chrome-mcp',
 ].map((name) => join(REPO, 'packages', name, 'src'));
 
-const SEAM_OWN = ['packages/shared/src/host/shell.ts', 'packages/shared/src/host/seam/'];
+const SEAM_OWN = ['packages/shared/src/host/shell.ts', 'packages/shared/src/host/seam/run.ts'];
 const ROOT_OWN = ['packages/shared/src/host/data-root.ts'];
 
 const rel = (file) => relative(REPO, file).split('\\').join('/');
@@ -49,7 +51,7 @@ function braceText(source, open) {
   return source.slice(open);
 }
 
-const CALL = /\b([A-Za-z_$][\w$]*(?:\([^()]*\))?)\s*\.\s*run\(\s*\{/g;
+const CALL = /\b([A-Za-z_$][\w$]*(?:\([^()]*\))?)\s*\.\s*(?:run|spawn|open)\(\s*\{/g;
 
 function seamCalls(source) {
   const out = [];
@@ -100,6 +102,39 @@ export function swallowHits() {
   return hits;
 }
 
+const EXEC_OWN = ['packages/shared/src/host/seam/process.ts'];
+
+export function execEntryHits() {
+  const hits = [];
+  const patterns = [
+    /^\s*import[^\n]*from\s+['"]execa['"]/m,
+    /^\s*import[^\n]*from\s+['"]node:child_process['"]/m,
+    /require\s*\(\s*['"]node:child_process['"]\s*\)/,
+    /\bexeca(?:Sync)?\s*\(/,
+  ];
+  for (const file of hostFiles()) {
+    if (allowed(file, EXEC_OWN)) continue;
+    const source = read(file);
+    for (const pattern of patterns) {
+      const match = pattern.exec(source);
+      if (match !== null) hits.push(`${rel(file)}:${String(lineOf(source, match.index))}`);
+    }
+  }
+  return hits;
+}
+
+export function hostCapabilityHits() {
+  const hits = [];
+  const allowHostFiles = ['packages/core/src/shared/api/host/workbench-seam.ts', 'packages/shared/src/host/seam/'];
+  for (const file of hostFiles()) {
+    if (allowed(file, allowHostFiles)) continue;
+    const source = read(file);
+    const match = /\ballowHost\b/.exec(source);
+    if (match !== null) hits.push(`${rel(file)}:${String(lineOf(source, match.index))}`);
+  }
+  return hits;
+}
+
 export function productRootHits() {
   const hits = [];
   const patterns = [
@@ -145,6 +180,18 @@ export const checks = [
     title: ROOT_TITLE,
     run(_ctx, report) {
       reportOne(report, ROOT_TITLE, productRootHits(), '产品域根只由 data-root 算');
+    },
+  },
+  {
+    title: EXEC_TITLE,
+    run(_ctx, report) {
+      reportOne(report, EXEC_TITLE, execEntryHits(), 'run / spawn / open 是宿主侧唯一的起进程入口');
+    },
+  },
+  {
+    title: HOST_TITLE,
+    run(_ctx, report) {
+      reportOne(report, HOST_TITLE, hostCapabilityHits(), 'allowHost 只在宿主接线与执行缝内部出现');
     },
   },
 ];

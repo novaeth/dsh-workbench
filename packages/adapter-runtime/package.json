@@ -24,8 +24,7 @@
     "check:runtimes": "node ../../scripts/check-adapter-package.mjs --runtime"
   },
   "dependencies": {
-    "@dsh-workbench/shared": "workspace:*",
-    "execa": "^10.2.0"
+    "@dsh-workbench/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.19.0",

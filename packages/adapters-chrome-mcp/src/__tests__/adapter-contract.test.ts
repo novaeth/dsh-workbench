@@ -1,10 +1,18 @@
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { adapterContractGaps } from '@dsh-workbench/shared/host';
+import { adapterContractGaps, createSeam, WORKBENCH_SEAM } from '@dsh-workbench/shared/host';
+import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { createAdapterSet } from '../index.js';
 
 const server = fileURLToPath(new URL('./fixtures/chrome-mcp-server.mjs', import.meta.url));
-const ctx = { get: () => undefined } as never;
+const seam = createSeam({
+  shell: createFakeShell([{}]).shell,
+  runtimeRoot: '/tmp/wb-seam-test',
+  allowHost: true,
+});
+const ctx = {
+  get: (name: string) => (name === WORKBENCH_SEAM ? seam : undefined),
+} as never;
 
 function set(): ReturnType<typeof createAdapterSet> {
   return createAdapterSet(ctx, { server: process.execPath, args: [server] });

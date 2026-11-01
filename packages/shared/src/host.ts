@@ -81,6 +81,8 @@ export * from './host/seam/policy.js';
 export * from './host/seam/env.js';
 export * from './host/seam/denial.js';
 export * from './host/seam/run.js';
+export * from './host/seam/exec.js';
+export * from './host/seam/process.js';
 export * from './host/seam/unit-seam.js';
 export * from './host/seam/service.js';
 export * from './host/data-error.js';
