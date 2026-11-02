@@ -7,6 +7,7 @@ import { panelsApprovalFor } from '../model/approval';
 import { PUBLISH_TIMEOUT_MS, registerPublishTool } from '../model/diy-publish';
 import type { GitRunner } from '@/shared/api/host/git-process';
 import { inferredAuthorOf, publishPreviewOf } from '@/shared/api/host/diy-publish-preview';
+import { cleanupStaging, stagingDirOf } from '@/shared/api/host/diy-release-staging';
 import { DIY_PUBLISH_TOOL } from '../unit';
 import { createDiyRig } from './diy-harness';
 
@@ -958,6 +959,82 @@ describe('workbench_diy_publish · 真发', () => {
     expect(commands[1]).toContain("'--index-only'");
     expect(commands[1]).not.toContain("'--workspace-only'");
     expect(result.text).toContain('已发到市场索引 https://git.example.com/wb/market.git');
+  });
+
+  it('★ 第二段回可续跑中断（exit 4）：按中断说，不按成功说，staging 留着给 resume', async () => {
+    rig.scaffold('demo');
+    withBin();
+    cleanupStaging('demo');
+    const interrupted = {
+      exitCode: 4,
+      stdout: JSON.stringify({
+        ok: false,
+        resumable: true,
+        text: '发布中断在第 artifacts 步：产物提交推不上去',
+        resume: { unit: 'demo', target: 'market', version: '0.1.0', phase: 'artifacts' },
+      }),
+    };
+    const { tool } = rig.harness({ probe: [{ stdout: WORKSPACE_ONLY }, interrupted] });
+
+    const result = (await tool(DIY_PUBLISH_TOOL)?.execute({ unit: 'demo', target: 'market' }, rig.diyExec())) as {
+      text: string;
+    };
+
+    expect(result.text).toContain('中断在第 artifacts 步');
+    expect(result.text).toContain('resume=true');
+    expect(result.text).not.toContain('已发到市场索引');
+    expect(fs.existsSync(stagingDirOf('demo'))).toBe(true);
+    cleanupStaging('demo');
+  });
+
+  it('★ 第二段要用户接管（exit 3）：把「还差一步」交回去，不拼成功文案', async () => {
+    rig.scaffold('demo');
+    withBin();
+    cleanupStaging('demo');
+    const needsUser = {
+      exitCode: 3,
+      stdout: JSON.stringify({
+        ok: false,
+        target: 'market',
+        needsUser: {
+          step: 'git-auth',
+          text: '推不上去：远端没给这个目录推送权限',
+          command: 'git push origin HEAD:refs/heads/master',
+        },
+      }),
+    };
+    const { tool } = rig.harness({ probe: [{ stdout: WORKSPACE_ONLY }, needsUser] });
+
+    const result = (await tool(DIY_PUBLISH_TOOL)?.execute({ unit: 'demo', target: 'market' }, rig.diyExec())) as {
+      text: string;
+    };
+
+    expect(result.text).toContain('还差一步');
+    expect(result.text).toContain('推不上去');
+    expect(result.text).not.toContain('已发到市场索引');
+    expect(fs.existsSync(stagingDirOf('demo'))).toBe(true);
+    cleanupStaging('demo');
+  });
+
+  it('★ 第二段说成功却没给出市场地址/安装命令：按没发出去报，不渲染成已发', async () => {
+    rig.scaffold('demo');
+    withBin();
+    cleanupStaging('demo');
+    const hollow = JSON.stringify({
+      ok: true,
+      target: 'market',
+      name: '@dsh-workbench/module-demo',
+      version: '0.1.0',
+      changes: [],
+      install: '',
+    });
+    const { tool } = rig.harness({ probe: [{ stdout: WORKSPACE_ONLY }, { stdout: hollow }] });
+
+    await expect(
+      tool(DIY_PUBLISH_TOOL)?.execute({ unit: 'demo', target: 'market' }, rig.diyExec()),
+    ).rejects.toThrow(/没给出市场地址或安装命令/);
+    expect(fs.existsSync(stagingDirOf('demo'))).toBe(true);
+    cleanupStaging('demo');
   });
 
   it('发布没走通时把工具链最后几行原样带回来（验收没打完是常见那条）', async () => {

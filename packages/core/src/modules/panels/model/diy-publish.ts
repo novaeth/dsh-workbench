@@ -79,15 +79,31 @@ function resumablePayload(payload: Record<string, unknown>, unit: string): Recor
   });
 }
 
-function outcomeOf(result: ShellResult, unit: string): { readonly error: Error } | { readonly payload: Record<string, unknown> } {
+type PublishOutcome =
+  | { readonly kind: 'done'; readonly payload: Record<string, unknown> }
+  | { readonly kind: 'needs-user'; readonly payload: Record<string, unknown> }
+  | { readonly kind: 'resumable'; readonly payload: Record<string, unknown> }
+  | { readonly kind: 'failed'; readonly error: Error };
+
+function outcomeOf(result: ShellResult, unit: string): PublishOutcome {
   const payload = jsonOf(result.stdout);
-  if (result.exitCode === 3 && payload !== undefined) return { payload: needsUserPayload(payload) };
-  if (result.exitCode === 4 && payload !== undefined) return { payload: resumablePayload(payload, unit) };
+  if (result.exitCode === 3 && payload !== undefined) return { kind: 'needs-user', payload: needsUserPayload(payload) };
+  if (result.exitCode === 4 && payload !== undefined) return { kind: 'resumable', payload: resumablePayload(payload, unit) };
   if (result.exitCode !== 0 || payload === undefined) {
     const tail = `${result.stderr}\n${result.stdout}`.trim().split('\n').slice(-6).join(' | ');
-    return { error: new Error(`发布没走通（exit ${String(result.exitCode)}）${tail === '' ? '' : `：${tail}`}`) };
+    return { kind: 'failed', error: new Error(`发布没走通（exit ${String(result.exitCode)}）${tail === '' ? '' : `：${tail}`}`) };
   }
-  return { payload };
+  return { kind: 'done', payload };
+}
+
+function publishProblemOf(payload: Record<string, unknown>): string | undefined {
+  if (payload['ok'] === false) {
+    const reason = asText(payload['text']);
+    return `市场索引这一步回的是失败，这次没发出去${reason === '' ? '' : `：${reason}`}`;
+  }
+  if (asText(payload['target']) !== 'market') return undefined;
+  if (asText(asRecord(payload['market'])['url']) !== '' && asText(payload['install']) !== '') return undefined;
+  return '市场索引这一步没给出市场地址或安装命令 —— 这次没发出去。重发一次；再这样先把本地索引镜像同步到 origin 再发。';
 }
 
 function successPayloadOf(
@@ -289,7 +305,8 @@ export function registerPublishTool(
         });
       if (verify || refresh) {
         const outcome = outcomeOf(await run([], { intent: productWrite() }), found.unit);
-        if ('error' in outcome) throw outcome.error;
+        if (outcome.kind === 'failed') throw outcome.error;
+        if (outcome.kind !== 'done') return plainJson(outcome.payload);
         return plainJson(successPayloadOf(outcome.payload, found, { verify }));
       }
       const staging = prepareStaging(found.unit, resume);
@@ -302,7 +319,8 @@ export function registerPublishTool(
       });
       const firstOutcome = outcomeOf(workspace, found.unit);
       mirrorJournal(staging, found.unit);
-      if ('error' in firstOutcome) throw firstOutcome.error;
+      if (firstOutcome.kind === 'failed') throw firstOutcome.error;
+      if (firstOutcome.kind !== 'done') return plainJson(firstOutcome.payload);
       const first = firstOutcome.payload;
       if (first['stop'] !== 'workspace-only' || asText(first['target']) === 'local') {
         cleanupStaging(found.unit);
@@ -310,9 +328,12 @@ export function registerPublishTool(
       }
       const indexOutcome = outcomeOf(await run(['--index-only'], { intent: productWrite(), env }), found.unit);
       mirrorJournal(staging, found.unit);
-      if ('error' in indexOutcome) throw indexOutcome.error;
-      cleanupStaging(found.unit);
+      if (indexOutcome.kind === 'failed') throw indexOutcome.error;
+      if (indexOutcome.kind !== 'done') return plainJson(indexOutcome.payload);
       const merged = adoptTarball(withPhasePayloads(first, indexOutcome.payload), found.unit);
+      const problem = publishProblemOf(merged);
+      if (problem !== undefined) throw new Error(problem);
+      cleanupStaging(found.unit);
       return plainJson(successPayloadOf(merged, found, { verify: false }));
     },
   };

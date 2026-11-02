@@ -42,6 +42,38 @@ describe('diy-release-staging', () => {
     expect(existsSync(dir)).toBe(false);
   });
 
+  it('staging 被清掉后 resume：从运行时根的记录兜底，不丢可续跑的那一份', () => {
+    const home = tempHome();
+    process.env.DSH_WORKBENCH_HOME = home;
+    const unit = `resume-${String(Date.now())}`;
+    const mirrored = join(home, 'releases', `${unit}.json`);
+    mkdirSync(dirname(mirrored), { recursive: true });
+    writeFileSync(mirrored, JSON.stringify({ run: { state: 'running', phase: 'workspace' } }));
+    cleanupStaging(unit);
+    const staging = prepareStaging(unit, true);
+    made.push(staging);
+    const seeded = JSON.parse(readFileSync(journalFileOf(staging, unit), 'utf8')) as { run: { state: string } };
+    expect(seeded.run.state).toBe('running');
+    cleanupStaging(unit);
+  });
+
+  it('staging 里已经有 journal：resume 不拿镜像记录盖掉它', () => {
+    const home = tempHome();
+    process.env.DSH_WORKBENCH_HOME = home;
+    const unit = `resume-keep-${String(Date.now())}`;
+    const mirrored = join(home, 'releases', `${unit}.json`);
+    mkdirSync(dirname(mirrored), { recursive: true });
+    writeFileSync(mirrored, JSON.stringify({ run: { state: 'done' } }));
+    const staging = prepareStaging(unit, false);
+    made.push(staging);
+    mkdirSync(dirname(journalFileOf(staging, unit)), { recursive: true });
+    writeFileSync(journalFileOf(staging, unit), JSON.stringify({ run: { state: 'interrupted' } }));
+    prepareStaging(unit, true);
+    const kept = JSON.parse(readFileSync(journalFileOf(staging, unit), 'utf8')) as { run: { state: string } };
+    expect(kept.run.state).toBe('interrupted');
+    cleanupStaging(unit);
+  });
+
   it('journal 从 staging 镜像回运行时根', () => {
     const home = tempHome();
     process.env.DSH_WORKBENCH_HOME = home;

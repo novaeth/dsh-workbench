@@ -637,7 +637,14 @@ export function updateMarketIndex(options) {
     if (resume !== undefined) {
       if (plan.source.localPath === undefined) {
         const fetched = runGit(exec, workdir, ['fetch', 'origin', branch], { allowFailure: true });
-        if (fetched.status === 0) runGit(exec, workdir, ['reset', '--hard', `origin/${branch}`], { allowFailure: true });
+        if (fetched.status !== 0) {
+          throw new MarketIndexError(
+            `续跑前拉不到索引仓库的远端 ${branch}：${tailOf(`${fetched.stdout}\n${fetched.stderr}`)} —— 本地镜像可能落后，先让网络/凭据通，再 resume`,
+            'git-auth',
+            `git -C ${workdir} fetch origin ${branch}`,
+          );
+        }
+        runGit(exec, workdir, ['reset', '--hard', `origin/${branch}`], { allowFailure: true });
         runGit(exec, workdir, ['clean', '-fd', '--', marketArtifactRoot(manifest.name), dir], {
           allowFailure: true,
         });

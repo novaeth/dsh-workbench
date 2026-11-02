@@ -17,7 +17,17 @@ export function prepareStaging(unit: string, resume: boolean): string {
   const staging = stagingDirOf(unit);
   if (!resume) rmSync(staging, { recursive: true, force: true });
   mkdirSync(staging, { recursive: true });
+  if (resume) seedJournal(staging, unit);
   return staging;
+}
+
+function seedJournal(staging: string, unit: string): void {
+  const to = journalFileOf(staging, unit);
+  if (existsSync(to)) return;
+  const from = join(workbenchRoot(), 'releases', `${unit}.json`);
+  if (!existsSync(from)) return;
+  mkdirSync(dirname(to), { recursive: true });
+  copyFileSync(from, to);
 }
 
 export function cleanupStaging(unit: string): void {

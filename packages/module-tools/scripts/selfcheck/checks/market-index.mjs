@@ -71,7 +71,7 @@ function fakeExec(results = {}) {
       return outcome;
     }
     if (verb === 'ls-remote') return ok(`${state.remoteHead}\trefs/heads/main\n`);
-    if (verb === 'fetch') return ok();
+    if (verb === 'fetch') return results.fetch ?? ok();
     if (verb === 'reset') return ok();
     return ok();
   };
@@ -652,6 +652,44 @@ export const checks = [
       } finally {
         rmSync(root, { recursive: true, force: true });
         rmSync(repo, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    title: 'market-index：续跑前拉不到远端就说清楚，不拿落后镜像往下走',
+    async run(_ctx, report) {
+      const title = 'market-index：续跑前拉不到远端就说清楚，不拿落后镜像往下走';
+      const root = moduleDir();
+      const home = mkdtempSync(join(tmpdir(), 'wb-market-home-'));
+      try {
+        const fake = fakeExec({
+          fetch: fail('ssh: connect to host e.example.com port 22: Connection refused'),
+        });
+        const plan = {
+          source: { kind: 'git', url: 'git@e.example.com:demo/market.git', ref: 'master' },
+          policy: 'artifacts-in-repo',
+        };
+        const market = updateMarketIndex({
+          plan,
+          root,
+          manifest: MANIFEST,
+          unit: 'probe',
+          version: '0.1.0',
+          publish: {},
+          exec: fake.exec,
+          home,
+          now: () => 1760000000000,
+          resume: { target: 'market', version: '0.1.0' },
+        });
+        if (market.updated !== false) throw new Error('拉不到远端还当成发出去了');
+        if (market.code !== 'git-auth') throw new Error(`code 不对：${String(market.code)}`);
+        if (!String(market.reason).includes('续跑前拉不到')) throw new Error(`理由不对：${String(market.reason)}`);
+        report(title, true);
+      } catch (error) {
+        report(title, false, error.message.slice(0, 200));
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+        rmSync(home, { recursive: true, force: true });
       }
     },
   },
