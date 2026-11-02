@@ -74,6 +74,27 @@ describe('filterStaticLines', () => {
     expect(filterStaticLines(raw)).toBe('');
   });
 
+  it('整段多行 JSON（opencli --raw 的输出）也压成一行', () => {
+    const raw = JSON.stringify(
+      {
+        entries: [
+          { url: 'https://a.test/api/x', method: 'GET' },
+          { url: 'https://a.test/logo.png', method: 'GET' },
+        ],
+      },
+      null,
+      2,
+    );
+    const out = filterStaticLines(raw);
+    expect(out.split('\n')).toHaveLength(1);
+    expect(JSON.parse(out)).toEqual({ entries: [{ url: 'https://a.test/api/x', method: 'GET' }] });
+  });
+
+  it('整段多行 JSON 且全是静态：整段丢掉', () => {
+    const raw = JSON.stringify({ entries: [{ url: 'https://a.test/a.js' }] }, null, 2);
+    expect(filterStaticLines(raw)).toBe('');
+  });
+
   it('不是 entries 的行、以及不是 JSON 的行，原样保留', () => {
     const plain = JSON.stringify({ url: 'https://a.test/a.js', method: 'GET' });
     expect(filterStaticLines(plain)).toBe(plain);

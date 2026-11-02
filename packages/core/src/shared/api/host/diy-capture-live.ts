@@ -37,27 +37,36 @@ function argvOf(command: string, session: string, args: readonly string[]): stri
   return [command === '' ? 'runtime' : command, 'browser', session, ...args, '--window', 'background'];
 }
 
+function parsedRecord(text: string): Record<string, unknown> | undefined {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+  return plainOf(parsed);
+}
+
+function withoutStatic(record: Record<string, unknown>): string {
+  const entries = Array.isArray(record['entries']) ? (record['entries'] as unknown[]) : [];
+  const inside = entries.filter((one) => !STATIC_URL.test(String(plainOf(one)?.['url'] ?? '')));
+  return inside.length === 0 ? '' : JSON.stringify({ ...record, entries: inside });
+}
+
 export function filterStaticLines(raw: string): string {
+  const document = parsedRecord(raw.trim());
+  if (document !== undefined && Array.isArray(document['entries'])) return withoutStatic(document);
   const kept: string[] = [];
   for (const line of raw.split('\n')) {
     const text = line.trim();
     if (text === '') continue;
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(text);
-    } catch {
+    const record = parsedRecord(text);
+    if (record === undefined || !Array.isArray(record['entries'])) {
       kept.push(text);
       continue;
     }
-    const record = plainOf(parsed);
-    const entries = record === undefined ? undefined : record['entries'];
-    if (record === undefined || !Array.isArray(entries)) {
-      kept.push(text);
-      continue;
-    }
-    const inside = entries.filter((one) => !STATIC_URL.test(String(plainOf(one)?.['url'] ?? '')));
-    if (inside.length === 0) continue;
-    kept.push(JSON.stringify({ ...record, entries: inside }));
+    const compact = withoutStatic(record);
+    if (compact !== '') kept.push(compact);
   }
   return kept.join('\n');
 }
