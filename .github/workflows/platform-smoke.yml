@@ -74,6 +74,7 @@ jobs:
         shell: bash
         run: pnpm --filter @dsh-workbench/adapter-runtime exec vitest run src/browser/__tests__/browser-read.test.ts
       - name: Selfcheck (core)
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           set -o pipefail
@@ -82,6 +83,21 @@ jobs:
             body=$(grep -aE '❌|通过 —— 失败' selfcheck.log || tail -n 8 selfcheck.log)
             body=$(printf '%s\n' "$body" | sed -e 's/%/%25/g' -e 's/\r$//' | awk 'NF { printf "%s%%0A", $0 }')
             echo "::error title=selfcheck failed::${body:0:1800}"
+            exit 1
+          fi
+          tail -n 3 selfcheck.log
+
+      - name: Selfcheck (core, 执行层那几条)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          set -o pipefail
+          only='起 shell 的写法|POSIX-only|执行缝只有一条路|每次执行缝调用都声明写入域|沙箱拒绝不被吞|起进程只有一个入口|宿主能力只在宿主接线里打开|宿主文件写只有一个入口|受控 env 只在 env-policy'
+          if ! node packages/core/scripts/selfcheck/index.mjs --only "$only" > selfcheck.log 2>&1; then
+            tail -n 25 selfcheck.log
+            body=$(grep -aE '❌|通过 —— 失败' selfcheck.log || tail -n 8 selfcheck.log)
+            body=$(printf '%s\n' "$body" | sed -e 's/%/%25/g' -e 's/\r$//' | awk 'NF { printf "%s%%0A", $0 }')
+            echo "::error title=selfcheck (exec layer) failed::${body:0:1800}"
             exit 1
           fi
           tail -n 3 selfcheck.log

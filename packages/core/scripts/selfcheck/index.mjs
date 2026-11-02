@@ -49,9 +49,13 @@ const report = (name, passed, detail = '') => {
   console.log(`${mark} ${name}${detail ? ` — ${detail}` : ''}`);
 };
 
+const onlyAt = process.argv.indexOf('--only');
+const only = onlyAt === -1 ? undefined : new RegExp(process.argv[onlyAt + 1] ?? '', 'u');
+
 const ctx = {};
 for (const module of MODULES) {
   for (const check of module.checks ?? []) {
+    if (only !== undefined && !only.test(check.title)) continue;
     const out = check.run(ctx, report);
     if (out !== undefined && typeof out.then === 'function') await out;
   }
