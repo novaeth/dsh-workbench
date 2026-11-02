@@ -1,12 +1,21 @@
 import type { DshHostContext } from '@dsh-workbench/shared';
 import type { RecordState, RecordStore } from '@dsh-workbench/shared/host';
-import { productWrite, quoteShellArg, shotDueOf, type Seam } from '@dsh-workbench/shared/host';
-import { plainLine, type LineMaker } from './diy-browser';
+import { shotDueOf, type Seam } from '@dsh-workbench/shared/host';
 import { BROWSER_RECORD_SESSION } from '@dsh-workbench/shared/host';
+import {
+  LIVE_TAIL_LINES,
+  keepCaptureFile,
+  readCaptureLines,
+  readCaptureLinesWithKey,
+  readCaptureRound,
+  readCaptureText,
+  startLiveCapture,
+  stopLiveCapture,
+} from '@/shared/api/host/diy-capture-live';
 
 import { dirname, join } from 'node:path';
 import { deliverDebugNotice, noticeMessage, type AgentsLookup } from '@/shared/api/host/diy-debug-act';
-import { actBrowser, actErrorOf, stopNetworkExact } from './diy-browser-act';
+import { actBrowser, actErrorOf } from './diy-browser-act';
 import { RECORD_READ_SCRIPT } from './diy-record-scripts';
 import { captureCallsOf, captureEntriesOf, mergeCalls, segmentOf } from './diy-record-capture';
 import type { CaptureEntry } from './diy-record-capture';
@@ -16,22 +25,15 @@ import { plainJson } from './diy-context';
 import { DIY_RECORD_DETAIL_TOOL, DIY_RECORD_READ_TOOL } from '../unit';
 
 export const OPEN_TIMEOUT_MS = 30000;
-const START_TIMEOUT_MS = 8000;
 export const SETTLE_MS = 2000;
 export const WAIT_CAP_MS = 15 * 60 * 1000;
 export const POLL_MS = 1000;
-const CAPTURE_TAIL_LINES = 20000;
-const CAPTURE_POLL_S = 3;
-const CAPTURE_ARM_S = 2;
+const CAPTURE_TAIL_LINES = LIVE_TAIL_LINES;
 
-export const STATIC_URL_PATTERN = `^(data:)|(\\.(js|css|png|jpe?g|gif|svg|woff2?|ico|map|webp|mp4)(\\?|$))`;
+export { STATIC_URL_PATTERN } from '@/shared/api/host/diy-capture-live';
 const RECORD_WATCH_MS = 3000;
 const RECORD_WATCH_TRIES = 5;
-const DROP_STATIC_JS =
-  'let s="";process.stdin.on("data",(d)=>s+=d).on("end",()=>{const re=new RegExp(process.argv[1],"i");for(const line of s.split("\\n")){const t=line.trim();if(t==="")continue;let one;try{one=JSON.parse(t)}catch{process.stdout.write(t+"\\n");continue}if(Array.isArray(one.entries)){one.entries=one.entries.filter((e)=>!re.test(String((e||{}).url||"")));if(one.entries.length===0)continue}process.stdout.write(JSON.stringify(one)+"\\n")}});';
 export const DETAIL_MAX_BYTES = 60000;
-
-const HOST_PID = String(process.pid);
 
 export const pauseFor = (ms: number) => new Promise<void>((resolve) => {
   setTimeout(resolve, ms);
@@ -83,22 +85,8 @@ export async function startRecordCapture(
   command: string,
   session: string,
   file: string,
-  makeLine: LineMaker = plainLine,
 ): Promise<boolean> {
-  const bin = command === '' ? 'runtime' : command;
-  const arm = makeLine(bin, ['browser', session, 'network', '--follow', '--all', '--window', 'background']);
-  const snap = makeLine(bin, ['browser', session, 'network', '--all', '--raw', '--window', 'background']);
-  const line = [
-    `f=${quoteShellArg(file)}`,
-    `r=${quoteShellArg(`${file}.round`)}`,
-    ': > "$f"',
-    'rm -f "$f.last" "$f.first" "$r"',
-    `( ${arm} >> "$f" 2>/dev/null & p=$!; sleep ${String(CAPTURE_ARM_S)}; kill "$p" 2>/dev/null )`,
-    `( while kill -0 ${HOST_PID} 2>/dev/null; do if ${snap} > "$r" 2>/dev/null; then printf ok > "$f.first"; else printf fail > "$f.first"; fi; if [ -s "$r" ]; then if command -v node >/dev/null 2>&1; then tr -d '\\n' < "$r" | node -e ${quoteShellArg(DROP_STATIC_JS)} ${quoteShellArg(STATIC_URL_PATTERN)} >> "$f"; else tr -d '\\n' < "$r" >> "$f"; printf '\\n' >> "$f"; fi; fi; rm -f "$r"; sleep ${String(CAPTURE_POLL_S)}; done & echo $! > "$f.pid" ) & echo $! > "$f.reaper"`,
-    'kill -0 "$(cat "$f.pid" 2>/dev/null)" 2>/dev/null',
-  ].join('; ');
-  const step = await seam.run({ command: line, intent: productWrite(), timeoutMs: START_TIMEOUT_MS });
-  return step.exitCode === 0;
+  return startLiveCapture({ seam, command, session, file });
 }
 
 export interface WatchFinishDeps {
@@ -123,7 +111,7 @@ async function releaseLeftoversOf(input: WatchFinishDeps): Promise<void> {
 
 async function stopCaptureQuiet(input: WatchFinishDeps): Promise<boolean> {
   try {
-    return await stopNetworkExact(input.seam, input.captureFile);
+    return stopLiveCapture(input.captureFile);
   } catch {
     return false;
   }
@@ -233,73 +221,36 @@ export interface CaptureRead {
   readonly round: string;
 }
 
-export async function captureLinesOf(seam: Seam, file: string, timeoutMs = START_TIMEOUT_MS): Promise<number> {
-  const step = await seam.run({
-    command: `wc -l < ${quoteShellArg(file)} 2>/dev/null || echo 0`,
-    intent: productWrite(),
-    timeoutMs,
-  });
-  const value = Number.parseInt(step.stdout.trim() === '' ? '0' : step.stdout.trim(), 10);
-  return Number.isFinite(value) ? value : 0;
+export function captureLinesOf(file: string): number {
+  return readCaptureLines(file);
 }
 
-export async function captureRoundOf(seam: Seam, file: string, timeoutMs = START_TIMEOUT_MS): Promise<string> {
-  const step = await seam.run({
-    command: `cat ${quoteShellArg(`${file}.first`)} 2>/dev/null || true`,
-    intent: productWrite(),
-    timeoutMs,
-  });
-  const value = step.stdout.trim();
-  return value === 'ok' || value === 'fail' ? value : '';
+export function captureRoundOf(file: string): string {
+  return readCaptureRound(file);
 }
 
-export async function captureTextOf(
-  seam: Seam,
-  file: string,
-  timeoutMs = START_TIMEOUT_MS,
-): Promise<{ readonly text: string; readonly truncated: boolean }> {
-  const step = await seam.run({
-    command: `tail -n ${String(CAPTURE_TAIL_LINES)} ${quoteShellArg(file)} 2>/dev/null || true`,
-    intent: productWrite(),
-    timeoutMs,
-  });
-  return { text: step.stdout, truncated: step.truncated };
+export function captureTextOf(file: string): { readonly text: string; readonly truncated: boolean } {
+  return readCaptureText(file);
 }
 
-export async function captureReadOf(seam: Seam, file: string, timeoutMs = START_TIMEOUT_MS): Promise<CaptureRead> {
-  const totalLines = await captureLinesOf(seam, file, timeoutMs);
-  const read = await captureTextOf(seam, file, timeoutMs);
-  const round = await captureRoundOf(seam, file, timeoutMs);
+export function captureReadOf(file: string): CaptureRead {
+  const totalLines = readCaptureLines(file);
+  const text = readCaptureText(file);
   return {
-    text: read.text,
+    text: text.text,
     totalLines,
     tailLimit: CAPTURE_TAIL_LINES,
-    truncated: read.truncated || totalLines > CAPTURE_TAIL_LINES,
-    round,
+    truncated: text.truncated || totalLines > CAPTURE_TAIL_LINES,
+    round: readCaptureRound(file),
   };
 }
 
-export async function keepCaptureOf(seam: Seam, file: string, timeoutMs = START_TIMEOUT_MS): Promise<boolean> {
-  const line = `[ -f ${quoteShellArg(file)} ] && mv ${quoteShellArg(file)} ${quoteShellArg(lastCaptureFileOf(file))} && [ -s ${quoteShellArg(lastCaptureFileOf(file))} ]`;
-  const step = await seam.run({ command: line, intent: productWrite(), timeoutMs });
-  return step.exitCode === 0;
+export function keepCaptureOf(file: string): boolean {
+  return keepCaptureFile(file);
 }
 
-export async function captureLinesWithKeyOf(
-  seam: Seam,
-  file: string,
-  key: string,
-  timeoutMs = START_TIMEOUT_MS,
-): Promise<string> {
-  const quoted = quoteShellArg(file);
-  const compact = quoteShellArg(`"key":"${key}"`);
-  const spaced = quoteShellArg(`"key": "${key}"`);
-  const line = [
-    `[ -f ${quoted} ] || exit 0`,
-    `grep -m 20 -F ${compact} ${quoted} 2>/dev/null || grep -m 20 -F ${spaced} ${quoted} 2>/dev/null || true`,
-  ].join('; ');
-  const step = await seam.run({ command: line, intent: productWrite(), timeoutMs });
-  return step.stdout;
+export function captureLinesWithKeyOf(file: string, key: string): string {
+  return readCaptureLinesWithKey(file, key);
 }
 
 export interface SegmentBundle {
@@ -458,7 +409,7 @@ export async function releaseRecord(input: {
   readonly url: string;
   readonly captureFile: string;
 }): Promise<{ readonly tab: boolean; readonly capture: boolean }> {
-  const capture = await stopNetworkExact(input.seam, input.captureFile);
+  const capture = stopLiveCapture(input.captureFile);
   const tab = await closeRecordTab(input.seam, input.command, input.session, input.url);
   return { tab, capture };
 }

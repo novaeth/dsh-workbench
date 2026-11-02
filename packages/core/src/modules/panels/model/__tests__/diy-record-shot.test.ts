@@ -154,8 +154,8 @@ describe('录制交接：他按一下「截图」，宿主按计数落图', () =
     mkdirSync(dirname(png), { recursive: true });
     writeFileSync(png, 'png-bytes');
 
+    writeFileSync(`${file}.first`, 'ok');
     const fake = rig.fakeShell([
-      { stdout: '' },
       { stdout: JSON.stringify([{ page: 'p1', url: URL }]) },
       { stdout: '{"closed":"p1"}' },
     ]);

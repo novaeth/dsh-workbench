@@ -1,3 +1,5 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { BROWSER_RECORD_SESSION } from '@dsh-workbench/shared/host';
 import type { DshHostContext, DshShell } from '@dsh-workbench/shared';
@@ -8,6 +10,11 @@ import type { ProbeStep } from '../../__tests__/diy-harness';
 import { ARM_OK, POST, URL, heldStore, line } from '../../__tests__/record-fixtures';
 import { releaseRecord, watchFinishStepOf } from '../diy-record';
 import { DIY_RECORD_READ_TOOL, DIY_RECORD_STOP_TOOL } from '../../unit';
+
+const writeCapture = (path: string, text: string): void => {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, text, 'utf8');
+};
 
 const finishedPayload = (): string =>
   JSON.stringify({
@@ -80,7 +87,6 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
     const seam = fakeSeamOf(recordingShell(
       [
         { stdout: finishedPayload() },
-        { stdout: '' },
         { stdout: JSON.stringify([{ page: 'p1', url: URL, title: '环境' }]) },
         { stdout: '{"closed":"p1"}' },
       ],
@@ -98,7 +104,7 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
     });
 
     expect(out).toEqual({ stop: true, delivered: true });
-    expect(order).toEqual(['cmd:eval', 'notice', 'cmd:other', 'cmd:tab-list', 'cmd:tab-close', 'cmd:other']);
+    expect(order).toEqual(['cmd:eval', 'notice', 'cmd:tab-list', 'cmd:tab-close', 'cmd:other']);
     expect(takeHeldNotices('s1')).toHaveLength(1);
   });
 
@@ -109,7 +115,6 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
     const seam = fakeSeamOf(recordingShell(
       [
         { stdout: finishedPayload() },
-        { stdout: '' },
         {
           stdout: JSON.stringify([
             { page: 'blank', url: 'about:blank', title: 'about:blank' },
@@ -133,14 +138,7 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
     });
 
     expect(out).toEqual({ stop: true, delivered: true });
-    expect(order).toEqual([
-      'cmd:eval',
-      'cmd:other',
-      'cmd:tab-list',
-      'cmd:tab-close',
-      'cmd:tab-close',
-      'cmd:other',
-    ]);
+    expect(order).toEqual(['cmd:eval', 'cmd:tab-list', 'cmd:tab-close', 'cmd:tab-close', 'cmd:other']);
   });
 
   it('★ 关窗失败（tab list 报错 / 关窗那一拍抛了）⇒ 照旧收工，叫醒不受影响', async () => {
@@ -152,7 +150,6 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
       seam: fakeSeamOf(recordingShell(
         [
           { stdout: finishedPayload() },
-          { stdout: '' },
           { stdout: '', stderr: 'tab list 挂了', exitCode: 1 },
           { stdout: '', stderr: '整会话 close 也没成', exitCode: 1 },
         ],
@@ -202,17 +199,16 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
   });
 
   it('★★ 窗口已经关了之后读那一段：不抛、清单照旧（正文里是清单，不是"读不到"）', async () => {
-    const record = heldStore(null);
+    const capture = join(rig.root(), 'workbench', 'artifacts', 'rec-demo.jsonl');
+    writeCapture(capture, `${line('POST', `${URL}/api/publish`, 15)}\n`);
+    const record = heldStore(null, capture);
     record.started('s1', 1, Date.now());
     record.finished('s1', 100, Date.now());
     const built = rig.harness({
       withTools: true,
       pact: false,
       record,
-      probe: [
-        { stdout: '1\n' },
-        { stdout: line('POST', `${URL}/api/publish`, 15) },
-      ],
+      probe: [],
     });
 
     const out = (await built.tool(DIY_RECORD_READ_TOOL).execute({}, rig.diyExec())) as {
@@ -236,7 +232,6 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
       seam: fakeSeamOf(recordingShell(
         [
           { stdout: finishedPayload() },
-          { stdout: '' },
           { stdout: '[]' },
         ],
         order,
@@ -274,7 +269,6 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
               calls: [],
             }),
           },
-          { stdout: '' },
           { stdout: '[]' },
         ],
         [],
@@ -324,7 +318,7 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
       captureFile: '/w/shots/rec-demo.jsonl',
     });
 
-    expect(cleaned).toEqual({ tab: true, capture: true });
+    expect(cleaned).toEqual({ tab: true, capture: false });
   });
 
   it('★ 收工那一拍也不自相矛盾：标签已被结束那一拍关掉 ⇒ 话说"收掉了"，不说"没关掉"', async () => {

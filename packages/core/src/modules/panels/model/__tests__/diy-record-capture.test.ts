@@ -1,3 +1,5 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import dayjs from 'dayjs';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
@@ -285,6 +287,11 @@ describe('合并两份来源：按 method + url 去重，钩子那份优先', ()
   });
 });
 
+const writeCapture = (path: string, text: string): void => {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, text, 'utf8');
+};
+
 describe('捕获这条来源接进 read / stop（真工具 + shell 桩）', () => {
   const rig = createDiyRig();
 
@@ -300,7 +307,6 @@ describe('捕获这条来源接进 read / stop（真工具 + shell 桩）', () =
       probe: [
         { stdout: ARM_OK({ phase: 'finished' }) },
         { stdout: JSON.stringify({ ok: true, phase: 'finished', t0: 1, t1: 2, calls: [] }) },
-        { stdout: '5\n' },
       ],
     });
 
@@ -317,16 +323,19 @@ describe('捕获这条来源接进 read / stop（真工具 + shell 桩）', () =
     expect(out.text).toContain('落在这个时间段里 0 条');
   });
 
-  it('★★ 捕获被 tail 截过（wc -l 超过上限）：read 要如实把这件事带出来，不许装作"一行都没落"', async () => {
+  it('★★ 捕获被 tail 截过（行数超过上限）：read 要如实把这件事带出来，不许装作"一行都没落"', async () => {
+    const capture = join(rig.root(), 'workbench', 'artifacts', 'rec-demo.jsonl');
+    writeCapture(
+      capture,
+      Array.from({ length: 20001 }, (_, i) => line('GET', `${URL}/api/n${String(i)}`, 5)).join('\n') + '\n',
+    );
     const built = rig.harness({
       withTools: true,
       pact: false,
-      record: heldStore(null),
+      record: heldStore(null, capture),
       probe: [
         { stdout: ARM_OK({ phase: 'finished' }) },
         { stdout: JSON.stringify({ ok: true, phase: 'finished', t0: 1, t1: 2, href: URL, here: URL, dropped: 0, calls: [] }) },
-        { stdout: '50000\n' },
-        { stdout: '' },
       ],
     });
 
@@ -337,24 +346,22 @@ describe('捕获这条来源接进 read / stop（真工具 + shell 桩）', () =
     };
 
     expect(out.capturedTruncated).toBe(true);
-    expect(out.capturedTotalLines).toBe(50000);
-    expect(out.text).toContain('一共落了 50000 行');
+    expect(out.capturedTotalLines).toBe(20001);
+    expect(out.text).toContain('一共落了 20001 行');
     expect(out.text).toContain('只解析了最后 20000 行');
     expect(out.text).not.toContain('一行都没落');
   });
 
   it('★★ stop 也认捕获那一条：钩子没看见的写照样进清单（收工前先读一次捕获文件）', async () => {
+    const capture = join(rig.root(), 'workbench', 'artifacts', 'rec-demo.jsonl');
+    writeCapture(capture, [line('POST', `${URL}/api/publish`, 7), line('GET', `${URL}/api/list`, 8)].join('\n') + '\n');
     const built = rig.harness({
       withTools: true,
       pact: false,
-      record: heldStore({ method: 'POST', urlContains: '/api/publish' }),
+      record: heldStore({ method: 'POST', urlContains: '/api/publish' }, capture),
       probe: [
         { stdout: ARM_OK({ phase: 'finished' }) },
         { stdout: JSON.stringify({ ok: true, unhooked: 1, phase: 'finished', t0: 5, t1: 9, calls: [] }) },
-        { stdout: '2\n' },
-        { stdout: [line('POST', `${URL}/api/publish`, 7), line('GET', `${URL}/api/list`, 8)].join('\n') },
-        { stdout: '' },
-        { stdout: '' },
         { stdout: JSON.stringify([{ page: 'p1', url: URL, title: '环境' }]) },
         { stdout: '{"closed":"p1"}' },
       ],

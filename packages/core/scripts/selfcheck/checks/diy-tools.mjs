@@ -157,7 +157,7 @@ export const checks = [
       const index = read(pkg('src/modules/panels/index.ts'));
       const cleanupWired =
         index.includes('withObserverCleanup(createDebugStore()') &&
-        read(pkg('src/modules/panels/model/diy-observers.ts')).includes('stopNetworkExact') &&
+        read(pkg('src/modules/panels/model/diy-observers.ts')).includes('stopLiveCapture') &&
         read(pkg('src/modules/panels/model/diy-observers.ts')).includes('settle');
       const wrong =
         bypass.length > 0
@@ -198,7 +198,7 @@ export const checks = [
             ? 'approval.ts 里没有 prepare 的问句（写工具没认领 = 当场 deny，这把工具等于没有）'
             : /BROWSER_SCREEN_SESSION|BROWSER_READ_SESSION/.test(record)
               ? '录制那一族碰了别的会话名（它只能碰 workbench-rec）'
-              : !record.includes('stopNetworkExact') || !record.includes('releaseRecord')
+              : !record.includes('stopLiveCapture') || !record.includes('releaseRecord')
                 ? '收工没收干净：停捕获与收标签都要走 releaseRecord'
                 : !index.includes('DIY_RECORD_SERVICE') ||
                     !index.includes('diyRecordRoutes(record)') ||

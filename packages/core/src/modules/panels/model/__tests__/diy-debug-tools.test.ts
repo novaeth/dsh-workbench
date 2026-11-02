@@ -138,7 +138,7 @@ describe('调试约定：说出口的四把动词', () => {
     await settled();
 
     expect(stopped.text).toContain('顺手把这一场的观察收一收');
-    expect(built.commands.some((one) => one.includes('net-workbench.jsonl.pid'))).toBe(true);
+    expect(built.commands.some((one) => one.includes('net-workbench.jsonl.pid'))).toBe(false);
     expect(built.commands.some((one) => one.includes("'eval'") && one.includes('unhooked'))).toBe(true);
   });
 

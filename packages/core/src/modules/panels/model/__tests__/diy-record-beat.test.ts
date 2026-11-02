@@ -91,7 +91,6 @@ describe('录制交接的门铃：页面内长轮询（每一轮一条 eval，�
       probe: [
         { stdout: recording({ t0: at, beat: true, beatKind: 'start' }) },
         { stdout: finishedPage(at) },
-        { stdout: '' },
         { stdout: JSON.stringify([{ page: 'p1', url: URL, title: '环境' }]) },
         { stdout: '{"closed":"p1"}' },
       ],
@@ -103,7 +102,7 @@ describe('录制交接的门铃：页面内长轮询（每一轮一条 eval，�
     expect(built.commands.filter((one) => one.includes("'eval'"))).toHaveLength(2);
     expect(built.commands.some((one) => one.includes("'tab' 'list'"))).toBe(true);
     expect(built.commands.some((one) => one.includes("'tab' 'close'"))).toBe(true);
-    expect(built.commands.some((one) => one.includes('.pid'))).toBe(true);
+    expect(built.commands.some((one) => one.includes('.pid'))).toBe(false);
     expect(record.live(Date.now())?.phase).toBe('finished');
     expect(record.live(Date.now())?.beats).toBe(1);
   });

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { DshShell } from '@dsh-workbench/shared';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
 import { fakeSeamOf } from '../../__tests__/seam-fake';
-import { ACT_TIMEOUT_MS, SWEEP_TIMEOUT_MS, actBrowser, actErrorOf, stopNetworkExact, type ActStep } from '../diy-browser-act';
+import { ACT_TIMEOUT_MS, actBrowser, actErrorOf, type ActStep } from '../diy-browser-act';
 
 interface Step {
   readonly stdout?: string;
@@ -101,35 +101,5 @@ describe('actErrorOf：四档话术，先超时、再 opencli 的 error 信封',
     expect(actErrorOf(step(undefined, { ok: false, stderr: 'boom' }))).toBe('boom');
     expect(actErrorOf(step(undefined, { ok: false, stdout: 'out' }))).toBe('out');
     expect(actErrorOf(step(undefined, { ok: false }))).toBe('运行时报了个错');
-  });
-});
-
-describe('stopNetworkExact：按文件精确收掉跟随者', () => {
-  it('★★ 一条 shell 行里先读 pid/reaper，再 kill 与 pkill，最后只在 pid 没漂时删掉那两只 pid 文件 —— **数据文件一个字节都不删**', async () => {
-    const rig = fakeShell([{ stdout: '' }]);
-    const ok = await stopNetworkExact(rig.seam, '/w/net.jsonl');
-
-    expect(ok).toBe(true);
-    expect(rig.lines[0]).toContain(`p="$(cat '/w/net.jsonl.pid' 2>/dev/null)"`);
-    expect(rig.lines[0]).toContain(`r="$(cat '/w/net.jsonl.reaper' 2>/dev/null)"`);
-    expect(rig.lines[0]).toContain('[ -n "$p" ] && kill "$p"');
-    expect(rig.lines[0]).toContain('[ -n "$r" ] && pkill -P "$r"');
-    expect(rig.lines[0]).toContain('[ -n "$r" ] && kill "$r"');
-    expect(rig.lines[0]).toContain(`rm -f '/w/net.jsonl.pid' '/w/net.jsonl.reaper'`);
-    expect(rig.lines[0]).not.toContain(`rm -f '/w/net.jsonl' `);
-    expect(rig.lines[0]).not.toContain(`'/w/net.jsonl' '/w/net.jsonl.pid'`);
-    expect(rig.lines[0].endsWith('; true')).toBe(true);
-    expect(rig.timeouts[0]).toBe(SWEEP_TIMEOUT_MS);
-  });
-
-  it('★ 非 0 退出就是没成；超时可传', async () => {
-    const rig = fakeShell([{ exitCode: 1 }, { exitCode: 0 }]);
-    const failed = await stopNetworkExact(rig.seam, '/w/net.jsonl', 999);
-    const passed = await stopNetworkExact(rig.seam, '/w/net.jsonl');
-
-    expect(failed).toBe(false);
-    expect(rig.timeouts[0]).toBe(999);
-    expect(passed).toBe(true);
-    expect(rig.timeouts[1]).toBe(SWEEP_TIMEOUT_MS);
   });
 });

@@ -1,9 +1,22 @@
-import { join } from 'node:path';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createDiyRig } from '../../__tests__/diy-harness';
 import { ARM_OK, GET, POST, URL, entry, envelope, heldStore, line } from '../../__tests__/record-fixtures';
+import { captureFileOf, lastCaptureFileOf } from '../diy-record';
+import { artifactsDirOf } from '@/shared/api/host/diy-artifacts';
 import type { RecordListRow } from '../diy-record-text';
 import { DIY_RECORD_DETAIL_TOOL, DIY_RECORD_PREPARE_TOOL, DIY_RECORD_READ_TOOL, DIY_RECORD_STOP_TOOL } from '../../unit';
+
+const captureAt = (rig: ReturnType<typeof createDiyRig>): string => join(rig.root(), 'workbench', 'artifacts', 'rec-demo.jsonl');
+
+const lastAt = (rig: ReturnType<typeof createDiyRig>): string =>
+  lastCaptureFileOf(captureFileOf(artifactsDirOf(join(rig.root(), 'workbench', 'diy')), 'demo'));
+
+const writeCapture = (path: string, text: string): void => {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, text, 'utf8');
+};
 
 describe('录制交接：prepare / read / stop 三把', () => {
   const rig = createDiyRig();
@@ -44,14 +57,9 @@ describe('录制交接：prepare / read / stop 三把', () => {
     expect(built.record.live(Date.now())?.unit).toBe('demo');
     expect(built.commands.some((one) => one.includes("'--window' 'foreground'"))).toBe(true);
     expect(built.commands.some((one) => one.includes('location.href'))).toBe(true);
-    expect(built.commands.some((one) => one.includes("'network' '--follow'") && one.includes('sleep 2'))).toBe(true);
-    expect(
-      built.commands.some(
-        (one) => one.includes("'network' '--all' '--raw'") && one.includes('node -e') && one.includes('.pid'),
-      ),
-    ).toBe(true);
-    expect(built.commands.some((one) => one.includes('while kill -0'))).toBe(true);
-    expect(built.commands.some((one) => one.includes('pkill -P'))).toBe(true);
+    expect(built.commands.some((one) => one.includes("'network' '--follow'"))).toBe(true);
+    expect(built.commands.some((one) => one.includes('kill -0') || one.includes('pkill'))).toBe(false);
+    expect(out.capture).toBe(true);
   });
 
   it('★★ 另一场占着就不许开（拒的话里有是谁占着）', async () => {
@@ -72,7 +80,17 @@ describe('录制交接：prepare / read / stop 三把', () => {
   });
 
   it('★★ read：页面说录完了就把状态推到 finished，只回要的那几条（还带诚实字段）', async () => {
-    const record = heldStore({ method: 'POST', urlContains: '/api/publish' });
+    const capture = captureAt(rig);
+    writeCapture(
+      capture,
+      [
+        line('POST', `${URL}/api/publish`, 15),
+        line('POST', `${URL}/api/other`, 16),
+        line('GET', `${URL}/api/list`, 17),
+        line('POST', `${URL}/api/publish`, 100000),
+      ].join('\n') + '\n',
+    );
+    const record = heldStore({ method: 'POST', urlContains: '/api/publish' }, capture);
     const built = rig.harness({
       withTools: true,
       pact: false,
@@ -90,15 +108,6 @@ describe('录制交接：prepare / read / stop 三把', () => {
             dropped: 1,
             calls: [POST(), GET()],
           }),
-        },
-        { stdout: '4\n' },
-        {
-          stdout: [
-            line('POST', `${URL}/api/publish`, 15),
-            line('POST', `${URL}/api/other`, 16),
-            line('GET', `${URL}/api/list`, 17),
-            line('POST', `${URL}/api/publish`, 100000),
-          ].join('\n'),
         },
       ],
     });
@@ -150,7 +159,10 @@ describe('录制交接：prepare / read / stop 三把', () => {
   });
 
   it('★★ stop：收标签 + 停捕获 + 清状态，回一段能直接落 design.json 的原文', async () => {
-    const record = heldStore({ method: 'POST', urlContains: '/api/publish' });
+    const capture = captureAt(rig);
+    writeCapture(capture, [line('POST', `${URL}/api/publish`, 15), line('PUT', `${URL}/api/other`, 16)].join('\n') + '\n');
+    writeCapture(`${capture}.first`, 'ok');
+    const record = heldStore({ method: 'POST', urlContains: '/api/publish' }, capture);
     const built = rig.harness({
       withTools: true,
       pact: false,
@@ -168,11 +180,6 @@ describe('录制交接：prepare / read / stop 三把', () => {
             calls: [POST()],
           }),
         },
-        { stdout: '2\n' },
-        { stdout: [line('POST', `${URL}/api/publish`, 15), line('PUT', `${URL}/api/other`, 16)].join('\n') },
-        { stdout: 'ok\n' },
-        { stdout: '' },
-        { stdout: '' },
         { stdout: JSON.stringify([{ page: 'p1', url: URL, title: '环境' }]) },
         { stdout: '{"closed":"p1"}' },
       ],
@@ -209,21 +216,22 @@ describe('录制交接：detail 那一拍（清单 → 挑一条 → 原文）',
   });
 
   it('★★ 按 key 从快照原文里取回入参 / 出参，且只发一条 grep（不整读文件）', async () => {
+    const capture = captureAt(rig);
+    writeCapture(
+      capture,
+      `${envelope([
+        entry('POST', `${URL}/api/publish`, 5, {
+          request: { headers: { 'content-type': 'application/json' }, body: { env: 'test' }, body_full_size: 14 },
+          body: { ok: true },
+          body_full_size: 11,
+        }),
+      ])}\n`,
+    );
     const built = rig.harness({
       withTools: true,
       pact: false,
-      record: heldStore(null),
-      probe: [
-        {
-          stdout: envelope([
-            entry('POST', `${URL}/api/publish`, 5, {
-              request: { headers: { 'content-type': 'application/json' }, body: { env: 'test' }, body_full_size: 14 },
-              body: { ok: true },
-              body_full_size: 11,
-            }),
-          ]),
-        },
-      ],
+      record: heldStore(null, capture),
+      probe: [],
     });
 
     const out = (await built.tool(DIY_RECORD_DETAIL_TOOL).execute(
@@ -238,7 +246,7 @@ describe('录制交接：detail 那一拍（清单 → 挑一条 → 原文）',
     expect(out.text).toContain('入参（request body，原长 14 字节）');
     expect(out.text).toContain('出参（response body');
     expect(out.text).toContain('请求头（可能含凭据');
-    expect(built.commands.some((one) => one.includes('grep') && one.includes('-m 20'))).toBe(true);
+    expect(built.commands.some((one) => one.includes('grep'))).toBe(false);
   });
 
   it('★★ 按 index 走清单：key 为空的那条（只在页面钩子那份里）就回钩子的原文', async () => {
@@ -265,15 +273,11 @@ describe('录制交接：detail 那一拍（清单 → 挑一条 → 原文）',
   });
 
   it('★★ 收工之后：给 unit 就去读 shots/rec-<unit>.last.jsonl', async () => {
-    const built = rig.harness({
-      withTools: true,
-      pact: false,
-      probe: [
-        {
-          stdout: envelope([entry('POST', `${URL}/api/publish`, 5, { request: { body: '{"env":"prod"}' } })]),
-        },
-      ],
-    });
+    writeCapture(
+      lastAt(rig),
+      `${envelope([entry('POST', `${URL}/api/publish`, 5, { request: { body: '{"env":"prod"}' } })])}\n`,
+    );
+    const built = rig.harness({ withTools: true, pact: false, probe: [] });
 
     const out = (await built.tool(DIY_RECORD_DETAIL_TOOL).execute(
       { unit: 'demo', key: `POST ${URL}/api/publish` },
@@ -282,7 +286,7 @@ describe('录制交接：detail 那一拍（清单 → 挑一条 → 原文）',
 
     expect(out.found).toBe(true);
     expect(out.request).toBe('{"env":"prod"}');
-    expect(built.commands.some((one) => one.includes('rec-demo.jsonl.last'))).toBe(true);
+    expect(built.commands).toHaveLength(0);
   });
 
   it('★ 找不到那条：如实说"两边都没有"，并给兜底那几条路', async () => {
@@ -307,15 +311,11 @@ describe('录制交接：detail 那一拍（清单 → 挑一条 → 原文）',
   });
 
   it('★★ 给 key 且原文里有 ⇒ 一条 eval 都不发（收工后不许把空白标签招回来）', async () => {
-    const built = rig.harness({
-      withTools: true,
-      pact: false,
-      probe: [
-        {
-          stdout: envelope([entry('POST', `${URL}/api/publish`, 5, { request: { body: '{"env":"prod"}' } })]),
-        },
-      ],
-    });
+    writeCapture(
+      lastAt(rig),
+      `${envelope([entry('POST', `${URL}/api/publish`, 5, { request: { body: '{"env":"prod"}' } })])}\n`,
+    );
+    const built = rig.harness({ withTools: true, pact: false, probe: [] });
 
     const out = (await built.tool(DIY_RECORD_DETAIL_TOOL).execute(
       { unit: 'demo', key: `POST ${URL}/api/publish` },

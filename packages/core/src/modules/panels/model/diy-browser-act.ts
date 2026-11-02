@@ -1,4 +1,4 @@
-import { productWrite, quoteShellArg, type Seam } from '@dsh-workbench/shared/host';
+import { type Seam } from '@dsh-workbench/shared/host';
 import { jsonOf, runBrowserStep, type LineMaker, textOf, type BrowserStep } from './diy-browser';
 
 export const ACT_TIMEOUT_MS = 15000;
@@ -32,23 +32,3 @@ export function actErrorOf(step: ActStep): string {
 
 export const SWEEP_TIMEOUT_MS = 4000;
 
-export async function stopNetworkExact(
-  seam: Seam,
-  file: string,
-  timeoutMs = SWEEP_TIMEOUT_MS,
-): Promise<boolean> {
-  const pidFile = quoteShellArg(`${file}.pid`);
-  const reaperFile = quoteShellArg(`${file}.reaper`);
-  const line = [
-    `p="$(cat ${pidFile} 2>/dev/null)"`,
-    `r="$(cat ${reaperFile} 2>/dev/null)"`,
-    `[ -n "$p" ] && pkill -P "$p" 2>/dev/null`,
-    `[ -n "$p" ] && kill "$p" 2>/dev/null`,
-    `[ -n "$r" ] && pkill -P "$r" 2>/dev/null`,
-    `[ -n "$r" ] && kill "$r" 2>/dev/null`,
-    `if [ "$(cat ${pidFile} 2>/dev/null)" = "$p" ]; then rm -f ${pidFile} ${reaperFile}; fi`,
-    'true',
-  ].join('; ');
-  const step = await seam.run({ command: line, intent: productWrite(), timeoutMs });
-  return step.exitCode === 0;
-}

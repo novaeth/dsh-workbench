@@ -28,8 +28,7 @@ describe('收工那一拍：把这一场的观察也收了', () => {
     const out = await stopObservers(built.ctx as unknown as DshHostContext, rig.WORKSHOP());
 
     expect(out).toEqual({ net: true, logs: true });
-    expect(built.commands.some((one) => one.includes('net-workbench.jsonl.pid') && one.includes('kill'))).toBe(true);
-    expect(built.commands.some((one) => one.includes('[b]rowser workbench network --follow'))).toBe(false);
+    expect(built.commands.some((one) => one.includes('kill'))).toBe(false);
     expect(built.commands.some((one) => one.includes("'eval'") && one.includes('unhooked'))).toBe(true);
   });
 

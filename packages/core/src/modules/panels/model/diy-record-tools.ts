@@ -8,7 +8,8 @@ import { artifactsDirOf } from '@/shared/api/host/diy-artifacts';
 import { asRecord, asText, OUTPUT, plainJson, unitsOf, workspaceOf } from './diy-context';
 import { holdNotice, noticeMessage } from '@/shared/api/host/diy-debug-act';
 import { readDesignOfModule } from '@/shared/api/host/diy-modules';
-import { actBrowser, stopNetworkExact } from './diy-browser-act';
+import { actBrowser } from './diy-browser-act';
+import { stopLiveCapture } from '@/shared/api/host/diy-capture-live';
 import { openRecordPage } from './diy-record-open';
 import { RECORD_ARM_SCRIPT, RECORD_READ_SCRIPT, RECORD_STOP_SCRIPT } from './diy-record-scripts';
 import { captureEntriesOf, pickAllOf, pickOf } from './diy-record-capture';
@@ -135,7 +136,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
         if (!armed.ok || !page.ok) {
           throw new Error(`浮条没装上：${armed.stderr || armed.stdout || '那一页还在加载'} —— 等用户那一页站稳了再试。`);
         }
-        await stopNetworkExact(seam, captureFile);
+        stopLiveCapture(captureFile);
         const capture = await startRecordCapture(seam, command, BROWSER_RECORD_SESSION, captureFile);
         watchRecordFinish({ ctx, seam, command, sessionId, store, url, captureFile });
         const talk = recordTalkOf();
@@ -228,7 +229,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
       }
       const state = store.live(Date.now()) ?? held;
       const ledger = state.shots;
-      const capture = await captureReadOf(seam, state.captureFile);
+      const capture = captureReadOf(state.captureFile);
       const bundle = bundleOf(capture, page, state);
       const hookCaught = page.calls.length;
       const nav = page.href !== '' && page.here !== '' && page.href !== page.here;
@@ -343,7 +344,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
         page = recordPageOf(
           (await actBrowser(seam, command, BROWSER_RECORD_SESSION, ['eval', RECORD_READ_SCRIPT])).payload,
         );
-        const bundle = bundleOf(await captureReadOf(seam, file), page, held);
+        const bundle = bundleOf(captureReadOf(file), page, held);
         const row = bundle.rows[index];
         if (row === undefined) {
           throw new Error(
@@ -357,7 +358,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
           if (only !== null) return detailOfCall(only, maxBytes);
         }
       }
-      const candidates = pickAllOf(captureEntriesOf(await captureLinesWithKeyOf(seam, file, key)), key);
+      const candidates = pickAllOf(captureEntriesOf(captureLinesWithKeyOf(file, key)), key);
       const fromCapture = pickOf(candidates, key, at);
       if (fromCapture !== null) {
         return detailOfEntry(fromCapture, maxBytes, candidates.length);
@@ -415,11 +416,11 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
       await actBrowser(seam, command, BROWSER_RECORD_SESSION, ['eval', RECORD_ARM_SCRIPT]);
       const finalStep = await actBrowser(seam, command, BROWSER_RECORD_SESSION, ['eval', RECORD_STOP_SCRIPT]);
       const page = recordPageOf(finalStep.payload);
-      const capture = await captureReadOf(seam, held.captureFile);
+      const capture = captureReadOf(held.captureFile);
       const bundle = bundleOf(capture, page, held);
       const hookCaught = page.calls.length;
       const noBody = bodyMissingOf(bundle.merged);
-      const kept = await keepCaptureOf(seam, held.captureFile);
+      const kept = keepCaptureOf(held.captureFile);
       const cleaned = await releaseQuietly({
         seam,
         command,

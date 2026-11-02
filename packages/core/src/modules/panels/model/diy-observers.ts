@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { BROWSER_SCREEN_SESSION, seamOf } from '@dsh-workbench/shared/host';
 import { artifactsDirOf } from '@/shared/api/host/diy-artifacts';
 import { cliCommandOf } from '@dsh-workbench/shared/host';
-import { actBrowser, stopNetworkExact, SWEEP_TIMEOUT_MS } from './diy-browser-act';
+import { actBrowser, SWEEP_TIMEOUT_MS } from './diy-browser-act';
+import { liveCaptureOf, stopLiveCapture } from '@/shared/api/host/diy-capture-live';
 import { LOGS_STOP_SCRIPT } from './diy-logs';
 
 export interface ObserverCleanup {
@@ -27,11 +28,11 @@ export async function stopObservers(
   }
   const file = join(artifactsDirOf(workspace), `net-${session}.jsonl`);
   const command = cliCommandOf(ctx);
-  const [net, step] = await Promise.all([
-    stopNetworkExact(seam, file),
+  const [stopped, step] = await Promise.all([
+    Promise.resolve(stopLiveCapture(file)),
     actBrowser(seam, command, session, ['eval', LOGS_STOP_SCRIPT], SWEEP_TIMEOUT_MS),
   ]);
-  return { net, logs: typeof step.payload?.['unhooked'] === 'number' };
+  return { net: stopped || !liveCaptureOf(file), logs: typeof step.payload?.['unhooked'] === 'number' };
 }
 
 export function withObserverCleanup(

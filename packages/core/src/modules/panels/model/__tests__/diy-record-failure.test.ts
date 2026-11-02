@@ -1,5 +1,5 @@
-import { writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { BROWSER_RECORD_SESSION } from '@dsh-workbench/shared/host';
 import { RECORD_STALE_MS } from '@dsh-workbench/shared/host';
@@ -13,6 +13,11 @@ import { foreignDomainText, releaseQuietly, watchFinishStepOf } from '../diy-rec
 import { RECORD_ARM_SCRIPT } from '../diy-record-scripts';
 import { domainOf, readDomainsOf, type RecordListRow } from '../diy-record-text';
 import { DIY_RECORD_PREPARE_TOOL, DIY_RECORD_READ_TOOL, DIY_RECORD_STOP_TOOL } from '../../unit';
+
+const writeCapture = (path: string, text: string): void => {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, text, 'utf8');
+};
 
 describe('录制交接：半路失败与实话（每一档都单独说）', () => {
   const rig = createDiyRig();
@@ -118,7 +123,12 @@ describe('录制交接：半路失败与实话（每一档都单独说）', () =
   });
 
   it('★★ read 的诚实字段：导航过 + 钩子 0 条但捕获这一段有 ⇒ 候选来自捕获、noBody / nav 都报', async () => {
-    const record = heldStore(null);
+    const capture = join(rig.root(), 'workbench', 'artifacts', 'rec-demo.jsonl');
+    writeCapture(
+      capture,
+      [line('POST', `${URL2}/api/publish`, 1), line('GET', `${URL2}/api/list`, 2)].join('\n') + '\n',
+    );
+    const record = heldStore(null, capture);
     const built = rig.harness({
       withTools: true,
       pact: false,
@@ -137,8 +147,6 @@ describe('录制交接：半路失败与实话（每一档都单独说）', () =
             calls: [],
           }),
         },
-        { stdout: '2\n' },
-        { stdout: [line('POST', `${URL2}/api/publish`, 1), line('GET', `${URL2}/api/list`, 2)].join('\n') },
       ],
     });
 
@@ -162,7 +170,9 @@ describe('录制交接：半路失败与实话（每一档都单独说）', () =
   });
 
   it('★★ stop 收标签兜底：列表里没有可用的就退到 close；连它都没成 ⇒ 话里直说"他自己关一下"', async () => {
-    const record = heldStore(null);
+    const capture = join(rig.root(), 'workbench', 'artifacts', 'rec-demo.jsonl');
+    writeCapture(capture, `${line('POST', `${URL2}/api/publish`, 1)}\n`);
+    const record = heldStore(null, capture);
     const built = rig.harness({
       withTools: true,
       pact: false,
@@ -170,10 +180,6 @@ describe('录制交接：半路失败与实话（每一档都单独说）', () =
       probe: [
         { stdout: ARM_OK({ phase: 'finished' }) },
         { stdout: JSON.stringify({ ok: true, unhooked: 1, phase: 'finished', t0: 1, t1: 2, calls: [POST()] }) },
-        { stdout: '' },
-        { stdout: '' },
-        { stdout: '' },
-        { stdout: '' },
         { stdout: 'not a json array' },
         { stdout: '', exitCode: 1 },
       ],
@@ -393,7 +399,7 @@ describe('录制交接：半路失败与实话（每一档都单独说）', () =
     expect(record.live(Date.now())).toBeNull();
     expect(step.stop).toBe(true);
     expect(step.delivered).toBe(false);
-    expect(built.commands.some((one) => one.includes('pkill -P'))).toBe(true);
+    expect(built.commands.some((one) => one.includes('pkill'))).toBe(false);
     expect(built.commands.some((one) => one.includes("'tab' 'list'"))).toBe(true);
   });
 

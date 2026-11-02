@@ -72,8 +72,8 @@ describe('开录制那一页：开完必须核地址，核不过就回落到 ope
   it('★ 开之前先收这条会话的残留（否则新页会开进旧窗、不顶前台）', async () => {
     const seen: string[] = [];
     await call(planShellOf([{}, { stdout: '[]' }, {}, {}, { stdout: href(WANT) }], seen));
-    expect(seen[0]).toContain('.pid');
-    expect(seen.some((one) => one.includes("'tab' 'list'"))).toBe(true);
+    expect(seen[0]).toContain("'tab' 'list'");
+    expect(seen.some((one) => one.includes('.pid'))).toBe(false);
   });
 
   it('★ samePageOf：末尾斜杠 / 锚点 / 查询串都不算开错页', () => {

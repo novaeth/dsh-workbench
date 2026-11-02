@@ -1,4 +1,4 @@
-import { chmodSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
+import { appendFileSync, chmodSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import writeFileAtomic from 'write-file-atomic';
 
@@ -42,6 +42,16 @@ export function writeTextFile(path: string, text: string, options: WriteFileOpti
     return;
   }
   writeFileAtomic.sync(path, text, atomicOptionsOf(mode, options));
+}
+
+/**
+ * 往文件末尾追加文本；文件或目录不存在就建。追加不是原子写，只给「日志/采集」这类只增不改的流。
+ * @param path 目标文件。
+ * @param text 追加内容。
+ */
+export function appendTextFile(path: string, text: string): void {
+  mkdirSync(dirname(path), { recursive: true });
+  appendFileSync(path, text, { mode: modeOf(path, 'keep') });
 }
 
 /**
