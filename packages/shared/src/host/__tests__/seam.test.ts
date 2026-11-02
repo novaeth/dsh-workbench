@@ -46,6 +46,13 @@ describe('createSeam', () => {
     expect(policyOf(fake.calls[0])).toEqual({ mode: 'workspace-write', workspaceRoot: ROOT });
   });
 
+  it('产品域跟到部署上限：danger-full-access 时不再收窄成 workspace-write', async () => {
+    const fake = createFakeShell([{}]);
+    const seam = createSeam({ shell: fake.shell, runtimeRoot: ROOT, ceiling: 'danger-full-access' });
+    await seam.run({ command: 'npm view x version', intent: { kind: 'product' } });
+    expect(policyOf(fake.calls[0])).toEqual({ mode: 'danger-full-access', workspaceRoot: ROOT });
+  });
+
   it('工作区域：取会话解析结果；上限更宽时按会话', async () => {
     const fake = createFakeShell([{}]);
     const seam = createSeam({
@@ -292,5 +299,45 @@ describe('宿主域：run / spawn / open', () => {
     const seam = createSeam({ shell: fake.shell, runtimeRoot: ROOT });
     await seam.run({ argv: ['npm', 'view', 'left-pad', 'version'], intent: { kind: 'product' } });
     expect(fake.calls[0]?.command).toBe("'npm' 'view' 'left-pad' 'version'");
+  });
+});
+
+describe('pwsh 命令行', () => {
+  it('host 域：命令行以引号开头时补 & 调用符', async () => {
+    const fake = createFakeProcesses([{}]);
+    const seam = createSeam({ shell: createFakeShell([]).shell, runtimeRoot: ROOT, allowHost: true, processes: fake.host });
+    await seam.run({
+      command: "'C:\\Program Files\\opencli\\opencli.cmd' 'browser' 'list'",
+      shellKind: 'pwsh',
+      intent: { kind: 'host' },
+    });
+    expect(fake.calls[0]?.file).toBe('pwsh');
+    expect(fake.calls[0]?.args).toEqual([
+      '-NoProfile',
+      '-NonInteractive',
+      '-Command',
+      "& 'C:\\Program Files\\opencli\\opencli.cmd' 'browser' 'list'",
+    ]);
+  });
+
+  it('host 域：不以引号开头的命令行不加 &', async () => {
+    const fake = createFakeProcesses([{}]);
+    const seam = createSeam({ shell: createFakeShell([]).shell, runtimeRoot: ROOT, allowHost: true, processes: fake.host });
+    await seam.run({ command: 'pnpm add left-pad', shellKind: 'pwsh', intent: { kind: 'host' } });
+    expect(fake.calls[0]?.args?.at(-1)).toBe('pnpm add left-pad');
+  });
+
+  it('沙箱域：pwsh 下带引号的命令行也落在 -Command 里补 &', async () => {
+    const fake = createFakeShell([{}]);
+    const seam = createSeam({ shell: fake.shell, runtimeRoot: ROOT });
+    await seam.run({ command: "'opencli' 'browser' 'list'", shellKind: 'pwsh', intent: { kind: 'none' } });
+    expect(fake.calls[0]?.command).toMatch(/'-Command' '& /);
+  });
+
+  it('沙箱域：pwsh 下普通命令行原样进 -Command', async () => {
+    const fake = createFakeShell([{}]);
+    const seam = createSeam({ shell: fake.shell, runtimeRoot: ROOT });
+    await seam.run({ command: 'pnpm install', shellKind: 'pwsh', intent: { kind: 'none' } });
+    expect(fake.calls[0]?.command).toContain("'-Command' 'pnpm install'");
   });
 });

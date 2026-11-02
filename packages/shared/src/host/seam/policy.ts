@@ -26,7 +26,7 @@ export function insideOf(root: string, path: string): boolean {
 
 export function productPolicy(ceiling: SeamMode, productRoot: string): SeamPolicy {
   return {
-    mode: ceiling === 'read-only' ? 'read-only' : 'workspace-write',
+    mode: ceiling === 'read-only' ? 'read-only' : ceiling === 'danger-full-access' ? 'danger-full-access' : 'workspace-write',
     workspaceRoot: resolve(productRoot),
   };
 }

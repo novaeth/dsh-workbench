@@ -77,6 +77,7 @@ export * from './host/write-result.js';
 export * from './host/cli-error.js';
 export * from './host/data-root.js';
 export * from './host/shell-text.js';
+export * from './host/shell-render.js';
 export * from './host/shell.js';
 export * from './host/seam/intent.js';
 export * from './host/seam/policy.js';

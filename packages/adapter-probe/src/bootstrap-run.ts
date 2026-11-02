@@ -1,6 +1,6 @@
 import { homedir } from 'node:os';
 import { isolatedRoot } from '@dsh-workbench/adapter-runtime';
-import { bootstrapEnvOf, tailLines } from '@dsh-workbench/shared/host';
+import { bootstrapEnvOf, invocationOf, tailLines } from '@dsh-workbench/shared/host';
 import type { Seam, ShellKind } from '@dsh-workbench/shared/host';
 import { desktopRuntimeEnvPath } from './desktop-runtime.js';
 import { currentShellKind } from './platform.js';
@@ -54,15 +54,6 @@ export function bootstrapEnv(options: BootstrapEnvOptions = {}): Record<string, 
   });
 }
 
-function commandArgsOf(
-  line: string,
-  shellKind: ShellKind,
-): { readonly file: string; readonly args: readonly string[] } {
-  return shellKind === 'pwsh'
-    ? { file: 'pwsh', args: ['-NoProfile', '-NonInteractive', '-Command', line] }
-    : { file: 'bash', args: ['-c', line] };
-}
-
 async function seamSpawn(
   seam: Seam | undefined,
   line: string,
@@ -92,7 +83,7 @@ export async function runBootstrapCommand(
 ): Promise<BootstrapRunResult> {
   const shellKind = options.shellKind ?? currentShellKind();
   const env = { ...bootstrapEnv({ shellKind }), ...(options.env ?? {}) };
-  const command = commandArgsOf(line, shellKind);
+  const command = invocationOf(shellKind, line);
   try {
     const result =
       options.spawn === undefined

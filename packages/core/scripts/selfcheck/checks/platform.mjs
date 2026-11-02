@@ -13,6 +13,9 @@ const ENV_PREFIX_ALLOWED = new Map([
   ],
 ]);
 
+const SHELL_INVOCATION_OWN = 'packages/shared/src/host/shell-render.ts';
+const SHELL_INVOCATION_PATTERNS = [/-NoProfile/, /-NonInteractive/, /'bash', args: \['-c'/];
+
 function packageSources() {
   const out = [];
   const packagesRoot = join(REPO, 'packages');
@@ -40,6 +43,7 @@ const ADAPTERS = [
   'shared/api/platform/contract.ts',
   'host/platform.ts',
   'host/shell-text.ts',
+  'host/shell-render.ts',
   'host/git-exec.ts',
 ];
 
@@ -134,6 +138,26 @@ export const checks = [
             ? '都走宿主 resolve({ env }) 的覆盖，命令行里只有命令本身'
             : `都走宿主 resolve({ env }) 的覆盖；例外：${[...ENV_PREFIX_ALLOWED].map(([rel, why]) => `${rel}（${why}）`).join('、')}`
           : hits.join(' · '),
+      );
+    },
+  },
+  {
+    title: '★ 起 shell 的写法只有一处：pwsh / bash 的启动参数由渲染层给',
+    run(_ctx, report) {
+      const hits = [];
+      for (const { rel, source } of packageSources()) {
+        if (!rel.includes('/src/')) continue;
+        if (rel === SHELL_INVOCATION_OWN) continue;
+        for (const line of source.split('\n')) {
+          if (SHELL_INVOCATION_PATTERNS.some((pattern) => pattern.test(line))) hits.push(`${rel}: ${line.trim()}`);
+        }
+      }
+      report(
+        '★ 起 shell 的写法只有一处：pwsh / bash 的启动参数由渲染层给',
+        hits.length === 0,
+        hits.length === 0
+          ? `只在 ${SHELL_INVOCATION_OWN}（执行缝与自举都从那里拿 invocation）`
+          : `改用 shell-render 的 invocationOf：${hits.join(' · ')}`,
       );
     },
   },

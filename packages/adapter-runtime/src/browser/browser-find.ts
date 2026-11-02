@@ -2,6 +2,7 @@ import { now, parseJsonLoose } from '@dsh-workbench/shared/host';
 import { BROWSER_READ_SESSION } from './browser-read.js';
 import { backgroundLine, OPENCLI_WINDOW_ENV } from '../cli/index.js';
 import { noWrite, type Seam } from '@dsh-workbench/shared/host';
+import { asRecord, textOf } from './page-value.js';
 
 const DEFAULT_TIMEOUT_MS = 25000;
 const DEFAULT_SETTLE_MS = 2500;
@@ -61,14 +62,6 @@ export function cellRows(text: string): string[] {
     .split('\n')
     .map((one) => one.trim())
     .filter((one) => one !== '');
-}
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : undefined;
-}
-
-function textOf(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
 }
 
 export function entriesOf(value: unknown): BrowserFindEntry[] {

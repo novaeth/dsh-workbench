@@ -3,7 +3,8 @@ import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { DshShell } from '../../api/dsh.js';
 import { workbenchRoot } from '../data-root.js';
-import { quoteShellArg, shellKindOf } from '../shell-text.js';
+import { shellKindOf } from '../shell-text.js';
+import { callOperatorOf, invocationOf, quotedArgvLine, quotedLineOf } from '../shell-render.js';
 import { runShell, type ShellResult } from '../shell.js';
 import { deniedPathOf, sandboxDeniedOf } from './denial.js';
 import { seamProductEnv } from './env.js';
@@ -119,29 +120,22 @@ function targetOf(request: {
 }
 
 function displayOf(target: SeamTarget): string {
-  return 'argv' in target ? target.argv.map((one) => quoteShellArg(one)).join(' ') : target.line;
+  return 'argv' in target ? quotedArgvLine(target.argv) : target.line;
 }
 
-function shellInvocationOf(shellKind: SeamShellKind, line: string): { file: string; args: string[] } {
-  return shellKind === 'pwsh'
-    ? { file: 'pwsh', args: ['-NoProfile', '-NonInteractive', '-Command', line] }
-    : { file: 'bash', args: ['-c', line] };
-}
-
-function invocationOf(target: SeamTarget, shellKind: SeamShellKind | undefined): { file: string; args: string[] } {
+function targetInvocationOf(target: SeamTarget, shellKind: SeamShellKind | undefined): { file: string; args: readonly string[] } {
   if ('argv' in target) {
     const [file, ...args] = target.argv;
     if (file === undefined) throw new SeamError('scope-not-declared', 'argv 是空的：至少给一个可执行文件');
     return { file, args };
   }
-  return shellInvocationOf(shellKind ?? shellKindOf(), target.line);
+  return invocationOf(shellKind ?? shellKindOf(), target.line);
 }
 
 function sandboxedLineOf(target: SeamTarget, shellKind: SeamShellKind | undefined): string {
-  if ('argv' in target) return target.argv.map((one) => quoteShellArg(one)).join(' ');
-  if (shellKind === undefined) return target.line;
-  const invocation = shellInvocationOf(shellKind, target.line);
-  return [invocation.file, ...invocation.args].map((one) => quoteShellArg(one)).join(' ');
+  const line = 'argv' in target ? quotedArgvLine(target.argv) : target.line;
+  if (shellKind === undefined) return callOperatorOf(shellKindOf(), line);
+  return callOperatorOf(shellKindOf(), quotedLineOf(invocationOf(shellKind, line)));
 }
 
 export function createSeam(ports: SeamPorts): Seam {
@@ -197,7 +191,7 @@ export function createSeam(ports: SeamPorts): Seam {
   }
 
   async function runHost(request: SeamRequest, target: SeamTarget): Promise<ShellResult> {
-    const invocation = invocationOf(target, request.shellKind);
+    const invocation = targetInvocationOf(target, request.shellKind);
     const child = processes.spawn({
       file: invocation.file,
       args: invocation.args,
@@ -249,7 +243,7 @@ export function createSeam(ports: SeamPorts): Seam {
   }
 
   function spawnHost(request: SpawnRequest): SpawnHandle {
-    const invocation = invocationOf(request.target, undefined);
+    const invocation = targetInvocationOf(request.target, undefined);
     const logFile =
       request.logFile ?? join(runtimeRoot, 'logs', `${request.label ?? 'spawn'}-${String(now())}.log`);
     mkdirSync(dirname(logFile), { recursive: true });
@@ -315,7 +309,7 @@ export function createSeam(ports: SeamPorts): Seam {
   }
 
   function openHost(request: OpenRequest): ChannelHandle {
-    const invocation = invocationOf(request.target, undefined);
+    const invocation = targetInvocationOf(request.target, undefined);
     const child: ProcessChild = processes.spawn({
       file: invocation.file,
       args: invocation.args,

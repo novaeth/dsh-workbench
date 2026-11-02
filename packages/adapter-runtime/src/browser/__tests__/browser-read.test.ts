@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createSeam } from '@dsh-workbench/shared/host';
-import { BROWSER_READ_SESSION, BROWSER_SCREEN_SESSION, browserRead } from '../browser-read.js';
+import { BROWSER_READ_SESSION, BROWSER_SCREEN_SESSION, browserRead, evalScriptArgOf } from '../browser-read.js';
 
 interface Step {
   readonly stdout?: string;
@@ -230,5 +230,42 @@ describe('browserRead · 后台静默（每一拍都不许抢焦点）', () => {
     expect(commands.filter((one) => one.includes("'eval'"))).toHaveLength(2);
     expect(backgroundless(commands)).toEqual([]);
     expect(envless(calls)).toBe(0);
+  });
+});
+
+describe('browserRead · Windows 的引号', () => {
+  const source = 'JSON.stringify({ href: location.href, label: "首页" })';
+
+  it('win32：脚本先 Base64，命令行里不再出现双引号，解码回来还是原脚本', async () => {
+    const { seam, commands } = fakeShell([{ stdout: JSON.stringify({ ok: true }) }]);
+    await browserRead({ seam, script: source, platform: 'win32', ...FAST });
+
+    const line = commands[0] ?? '';
+    expect(line).not.toContain('"');
+    expect(line).toContain('eval(new TextDecoder().decode(Uint8Array.from(atob(');
+    const packed = /atob\(''+([A-Za-z0-9+/=]*)''+\)/.exec(line)?.[1] ?? '';
+    expect(Buffer.from(packed, 'base64').toString('utf8')).toBe(source);
+  });
+
+  it('非 win32：脚本原样进命令行', async () => {
+    const { seam, commands } = fakeShell([{ stdout: JSON.stringify({ ok: true }) }]);
+    await browserRead({ seam, script: source, platform: 'darwin', ...FAST });
+
+    expect(commands[0]).toContain(source);
+  });
+});
+
+describe('evalScriptArgOf', () => {
+  it('非 win32 原样返回；win32 包成 eval 且不带双引号', () => {
+    expect(evalScriptArgOf('return 1', 'darwin')).toBe('return 1');
+    const packed = evalScriptArgOf('if (a > b) return "x"', 'win32');
+    expect(packed).not.toContain('"');
+    expect(packed.startsWith('eval(')).toBe(true);
+  });
+
+  it('中文脚本按 UTF-8 往返', () => {
+    const packed = evalScriptArgOf('"读一读那张卡"', 'win32');
+    const encoded = /atob\('([^']*)'\)/.exec(packed)?.[1] ?? '';
+    expect(Buffer.from(encoded, 'base64').toString('utf8')).toBe('"读一读那张卡"');
   });
 });

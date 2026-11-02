@@ -2,6 +2,7 @@ import { now, parseJsonLoose } from '@dsh-workbench/shared/host';
 import { tailLines } from '@dsh-workbench/shared/host';
 import { backgroundLine, OPENCLI_WINDOW_ENV } from '../cli/index.js';
 import { noWrite, type Seam } from '@dsh-workbench/shared/host';
+import { asRecord, textOf } from './page-value.js';
 
 import { BROWSER_READ_SESSION, BROWSER_RECORD_SESSION, BROWSER_SCREEN_SESSION } from '@dsh-workbench/shared/host';
 export { BROWSER_READ_SESSION, BROWSER_RECORD_SESSION, BROWSER_SCREEN_SESSION };
@@ -45,14 +46,7 @@ export interface BrowserReadOptions {
   readonly timeoutMs?: number;
   readonly retryMs?: number;
   readonly settleMs?: number;
-}
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : undefined;
-}
-
-function textOf(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
+  readonly platform?: NodeJS.Platform;
 }
 
 function codeOf(page: unknown): string {
@@ -99,14 +93,21 @@ type ShellOutcome =
   | { readonly kind: 'timeout'; readonly detail: string; readonly stderr: string }
   | { readonly kind: 'failed'; readonly detail: string; readonly stderr: string };
 
+export function evalScriptArgOf(script: string, platform: NodeJS.Platform = process.platform): string {
+  if (platform !== 'win32') return script;
+  const bytes = Buffer.from(script, 'utf8').toString('base64');
+  return `eval(new TextDecoder().decode(Uint8Array.from(atob('${bytes}'), (one) => one.charCodeAt(0))))`;
+}
+
 async function shellRun(
   seam: Seam,
   command: string,
   argv: readonly string[],
   timeoutMs: number,
+  platform: NodeJS.Platform,
 ): Promise<ShellOutcome> {
   const result = await seam.run({
-    command: backgroundLine(command, argv),
+    command: backgroundLine(command, argv, platform),
     intent: noWrite(),
     retry: 'safe',
     timeoutMs,
@@ -128,6 +129,7 @@ async function evalOnce(
   script: string,
   timeoutMs: number,
   retryMs: number,
+  platform: NodeJS.Platform,
 ): Promise<Attempt> {
   const run = async (): Promise<Attempt> => {
     let attempt: Awaited<ReturnType<typeof shellRun>>;
@@ -135,8 +137,9 @@ async function evalOnce(
       attempt = await shellRun(
         seam,
         command,
-        ['browser', session, 'eval', script, '--window', 'background'],
+        ['browser', session, 'eval', evalScriptArgOf(script, platform), '--window', 'background'],
         timeoutMs,
+        platform,
       );
     } catch (error) {
       return {
@@ -205,10 +208,11 @@ async function openOnce(
   session: string,
   url: string,
   timeoutMs: number,
+  platform: NodeJS.Platform,
 ): Promise<Omit<BrowserReadResult, 'at'> | undefined> {
   let attempt: Awaited<ReturnType<typeof shellRun>>;
   try {
-    attempt = await shellRun(seam, command, ['browser', session, 'open', url, '--window', 'background'], timeoutMs);
+    attempt = await shellRun(seam, command, ['browser', session, 'open', url, '--window', 'background'], timeoutMs, platform);
   } catch (error) {
     return {
       ok: false,
@@ -237,9 +241,10 @@ export async function browserRead(options: BrowserReadOptions): Promise<BrowserR
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const retryMs = options.retryMs ?? DEFAULT_RETRY_MS;
   const settleMs = options.settleMs ?? DEFAULT_SETTLE_MS;
+  const platform = options.platform ?? process.platform;
   const at = now();
 
-  const first = await evalOnce(seam, command, session, script, timeoutMs, retryMs);
+  const first = await evalOnce(seam, command, session, script, timeoutMs, retryMs, platform);
   if (first.kind === 'failure') return { ...first.result, at };
   let page = first.value;
 
@@ -255,10 +260,10 @@ export async function browserRead(options: BrowserReadOptions): Promise<BrowserR
         ...(url === undefined ? {} : { helpUrl: url }),
       };
     }
-    const opened = await openOnce(seam, command, session, url, timeoutMs);
+    const opened = await openOnce(seam, command, session, url, timeoutMs, platform);
     if (opened !== undefined) return { ...opened, at };
     await sleep(settleMs);
-    const second = await evalOnce(seam, command, session, script, timeoutMs, retryMs);
+    const second = await evalOnce(seam, command, session, script, timeoutMs, retryMs, platform);
     if (second.kind === 'failure') return { ...second.result, at };
     page = second.value;
     if (codeOf(page) === 'not-on-site') {
