@@ -297,6 +297,41 @@ async function addPluginDialog(cdp) {
   throw new Error('Add plugin 弹窗没出来（60s，重试过点 Add plugin）');
 }
 
+async function confirmInstall(cdp, budgetMs = 60_000) {
+  const until = Date.now() + remaining('等安装确认弹窗里的 Install', budgetMs);
+  let last = '';
+  while (Date.now() < until) {
+    const answer = await cdp.send('Runtime.evaluate', {
+      expression: `(() => {
+        const dialog = document.querySelector('[role="dialog"], [aria-modal="true"]');
+        const scope = dialog ?? document;
+        const buttons = [...scope.querySelectorAll('button')];
+        const target = buttons.filter((node) => (node.innerText ?? '').trim() === 'Install').at(-1);
+        if (target !== undefined) {
+          target.click();
+          return JSON.stringify({ clicked: true });
+        }
+        return JSON.stringify({
+          clicked: false,
+          labels: buttons.map((node) => (node.innerText ?? '').trim()).filter((one) => one !== ''),
+        });
+      })()`,
+      returnByValue: true,
+    });
+    last = String(answer.result?.value ?? '');
+    log(`confirm install: ${last}`);
+    try {
+      const state = JSON.parse(last);
+      if (state.clicked === true) return true;
+    } catch {
+
+    }
+    await sleep(500);
+  }
+  log(`confirm install 等到超时：${last}`);
+  return false;
+}
+
 async function waitForBody(cdp, pattern, budgetMs, label) {
   const until = Date.now() + remaining(label, budgetMs);
   let body;
@@ -611,22 +646,8 @@ async function smokeMarket(cdp) {
   if (installClicked.result?.value === 'missing') {
     await fail(cdp, '市场条目上没有安装按钮', body);
   }
-  await sleep(1500);
-
-  const confirmed = await cdp.send('Runtime.evaluate', {
-    expression: `(() => {
-      const dialog = document.querySelector('[role="dialog"], [aria-modal="true"]');
-      const scope = dialog ?? document;
-      const buttons = [...scope.querySelectorAll('button')].filter((node) => node.innerText?.trim() === 'Install');
-      const button = buttons.at(-1);
-      if (button === undefined) return 'missing';
-      button.click();
-      return buttons.length;
-    })()`,
-    returnByValue: true,
-  });
-  log(`STEP confirm install: ${JSON.stringify(confirmed.result?.value)}`);
-  if (confirmed.result?.value === 'missing') {
+  const confirmed = await confirmInstall(cdp);
+  if (!confirmed) {
     writeText(`${prefix}-market-confirm-body.txt`, await bodyOf(cdp));
     await fail(cdp, '安装确认弹窗里没有 Install 按钮', await bodyOf(cdp));
   }

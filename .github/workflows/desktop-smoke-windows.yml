@@ -116,11 +116,16 @@ jobs:
         run: |
           $root = "$env:USERPROFILE\.dsh\workbench\opencli"
           $manifest = Join-Path $root 'toolchain\node_modules\@jackwener\opencli\package.json'
-          if (!(Test-Path $manifest)) { throw "opencli missing: $manifest" }
+          $bin = Join-Path $root 'bin\opencli.cmd'
+          $deadline = (Get-Date).AddSeconds(180)
+          while (!((Test-Path $manifest) -and (Test-Path $bin))) {
+            if ((Get-Date) -gt $deadline) {
+              throw "opencli missing after 180s: manifest=$(Test-Path $manifest) bin=$(Test-Path $bin)"
+            }
+            Start-Sleep -Seconds 5
+          }
           $version = (Get-Content $manifest -Raw | ConvertFrom-Json).version
           "opencli $version"
-          $bin = Join-Path $root 'bin\opencli.cmd'
-          if (!(Test-Path $bin)) { throw "opencli bin missing: $bin" }
           & $bin --version
           if ($LASTEXITCODE -ne 0) { throw "opencli --version failed: $LASTEXITCODE" }
       - name: Assert module installed
