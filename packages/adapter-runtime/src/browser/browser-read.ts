@@ -96,7 +96,8 @@ type ShellOutcome =
 export function evalScriptArgOf(script: string, platform: NodeJS.Platform = process.platform): string {
   if (platform !== 'win32') return script;
   const bytes = Buffer.from(script, 'utf8').toString('base64');
-  return `eval(new TextDecoder().decode(Uint8Array.from(atob('${bytes}'), (one) => one.charCodeAt(0))))`;
+  const decoded = `eval(new TextDecoder().decode(Uint8Array.from(atob('${bytes}'), (one) => one.charCodeAt(0))))`;
+  return `(async () => { const value = ${decoded}; return typeof value === 'function' ? value() : value; })()`;
 }
 
 async function shellRun(

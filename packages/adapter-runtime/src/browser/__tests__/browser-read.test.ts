@@ -256,11 +256,22 @@ describe('browserRead · Windows 的引号', () => {
 });
 
 describe('evalScriptArgOf', () => {
-  it('非 win32 原样返回；win32 包成 eval 且不带双引号', () => {
+  it('非 win32 原样返回；win32 包成能回值的表达式且不带双引号', () => {
     expect(evalScriptArgOf('return 1', 'darwin')).toBe('return 1');
     const packed = evalScriptArgOf('if (a > b) return "x"', 'win32');
     expect(packed).not.toContain('"');
-    expect(packed.startsWith('eval(')).toBe(true);
+    expect(packed.startsWith('(async () =>')).toBe(true);
+    expect(packed).toContain('eval(new TextDecoder().decode(Uint8Array.from(atob(');
+  });
+
+  it('win32：箭头函数脚本先调用再回值（opencli 的自动调用被 base64 包住后要自己做）', async () => {
+    const packed = evalScriptArgOf('() => ({ ok: true })', 'win32');
+    await expect(eval(packed) as Promise<unknown>).resolves.toEqual({ ok: true });
+  });
+
+  it('win32：表达式脚本原样回值，不会被当成函数再调一次', async () => {
+    const packed = evalScriptArgOf('({ ok: 1 })', 'win32');
+    await expect(eval(packed) as Promise<unknown>).resolves.toEqual({ ok: 1 });
   });
 
   it('中文脚本按 UTF-8 往返', () => {
