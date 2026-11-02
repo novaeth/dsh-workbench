@@ -161,4 +161,25 @@ export const checks = [
       );
     },
   },
+  {
+    title: '★ DIY 录制这一层没有 POSIX-only 的壳命令（Windows 上没有那些东西）',
+    run(_ctx, report) {
+      const forbidden = [/\bpkill\b/, /\bkill -0\b/, /\bwc -l\b/, /\btail -n\b/, /\bgrep -m\b/, /\btr -d\b/, /\/dev\/null\b/];
+      const hits = [];
+      for (const file of walk(join(REPO, 'packages', 'core', 'src'))) {
+        const rel = file.slice(REPO.length + 1).replaceAll('\\', '/');
+        if (!/\/diy-[^/]*\.ts$/.test(rel)) continue;
+        if (isTest(rel)) continue;
+        const source = read(file);
+        for (const pattern of forbidden) {
+          if (pattern.test(source)) hits.push(`${rel} 命中 ${String(pattern)}`);
+        }
+      }
+      report(
+        '★ DIY 录制这一层没有 POSIX-only 的壳命令（Windows 上没有那些东西）',
+        hits.length === 0,
+        hits.length === 0 ? '用 node:fs 与执行缝的 argv：不拼 wc / cat / tail / grep / tr / pkill / kill -0' : hits.join(' · '),
+      );
+    },
+  },
 ];

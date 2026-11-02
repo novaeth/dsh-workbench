@@ -116,7 +116,7 @@ the scan surface in `.jscpd.json` or after upgrading jscpd across a major versio
 
 ## CI
 
-GitHub Actions runs two workflows:
+GitHub Actions runs three workflows:
 
 - `.github/workflows/docs.yml` (ubuntu, pull requests and pushes to `main`): `pnpm run check:docs`,
   the `DOC-3` link/§N gate, and `pnpm run lint`.
@@ -125,9 +125,15 @@ GitHub Actions runs two workflows:
   build, installs the workbench from the plugin page, runs preflight, loads the opencli extension,
   installs `module-hello` from the market, restarts once and asserts the card. A failing run publishes
   the page/log evidence to a `desktop-ui-log-*` branch; a green one only uploads the run artifacts.
+- `.github/workflows/platform-smoke.yml` (pull requests and pushes to `main` touching `packages/**/src/**`
+  or `scripts/smoke/**`, a weekly cron, and manual dispatch; ubuntu, macOS, Windows Server 2022/2025):
+  runs `pnpm run smoke:platform` — argv quoting through the real shell, win32 quoting parsed by a real
+  `pwsh`, timeout kill, and append writes — plus the renderer/seam/capture/browser-read test files and the
+  core selfcheck. This is the cross-platform guard for the execution seam: keep it green when touching
+  `shell-render`, the seam, or the DIY capture layer.
 
 The full `pnpm run check` is still the release gate and is expected before pushing. Nothing in CI runs
-the typecheck or the test suite on Windows/macOS any more, so run the gate locally (or in a worktree)
+the **full** typecheck or test suite on Windows/macOS, so run the gate locally (or in a worktree)
 before pushing.
 
 ## Docs site

@@ -20,6 +20,8 @@ jobs:
     timeout-minutes: 25
     env:
       HUSKY: 0
+      # 绕开 dsh 在 Windows 上的沙箱问题：冒烟先把部署上限放开，dsh 修好后删掉这一行
+      DSH_PERMISSION_MODE: danger-full-access
       DESKTOP_SMOKE_OS: ${{ inputs.label }}
       DESKTOP_SMOKE_MARKET: https://github.com/novaeth/dsh-workbench-market.git
       DESKTOP_SMOKE_MODULE: '@dsh-workbench/module-hello'

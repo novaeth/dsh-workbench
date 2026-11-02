@@ -1,0 +1,78 @@
+name: platform-smoke
+
+"on":
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/**/src/**'
+      - 'scripts/smoke/**'
+      - '.github/workflows/platform-smoke.yml'
+  pull_request:
+    paths:
+      - 'packages/**/src/**'
+      - 'scripts/smoke/**'
+      - '.github/workflows/platform-smoke.yml'
+  schedule:
+    - cron: '23 3 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platform-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: smoke / ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            label: linux
+          - os: macos-latest
+            label: mac
+          - os: windows-latest
+            label: win-2025
+          - os: windows-2022
+            label: win-2022
+    env:
+      HUSKY: 0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install (immutable)
+        shell: bash
+        run: pnpm install --frozen-lockfile
+      - name: Build (except docs)
+        shell: bash
+        run: pnpm --filter "./packages/*" --filter "!@dsh-workbench/docs" --if-present run build
+      - name: Assert pwsh (win32 引号往返要靠它)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: command -v pwsh
+      - name: Platform smoke (argv quoting / timeout / append)
+        shell: bash
+        run: node scripts/smoke/platform-shell.mjs
+      - name: Renderer + seam tests
+        shell: bash
+        run: pnpm --filter @dsh-workbench/shared exec vitest run src/host/__tests__/shell-render.test.ts src/host/__tests__/seam.test.ts
+      - name: Capture controller tests
+        shell: bash
+        run: pnpm --filter @dsh-workbench/core exec vitest run src/modules/panels/model/__tests__/diy-record-live.test.ts
+      - name: Browser read tests
+        shell: bash
+        run: pnpm --filter @dsh-workbench/adapter-runtime exec vitest run src/browser/__tests__/browser-read.test.ts
+      - name: Selfcheck (core)
+        shell: bash
+        run: pnpm --filter @dsh-workbench/core run selfcheck
