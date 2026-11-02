@@ -1,8 +1,9 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { SeamError } from '../seam/intent.js';
+import { pathsPolicy } from '../seam/policy.js';
 import { createSeam } from '../seam/run.js';
 import { createUnitSeam, unitDataRoot } from '../seam/unit-seam.js';
 import { createFakeProcesses, createFakeShell, createFakeLogger } from '../../testing/host-fakes.js';
@@ -85,6 +86,15 @@ describe('createSeam', () => {
       code: 'workspace-unknown',
     });
     expect(fake.calls).toHaveLength(0);
+  });
+
+  it('路径共同根是文件系统根就拒（win32 的盘根也算）', () => {
+    const root = resolve(sep);
+    expect(() => pathsPolicy('workspace-write', [join(root, 'a.png'), join(root, 'b.png')])).toThrow(SeamError);
+    expect(pathsPolicy('workspace-write', [join(SCRATCH, 'a.png'), join(SCRATCH, 'b.png')])).toEqual({
+      mode: 'workspace-write',
+      workspaceRoot: SCRATCH,
+    });
   });
 
   it('外部路径：同一目录可以，跨目录拒绝', async () => {
@@ -298,7 +308,8 @@ describe('宿主域：run / spawn / open', () => {
     const fake = createFakeShell([{}]);
     const seam = createSeam({ shell: fake.shell, runtimeRoot: ROOT });
     await seam.run({ argv: ['npm', 'view', 'left-pad', 'version'], intent: { kind: 'product' } });
-    expect(fake.calls[0]?.command).toBe("'npm' 'view' 'left-pad' 'version'");
+    const call = process.platform === 'win32' ? "& 'npm' 'view' 'left-pad' 'version'" : "'npm' 'view' 'left-pad' 'version'";
+    expect(fake.calls[0]?.command).toBe(call);
   });
 });
 

@@ -45,6 +45,10 @@ export const checks = [
         execFileSync(process.execPath, [pkg('scripts/gen-diy-preset.mjs'), '--check'], { stdio: 'pipe', encoding: 'utf8' });
         report(title, true);
       } catch (error) {
+        if (error.status === 2) {
+          report(title, true, '跳过：这台机器上没有 dsh 出厂的 preset（装好 dsh 后这一条会真的校验）');
+          return;
+        }
         const detail = `${error.stdout ?? ''}${error.stderr ?? ''}`.trim().split('\n').slice(-4).join(' · ');
         report(title, false, detail);
       }

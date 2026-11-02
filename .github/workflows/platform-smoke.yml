@@ -75,4 +75,10 @@ jobs:
         run: pnpm --filter @dsh-workbench/adapter-runtime exec vitest run src/browser/__tests__/browser-read.test.ts
       - name: Selfcheck (core)
         shell: bash
-        run: pnpm --filter @dsh-workbench/core run selfcheck
+        run: |
+          set -o pipefail
+          if ! pnpm --filter @dsh-workbench/core run selfcheck 2>&1 | tee selfcheck.log; then
+            body=$(tail -n 40 selfcheck.log | sed -e 's/%/%25/g' -e 's/\r$//' | awk 'NF { printf "%s%%0A", $0 }')
+            echo "::error title=selfcheck failed::$body"
+            exit 1
+          fi

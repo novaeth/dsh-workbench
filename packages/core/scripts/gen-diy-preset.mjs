@@ -39,6 +39,11 @@ function die(message) {
   process.exit(1);
 }
 
+function skipCheck(message) {
+  console.error(`gen-diy-preset: ${message}`);
+  process.exit(2);
+}
+
 function standardPresetPath() {
   const candidates = [];
   if (process.env.DSH_WB_STANDARD_PRESET !== undefined) candidates.push(process.env.DSH_WB_STANDARD_PRESET);
@@ -74,11 +79,12 @@ function standardPresetPath() {
 
   const hit = candidates.find((path) => path !== undefined && existsSync(path));
   if (hit === undefined) {
-    die(
+    const why =
       '找不到 dsh 出厂那份 standard.patch.yml —— 试过：\n  ' +
-        candidates.join('\n  ') +
-        '\n  装好 dsh（或设 DSH_WB_STANDARD_PRESET=<那份文件的绝对路径>）再跑。',
-    );
+      candidates.join('\n  ') +
+      '\n  装好 dsh（或设 DSH_WB_STANDARD_PRESET=<那份文件的绝对路径>）再跑。';
+    if (process.argv.includes('--check')) skipCheck(why);
+    die(why);
   }
   return hit;
 }

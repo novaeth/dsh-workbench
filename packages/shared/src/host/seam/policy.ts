@@ -1,4 +1,4 @@
-import { dirname, isAbsolute, resolve, sep } from 'node:path';
+import { dirname, isAbsolute, parse, resolve, sep } from 'node:path';
 import type { DenialScope, SeamMode, SeamPolicy, WriteIntent } from './intent.js';
 import { SeamError } from './intent.js';
 
@@ -42,6 +42,10 @@ export function workspacePolicy(ceiling: SeamMode, grant: SeamPolicy | undefined
   return { mode, workspaceRoot: resolve(grant.workspaceRoot) };
 }
 
+function atFilesystemRoot(path: string): boolean {
+  return parse(path).root === path;
+}
+
 function commonDirectory(paths: readonly string[]): string | undefined {
   const dirs = paths.map((path) => dirname(resolve(path)));
   let shared = dirs[0];
@@ -65,11 +69,14 @@ export function pathsPolicy(ceiling: SeamMode, paths: readonly string[]): SeamPo
     throw new SeamError('read-only', '当前部署是只读模式：这条命令不能写外部路径');
   }
   const root = commonDirectory(paths);
-  if (root === undefined || (root === sep && paths.length > 1)) {
-    throw new SeamError('paths-span-trees', '这次写入跨了多个目录：请分开做，或把产物改到工作台目录');
+  if (root === undefined) {
+    throw new SeamError('paths-span-trees', '这次写入没有给出任何路径');
   }
-  if (root === sep) {
-    throw new SeamError('paths-span-trees', '不能把整个文件系统声明成写入域');
+  if (atFilesystemRoot(root)) {
+    throw new SeamError(
+      'paths-span-trees',
+      paths.length > 1 ? '这次写入跨了多个目录：请分开做，或把产物改到工作台目录' : '不能把整个文件系统声明成写入域',
+    );
   }
   return { mode: 'workspace-write', workspaceRoot: root };
 }
