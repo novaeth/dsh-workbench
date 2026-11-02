@@ -68,10 +68,25 @@ async function runtimeList(options: {
       timeoutMs: OPENCLI_TIMEOUT_MS,
     })
     .then(
-    (value) => ({ ok: true as const, stdout: value.exitCode === 0 ? value.stdout : '', stderr: value.stderr }),
-    (error: unknown) => ({ ok: false as const, stdout: '', stderr: String(error) }),
+    (value) => ({
+      ok: true as const,
+      exitCode: value.exitCode,
+      timedOut: value.timedOut,
+      stdout: value.stdout,
+      stderr: value.stderr,
+    }),
+    (error: unknown) => ({ ok: false as const, problem: String(error) }),
   );
-  if (!result.ok) return { failure: result.stderr };
+  if (!result.ok) return { failure: `plugin list 没跑起来：${result.problem}` };
+  if (result.timedOut) {
+    return { failure: `plugin list 超过 ${String(Math.round(OPENCLI_TIMEOUT_MS / 1000))} 秒没返回` };
+  }
+  if (result.exitCode !== 0) {
+    const tail = `${result.stderr}\n${result.stdout}`.trim().split('\n').slice(-3).join(' | ');
+    return {
+      failure: `plugin list 退出码 ${String(result.exitCode)}${tail === '' ? '' : `：${tail}`}`,
+    };
+  }
   const list = parsePluginList(result.stdout);
   return list === undefined ? { failure: 'plugin list 的输出读不懂（不是 JSON 数组）' } : { list };
 }

@@ -93,6 +93,29 @@ describe('probeUnits：extension 一类', () => {
     expect(stateOf(capability, 'extension', 'demo')?.detail).toContain('读不懂');
   });
 
+  it('plugin list 退出码非 0 → unchecked，detail 带退出码与 stderr（不把原因吞掉）', async () => {
+    const { capability } = await probeOne(
+      [extensionNeedOf('demo')],
+      [{ exitCode: 1, stdout: '', stderr: "opencli: unknown option '-f json'" }],
+    );
+
+    const state = stateOf(capability, 'extension', 'demo');
+    expect(capability.status).toBe('unchecked');
+    expect(state?.detail).toContain('退出码 1');
+    expect(state?.detail).toContain("unknown option '-f json'");
+  });
+
+  it('plugin list 超时 → unchecked，detail 说清多少秒没返回', async () => {
+    const { capability } = await probeOne(
+      [extensionNeedOf('demo')],
+      [{ timedOut: true, exitCode: null, stdout: '', stderr: '' }],
+    );
+
+    const state = stateOf(capability, 'extension', 'demo');
+    expect(state?.status).toBe('unchecked');
+    expect(state?.detail).toContain('没返回');
+  });
+
   it('★ 每一份安装都必须**报名字**：名字对不上就是"没装"', async () => {
     const { capability } = await probeOne(
       [extensionNeedOf('demo')],
