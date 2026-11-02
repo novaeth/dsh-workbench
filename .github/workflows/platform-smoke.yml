@@ -77,8 +77,11 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          if ! pnpm --filter @dsh-workbench/core run selfcheck 2>&1 | tee selfcheck.log; then
-            body=$(tail -n 40 selfcheck.log | sed -e 's/%/%25/g' -e 's/\r$//' | awk 'NF { printf "%s%%0A", $0 }')
-            echo "::error title=selfcheck failed::$body"
+          if ! pnpm --filter @dsh-workbench/core run selfcheck > selfcheck.log 2>&1; then
+            tail -n 25 selfcheck.log
+            body=$(grep -aE '❌|通过 —— 失败' selfcheck.log || tail -n 8 selfcheck.log)
+            body=$(printf '%s\n' "$body" | sed -e 's/%/%25/g' -e 's/\r$//' | awk 'NF { printf "%s%%0A", $0 }')
+            echo "::error title=selfcheck failed::${body:0:1800}"
             exit 1
           fi
+          tail -n 3 selfcheck.log
