@@ -1,4 +1,4 @@
-import type { ModuleUpdateBlock } from '@/kernel/contract/bundle-install';
+import type { BundleVersionList, ModuleUpdateBlock } from '@/kernel/contract/bundle-install';
 import type { MarketInstalledModule } from '@/kernel/contract/market-index';
 import type { InstallFailure } from '@dsh-workbench/shared';
 import type { FailureCardModel } from './failure-card-text';
@@ -68,6 +68,7 @@ export interface ModuleUpdate {
   readonly local?: boolean;
   readonly blocked?: ModuleUpdateBlock;
   readonly market?: MarketInstalledModule;
+  readonly versions?: BundleVersionList;
   readonly pkg?: string;
   readonly spec?: string;
   readonly registry?: string;

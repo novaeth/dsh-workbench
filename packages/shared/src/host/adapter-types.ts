@@ -5,6 +5,9 @@ import type {
   BundleInstallRequest,
   BundleRegistries,
   BundleRegistry,
+  BundleUpdateOutcome,
+  BundleUpdateRequest,
+  BundleVersionList,
 } from '../contract/protocol/bundle-install.js';
 
 export type InstalledModule =
@@ -42,6 +45,9 @@ export interface BundleManager {
   remove(name: string): Promise<BundleChange | null>;
   setEnabled?(name: string, enabled: boolean): Promise<BundleChange | null>;
   cancel(requestId: string): Promise<BundleCancellation | null>;
+  listVersions?(name: string, registry?: BundleRegistry): Promise<BundleVersionList | null>;
+  updateBundle?(name: string, version: string, request?: BundleUpdateRequest): Promise<BundleUpdateOutcome | null>;
+  waitForInstall?(requestId: string): Promise<BundleChange | null>;
 }
 
 export interface RegistryEntry {

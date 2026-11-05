@@ -21,6 +21,7 @@ const change = (over: Partial<BundleChange> = {}): BundleChange => ({
 function depsOf(input: {
   readonly installed: () => InstalledModule;
   readonly install: BundleManager['install'];
+  readonly updateBundle?: BundleManager['updateBundle'];
   readonly modules?: () => readonly ProfileModule[];
   readonly seam?: Seam;
   readonly supply?: SupplyPort;
@@ -36,6 +37,7 @@ function depsOf(input: {
     install: input.install,
     remove: async () => change({ stage: 'remove' }),
     cancel: async () => 'not-running',
+    ...(input.updateBundle === undefined ? {} : { updateBundle: input.updateBundle }),
   };
   const routeDeps: ReplaceBundleDeps = {
     manager,
@@ -230,5 +232,95 @@ describe('模块更新那一跳：跑完重新读盘对账', () => {
       }),
     );
     expect(installs).toBe(1);
+  });
+
+  it('★ registry 装的行优先走 dsh 的 updateBundle（拿到 check/回滚），不再走自己的换包一跳', async () => {
+    let version = '0.1.0';
+    const calls: unknown[] = [];
+    const outcome = await updateModuleBundle(
+      'mod',
+      depsOf({
+        installed: () => ({ kind: 'module', pkg: PKG, unit: 'mod', version, registry: 'https://r.test/' }),
+        install: async () => {
+          throw new Error('不该走到自己的换包');
+        },
+        updateBundle: async (name, target, request) => {
+          calls.push({ name, target, request });
+          version = '0.2.0';
+          return { from: '0.1.0', to: '0.2.0', step: 'install', change: change({ version: '0.2.0' }) };
+        },
+        seam: {} as unknown as Seam,
+        supply: supplyOf(3),
+      }),
+    );
+
+    expect(calls).toEqual([{ name: PKG, target: '0.2.0', request: { registry: 'https://r.test/' } }]);
+    expect(outcome?.change.application).toBe('applied');
+    expect(outcome?.change.version).toBe('0.2.0');
+    expect(outcome?.module).toMatchObject({ kind: 'module', version: '0.2.0' });
+  });
+
+  it('dsh 说这行不归它管（invalid-spec）→ 回退到自己的换包路径', async () => {
+    let installs = 0;
+    let version = '0.1.0';
+    const outcome = await updateModuleBundle(
+      'mod',
+      depsOf({
+        installed: () => ({ kind: 'module', pkg: PKG, unit: 'mod', version, registry: 'https://r.test/' }),
+        install: async () => {
+          installs += 1;
+          version = '0.2.0';
+          return change({ version: '0.2.0' });
+        },
+        updateBundle: async () => ({
+          from: '0.1.0',
+          to: '0.2.0',
+          step: 'check',
+          change: change({ application: 'failed', changed: false, errorCode: 'invalid-spec', errorDetail: '不是第三方 registry 包' }),
+        }),
+        seam: {} as unknown as Seam,
+        supply: supplyOf(3),
+      }),
+    );
+
+    expect(installs).toBe(1);
+    expect(outcome?.change.application).toBe('applied');
+    expect(outcome?.change.version).toBe('0.2.0');
+  });
+
+  it('★ dsh 在 check 阶段就判不兼容 → 不装、也不触发外部换包，失败带上 incompatible', async () => {
+    const outcome = await updateModuleBundle(
+      'mod',
+      depsOf({
+        installed: () => ({ kind: 'module', pkg: PKG, unit: 'mod', version: '0.1.0', registry: 'https://r.test/' }),
+        install: async () => {
+          throw new Error('不该装');
+        },
+        updateBundle: async () => ({
+          from: '0.1.0',
+          to: '0.2.0',
+          step: 'check',
+          change: change({
+            application: 'failed',
+            changed: false,
+            errorCode: 'incompatible-version',
+            incompatible: [
+              { name: PKG, version: '0.2.0', runtimeVersion: '0.2.2-rc.1', requirements: { '@deepseek-ai/dsh-web': '9.9.9' } },
+            ],
+          }),
+        }),
+        seam: {} as unknown as Seam,
+        supply: supplyOf(3),
+        dshHome: mkdtempSync(join(tmpdir(), 'wb-delegated-')),
+        profileName: 'workbench',
+      }),
+    );
+
+    expect(outcome?.change.application).toBe('failed');
+    expect(outcome?.change.errorCode).toBe('incompatible-version');
+    expect(outcome?.change.incompatible).toEqual([
+      { name: PKG, version: '0.2.0', runtimeVersion: '0.2.2-rc.1', requirements: { '@deepseek-ai/dsh-web': '9.9.9' } },
+    ]);
+    expect(outcome?.module).toMatchObject({ kind: 'module', version: '0.1.0' });
   });
 });

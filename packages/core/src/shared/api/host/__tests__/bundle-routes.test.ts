@@ -438,6 +438,116 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
     cleanup();
   });
 
+  it('★ force 检查时才问 dsh 要完整版本表：带 tags/废弃/incompatible，latest 取表里最新', async () => {
+    const { dir, cleanup } = profileWith('0.1.2');
+    const { seam } = fakeShell({ '@a/mod': '0.2.0' }, { '@a/mod': declarationOf('mod', 3) });
+    const asked: string[] = [];
+    const manager = {
+      ...MANAGER,
+      listVersions: async (name: string, options: unknown) => {
+        asked.push(`${name}|${JSON.stringify(options)}`);
+        return {
+          status: 'listed',
+          installed: '0.1.2',
+          registry: 'https://declared.example/',
+          attempts: [{ registry: 'https://declared.example/' }],
+          omitted: 1,
+          versions: [
+            { version: '0.2.0', tags: ['latest'], prerelease: false, bundle: true, deprecated: '换 0.3', publishedAt: '2026-11-01T00:00:00.000Z' },
+            { version: '0.2.0-beta.1', tags: ['next'], prerelease: true, bundle: true, incompatible: { name: '@a/mod', version: '0.2.0-beta.1', runtimeVersion: '0.2.2-rc.1', requirements: { '@deepseek-ai/dsh-web': '9.9.9' } } },
+            { version: '' },
+          ],
+        };
+      },
+    };
+
+    const result = (await moduleVersionsHandler(fakeContext(manager, dir), seam as never)(
+      new URLSearchParams('force=1'),
+    )) as { modules: { unit: string; latest?: string; latestBlocked?: string; versions?: unknown }[] };
+
+    expect(asked).toEqual(['@a/mod|{"registry":"https://declared.example/"}']);
+    expect(result.modules[0]).toMatchObject({
+      unit: 'mod',
+      latest: '0.2.0',
+      versions: {
+        status: 'listed',
+        installed: '0.1.2',
+        registry: 'https://declared.example/',
+        omitted: 1,
+        versions: [
+          { version: '0.2.0', tags: ['latest'], prerelease: false, bundle: true, deprecated: '换 0.3', publishedAt: '2026-11-01T00:00:00.000Z' },
+          { version: '0.2.0-beta.1', tags: ['next'], prerelease: true, bundle: true, incompatible: { name: '@a/mod', version: '0.2.0-beta.1', runtimeVersion: '0.2.2-rc.1', requirements: { '@deepseek-ai/dsh-web': '9.9.9' } } },
+        ],
+      },
+    });
+    expect(result.modules[0]?.latestBlocked).toBeUndefined();
+    cleanup();
+  });
+
+  it('★ 没点检查（force 缺省）就不问版本表；dsh 说 not-updatable 也把表带回来，latest 仍走 npm view', async () => {
+    const { dir, cleanup } = profileWith('0.1.2');
+    const { seam } = fakeShell({ '@a/mod': '0.2.0' });
+    let asked = 0;
+    const silent = {
+      ...MANAGER,
+      listVersions: async () => {
+        asked += 1;
+        return { status: 'listed', installed: '0.1.2', registry: null, attempts: [], omitted: 0, versions: [] };
+      },
+    };
+    const plain = (await moduleVersionsHandler(fakeContext(silent, dir), seam as never)(
+      new URLSearchParams(),
+    )) as { modules: { unit: string; latest?: string; versions?: unknown }[] };
+    expect(asked).toBe(0);
+    expect(plain.modules[0]?.versions).toBeUndefined();
+    expect(plain.modules[0]?.latest).toBe('0.2.0');
+
+    const refused = {
+      ...MANAGER,
+      listVersions: async () => ({ status: 'refused', problem: 'not-updatable', reason: '这份装的是本地 link', attempts: [] }),
+    };
+    const forced = (await moduleVersionsHandler(fakeContext(refused, dir), seam as never)(
+      new URLSearchParams('force=1'),
+    )) as { modules: { unit: string; latest?: string; versions?: { status: string; problem?: string; reason?: string } }[] };
+    expect(forced.modules[0]?.latest).toBe('0.2.0');
+    expect(forced.modules[0]?.versions).toEqual({
+      status: 'refused',
+      problem: 'not-updatable',
+      reason: '这份装的是本地 link',
+      attempts: [],
+    });
+    cleanup();
+  });
+
+  it('★ dsh 判最新版与运行时 dsh 不兼容（我们这边协议能认）→ latestBlocked: incompatible', async () => {
+    const { dir, cleanup } = profileWith('0.1.2');
+    const { seam } = fakeShell({ '@a/mod': '0.2.0' }, { '@a/mod': declarationOf('mod', 3) });
+    const manager = {
+      ...MANAGER,
+      listVersions: async () => ({
+        status: 'listed',
+        installed: '0.1.2',
+        registry: 'https://declared.example/',
+        attempts: [],
+        omitted: 0,
+        versions: [
+          {
+            version: '0.2.0',
+            tags: [],
+            prerelease: false,
+            bundle: true,
+            incompatible: { name: '@a/mod', version: '0.2.0', runtimeVersion: '0.2.2-rc.1', requirements: { '@deepseek-ai/dsh-web': '9.9.9' } },
+          },
+        ],
+      }),
+    };
+    const result = (await moduleVersionsHandler(fakeContext(manager, dir), seam as never)(
+      new URLSearchParams('force=1'),
+    )) as { modules: { unit: string; latest?: string; latestBlocked?: string }[] };
+    expect(result.modules[0]).toMatchObject({ unit: 'mod', latest: '0.2.0', latestBlocked: 'incompatible' });
+    cleanup();
+  });
+
   function declarationOf(unit: string, apiVersion: number): string {
     return JSON.stringify({
       workbench: {

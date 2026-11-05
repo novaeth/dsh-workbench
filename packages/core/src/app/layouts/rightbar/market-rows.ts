@@ -1,4 +1,4 @@
-import type { LatestUnavailable, ModuleUpdateBlock, ModuleVersion } from '@/kernel/contract/bundle-install';
+import type { BundleVersionList, LatestUnavailable, ModuleUpdateBlock, ModuleVersion } from '@/kernel/contract/bundle-install';
 import type { MarketInstalledModule } from '@/kernel/contract/market-index';
 import type { NeedState, SupplySource, Translate, UnitManifest, UnitTitle } from '@dsh-workbench/shared';
 import { supplyNeedsOf } from '@dsh-workbench/shared';
@@ -74,6 +74,7 @@ export interface InstalledWorkbenchModule {
   readonly refused?: readonly string[] | undefined;
   readonly clientRefused?: readonly string[] | undefined;
   readonly market?: MarketInstalledModule | undefined;
+  readonly versions?: BundleVersionList | undefined;
   readonly spec?: string | undefined;
   readonly registry?: string | undefined;
 }
@@ -201,6 +202,7 @@ export function installedRows(
               latest,
               ...(blocked === undefined ? {} : { blocked }),
               ...(module.market === undefined ? {} : { market: module.market }),
+              ...(module.versions === undefined ? {} : { versions: module.versions }),
               pkg: module.pkg,
               ...(module.spec === undefined ? {} : { spec: module.spec }),
               ...(module.registry === undefined ? {} : { registry: module.registry }),

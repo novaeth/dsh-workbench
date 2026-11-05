@@ -117,6 +117,13 @@ export interface BundlePackageResult {
   readonly kind?: BundleFailureKind;
 }
 
+export interface BundleIncompatible {
+  readonly name: string;
+  readonly version: string;
+  readonly runtimeVersion: string;
+  readonly requirements: Readonly<Record<string, string>>;
+}
+
 export interface BundleChange {
   readonly application: BundleApplication;
   readonly stage: BundleChangeStage;
@@ -126,6 +133,7 @@ export interface BundleChange {
   readonly version?: string;
   readonly errorCode?: string;
   readonly errorDetail?: string;
+  readonly incompatible?: readonly BundleIncompatible[];
   readonly packageResult?: BundlePackageResult;
   readonly pendingBuilds?: readonly string[];
   readonly restartReason?: RestartReason;
@@ -140,6 +148,57 @@ export interface BundleInstallRequest {
 }
 
 export type BundleCancellation = 'cancelled' | 'too-late' | 'not-running';
+
+export type BundleVersionProblem = 'not-updatable' | 'not-found' | 'network' | 'unknown';
+
+export interface BundleRegistryAttempt {
+  readonly registry: BundleRegistry;
+  readonly problem?: BundleVersionProblem;
+  readonly reason?: string;
+}
+
+export interface BundleVersionEntry {
+  readonly version: string;
+  readonly publishedAt?: string;
+  readonly tags: readonly string[];
+  readonly prerelease: boolean;
+  readonly bundle: boolean;
+  readonly deprecated?: string;
+  readonly incompatible?: BundleIncompatible;
+}
+
+export interface BundleVersionListListed {
+  readonly status: 'listed';
+  readonly installed: string;
+  readonly registry: BundleRegistry;
+  readonly attempts: readonly BundleRegistryAttempt[];
+  readonly versions: readonly BundleVersionEntry[];
+  readonly omitted: number;
+}
+
+export interface BundleVersionListRefused {
+  readonly status: 'refused';
+  readonly problem: BundleVersionProblem;
+  readonly reason: string;
+  readonly attempts: readonly BundleRegistryAttempt[];
+}
+
+export type BundleVersionList = BundleVersionListListed | BundleVersionListRefused;
+
+export type BundleUpdateStep = 'check' | 'remove' | 'install';
+
+export interface BundleUpdateOutcome {
+  readonly from: string;
+  readonly to: string;
+  readonly step: BundleUpdateStep;
+  readonly change: BundleChange;
+  readonly restore?: BundleChange;
+}
+
+export interface BundleUpdateRequest {
+  readonly registry?: BundleRegistry;
+  readonly requestId?: string;
+}
 
 export type BundleSupplyState = 'not-a-module' | 'no-needs' | 'installed' | 'failed' | 'pending-restart';
 
@@ -198,6 +257,7 @@ export interface ModuleVersion {
   readonly local?: boolean;
   readonly refused?: readonly string[];
   readonly market?: MarketInstalledModule;
+  readonly versions?: BundleVersionList;
   readonly spec?: string;
   readonly registry?: string;
 }

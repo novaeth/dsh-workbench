@@ -3,9 +3,15 @@ import { RESTART_REASONS } from '../contract/protocol/bundle-install.js';
 import type { BundleManager } from './adapter-types.js';
 import type {
   BundleChange,
+  BundleIncompatible,
   BundleInspection,
   BundleRegistries,
   BundleRegistry,
+  BundleRegistryAttempt,
+  BundleUpdateOutcome,
+  BundleUpdateRequest,
+  BundleVersionEntry,
+  BundleVersionList,
 } from '../contract/protocol/bundle-install.js';
 
 const MANAGER_SERVICE = 'pluginManager';
@@ -17,6 +23,13 @@ interface PluginManagerFace {
   removeBundle?(name: string): Promise<unknown>;
   setBundleEnabled?(name: string, enabled: boolean): Promise<unknown>;
   cancelInstall?(requestId: string): Promise<unknown>;
+  listVersions?(name: string, options?: { readonly registry?: BundleRegistry }): Promise<unknown>;
+  updateBundle?(
+    name: string,
+    version: string,
+    options?: { readonly registry?: BundleRegistry; readonly requestId?: string },
+  ): Promise<unknown>;
+  waitForInstall?(requestId: string): Promise<unknown>;
 }
 
 const APPLICATIONS = ['applied', 'restart-required', 'overridden', 'failed', 'cancelled'] as const;
@@ -107,6 +120,7 @@ function asChange(raw: unknown): BundleChange | null {
   const version = asText(record.version);
   const errorCode = error === undefined ? '' : asText(error.code);
   const errorDetail = error === undefined ? '' : asText(error.diagnostic);
+  const incompatible = asIncompatibleList(error?.incompatible);
   return {
     application,
     stage,
@@ -116,6 +130,7 @@ function asChange(raw: unknown): BundleChange | null {
     ...(version === '' ? {} : { version }),
     ...(errorCode === '' ? {} : { errorCode }),
     ...(errorDetail === '' ? {} : { errorDetail }),
+    ...(incompatible.length === 0 ? {} : { incompatible }),
     ...(packageResult === undefined ? {} : { packageResult }),
     ...(pendingBuilds.length === 0 ? {} : { pendingBuilds }),
     ...(restartReason === undefined ? {} : { restartReason }),
@@ -159,6 +174,130 @@ function asInspection(raw: unknown): BundleInspection | null {
   };
 }
 
+const VERSION_PROBLEMS = ['not-updatable', 'not-found', 'network', 'unknown'] as const;
+const UPDATE_STEPS = ['check', 'remove', 'install'] as const;
+
+function asRequirementMap(value: unknown): Readonly<Record<string, string>> {
+  const record = asRecord(value);
+  if (record === undefined) return {};
+  const entries: [string, string][] = [];
+  for (const [key, raw] of Object.entries(record)) {
+    if (typeof raw === 'string') entries.push([key, raw]);
+  }
+  return Object.fromEntries(entries);
+}
+
+function asIncompatible(raw: unknown): BundleIncompatible | undefined {
+  const record = asRecord(raw);
+  if (record === undefined) return undefined;
+  const name = asText(record.name);
+  const version = asText(record.version);
+  const runtimeVersion = asText(record.runtimeVersion);
+  if (name === '' || version === '' || runtimeVersion === '') return undefined;
+  return { name, version, runtimeVersion, requirements: asRequirementMap(record.requirements) };
+}
+
+function asIncompatibleList(raw: unknown): BundleIncompatible[] {
+  if (!Array.isArray(raw)) return [];
+  const rows: BundleIncompatible[] = [];
+  for (const item of raw) {
+    const entry = asIncompatible(item);
+    if (entry !== undefined) rows.push(entry);
+  }
+  return rows;
+}
+
+function asRegistryAttempt(raw: unknown): BundleRegistryAttempt | undefined {
+  const record = asRecord(raw);
+  if (record === undefined) return undefined;
+  const registry = asRegistry(record.registry);
+  if (registry === undefined) return undefined;
+  const problem = pick(VERSION_PROBLEMS, record.problem);
+  const reason = asText(record.reason);
+  return {
+    registry,
+    ...(problem === undefined ? {} : { problem }),
+    ...(reason === '' ? {} : { reason }),
+  };
+}
+
+function asRegistryAttempts(raw: unknown): BundleRegistryAttempt[] {
+  if (!Array.isArray(raw)) return [];
+  const rows: BundleRegistryAttempt[] = [];
+  for (const item of raw) {
+    const attempt = asRegistryAttempt(item);
+    if (attempt !== undefined) rows.push(attempt);
+  }
+  return rows;
+}
+
+function asVersionEntry(raw: unknown): BundleVersionEntry | null {
+  const record = asRecord(raw);
+  if (record === undefined) return null;
+  const version = asText(record.version);
+  if (version === '') return null;
+  const publishedAt = asText(record.publishedAt);
+  const deprecated = asText(record.deprecated);
+  const incompatible = asIncompatible(record.incompatible);
+  return {
+    version,
+    tags: asTextArray(record.tags),
+    prerelease: record.prerelease === true,
+    bundle: record.bundle === true,
+    ...(publishedAt === '' ? {} : { publishedAt }),
+    ...(deprecated === '' ? {} : { deprecated }),
+    ...(incompatible === undefined ? {} : { incompatible }),
+  };
+}
+
+function asVersionList(raw: unknown): BundleVersionList | null {
+  const record = asRecord(raw);
+  if (record === undefined) return null;
+  const status = asText(record.status);
+  const attempts = asRegistryAttempts(record.attempts);
+  if (status === 'refused') {
+    return {
+      status: 'refused',
+      problem: pick(VERSION_PROBLEMS, record.problem) ?? 'unknown',
+      reason: asText(record.reason),
+      attempts,
+    };
+  }
+  if (status !== 'listed') return null;
+  const registry = asRegistry(record.registry);
+  const versions: BundleVersionEntry[] = [];
+  if (Array.isArray(record.versions)) {
+    for (const item of record.versions) {
+      const entry = asVersionEntry(item);
+      if (entry !== null) versions.push(entry);
+    }
+  }
+  return {
+    status: 'listed',
+    installed: asText(record.installed),
+    registry: registry ?? null,
+    attempts,
+    versions,
+    omitted: typeof record.omitted === 'number' ? record.omitted : 0,
+  };
+}
+
+function asUpdateOutcome(raw: unknown): BundleUpdateOutcome | null {
+  const record = asRecord(raw);
+  if (record === undefined) return null;
+  const step = pick(UPDATE_STEPS, record.step);
+  const change = asChange(record.result);
+  if (step === undefined || change === null) return null;
+  const restore = record.restore === undefined ? null : asChange(record.restore);
+  return {
+    from: asText(record.from),
+    to: asText(record.to),
+    step,
+    change,
+    ...(restore === null ? {} : { restore }),
+  };
+}
+
 export function readBundleManager(ctx: DshHostContext): BundleManager | undefined {
   const face = ctx.get<PluginManagerFace>(MANAGER_SERVICE);
   if (face === undefined) return undefined;
@@ -190,6 +329,22 @@ export function readBundleManager(ctx: DshHostContext): BundleManager | undefine
     async cancel(requestId) {
       if (typeof face.cancelInstall !== 'function') return null;
       return pick(CANCELLATIONS, (asRecord(await face.cancelInstall(requestId)) ?? {}).status) ?? null;
+    },
+    async listVersions(name, registry) {
+      if (typeof face.listVersions !== 'function') return null;
+      return asVersionList(await face.listVersions(name, registry === undefined ? undefined : { registry }));
+    },
+    async updateBundle(name, version, request: BundleUpdateRequest = {}) {
+      if (typeof face.updateBundle !== 'function') return null;
+      const options = {
+        ...(request.registry === undefined ? {} : { registry: request.registry }),
+        ...(request.requestId === undefined ? {} : { requestId: request.requestId }),
+      };
+      return asUpdateOutcome(await face.updateBundle(name, version, options));
+    },
+    async waitForInstall(requestId) {
+      if (typeof face.waitForInstall !== 'function') return null;
+      return asChange(await face.waitForInstall(requestId));
     },
   };
 }

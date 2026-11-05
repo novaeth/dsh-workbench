@@ -182,10 +182,30 @@ export function moduleVersionsHandler(
         const fromRegistry = module.fromRegistry !== false;
         const registry = fromRegistry ? (module.registry ?? fallback) : undefined;
         const spec = dependencyOf(module.pkg);
-        const latest =
+        const probed =
           local || !fromRegistry || !check || seam === undefined || registry === undefined
             ? undefined
             : await supply.latestVersion({ seam, name: module.pkg, registry, force });
+        const list =
+          !local &&
+          fromRegistry &&
+          check &&
+          force &&
+          seam !== undefined &&
+          registry !== undefined &&
+          probed !== undefined &&
+          supply.isNewerVersion(probed, module.version) &&
+          manager.listVersions !== undefined
+            ? await manager.listVersions(module.pkg, registry).catch(() => null)
+            : null;
+        const listed = list?.status === 'listed' ? list.versions : [];
+        const newest = listed[0]?.version;
+        const latest =
+          newest === undefined
+            ? probed
+            : probed === undefined || supply.isNewerVersion(newest, probed)
+              ? newest
+              : probed;
         const raw = supply.moduleDeclarationOf(dir, module.pkg);
         const declared = raw === undefined ? [] : declarationProblemsOf(module.pkg, raw);
         const title = titleOf(raw);
@@ -194,10 +214,12 @@ export function moduleVersionsHandler(
           latest === undefined || latest === module.version || seam === undefined || registry === undefined
             ? undefined
             : await supply.registryDeclarationOf({ seam, name: module.pkg, registry, force });
-        const latestBlocked =
+        const peerBlocked =
           latestRaw === undefined
             ? undefined
             : updateBlockOf(latestRaw, declarationProblemsOf(module.pkg, latestRaw));
+        const incompatible = listed.find((entry) => entry.version === latest)?.incompatible;
+        const latestBlocked = peerBlocked ?? (incompatible === undefined ? undefined : 'incompatible');
         if (refused === undefined) {
           refusalLog.delete(module.pkg);
         } else {
@@ -226,6 +248,7 @@ export function moduleVersionsHandler(
                     ? { latestUnavailable: 'probe-failed' as const }
                     : {}),
           ...(refused === undefined ? {} : { refused }),
+          ...(list === null ? {} : { versions: list }),
           ...(spec === undefined ? {} : { spec }),
           ...(registry === undefined ? {} : { registry }),
         };

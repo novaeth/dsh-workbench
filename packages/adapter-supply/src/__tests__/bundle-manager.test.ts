@@ -228,4 +228,137 @@ describe('bundle manager：唯一那条 pluginManager 适配缝', () => {
     const weird = readBundleManager(fakeContext({ ...MANAGER, cancelInstall: async () => ({ status: 'nope' }) }));
     expect(await weird?.cancel('req-1')).toBeNull();
   });
+
+  it('listVersions()：listed 的版本条目归一，缺字段不编；方法不在就 null', async () => {
+    const seen: unknown[] = [];
+    const manager = readBundleManager(
+      fakeContext({
+        ...MANAGER,
+        listVersions: async (name: string, options: unknown) => {
+          seen.push({ name, options });
+          return {
+            status: 'listed',
+            installed: '0.2.0',
+            registry: 'https://r.example/',
+            attempts: [{ registry: 'https://r.example/' }, { registry: 'https://fallback.example/', problem: 'network', reason: '超时' }, { registry: 9 }],
+            omitted: 3,
+            versions: [
+              {
+                version: '0.3.0',
+                publishedAt: '2026-11-01T00:00:00.000Z',
+                tags: ['latest', 7],
+                prerelease: false,
+                bundle: true,
+                deprecated: '换 0.4',
+                incompatible: { name: 'x', version: '0.3.0', runtimeVersion: '0.2.2-rc.1', requirements: { '@deepseek-ai/dsh-web': '0.3.0', bad: 1 } },
+              },
+              { version: '0.4.0-beta.1', tags: ['next'], prerelease: true, bundle: false },
+              { version: '' },
+            ],
+          };
+        },
+      }),
+    );
+    expect(await manager?.listVersions('@dsh-workbench/module-hello', 'https://r.example/')).toEqual({
+      status: 'listed',
+      installed: '0.2.0',
+      registry: 'https://r.example/',
+      attempts: [
+        { registry: 'https://r.example/' },
+        { registry: 'https://fallback.example/', problem: 'network', reason: '超时' },
+      ],
+      omitted: 3,
+      versions: [
+        {
+          version: '0.3.0',
+          publishedAt: '2026-11-01T00:00:00.000Z',
+          tags: ['latest'],
+          prerelease: false,
+          bundle: true,
+          deprecated: '换 0.4',
+          incompatible: { name: 'x', version: '0.3.0', runtimeVersion: '0.2.2-rc.1', requirements: { '@deepseek-ai/dsh-web': '0.3.0' } },
+        },
+        { version: '0.4.0-beta.1', tags: ['next'], prerelease: true, bundle: false },
+      ],
+    });
+    expect(seen).toEqual([
+      { name: '@dsh-workbench/module-hello', options: { registry: 'https://r.example/' } },
+    ]);
+    expect(await readBundleManager(fakeContext(MANAGER))?.listVersions('x')).toBeNull();
+  });
+
+  it('listVersions()：refused 的 problem 不在表里就落到 unknown', async () => {
+    const manager = readBundleManager(
+      fakeContext({
+        ...MANAGER,
+        listVersions: async () => ({ status: 'refused', problem: 'something-new', reason: '不是第三方 registry 包', attempts: [] }),
+      }),
+    );
+    expect(await manager?.listVersions('x')).toEqual({
+      status: 'refused',
+      problem: 'unknown',
+      reason: '不是第三方 registry 包',
+      attempts: [],
+    });
+  });
+
+  it('updateBundle()：from/to/step/result/restore 归一，check 阶段的 incompatible 带出来', async () => {
+    const seen: unknown[] = [];
+    const manager = readBundleManager(
+      fakeContext({
+        ...MANAGER,
+        updateBundle: async (name: string, version: string, options: unknown) => {
+          seen.push({ name, version, options });
+          return {
+            from: '0.2.0',
+            to: version,
+            step: 'install',
+            result: { application: 'failed', stage: 'install', changed: false, target: name, error: { code: 'incompatible-version' } },
+            restore: { application: 'applied', stage: 'install', changed: true, target: name, version: '0.2.0' },
+          };
+        },
+      }),
+    );
+    expect(await manager?.updateBundle('@dsh-workbench/module-hello', '0.3.0', { registry: 'https://r.example/', requestId: 'req-9' })).toEqual({
+      from: '0.2.0',
+      to: '0.3.0',
+      step: 'install',
+      change: { application: 'failed', stage: 'install', changed: false, target: '@dsh-workbench/module-hello', errorCode: 'incompatible-version' },
+      restore: { application: 'applied', stage: 'install', changed: true, target: '@dsh-workbench/module-hello', version: '0.2.0' },
+    });
+    expect(seen).toEqual([
+      { name: '@dsh-workbench/module-hello', version: '0.3.0', options: { registry: 'https://r.example/', requestId: 'req-9' } },
+    ]);
+    const badStep = readBundleManager(
+      fakeContext({ ...MANAGER, updateBundle: async () => ({ from: 'a', to: 'b', step: 'vibes', result: {} }) }),
+    );
+    expect(await badStep?.updateBundle('x', '1.0.0')).toBeNull();
+    expect(await readBundleManager(fakeContext(MANAGER))?.updateBundle('x', '1.0.0')).toBeNull();
+  });
+
+  it('install() 的 incompatible 记录跟着失败一起回来；waitForInstall 也归一', async () => {
+    const manager = readBundleManager(
+      fakeContext({
+        ...MANAGER,
+        installBundle: async () => ({
+          application: 'failed',
+          stage: 'install',
+          changed: false,
+          target: 'x',
+          error: { code: 'incompatible-version', incompatible: [{ name: 'x', version: '0.3.0', runtimeVersion: '0.2.2-rc.1', requirements: { '@deepseek-ai/dsh-web': '0.3.0' } }] },
+        }),
+        waitForInstall: async (requestId: string) => ({ application: 'applied', stage: 'install', changed: true, target: requestId }),
+      }),
+    );
+    expect((await manager?.install({ spec: 'x' }))?.incompatible).toEqual([
+      { name: 'x', version: '0.3.0', runtimeVersion: '0.2.2-rc.1', requirements: { '@deepseek-ai/dsh-web': '0.3.0' } },
+    ]);
+    expect(await manager?.waitForInstall('req-1')).toEqual({
+      application: 'applied',
+      stage: 'install',
+      changed: true,
+      target: 'req-1',
+    });
+    expect(await readBundleManager(fakeContext(MANAGER))?.waitForInstall('req-1')).toBeNull();
+  });
 });

@@ -104,25 +104,47 @@ export async function updateModuleBundle(
     }
   }
   const spec = latest === undefined ? pkg : `${pkg}@${latest}`;
-  const outcome = await replaceDshBundle(deps.routeDeps, spec, {
-    ...(registry === undefined ? {} : { registry }),
-  });
+  const delegated =
+    latest !== undefined &&
+    registry !== undefined &&
+    found.fromRegistry !== false &&
+    deps.manager.updateBundle !== undefined
+      ? await deps.manager.updateBundle(pkg, latest, { registry }).catch(() => null)
+      : null;
+  const forwarded = delegated !== null && delegated.change.errorCode !== 'invalid-spec' ? delegated : null;
+  const base: BundleInstallOutcome =
+    forwarded === null
+      ? await replaceDshBundle(deps.routeDeps, spec, {
+          ...(registry === undefined ? {} : { registry }),
+        })
+      : {
+          change: forwarded.change,
+          module: deps.installed?.(pkg) ?? { kind: 'unknown', pkg },
+          supply: { state: 'no-needs' },
+          ...(forwarded.restore?.version === undefined ? {} : { restored: forwarded.restore.version }),
+        };
   await deps.sweep();
+  const readAfter = deps.installed?.(pkg) ?? { kind: 'unknown', pkg };
   const restored =
-    (deps.installed?.(pkg) ?? { kind: 'unknown', pkg }).kind === 'module'
-      ? undefined
-      : await restoreRemovedBundle(pkg, before, registry, deps);
+    readAfter.kind === 'module'
+      ? base.restored
+      : (base.restored ?? (await restoreRemovedBundle(pkg, before, registry, deps)));
   let after = deps.installed?.(pkg) ?? { kind: 'unknown', pkg };
   const verified = verifyBundleUpdate({
-    change: outcome.change,
+    change: base.change,
     before,
     after,
     ...(restored === undefined ? {} : { restored }),
   });
   let change = verified.change;
   let restoredVersion = verified.restored;
+  const precheckRefused = forwarded !== null && forwarded.step === 'check';
   const swap =
-    stillStuck(change, after, before) && before !== undefined && deps.dshHome !== undefined && deps.profileName !== undefined
+    !precheckRefused &&
+    stillStuck(change, after, before) &&
+    before !== undefined &&
+    deps.dshHome !== undefined &&
+    deps.profileName !== undefined
       ? await swapExternally(
           {
             supply,
@@ -154,7 +176,7 @@ export async function updateModuleBundle(
     ? remedyOf(deps, change, before, after.kind === 'module' ? after.version : undefined, spec)
     : undefined;
   return {
-    ...outcome,
+    ...base,
     change,
     module: after,
     ...(restoredVersion === undefined ? {} : { restored: restoredVersion }),
