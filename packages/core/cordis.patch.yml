@@ -21,6 +21,11 @@
 # **独占 claim**，两个 entry 声明同一批座位会抛错；而运行时只给声明了 children 的
 # entry 发 `renderSlot`。所以两套左栏不能同时在场，只能按组合层二选一。
 # 证据：内部设计记录 §3。
+#
+# 0.2.2 起 `sidebar.workspaces.session.menu.item` 由 dsh 的 ui-workspace（Session menu
+# adapter，挂在 contextMenu.content 下）声明；自定义左栏**既不声明、也不 renderSlot 它** ——
+# 声明会抛 `already declared`，而由没有声明它的 entry 去 renderSlot 会抛
+# `not declared by this entry's children`，两条都会让整条左栏被 slot 边界摘掉 ⇒ 左栏消失。
 
 # ── 权限预设：多给一档「全盘写 + 保留审批」 ────────────────────────────
 # dsh 出厂只有「工作区内修改」（workspace-write + ask）与「完全权限」

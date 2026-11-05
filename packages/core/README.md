@@ -50,7 +50,7 @@ dsh-workbench migrate --force  # 已经迁过一次、想再补并一次
 
 | 要有 | 为什么 |
 |---|---|
-| `dsh` ≥ 0.2.1-rc.2 | 本体。更旧的会被拒绝：`engines.dsh` 声明了下限，老到不认这个字段的 dsh 由启动器当场拒绝并给升级命令 |
+| `dsh` ≥ 0.2.2-rc.1 | 本体。更旧的会被拒绝：`engines.dsh` 声明了下限，老到不认这个字段的 dsh 由启动器当场拒绝并给升级命令 |
 | Node + pnpm | dsh 的 `plugin` 子命令转发给 pnpm；没有 pnpm 会报 `dsh: pnpm was not found` |
 | 可选：跑过一次 `dsh web` | 想继承它的设置 / 插件时。只建工作台不需要 |
 
@@ -93,12 +93,13 @@ dsh-workbench migrate --force  # 已经迁过一次、想再补并一次
 | `dist/types/**` | 类型声明（`exports` 的 `types` 指向这里）；构建产物，不进 git |
 | `client.js` | 浏览器侧 bundle，dsh 客户端按 `dsh.client` 加载 |
 | `cordis.patch.yml` | 把自己插进 profile 组合图的补丁（装载） |
-| `preset/diy.patch.yml` | 「工作台 DIY 模式」的 preset；由 `scripts/gen-diy-preset.mjs` 从 dsh 出厂那份 `standard.patch.yml` 派生（生成后提交，selfcheck 盯过期） |
 | `profile/` | 出厂 profile 模板：可写根那一行（启动器 `--patch` 用，seed 也抄进 profile） |
 | `skills/` | 模块 DIY 指引，装好后挂给 agent；漏了不报错，只是 agent 不知道要怎么做模块 |
 | `bin/` | `dsh-workbench` 启动器、隔离 opencli 的入口 |
 | `scripts/` | 随包出货的脚本：`seed-profile.sh` / `seed-workshop.sh` / `create-workbench.mjs` / `clone-profile.mjs` / `share-data-root.mjs` / `patch-blocks.mjs` |
 | `icon.svg` | 插件图标（dsh 插件页用） |
+
+「工作台 DIY 模式」不在这个表里：**启动时现场派生**，没有生成物 —— `src/shared/api/host/diy-preset.ts` 从这一轮 dsh 的 `standard` preset 克隆出插件表、叠加三处差分并注册；纯规则在 `../shared/src/host/diy-preset.ts`。dsh 加工具 / 改行时它自动跟上。
 
 ## 数据落在哪
 
@@ -172,7 +173,7 @@ dsh-workbench migrate --force  # 已经迁过一次、想再补并一次
 | 模型列表里只有出厂的几个、没有自己配的供应商 | 新 profile 不带设置。设置 → 工作台设置 → 配置同步 → 勾 `llm-` 那几行 → 同步 |
 | 配置同步里某行说 `@x 还没装` | 那一行点名的包不在这个 profile 的 `node_modules` 里：`dsh plugin --profile workbench add @x`（或在模块市场装），装完 dsh 会自行重组，它报 `restartReason` 时才重启 |
 | 启动被拒，说 dsh 太旧 | `npm i -g @deepseek-ai/dsh@latest`，装完重启工作台 |
-| 左栏没有「工作台DIY」，模式下拉里也没有「工作台 DIY 模式」 | 多半是 dsh 太旧：DIY preset 从 dsh 0.2.1-rc.2 的 preset 清单派生，旧一代挂不起来，而 dsh 的模式选择器只列挂得起来的 ⇒ 整个不见且不报错。启动体检会把它摆出来并给升级命令；自己核对就看 dsh 的 设置 → 「Agent presets」那一行的红标与原因 |
+| 左栏没有「工作台DIY」，模式下拉里也没有「工作台 DIY 模式」 | DIY preset 是启动时从这一轮 dsh 的 `standard` 现场派生的：dsh 太旧（没有 `loader` / `agentPresets` 的注册口）或 `standard` 的行变了，就派生不出来；dsh 的模式选择器只列挂得起来的 ⇒ 整个不见且不报错。启动体检会把它摆出来并给升级命令；自己核对就看 dsh 的 设置 → 「Agent presets」那一行的红标与原因 |
 | 在自己项目里开了 DIY，面板却说没找到模块 | 模块跟**这条会话的工作区**走，不跟工坊走：① 那个工作区要有一个在 `package.json` 里声明 `dsh.workbench` 的包；② 从工坊带过去的，把模块目录挪 / 拷进那个仓库；③ 旧截图不迁移（新的落在 `~/.dsh/workbench/artifacts/<工作区>/`）。细节见工作台模块指引 |
 
 ## 从源码跑

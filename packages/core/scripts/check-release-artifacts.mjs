@@ -438,14 +438,13 @@ function selfTest(verbose) {
     ]);
 
     write('bin/dsh-workbench', '#!/bin/sh\n# wbMock fixture helper\n');
-    write('preset/diy.patch.yml', 'plugins:\n  # MockStrip fixture\n');
     write('profile/default/hint.txt', 'useFixturePick fixture helper\n');
     expect(
-      '植入无后缀 bin/ 与 preset|profile 清单：M1 逐份点名',
+      '植入无后缀 bin/ 与 profile 清单：M1 逐份点名',
       filesOf(
-        contentFindings(root, ['bin/dsh-workbench', 'preset/diy.patch.yml', 'profile/default/hint.txt', 'cordis.patch.yml']),
+        contentFindings(root, ['bin/dsh-workbench', 'profile/default/hint.txt', 'cordis.patch.yml']),
       ),
-      ['bin/dsh-workbench', 'preset/diy.patch.yml', 'profile/default/hint.txt'],
+      ['bin/dsh-workbench', 'profile/default/hint.txt'],
     );
 
     write('skills/workbench-module-diy/KIT.md', '模块**拿不到** `MockStrip` / `useFixturePick`；`?wbMock=1` 对模块不生效。\n');
@@ -497,7 +496,7 @@ function selfTest(verbose) {
   if (verbose) {
     console.log(
       '✅ --self-test：21 条断言全过（M1/M2/M3 的正负例：干净过、植入标记红、植入夹具文件名红、逃出覆盖红，' +
-        '含 .json 夹具数据 / .js.map 的 sourcesContent / scripts/*.sh / 无后缀 bin / preset|profile，' +
+        '含 .json 夹具数据 / .js.map 的 sourcesContent / scripts/*.sh / 无后缀 bin / profile，' +
         '以及 npm 恒发的 package.json 必须并进扫描集）',
     );
   }

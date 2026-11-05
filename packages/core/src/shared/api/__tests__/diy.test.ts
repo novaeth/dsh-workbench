@@ -1,5 +1,3 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   DIY_PRESET_ID,
@@ -12,11 +10,6 @@ import {
 } from '../diy';
 
 describe('DIY 这三个常量', () => {
-  it('preset id 与生成的那份补丁对得上（两处各写一遍就会漂：点了造模块却不是 DIY 模式）', () => {
-    const patch = readFileSync(fileURLToPath(new URL('../../../../preset/diy.patch.yml', import.meta.url)), 'utf8');
-    expect(patch).toContain(`        id: ${DIY_PRESET_ID}`);
-  });
-
   it('工坊的新名字不在"旧名字"名单里（否则每次启动都改名，永远改不干净）', () => {
     expect(WORKSHOP_TITLE).not.toBe('');
     expect(WORKSHOP_PAST_TITLES).not.toContain(WORKSHOP_TITLE);

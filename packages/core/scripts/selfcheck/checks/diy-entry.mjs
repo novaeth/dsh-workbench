@@ -1,4 +1,3 @@
-import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 
@@ -23,46 +22,42 @@ export const checks = [
     },
   },
   {
-    title: '★ preset 在 dsh.bundle.patch 里（不接线就加载不到，且不报错）',
+    title: '★ DIY preset 在启动时从 dsh 的 standard 现场派生（没有生成物要维护）',
     run(_ctx, report) {
-      const patches = JSON.parse(read(pkg('package.json'))).dsh?.bundle?.patch;
-      const patchList = Array.isArray(patches) ? patches : [patches];
-      report('★ preset 在 dsh.bundle.patch 里（不接线就加载不到，且不报错）', patchList.includes('./preset/diy.patch.yml'), patchList.join(' / '));
-    },
-  },
-  {
-    title: '★ preset/ 在 package.json 的 files 里（漏了不报错，只是装出去没有它）',
-    run(_ctx, report) {
+      const title = '★ DIY preset 在启动时从 dsh 的 standard 现场派生（没有生成物要维护）';
+      const hostEntry = read(pkg('src/app/host.ts'));
+      const hostSide = read(pkg('src/shared/api/host/diy-preset.ts'));
+      const derive = read(pkg('../shared/src/host/diy-preset.ts'));
       const manifest = JSON.parse(read(pkg('package.json')));
-      report('★ preset/ 在 package.json 的 files 里（漏了不报错，只是装出去没有它）', (manifest.files ?? []).includes('preset'));
+      const patches = manifest.dsh?.bundle?.patch;
+      const patchList = Array.isArray(patches) ? patches : [patches];
+      const noArtifact = !patchList.includes('./preset/diy.patch.yml') && !existsSync(pkg('preset/diy.patch.yml'));
+      const wired = hostEntry.includes('registerDiyPreset(ctx)');
+      const hostReads = hostSide.includes("'agentPresets'") && hostSide.includes("'loader'") && hostSide.includes('.register(');
+      const deriveAnchors =
+        derive.includes('DIY_PRESET_ID') &&
+        derive.includes('skill-filesystem') &&
+        derive.includes('tool-cordis') &&
+        derive.includes('tool-plugin-manager');
+      report(
+        title,
+        wired && hostReads && deriveAnchors && noArtifact,
+        `宿主接线 ${wired} · 读 loader/agentPresets ${hostReads} · 三处差分锚点 ${deriveAnchors} · 生成物已删 ${noArtifact}`,
+      );
     },
   },
   {
-    title: '★ preset 与 dsh 出厂那份 standard.patch.yml 同步（生成的，不是手抄的）',
-    run(_ctx, report) {
-      const title = '★ preset 与 dsh 出厂那份 standard.patch.yml 同步（生成的，不是手抄的）';
-      try {
-        execFileSync(process.execPath, [pkg('scripts/gen-diy-preset.mjs'), '--check'], { stdio: 'pipe', encoding: 'utf8' });
-        report(title, true);
-      } catch (error) {
-        if (error.status === 2) {
-          report(title, true, '跳过：这台机器上没有 dsh 出厂的 preset（装好 dsh 后这一条会真的校验）');
-          return;
-        }
-        const detail = `${error.stdout ?? ''}${error.stderr ?? ''}`.trim().split('\n').slice(-4).join(' · ');
-        report(title, false, detail);
-      }
-    },
-  },
-  {
-    title: '★ preset id 只有一处真相（生成物与代码对得上）',
+    title: '★ preset id 只有一处真相（派生那份从 DIY_PRESET_ID 来，宿主不另写一遍）',
     run(_ctx, report) {
       const presetId = /DIY_PRESET_ID = '([^']+)'/.exec(diyConstants())?.[1];
-      const presetPatch = read(pkg('preset/diy.patch.yml'));
+      const derive = read(pkg('../shared/src/host/diy-preset.ts'));
+      const hostSide = read(pkg('src/shared/api/host/diy-preset.ts'));
+      const sameId = presetId !== undefined && derive.includes('id: DIY_PRESET_ID');
+      const notCopied = presetId === undefined || (!hostSide.includes(`'${presetId}'`) && !hostSide.includes(`"${presetId}"`));
       report(
-        '★ preset id 只有一处真相（生成物与代码对得上）',
-        presetId !== undefined && new RegExp(`^        id: ${presetId}$`, 'm').test(presetPatch),
-        `代码说 ${String(presetId)}`,
+        '★ preset id 只有一处真相（派生那份从 DIY_PRESET_ID 来，宿主不另写一遍）',
+        sameId && notCopied,
+        `代码说 ${String(presetId)} · 派生用常量 ${sameId} · 宿主没另写 ${notCopied}`,
       );
     },
   },
@@ -216,7 +211,7 @@ export const checks = [
     },
   },
   {
-    title: '★ 声明了验过的 dsh 下限（DIY preset 是照那一代派生的，旧一代整个不显示）',
+    title: '★ 声明了验过的 dsh 下限（旧一代没有现场派生的注册口，DIY 整个不显示）',
     run(_ctx, report) {
 
       const manifest = JSON.parse(read(pkg('package.json')));
@@ -227,7 +222,7 @@ export const checks = [
       const gateReadsManifest = launcher.includes('engines');
       const noSecondCopy = floorVersion === undefined || !launcher.includes(floorVersion);
       report(
-        '★ 声明了验过的 dsh 下限（DIY preset 是照那一代派生的，旧一代整个不显示）',
+        '★ 声明了验过的 dsh 下限（旧一代没有现场派生的注册口，DIY 整个不显示）',
         floorVersion !== undefined && floorVersion === pinned && gateReadsManifest && noSecondCopy,
         `engines.dsh ${JSON.stringify(floor)} · 验过的 dsh（primitives pin）${String(pinned)} · 启动器读清单 ${gateReadsManifest} · 启动器没另写版本号 ${noSecondCopy}`,
       );

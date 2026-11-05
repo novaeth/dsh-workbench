@@ -50,6 +50,7 @@ import { createValueHandoff } from '@dsh-workbench/shared/host';
 import { PANELS_SERVICE, PLUGIN_ID, UNITS_SERVICE } from '@dsh-workbench/shared/host';
 import { asArgs, warn } from '../shared/api/host/host-args';
 import { createApprovalGate } from '@/shared/api/host/approval-gate';
+import { registerDiyPreset } from '@/shared/api/host/diy-preset';
 import { notifyLongTaskStop } from '@/shared/api/host/long-task-notice';
 export const name = 'dsh-workbench';
 interface ReleasedLookup { isReleased(id: string): boolean }
@@ -57,6 +58,7 @@ export const inject = ['webServer'];
 export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Promise<void> {
   const seam = provideWorkbenchSeam(ctx);
   if (seam !== undefined) provideGitProcessSeam(seam);
+  registerDiyPreset(ctx);
   const facts = createFactLog();
   const values = createValueHandoff();
   const panelState = createPanelStateStore();

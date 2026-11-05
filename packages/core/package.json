@@ -32,7 +32,6 @@
     "icon.svg",
     "bin",
     "skills",
-    "preset",
     "scripts/create-workbench.mjs",
     "scripts/clone-profile.mjs",
     "scripts/patch-blocks.mjs",
@@ -67,10 +66,7 @@
   },
   "dsh": {
     "bundle": {
-      "patch": [
-        "./cordis.patch.yml",
-        "./preset/diy.patch.yml"
-      ]
+      "patch": ["./cordis.patch.yml"]
     },
     "client": {
       "platform": "web",
@@ -84,7 +80,7 @@
     }
   },
   "engines": {
-    "dsh": ">=0.2.1-rc.2"
+    "dsh": ">=0.2.2-rc.1"
   },
   "peerDependencies": {
     "react": "*"
@@ -96,7 +92,7 @@
   },
   "devDependencies": {
     "@arch-guard/core": "^0.11.3",
-    "@deepseek-ai/dsh-client-ui-primitives": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-primitives": "0.2.2-rc.1",
     "@types/node": "^24.19.0",
     "@types/proper-lockfile": "^4.1.4",
     "@types/react": "^19.3.0",

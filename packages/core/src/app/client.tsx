@@ -319,7 +319,7 @@ function mount(ctx: DshClientContext): void {
           name: 'sidebar',
           priority: -1,
           locale: LOCALE_NS,
-          children: sidebarChildren(ctx),
+          children: sidebarChildren(),
           inject: () => ({
             listPanels: () => readPanels(ctx),
             subscribePanels: (callback: () => void) => ctx.slots.subscribe('sidebar.panellist', callback),
@@ -460,7 +460,7 @@ function registerWorkbenchSettingsSection(ctx: DshClientContext): void {
   );
 }
 
-function sidebarChildren(ctx: DshClientContext) {
+function sidebarChildren() {
   return {
     'sidebar.brand.mark': { kind: 'single', scope: 'root' },
     'sidebar.brand.name': { kind: 'single', scope: 'root' },
@@ -468,19 +468,10 @@ function sidebarChildren(ctx: DshClientContext) {
     'sidebar.panellist': { kind: 'list', scope: 'root' },
     'sidebar.settings': { kind: 'single', scope: 'root' },
     'sidebar.footer.action': { kind: 'list', scope: 'root' },
-    'sidebar.workspaces.session.menu.item': {
-      kind: 'list',
-      scope: 'root',
-      inject: { hooks: { menuOpenState: menuOpenStateFactory, shortcuts: ctx.shortcuts.catalog } },
-    },
     'sidebar.workspaces.session.row.action': { kind: 'list', scope: 'root' },
     'sidebar.session.row.leading': { kind: 'list', scope: 'root' },
     'sidebar.session.row.hover': { kind: 'list', scope: 'root' },
   };
-}
-
-function menuOpenStateFactory(_standard: unknown, state: unknown) {
-  return () => state;
 }
 
 export type Kit = typeof kit;

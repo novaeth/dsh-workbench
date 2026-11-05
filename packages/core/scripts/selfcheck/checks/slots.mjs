@@ -165,6 +165,28 @@ export const checks = [
     },
   },
   {
+    title: '★ 自定义左栏不碰 dsh 自己声明的 session 菜单槽（0.2.2 起 ui-workspace 的 context menu adapter owns it：既不声明，也不 renderSlot）',
+    run(_ctx, report) {
+      const clientEntry = read(pkg('src/app/client.tsx'));
+      const start = clientEntry.indexOf('function sidebarChildren(');
+      const end = start < 0 ? -1 : clientEntry.indexOf('\n}', start);
+      const children = start < 0 || end < 0 ? '' : clientEntry.slice(start, end);
+      const sessionList = read(pkg('src/app/layouts/sidebar/SessionList.tsx'));
+      const declared = children.includes("'sidebar.workspaces.session.menu.item'");
+      const rendered = sessionList.includes("renderSlot('sidebar.workspaces.session.menu.item'");
+      const why = declared
+        ? '自定义左栏又声明了 menu.item —— 声明期就会因 slot 重声明抛错'
+        : rendered
+          ? '自定义左栏在自己的 Menu 里 renderSlot(menu.item) —— dsh 0.2.2 只许声明它的 entry 渲染，会崩掉整条左栏'
+          : '既不声明也不渲染';
+      report(
+        '★ 自定义左栏不碰 dsh 自己声明的 session 菜单槽（0.2.2 起 ui-workspace 的 context menu adapter owns it：既不声明，也不 renderSlot）',
+        children !== '' && !declared && !rendered,
+        why,
+      );
+    },
+  },
+  {
     title: '一共就注册这十个槽名，十一条注册（多一条都要想清楚为什么）',
     run(ctx, report) {
       const { registrations } = ctx;
@@ -274,7 +296,7 @@ export const checks = [
     },
   },
   {
-    title: '重新声明了这十个座位',
+    title: '重新声明了这九个座位（session.menu.item 归 dsh 的 workspace 声明）',
     run(ctx, report) {
       const { sidebar } = ctx;
       const children = Object.keys(sidebar?.options.children ?? {});
@@ -287,13 +309,12 @@ export const checks = [
         'sidebar.panellist',
         'sidebar.settings',
         'sidebar.footer.action',
-        'sidebar.workspaces.session.menu.item',
         'sidebar.workspaces.session.row.action',
         'sidebar.session.row.leading',
         'sidebar.session.row.hover',
       ];
       report(
-        '重新声明了这十个座位',
+        '重新声明了这九个座位（session.menu.item 归 dsh 的 workspace 声明）',
         SEATS.every((seat) => children.includes(seat)),
         SEATS.filter((seat) => !children.includes(seat)).join('、') || children.join(','),
       );
@@ -321,17 +342,6 @@ export const checks = [
         children.includes('sidebar.session.row.hover') &&
           sessionRowSource.includes("renderSlot('sidebar.session.row.hover'"),
         children.join(','),
-      );
-    },
-  },
-  {
-    title: 'session.menu.item 带着 hooks 注入面（ui-workspace 靠它关菜单）',
-    run(ctx, report) {
-      const { sidebar } = ctx;
-      report(
-        'session.menu.item 带着 hooks 注入面（ui-workspace 靠它关菜单）',
-        typeof sidebar?.options.children?.['sidebar.workspaces.session.menu.item']?.inject?.hooks
-          ?.menuOpenState === 'function',
       );
     },
   },

@@ -152,13 +152,13 @@ fi
 
 # ── 硬门禁：dsh 太旧就别起（DIY 模式会整个不见，而且一句错都不报）────────────
 #
-# DIY 模式就是 `preset/diy.patch.yml` 那一行 agent preset，而它是**从 dsh 出厂那份
-# `standard.patch.yml` 派生的**（scripts/gen-diy-preset.mjs）—— 所以它跟的是**派生那一刻的
-# dsh**。dsh 旧到那份清单里有几个包它根本没有时（实测 0.2.0-rc.2 缺
-# `@deepseek-ai/dsh-tool-schedule`），preset 挂不起来；dsh 的模式选择器**只列挂得起来的**
-# （healthy presets only），于是「工作台 DIY 模式」在用户面前整个消失，界面与终端都不吭声。
-# 同一代 dsh 0.2.0 的 `uiWorkspace.startSession()` 也**不收** `agentPreset`（0.2.1-alpha.3 才收），
-# 所以就算 preset 挂上了，「造一个模块」也落不到 DIY 模式 —— 这一档没有"少一把工具"的降级空间。
+# DIY 模式是**启动时现场派生**的（`shared/host/diy-preset` + 宿主的 `diy-preset.ts`）：从这一轮
+# dsh 的 `standard` preset 克隆插件表、叠加三处差分，再走 `agentPresets.register()`。所以要两样
+# 东西都在：dsh 的 `loader` 能交出 `preset-standard` 那一行，`agentPresets` 有程序化注册口。
+# 少一样，preset 根本不在名册里；而 dsh 的模式选择器**只列挂得起来的**（healthy presets only），
+# 「工作台 DIY 模式」就在用户面前整个消失，界面与终端都不吭声。
+# 更旧的一代（0.2.0-rc.2）连 `uiWorkspace.startSession()` 都**不收** `agentPreset`（0.2.1-alpha.3 才收），
+# 所以就算派生出来了，「造一个模块」也落不到 DIY 模式 —— 这一档没有"少一把工具"的降级空间。
 #
 # 为什么门禁写在启动器、而不只写 package.json 的 `engines.dsh`：
 # engines.dsh 只有 **0.2.1-alpha.4 起**的 dsh 才读（见 HANDOFF §八），而这台机器上那份 dsh
@@ -198,8 +198,8 @@ process.exit(0);
 ' || DSH_FLOOR_GUARD=$?
   if [ "${DSH_FLOOR_GUARD:-0}" -eq 1 ]; then
     echo "dsh-workbench: 这台机器上的 dsh 是 ${DSH_VERSION}，这份工作台要 ${DSH_FLOOR}。" >&2
-    echo "  低于它时 DIY 模式（会话里的「工作台 DIY 模式」）挂不起来，而 dsh 的模式选择器只列挂得起来的" >&2
-    echo "  —— 它会**整个不出现**，不报错。所以这里直接拒绝启动。" >&2
+    echo "  低于它时工作台要的那几个注册口（loader / agentPresets / startSession 的 agentPreset）不一定有，" >&2
+    echo "  DIY 模式会**整个不出现**且不报错。所以这里直接拒绝启动。" >&2
     echo "  升级 dsh（再重启一次工作台）: npm i -g @deepseek-ai/dsh@latest" >&2
     exit 1
   fi

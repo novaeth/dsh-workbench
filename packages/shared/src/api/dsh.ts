@@ -195,10 +195,44 @@ export interface DshAgentPresetRow {
 }
 
 /**
- * 宿主侧的 agent preset 名册（服务名 `agentPresets`）：只读它的 `list()` —— 启动体检拿它判 DIY 模式挂不挂得起来。
+ * 一条 agent preset 的定义：`@deepseek-ai/dsh-agent-preset` 收的那份配置（`plugins` 是整表插件行）。
+ * DIY 的那一份在启动时从这一轮 dsh 的 `standard` 现场派生，不再有生成物。
+ */
+export interface DshAgentPresetDefinition {
+  readonly id: string;
+  readonly name?: string;
+  readonly description?: string;
+  readonly order?: number;
+  readonly plugins: readonly unknown[];
+}
+
+/** 注册成功后拿到的注销函数；插件卸载时调它，别把 preset 留在名册里。 */
+export type DshAgentPresetUnregister = () => Promise<void>;
+
+/**
+ * 宿主侧的 agent preset 名册（服务名 `agentPresets`）：`list()` 给启动体检读，`register()` 给 DIY 注册现场派生出来的那份。
  */
 export interface DshAgentPresetRegistry {
   list(): Promise<readonly DshAgentPresetRow[]>;
+  register?(definition: DshAgentPresetDefinition): Promise<DshAgentPresetUnregister>;
+}
+
+/**
+ * dsh loader 里的一行：只读插件名与它收到的原始 config。
+ * DIY 从 `standard` 那一行的 config 现场派生；loader 的 `entries()` 递归给出这一轮组合里的所有行。
+ */
+export interface DshLoaderEntry {
+  readonly id?: string;
+  readonly disabled?: boolean;
+  readonly options?: {
+    readonly name?: string;
+    readonly config?: unknown;
+  };
+}
+
+/** loader 服务（服务名 `loader`）：插件行都在它的 `entries()` 里。 */
+export interface DshLoader {
+  entries(): Iterable<DshLoaderEntry>;
 }
 
 /**

@@ -142,7 +142,6 @@ function SessionRow({
   t: Translate;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuState = useMemo(() => [menuOpen, setMenuOpen], [menuOpen]);
   const statuses = sessionStatuses(node, t);
   const label = node.blank ? t('session.new') : node.title;
   const titleRef = useRef<HTMLSpanElement>(null);
@@ -212,7 +211,6 @@ function SessionRow({
                 }
                 onClose={() => setMenuOpen(false)}
               >
-                {renderSlot('sidebar.workspaces.session.menu.item', owner, { hookContext: menuState })}
               </Menu>
               {renderSlot('sidebar.workspaces.session.row.action', owner)}
             </span>
