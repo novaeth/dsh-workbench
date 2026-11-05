@@ -1,0 +1,28 @@
+[
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: net::ERR_FAILED",
+        "timestamp": 1793850288265.19,
+        "url": "dsh-app://app/plugins/events",
+        "networkRequestId": "4404.39"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1793850353744.754,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "4404.86"
+      }
+    }
+  }
+]
