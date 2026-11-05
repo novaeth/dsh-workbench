@@ -20,11 +20,6 @@ jobs:
     timeout-minutes: 25
     env:
       HUSKY: 0
-      # 官方 Desktop 的 latest 通道还停在 0.2.1-rc.5：它没有 0.2.2-rc.1 那个「管理员 / Windows
-      # Sandbox 下受限命令起不来」的修复（LUA_TOKEN，见 deepseek-harness#11722），Windows 上
-      # 受限沙箱根本起不了子进程，所以冒烟先把部署上限放开 —— 这也是 pre-fix Desktop 上真实用户
-      # 唯一走得通的做法。等 Desktop latest ≥ 0.2.2-rc.1 再删掉这一行、改成默认沙箱。
-      DSH_PERMISSION_MODE: danger-full-access
       DESKTOP_SMOKE_OS: ${{ inputs.label }}
       DESKTOP_SMOKE_MARKET: https://github.com/novaeth/dsh-workbench-market.git
       DESKTOP_SMOKE_MODULE: '@dsh-workbench/module-hello'
