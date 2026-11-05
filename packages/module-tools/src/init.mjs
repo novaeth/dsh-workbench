@@ -10,7 +10,7 @@ const UNIT_ID = /^[a-z][a-z0-9-]*$/;
 
 const FALLBACK_RANGE = '^0.1.0';
 
-const FALLBACK_DSH_UI = '0.2.2-rc.1';
+const FALLBACK_DSH_UI = '0.2.1-rc.5';
 const DSH_UI = '@deepseek-ai/dsh-client-ui-primitives';
 
 const dshUiVersion = (root) => {

@@ -50,7 +50,7 @@ dsh-workbench migrate --force  # 已经迁过一次、想再补并一次
 
 | 要有 | 为什么 |
 |---|---|
-| `dsh` ≥ 0.2.2-rc.1 | 本体。更旧的会被拒绝：`engines.dsh` 声明了下限，老到不认这个字段的 dsh 由启动器当场拒绝并给升级命令 |
+| `dsh` ≥ 0.2.1-rc.5 | 本体。更旧的会被拒绝：`engines.dsh` 声明了下限，老到不认这个字段的 dsh 由启动器当场拒绝并给升级命令 |
 | Node + pnpm | dsh 的 `plugin` 子命令转发给 pnpm；没有 pnpm 会报 `dsh: pnpm was not found` |
 | 可选：跑过一次 `dsh web` | 想继承它的设置 / 插件时。只建工作台不需要 |
 
