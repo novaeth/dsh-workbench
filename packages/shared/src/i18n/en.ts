@@ -682,6 +682,7 @@ export const en: Record<keyof WorkbenchMessages, string> = {
 
   'panel.conversation': 'Conversation',
   'panels.label': 'Global panels',
+  'panels.more': 'More',
 
   'adapterSet.title': 'Adapter set',
   'adapterSet.lead': 'The host adapters this workbench is using. Change the workbench config in the profile and restart.',

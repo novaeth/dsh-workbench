@@ -1,0 +1,13 @@
+.anchor {
+  display: flex;
+  flex-direction: column;
+}
+
+.more[aria-expanded='true'] {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.menu {
+  width: var(--wb-len-280);
+  max-width: calc(100vw - var(--wb-len-24));
+}

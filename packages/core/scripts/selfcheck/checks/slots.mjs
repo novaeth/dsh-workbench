@@ -296,7 +296,7 @@ export const checks = [
     },
   },
   {
-    title: '重新声明了这九个座位（session.menu.item 归 dsh 的 workspace 声明）',
+    title: '重新声明了这十个座位（session.menu.item 归 dsh 的 workspace 声明）',
     run(ctx, report) {
       const { sidebar } = ctx;
       const children = Object.keys(sidebar?.options.children ?? {});
@@ -307,6 +307,7 @@ export const checks = [
         'sidebar.brand.name',
         'sidebar.toggle.badge',
         'sidebar.panellist',
+        'sidebar.panellist.actions',
         'sidebar.settings',
         'sidebar.footer.action',
         'sidebar.workspaces.session.row.action',
@@ -314,7 +315,7 @@ export const checks = [
         'sidebar.session.row.hover',
       ];
       report(
-        '重新声明了这九个座位（session.menu.item 归 dsh 的 workspace 声明）',
+        '重新声明了这十个座位（session.menu.item 归 dsh 的 workspace 声明）',
         SEATS.every((seat) => children.includes(seat)),
         SEATS.filter((seat) => !children.includes(seat)).join('、') || children.join(','),
       );
@@ -346,7 +347,21 @@ export const checks = [
     },
   },
   {
-    title: '左栏 inject 提供十个能力',
+    title: '★ 声明了 sidebar.panellist.actions 就必须真渲染它（官方的「更多」菜单靠它）',
+    run(ctx, report) {
+      const { children } = ctx;
+
+      const panelListSource = read(pkg('src/app/layouts/sidebar/PanelNav.tsx'));
+      report(
+        '★ 声明了 sidebar.panellist.actions 就必须真渲染它（官方的「更多」菜单靠它）',
+        !children.includes('sidebar.panellist.actions') ||
+          panelListSource.includes("renderSlot('sidebar.panellist.actions'"),
+        children.join(','),
+      );
+    },
+  },
+  {
+    title: '左栏 inject 提供十一个能力',
     run(ctx, report) {
       const { sidebar } = ctx;
 
@@ -355,6 +370,7 @@ export const checks = [
       const { injected } = ctx;
       const SIDEBAR_CAPS = [
         'listPanels',
+        'hasPanelActions',
         'subscribePanels',
         'openWorkspace',
         'createWorkspace',
@@ -366,7 +382,7 @@ export const checks = [
         'renameWorkspace',
       ];
       report(
-        '左栏 inject 提供十个能力',
+        '左栏 inject 提供十一个能力',
         SIDEBAR_CAPS.every((name) => typeof injected?.[name] === 'function'),
         SIDEBAR_CAPS.filter((name) => typeof injected?.[name] !== 'function').join('、') ||
           SIDEBAR_CAPS.join(','),

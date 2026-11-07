@@ -322,7 +322,15 @@ function mount(ctx: DshClientContext): void {
           children: sidebarChildren(),
           inject: () => ({
             listPanels: () => readPanels(ctx),
-            subscribePanels: (callback: () => void) => ctx.slots.subscribe('sidebar.panellist', callback),
+            hasPanelActions: () => ctx.slots.entriesOfSlot('sidebar.panellist.actions').length > 0,
+            subscribePanels: (callback: () => void) => {
+              const offPanels = ctx.slots.subscribe('sidebar.panellist', callback);
+              const offActions = ctx.slots.subscribe('sidebar.panellist.actions', callback);
+              return () => {
+                offPanels();
+                offActions();
+              };
+            },
             renameWorkspace: async (workspaceId: string, title: string) => {
               try {
                 await ctx.workspaces.rename(workspaceId, title);
@@ -466,6 +474,7 @@ function sidebarChildren() {
     'sidebar.brand.name': { kind: 'single', scope: 'root' },
     'sidebar.toggle.badge': { kind: 'single', scope: 'root' },
     'sidebar.panellist': { kind: 'list', scope: 'root' },
+    'sidebar.panellist.actions': { kind: 'list', scope: 'root' },
     'sidebar.settings': { kind: 'single', scope: 'root' },
     'sidebar.footer.action': { kind: 'list', scope: 'root' },
     'sidebar.workspaces.session.row.action': { kind: 'list', scope: 'root' },

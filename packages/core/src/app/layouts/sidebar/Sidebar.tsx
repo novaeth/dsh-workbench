@@ -18,12 +18,13 @@ import { WorkspaceSection } from './WorkspaceSection';
 import { useSidebarAttention, useLongTaskPresence } from './use-attention';
 import { cx } from '@dsh-workbench/shared';
 
-import { PanelRow } from './PanelNav';
+import { PanelList } from './PanelNav';
 import { ProjectSwitcher } from './ProjectSwitcher';
 import { SessionList } from './SessionList';
 
 export interface SidebarActions {
   listPanels: () => PanelEntry[];
+  hasPanelActions: () => boolean;
   subscribePanels: (callback: () => void) => () => void;
   renameWorkspace: (workspaceId: string, title: string) => Promise<boolean>;
   openWorkspace: (workspaceId: string) => void;
@@ -44,10 +45,6 @@ export type SidebarProps = SidebarActions & {
   useSessions: SnapshotSelectorHook<SessionsSnapshot>;
   useSessionStatus: SnapshotSelectorHook<SessionStatusSnapshot>;
 };
-
-function panelLabel(entry: PanelEntry): string {
-  return typeof entry.label === 'function' ? entry.label() : entry.label;
-}
 
 function addWorkspace(input: {
   readonly add: SidebarActions['pickDirectory'];
@@ -90,10 +87,18 @@ export function Sidebar(props: SidebarProps) {
 
   const [storedId, setStoredId] = useState(() => selectedProjectId());
   const [panelEntries, setPanelEntries] = useState<PanelEntry[]>(() => props.listPanels());
+  const [hasPanelActions, setHasPanelActions] = useState(() => props.hasPanelActions());
   const [creating, setCreating] = useState(false);
   const [createFailed, setCreateFailed] = useState(false);
 
-  useEffect(() => props.subscribePanels(() => setPanelEntries(props.listPanels())), [props]);
+  useEffect(
+    () =>
+      props.subscribePanels(() => {
+        setPanelEntries(props.listPanels());
+        setHasPanelActions(props.hasPanelActions());
+      }),
+    [props],
+  );
 
   useEffect(() => subscribeProject(() => setStoredId(selectedProjectId())), []);
 
@@ -140,22 +145,15 @@ export function Sidebar(props: SidebarProps) {
         onSelectPanel={props.selectPanel}
       />
 
-      <nav className="wb-panelList" aria-label={t('panels.label')}>
-        {panelEntries.map((entry) => (
-          <PanelRow
-            key={entry.id}
-            id={entry.id}
-            label={panelLabel(entry)}
-            active={activePanelId === entry.id}
-            wide={wide}
-            onSelect={props.selectPanel}
-            t={t}
-            renderEntry={(id, active, isWide) =>
-              renderSlot('sidebar.panellist', { size: isWide ? 16 : 18, active }, { only: id })
-            }
-          />
-        ))}
-      </nav>
+      <PanelList
+        entries={panelEntries}
+        hasActions={hasPanelActions}
+        activePanelId={activePanelId}
+        wide={wide}
+        onSelect={props.selectPanel}
+        renderSlot={renderSlot}
+        t={t}
+      />
 
       {wide ? (
         <>

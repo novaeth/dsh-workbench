@@ -678,6 +678,7 @@ export const zh = {
 
   'panel.conversation': '对话',
   'panels.label': '全局面板',
+  'panels.more': '更多',
 
   'adapterSet.title': '适配器集合',
   'adapterSet.lead': '工作台当前使用的宿主适配器。换集合在 profile 的 workbench 行配置，重启后生效。',
