@@ -12,6 +12,7 @@ import type { RuntimeProfile } from '@dsh-workbench/shared';
 import { readRuntimeCapabilities } from '@/shared/hooks/runtime-queries';
 import { createGateDeadline } from './gate-deadline';
 import { el, spinnerIcon, svgIcon } from './gate-dom';
+import { logAtBottom } from './log-follow';
 
 const POLL_MS = 400;
 
@@ -201,6 +202,7 @@ diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
     status: string;
     expandable: boolean;
     expanded: boolean;
+    follow: boolean;
   }
 
   const rows = new Map<PreflightStepId, StepRow>();
@@ -226,6 +228,7 @@ diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
       status: '',
       expandable: false,
       expanded: false,
+      follow: true,
     };
     row.arrow.setAttribute('aria-hidden', 'true');
     row.arrow.hidden = true;
@@ -238,8 +241,13 @@ diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
       row.log.hidden = !row.expanded;
       head.setAttribute('aria-expanded', row.expanded ? 'true' : 'false');
       item.dataset.expanded = row.expanded ? 'true' : 'false';
-      if (row.expanded) row.log.scrollTop = row.log.scrollHeight;
+      if (!row.expanded) return;
+      row.follow = true;
+      row.log.scrollTop = row.log.scrollHeight;
     };
+    row.log.addEventListener('scroll', () => {
+      row.follow = logAtBottom(row.log);
+    });
     head.addEventListener('click', toggle);
     head.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -277,14 +285,14 @@ diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
       row.expandable = logText !== '';
       row.item.dataset.expandable = row.expandable ? 'true' : 'false';
       row.arrow.hidden = !row.expandable;
-      row.log.textContent = logText;
+      if (row.log.textContent !== logText) row.log.textContent = logText;
       if (!row.expandable && row.expanded) {
         row.expanded = false;
         row.log.hidden = true;
         row.head.setAttribute('aria-expanded', 'false');
         row.item.dataset.expanded = 'false';
       }
-      if (row.expanded) row.log.scrollTop = row.log.scrollHeight;
+      if (row.expanded && row.follow) row.log.scrollTop = row.log.scrollHeight;
       return row.item;
     });
 
