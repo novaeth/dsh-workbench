@@ -26,7 +26,13 @@ function settingsOf(onDemand: boolean): WorkbenchSettingsStore & { set(next: boo
 function fakeCtx(open: ReadonlySet<string>, names: readonly string[] = []) {
   const provided: Record<string, unknown> = {};
   const ctx = {
-    get: (key: string) => (key === TOOLBOX_SERVICE ? { packsOf: () => open } : undefined),
+    get: (key: string) => {
+      if (key === TOOLBOX_SERVICE) return { packsOf: () => open };
+      if (key === 'tools') {
+        return { view: (scope?: unknown) => ({ knownNames: new Set(scope === undefined ? [] : names) }) };
+      }
+      return undefined;
+    },
     provide: (name: string, value: unknown) => {
       provided[name] = value;
       return () => {};
@@ -34,7 +40,6 @@ function fakeCtx(open: ReadonlySet<string>, names: readonly string[] = []) {
     effect: (run: () => () => void) => {
       run();
     },
-    tools: { view: (scope?: unknown) => ({ knownNames: new Set(scope === undefined ? [] : names) }) },
     logger: { info: () => {}, warn: () => {} },
   } as unknown as DshHostContext;
   return { ctx, provided };

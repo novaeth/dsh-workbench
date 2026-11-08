@@ -14,7 +14,7 @@ interface ToolRegistryView {
 }
 
 function registeredToolNames(ctx: DshHostContext, scope?: unknown): readonly string[] {
-  const registry = (ctx as unknown as { readonly tools?: ToolRegistryView }).tools;
+  const registry = ctx.get<ToolRegistryView>('tools');
   if (registry === undefined) return [];
   try {
     return [...(registry.view(scope).knownNames ?? [])];
