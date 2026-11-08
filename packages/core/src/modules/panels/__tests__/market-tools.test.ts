@@ -13,6 +13,7 @@ import {
   MODULES_UPDATE_PLUGIN_TOOL,
   MODULES_UPDATE_TOOL,
   MARKET_SOURCES_TOOL,
+  MARKET_CATEGORIES_TOOL,
   MARKET_ENABLE_TOOL,
   MARKET_DISABLE_TOOL,
 } from '../unit';
@@ -28,7 +29,7 @@ beforeEach(() => {
 afterEach(cleanupRoots);
 
 describe('workbench_modules_*：一个动词一把工具', () => {
-  it('★ 声明的工具名 === 实际注册的（防漂移）；读的那两把不是写，其余十把都是写', () => {
+  it('★ 声明的工具名 === 实际注册的（防漂移）；读的那三把不是写，其余十把都是写', () => {
     const h = harness({ manifests: [unit('issues', 'demo')] });
 
     const declared = panelsUnit.tools
@@ -37,16 +38,19 @@ describe('workbench_modules_*：一个动词一把工具', () => {
         (name) =>
           name.startsWith('workbench_modules') ||
           name === MARKET_SOURCES_TOOL ||
+          name === MARKET_CATEGORIES_TOOL ||
           name === MARKET_ENABLE_TOOL ||
           name === MARKET_DISABLE_TOOL,
       );
     expect(declared).toContain(MODULES_LIST_TOOL);
-    expect(declared).toHaveLength(12);
+    expect(declared).toHaveLength(13);
     expect([...h.registered.map((tool) => tool.name)].sort()).toEqual([...declared].sort());
 
     const writes = new Map(panelsUnit.tools.map((tool) => [tool.name, tool.writes]));
     for (const name of h.registered.map((tool) => tool.name)) {
-      expect(writes.get(name), name).toBe(name !== MODULES_LIST_TOOL && name !== MARKET_SOURCES_TOOL);
+      expect(writes.get(name), name).toBe(
+        name !== MODULES_LIST_TOOL && name !== MARKET_SOURCES_TOOL && name !== MARKET_CATEGORIES_TOOL,
+      );
     }
     expect(h.registered.map((tool) => tool.name)).not.toContain('workbench_modules');
   });

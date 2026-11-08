@@ -1,11 +1,11 @@
-import { Fragment, createElement as h, useMemo, useState } from 'react';
+import { Fragment, createElement as h, useMemo, useRef, useState } from 'react';
+import type { KeyboardEvent } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import { marketText } from '@dsh-workbench/shared';
 import type { DiscoverEntry, DiscoverVersionRow } from '@/kernel/contract/market-index';
 import {
   IconChevronDownOutlineRegular,
   IconWarningOutlineRegular,
-  SegmentedTabs,
   Tag,
 } from '@deepseek-ai/dsh-client-ui-primitives';
 import { displayTitleOf, latestVersionOf, publishDateText, sourceFactsOf } from './discover-view';
@@ -16,6 +16,70 @@ import { DiscoverDocPanel } from './discover-doc';
 import styles from './MarketPage.module.css';
 
 type DetailTab = 'overview' | 'readme' | 'changelog';
+
+interface DetailTabItem {
+  readonly value: DetailTab;
+  readonly label: string;
+  readonly id: string;
+  readonly panelId: string;
+}
+
+interface DetailTabsProps {
+  readonly items: readonly DetailTabItem[];
+  readonly value: DetailTab;
+  readonly onChange: (tab: DetailTab) => void;
+  readonly label: string;
+}
+
+function DetailTabs({ items, value, onChange, label }: DetailTabsProps) {
+  const buttons = useRef<Array<HTMLButtonElement | null>>([]);
+  const move = (event: KeyboardEvent<HTMLButtonElement>, index: number): void => {
+    const last = items.length - 1;
+    let target: number;
+    switch (event.key) {
+      case 'ArrowRight':
+        target = index === last ? 0 : index + 1;
+        break;
+      case 'ArrowLeft':
+        target = index === 0 ? last : index - 1;
+        break;
+      case 'Home':
+        target = 0;
+        break;
+      case 'End':
+        target = last;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    onChange(items[target].value);
+    buttons.current[target]?.focus();
+  };
+  return (
+    <div className={styles.discoverTabStrip} role="tablist" aria-label={label}>
+      {items.map((item, index) => (
+        <button
+          key={item.value}
+          ref={(node) => {
+            buttons.current[index] = node;
+          }}
+          type="button"
+          role="tab"
+          id={item.id}
+          aria-controls={item.panelId}
+          aria-selected={item.value === value}
+          tabIndex={item.value === value ? 0 : -1}
+          className={styles.discoverTab}
+          onClick={() => onChange(item.value)}
+          onKeyDown={(event) => move(event, index)}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export interface DiscoverDetailProps {
   readonly t: Translate;
@@ -189,15 +253,7 @@ export function DiscoverDetail(props: DiscoverDetailProps) {
           />
         )}
       </div>
-      <div className={styles.discoverDetailTabs}>
-        <SegmentedTabs
-          className={styles.discoverDetailTabList}
-          items={tabItems}
-          value={tab}
-          onChange={setTab}
-          label={t('panels.discover.detailTabs')}
-        />
-      </div>
+      <DetailTabs items={tabItems} value={tab} onChange={setTab} label={t('panels.discover.detailTabs')} />
       {tab === 'overview' ? (
         <div
           className={styles.discoverDetailPanel}

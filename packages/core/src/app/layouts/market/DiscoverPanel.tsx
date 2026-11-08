@@ -1,4 +1,4 @@
-import { Fragment, createElement as h } from 'react';
+import { Fragment, createElement as h, useLayoutEffect } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import { Button, IconWarningOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives';
 import { DiscoverDetail } from './discover-detail';
@@ -31,10 +31,15 @@ export interface DiscoverPanelProps {
   readonly active: boolean;
   readonly onInstalled: () => void;
   readonly onShowInstalled: (name: string) => void;
+  readonly onDetailChange?: ((open: boolean) => void) | undefined;
 }
 
-export function DiscoverPanel({ t, active, onInstalled, onShowInstalled }: DiscoverPanelProps) {
+export function DiscoverPanel({ t, active, onInstalled, onShowInstalled, onDetailChange }: DiscoverPanelProps) {
   const d = useDiscover(t, active, onInstalled);
+  const detailOpen = d.detailEntry !== null;
+  useLayoutEffect(() => {
+    onDetailChange?.(detailOpen);
+  }, [detailOpen, onDetailChange]);
   const marketLabel =
     d.selected === null ? '' : (sourceLabelsOf(d.sources).get(d.selected) ?? '');
 

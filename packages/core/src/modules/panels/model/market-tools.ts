@@ -1,5 +1,6 @@
 import type { DshHostContext, DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared';
 import type {
+  DiscoverPayload,
   MarketSourceConfig,
   MarketSourcesPayload,
 } from '@dsh-workbench/shared/contract/protocol/market-index';
@@ -11,6 +12,7 @@ import type { BundleSupply, MarketEntry, MarketService } from './market';
 import type { SharedDependency } from './market-dependency';
 import { pluginKeptText, type PluginUninstallOutcome } from './plugin-actions';
 import { pluginTermOf } from '@/shared/api/host/plugin-term';
+import { marketCategoriesTool } from './market-categories-tool';
 import { marketSourcesTool } from './market-sources-tool';
 import { textOutput } from './tool-output';
 import {
@@ -177,6 +179,7 @@ export function registerMarketTools(
   ctx: DshHostContext,
   market: MarketService,
   sources?: MarketSourceGateway,
+  categories?: () => Promise<DiscoverPayload>,
 ): Array<() => void> {
   const tools = ctx.get<DshToolRegistry>('tools');
   if (tools === undefined) {
@@ -471,6 +474,7 @@ export function registerMarketTools(
     tools.register(uninstallPluginTool),
     tools.register(updateWorkbenchTool),
     tools.register(marketSourcesTool(sources === undefined ? undefined : () => sources.read())),
+    tools.register(marketCategoriesTool(categories)),
     tools.register(enableTool),
     tools.register(readOnlyTool),
   ];

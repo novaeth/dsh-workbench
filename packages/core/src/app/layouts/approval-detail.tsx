@@ -148,9 +148,27 @@ export function publishRows(
         preview === undefined && asked.length === 0
           ? t('approval.publish.reading')
           : labels.length === 0
-            ? t('approval.publish.labelsMissing')
+            ? t('approval.publish.labelsNone')
             : labels.join(' · '),
     });
+    const category = textOf(args, 'category') || (preview?.category ?? '');
+    rows.push({
+      label: t('approval.publish.category'),
+      value:
+        category !== ''
+          ? category
+          : preview === undefined
+            ? t('approval.publish.reading')
+            : t('approval.publish.categoryMissing'),
+    });
+    const known = preview?.categories;
+    if (category !== '' && known !== undefined && !known.includes(category)) {
+      rows.push({
+        label: t('approval.publish.categoryVocabulary'),
+        value:
+          known.length === 0 ? t('approval.publish.categoryVocabularyEmpty') : known.join(' · '),
+      });
+    }
   }
   const claim = preview?.claim;
   if (claim !== undefined && claim.state !== 'new' && claim.state !== 'unknown') {

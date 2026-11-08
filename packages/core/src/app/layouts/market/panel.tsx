@@ -112,6 +112,8 @@ function MarketPanel({
   const [adding, setAdding] = useState(false);
   const [acting, setActing] = useState(false);
   const [tab, setTab] = useState<MarketTab>('installed');
+  const [installedDetailOpen, setInstalledDetailOpen] = useState(false);
+  const [discoverDetailOpen, setDiscoverDetailOpen] = useState(false);
   const openAddModule = useCallback((): void => setAdding(true), []);
 
   const updates = useMemo(() => marketUpdatesOf(modules), [modules]);
@@ -146,18 +148,21 @@ function MarketPanel({
     mock === undefined ? freshness : mock.loaded === false ? pendingFreshness : MOCK_FRESHNESS;
   const shownRead = mock === undefined ? installedRead : (mock.installedRead ?? true);
   const busy = !marketSettled(shownFreshness, shownRead) || acting;
+  const detailOpen = tab === 'installed' ? installedDetailOpen : discoverDetailOpen;
   return (
-    <div className={styles.marketPage}>
-      <MarketHeader
-        t={t}
-        idPrefix={MARKET_PANEL_ID}
-        tab={tab}
-        busy={busy}
-        checking={checking || versionsAllChecking}
-        onTab={setTab}
-        onReload={recheck}
-        onAdd={openAddModule}
-      />
+    <div className={styles.marketPage} data-detail={detailOpen ? 'true' : 'false'}>
+      {detailOpen ? null : (
+        <MarketHeader
+          t={t}
+          idPrefix={MARKET_PANEL_ID}
+          tab={tab}
+          busy={busy}
+          checking={checking || versionsAllChecking}
+          onTab={setTab}
+          onReload={recheck}
+          onAdd={openAddModule}
+        />
+      )}
       {devMarket.strip}
       <div
         id={`${MARKET_PANEL_ID}-panel-installed`}
@@ -190,6 +195,7 @@ function MarketPanel({
           mock={mock}
           defaults={machineBoard?.defaults ?? []}
           changed={machineBoard?.changed ?? {}}
+          onDetailChange={setInstalledDetailOpen}
         />
         <AddModuleDialog
           t={t}
@@ -209,6 +215,7 @@ function MarketPanel({
           active={tab === 'discover'}
           onInstalled={() => reload({ force: true })}
           onShowInstalled={() => setTab('installed')}
+          onDetailChange={setDiscoverDetailOpen}
         />
       </div>
     </div>

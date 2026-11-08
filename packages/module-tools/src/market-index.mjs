@@ -322,6 +322,19 @@ export function mergeEntryLabels(entry, labels) {
   return { ...entry, metadata: { ...(entry.metadata ?? {}), labels: wanted } };
 }
 
+export function categoryOfManifest(manifest) {
+  const dsh = recordOf(recordOf(manifest).dsh);
+  const workbench = recordOf(dsh.workbench);
+  const category = recordOf(workbench.market).category;
+  return typeof category === 'string' ? category.trim() : '';
+}
+
+export function mergeEntryCategory(entry, category) {
+  if (typeof category !== 'string' || category === '') return entry;
+  if (entry.metadata?.category === category) return entry;
+  return { ...entry, metadata: { ...(entry.metadata ?? {}), category } };
+}
+
 export function entryMetaOf(manifest) {
   const author = authorOf(manifest);
   const homepage = typeof manifest.homepage === 'string' ? manifest.homepage.trim() : '';
@@ -742,6 +755,7 @@ export function updateMarketIndex(options) {
         }
       }
       next = mergeEntryLabels(next, options.labels);
+      next = mergeEntryCategory(next, options.category);
       writeEntryFile(workdir, dir, next);
       indexSha = commitOf(exec, workdir, `chore(market): ${entryName}`, identityOf(manifest));
       report({ phase: 'index-committed', indexCommit: indexSha });
@@ -816,6 +830,18 @@ export function refreshMarketEntry(options) {
     }
     const latest = existing.versions[0]?.version ?? '';
     const meta = entryMetaOf(manifest);
+    const keptLabels = Array.isArray(options.labels) && options.labels.length > 0
+      ? [...options.labels]
+      : (existing.metadata?.labels ?? []);
+    const keptCategory = typeof options.category === 'string' && options.category !== ''
+      ? options.category
+      : (existing.metadata?.category ?? '');
+    const metadata = { ...(meta.metadata ?? {}) };
+    if (keptLabels.length === 0) delete metadata.labels;
+    else metadata.labels = keptLabels;
+    if (keptCategory === '') delete metadata.category;
+    else metadata.category = keptCategory;
+    meta.metadata = metadata;
     const next = { ...existing };
     for (const key of ['title', 'description', 'author', 'homepage', 'metadata']) {
       if (Object.hasOwn(meta, key)) next[key] = meta[key];

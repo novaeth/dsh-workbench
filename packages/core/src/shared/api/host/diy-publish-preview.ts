@@ -251,6 +251,22 @@ export function publishPreviewOf(
   const declaredLabels = labelsOfManifest(record);
   const labels =
     declaredLabels.length > 0 || marketEntry === undefined ? declaredLabels : marketEntryLabels(marketEntry);
+  const declaredCategory = categoryOfManifest(record);
+  const category =
+    declaredCategory !== '' || marketEntry === undefined
+      ? declaredCategory
+      : (marketEntry.metadata?.category ?? '');
+  const categories =
+    market?.index === undefined
+      ? undefined
+      : [
+          ...new Set(
+            market.index.plugins.flatMap((one) => {
+              const value = one.metadata?.category;
+              return value === undefined || value === '' ? [] : [value];
+            }),
+          ),
+        ].sort((left, right) => left.localeCompare(right, 'zh'));
   const target = targetVersionOf(version, (options.version ?? '').trim(), market?.market);
   const askedAuthor = (options.author ?? '').trim();
   const author = askedAuthor === '' ? authorOf(record) : askedAuthor;
@@ -268,11 +284,26 @@ export function publishPreviewOf(
     version,
     ...(author === '' ? {} : { author }),
     ...(labels.length === 0 ? {} : { labels }),
+    ...(category === '' ? {} : { category }),
+    ...(categories === undefined ? {} : { categories }),
     ...(typeof registry === 'string' && registry !== '' ? { registry } : {}),
     ...(market === undefined ? {} : { market: market.market }),
     ...(claim === undefined ? {} : { claim }),
     changelog: changelogOf(found.dir, target, (options.changelog ?? '').trim(), kindOf(options.changelogType)),
   };
+}
+
+function categoryOfManifest(record: Record<string, unknown>): string {
+  const dsh = record['dsh'];
+  const workbench =
+    dsh !== null && typeof dsh === 'object' ? (dsh as Record<string, unknown>)['workbench'] : undefined;
+  const market =
+    workbench !== null && typeof workbench === 'object'
+      ? (workbench as Record<string, unknown>)['market']
+      : undefined;
+  const category =
+    market !== null && typeof market === 'object' ? (market as Record<string, unknown>)['category'] : undefined;
+  return typeof category === 'string' ? category.trim() : '';
 }
 
 function labelsOfManifest(record: Record<string, unknown>): readonly string[] {

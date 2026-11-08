@@ -265,6 +265,8 @@ export interface PublishPreview {
   readonly version: string;
   readonly author?: string;
   readonly labels?: readonly string[];
+  readonly category?: string;
+  readonly categories?: readonly string[];
   readonly registry?: string;
   readonly market?: MarketPublishDestination;
   readonly claim?: MarketClaim;

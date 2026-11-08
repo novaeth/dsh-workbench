@@ -1,4 +1,4 @@
-import { createElement as h, useState } from 'react';
+import { createElement as h, useLayoutEffect, useState } from 'react';
 import type { ReactNode, Translate } from '@dsh-workbench/shared';
 import type { UnitManifest } from '@dsh-workbench/shared';
 import { useHostWrite } from '@/shared/hooks/use-host-write';
@@ -82,6 +82,7 @@ export interface MarketViewProps {
   readonly mock?: MarketMock | undefined;
   readonly defaults?: readonly string[] | undefined;
   readonly changed?: Readonly<Record<string, number>> | undefined;
+  readonly onDetailChange?: ((open: boolean) => void) | undefined;
 }
 
 
@@ -204,6 +205,7 @@ export function MarketView({
   mock,
   defaults = [],
   changed = {},
+  onDetailChange,
 }: MarketViewProps) {
   const { pending, setPending, confirming, setConfirming, failed, setFailed, notice, setNotice } =
     useMarketTransient({ mock, onPending });
@@ -243,6 +245,10 @@ export function MarketView({
   const rowById = marketRowMap(shown, self, installedList, pluginList);
   const confirmingRow = confirming === null ? undefined : rowById.get(confirming);
   const detailRow = detailId === null ? undefined : rowById.get(detailId);
+  const detailOpen = detailRow !== undefined;
+  useLayoutEffect(() => {
+    onDetailChange?.(detailOpen);
+  }, [detailOpen, onDetailChange]);
 
   const seats = { setPending, setHeld: steady.hold, setConfirming, setFailed, setNotice };
   const act = marketActOf({

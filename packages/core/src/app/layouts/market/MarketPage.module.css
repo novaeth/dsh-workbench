@@ -276,6 +276,10 @@
   color: var(--dsw-alias-label-primary);
 }
 
+.marketPage[data-detail='true'] {
+  padding-top: var(--wb-len-28);
+}
+
 .marketPage > * {
   width: 100%;
   max-width: var(--wb-len-960);
@@ -720,14 +724,45 @@
   min-width: 0;
 }
 
-.discoverDetailTabs {
+.discoverTabStrip {
   display: flex;
-  margin-bottom: calc(0px - var(--wb-len-4));
+  align-items: center;
+  gap: var(--wb-len-20);
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
 }
 
-.discoverDetailTabList {
-  width: fit-content;
-  min-width: var(--wb-len-240);
+.discoverTab {
+  position: relative;
+  height: var(--wb-len-32);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dsw-alias-label-tertiary);
+  font: var(--dsw-font-s-14);
+  cursor: pointer;
+}
+
+.discoverTab:hover {
+  color: var(--dsw-alias-label-primary);
+}
+
+.discoverTab[aria-selected='true'] {
+  color: var(--dsw-alias-label-primary);
+  font-weight: 500;
+}
+
+.discoverTab[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 calc(0px - 0.5px);
+  height: var(--wb-len-2);
+  border-radius: var(--wb-len-1);
+  background: var(--dsw-alias-label-primary);
+}
+
+.discoverTab:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
 }
 
 .discoverDocBody {

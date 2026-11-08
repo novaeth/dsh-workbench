@@ -31,8 +31,10 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 `package.json` 缺 `files` 里的 `CHANGELOG.md` 一样拦下；`author` 没写时从本机 `git config` 补进 manifest，索引与产物都带上。
 标签只住在市集条目上（`metadata.labels`），**不写进 `package.json`**：清单的键是协议定死的
 （`apiVersion` / `unit` / `title` / `card` / `tools` / `host` / `needs`），往里塞私货 check 会判红。
-发布时带 `--label <短词>`（可重复，最多两个）：它并进索引条目的 `metadata.labels`；
+标签可选：`--label <短词>`（可重复，最多两个）并进索引条目的 `metadata.labels`；
 不传就沿用老清单里已经写过的（`dsh.workbench.market.labels`，只在读那一侧认）。
+分类 `--category <短词>` 是市场发布的要求：条目还没有分类时必须给一个（工作台的发布审批会拦），
+已有分类可以不带；它写进 `metadata.category`，发现页的分类 chip 就是按它汇总的，新模块带一个新分类，页面自动多一个。
 标题 / 署名 / 说明仍保持索引里现有的那份不动。
 要换署名时带 `--author "姓名 <邮箱>"`（或只给姓名）：它写回 `package.json`，索引、产物与提交都用它，
 `--refresh` 时也一样。**发布本身不改市集里的标题 / 署名 / 说明**：这些元数据只由 `--refresh`（或显式 `--author`）写，

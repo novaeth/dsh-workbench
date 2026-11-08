@@ -100,7 +100,6 @@ export interface DiscoverController {
   readonly setQuery: (value: string) => void;
   readonly setCategory: (value: string | null) => void;
   readonly toggleLabel: (label: string) => void;
-  readonly clearLabels: () => void;
   readonly setSort: (sort: DiscoverSort) => void;
   readonly showMore: () => void;
   readonly openDetail: (name: string) => void;
@@ -468,7 +467,6 @@ export function useDiscover(t: Translate, active: boolean, onInstalled: () => vo
       setSelectedLabels((current) =>
         current.includes(label) ? current.filter((one) => one !== label) : [...current, label],
       ),
-    clearLabels: () => setSelectedLabels([]),
     setSort,
     showMore: () => setLimit((current) => current + DISCOVER_PAGE_SIZE),
     openDetail: (name) => setDetail(name),

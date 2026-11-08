@@ -78,6 +78,7 @@ describe('发布审批：版本单独一行，仓库 / 分支 / 两个 commit �
       ['目标', '按配置默认'],
       ['作者', '未署名'],
       ['标签', '探针'],
+      ['分类', '还没有（发布到市场时定一个）'],
       ['仓库', market.url],
       ['分支', 'main'],
       ['打包文件', 'artifacts/probe · dist · client.js'],
@@ -86,12 +87,31 @@ describe('发布审批：版本单独一行，仓库 / 分支 / 两个 commit �
     ]);
   });
 
+  it('★ 分类不在索引现有词表里：把现有分类摆出来（软提示，不拦）', () => {
+    const rows = publishRows(
+      { unit: 'probe', category: '提醒' },
+      { name: '@demo/probe', version: '0.0.1', categories: ['任务与协作', '用量与计费'], market },
+      t,
+    );
+    expect(rows.find((row) => row.label === '分类')?.value).toBe('提醒');
+    expect(rows.find((row) => row.label === '现有分类')?.value).toBe('任务与协作 · 用量与计费');
+  });
+
+  it('分类在现有词表里：不额外占一行', () => {
+    const rows = publishRows(
+      { unit: 'probe', category: '任务与协作' },
+      { name: '@demo/probe', version: '0.0.1', categories: ['任务与协作'], market },
+      t,
+    );
+    expect(rows.some((row) => row.label === '现有分类')).toBe(false);
+  });
+
   it('★ 这次带的标签排在模块里写的那个前面；模块还没有标签就直说', () => {
     const asked = publishRows({ unit: 'probe', labels: ['发布编排', '构建状态'] }, preview, t);
     expect(asked.find((row) => row.label === '标签')?.value).toBe('发布编排 · 构建状态');
 
     const missing = publishRows({ unit: 'probe' }, { name: '@demo/probe', version: '0.0.1', market }, t);
-    expect(missing.find((row) => row.label === '标签')?.value).toBe('还没有（发布到市场时补 1–2 个）');
+    expect(missing.find((row) => row.label === '标签')?.value).toBe('未设置');
   });
 
   it('★ 模块写了 author：作者行把署名原文摆出来（姓名 + 邮箱，和提交署名一致）', () => {
@@ -464,7 +484,7 @@ describe('工具包审批：详情座一行一个包，范围与写工具的口�
 
   it('★ 外壳包与单元包各一行：名字 + 共 N 把（读 / 写）', () => {
     expect(toolboxApprovalRows({ targets: ['manage', 'unit:inventory'] }, [unit], t)).toEqual([
-      { label: '工具包', value: '工作台管理 · 共 20 把（读 4 / 写 16）' },
+      { label: '工具包', value: '工作台管理 · 共 21 把（读 5 / 写 16）' },
       { label: '工具包', value: '库存 · 共 2 把（读 1 / 写 1）' },
       { label: '范围', value: '这个会话' },
       { label: '写入', value: '包里的写工具仍逐条确认' },

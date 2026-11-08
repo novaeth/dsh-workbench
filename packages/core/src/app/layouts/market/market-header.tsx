@@ -4,6 +4,12 @@ import { Button, IconPlusOutlineRegular, SegmentedTabs } from '@deepseek-ai/dsh-
 import { MarketRefreshButton } from './market-check';
 import styles from './MarketPage.module.css';
 
+type SegmentedTabsProps<Value extends string> = Parameters<typeof SegmentedTabs<Value>>[0];
+
+const SegmentedTabsSm = SegmentedTabs as unknown as <Value extends string>(
+  props: SegmentedTabsProps<Value> & { readonly size?: 'sm' },
+) => ReturnType<typeof SegmentedTabs>;
+
 export type MarketTab = 'installed' | 'discover';
 
 export interface MarketHeaderProps {
@@ -77,7 +83,8 @@ export function MarketHeader({
         </div>
       </header>
       <div className={styles.marketTabs}>
-        <SegmentedTabs
+        <SegmentedTabsSm
+          size="sm"
           className={styles.marketTabList}
           items={tabItems}
           value={tab}

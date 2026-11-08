@@ -51,6 +51,7 @@ import {
 import {
   MarketIndexError,
   authorTextOf,
+  categoryOfManifest,
   claimProblemText,
   identityOf,
   labelsOfManifest,
@@ -158,7 +159,7 @@ function writeStateKeepingRun(home, unit, value) {
   writeState(home, unit, run === undefined ? value : { ...value, run });
 }
 
-function stopSummaryOf(target, manifest, version, changes, changelog, labels) {
+function stopSummaryOf(target, manifest, version, changes, changelog, labels, category = '') {
   return {
     ok: true,
     stop: 'workspace-only',
@@ -167,6 +168,7 @@ function stopSummaryOf(target, manifest, version, changes, changelog, labels) {
     version,
     changes,
     ...(labels.length === 0 ? {} : { labels }),
+    ...(category === '' ? {} : { category }),
     ...(changelog === undefined ? {} : { changelog }),
     install: '',
   };
@@ -293,6 +295,10 @@ export async function runRelease({
     throw new ReleaseError('--label 只认一行短词：不能是空的');
   }
   if (askedLabels.length > 2) throw new ReleaseError('--label 最多两个 —— 一个模块的标签是 1–2 个短词');
+  const askedCategory = (argValue(args, '--category') ?? '').trim();
+  if (askedCategory !== '' && /[\r\n]/u.test(askedCategory)) {
+    throw new ReleaseError('--category 只认一个短词：不能换行');
+  }
   const manifest = readManifest(root);
   const unit = manifest?.dsh?.workbench?.unit;
   if (typeof unit !== 'string' || unit === '') throw new ReleaseError('这不是一个 wb 模块包（没有 dsh.workbench.unit）');
@@ -359,6 +365,8 @@ export async function runRelease({
   const labels = askedLabels;
   const labelsForIndex = labels.length > 0 ? labels : labelsOfManifest(manifest);
   const labelsChange = verify || labels.length === 0 ? undefined : `标签 ← ${labels.join(' · ')}`;
+  const categoryForIndex = askedCategory !== '' ? askedCategory : categoryOfManifest(manifest);
+  const categoryChange = verify || askedCategory === '' ? undefined : `分类 ← ${askedCategory}`;
   const explicitApplied = explicitAuthor !== undefined && !verify && !dryRun;
   if (explicitApplied && !indexOnly) {
     manifest.author = explicitAuthor;
@@ -397,7 +405,15 @@ export async function runRelease({
     const cardTitle = cardTitleFromMessages(root, unit);
     const titled = cardTitle === undefined ? manifest : { ...manifest, title: cardTitle };
     const publisher = authorTextOf(manifest) || authored.author || '';
-    const result = refreshMarketEntry({ plan: indexPlan, exec, home, manifest: titled, publisher });
+    const result = refreshMarketEntry({
+      plan: indexPlan,
+      exec,
+      home,
+      manifest: titled,
+      publisher,
+      ...(labelsForIndex.length === 0 ? {} : { labels: labelsForIndex }),
+      ...(categoryForIndex === '' ? {} : { category: categoryForIndex }),
+    });
     if (result.updated !== true && result.reason !== undefined) {
       throw new ReleaseError(`刷新市集元数据没走通：${result.reason}`);
     }
@@ -419,9 +435,11 @@ export async function runRelease({
               '市集元数据已刷新',
               ...(explicitAuthor === undefined ? [] : ['author ← --author']),
               ...(labelsChange === undefined ? [] : [labelsChange]),
+              ...(categoryChange === undefined ? [] : [categoryChange]),
             ]
           : [],
       ...(labels.length === 0 ? {} : { labels }),
+      ...(categoryForIndex === '' ? {} : { category: categoryForIndex }),
       install: '',
       text:
         result.updated === true
@@ -535,6 +553,7 @@ export async function runRelease({
       publisher: authorTextOf(manifestNow),
       metadata: authorChange !== undefined,
       ...(labelsForIndex.length === 0 ? {} : { labels: labelsForIndex }),
+      ...(categoryForIndex === '' ? {} : { category: categoryForIndex }),
       exec,
       home,
       now: () => Date.now(),
@@ -544,6 +563,7 @@ export async function runRelease({
   const changesOf = (version) => [
     ...(authorChange === undefined ? [] : [authorChange]),
     ...(labelsChange === undefined ? [] : [labelsChange]),
+    ...(categoryChange === undefined ? [] : [categoryChange]),
     ...(version === manifest.version ? [] : [`version → ${version}`]),
     ...(changelogChange === undefined ? [] : [changelogChange]),
   ];
@@ -764,6 +784,7 @@ export async function runRelease({
       files,
       changes: changesOf(version),
       ...(labels.length === 0 ? {} : { labels }),
+      ...(categoryForIndex === '' ? {} : { category: categoryForIndex }),
       ...(changelogReport === undefined ? {} : { changelog: changelogReport }),
       install: '',
       market: indexPreviewOf(manifest.name, version),
@@ -780,7 +801,7 @@ export async function runRelease({
     if (workspaceOnly) {
       writeManifest(root, next);
       if (tracking) advanceRun(home, unit, { phase: 'workspace', fingerprint: artifactFingerprintOf(root) });
-      const stopSummary = stopSummaryOf(target, next, version, changesOf(version), changelogReport, labels);
+      const stopSummary = stopSummaryOf(target, next, version, changesOf(version), changelogReport, labels, categoryForIndex);
       emit(out, json, stopSummary);
       return stopSummary;
     }
@@ -794,6 +815,7 @@ export async function runRelease({
       publisher,
       metadata: authorChange !== undefined,
       ...(labelsForIndex.length === 0 ? {} : { labels: labelsForIndex }),
+      ...(categoryForIndex === '' ? {} : { category: categoryForIndex }),
       exec,
       home,
       now: () => Date.now(),
@@ -877,7 +899,7 @@ export async function runRelease({
     if (tracking) advanceRun(home, unit, { phase: 'version', version, fingerprint: artifactFingerprintOf(root) });
     writeStateKeepingRun(home, unit, stateOf(info, next, version, 'intent'));
     if (workspaceOnly) {
-      const stopSummary = stopSummaryOf(target, next, version, changesOf(version), changelogReport, labels);
+      const stopSummary = stopSummaryOf(target, next, version, changesOf(version), changelogReport, labels, categoryForIndex);
       emit(out, json, stopSummary);
       return stopSummary;
     }
@@ -964,7 +986,7 @@ export async function runRelease({
       });
       if (workspaceOnly) {
         const stopSummary = {
-          ...stopSummaryOf(target, next, version, changesOf(version), changelogReport, labels),
+          ...stopSummaryOf(target, next, version, changesOf(version), changelogReport, labels, categoryForIndex),
           files: checked.files,
           git: { url: info.url, tag: info.tagOf(version), commit: checked.commit },
         };
@@ -1049,7 +1071,7 @@ export async function runRelease({
     if (!resumeMatchesTree) runCliStage(exec, root, ['check'], stageOptions);
     writeStateKeepingRun(home, unit, stateOf(info, next, version, 'intent'));
     if (workspaceOnly) {
-      const stopSummary = stopSummaryOf(target, next, version, changes, changelogReport, labels);
+      const stopSummary = stopSummaryOf(target, next, version, changes, changelogReport, labels, categoryForIndex);
       emit(out, json, stopSummary);
       return stopSummary;
     }

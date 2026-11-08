@@ -164,7 +164,11 @@ function successPayloadOf(
     labelList.length === 0 || (targetOfPayload !== 'market' && payload['refresh'] !== true)
       ? ''
       : `标签：${labelList.join(' · ')}`;
-  const tail = [changelogLine, labelsLine].filter((one) => one !== '').join('\n');
+  const categoryLine =
+    asText(payload['category']) === '' || (targetOfPayload !== 'market' && payload['refresh'] !== true)
+      ? ''
+      : `分类：${asText(payload['category'])}`;
+  const tail = [changelogLine, labelsLine, categoryLine].filter((one) => one !== '').join('\n');
   return plainJson({ ...payload, unit: found.unit, text: tail === '' ? text : `${text}\n${tail}` });
 }
 
@@ -183,6 +187,9 @@ function withPhasePayloads(
   if (merged['labels'] === undefined && first['labels'] !== undefined) {
     merged['labels'] = first['labels'];
   }
+  if (merged['category'] === undefined && first['category'] !== undefined) {
+    merged['category'] = first['category'];
+  }
   return merged;
 }
 
@@ -196,7 +203,7 @@ export function registerPublishTool(
     description:
       '用户说“发布”后才用：把这一格发到 target 指定的出口（不填按环境默认）。' +
       '这一版还没有更新日志时把 changelogNote 一起带上 —— 发布时写进 CHANGELOG.md，随包发。' +
-      '这个模块还没有市集标签时把 labels 带上（1–2 个短词）。',
+      '这个模块还没有市集分类时把 category 带上（一个短词）；标签 labels 可选（最多两个短词）。',
     parameters: {
       type: 'object',
       properties: {
@@ -214,8 +221,13 @@ export function registerPublishTool(
           type: 'array',
           items: { type: 'string' },
           description:
-            '市集条目的标签，1–2 个短词（说它干什么，比如「发布编排」「构建状态」）。' +
-            '模块还没有标签时必填；已有可省，传了会替换掉原来的。',
+            '市集条目的标签，可选，最多两个短词（说它干什么，比如「发布编排」「构建状态」）；传了会替换掉原来的。',
+        },
+        category: {
+          type: 'string',
+          description:
+            '市集条目的分类，一个短词（比如「任务与协作」）。发布到市场时必填：条目还没有分类必须给一个，' +
+            '已有分类可省；传了会替换掉原来的。',
         },
         target: {
           type: 'string',
@@ -275,6 +287,7 @@ export function registerPublishTool(
       const changelogNote = asText(args['changelogNote']);
       const changelogType = asText(args['changelogType']);
       const labels = labelsOf(args['labels']);
+      const category = asText(args['category']);
       let author = asText(args['author']);
       const verify = args['verify'] === true;
       const resume = args['resume'] === true;
@@ -294,6 +307,7 @@ export function registerPublishTool(
       if (changelogNote !== '') argv.push('--changelog-note', changelogNote);
       if (changelogType !== '') argv.push('--changelog-type', changelogType);
       for (const label of labels) argv.push('--label', label);
+      if (category !== '') argv.push('--category', category);
       if (refresh) argv.push('--refresh');
       const run = async (extra: readonly string[], request: ReleaseRun): Promise<ShellResult> =>
         seam.run({

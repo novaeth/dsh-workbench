@@ -107,6 +107,11 @@ function clipped(text: string): string {
   return chars.length > TARGET_LIMIT ? `${chars.slice(0, TARGET_LIMIT).join('')}…` : text;
 }
 
+function categoryOfArgs(raw: Record<string, unknown>): string {
+  const value = raw['category'];
+  return typeof value === 'string' ? value.trim() : '';
+}
+
 function labelsOfArgs(raw: Record<string, unknown>): readonly string[] {
   const value = raw['labels'];
   if (!Array.isArray(value)) return [];
@@ -182,6 +187,10 @@ function publishVerdict(
         '发布时会一起写进 CHANGELOG.md 并随包发',
     };
   }
+  const category = categoryOfArgs(raw);
+  if (/[\r\n]/u.test(category)) {
+    return { kind: 'deny', reason: '分类只认一个短词：不能换行' };
+  }
   const labels = labelsOfArgs(raw);
   if (labels.length > 2) {
     return {
@@ -189,12 +198,12 @@ function publishVerdict(
       reason: `标签最多两个（收到 ${String(labels.length)} 个）—— 挑最能说明这个模块干什么的 1–2 个`,
     };
   }
-  if (target === 'market' && labels.length === 0 && (found?.labels ?? []).length === 0) {
+  if (target === 'market' && category === '' && (found?.category ?? '') === '') {
     return {
       kind: 'deny',
       reason:
-        '这个模块还没有标签 —— 发布到市场时给它 1–2 个短词（labels，说它干什么，比如「发布编排」「构建状态」）；' +
-        '已经有标签就不用传',
+        '这个模块还没有市集分类 —— 发布到市场时用 category 定一个（一个短词，说它属于哪类，比如「任务与协作」）；' +
+        '已经有分类就不用传',
     };
   }
   const copies = copiesOf(label, labelEn);
@@ -207,8 +216,8 @@ function publishVerdict(
         : `${found.name}@${found.version} → ${target}${found.registry === undefined ? '' : ` (${found.registry})`}`;
   const question = refresh
     ? pair(
-        `只刷新${label}在市集里的元数据（标题 / 作者 / 说明 / 标签），不升版本、不重发产物，允许吗？`,
-        `Only refresh ${labelEn}'s market metadata (title, author, description, labels); no version bump, no artifacts. Allow?`,
+        `只刷新${label}在市集里的元数据（标题 / 作者 / 说明 / 标签 / 分类），不升版本、不重发产物，允许吗？`,
+        `Only refresh ${labelEn}'s market metadata (title, author, description, labels, category); no version bump, no artifacts. Allow?`,
       )
     : pair(copy.zh, copy.en);
   return askOf(`${DIY_PUBLISH_TOOL} ${targetLabel}${refresh ? '（元数据）' : ''}`, question, question);

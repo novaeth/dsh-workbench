@@ -192,11 +192,16 @@ export const panelsHost: UnitOwnedFace = {
       registerTools: () => [
         ...registerToolboxTools(ctx, toolbox),
         ...registerPanelTools(ctx, panels, values),
-        ...registerMarketTools(ctx, market, {
-          read: () => marketSources.read(),
-          init: marketInit,
-          readOnly: (id) => markSourceReadOnly(marketSources, id),
-        }),
+        ...registerMarketTools(
+          ctx,
+          market,
+          {
+            read: () => marketSources.read(),
+            init: marketInit,
+            readOnly: (id) => markSourceReadOnly(marketSources, id),
+          },
+          () => discover.snapshot(),
+        ),
         ...registerDiyTools(
           ctx,
           market,
