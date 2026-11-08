@@ -1,5 +1,5 @@
 import type { WorkbenchVersion } from '@/kernel/contract/bundle-install';
-import type { MarketRow } from './market-row-types';
+import type { MarketHintKey, MarketRow } from './market-row-types';
 
 export const WORKBENCH_ROW_ID = 'workbench:self';
 
@@ -13,6 +13,9 @@ export function workbenchRow(version: WorkbenchVersion | null | undefined): Mark
     latest !== undefined && latest !== version.installed
       ? { installed: version.installed, latest }
       : undefined;
+  const blocked = update === undefined ? undefined : version.latestBlocked;
+  const blockedHint: MarketHintKey | undefined =
+    blocked === undefined ? undefined : 'panels.market.workbenchUpdateNeedsDsh';
   const stale = !local && version.running !== undefined && version.running !== version.installed;
   const followUp = version.followUp;
   const followUpState = !stale && followUp !== undefined;
@@ -28,14 +31,17 @@ export function workbenchRow(version: WorkbenchVersion | null | undefined): Mark
           ? 'installed'
           : 'outdated',
     canInstall: false,
-    canUpdate: update !== undefined,
+    canUpdate: update !== undefined && blocked === undefined,
     canUninstall: false,
     ...(local ? { local: true } : {}),
+    ...(stale || followUpState || blockedHint === undefined ? {} : { hint: blockedHint }),
     version: {
       installed: version.installed,
       ...(latest === undefined ? {} : { latest }),
     },
-    ...(update === undefined ? {} : { moduleUpdate: update }),
+    ...(update === undefined
+      ? {}
+      : { moduleUpdate: { ...update, ...(blocked === undefined ? {} : { blocked }) } }),
     ...(followUp === undefined ? {} : { followUp }),
     ...(followUpState ? { hint: 'panels.market.migrationHint' as const } : {}),
     pkg: version.pkg,

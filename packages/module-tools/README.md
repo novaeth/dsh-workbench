@@ -57,7 +57,7 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 | `dsh-wb-module migrate [--dry-run]` | 把模块清单迁到当前代：`apiVersion` → 3、缺/空的 `workbenchFaces` 补默认；源码类问题只给提示（check 会点名） |
 | `dsh-wb-module changelog check [版本]` | 查这一版有没有记录；发布时用 `release --changelog-note` 写进去 |
 | `dsh-wb-module publish` | 发货前清单：门禁 + `files` + `npm pack`（只 dry run） |
-| `dsh-wb-module release` | 真发布：team / public / tarball / git；全门禁 + 验收闸 + 预检接管 + 发后核包 + 更新市场索引（`--dry-run` / `--verify`） |
+| `dsh-wb-module release` | 真发布：team / public / tarball / git / market / local；全门禁 + 验收闸 + 预检接管 + 发后核包 + 更新市场索引（`--dry-run` / `--verify`） |
 
 `--cwd <目录>` 指定**工作目录**，默认当前目录。注意判据仍按**工作区**发现模块：往上找
 `pnpm-workspace.yaml`（或 `package.json` 的 `workspaces`），按它声明的 glob 展开包目录

@@ -60,7 +60,8 @@ export type MarketHintKey =
   | 'panels.market.uncheckedHint'
   | 'panels.market.migrationHint'
   | 'panels.market.updateNeedsWorkbench'
-  | 'panels.market.updateIncompatible';
+  | 'panels.market.updateIncompatible'
+  | 'panels.market.workbenchUpdateNeedsDsh';
 
 export interface ModuleUpdate {
   readonly installed: string;

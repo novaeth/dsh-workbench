@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { ADAPTER_ALLOWED_IMPORTS } from './arch/adapter-packages.mjs';
 
 const dir = process.cwd();
 const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
@@ -22,7 +23,6 @@ if (!pkg.scripts?.test) problems.push('缺少 test 脚本');
 if (!pkg.files?.includes('dist')) problems.push('files 未包含 dist');
 if (!existsSync(join(dir, 'dist'))) problems.push('dist 不存在，先跑 build');
 
-const allowed = /^(node:|@dsh-workbench\/(shared|adapter-[a-z-]+)|execa$|proper-lockfile$|write-file-atomic$|dayjs$)/;
 for (const file of walk(join(dir, 'src'))) {
   if (!file.endsWith('.ts') || file.endsWith('.test.ts')) continue;
   const rel = relative(dir, file).split('\\').join('/');
@@ -31,7 +31,7 @@ for (const file of walk(join(dir, 'src'))) {
   for (const match of text.matchAll(/from\s+['"]([^'"]+)['"]/g)) {
     const spec = match[1];
     if (spec.startsWith('.')) continue;
-    if (!allowed.test(spec)) problems.push(`${rel}: 越界 import ${spec}`);
+    if (!ADAPTER_ALLOWED_IMPORTS.test(spec)) problems.push(`${rel}: 越界 import ${spec}`);
   }
 }
 

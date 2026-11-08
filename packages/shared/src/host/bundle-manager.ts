@@ -14,7 +14,7 @@ import type {
   BundleVersionList,
 } from '../contract/protocol/bundle-install.js';
 
-const MANAGER_SERVICE = 'pluginManager';
+export const PLUGIN_MANAGER_SERVICE = 'pluginManager';
 
 interface PluginManagerFace {
   registries?(): Promise<unknown>;
@@ -299,7 +299,7 @@ function asUpdateOutcome(raw: unknown): BundleUpdateOutcome | null {
 }
 
 export function readBundleManager(ctx: DshHostContext): BundleManager | undefined {
-  const face = ctx.get<PluginManagerFace>(MANAGER_SERVICE);
+  const face = ctx.get<PluginManagerFace>(PLUGIN_MANAGER_SERVICE);
   if (face === undefined) return undefined;
   if (typeof face.installBundle !== 'function' || typeof face.removeBundle !== 'function') return undefined;
   return {

@@ -1,8 +1,6 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-export const DSH_ALIAS_FONT_SIZES = [11, 12, 13, 14, 16, 20, 24];
-
 const SHELL_FONT_TOKEN = /--wb-font-[a-z0-9-]+\s*:\s*([0-9]+(?:\.[0-9]+)?)px/g;
 
 export function shellFontScaleIn(files) {
@@ -16,8 +14,26 @@ export function shellFontScaleIn(files) {
   return sizes;
 }
 
-export function fontScaleOf(shellTokenFiles = []) {
-  return new Set([...DSH_ALIAS_FONT_SIZES, ...shellFontScaleIn(shellTokenFiles)]);
+const TOKEN_FONT_SIZE = /([0-9]*\.?[0-9]+)(px|rem)/g;
+
+export function tokenFontSizesIn(source) {
+  const sizes = new Set();
+  if (source === null || source === undefined) return sizes;
+  for (const entry of source.entries ?? []) {
+    if (!entry.name.includes('font-size')) continue;
+    for (const value of [entry.values?.light, entry.values?.dark]) {
+      if (typeof value !== 'string') continue;
+      for (const hit of value.matchAll(TOKEN_FONT_SIZE)) {
+        const number = Number(hit[1]);
+        sizes.add(hit[2] === 'rem' ? number * 16 : number);
+      }
+    }
+  }
+  return sizes;
+}
+
+export function fontScaleOf(shellTokenFiles = [], dshTokens = null) {
+  return new Set([...shellFontScaleIn(shellTokenFiles), ...tokenFontSizesIn(dshTokens)]);
 }
 
 const CSS_FONT_SIZE = /(?:^|[;{\s])font-size\s*:\s*([^;{}]+)/g;
@@ -131,10 +147,13 @@ function detailOf(hit, verdict) {
     : `· ${head} —— ${formatSize(hit.px)} 在刻度上，可收进令牌（但不是错）`;
 }
 
-export function fontScaleNotes(report, scale, { doc }) {
+export function fontScaleNotes(report, scale, { doc, dshMissing = false }) {
   const sizes = [...scale].sort((a, b) => a - b).map(formatSize).join(' / ');
+  const source = dshMissing
+    ? '外壳 --wb-font-* 的定义（dsh 主题没读到，--dsw-font-* 未纳入）'
+    : '外壳 --wb-font-* 与 dsh --dsw-font-* 的定义';
   const head =
-    `字号口径（黄，不判红）：刻度 ${sizes}（从 --dsw-font-* 与 --wb-font-* 的**定义**读出来，` +
+    `字号口径（黄，不判红）：刻度 ${sizes}（从 ${source}读出来，` +
     `出处见 ${doc}）；引用令牌 ${report.refs.length} 处 / ${report.refFiles.size} 文件（合规，不列）；` +
     `刻度外字面值 ${report.offScale.length} 处 / ${report.litFiles.size} 文件；` +
     `刻度上字面值 ${report.onScale.length} 处；相对单位（em/%）判不了 ${report.relative.length} 处`;

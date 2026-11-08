@@ -17,6 +17,7 @@ import type {
   MarketSourceConfig,
 } from '@dsh-workbench/shared/contract/protocol/market-index';
 import { MARKET_WORKBENCH_LABEL } from '@dsh-workbench/shared/contract/protocol/market-index';
+import { DEFAULT_NPM_REGISTRY } from '@dsh-workbench/shared/host';
 import {
   checkVersionRange,
   compareSemver,
@@ -64,7 +65,6 @@ function explainProblem(problem: DiscoverProblem, profilePath: string | undefine
 const DEFAULT_PEER_TTL_MS = 10 * 60 * 1000;
 const DEFAULT_TIMEOUT_MS = 15 * 1000;
 const CORE_PEER = '@dsh-workbench/core';
-const DEFAULT_REGISTRY = 'https://registry.npmjs.org';
 
 function normalizedRepo(value: string): string {
   return value.trim().replace(/^git\+/, '').replace(/\.git$/, '').toLowerCase();
@@ -168,7 +168,7 @@ export function createMarketDiscover(options: MarketDiscoverOptions): MarketDisc
     version: MarketIndexVersion,
   ): Promise<string | undefined> {
     if (version.source.type === 'git') return gitPeer(source, version);
-    const registry = version.source.registry ?? (await options.defaultRegistry()) ?? DEFAULT_REGISTRY;
+    const registry = version.source.registry ?? (await options.defaultRegistry()) ?? DEFAULT_NPM_REGISTRY;
     return npmPeer(registry, name, version.version);
   }
 

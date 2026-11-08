@@ -462,6 +462,7 @@ export function createMarketService(options: {
         ...(installed === undefined ? {} : { installed }),
         ...(dshHome === undefined ? {} : { dshHome }),
         ...(profileName === undefined ? {} : { profileName }),
+        ...(bundles === undefined ? {} : { manager: bundles }),
         profileRegistry: async () => {
           try {
             return (await requireBundles().registries())?.resolved ?? undefined;

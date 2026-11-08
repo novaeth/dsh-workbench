@@ -4,6 +4,8 @@ import { homedir } from 'node:os';
 import { join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
+  OPENCLI_CATALOG_ENV,
+  OPENCLI_NPM_PACKAGE,
   buildSupplyIndex,
   createHostKit,
   hostSurface,
@@ -18,6 +20,7 @@ import {
 } from '../declared-tools.mjs';
 import { discoverPackages, workspaceRootOf } from '../discover.mjs';
 import { readDesign } from '../design.mjs';
+import { DEFAULT_FACES } from '../faces.mjs';
 import { datasourceProblemOf } from '../datasource-file.mjs';
 import { SEED_SHORT } from '../seed.mjs';
 
@@ -64,9 +67,6 @@ async function unitFaceOf(dir) {
     return undefined;
   }
 }
-
-const OPENCLI_CATALOG_ENV = 'DSH_WB_OPENCLI_CATALOG';
-const OPENCLI_NPM_PACKAGE = '@jackwener/opencli';
 
 function workbenchRootOf() {
   const configured = process.env.DSH_WORKBENCH_HOME?.trim();
@@ -540,7 +540,7 @@ export async function run() {
         problems.push(
           `${name}: dsh.workbenchFaces.${face} 没声明 —— 这两个源码入口是工具链字段` +
             `（不在 dsh.workbench 协议里）：source 判据靠它们判"哪一半"，缺了它判不了` +
-            `（\`dsh-wb-module migrate\` 会补默认的 ${face === 'host' ? 'src/host.ts' : 'src/client.tsx'}）`,
+            `（\`dsh-wb-module migrate\` 会补默认的 ${DEFAULT_FACES[face]}）`,
         );
       } else if (!existsSync(join(pkg.dir, rel))) {
         problems.push(`${name}: dsh.workbenchFaces.${face} 指的文件不存在 —— ${rel}`);

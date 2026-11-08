@@ -1,13 +1,16 @@
 import { adapterContractGaps } from '../packages/shared/dist/host.js';
 import { createAdapterSet as defaultSet } from '../packages/adapters-default/dist/index.js';
 import { createAdapterSet as chromeMcpSet } from '../packages/adapters-chrome-mcp/dist/index.js';
+import { ADAPTER_CONTRACT_SETS } from './arch/adapter-packages.mjs';
 
 const ctx = { get: () => undefined };
 
-const sets = [
-  { name: '@dsh-workbench/adapters-default', make: () => defaultSet(ctx), surface: 'required', cliDirs: 'required' },
-  { name: '@dsh-workbench/adapters-chrome-mcp', make: () => chromeMcpSet(ctx, { server: 'chrome-devtools-mcp' }), surface: 'absent', cliDirs: 'absent' },
-];
+const factories = {
+  '@dsh-workbench/adapters-default': () => defaultSet(ctx),
+  '@dsh-workbench/adapters-chrome-mcp': () => chromeMcpSet(ctx, { server: 'chrome-devtools-mcp' }),
+};
+
+const sets = ADAPTER_CONTRACT_SETS.map((item) => ({ ...item, make: factories[item.name] }));
 
 let failed = 0;
 for (const item of sets) {

@@ -13,9 +13,7 @@ import {
 import { createRule } from '@arch-guard/core';
 import { DECLARED_TOOLS_FILE } from './declared-tools.mjs';
 import { SEED_SPECIFIERS } from './seed.mjs';
-
-const HOST_FACE = 'src/host.ts';
-const CLIENT_FACE = 'src/client.tsx';
+import { CLIENT_FACE, HOST_FACE } from './faces.mjs';
 
 const LAYERS = { model: 1, components: 2, host: 10 };
 

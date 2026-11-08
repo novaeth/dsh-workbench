@@ -151,9 +151,23 @@ function withPreviousWorkbenchLatest(
   next: WorkbenchVersion | null,
   previous: WorkbenchVersion | null,
 ): WorkbenchVersion | null {
-  if (next === null || previous === null) return next;
-  if (next.latest !== undefined || previous.latest === undefined || next.pkg !== previous.pkg) return next;
-  return { ...next, latest: previous.latest };
+  if (next === null || previous === null || next.pkg !== previous.pkg) return next;
+  if (next.latest === undefined) {
+    if (previous.latest === undefined) return next;
+    return {
+      ...next,
+      latest: previous.latest,
+      ...(previous.latestBlocked === undefined ? {} : { latestBlocked: previous.latestBlocked }),
+    };
+  }
+  if (
+    next.latestBlocked === undefined &&
+    previous.latestBlocked !== undefined &&
+    next.latest === previous.latest
+  ) {
+    return { ...next, latestBlocked: previous.latestBlocked };
+  }
+  return next;
 }
 
 export function moduleVersionsCheckedAt(now: ModuleVersionsState): number | null {

@@ -2,6 +2,9 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import coreArch from '../../packages/core/arch.config.mjs';
+import sharedArch from '../../packages/shared/arch.config.mjs';
+
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 export const WORKBENCH_SRC = join(ROOT, 'packages/core/src');
 export const SHARED_SRC = join(ROOT, 'packages/shared/src');
@@ -77,39 +80,42 @@ export function resolveSpecifier(spec, fromFile, srcRoot) {
   return existsWithExt(base.replace(/\.js$/, ''));
 }
 
+function layerTableOf(config) {
+  const roles = config.presets?.[0]?.roles ?? [];
+  if (roles.length === 0) throw new Error('arch.config.mjs 的 roles 表读不出来');
+  const entries = [];
+  const dirs = [];
+  for (const role of roles) {
+    const pattern = typeof role.pattern === 'string' ? role.pattern : '';
+    const match = /^src\/([^*]+)$/.exec(pattern);
+    if (match === null) continue;
+    const rest = match[1];
+    if (rest.endsWith('/**')) dirs.push({ prefix: `src/${rest.slice(0, -3)}/`, layer: role.layer });
+    else if (!rest.includes('*')) entries.push({ file: `src/${rest}`, layer: role.layer });
+  }
+  dirs.sort((a, b) => b.prefix.length - a.prefix.length);
+  return { entries, dirs };
+}
+
+const WORKBENCH_LAYERS = layerTableOf(coreArch);
+const SHARED_LAYERS = layerTableOf(sharedArch);
+
+function layerFrom(table, rel) {
+  const path = rel.startsWith('src/') ? rel : `src/${rel}`;
+  const entry = table.entries.find((one) => one.file === path);
+  if (entry !== undefined) return entry.layer;
+  const dir = table.dirs.find((one) => path.startsWith(one.prefix));
+  return dir === undefined ? null : dir.layer;
+}
+
 export function layerOfWorkbench(rel) {
   if (isTest(rel)) return 99;
-  const path = rel.startsWith('src/') ? rel : `src/${rel}`;
-  rel = path;
-  if (rel.startsWith('src/kernel/')) return 2;
-  if (rel.startsWith('src/adapters/')) return 3;
-  if (rel.startsWith('src/shared/api/host/')) return 4;
-  if (rel.startsWith('src/shared/')) return 4;
-  if (rel.startsWith('src/units/')) return 5;
-  if (rel.startsWith('src/shell/')) return 6;
-  if (rel.startsWith('src/app/layouts/')) return 6;
-  if (rel.startsWith('src/app/units/')) {
-    return /mock|fixture/i.test(rel) ? 9 : 7;
-  }
-  if (rel.startsWith('src/app/')) return 7;
-  if (rel.startsWith('src/modules/')) return 5;
-  if (rel.startsWith('src/units/')) return 5;
-  if (rel.startsWith('src/dev/')) return 9;
-  return null;
+  return layerFrom(WORKBENCH_LAYERS, rel);
 }
 
 export function layerOfShared(rel) {
   if (isTest(rel)) return 99;
-  if (rel === 'index.ts' || rel === 'host.ts' || rel === 'testing.ts') return 10;
-  if (rel.startsWith('contract/')) return 1;
-  if (rel.startsWith('lib/') || rel.startsWith('config/')) return 2;
-  if (rel.startsWith('i18n/')) return 2;
-  if (rel.startsWith('components/')) return 3;
-  if (rel.startsWith('host/')) return 4;
-  if (rel.startsWith('adapters/')) return 4;
-  if (rel.startsWith('api/')) return 4;
-  if (rel.startsWith('testing/')) return 99;
-  return null;
+  return layerFrom(SHARED_LAYERS, rel);
 }
 
 export function reverseLayerFindings(files, srcRoot, layerOf) {

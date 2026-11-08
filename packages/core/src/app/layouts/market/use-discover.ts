@@ -11,6 +11,7 @@ import type {
 } from '@/kernel/contract/market-index';
 import { useHostWrite } from '@/shared/hooks/use-host-write';
 import { readMarketDiscover, readMarketSources } from '@/shared/hooks/market-queries';
+import { isShippedApplication } from '@dsh-workbench/shared/contract/protocol/bundle-install';
 import { CAPABILITY_FACT } from '@/shared/hooks/use-capabilities';
 import { subscribeFactRevision } from '@/shared/hooks/use-facts';
 import { appliedUnitsOf, changeFailure, changeOf } from '../rightbar/market-change';
@@ -30,8 +31,6 @@ interface InstallTarget {
   readonly entry: DiscoverEntry;
   readonly version: DiscoverVersionRow;
 }
-
-const SHIPPED: readonly string[] = ['applied', 'restart-required', 'overridden'];
 
 interface KnownSources {
   readonly sources: readonly DiscoverSourceRow[];
@@ -55,7 +54,7 @@ export type InstallVerdict =
 export function installVerdictOf(value: unknown, t: Translate): InstallVerdict {
   const change = changeOf(value);
   if (change === undefined) return { kind: 'quiet' };
-  if (SHIPPED.includes(change.application)) return { kind: 'done' };
+  if (isShippedApplication(change.application)) return { kind: 'done' };
   if (change.application === 'cancelled') return { kind: 'cancelled' };
   if (change.application !== 'failed') return { kind: 'quiet' };
   const reason = changeFailure(change, t) ?? t('panels.market.add.reason.unknown');

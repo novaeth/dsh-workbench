@@ -289,6 +289,7 @@ export async function run() {
   const anchorHits = new Set();
   const modules = discoverModulePackages({ root: process.cwd() });
   const contracts = new Map(modules.map((pkg) => [pkg.dir, contractOf(pkg.dir)]));
+  let dshTokens = null;
   if (modules.length > 0) {
     const searched = [
       process.cwd(),
@@ -297,6 +298,7 @@ export async function run() {
       join(dshHome(), 'workbench', 'diy'),
     ];
     const tokens = readTokens(searched);
+    dshTokens = tokens.dsw;
     const dswNames = (tokens.dsw?.entries ?? []).map((one) => one.name);
     const wbNames = (tokens.wb?.entries ?? []).map((one) => one.name);
     const known = new Set([...dswNames, ...wbNames]);
@@ -675,11 +677,11 @@ export async function run() {
       ? '没有手写的整张表单（没有裸 <form>，也没有借表单槽类手摆行）'
       : `表单这一层还有 ${formHits.size} 个文件在 FORM_EXEMPT 里等外壳发版后迁（棘轮：迁一处删一行）`;
 
-  const fontScale = fontScaleOf(SHELL_FONT_SCALE_FILES);
+  const fontScale = fontScaleOf(SHELL_FONT_SCALE_FILES, dshTokens);
   const fontNotes = fontScaleNotes(
     auditFontSizes({ roots: fontRootsIn(modules), scale: fontScale }),
     fontScale,
-    { doc: FONT_DOC },
+    { doc: FONT_DOC, dshMissing: dshTokens === null },
   );
   return {
     status: 'pass',

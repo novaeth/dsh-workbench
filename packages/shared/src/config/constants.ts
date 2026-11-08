@@ -32,7 +32,13 @@ export const DIY_RECORD_ACT_PATH = `${DIY_RECORD_PATH}/act`;
 export const PANEL_STATE_PREFIX = `${API_PREFIX}/${PANEL_STATE_PATH}`;
 
 /** 钉住的运行时版本：隔离运行时按它校验、取那一份。 */
+export const DEFAULT_NPM_REGISTRY = "https://registry.npmjs.org";
+
 export const OPENCLI_PIN = "1.8.8";
+
+export const OPENCLI_NPM_PACKAGE = "@jackwener/opencli";
+
+export const OPENCLI_CATALOG_ENV = "DSH_WB_OPENCLI_CATALOG";
 
 /** 缺陷看板套件的 dsh 服务名（`workbenchIssues`）：套件照它登记自己那份服务。 */
 export const ISSUES_SERVICE = "workbenchIssues";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { unitTitleKey } from '../unit.js';
-import { declarationProblemsOf, readDeclaration } from '../unit-declaration.js';
+import { DECLARATION_KEYS, declarationProblemsOf, readDeclaration, type UnitDeclaration } from '../unit-declaration.js';
 
 const declared = (tools: unknown) => ({
   apiVersion: 3,
@@ -108,5 +108,20 @@ describe('清单里的名字（v3 起名字在顶层，是字面量）', () => {
     expect(read.manifest?.title).toEqual({ zh: '演示', en: 'Demo' });
     expect(read.manifest?.titleKey).toBe(unitTitleKey('demo'));
     expect(read.manifest?.card).toEqual({ order: 7 });
+  });
+});
+
+describe('声明协议的键表', () => {
+  it('DECLARATION_KEYS 与 UnitDeclaration 的字段一一对应', () => {
+    const full: UnitDeclaration = {
+      apiVersion: 3,
+      unit: 'demo',
+      title: { zh: '演示', en: 'Demo' },
+      card: { order: 1 },
+      tools: [{ name: 'workbench_demo_sync', writes: false }],
+      host: { inject: [], optional: [], writes: [] },
+      needs: [],
+    };
+    expect(Object.keys(full).sort()).toEqual([...DECLARATION_KEYS].sort());
   });
 });

@@ -4,6 +4,12 @@ import { isDependencyAction, type ProvisionAction, type ProvisionRequest } from 
 import type { UnitCall } from '@dsh-workbench/shared/host';
 import type { HandoffEntry } from '@dsh-workbench/shared/host';
 import type { UnitManifest } from '@dsh-workbench/shared/host';
+import {
+  CAPABILITY_FACT,
+  DIY_DEBUG_FACT,
+  DIY_RECORD_FACT,
+  PANELS_FACT,
+} from '@dsh-workbench/shared/contract/facts';
 import { affectedUnitsOf } from './market-dependency';
 import {
   DIY_DEBUG_PAUSE_TOOL,
@@ -27,10 +33,7 @@ import {
   PANELS_LIST_TOOL,
 } from '../unit';
 
-export const PANELS_FACT = 'panels';
-export const DIY_DEBUG_FACT = 'diy-debug';
-export const DIY_RECORD_FACT = 'diy-record';
-const CAPABILITY_FACT = 'capability';
+export { DIY_DEBUG_FACT, DIY_RECORD_FACT, PANELS_FACT };
 
 const DEBUG_TOOLS: readonly string[] = [
   DIY_DEBUG_START_TOOL,

@@ -23,8 +23,9 @@ import {
   type PanelPluginRef,
   type ScopeBoards,
 } from './config';
+import { PANELS_MODULE_ID } from '../unit';
 
-export const PANELS_MODULE_ID = 'panels';
+export { PANELS_MODULE_ID };
 
 export const PANELS_FILE = 'config.json';
 
