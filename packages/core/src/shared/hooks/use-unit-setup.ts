@@ -12,7 +12,8 @@ import type {
  */
 export interface UseUnitSetupOptions {
   readonly steps: readonly SetupStep[];
-  readonly read: () => Promise<SetupSnapshot>;
+  readonly read?: (() => Promise<SetupSnapshot>) | undefined;
+  readonly initialValues?: Readonly<Record<string, unknown>> | undefined;
   readonly write?:
     | ((values: Readonly<Record<string, unknown>>) => Promise<SetupWriteResult>)
     | undefined;
@@ -24,7 +25,8 @@ export interface UseUnitSetupOptions {
 /**
  * 初始化的那台状态机：读配置定相位、按步走、每步可存、完成进主页、`edit` 模式一次存全量。
  * @param options.steps - 步骤；每步给 `render`、可选的 `canLeave` / `next` / `submit`。
- * @param options.read - 读一次配置：`configured` 为真表示已配置（相位直接到 `ready`）。
+ * @param options.read - 读一次配置：`configured` 为真表示已配置（相位直接到 `ready`）；不给就直接进 `needs-setup`。
+ * @param options.initialValues - 没有 `read` 时的初始值（编辑当前配置的常见接法）。
  * @param options.write - `edit` 模式存全量时用；不给则 `saveAll` 无效。
  * @param options.initialStep - 未配置时从哪一步开始；不给用第一步。
  * @param options.onReady - 相位到 `ready` 时回调（含配置已存在的那次读）。
@@ -34,14 +36,15 @@ export interface UseUnitSetupOptions {
 export function useUnitSetup({
   steps,
   read,
+  initialValues,
   write,
   initialStep,
   onReady,
   onSaved,
 }: UseUnitSetupOptions): UnitSetup {
-  const [phase, setPhase] = useState<SetupPhase>('checking');
+  const [phase, setPhase] = useState<SetupPhase>(read === undefined ? 'needs-setup' : 'checking');
   const [stepId, setStepId] = useState<string>(() => steps[0]?.id ?? '');
-  const [values, setValuesState] = useState<Record<string, unknown>>({});
+  const [values, setValuesState] = useState<Record<string, unknown>>(() => ({ ...(initialValues ?? {}) }));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,12 +72,13 @@ export function useUnitSetup({
   }, [onSaved]);
 
   const load = useCallback(() => {
+    const currentRead = readRef.current;
+    if (currentRead === undefined) return;
     const ticket = ticketRef.current + 1;
     ticketRef.current = ticket;
     setPhase('checking');
     setError(null);
-    void readRef
-      .current()
+    void currentRead()
       .then((snapshot) => {
         if (ticketRef.current !== ticket) return;
         setValuesState({ ...(snapshot.values ?? {}) });
@@ -96,7 +100,7 @@ export function useUnitSetup({
   }, []);
 
   useEffect(() => {
-    void Promise.resolve().then(load);
+    if (readRef.current !== undefined) void Promise.resolve().then(load);
   }, [load]);
 
   const step = steps.find((candidate) => candidate.id === stepId);

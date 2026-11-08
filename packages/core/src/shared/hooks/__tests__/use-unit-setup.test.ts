@@ -106,6 +106,15 @@ describe('初始化的状态机', () => {
     expect(setup.values['name']).toBe('工作台');
   });
 
+  it('★ 编辑当前配置：不给 read 就直接进 needs-setup，initialValues 当起点', async () => {
+    const setup = await mount(
+      options({ read: undefined, initialValues: { env: '7' }, steps: [step('env')] }),
+    );
+    expect(setup.phase).toBe('needs-setup');
+    expect(setup.values['env']).toBe('7');
+    expect(setup.step?.id).toBe('env');
+  });
+
   it('★ 已配置：相位直接 ready，并回调一次', async () => {
     const onReady = vi.fn();
     const setup = await mount(options({ read: async () => snapshot(true), onReady }));
