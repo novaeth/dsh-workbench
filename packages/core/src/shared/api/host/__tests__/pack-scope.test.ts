@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DshHostContext } from '@dsh-workbench/shared';
 import { MCP_TOOLS_SERVICE, TOOLBOX_SERVICE } from '@dsh-workbench/shared/host';
+import type { McpToolsPort } from '@dsh-workbench/shared/host';
 import type { WorkbenchSettings } from '@/kernel/contract/workbench-settings';
 import { createMcpScope } from '../pack-scope';
 import type { WorkbenchSettingsStore } from '../workbench-settings';
@@ -22,63 +23,72 @@ function settingsOf(onDemand: boolean): WorkbenchSettingsStore & { set(next: boo
   };
 }
 
-function fakeCtx(open: ReadonlySet<string>) {
-  const provided: string[] = [];
+function fakeCtx(open: ReadonlySet<string>, names: readonly string[] = []) {
+  const provided: Record<string, unknown> = {};
   const ctx = {
     get: (key: string) => (key === TOOLBOX_SERVICE ? { packsOf: () => open } : undefined),
-    provide: (name: string) => {
-      provided.push(name);
+    provide: (name: string, value: unknown) => {
+      provided[name] = value;
       return () => {};
     },
     effect: (run: () => () => void) => {
       run();
     },
+    tools: { view: () => ({ knownNames: new Set(names) }) },
     logger: { info: () => {}, warn: () => {} },
   } as unknown as DshHostContext;
   return { ctx, provided };
 }
 
-const assembly = (...names: string[]) => ({ tools: names.map((name) => ({ name })) });
 const context = { workspace: '/w/a', preset: null, session: 's-1' };
+const names = ['mcp__chrome__list_pages', 'mcp__chrome__navigate_page', 'workbench_panels_list'];
 
-describe('MCP 包的收窄接在装配期与注册期', () => {
-  it('★ 默认关：不登记读口里的 server，也不 deny 任何 MCP 工具', () => {
-    const { ctx, provided } = fakeCtx(new Set());
-    const settings = settingsOf(false);
-    const scope = createMcpScope({ ctx, reapply: () => {}, settings });
+describe('MCP 包的收窄接在注册期（dsh 0.2.2 的 assembly 里还没有 tools）', () => {
+  it('★ 默认关：不登记 server、不 deny 任何 MCP 工具，读口里也没有 MCP 包', () => {
+    const { ctx, provided } = fakeCtx(new Set(), names);
+    const scope = createMcpScope({ ctx, reapply: () => {}, settings: settingsOf(false) });
+    const port = provided[MCP_TOOLS_SERVICE] as McpToolsPort;
 
-    expect(provided).toEqual([MCP_TOOLS_SERVICE]);
-    expect(scope.extraDenied(assembly('mcp__chrome__a'), context)).toEqual([]);
+    expect(scope.extraDenied({} as never, context)).toEqual([]);
     expect(scope.denied(context)).toEqual([]);
+    expect(port.servers()).toEqual([]);
   });
 
-  it('★ 打开开关后才走按需：登记 server、deny 没开的包；开关一变就 reapply', () => {
-    const { ctx } = fakeCtx(new Set());
+  it('★ 打开开关后：从注册的工具名认出 server，包没开就 deny；读口里能看到 mcp:chrome', () => {
+    const { ctx, provided } = fakeCtx(new Set(), names);
+    const scope = createMcpScope({ ctx, reapply: () => {}, settings: settingsOf(true) });
+
+    expect(scope.denied(context)).toEqual(['mcp__chrome__list_pages', 'mcp__chrome__navigate_page']);
+    expect(scope.extraDenied({} as never, context)).toEqual([
+      'mcp__chrome__list_pages',
+      'mcp__chrome__navigate_page',
+    ]);
+    expect((provided[MCP_TOOLS_SERVICE] as McpToolsPort).servers()).toEqual([
+      { name: 'chrome', tools: ['mcp__chrome__list_pages', 'mcp__chrome__navigate_page'] },
+    ]);
+  });
+
+  it('包开着就一个都不 deny；开关一变就重算工具面', () => {
+    const { ctx } = fakeCtx(new Set(['mcp:chrome']), names);
     const settings = settingsOf(true);
     let reapplied = 0;
     const scope = createMcpScope({ ctx, reapply: () => (reapplied += 1), settings });
 
-    expect(scope.extraDenied(assembly('mcp__chrome__a'), context)).toEqual(['mcp__chrome__a']);
-    expect(reapplied).toBe(1);
-    expect(scope.denied(context)).toEqual(['mcp__chrome__a']);
-
+    expect(scope.denied(context)).toEqual([]);
     settings.set(false);
-    expect(reapplied).toBe(2);
+    expect(reapplied).toBe(1);
     expect(scope.denied(context)).toEqual([]);
   });
 
-  it('包开着就一个都不 deny；拿不到工具包状态时当作全开', () => {
-    const openCtx = fakeCtx(new Set(['mcp:chrome'])).ctx;
-    const scope = createMcpScope({ ctx: openCtx, reapply: () => {}, settings: settingsOf(true) });
-    expect(scope.extraDenied(assembly('mcp__chrome__a'), context)).toEqual([]);
-
-    const none = {
+  it('拿不到工具面 / 工具包状态：当作全开，不把 MCP 收走', () => {
+    const ctx = {
       get: () => undefined,
       provide: () => () => {},
       effect: (run: () => () => void) => run(),
       logger: { info: () => {}, warn: () => {} },
     } as unknown as DshHostContext;
-    const loose = createMcpScope({ ctx: none, reapply: () => {}, settings: settingsOf(true) });
-    expect(loose.extraDenied(assembly('mcp__chrome__a'), context)).toEqual([]);
+    const scope = createMcpScope({ ctx, reapply: () => {}, settings: settingsOf(true) });
+
+    expect(scope.denied(context)).toEqual([]);
   });
 });

@@ -9,6 +9,20 @@ import {
 import { createMcpPacks, type McpPacks } from './mcp-packs';
 import type { WorkbenchSettingsStore } from './workbench-settings';
 
+interface ToolRegistryView {
+  view(scope?: unknown): { readonly knownNames?: ReadonlySet<string> };
+}
+
+function registeredToolNames(ctx: DshHostContext): readonly string[] {
+  const registry = (ctx as unknown as { readonly tools?: ToolRegistryView }).tools;
+  if (registry === undefined) return [];
+  try {
+    return [...(registry.view().knownNames ?? [])];
+  } catch {
+    return [];
+  }
+}
+
 export interface McpScope {
   extraDenied(assembly: DshPromptAssembly, context: ToolScopeContext): readonly string[];
   denied(context: ToolScopeContext): readonly string[];
@@ -36,15 +50,20 @@ export function createMcpScope(options: {
   const port: McpToolsPort = { servers: () => (enabled() ? packs.servers() : []) };
   ctx.provide(MCP_TOOLS_SERVICE, port);
   ctx.effect(() => settings.watch(() => reapply()), 'dsh-workbench: MCP 按需加载开关一变就重算工具面');
+  const refresh = (): void => {
+    packs.observeNames(registeredToolNames(ctx));
+  };
 
   return {
-    extraDenied(assembly, context) {
+    extraDenied(_assembly, context) {
       if (!enabled()) return [];
-      if (packs.observe(assembly)) reapply();
+      refresh();
       return deniedFor(ctx, packs, context);
     },
     denied(context) {
-      return enabled() ? deniedFor(ctx, packs, context) : [];
+      if (!enabled()) return [];
+      refresh();
+      return deniedFor(ctx, packs, context);
     },
   };
 }

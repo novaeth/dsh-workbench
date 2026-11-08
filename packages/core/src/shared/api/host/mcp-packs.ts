@@ -1,4 +1,3 @@
-import type { DshPromptAssembly } from '@dsh-workbench/shared';
 import type { McpServerPacks } from '@dsh-workbench/shared/host';
 
 const TOOL_NAME = /^mcp__(.+?)__(.+)$/;
@@ -9,7 +8,7 @@ export function mcpServerOf(tool: string): string | undefined {
 }
 
 export interface McpPacks {
-  observe(assembly: DshPromptAssembly): boolean;
+  observeNames(names: Iterable<string>): boolean;
   servers(): readonly McpServerPacks[];
   deniedFor(open: (packId: string) => boolean): readonly string[];
 }
@@ -22,19 +21,19 @@ export function createMcpPacks(): McpPacks {
       .map(([name, tools]) => ({ name, tools: [...tools].sort() }));
 
   return {
-    observe(assembly) {
+    observeNames(names) {
       let changed = false;
-      for (const tool of assembly.tools ?? []) {
-        const server = mcpServerOf(tool.name);
+      for (const name of names) {
+        const server = mcpServerOf(name);
         if (server === undefined) continue;
         const bucket = servers.get(server);
         if (bucket === undefined) {
-          servers.set(server, new Set([tool.name]));
+          servers.set(server, new Set([name]));
           changed = true;
           continue;
         }
-        if (bucket.has(tool.name)) continue;
-        bucket.add(tool.name);
+        if (bucket.has(name)) continue;
+        bucket.add(name);
         changed = true;
       }
       return changed;
