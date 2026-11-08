@@ -452,7 +452,6 @@ export function createMarketService(options: {
         ...(logger === undefined ? {} : { logger }),
       });
     },
-
     async updateWorkbench(pkg) {
       return updateWorkbenchOnce({
         supply,
