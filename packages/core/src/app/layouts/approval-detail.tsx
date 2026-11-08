@@ -1,5 +1,5 @@
 import { Fragment, createElement as h, useEffect, useState } from 'react';
-import type { ApprovalInput, ReactNode, Translate, UnitManifest, UnitToolRuntime } from '@dsh-workbench/shared';
+import type { ApprovalInput, Need, ReactNode, Translate, UnitManifest, UnitToolRuntime } from '@dsh-workbench/shared';
 import { APPROVAL_NOTE_ARG, ApprovalPlan } from '@dsh-workbench/shared';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import type { MarketSourcesPayload, PublishChangelog, PublishPreview } from '@/kernel/contract/market-index';
@@ -10,6 +10,8 @@ import {
   LONG_TASKS_STOP_TOOL,
   MARKET_DISABLE_TOOL,
   MARKET_ENABLE_TOOL,
+  MODULES_INSTALL_TOOL,
+  MODULES_UPDATE_TOOL,
 } from '@/modules/panels/client';
 import { readMarketSources, readPublishPreview } from '@/shared/hooks/market-queries';
 import styles from './approval-detail.module.css';
@@ -365,10 +367,48 @@ export function pluginApprovalRows(
   return rows;
 }
 
+const SUPPLY_LABEL: Readonly<Record<string, string>> = {
+  extension: 'approval.supply.plugin',
+  lib: 'approval.supply.lib',
+};
+
+function supplyNeedRows(needs: readonly Need[], t: Translate): readonly ApprovalRow[] {
+  return needs.flatMap((need) => {
+    if (need.kind !== 'extension' && need.kind !== 'lib') return [];
+    const version = typeof need.version === 'string' && need.version !== '' ? ` ${need.version}` : '';
+    const purpose = need.purpose.trim();
+    return [
+      {
+        label: t(SUPPLY_LABEL[need.kind] ?? 'approval.supply.kind'),
+        value: `${need.name}${version}${purpose === '' ? '' : ` —— ${purpose}`}`,
+      },
+    ];
+  });
+}
+
+export function moduleSupplyRows(
+  manifest: UnitManifest | undefined,
+  id: string,
+  t: Translate,
+): readonly ApprovalRow[] {
+  const rows: ApprovalRow[] = [{ label: t('approval.supply.module'), value: id === '' ? '—' : id }];
+  if (manifest === undefined) {
+    return [...rows, { label: t('approval.supply.kind'), value: t('approval.supply.missing') }];
+  }
+  const needs = (manifest.needs ?? []).filter((need) => need.kind === 'extension' || need.kind === 'lib');
+  if (needs.length === 0) {
+    return [...rows, { label: t('approval.supply.kind'), value: t('approval.supply.none') }];
+  }
+  return [...rows, ...supplyNeedRows(needs, t)];
+}
+
 export function shellApprovalRenderer(
   manifests: () => readonly UnitManifest[],
 ): (input: ApprovalInput, t: Translate) => ReactNode {
-  return (input, t) => shellApprovalDetail(input, t, pluginToolIndexOf(manifests()));
+  return (input, t) => {
+    const list = manifests();
+    return shellApprovalDetail(input, t, pluginToolIndexOf(list), list);
+  };
 }
 
 export function shellClaimsApprovalDetail(tool: string): boolean {
@@ -393,9 +433,14 @@ export function shellApprovalPlan(
   input: ApprovalInput,
   t: Translate,
   pluginTools?: ReadonlyMap<string, UnitToolRuntime> | undefined,
+  manifests?: readonly UnitManifest[] | undefined,
 ): ApprovalPlanView | undefined {
   const origin = pluginTools?.get(input.tool);
   if (origin !== undefined) return { rows: pluginApprovalRows(origin, input.args, t) };
+  if (input.tool === MODULES_INSTALL_TOOL || input.tool === MODULES_UPDATE_TOOL) {
+    const id = textOf(input.args, 'id');
+    return { rows: moduleSupplyRows(manifests?.find((one) => one.id === id), id, t) };
+  }
   if (input.tool === DIY_RECORD_PREPARE_TOOL) {
     return { rows: recordApprovalRows(input.args, t), warn: t('approval.record.noSwitch') };
   }
@@ -412,12 +457,13 @@ export function shellApprovalDetail(
   input: ApprovalInput,
   t: Translate,
   pluginTools?: ReadonlyMap<string, UnitToolRuntime> | undefined,
+  manifests?: readonly UnitManifest[] | undefined,
 ): ReactNode {
   if (input.tool === DIY_PUBLISH_TOOL) return h(PublishApprovalSeat, { args: input.args, t });
   if (input.tool === MARKET_ENABLE_TOOL || input.tool === MARKET_DISABLE_TOOL) {
     return h(MarketSourceApprovalSeat, { tool: input.tool, args: input.args, t });
   }
-  const plan = shellApprovalPlan(input, t, pluginTools);
+  const plan = shellApprovalPlan(input, t, pluginTools, manifests);
   if (plan === undefined) return undefined;
   if (plan.rows.length === 0) return h(Fragment, null);
   return <ApprovalPlan rows={plan.rows} warn={plan.warn} />;

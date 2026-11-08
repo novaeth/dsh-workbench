@@ -73,12 +73,25 @@ async function screenOf(tool: string): Promise<readonly string[]> {
   return [
     `## ${tool}`,
     '',
-    ...box(title, ['', title, '', ...planLines(shellApprovalPlan({ tool, args }, t))]),
+    ...box(title, ['', title, '', ...planLines(shellApprovalPlan({ tool, args }, t, undefined, [MODULE_UNIT]))]),
     '',
   ];
 }
 
 const PLUGIN_TOOL = 'inventory_build';
+
+const MODULE_UNIT: UnitManifest = {
+  id: 'inventory',
+  title: { zh: '库存', en: 'Inventory' },
+  titleKey: 'dsh-workbench.unit.inventory.title',
+  card: null,
+  tools: [],
+  host: { inject: [] },
+  needs: [
+    { kind: 'extension', runtime: 'opencli', name: 'inventory', purpose: '读库存数据' },
+    { kind: 'lib', name: 'acme-sdk', version: '^2.1', purpose: '调库存接口' },
+  ],
+};
 
 interface PluginCommand {
   readonly plugin: string;
@@ -193,6 +206,10 @@ async function document(): Promise<string> {
     '',
     '**2026-10-28 加 opencli 插件命令那一屏**：标题只留动作（插件 + 命令）；参数与 agent 那句话全进详情座 ——',
     '外壳按清单里那条工具的 `opencli` 那一格认领，画 插件 / 命令 / `agent 说` / 参数各一行。',
+    '',
+    '**2026-11-08 加 `modules_install` / `modules_update` 那一屏的详情座**：标题只说"装/升 …模块要的插件与库"，',
+    '具体清单进详情座 —— 外壳按浏览器侧已有的清单画 模块 / 插件 / 库 各一行（来源是 `needs` 里的 extension 与 lib）；',
+    '没有声明就写"没有声明"，清单没读回来就写"读不到"。',
     '',
   ];
   for (const tool of ASK_TOOLS) parts.push(...(await screenOf(tool)));

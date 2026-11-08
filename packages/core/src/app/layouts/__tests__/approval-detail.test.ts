@@ -4,6 +4,7 @@ import type { Translate, UnitManifest } from '@dsh-workbench/shared';
 import { ApprovalDetail, ApprovalPlan, zh } from '@dsh-workbench/shared';
 import {
   marketSourceRows,
+  moduleSupplyRows,
   pluginApprovalRows,
   pluginToolIndexOf,
   publishRows,
@@ -19,6 +20,7 @@ import {
   DIY_RECORD_READ_TOOL,
   MARKET_DISABLE_TOOL,
   MARKET_ENABLE_TOOL,
+  MODULES_INSTALL_TOOL,
 } from '@/modules/panels/client';
 
 const HERE = new URL('../', import.meta.url);
@@ -400,5 +402,47 @@ describe('索引源审批：把源的名字、地址、操作与当前状态摆�
       '可发布',
     ]);
     expect(marketSourceRows(MARKET_DISABLE_TOOL, { id: 'nope' }, payload, t)[0]?.value).toBe('nope');
+  });
+});
+
+describe('模块外部供给审批：要装的插件与库摆进详情座', () => {
+  const unit: UnitManifest = {
+    id: 'inventory',
+    title: { zh: '库存', en: 'Inventory' },
+    titleKey: 'dsh-workbench.unit.inventory.title',
+    card: null,
+    tools: [],
+    host: { inject: [] },
+    needs: [
+      { kind: 'extension', runtime: 'opencli', name: 'inventory', purpose: '读库存数据' },
+      { kind: 'lib', name: 'acme-sdk', version: '^2.1', purpose: '调库存接口' },
+      { kind: 'env', name: 'INVENTORY_TOKEN', purpose: '登录' },
+    ],
+  };
+
+  it('★ 只画要装的（extension / lib）；env / bin 不上屏', () => {
+    expect(moduleSupplyRows(unit, 'inventory', t)).toEqual([
+      { label: '模块', value: 'inventory' },
+      { label: '插件', value: 'inventory —— 读库存数据' },
+      { label: '库', value: 'acme-sdk ^2.1 —— 调库存接口' },
+    ]);
+  });
+
+  it('没声明就没有；清单没读回来就说读不到 —— 不猜、不写空行', () => {
+    expect(moduleSupplyRows({ ...unit, needs: [] }, 'inventory', t)).toEqual([
+      { label: '模块', value: 'inventory' },
+      { label: '要装的', value: '这个模块没有声明插件与库' },
+    ]);
+    expect(moduleSupplyRows(undefined, 'inventory', t)[1]).toEqual({
+      label: '要装的',
+      value: '读不到这个模块要装什么',
+    });
+  });
+
+  it('★ 座位画的正是这张表（外壳拿浏览器侧清单认出这次调用）', () => {
+    const seat = seatOf(MODULES_INSTALL_TOOL, { id: 'inventory' }, shellApprovalRenderer(() => [unit]));
+
+    expect(seat?.props?.rows).toHaveLength(3);
+    expect(seat?.props?.code).toBeUndefined();
   });
 });
