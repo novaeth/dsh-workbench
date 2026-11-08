@@ -7,6 +7,7 @@ import { CenteredState } from '@dsh-workbench/shared';
 import type { CapabilityMap } from '@/shared/hooks/use-capabilities';
 
 import { PanelFoot } from '@/shared/components/PanelFoot';
+import { EmptyIllustration } from '@/shared/components/EmptyIllustration';
 import styles from './ModulesPage.module.css';
 import { Button, RiskConfirmation } from '@deepseek-ai/dsh-client-ui-primitives';
 import { panelDropTarget, rowAtPoint, selectPanelRows, type PanelRow } from './board-selection';
@@ -112,7 +113,7 @@ function PanelEmpty({ t, onOpenMarket }: { readonly t: Translate; readonly onOpe
   return (
     <CenteredState
       compact
-      icon={null}
+      icon={<EmptyIllustration size={72} />}
       title={t('panels.noneInstalled')}
       hint={t('panels.noneInstalledHint')}
       action={

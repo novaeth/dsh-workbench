@@ -1,7 +1,8 @@
 import { createElement as h } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import { CenteredState } from '@dsh-workbench/shared';
-import { IconBrandMark } from '@dsh-workbench/shared';
+
+import { EmptyIllustration } from '@/shared/components/EmptyIllustration';
 
 import { Button } from '@deepseek-ai/dsh-client-ui-primitives';
 
@@ -20,7 +21,7 @@ export function BoardEmpty({
 }) {
   return (
     <CenteredState
-      icon={<IconBrandMark size={32} />}
+      icon={<EmptyIllustration />}
       title={t('panels.empty')}
       hint={t('panels.emptyHint')}
       action={
