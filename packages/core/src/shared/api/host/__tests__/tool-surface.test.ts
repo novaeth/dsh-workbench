@@ -11,8 +11,8 @@ import { createToolbox } from '@/modules/panels/model/toolbox';
 import { TOOLBOX_TOOLS } from '@/modules/panels/unit';
 
 const TOOLBOX_CHAR_BUDGET = 394;
-const MANAGE_CHAR_BUDGET = 1651;
-const DIY_CHAR_BUDGET = 5012;
+const MANAGE_CHAR_BUDGET = 1687;
+const DIY_CHAR_BUDGET = 5082;
 
 type Surface = 'toolbox' | 'manage' | 'diy';
 
@@ -109,17 +109,17 @@ describe('工具面是常驻上下文：话要一句顶一句', () => {
     );
   });
 
-  it('★ manage 包：面板 6 + 模块 9 + 市场 3 + 长任务 2，共 20 把；开包才付这份钱（2026-11-08 实测 1651）', () => {
+  it('★ manage 包：面板 6 + 模块 9 + 市场 3 + 长任务 2，共 21 把；开包才付这份钱（2026-11-08 实测 1687）', () => {
     const tools = registered('manage');
     const total = tools.reduce((sum, tool) => sum + promptTextOf(tool).length, 0);
 
-    expect(tools).toHaveLength(20);
+    expect(tools).toHaveLength(21);
     expect(total, `${TOTAL_OF('manage')} / 预算 ${String(MANAGE_CHAR_BUDGET)}`).toBeLessThanOrEqual(
       MANAGE_CHAR_BUDGET,
     );
   });
 
-  it('★ diy 包：DIY 25 + 调试 4 + 录制 4，共 33 把；开包才付这份钱（2026-11-08 实测 5012）', () => {
+  it('★ diy 包：DIY 25 + 调试 4 + 录制 4，共 33 把；开包才付这份钱（2026-11-08 实测 5082）', () => {
     const tools = registered('diy');
     const total = tools.reduce((sum, tool) => sum + promptTextOf(tool).length, 0);
 

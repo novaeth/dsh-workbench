@@ -754,7 +754,7 @@
 .discoverTab[aria-selected='true']::after {
   content: '';
   position: absolute;
-  inset: auto 0 calc(0px - 0.5px);
+  inset: auto 0 calc(0px - var(--wb-len-0-5));
   height: var(--wb-len-2);
   border-radius: var(--wb-len-1);
   background: var(--dsw-alias-label-primary);
