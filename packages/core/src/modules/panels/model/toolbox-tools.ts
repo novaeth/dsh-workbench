@@ -96,7 +96,7 @@ function openedText(toolbox: Toolbox, session: string, preset: string | null, ne
       ? '这些工具包本来就在开。'
       : `已开启：${newly.map((pack) => `${pack}（${countLine(catalog.get(pack) as PackEntry)}）`).join('、')}`,
     already.length === 0 ? '' : `本来就在开：${already.join('、')}`,
-    '下一轮消息可用；用完让用户说"收起"，再调 workbench_toolbox_close。',
+    '下一次工具调用就能用（不用等用户再发消息）；这一轮用完了就直接调 workbench_toolbox_close 收回去。',
   ];
   return parts.filter((line) => line !== '').join('\n');
 }
