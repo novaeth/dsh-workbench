@@ -41,7 +41,7 @@ function catalogText(
   workspace: string | null,
 ): string {
   const lines = [
-    '工作台工具包（默认只开三把控制工具；开包要用户审批，收包不审批）：',
+    '工作台工具包（默认只开三把控制工具；开启工具包要用户审批，关闭工具包不审批）：',
     ...toolbox
       .catalog(workspace)
       .map((pack) => `- ${pack.id} — ${pack.label.zh}（${countLine(pack)}）· ${pack.hint}`),
@@ -52,7 +52,7 @@ function catalogText(
 }
 
 function unavailableText(): string {
-  return '这个 dsh 版本拿不到会话 id，工作台的工具包已经全部可用，直接调需要的工具就行，不用开包。';
+  return '这个 dsh 版本拿不到会话 id，工作台的工具包已经全部可用，直接调需要的工具就行，不用先开启工具包。';
 }
 
 interface TargetPlan {

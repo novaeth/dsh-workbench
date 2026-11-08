@@ -668,10 +668,10 @@ ctx.get('workbenchUnits').registerUnit({
 - 包不是新注册的工具 —— 注册照旧，包只决定"进不进上下文、能不能调"。模块可以在清单里给工具写
   `onDemand: false`，表示它不随包收（常驻）。
 - 状态按会话（宿主内存）；DIY 模式默认开 `manage + diy`，其余会话从空开始；显式 open/close 覆盖默认。
-- 开包要用户审批（`elevates`）；非法 / 没在板子上的单元在审批之前就被拒；收包不审批。
+- 开启工具包要用户审批（`elevates`）；非法 / 没在板子上的单元在审批之前就被拒；关闭不审批。
 - `system-prompt/assemble` 的 `narrow` 与注册期的 `restrict` 共用同一份 deny（ADR-0020）；
   MCP 那半边多一份"只有看到 assembly 才算得出来"的 deny（`extraDenied`）—— 先认出 `mcp__*` 再收。
-  板子隐藏的单元与今天一样始终收着，开包也绕不过去。
+  板子隐藏的单元与今天一样始终收着，开启工具包也绕不过去。
 - 装配期、工具面、审批的实现落在 `modules/panels/model/toolbox*.ts` 与 `modules/panels/unit.ts`。
 
 ### 5.7 生命周期
