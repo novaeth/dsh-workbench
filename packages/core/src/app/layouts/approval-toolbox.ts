@@ -21,6 +21,9 @@ function packToolText(id: string, manifests: readonly UnitManifest[], t: Transla
     const label = t(id === 'manage' ? 'approval.toolbox.manage' : 'approval.toolbox.diy');
     return packCountText(label, tools.length, tools.filter((name) => WRITING.has(name)).length, t);
   }
+  if (id.startsWith('mcp:')) {
+    return t('approval.toolbox.mcpPack', { name: id.slice('mcp:'.length) });
+  }
   if (id.startsWith('unit:')) {
     const unit = id.slice('unit:'.length);
     const manifest = manifests.find((one) => one.id === unit);
@@ -42,12 +45,25 @@ export function toolboxApprovalRows(
         .flatMap((one) => (typeof one === 'string' && one.trim() !== '' ? [one.trim()] : []))
         .slice(0, PACK_TARGET_LIMIT)
     : [];
+  const mcpOnly = targets.length > 0 && targets.every((id) => id.startsWith('mcp:'));
+  const hasMcp = targets.some((id) => id.startsWith('mcp:'));
+  const hasPacks = targets.some((id) => !id.startsWith('mcp:'));
   return [
     ...targets.map((id) => ({
       label: t('approval.toolbox.pack'),
       value: packToolText(id, manifests, t),
     })),
     { label: t('approval.toolbox.scope'), value: t('approval.toolbox.session') },
-    { label: t('approval.toolbox.write'), value: t('approval.toolbox.writeNote') },
+    ...(hasPacks || !hasMcp
+      ? [{ label: t('approval.toolbox.write'), value: t('approval.toolbox.writeNote') }]
+      : []),
+    ...(hasMcp
+      ? [
+          {
+            label: t(mcpOnly ? 'approval.toolbox.write' : 'approval.toolbox.mcp'),
+            value: t('approval.toolbox.mcpWriteNote'),
+          },
+        ]
+      : []),
   ];
 }

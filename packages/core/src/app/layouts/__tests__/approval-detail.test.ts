@@ -471,6 +471,14 @@ describe('工具包审批：详情座一行一个包，范围与写工具的口�
     ]);
   });
 
+  it('★ MCP 包只点名字与 server，写入那一行改说"审批仍走 dsh"', () => {
+    expect(toolboxApprovalRows({ targets: ['mcp:chrome'] }, [], t)).toEqual([
+      { label: '工具包', value: 'chrome（MCP server）' },
+      { label: '范围', value: '这个会话' },
+      { label: '写入', value: 'MCP 工具自己的审批仍走 dsh' },
+    ]);
+  });
+
   it('不认识的 target 原样写出来，不编名字', () => {
     expect(toolboxApprovalRows({ targets: ['unit:nope'] }, [], t)[0]).toEqual({
       label: '工具包',

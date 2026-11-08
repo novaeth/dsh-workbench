@@ -44,13 +44,14 @@ export function toolboxVerdictFor(call: ApprovalCall, toolbox: Toolbox | undefin
     return pair(found?.label.zh ?? String(id), found?.label.en ?? String(id)) satisfies { zh: string; en: string };
   });
   const first = labels[0];
+  const gap = first !== undefined && /^[A-Za-z0-9]/.test(first.zh) ? ' ' : '';
   const question =
     first === undefined
       ? pair('要开启工作台的工具包吗？', 'Open a workbench tool pack?')
       : labels.length === 1
-        ? pair(`要开启${first.zh}工具包吗？`, `Open the ${first.en} tool pack?`)
+        ? pair(`要开启${gap}${first.zh}工具包吗？`, `Open the ${first.en} tool pack?`)
         : pair(
-            `要开启${first.zh}等 ${String(labels.length)} 个工具包吗？`,
+            `要开启${gap}${first.zh}等 ${String(labels.length)} 个工具包吗？`,
             `Open ${String(labels.length)} workbench tool packs (${first.en}…)?`,
           );
   return {

@@ -4,6 +4,7 @@ import { SettingsSection } from '@dsh-workbench/shared';
 import { clientSurface } from '@/shared/api/platform/client';
 import { AdapterSetItem } from './AdapterSetItem';
 import { ConfigSyncItem } from './ConfigSyncItem';
+import { McpOnDemandItem } from './McpOnDemandItem';
 import { NewWorkbenchItem } from './NewWorkbenchItem';
 import { SidebarEditionItem } from './SidebarEditionItem';
 import styles from './WorkbenchSettingsSection.module.css';
@@ -24,6 +25,7 @@ export function WorkbenchSettingsSection({ t }: WorkbenchSettingsSectionProps): 
         <AdapterSetItem t={t} />
         <SidebarEditionItem t={t} />
         <ConfigSyncItem t={t} />
+        <McpOnDemandItem t={t} />
         {desktop ? null : <NewWorkbenchItem t={t} />}
       </div>
     </SettingsSection>

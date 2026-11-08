@@ -8,7 +8,7 @@ import { assembleHostUnits } from '@/app/units/host';
 import { createPostChannels } from '@/shared/api/host/post-channels';
 import { takeHeldNotices, type AgentsLookup } from '@/shared/api/host/diy-debug-act';
 import { registerDiyActs } from '@/shared/api/host/diy-acts';
-import { hostSurface, runningVersionOf } from '@dsh-workbench/shared/host';
+import { hostSurface, runningVersionOf, workbenchRoot } from '@dsh-workbench/shared/host';
 import {
   capabilityHandler,
   registerApi,
@@ -17,6 +17,8 @@ import {
   type RouteTable,
 } from '@dsh-workbench/shared/host';
 import { PANEL_STATE_SERVICE, createFactLog, createPanelStateStore, toolUnits, wroteNow } from '@dsh-workbench/shared/host';
+import { createMcpScope } from '@/shared/api/host/pack-scope';
+import { mountWorkbenchSettings, workbenchSettingsAction } from '@/shared/api/host/workbench-settings';
 import { basename } from 'node:path';
 import { registerFactStream } from '@/shared/api/host/events';
 import { applyPlanFailures } from '@/kernel/host/mount-units';
@@ -175,9 +177,12 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   };
   const store = createWorkspaceStore({ logger: ctx.logger });
   const unitsOfTool = (): ReturnType<typeof toolUnits> => toolUnits(liveManifests());
+  const settings = mountWorkbenchSettings({ ctx, routes, root: workbenchRoot() });
+  const mcpScope = createMcpScope({ ctx, reapply: () => toolScope.reapply(), settings });
   const toolScope = createPresetScope({
     ctx,
     deniedTools: (context) => deniedNow(context),
+    extraDenied: (assembly, context) => mcpScope.extraDenied(assembly, context),
     logger: ctx.logger,
   });
   ctx.effect(
@@ -211,7 +216,10 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   const callFacts = (unit: string, call: UnitCall): readonly string[] =>
     factsOfMap.get(unit)?.(call) ?? factsOfUnit(unit);
   const deniedNow = (context: ToolScopeContext): readonly string[] => [
-    ...new Set([...mounted.values()].flatMap((item) => item.plan.gate?.deniedTools(context) ?? [])),
+    ...new Set([
+      ...[...mounted.values()].flatMap((item) => item.plan.gate?.deniedTools(context) ?? []),
+      ...mcpScope.denied(context),
+    ]),
   ];
   const declaredNoteTools = (): ReadonlySet<string> =>
     declaredNotesOf([...mounted.values()].map((item) => item.plan));
@@ -229,6 +237,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
       adapters.actions.configSyncAction(configSync),
       adapters.actions.profileCreateAction(profileCreate),
       sidebarEditionAction({ profileDir, reconcile: sidebarReconcile }),
+      workbenchSettingsAction(settings),
     ],
   });
   function unmountUnit(id: string): void {

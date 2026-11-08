@@ -1,6 +1,7 @@
 import type { UnitManifest } from '@dsh-workbench/shared';
 import type { RecordStore, UnitOwnedFace } from '@dsh-workbench/shared/host';
-import { DIY_DEBUG_SERVICE, DIY_RECORD_SERVICE, createDebugStore, createRecordStore, supplyNeedsOf, PANELS_SERVICE, dshHome, seamOf, supplyPortOf, workbenchRoot } from '@dsh-workbench/shared/host';
+import { DIY_DEBUG_SERVICE, DIY_RECORD_SERVICE, MCP_TOOLS_SERVICE, TOOLBOX_SERVICE, createDebugStore, createRecordStore, supplyNeedsOf, PANELS_SERVICE, dshHome, seamOf, supplyPortOf, workbenchRoot } from '@dsh-workbench/shared/host';
+import type { McpToolsPort, ToolboxPort } from '@dsh-workbench/shared/host';
 import { basename } from 'node:path';
 import { workshopPathOf } from '@/shared/api/host/diy';
 import { hostSurface } from '@dsh-workbench/shared/host';
@@ -74,7 +75,15 @@ export const panelsHost: UnitOwnedFace = {
           .map((manifest) => manifest.id),
       );
     };
-    const toolbox = createToolbox({ manifests, visibleUnits });
+    const toolbox = createToolbox({
+      manifests,
+      visibleUnits,
+      mcp: () => ctx.get<McpToolsPort>(MCP_TOOLS_SERVICE)?.servers() ?? [],
+    });
+    const toolboxPort: ToolboxPort = {
+      packsOf: (session, preset) => toolbox.packsOf(session, preset),
+    };
+    ctx.provide(TOOLBOX_SERVICE, toolboxPort);
     const debug = withObserverCleanup(createDebugStore(), (workspace) => stopObservers(ctx, workspace), logger);
     ctx.provide(DIY_DEBUG_SERVICE, debug);
     const base = createRecordStore();

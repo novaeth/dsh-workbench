@@ -103,13 +103,28 @@ const TOOLBOX_UNIT: UnitManifest = {
   ],
 };
 
-async function toolboxScreenOf(targets: readonly string[]): Promise<readonly string[]> {
+function toolboxOfMcp(): ReturnType<typeof createToolbox> {
+  return createToolbox({
+    manifests: () => [TOOLBOX_UNIT],
+    mcp: () => [
+      {
+        name: 'chrome',
+        tools: ['mcp__chrome__navigate_page', 'mcp__chrome__take_snapshot'],
+      },
+    ],
+  });
+}
+
+async function toolboxScreenOf(
+  targets: readonly string[],
+  toolbox: ReturnType<typeof createToolbox> = createToolbox({ manifests: () => [TOOLBOX_UNIT] }),
+): Promise<readonly string[]> {
   const args = { targets };
   const call: ApprovalCall = { name: TOOLBOX_OPEN_TOOL, arguments: args };
   const decision = await approvalFor(call, {
     writes: false,
     elevates: true,
-    policy: panelsApprovalFor(stopRuns(), undefined, undefined, undefined, createToolbox({ manifests: () => [TOOLBOX_UNIT] })),
+    policy: panelsApprovalFor(stopRuns(), undefined, undefined, undefined, toolbox),
   });
   const title = decision?.kind === 'ask' ? decision.displayReason.zh : '（不问）';
 
@@ -245,12 +260,16 @@ async function document(): Promise<string> {
     '**2026-11-08 加 `workbench_toolbox_open` 那三屏**：开工具包按 `elevates` 问（与 `writes` 无关）；',
     '标题点名第一个包 + 数量，详情座一行一个包（名字 · 共 N 把：读/写），再画范围与"写工具仍逐条确认"。',
     '',
+    '**2026-11-08 加 MCP 那一屏**：`mcp:<server>` 包只点 server 的名字；工具自己的审批归 dsh，',
+    '所以"写入"那一行改说"MCP 工具自己的审批仍走 dsh"（不说逐条确认）。',
+    '',
   ];
   for (const tool of ASK_TOOLS) parts.push(...(await screenOf(tool)));
   parts.push(...(await pluginScreen()));
   parts.push(...(await toolboxScreenOf(['manage'])));
   parts.push(...(await toolboxScreenOf(['unit:inventory'])));
   parts.push(...(await toolboxScreenOf(['unit:inventory', 'manage'])));
+  parts.push(...(await toolboxScreenOf(['mcp:chrome'], toolboxOfMcp())));
   return parts.join('\n');
 }
 

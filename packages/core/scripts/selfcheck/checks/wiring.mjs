@@ -165,6 +165,7 @@ export const checks = [
         'app/layouts/workbench-settings/ConfigSyncItem.tsx',
         'app/layouts/workbench-settings/NewWorkbenchItem.tsx',
         'app/layouts/workbench-settings/SidebarEditionItem.tsx',
+        'app/layouts/workbench-settings/McpOnDemandItem.tsx',
       ];
       const missingBusy = floorSites.filter((file) => !busySites.includes(file));
       const strayBusy = busySites.filter(

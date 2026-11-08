@@ -30,6 +30,7 @@ function presetOf(exec: DshToolRunContext | undefined): string | null {
 }
 
 function countLine(pack: PackEntry): string {
+  if (pack.kind === 'mcp') return `${pack.tools.length} 把工具`;
   return `${pack.tools.length} 把：读 ${pack.tools.length - pack.writes} / 写 ${pack.writes}`;
 }
 

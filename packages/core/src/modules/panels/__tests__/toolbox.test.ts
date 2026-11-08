@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createNoopDataReader } from '@dsh-workbench/shared/testing';
 import type { DshHostContext, DshToolDefinition, UnitManifest } from '@dsh-workbench/shared';
-import { approvalFor } from '@dsh-workbench/shared/host';
+import { approvalFor, MCP_TOOLS_SERVICE, type McpServerPacks } from '@dsh-workbench/shared/host';
 import { createHostKit, createWorkspaceStore, hostSurface, WORKBENCH_ADAPTERS } from '@dsh-workbench/shared/host';
 import { panelsHost } from '../index';
 import {
@@ -26,6 +26,7 @@ const boardUnit: UnitManifest = {
   tools: [
     { name: 'workbench_board_x_list', writes: false },
     { name: 'workbench_board_x_do', writes: true },
+    { name: 'workbench_board_x_always', writes: false, onDemand: false },
   ],
 };
 
@@ -49,13 +50,15 @@ afterEach(() => {
 
 const store = () => createWorkspaceStore({ root: dir });
 
-function mount() {
+function mount(mcp: readonly McpServerPacks[] = []) {
   const registered: DshToolDefinition[] = [];
   const ctx = {
     get: (key: string) =>
       key === WORKBENCH_ADAPTERS
         ? adapters
-        : key === 'tools'
+        : key === MCP_TOOLS_SERVICE
+          ? { servers: () => mcp }
+          : key === 'tools'
           ? {
               register: (definition: DshToolDefinition) => {
                 registered.push(definition);
@@ -126,6 +129,7 @@ describe('工具箱：默认只留控制面，按会话开包', () => {
     const all = new Set([...MANAGE_TOOLS, ...DIY_PACK_TOOLS, 'workbench_board_x_list', 'workbench_board_x_do']);
 
     expect(new Set(deniedOf(mounted, 's-1'))).toEqual(all);
+    expect(deniedOf(mounted, 's-1')).not.toContain('workbench_board_x_always');
 
     await call(registered, TOOLBOX_OPEN_TOOL, { targets: ['unit:board-x'] }, 's-1');
     const afterUnit = deniedOf(mounted, 's-1');
@@ -215,7 +219,8 @@ describe('工具箱：默认只留控制面，按会话开包', () => {
     expect(text).toContain('diy');
     expect(text).toContain('unit:board-x');
     expect(text).toContain('工作台管理');
-    expect(text).toContain('2 把：读 1 / 写 1');
+    expect(text).toContain('3 把：读 2 / 写 1');
+    expect(text).toContain('常驻 1 把');
   });
 });
 
@@ -275,5 +280,43 @@ describe('开包审批：elevates 走同一套审批闸', () => {
     });
 
     expect(decision).toBeUndefined();
+  });
+});
+
+describe('MCP server 也是外部包', () => {
+  const servers: readonly McpServerPacks[] = [
+    { name: 'chrome', tools: ['mcp__chrome__navigate_page', 'mcp__chrome__take_snapshot'] },
+  ];
+
+  it('★ 目录里列 mcp:<server>，默认 deny 掉它的工具', async () => {
+    const { mounted, registered } = mount(servers);
+    const listed = await call(registered, TOOLBOX_LIST_TOOL, {}, 's-1');
+
+    expect(String(listed['text'])).toContain('mcp:chrome');
+    expect(String(listed['text'])).toContain('2 把工具');
+    expect(deniedOf(mounted, 's-1')).toContain('mcp__chrome__navigate_page');
+  });
+
+  it('★ 开 mcp 包：它的工具从 deny 里消失；旧的没有会话 id 时照旧全开', async () => {
+    const { mounted, registered } = mount(servers);
+
+    await call(registered, TOOLBOX_OPEN_TOOL, { targets: ['mcp:chrome'] }, 's-1');
+
+    expect(deniedOf(mounted, 's-1')).not.toContain('mcp__chrome__navigate_page');
+    expect(deniedOf(mounted, null)).toEqual([]);
+  });
+
+  it('★ 审批：mcp 包也走同一套，标题点它的名字', async () => {
+    const { mounted } = mount(servers);
+    const approvalCall = { name: TOOLBOX_OPEN_TOOL, arguments: { targets: ['mcp:chrome'] } };
+
+    const decision = await approvalFor(approvalCall, {
+      writes: false,
+      elevates: true,
+      ...(mounted.needsApproval === undefined ? {} : { policy: mounted.needsApproval }),
+    });
+
+    expect(decision?.kind).toBe('ask');
+    expect(decision?.kind === 'ask' ? decision.displayReason.zh : '').toContain('chrome（MCP）');
   });
 });

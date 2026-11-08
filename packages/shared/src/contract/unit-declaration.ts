@@ -26,6 +26,7 @@ export interface UnitToolDeclaration {
   readonly name: string;
   readonly writes: boolean;
   readonly key?: string;
+  readonly onDemand?: boolean;
 }
 
 /**
@@ -68,7 +69,7 @@ export const DECLARATION_REQUIRED_KEYS: readonly string[] = [
 
 const CARD_KEYS = ['order'];
 const TITLE_KEYS = ['zh', 'en'];
-const TOOL_KEYS = ['name', 'writes', 'key'];
+const TOOL_KEYS = ['name', 'writes', 'key', 'onDemand'];
 
 const TOOL_KEY_SHAPE = /^[a-z][a-zA-Z0-9]*$/;
 const HOST_KEYS = ['inject', 'optional', 'writes'];
@@ -228,6 +229,9 @@ export function declarationProblemsOf(subject: string, raw: unknown): readonly s
             `${subject}: ${at}.writes 要是 true / false（它是"这会写"的唯一声明，缺了审批无从认领）`,
           );
         }
+        if (tool.onDemand !== undefined && typeof tool.onDemand !== 'boolean') {
+          problems.push(`${subject}: ${at}.onDemand 要是 true / false（false = 这把工具不随工具包收）`);
+        }
         if (tool.key !== undefined) {
           const key = text(tool.key);
           if (!TOOL_KEY_SHAPE.test(key)) {
@@ -322,6 +326,7 @@ export function readDeclaration(subject: string, raw: unknown): DeclarationRead 
       tools: declaration.tools.map((tool) => ({
         name: text(tool.name),
         writes: tool.writes,
+        ...(tool.onDemand === false ? { onDemand: false } : {}),
       })),
       host: {
         inject: [...(declaration.host.inject ?? [])],

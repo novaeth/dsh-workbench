@@ -46,6 +46,12 @@ export const UNITS_SERVICE = "workbenchUnits";
 /** 面板运行态服务的 dsh 服务名（`workbenchPanelState`）：宿主注册，读口按它取。 */
 export const PANEL_STATE_SERVICE = "workbenchPanelState";
 
+/** 工具包状态服务的 dsh 服务名（`workbenchToolbox`）：宿主经它读某会话开着的包，决定工具面。 */
+export const TOOLBOX_SERVICE = "workbenchToolbox";
+
+/** MCP 工具清单服务的 dsh 服务名（`workbenchMcpTools`）：宿主登记见过的 server 与工具，外壳目录按它列包。 */
+export const MCP_TOOLS_SERVICE = "workbenchMcpTools";
+
 /** DIY 调试约定服务的 dsh 服务名（`workbenchDiyDebug`）：调试动作走它，不走 HTTP。 */
 export const DIY_DEBUG_SERVICE = "workbenchDiyDebug";
 

@@ -1,5 +1,5 @@
 import type { UnitManifest } from '@dsh-workbench/shared';
-import type { ToolScopeContext } from '@dsh-workbench/shared/host';
+import type { McpServerPacks, ToolScopeContext } from '@dsh-workbench/shared/host';
 import { DIY_PRESET_ID } from '@/shared/api/diy';
 import { DIY_PACK_TOOLS, MANAGE_TOOLS, TOOLBOX_TOOLS, WRITE_TOOLS } from '../unit';
 
@@ -14,12 +14,16 @@ export interface PackLabel {
   readonly en: string;
 }
 
+export type PackKind = 'shell' | 'unit' | 'mcp';
+
 export interface PackEntry {
   readonly id: PackId;
   readonly label: PackLabel;
   readonly hint: string;
   readonly tools: readonly string[];
+  readonly alwaysOn: readonly string[];
   readonly writes: number;
+  readonly kind: PackKind;
 }
 
 const WRITING = new Set<string>(WRITE_TOOLS);
@@ -34,14 +38,18 @@ const SHELL_PACKS: readonly PackEntry[] = [
     label: { zh: '工作台管理', en: 'workbench admin' },
     hint: '面板 · 模块 · 市场 · 长任务',
     tools: MANAGE_TOOLS,
+    alwaysOn: [],
     writes: writesOf(MANAGE_TOOLS),
+    kind: 'shell',
   },
   {
     id: 'diy',
     label: { zh: 'DIY 工具', en: 'DIY tools' },
     hint: '调试 · 录制 · 日志 · 页面动作 · 工坊',
     tools: DIY_PACK_TOOLS,
+    alwaysOn: [],
     writes: writesOf(DIY_PACK_TOOLS),
+    kind: 'shell',
   },
 ];
 
@@ -78,12 +86,16 @@ function unitPacks(manifests: readonly UnitManifest[]): readonly PackEntry[] {
       {
         id: `unit:${manifest.id}` as PackId,
         label: { zh: label.zh, en: label.en },
-        hint: tools
-          .map((tool) => tool.name.replace(/^workbench_/, ''))
-          .join(' · ')
-          .slice(0, 80),
+        hint: `${
+          tools
+            .map((tool) => tool.name.replace(/^workbench_/, ''))
+            .join(' · ')
+            .slice(0, 80)
+        }${tools.some((tool) => tool.onDemand === false) ? ` · 常驻 ${String(tools.filter((tool) => tool.onDemand === false).length)} 把` : ''}`,
         tools: tools.map((tool) => tool.name),
+        alwaysOn: tools.filter((tool) => tool.onDemand === false).map((tool) => tool.name),
         writes: tools.filter((tool) => tool.writes).length,
+        kind: 'unit',
       },
     ];
   });
@@ -92,6 +104,7 @@ function unitPacks(manifests: readonly UnitManifest[]): readonly PackEntry[] {
 export function createToolbox(options: {
   readonly manifests: () => readonly UnitManifest[];
   readonly visibleUnits?: ((workspace: string | null) => ReadonlySet<string>) | undefined;
+  readonly mcp?: (() => readonly McpServerPacks[]) | undefined;
 }): Toolbox {
   const states = new Map<string, SessionState>();
   const listeners = new Set<() => void>();
@@ -108,13 +121,26 @@ export function createToolbox(options: {
     for (const listener of [...listeners]) listener();
   };
 
+  const mcpPacks = (): readonly PackEntry[] =>
+    (options.mcp?.() ?? []).map((server) => ({
+      id: `mcp:${server.name}` as PackId,
+      label: { zh: `${server.name}（MCP）`, en: `${server.name} (MCP)` },
+      hint: 'dsh 的 MCP server —— 工具自己的审批仍走 dsh',
+      tools: server.tools,
+      alwaysOn: [],
+      writes: 0,
+      kind: 'mcp',
+    }));
+
   const catalog = (workspace?: string | null): readonly PackEntry[] => {
     const units = unitPacks(options.manifests());
-    if (workspace === undefined || options.visibleUnits === undefined) return [...SHELL_PACKS, ...units];
+    const mcp = mcpPacks();
+    if (workspace === undefined || options.visibleUnits === undefined) return [...SHELL_PACKS, ...units, ...mcp];
     const visible = options.visibleUnits(workspace);
     return [
       ...SHELL_PACKS,
       ...units.filter((pack) => visible.has(pack.id.slice('unit:'.length))),
+      ...mcp,
     ];
   };
 
@@ -190,7 +216,9 @@ export function createToolbox(options: {
       const deny = new Set<string>();
       for (const pack of catalog()) {
         if (open.has(pack.id)) continue;
-        for (const name of pack.tools) deny.add(name);
+        for (const name of pack.tools) {
+          if (!pack.alwaysOn.includes(name)) deny.add(name);
+        }
       }
       for (const name of TOOLBOX_TOOLS) deny.delete(name);
       return [...deny];

@@ -107,6 +107,23 @@ describe('tool-scope', () => {
     expect(calls).toHaveLength(2);
   });
 
+  it('★ 装配期还有一份"看 assembly 才算得出来"的 deny（MCP 那种）：按名字从清单里拿掉；注册期那份另算', () => {
+    const { registry } = fakeTools();
+    const scope = createToolScope({
+      deniedTools: () => [],
+      extraDenied: (assembly, context) =>
+        (assembly.tools ?? [])
+          .map((tool) => tool.name)
+          .filter((name) => name.startsWith('mcp__') && context.session === 's-1'),
+    });
+
+    const assembly = { tools: [{ name: 'mcp__chrome__a' }, { name: 'workbench_panels_list' }] };
+    const narrowed = scope.narrow(assembly, agentWith(registry, '/w/a', undefined, 's-1'));
+
+    expect(narrowed.tools).toEqual([{ name: 'workbench_panels_list' }]);
+    expect(scope.narrow(assembly, agentWith(registry, '/w/a', undefined, 's-2')).tools).toEqual(assembly.tools);
+  });
+
   it('★★ preset 选上了：reapply 之后整条限制撤掉（那 34 把放出来）', () => {
     const { registry, calls, disposed } = fakeTools();
     let preset: string | null = null;

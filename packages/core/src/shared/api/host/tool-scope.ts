@@ -22,6 +22,7 @@ export interface ToolScopeAgent {
 
 export interface ToolScopeOptions {
   deniedTools(context: ToolScopeContext): readonly string[];
+  extraDenied?: ((assembly: DshPromptAssembly, context: ToolScopeContext) => readonly string[]) | undefined;
   presetOf?: ((handle: ToolScopeAgent) => string | null) | undefined;
   logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
 }
@@ -103,7 +104,11 @@ export function createToolScope(options: ToolScopeOptions): ToolScope {
       const handle = agentOf(agent);
       const tools = assembly?.tools;
       if (handle === undefined || tools === undefined) return assembly;
-      const deny = new Set(options.deniedTools(contextOf(handle, options)));
+      const context = contextOf(handle, options);
+      const deny = new Set([
+        ...options.deniedTools(context),
+        ...(options.extraDenied?.(assembly, context) ?? []),
+      ]);
       if (deny.size === 0) return assembly;
       const kept = tools.filter((tool) => !deny.has(tool.name));
       return kept.length === tools.length ? assembly : { ...assembly, tools: kept };

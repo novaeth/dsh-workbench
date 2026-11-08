@@ -32,8 +32,9 @@ _Avoid_: 右栏、rightbar、sidebar
 _Avoid_: 卡片、组件、widget
 
 **工具包（tool pack）**：一组按会话开关的 agent 工具 —— `manage`（面板 / 模块 / 市场 / 长任务）、
-`diy`（DIY 与页面调试）、以及每个挂在板子上的模块 / 插件各一个 `unit:<id>`。默认只挂三把
-`workbench_toolbox_*` 控制工具；agent 按用户意图开包（要审批），收包即时收回。
+`diy`（DIY 与页面调试）、每个挂在板子上的模块 / 插件各一个 `unit:<id>`，以及 dsh 的 MCP server 各一个
+`mcp:<server>`（默认不启用：工作台设置里打开「MCP 按需加载」后才按需；工具自己的审批仍走 dsh）。默认只挂三把 `workbench_toolbox_*` 控制工具；
+agent 按用户意图开包（要审批），收包即时收回；模块可以声明工具的 `onDemand: false` 让它常驻。
 _Avoid_: 工具套件（"套件"专指模块）
 
 **看板**：面板列的默认视图，由若干模块按用户顺序组成。

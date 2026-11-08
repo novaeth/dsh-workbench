@@ -42,6 +42,7 @@ export interface UnitTool {
   readonly name: string;
   readonly writes: boolean;
   readonly elevates?: boolean;
+  readonly onDemand?: boolean;
   readonly runtime?: UnitToolRuntime;
 }
 

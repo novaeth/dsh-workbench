@@ -661,11 +661,16 @@ ctx.get('workbenchUnits').registerUnit({
 默认工具面只有三把控制工具（`workbench_toolbox_list` / `_open` / `_close`），其余工作台工具收在
 工具包里按会话打开：
 
-- 三个包：`manage`（面板 / 模块 / 市场 / 长任务）、`diy`（DIY 与页面调试）、以及每个挂在板子上的
-  模块 / 插件各一个 `unit:<id>`。包不是新注册的工具 —— 注册照旧，包只决定"进不进上下文、能不能调"。
+- 三类包：`manage`（面板 / 模块 / 市场 / 长任务）、`diy`（DIY 与页面调试）、以及每个挂在板子上的
+  模块 / 插件各一个 `unit:<id>`；dsh 的 MCP server 另外各收一个 `mcp:<server>`（工具面第一次装配时
+  从 `mcp__<server>__*` 认出来；它们自己的审批仍走 dsh，不归工作台）。MCP 这一条**默认不启用**：
+  工作台设置里的「MCP 按需加载」打开后才走包（本机 `$DSH_HOME/workbench/settings.json`），关着时 MCP 工具照旧全量。
+- 包不是新注册的工具 —— 注册照旧，包只决定"进不进上下文、能不能调"。模块可以在清单里给工具写
+  `onDemand: false`，表示它不随包收（常驻）。
 - 状态按会话（宿主内存）；DIY 模式默认开 `manage + diy`，其余会话从空开始；显式 open/close 覆盖默认。
 - 开包要用户审批（`elevates`）；非法 / 没在板子上的单元在审批之前就被拒；收包不审批。
 - `system-prompt/assemble` 的 `narrow` 与注册期的 `restrict` 共用同一份 deny（ADR-0020）；
+  MCP 那半边多一份"只有看到 assembly 才算得出来"的 deny（`extraDenied`）—— 先认出 `mcp__*` 再收。
   板子隐藏的单元与今天一样始终收着，开包也绕不过去。
 - 装配期、工具面、审批的实现落在 `modules/panels/model/toolbox*.ts` 与 `modules/panels/unit.ts`。
 
