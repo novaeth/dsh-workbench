@@ -77,7 +77,7 @@ export function mountWorkbenchSettings(options: {
   readonly root: string;
 }): WorkbenchSettingsStore {
   const store = createWorkbenchSettingsStore({ root: options.root });
-  options.routes[WORKBENCH_SETTINGS_ROUTE] = () => ({ settings: store.read() });
+  options.routes[WORKBENCH_SETTINGS_ROUTE] = () => ({ ok: true, settings: store.read() });
   return store;
 }
 
