@@ -1,0 +1,5 @@
+cft: https://storage.googleapis.com/chrome-for-testing-public/157.0.8103.38/win64/chrome-win64.zip
+chrome: 157.0.8103.38
+opencli pin: 1.8.8
+latest release: v2.0.3
+extension: https://github.com/jackwener/opencli/releases/download/v2.0.3/opencli-extension-v1.0.27.zip

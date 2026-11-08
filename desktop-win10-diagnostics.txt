@@ -1,0 +1,166 @@
+
+=== meta ===
+collected-at: 2026-11-08T13:09:15.912Z
+platform: win32 x64 · node v24.22.2
+cwd: D:\a\dsh-workbench\dsh-workbench
+home: C:\Users\runneradmin
+dsh-home: C:\Users\runneradmin\.dsh
+workbench-home: C:\Users\runneradmin\.dsh\workbench
+GITHUB_RUN_ID: 42483397277
+GITHUB_RUN_ATTEMPT: 1
+GITHUB_SHA: 26eaaf615fc223b8792f3bbdbdebc82c669ea2cf
+GITHUB_JOB: smoke
+DESKTOP_SMOKE_STATUS: failure
+probe-log: D:\a\dsh-workbench\dsh-workbench\desktop-win10-probe.log
+git: 26eaaf6 feat(empty-state): 空态默认用插画，插画搬进 shared
+git-status: M packages/module-hello/client.js
+ M packages/shared/src/host/release-packages.generated.ts
+
+=== triage ===
+探针总结: （没有）
+第一处错误: （没有）
+
+里程碑:
+（没有）
+
+现场文件:
+（没有）
+
+体检失败快照:
+（没有）
+
+=== smoke results ===
+desktop-win10-smoke.json:
+（读不出 JSON）: ENOENT: no such file or directory, open 'D:\a\dsh-workbench\dsh-workbench\desktop-win10-smoke.json'
+desktop-win10-after-restart-smoke.json:
+（读不出 JSON）: ENOENT: no such file or directory, open 'D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart-smoke.json'
+
+=== checklist ===
+profile 里有 @dsh-workbench/core: 否
+profile 里有 @dsh-workbench/module-hello: 否
+opencli 装上了: 否（C:\Users\runneradmin\.dsh\workbench\opencli\toolchain\node_modules\@jackwener\opencli\package.json）
+市场索引列出模块: 否: ENOENT: no such file or directory, open 'D:\a\dsh-workbench\dsh-workbench\desktop-win10-market-body.txt'
+市场装上了模块: 否: ENOENT: no such file or directory, open 'D:\a\dsh-workbench\dsh-workbench\desktop-win10-market-installed.txt'
+重启后看到了模块卡片: 否: ENOENT: no such file or directory, open 'D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart-verify-body.txt'
+截图: （没有）
+
+=== probe log ===
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-probe.log（不存在）
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart-probe.log（不存在）
+
+=== app stdout/stderr ===
+DESKTOP_SMOKE_APP_LOG: D:\a\_temp\desktop-win10-app.log
+D:\a\_temp\desktop-win10-app.log（不存在）
+DESKTOP_SMOKE_APP_ERR: D:\a\_temp\desktop-win10-app.err.log
+D:\a\_temp\desktop-win10-app.err.log（不存在）
+DESKTOP_SMOKE_APP_LOG_2: D:\a\_temp\desktop-win10-app2.log
+D:\a\_temp\desktop-win10-app2.log（不存在）
+DESKTOP_SMOKE_APP_ERR_2: D:\a\_temp\desktop-win10-app2.err.log
+D:\a\_temp\desktop-win10-app2.err.log（不存在）
+
+=== market artifacts ===
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-market-body.txt（不存在）
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-market-installed.txt（不存在）
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-verify-body.txt（不存在）
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart-verify-body.txt（不存在）
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-final-body.txt（不存在）
+
+=== desktop install tree ===
+resources: C:\Users\runneradmin\AppData\Local\Programs\DeepSeek Harness\resources（在）
+  dir app.asar.unpacked\dsh\node_modules
+  file app.asar.unpacked\dsh\node_modules\clone\.npmignore
+  dir app.asar.unpacked\dsh\node_modules\node-addon-require-builtin-win32-x64-msvc
+  dir app.asar.unpacked\dsh\node_modules\node-pty
+  dir runtime
+  dir runtime\primary-runtime
+  dir runtime\primary-runtime\dependencies\node
+  dir runtime\primary-runtime\dependencies\node\bin
+  dir runtime\primary-runtime\dependencies\node\node_modules
+  dir runtime\primary-runtime\dependencies\pnpm
+  dir runtime\primary-runtime\dependencies\pnpm\bin
+  dir runtime\primary-runtime\dependencies\pnpm\dist
+  dir runtime\primary-runtime\dependencies\python
+  dir runtime\primary-runtime\dependencies\python\DLLs
+  dir runtime\primary-runtime\dependencies\python\include
+  dir runtime\primary-runtime\dependencies\python\Lib
+  dir runtime\primary-runtime\dependencies\python\libs
+  dir runtime\primary-runtime\dependencies\python\Scripts
+  dir runtime\primary-runtime\dependencies\python\tcl
+
+=== opencli doctor ===
+bin: C:\Users\runneradmin\.dsh\workbench\opencli\bin\opencli.cmd（不在）
+
+=== runner os ===
+platform: win32 · release: 10.0.20348 · version: Windows Server 2022 Datacenter
+OS env: Windows_NT
+Microsoft Windows [Version 10.0.20348.5773]
+
+=== extension prep ===
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-prep.log（266 字节，末尾 6 行）
+cft: https://storage.googleapis.com/chrome-for-testing-public/157.0.8103.38/win64/chrome-win64.zip
+chrome: 157.0.8103.38
+opencli pin: 1.8.8
+latest release: v2.0.3
+extension: https://github.com/jackwener/opencli/releases/download/v2.0.3/opencli-extension-v1.0.27.zip
+
+
+=== smoke browser ===
+chrome: （未设置）
+extension: （未设置）
+opencli bin: （未设置）
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-chrome.log（不存在）
+
+=== units and client injection ===
+desktop-win10-units.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-units.json（不存在）
+desktop-win10-after-restart-units.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart-units.json（不存在）
+desktop-win10-client-bundles.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-client-bundles.json（不存在）
+desktop-win10-after-restart-client-bundles.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart-client-bundles.json（不存在）
+desktop-win10-page-internals.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-page-internals.json（不存在）
+desktop-win10-after-restart-page-internals.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart-page-internals.json（不存在）
+desktop-win10-scripts.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-scripts.json（不存在）
+desktop-win10-after-restart-scripts.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart-scripts.json（不存在）
+desktop-win10-console-events.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-console-events.json（不存在）
+desktop-win10-after-restart-console-events.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart-console-events.json（不存在）
+
+=== dsh startup logs ===
+C:\Users\runneradmin\.dsh\logs（不存在）
+
+=== desktop app logs ===
+（没找到 Desktop 自己的日志文件）
+
+=== workbench home tree（C:\Users\runneradmin\.dsh\workbench） ===
+C:\Users\runneradmin\.dsh\workbench（不存在）
+
+=== seed.log ===
+C:\Users\runneradmin\.dsh\workbench\seed.log（不存在）
+
+=== diy/.sync.json ===
+C:\Users\runneradmin\.dsh\workbench\diy\.sync.json（不存在）
+
+=== profile package.json ===
+C:\Users\runneradmin\.dsh\profiles\desktop\package.json（不存在）
+
+=== profile cordis.patch.yml ===
+C:\Users\runneradmin\.dsh\profiles\desktop\cordis.patch.yml（不存在）
+
+=== profile cordis.yml ===
+C:\Users\runneradmin\.dsh\profiles\desktop\cordis.yml（不存在）
+
+=== workbench browser.json ===
+C:\Users\runneradmin\.dsh\workbench\browser.json（不存在）
+
+=== dsh home tree（C:\Users\runneradmin\.dsh） ===
+C:\Users\runneradmin\.dsh（不存在）
+
+=== processes ===
+
