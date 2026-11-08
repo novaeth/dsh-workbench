@@ -13,11 +13,11 @@ interface ToolRegistryView {
   view(scope?: unknown): { readonly knownNames?: ReadonlySet<string> };
 }
 
-function registeredToolNames(ctx: DshHostContext): readonly string[] {
+function registeredToolNames(ctx: DshHostContext, scope?: unknown): readonly string[] {
   const registry = (ctx as unknown as { readonly tools?: ToolRegistryView }).tools;
   if (registry === undefined) return [];
   try {
-    return [...(registry.view().knownNames ?? [])];
+    return [...(registry.view(scope).knownNames ?? [])];
   } catch {
     return [];
   }
@@ -50,19 +50,19 @@ export function createMcpScope(options: {
   const port: McpToolsPort = { servers: () => (enabled() ? packs.servers() : []) };
   ctx.provide(MCP_TOOLS_SERVICE, port);
   ctx.effect(() => settings.watch(() => reapply()), 'dsh-workbench: MCP 按需加载开关一变就重算工具面');
-  const refresh = (): void => {
-    packs.observeNames(registeredToolNames(ctx));
+  const refresh = (context?: ToolScopeContext): void => {
+    packs.observeNames(registeredToolNames(ctx, context?.scope));
   };
 
   return {
     extraDenied(_assembly, context) {
       if (!enabled()) return [];
-      refresh();
+      refresh(context);
       return deniedFor(ctx, packs, context);
     },
     denied(context) {
       if (!enabled()) return [];
-      refresh();
+      refresh(context);
       return deniedFor(ctx, packs, context);
     },
   };

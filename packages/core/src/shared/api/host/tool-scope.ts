@@ -48,6 +48,7 @@ function contextOf(handle: ToolScopeAgent, options: ToolScopeOptions): ToolScope
     workspace: typeof cwd === 'string' && cwd !== '' ? cwd : null,
     preset: read ?? (typeof declared === 'string' && declared !== '' ? declared : null),
     session: typeof session === 'string' && session !== '' ? session : null,
+    scope: handle,
   };
 }
 

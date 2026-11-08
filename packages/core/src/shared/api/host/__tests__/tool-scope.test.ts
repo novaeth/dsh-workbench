@@ -68,9 +68,10 @@ describe('tool-scope', () => {
       presetOf: () => 'workbench-diy',
     });
 
-    scope.apply(agentWith(registry, '/w/a'));
+    const agent = agentWith(registry, '/w/a');
+    scope.apply(agent);
 
-    expect(seen).toEqual([{ workspace: '/w/a', preset: 'workbench-diy', session: null }]);
+    expect(seen).toEqual([{ workspace: '/w/a', preset: 'workbench-diy', session: null, scope: agent }]);
   });
 
   it('presetOf 读不到就退回会话 header 里的创建事实', () => {
@@ -83,11 +84,13 @@ describe('tool-scope', () => {
       },
     });
 
-    scope.apply(agentWith(registry, '/w/a', 'workbench-diy'));
-    scope.apply(agentWith(registry));
+    const withPreset = agentWith(registry, '/w/a', 'workbench-diy');
+    const bare = agentWith(registry);
+    scope.apply(withPreset);
+    scope.apply(bare);
 
-    expect(seen[0]).toEqual({ workspace: '/w/a', preset: 'workbench-diy', session: null });
-    expect(seen[1]).toEqual({ workspace: null, preset: null, session: null });
+    expect(seen[0]).toEqual({ workspace: '/w/a', preset: 'workbench-diy', session: null, scope: withPreset });
+    expect(seen[1]).toEqual({ workspace: null, preset: null, session: null, scope: bare });
   });
 
   it('★ 会话 id 也进 context：工具包状态按会话分，签名里也有它', () => {

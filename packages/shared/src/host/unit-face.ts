@@ -17,6 +17,7 @@ export interface ToolScopeContext {
   readonly workspace: string | null;
   readonly preset: string | null;
   readonly session: string | null;
+  readonly scope?: unknown;
 }
 
 export interface UnitMountDeps extends HostKit {

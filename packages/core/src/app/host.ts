@@ -452,7 +452,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     const off = ctx.on?.('system-prompt/assemble', async (_assembly, context, next) => {
       pluginTools?.touch();
       const resolved = await next();
-      return toolScope.narrow(resolved, context?.scope);
+      return toolScope.narrow(resolved, context?.agent ?? context?.scope);
     });
     return () => off?.();
   }, `${PLUGIN_ID}: 打包提示时就把收起的工具从清单里去掉（不靠限制的生效时机）`);

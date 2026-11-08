@@ -34,13 +34,14 @@ function fakeCtx(open: ReadonlySet<string>, names: readonly string[] = []) {
     effect: (run: () => () => void) => {
       run();
     },
-    tools: { view: () => ({ knownNames: new Set(names) }) },
+    tools: { view: (scope?: unknown) => ({ knownNames: new Set(scope === undefined ? [] : names) }) },
     logger: { info: () => {}, warn: () => {} },
   } as unknown as DshHostContext;
   return { ctx, provided };
 }
 
-const context = { workspace: '/w/a', preset: null, session: 's-1' };
+const agent = { id: 'agent-1' };
+const context = { workspace: '/w/a', preset: null, session: 's-1', scope: agent };
 const names = ['mcp__chrome__list_pages', 'mcp__chrome__navigate_page', 'workbench_panels_list'];
 
 describe('MCP 包的收窄接在注册期（dsh 0.2.2 的 assembly 里还没有 tools）', () => {
@@ -78,6 +79,13 @@ describe('MCP 包的收窄接在注册期（dsh 0.2.2 的 assembly 里还没有 
     settings.set(false);
     expect(reapplied).toBe(1);
     expect(scope.denied(context)).toEqual([]);
+  });
+
+  it('没有 agent scope 时退回全局视图：那里看不到 scoped 的 MCP 注册，也就不 deny', () => {
+    const { ctx } = fakeCtx(new Set(), names);
+    const scope = createMcpScope({ ctx, reapply: () => {}, settings: settingsOf(true) });
+
+    expect(scope.denied({ workspace: null, preset: null, session: null })).toEqual([]);
   });
 
   it('拿不到工具面 / 工具包状态：当作全开，不把 MCP 收走', () => {
