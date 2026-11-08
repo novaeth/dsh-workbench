@@ -96,7 +96,7 @@ function openedText(toolbox: Toolbox, session: string, preset: string | null, ne
       ? '这些工具包本来就在开。'
       : `已开启：${newly.map((pack) => `${pack}（${countLine(catalog.get(pack) as PackEntry)}）`).join('、')}`,
     already.length === 0 ? '' : `本来就在开：${already.join('、')}`,
-    '下一次工具调用就能用（不用等用户再发消息）；这一轮用完了就直接调 workbench_toolbox_close 收回去。',
+    '下一次工具调用就能用（不用等用户再发消息）；相关的事做完、或接下来用不到，就自己调 workbench_toolbox_close 收回去。',
   ];
   return parts.filter((line) => line !== '').join('\n');
 }
@@ -154,8 +154,8 @@ export function registerToolboxTools(ctx: DshHostContext, toolbox: Toolbox): Arr
 
   const openTool = targetTool(
     TOOLBOX_OPEN_TOOL,
-    '开启工作台工具包（manage / diy / unit:<模块或插件 id>），把它的工具解锁到本次会话。' +
-      '用户要面板、调试、录制、某个模块或插件的能力时用它；开启要用户审批。',
+    '开启工作台工具包（manage / diy / unit:<模块或插件 id>），把工具解锁到本次会话。' +
+      '需要面板、调试、录制或某个模块/插件的能力时用它；开启要用户审批。',
     false,
     (plan, exec) => {
       const newly = toolbox.open(plan.session, plan.packs, presetOf(exec));
@@ -169,7 +169,7 @@ export function registerToolboxTools(ctx: DshHostContext, toolbox: Toolbox): Arr
 
   const closeTool = targetTool(
     TOOLBOX_CLOSE_TOOL,
-    '收起已开启的工作台工具包，把这些工具从本次会话的上下文里拿掉。用户说"不用了 / 收起来"、或这一轮用完了就调它；不收审批。',
+    '收起已开启的工作台工具包，把这些工具从本次会话的上下文里拿掉。什么时候收由你决定：相关的事做完、或接下来用不到就主动收；不收审批。',
     true,
     (plan, exec) => {
       const closed = toolbox.close(plan.session, plan.packs, presetOf(exec));
