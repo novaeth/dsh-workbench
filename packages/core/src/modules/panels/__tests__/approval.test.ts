@@ -466,6 +466,22 @@ describe('文案口径：说清是工作台的动作、目标是哪个模块 / �
     expect(zh({ name: PANELS_FOLLOW_TOOL, arguments: { id: 'inventory' } })).toContain('工作台 [inventory] 模块这一行');
   });
 
+  it('★ 移动位置说的是参数里的那一格：0 是最前面，其余按 0 基算成第几位', () => {
+    const say = (call: ApprovalCall): string => {
+      const verdict = panelsApproval(call);
+      return verdict?.kind === 'ask' ? `${verdict.fallback.zh}｜${verdict.fallback.en}` : '';
+    };
+
+    expect(say({ name: PANELS_MOVE_TOOL, arguments: { id: 'issues', index: 0 } })).toContain('最前面');
+    expect(say({ name: PANELS_MOVE_TOOL, arguments: { id: 'issues', index: 0 } })).toContain('to the front');
+
+    const placed = say({ name: PANELS_MOVE_TOOL, arguments: { id: 'issues', index: 2 } });
+    expect(placed).toContain('第 3 位');
+    expect(placed).toContain('position 3');
+    expect(placed).not.toContain('最前面');
+    expect(placed).not.toContain('to the front');
+  });
+
   it('★ 升级工具与安装工具的话不一样（升 ≠ 装）', () => {
     const install = panelsApproval({ name: MODULES_INSTALL_TOOL, arguments: { id: 'inventory' } });
     const update = panelsApproval({ name: MODULES_UPDATE_TOOL, arguments: { id: 'inventory' } });

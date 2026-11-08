@@ -297,10 +297,17 @@ function approvalVerdict(call: ApprovalCall, marketSource?: MarketSourceLookup):
     }
     case PANELS_MOVE_TOOL: {
       const row = workbenchPanelRow(id);
+      const index = raw['index'];
+      const at = typeof index === 'number' && Number.isInteger(index) && index > 0 ? index : 0;
+      const place =
+        at === 0 ? { zh: '最前面', en: 'the front' } : { zh: `第 ${at + 1} 位`, en: `position ${at + 1}` };
       return askOf(
         `${PANELS_MOVE_TOOL} ${id ?? ''} reorders the workbench panel`,
-        pair(`会把${row.zh}移到${board.zh}最前面，允许吗？`, `it moves ${row.en} to the front of ${board.en}. Allow?`),
-        pair(`agent 想把${row.zh}移到最前面，允许吗？`, `The agent wants to move ${row.en} to the front. Allow?`),
+        pair(
+          `会把${row.zh}移到${board.zh}${at === 0 ? '' : '的'}${place.zh}，允许吗？`,
+          `it moves ${row.en} to ${place.en} of ${board.en}. Allow?`,
+        ),
+        pair(`agent 想把${row.zh}移到${place.zh}，允许吗？`, `The agent wants to move ${row.en} to ${place.en}. Allow?`),
       );
     }
     case PANELS_RESET_TOOL:
