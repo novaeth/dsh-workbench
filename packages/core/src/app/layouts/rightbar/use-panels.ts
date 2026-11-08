@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { apiGet } from '@dsh-workbench/shared';
+import { PANELS_FACT } from '@dsh-workbench/shared/contract/facts';
+import {
+  PANELS_ROUTE,
+  type PanelPluginView as PanelPluginUnit,
+  type PanelUnitView as PanelUnit,
+  type PanelsPayload,
+} from '@dsh-workbench/shared/contract/protocol/panels';
 
 import { useFactRevision } from '@/shared/hooks/use-facts';
 import type { SessionsSnapshot, WorkspaceSnapshot, WorkspaceView } from '@dsh-workbench/shared';
@@ -7,29 +14,9 @@ import { currentSessionId, workspaceOfSession } from '@/modules/sessions';
 import { selectedProjectId, subscribeProject } from '@/app/layouts/project-selection';
 import { useRuntimeSidebarEdition } from '@/app/layouts/sidebar/edition';
 
-export interface PanelUnit {
-  readonly id: string;
-  readonly titleKey: string;
-  readonly shown: boolean;
-  readonly source: 'default' | 'user';
-  readonly hasCard: boolean;
-}
+export type { PanelPluginUnit, PanelUnit };
 
-export interface PanelPluginUnit {
-  readonly id: string;
-  readonly pkg: string;
-  readonly title: string;
-  readonly shown: boolean;
-  readonly source: 'default' | 'user';
-}
-
-export interface PanelBoardView {
-  readonly units: readonly PanelUnit[];
-  readonly plugins: readonly PanelPluginUnit[];
-  readonly defaults: readonly string[];
-  readonly own: boolean;
-  readonly changed: Readonly<Record<string, number>>;
-}
+export type PanelBoardView = Omit<PanelsPayload, 'ok'>;
 
 export function shouldDropPanels(workspace: string | null, previous: string | null): boolean {
   return workspace !== previous;
@@ -41,7 +28,7 @@ export function useEnabledUnits(
 ): PanelBoardView | null {
   const [enabled, setEnabled] = useState<PanelBoardView | null>(null);
   const lastWorkspace = useRef<string | null>(workspace);
-  const factRev = useFactRevision('panels');
+  const factRev = useFactRevision(PANELS_FACT);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,13 +38,7 @@ export function useEnabledUnits(
     }
 
     const read = async (): Promise<void> => {
-      const response = await apiGet<{
-        units?: PanelUnit[];
-        plugins?: PanelPluginUnit[];
-        defaults?: string[];
-        own?: boolean;
-        changed?: Record<string, number>;
-      }>('panels', workspace === null ? {} : { path: workspace }).catch(() => null);
+      const response = await apiGet<PanelsPayload>(PANELS_ROUTE, workspace === null ? {} : { path: workspace }).catch(() => null);
       if (cancelled) return;
       if (response?.ok === true && Array.isArray(response.units)) {
         setEnabled({

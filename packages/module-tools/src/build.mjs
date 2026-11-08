@@ -5,6 +5,7 @@ import { isAbsolute, join, relative } from 'node:path';
 import { build as esbuild } from 'esbuild';
 import { SEED_SPECIFIERS } from './seed.mjs';
 import { cssInjectionCode } from './css-injection.mjs';
+import { CLIENT_ENTRY_CANDIDATES, HOST_ENTRY_CANDIDATES } from './faces.mjs';
 
 const SHELL_CLIENT = '@dsh-workbench/core/client';
 const RESOLVE_EXTENSIONS = ['.ts', '.tsx', '.js', '.json'];
@@ -113,7 +114,7 @@ export async function build({ root }) {
   const plugins = [aliasResolver({ root, unit })];
   const nodeBuiltins = [...builtinModules, ...builtinModules.map((name) => `node:${name}`)];
 
-  const hostEntry = pickEntry(root, ['src/plugin.host.ts', 'src/host.ts']);
+  const hostEntry = pickEntry(root, HOST_ENTRY_CANDIDATES);
   if (hostEntry !== undefined) {
     await esbuild({
       absWorkingDir: root,
@@ -130,8 +131,8 @@ export async function build({ root }) {
     });
   }
 
-  const clientEntry = pickEntry(root, ['src/plugin.client.ts', 'src/client.tsx']);
-  if (clientEntry === undefined) throw new Error('找不到浏览器侧入口（src/plugin.client.ts 或 src/client.tsx）');
+  const clientEntry = pickEntry(root, CLIENT_ENTRY_CANDIDATES);
+  if (clientEntry === undefined) throw new Error(`找不到浏览器侧入口（${CLIENT_ENTRY_CANDIDATES.join(' 或 ')}）`);
   const client = await esbuild({
     absWorkingDir: root,
     entryPoints: [clientEntry],

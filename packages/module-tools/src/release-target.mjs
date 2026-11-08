@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { RELEASE_TARGETS } from '@dsh-workbench/shared/contract/protocol/release';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 
 import {
@@ -11,7 +12,7 @@ import {
   tailOf,
 } from './release-util.mjs';
 
-const TARGETS = ['team', 'public', 'tarball', 'git', 'market', 'local'];
+const TARGETS = RELEASE_TARGETS;
 const PUBLIC_REGISTRIES = ['https://registry.npmjs.org/', 'https://registry.npmmirror.com/'];
 
 function isPublicRegistry(registry) {

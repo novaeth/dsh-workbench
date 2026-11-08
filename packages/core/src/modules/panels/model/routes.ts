@@ -1,12 +1,13 @@
 import { param, type RouteTable } from '@dsh-workbench/shared/host';
 import type { ValueHandoff } from '@dsh-workbench/shared/host';
+import { PANELS_ROUTE, type PanelsPayload } from '@dsh-workbench/shared/contract/protocol/panels';
 import type { PanelEntry } from './config';
 import { panelsHandoffEntry } from './handoff';
 import type { PanelsService } from './service';
 
 export function panelRoutes(panels: PanelsService, values?: ValueHandoff): RouteTable {
   return {
-    panels: (search) => {
+    [PANELS_ROUTE]: (search) => {
       const path = param(search, 'path') ?? null;
       const entry = panelsHandoffEntry(path === null ? {} : { path });
       const handed = entry === undefined ? undefined : values?.take(entry);
@@ -27,7 +28,7 @@ export function panelRoutes(panels: PanelsService, values?: ValueHandoff): Route
         defaults,
         own,
         changed: Object.fromEntries(panels.changedBy()),
-      };
+      } satisfies PanelsPayload;
     },
   };
 }

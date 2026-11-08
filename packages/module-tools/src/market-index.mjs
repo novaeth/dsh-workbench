@@ -1,6 +1,7 @@
 import { cpSync, copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
+import { MARKET_INDEX_DIR, MARKET_INDEX_PATH } from '@dsh-workbench/shared/contract/protocol/market-index';
 
 import {
   MARKET_ENTRIES_README_LINES,
@@ -18,8 +19,8 @@ import {
   sortMarketVersions,
 } from '@dsh-workbench/shared/host';
 
-const MARKET_DIR = 'market';
-const LEGACY_FILE = 'market.json';
+const MARKET_DIR = MARKET_INDEX_DIR;
+const LEGACY_FILE = MARKET_INDEX_PATH;
 const SAFE_PACKAGE_NAME = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/;
 const WORKSPACE_PREFIX = 'workspace:';
 const ARTIFACT_DIRS = ['dist'];

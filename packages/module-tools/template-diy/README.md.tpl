@@ -9,8 +9,8 @@
 ```bash
 dsh-wb-module init <unit> --dir <目录>              # 生成这份骨架（只有这一个模板）
 dsh-wb-module build     # 出 dist/host.js 与套了 loader 壳的 client.js
-dsh-wb-module check     # 十三条判据：契约 / 声明协议 / 产物边界 / 源码边界 / 架构 / dsh 原语 / kit 面 / 卡片渲染 / 独立构建 / 内部标识 / 样式归属 / 不指外壳 / 代码卫生（eslint）
-dsh-wb-module check --only cards   # 十三条可以单跑
+dsh-wb-module check     # 十四条判据：契约 / 声明协议 / 产物边界 / 源码边界 / 执行缝 / 架构 / dsh 原语 / kit 面 / 卡片渲染 / 独立构建 / 内部标识 / 样式归属 / 不指外壳 / 代码卫生（eslint）
+dsh-wb-module check --only cards   # 十四条可以单跑
 ```
 
 包自带的六个脚本（`build` / `typecheck` / `test` / `selfcheck` 是 `check` 的契约判据要求的那四个；`check` 跑全部判据，`lint` 只跑源码卫生那一条）：

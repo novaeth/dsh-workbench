@@ -1,8 +1,14 @@
 import type { DshHostContext } from '../api/dsh.js';
+import type { RuntimeCapabilities } from '../contract/capabilities.js';
 import type { AdapterSet } from './adapters.js';
 import { validateAdapterSet } from './adapter-set.js';
 
-const CAPABILITY_KEYS = ['console', 'pluginMarket', 'browserBridge'] as const;
+const CAPABILITY_KEYS = ['console', 'pluginMarket', 'browserBridge'] as const satisfies readonly (keyof RuntimeCapabilities)[];
+
+type MissingCapability = Exclude<keyof RuntimeCapabilities, (typeof CAPABILITY_KEYS)[number]>;
+
+const CAPABILITIES_COVERED: MissingCapability extends never ? true : false = true;
+void CAPABILITIES_COVERED;
 const DATA_METHODS = ['read', 'request', 'requestMany', 'submit'] as const;
 
 function isNonEmptyString(value: unknown): boolean {

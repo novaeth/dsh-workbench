@@ -1,4 +1,5 @@
 import type { UnitManifest } from '@dsh-workbench/shared/host';
+import type { PanelPluginView, PanelUnitView } from '@dsh-workbench/shared/contract/protocol/panels';
 
 export type PanelList = readonly string[];
 
@@ -45,13 +46,8 @@ export function resolveScope(query: ScopeQuery): boolean {
   return own ?? defaultOf(boards.machine, id);
 }
 
-export interface PanelEntry {
-  readonly id: string;
-  readonly titleKey: string;
+export interface PanelEntry extends PanelUnitView {
   readonly order: number;
-  readonly shown: boolean;
-  readonly source: 'default' | 'user';
-  readonly hasCard: boolean;
 }
 
 function strings(raw: unknown): string[] {
@@ -129,14 +125,8 @@ export interface PanelPluginRef {
   readonly name?: string | undefined;
 }
 
-export interface PanelPluginEntry {
-  readonly id: string;
-  readonly pkg: string;
-  readonly title: string;
-  readonly name?: string | undefined;
+export interface PanelPluginEntry extends PanelPluginView {
   readonly order: number;
-  readonly shown: boolean;
-  readonly source: 'default' | 'user';
 }
 
 export const PLUGIN_PANEL_PREFIX = 'plugin:';

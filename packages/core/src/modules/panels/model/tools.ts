@@ -20,7 +20,7 @@ const MACHINE_CAVEAT = '机器级默认板只是还没配过的工作区的默�
 const SCOPE_PARAM = {
   type: 'string',
   description: 'workspace（默认）=只动当前工作区；machine=动机器级默认板（只影响还没配过的工作区）。',
-  enum: ['workspace', 'machine'],
+  enum: [...BOARD_TARGETS],
 };
 
 const ID_PARAM = { type: 'string', description: '模块 id（如 inventory）。' };

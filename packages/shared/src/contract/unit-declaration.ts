@@ -66,12 +66,26 @@ export const DECLARATION_REQUIRED_KEYS: readonly string[] = [
   'host',
 ];
 
-const CARD_KEYS = ['order'];
-const TITLE_KEYS = ['zh', 'en'];
-const TOOL_KEYS = ['name', 'writes', 'key'];
+const CARD_KEYS = ['order'] as const satisfies readonly (keyof UnitCardDeclaration)[];
+const TITLE_KEYS = ['zh', 'en'] as const satisfies readonly (keyof UnitTitle)[];
+const TOOL_KEYS = ['name', 'writes', 'key'] as const satisfies readonly (keyof UnitToolDeclaration)[];
 
 const TOOL_KEY_SHAPE = /^[a-z][a-zA-Z0-9]*$/;
-const HOST_KEYS = ['inject', 'optional', 'writes'];
+const HOST_KEYS = ['inject', 'optional', 'writes'] as const satisfies readonly (keyof UnitHostNeeds)[];
+
+type MissingCardKey = Exclude<keyof UnitCardDeclaration, (typeof CARD_KEYS)[number]>;
+type MissingTitleKey = Exclude<keyof UnitTitle, (typeof TITLE_KEYS)[number]>;
+type MissingToolKey = Exclude<keyof UnitToolDeclaration, (typeof TOOL_KEYS)[number]>;
+type MissingHostKey = Exclude<keyof UnitHostNeeds, (typeof HOST_KEYS)[number]>;
+
+const CARD_KEYS_COVERED: MissingCardKey extends never ? true : false = true;
+const TITLE_KEYS_COVERED: MissingTitleKey extends never ? true : false = true;
+const TOOL_KEYS_COVERED: MissingToolKey extends never ? true : false = true;
+const HOST_KEYS_COVERED: MissingHostKey extends never ? true : false = true;
+void CARD_KEYS_COVERED;
+void TITLE_KEYS_COVERED;
+void TOOL_KEYS_COVERED;
+void HOST_KEYS_COVERED;
 
 const UNIT_WRITE_SCOPES: readonly string[] = ['unit', 'workspace'];
 
@@ -130,8 +144,8 @@ export function declarationProblemsOf(subject: string, raw: unknown): readonly s
     const hint =
       version === 2
         ? ' —— v3 把卡片标题挪成了顶层 `title`（`{ "zh": "…", "en": "…" }` 字面量）：' +
-          '把 `card.titleKey` 删掉、在顶层写 title，再把 apiVersion 改成 3'
-        : ' —— 先跑 `dsh-wb-module migrate` 把版本号改到 3，再按 check 的提示改源码';
+          `把 \`card.titleKey\` 删掉、在顶层写 title，再把 apiVersion 改成 ${WORKBENCH_API_VERSION}`
+        : ` —— 先跑 \`dsh-wb-module migrate\` 把版本号改到 ${WORKBENCH_API_VERSION}，再按 check 的提示改源码`;
     return [
       `${subject}: dsh.workbench.apiVersion 是 ${JSON.stringify(version)}，这里只认 ` +
         `${SUPPORTED_API_VERSIONS.join(' / ')}（要整数）${hint}`,

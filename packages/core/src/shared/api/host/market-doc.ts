@@ -5,7 +5,7 @@ import type {
   MarketIndexSource,
   MarketSourceConfig,
 } from '@dsh-workbench/shared/contract/protocol/market-index';
-import { marketSourceKey } from '@dsh-workbench/shared/host';
+import { DEFAULT_NPM_REGISTRY, marketSourceKey } from '@dsh-workbench/shared/host';
 import type { GitRunner } from './git-process.js';
 import { runGitProcess } from './git-process.js';
 
@@ -35,7 +35,6 @@ const FILES: Readonly<Record<DiscoverDocKind, string>> = {
 
 const DEFAULT_TIMEOUT_MS = 15 * 1000;
 const DEFAULT_MAX_BYTES = 200 * 1024;
-const DEFAULT_REGISTRY = 'https://registry.npmjs.org';
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -107,7 +106,7 @@ export function createMarketDocReader(options: MarketDocReaderOptions): MarketDo
   async function readNpm(target: MarketDocTarget, kind: DiscoverDocKind): Promise<DiscoverDoc> {
     if (kind === 'changelog') return fail(kind, target.version, 'missing');
     const source = target.source;
-    const registry = (source.type === 'npm' ? (source.registry ?? DEFAULT_REGISTRY) : DEFAULT_REGISTRY).replace(
+    const registry = (source.type === 'npm' ? (source.registry ?? DEFAULT_NPM_REGISTRY) : DEFAULT_NPM_REGISTRY).replace(
       /\/+$/,
       '',
     );

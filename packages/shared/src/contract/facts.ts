@@ -1,3 +1,11 @@
+export const PANELS_FACT = 'panels';
+
+export const CAPABILITY_FACT = 'capability';
+
+export const DIY_DEBUG_FACT = 'diy-debug';
+
+export const DIY_RECORD_FACT = 'diy-record';
+
 /**
  * 宿主推来的一帧事实变更：rev 在同一纪元里单调，facts 是这一帧动过的名字。
  */

@@ -1,5 +1,7 @@
 import type { UnitManifest } from '@dsh-workbench/shared';
 
+export const PANELS_MODULE_ID = 'panels';
+
 export const PANELS_LIST_TOOL = 'workbench_panels_list';
 export const PANELS_SHOW_TOOL = 'workbench_panels_show';
 export const PANELS_HIDE_TOOL = 'workbench_panels_hide';
@@ -238,8 +240,8 @@ export function screenOnlyToolsFor(pageDebug: boolean): readonly PanelsToolName[
 }
 
 export const panelsUnit: UnitManifest = {
-  id: 'panels',
-  titleKey: 'panels.title',
+  id: PANELS_MODULE_ID,
+  titleKey: `${PANELS_MODULE_ID}.title`,
   card: null,
   tools: [
     ...READ_TOOLS.map((name) => ({ name, writes: false })),

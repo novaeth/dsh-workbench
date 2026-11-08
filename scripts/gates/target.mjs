@@ -3,6 +3,11 @@ import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 
 import { misplacedTests } from '../arch/rules/tests-in-folders.mjs';
+import { ADAPTER_ALLOWED_IMPORTS, adapterPackageDirs } from '../arch/adapter-packages.mjs';
+import {
+  CLIENT_GRAPH_HOST_PATHS,
+  HOST_GRAPH_CLIENT_PATHS,
+} from '../../packages/core/arch/runtime-boundaries.mjs';
 import {
   ROOT,
   SHARED_SRC,
@@ -31,7 +36,7 @@ const CORE_PKG = join(ROOT, 'packages/core/package.json');
 const CORE_CONTRACT = join(WORKBENCH_SRC, 'kernel/contract/index.ts');
 const MODULE_TOOLS_SRC = join(ROOT, 'packages/module-tools/src');
 const ARCHITECTURE = join(ROOT, 'ARCHITECTURE.md');
-const ADAPTER_PACKAGES = ['adapter-runtime', 'adapter-supply', 'adapter-profile', 'adapter-probe', 'adapters-default'].map((name) => join(ROOT, 'packages', name));
+const ADAPTER_PACKAGES = adapterPackageDirs().map((dir) => join(ROOT, dir));
 const TEST_SCAN_ROOTS = [join(ROOT, 'packages'), join(ROOT, 'scripts')];
 const TEST_SCAN_SKIP = new Set(['node_modules', 'dist', 'coverage', 'site-dist', '.git', '.verify']);
 
@@ -99,7 +104,7 @@ function adapterPackageFindings() {
       for (const { spec } of importsOf(read(file))) {
         if (spec.startsWith('.') || spec.startsWith('node:')) continue;
         if (spec.startsWith('@dsh-workbench/shared') || spec.startsWith('@dsh-workbench/adapter-')) continue;
-        if (['execa', 'proper-lockfile', 'write-file-atomic', 'dayjs'].includes(spec)) continue;
+        if (ADAPTER_ALLOWED_IMPORTS.test(spec)) continue;
         findings.push(finding(rel, 1, `adapter 包越界 import ${spec}`, '适配器只取 shared 契约/纯函数与自己的依赖'));
       }
     }
@@ -276,14 +281,7 @@ const GATES = [
     title: '宿主图里没有浏览器侧文件',
     run() {
       const graph = reachableFrom(join(WORKBENCH_SRC, 'app/host.ts'), WORKBENCH_SRC, { valuesOnly: true });
-      const banned = [
-        'src/kernel/client/',
-        'src/app/layouts/',
-        'src/app/units/manifests.ts',
-        'src/shared/components/',
-        'src/shared/hooks/',
-        'src/shared/styles/',
-      ];
+      const banned = HOST_GRAPH_CLIENT_PATHS;
       const findings = [];
       for (const file of graph) {
         const rel = wbRel(file);
@@ -810,12 +808,7 @@ function browserHostFindings(graph, base) {
   const findings = [];
   for (const file of graph) {
     const rel = `src/${relOf(file, base)}`;
-    if (
-      rel.startsWith('src/kernel/host/') ||
-      rel.startsWith('src/shared/api/host/') ||
-      rel === 'src/app/units/host.ts' ||
-      rel === 'src/app/host.ts'
-    ) {
+    if (CLIENT_GRAPH_HOST_PATHS.some((path) => rel === path || rel.startsWith(path))) {
       findings.push(finding(rel, 1, '浏览器入口可达宿主文件', '把宿主代码移出 client 可达图'));
     }
   }

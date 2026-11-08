@@ -1,7 +1,7 @@
 // 这份模块自己的真读断言：换数据源时改这一份，不要删 smoke.mjs 里那一整段。
 //
 // `assertModule()` 只在这里拿到真东西（路由表与 check），想验什么就写什么：
-// 卡片画的数从哪来，这里真的调一次 —— `check` 的十三条判据一条都不碰这条。
+// 卡片画的数从哪来，这里真的调一次 —— `check` 的十四条判据一条都不碰这条。
 
 import { readdirSync } from 'node:fs';
 import { dirname } from 'node:path';

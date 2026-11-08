@@ -3,6 +3,8 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { DshHostContext } from '../api/dsh.js';
+import type { DataReader } from '../contract/data.js';
+import type { EnvSupplyPort, ProbePort, ProfilePort } from './port-types.js';
 import {
   ADAPTER_SET_API_VERSION,
   SUPPORTED_ADAPTER_API_VERSIONS,
@@ -38,13 +40,14 @@ export type AdapterSetLoad =
 
 const CORE_MEMBERS = ['data', 'supply', 'profile', 'probe'] as const;
 
-const CORE_METHODS = [
+export const CORE_METHODS = [
   ['data', 'read'],
   ['data', 'request'],
   ['data', 'requestMany'],
   ['data', 'submit'],
   ['supply', 'resolvePluginSource'],
   ['supply', 'libInstallCommand'],
+  ['supply', 'libUninstallCommand'],
   ['supply', 'pluginInstallPlan'],
   ['supply', 'latestVersion'],
   ['supply', 'missingReleaseParts'],
@@ -57,6 +60,24 @@ const CORE_METHODS = [
   ['probe', 'registerPreflight'],
   ['probe', 'declaredPluginCommands'],
 ] as const;
+
+type ListedMethodFor<M extends string> = Extract<
+  (typeof CORE_METHODS)[number],
+  readonly [M, string]
+>[1];
+
+type Covered<Keys extends string, M extends string> = Exclude<Keys, ListedMethodFor<M>> extends never
+  ? true
+  : false;
+
+const DATA_METHODS_COVERED: Covered<keyof DataReader, 'data'> = true;
+const SUPPLY_METHODS_COVERED: Covered<keyof EnvSupplyPort, 'supply'> = true;
+const PROFILE_METHODS_COVERED: Covered<keyof ProfilePort, 'profile'> = true;
+const PROBE_METHODS_COVERED: Covered<keyof ProbePort, 'probe'> = true;
+void DATA_METHODS_COVERED;
+void SUPPLY_METHODS_COVERED;
+void PROFILE_METHODS_COVERED;
+void PROBE_METHODS_COVERED;
 
 const FULL_MEMBERS = ['modules', 'runtime', 'plugins', 'actions'] as const;
 

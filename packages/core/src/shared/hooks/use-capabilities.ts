@@ -1,5 +1,6 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import type { CapabilityPayload } from '@dsh-workbench/shared';
+import { CAPABILITY_FACT } from '@dsh-workbench/shared/contract/facts';
 import { apiGet } from '@dsh-workbench/shared';
 
 import { useFactRevision } from './use-facts';
@@ -46,7 +47,7 @@ function setProbe(next: CapabilityProbeState): void {
   for (const listener of [...probeListeners]) listener();
 }
 
-export const CAPABILITY_FACT = 'capability';
+export { CAPABILITY_FACT };
 
 let shared: { readonly force: boolean; readonly epoch: number; readonly promise: Promise<CapabilityMap | null> } | null = null;
 

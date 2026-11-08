@@ -1,10 +1,11 @@
 import type { RecordState } from '@dsh-workbench/shared/host';
+import { DIY_RECORD_FACT } from '@dsh-workbench/shared/contract/facts';
+import { DIY_RECORD_ROUTE } from '@dsh-workbench/shared/contract/protocol/panels';
 import { useHostWrite } from './use-host-write';
 import type { HostWrite } from './use-host-write';
 import { useApiResource } from './use-api-resource';
 
-export const DIY_RECORD_ROUTE = 'panels/diy-record';
-export const DIY_RECORD_FACT = 'diy-record';
+export { DIY_RECORD_FACT, DIY_RECORD_ROUTE };
 
 export function useDiyRecordState(): RecordState | null {
   const read = useApiResource<{ state?: RecordState | null }>(DIY_RECORD_ROUTE, {}, 0, {

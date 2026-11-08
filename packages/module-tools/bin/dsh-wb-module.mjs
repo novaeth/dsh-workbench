@@ -2,6 +2,8 @@
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { Command } from 'commander';
+import { WORKBENCH_API_VERSION } from '@dsh-workbench/shared/host';
+import { RELEASE_TARGETS } from '@dsh-workbench/shared/contract/protocol/release';
 import { build } from '../src/build.mjs';
 import { CHECKS, check } from '../src/check.mjs';
 import { changelog } from '../src/changelog.mjs';
@@ -63,12 +65,12 @@ const MIGRATE_HELP = `
 用法：
   migrate [--cwd <模块目录>] [--dry-run]
 
-把模块清单迁到当前代：apiVersion → 3、缺/空的 workbenchFaces 补默认入口。
+把模块清单迁到当前代：apiVersion → ${WORKBENCH_API_VERSION}、缺/空的 workbenchFaces 补默认入口。
 源码类问题（kit 成员移除、裸控件、card: null 对账）不自动改 —— check 会逐条点名。`;
 
 const RELEASE_HELP = `
 选项：
-  --target team|public|tarball|git|market|local         出口；省略按配置默认（可写索引优先 market）
+  --target ${RELEASE_TARGETS.join('|')}         出口；省略按配置默认（可写索引优先 market）
   --version patch|minor|major|x.y.z                     版本；省略时已存在就自动 patch
   --registry <url> --access restricted|public --npmrc <文件>
   --license <id> --out <目录> --git <remote>

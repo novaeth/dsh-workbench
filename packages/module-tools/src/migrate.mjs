@@ -1,9 +1,9 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { WORKBENCH_API_VERSION } from '@dsh-workbench/shared/host';
+import { DEFAULT_FACES } from './faces.mjs';
 
-const API_VERSION = 3;
-
-const DEFAULT_FACES = { host: 'src/host.ts', client: 'src/client.tsx' };
+const API_VERSION = WORKBENCH_API_VERSION;
 
 export async function migrate({ root, args = [] }) {
   const dryRun = args.includes('--dry-run');

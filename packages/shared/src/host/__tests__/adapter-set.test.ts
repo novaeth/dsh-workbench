@@ -68,6 +68,7 @@ const FULL = `{
   supply: {
     resolvePluginSource: () => ({ ok: false, problem: 'not-declared' }),
     libInstallCommand: () => '',
+    libUninstallCommand: () => '',
     pluginInstallPlan: () => ({ ok: false, problem: 'not-declared' }),
     latestVersion: async () => undefined,
     missingReleaseParts: async () => [],
@@ -190,6 +191,15 @@ describe('loadAdapterSet：从 profile 解析 set，失败不抛', () => {
     const loaded = await loadAdapterSet(ctxOf(dir), 'fixture-set');
     expect(loaded).toMatchObject({ ok: false, failure: 'missing-member' });
     if (!loaded.ok) expect(loaded.detail).toContain('id');
+  });
+
+  it('supply 少了 libUninstallCommand → missing-member（加载期就点名）', async () => {
+    const dir = profileOf();
+    const missing = FULL.replace("    libUninstallCommand: () => '',\n", '');
+    install(dir, 'missing-uninstall-set', `export function createAdapterSet() { return ${missing}; }`);
+    const loaded = await loadAdapterSet(ctxOf(dir), 'missing-uninstall-set');
+    expect(loaded).toMatchObject({ ok: false, failure: 'missing-member' });
+    if (!loaded.ok) expect(loaded.detail).toContain('supply.libUninstallCommand');
   });
 
   it('关键方法不是函数 → missing-member', async () => {

@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { OPENCLI_PIN } from '@dsh-workbench/shared/host';
+import { OPENCLI_CATALOG_ENV, OPENCLI_PIN } from '@dsh-workbench/shared/host';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
 import { isolatedRoot, libsPrefix, npmCacheDir, toolchainOpencliDir } from '../foundation/paths.js';
 import { OPENCLI_NPM_PACKAGE } from '../foundation/paths.js';
@@ -10,7 +10,7 @@ export function toolchainDir(): string {
   return join(isolatedRoot(), 'toolchain');
 }
 
-export const OPENCLI_CATALOG_ENV = 'DSH_WB_OPENCLI_CATALOG';
+export { OPENCLI_CATALOG_ENV };
 
 export function toolchainManifestOf(): string {
   return `${JSON.stringify(

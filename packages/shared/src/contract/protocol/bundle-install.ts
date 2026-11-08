@@ -71,6 +71,12 @@ export interface BundleInspectionPayload {
 
 export type BundleApplication = 'applied' | 'restart-required' | 'overridden' | 'failed' | 'cancelled';
 
+export const SHIPPED_APPLICATIONS = ['applied', 'restart-required', 'overridden'] as const satisfies readonly BundleApplication[];
+
+export function isShippedApplication(value: BundleApplication): boolean {
+  return (SHIPPED_APPLICATIONS as readonly BundleApplication[]).includes(value);
+}
+
 export const SELF_UPDATE_STATES = ['running', 'ok', 'rolled-back', 'failed'] as const;
 
 export type SelfUpdateState = (typeof SELF_UPDATE_STATES)[number];
@@ -266,6 +272,7 @@ export interface WorkbenchVersion {
   readonly pkg: string;
   readonly installed: string;
   readonly latest?: string;
+  readonly latestBlocked?: 'incompatible';
   readonly running?: string;
   readonly local?: boolean;
   readonly spec?: string;

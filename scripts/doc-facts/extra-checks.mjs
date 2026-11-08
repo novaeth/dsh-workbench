@@ -50,6 +50,17 @@ export function gateCount() {
   return [...text.slice(start, end).matchAll(/\bid: '[A-Z][A-Z0-9-]*'/g)].length;
 }
 
+function documentedMembersOf(text, label) {
+  const start = text.indexOf(`\`${label}\``);
+  if (start === -1) return [];
+  const stop = text.indexOf('。', start + label.length + 2);
+  const end = stop === -1 ? text.indexOf('\n- ', start + label.length + 2) : stop;
+  const segment = text.slice(start, end === -1 ? text.length : end);
+  return [...segment.matchAll(/`([A-Za-z][A-Za-z0-9]*)`/g)]
+    .map((match) => match[1])
+    .filter((name) => name !== label);
+}
+
 export function contractPorts() {
   const arch = readText('ARCHITECTURE.md');
   const adapters = readText('ADAPTERS.md');
@@ -78,6 +89,20 @@ export function contractPorts() {
       findings.push(finding('ARCHITECTURE.md', lineOf(arch, 'RuntimeCapabilities'), `RuntimeCapabilities 漏了 ${member.name}`, '补能力名'));
     }
   }
+  for (const [label, members] of [
+    ['EnvSupplyPort', interfaceFacts('packages/shared/src/host/port-types.ts', 'EnvSupplyPort').members],
+    ['RuntimePort', runtime],
+    ['ProbePort', interfaceFacts('packages/shared/src/host/port-types.ts', 'ProbePort').members],
+    ['PluginSurface', interfaceFacts('packages/shared/src/host/port-types.ts', 'PluginSurface').members],
+  ]) {
+    const known = new Set(members.map((member) => member.name));
+    for (const name of documentedMembersOf(adapters, label)) {
+      if (known.has(name)) continue;
+      findings.push(
+        finding('ADAPTERS.md', lineOf(adapters, `\`${name}\``), `${label} 写了不存在的 ${name}`, '删掉这一项，或补进 port-types'),
+      );
+    }
+  }
   const row = arch.split('\n').find((line) => line.startsWith('| `AdapterSet`'));
   for (const member of ['apiVersion', 'id', 'version', 'libs', 'git', 'commands']) {
     if (row === undefined || !row.includes(member)) {
@@ -98,7 +123,16 @@ export function counts() {
     findings.push(finding('ARCHITECTURE.md', lineOf(arch, '当前目标报告'), `写 ${reported[1]} 绿，目标门禁实际 ${gates} 条`, `改成 ${gates} 绿`));
   }
   const checks = objectKeysOf('packages/module-tools/src/check.mjs', 'CHECKS').length;
-  for (const file of ['ARCHITECTURE.md', 'packages/module-tools/README.md', 'DESIGN-BOUNDARIES.md']) {
+  for (const file of [
+    'ARCHITECTURE.md',
+    'packages/module-tools/README.md',
+    'DESIGN-BOUNDARIES.md',
+    'packages/module-tools/template-diy/README.md.tpl',
+    'packages/module-tools/template-diy/AGENTS.md.tpl',
+    'packages/core/scripts/seed-workshop.sh',
+    'packages/module-tools/template-diy/scripts/smoke.mjs.tpl',
+    'packages/module-tools/template-diy/scripts/smoke.assert.mjs.tpl',
+  ]) {
     findings.push(...countMismatch(file, /([一二两三四五六七八九十\d]+)\s*(?:条)?判据/g, checks, '判据数'));
   }
   const snapshots = arrayLengthOf('packages/module-tools/src/checks/cards.mjs', 'SNAPSHOTS');

@@ -1,10 +1,11 @@
 import type { DebugState } from '@dsh-workbench/shared/host';
+import { DIY_DEBUG_FACT } from '@dsh-workbench/shared/contract/facts';
+import { DIY_DEBUG_ROUTE } from '@dsh-workbench/shared/contract/protocol/panels';
 import { useHostWrite } from './use-host-write';
 import type { HostWrite } from './use-host-write';
 import { useApiResource } from './use-api-resource';
 
-export const DIY_DEBUG_ROUTE = 'panels/diy-debug';
-export const DIY_DEBUG_FACT = 'diy-debug';
+export { DIY_DEBUG_FACT, DIY_DEBUG_ROUTE };
 
 export function useDiyDebugState(): DebugState | null {
   const read = useApiResource<{ state?: DebugState | null }>(DIY_DEBUG_ROUTE, {}, 0, {

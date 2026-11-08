@@ -26,6 +26,7 @@ import {
   prepareStaging,
 } from '@/shared/api/host/diy-release-staging';
 import { asRecord, asText, OUTPUT, plainJson, workspaceOf } from './diy-context';
+import { RELEASE_TARGETS } from '@dsh-workbench/shared/contract/protocol/release';
 import { DIY_PUBLISH_TOOL } from '../unit';
 
 export const PUBLISH_TIMEOUT_MS = 30 * 60 * 1000;
@@ -218,7 +219,7 @@ export function registerPublishTool(
         },
         target: {
           type: 'string',
-          enum: ['team', 'public', 'tarball', 'git', 'market', 'local'],
+          enum: [...RELEASE_TARGETS],
           description:
             '发到哪：团队源 / 公共 npm / 安装包 / git / 模块市场索引；不填按环境默认（有可写索引走市场，有私源走团队源，否则安装包）。',
         },

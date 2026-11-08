@@ -1,23 +1,9 @@
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
+import { CLIENT_ONLY_PREFIXES, HOST_ONLY_PREFIXES } from '../arch/runtime-boundaries.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-
-const HOST_ONLY = [
-  /^src\/kernel\/host\//,
-  /^src\/shared\/api\/host\//,
-  /^src\/adapters\//,
-  /^src\/app\/host\.ts$/,
-];
-
-const CLIENT_ONLY = [
-  /^src\/kernel\/client\//,
-  /^src\/app\/layouts\//,
-  /^src\/shared\/components\//,
-  /^src\/shared\/hooks\//,
-  /^src\/shared\/styles\//,
-];
 
 function collectModules(sink, outside) {
   return {
@@ -44,7 +30,7 @@ async function graphOf(mode, outside) {
 }
 
 function report(label, graph, patterns, advice) {
-  const violations = graph.filter((path) => patterns.some((pattern) => pattern.test(path)));
+  const violations = graph.filter((path) => patterns.some((prefix) => path.startsWith(prefix)));
   if (violations.length === 0) return false;
   console.error(`✖ ${label}：`);
   for (const path of violations) console.error(`  ${path}`);
@@ -59,13 +45,13 @@ const hostGraph = await graphOf('host', outsideHost);
 const clientBroken = report(
   '浏览器入口的 import 图里出现了宿主传输层',
   clientGraph,
-  HOST_ONLY,
+  HOST_ONLY_PREFIXES,
   '两个运行时不许互引（见 AGENTS.md 硬约束 3）。',
 );
 const hostBroken = report(
   '宿主入口的 import 图里出现了浏览器侧文件',
   hostGraph,
-  CLIENT_ONLY,
+  CLIENT_ONLY_PREFIXES,
   '宿主半侧不许碰 DOM / React（见 AGENTS.md 硬约束 3）。',
 );
 
