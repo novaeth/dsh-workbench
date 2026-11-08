@@ -2,13 +2,12 @@ import type { DshHostContext, DshWorkspaceRegistry, UnitManifest } from '@dsh-wo
 import { provideWorkbenchSeam } from '@/shared/api/host/workbench-seam';
 import { provideGitProcessSeam } from '@/shared/api/host/git-process';
 import { shippedAdapterSet } from '@/shared/api/host/shipped-adapter-set';
-import { dshHome } from '@dsh-workbench/shared/host';
 import { createHostRoutes } from '@/shared/api/host/host-routes';
 import { assembleHostUnits } from '@/app/units/host';
 import { createPostChannels } from '@/shared/api/host/post-channels';
 import { takeHeldNotices, type AgentsLookup } from '@/shared/api/host/diy-debug-act';
 import { registerDiyActs } from '@/shared/api/host/diy-acts';
-import { hostSurface, runningVersionOf, workbenchRoot } from '@dsh-workbench/shared/host';
+import { dshHome, hostSurface, runningVersionOf, workbenchRoot } from '@dsh-workbench/shared/host';
 import {
   capabilityHandler,
   registerApi,
@@ -21,7 +20,6 @@ import { createMcpScope } from '@/shared/api/host/pack-scope';
 import { mountWorkbenchSettings, workbenchSettingsAction } from '@/shared/api/host/workbench-settings';
 import { basename } from 'node:path';
 import { registerFactStream } from '@/shared/api/host/events';
-import { applyPlanFailures } from '@/kernel/host/mount-units';
 import { WORKSHOP_TITLE } from '@/kernel/contract/diy';
 import { workshopPathOf } from '@/shared/api/host/diy';
 import { WORKBENCH_ADAPTERS, needsOf, resolveAdapterSet, type AdapterSet, type NeedProbeInput, type PluginRowsSource, type PluginUnitsPort, type UnitCapability, type WorkbenchConfig } from '@dsh-workbench/shared/host';
@@ -34,7 +32,7 @@ import {
   type ScannableMessage,
 } from '@/shared/api/host/context-inject';
 import type { LongTaskBase, LongTaskRegistry, UnitCall, UnitMountResult, ToolScopeContext } from '@dsh-workbench/shared/host';
-import { declaredNotesOf, mountUnits, failureReasonOf, type UnitsPlan } from '@/kernel/host/mount-units';
+import { applyPlanFailures, declaredNotesOf, mountUnits, failureReasonOf, type UnitsPlan } from '@/kernel/host/mount-units';
 import {
   createUnitRegistry,
   installableUnitsOf,
@@ -52,6 +50,7 @@ import { createValueHandoff } from '@dsh-workbench/shared/host';
 import { PANELS_SERVICE, PLUGIN_ID, UNITS_SERVICE } from '@dsh-workbench/shared/host';
 import { asArgs, warn } from '../shared/api/host/host-args';
 import { createApprovalGate } from '@/shared/api/host/approval-gate';
+import { registerBootThemeGuard } from '@/shared/api/host/boot-theme-guard';
 import { registerDiyPreset } from '@/shared/api/host/diy-preset';
 import { notifyLongTaskStop } from '@/shared/api/host/long-task-notice';
 export const name = 'dsh-workbench';
@@ -60,6 +59,7 @@ export const inject = ['webServer'];
 export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Promise<void> {
   const seam = provideWorkbenchSeam(ctx);
   if (seam !== undefined) provideGitProcessSeam(seam);
+  registerBootThemeGuard(ctx);
   registerDiyPreset(ctx);
   const facts = createFactLog();
   const values = createValueHandoff();

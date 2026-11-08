@@ -1,3 +1,4 @@
+import { BRAND_MARK_GEOMETRY } from '@dsh-workbench/shared';
 import styles from './BootGate.module.css';
 export const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -48,6 +49,31 @@ export function spinnerIcon(size = 14): SVGElement {
     group.append(circle);
   }
   svg.append(group);
+  return svg;
+}
+
+export function brandMarkIcon(size = 24): SVGElement {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('width', String(size));
+  svg.setAttribute('height', String(size));
+  svg.setAttribute('viewBox', '0 0 64 64');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('class', styles.brandMark);
+  svg.setAttribute('style', `width:${size}px;height:${size}px`);
+
+  const shapes: Array<[string, Record<string, string>]> = [
+    [BRAND_MARK_GEOMETRY.body, { stroke: 'currentColor', 'stroke-width': '4' }],
+    [BRAND_MARK_GEOMETRY.neck, { fill: 'currentColor' }],
+    [BRAND_MARK_GEOMETRY.base, { fill: 'currentColor' }],
+    [BRAND_MARK_GEOMETRY.whale, { fill: 'currentColor' }],
+  ];
+  for (const [d, attrs] of shapes) {
+    const path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('d', d);
+    for (const [name, value] of Object.entries(attrs)) path.setAttribute(name, value);
+    svg.append(path);
+  }
   return svg;
 }
 

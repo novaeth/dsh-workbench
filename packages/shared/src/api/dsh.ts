@@ -69,6 +69,16 @@ export interface DshAssemblyContext {
 }
 
 /**
+ * 一条 index 注入行：脚本 / 样式 / 预载 / 原始片段，放在 head 或 body。
+ */
+export type DshIndexRow =
+  | { readonly kind: 'script'; readonly placement: 'head' | 'body'; readonly text: string }
+  | { readonly kind: 'style'; readonly placement: 'head' | 'body'; readonly text: string }
+  | { readonly kind: 'script-src'; readonly placement: 'head' | 'body'; readonly src: string }
+  | { readonly kind: 'preload'; readonly placement: 'head'; readonly src: string }
+  | { readonly kind: 'raw'; readonly placement: 'head' | 'body'; readonly html: string };
+
+/**
  * 宿主插件上下文：on 订阅 dsh 的钩子（提示词装配、工具执行前后、agent 生命周期），webServer 挂路由。
  */
 export interface DshHostContext {
@@ -124,6 +134,11 @@ export interface DshHostContext {
         payload: { agent?: unknown; messages?: readonly unknown[] },
         next: () => Promise<{ kind: string; messages?: readonly unknown[] }>,
       ) => Promise<{ kind: string; messages?: readonly unknown[] }>,
+    ): (() => void) | undefined;
+  } & {
+    (
+      event: 'webserver/index-inject',
+      listener: (table: DshIndexRow[]) => void,
     ): (() => void) | undefined;
   };
   get<T = unknown>(name: string, strict?: boolean): T | undefined;

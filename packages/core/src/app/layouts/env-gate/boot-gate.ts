@@ -11,7 +11,7 @@ import { bridgeAdviceLines, guidanceTextOf, stepDetailText } from './gate-text';
 import type { RuntimeProfile } from '@dsh-workbench/shared';
 import { readRuntimeCapabilities } from '@/shared/hooks/runtime-queries';
 import { createGateDeadline } from './gate-deadline';
-import { el, spinnerIcon, svgIcon } from './gate-dom';
+import { brandMarkIcon, el, spinnerIcon, svgIcon } from './gate-dom';
 import { logAtBottom } from './log-follow';
 
 const POLL_MS = 400;
@@ -113,6 +113,8 @@ export function createBootGate(
   overlay.setAttribute('aria-label', t('env.title'));
   const card = el('div', styles.card);
   const title = el('h1', styles.title, t('env.title'));
+  const brandHead = el('div', styles.brandHead);
+  brandHead.append(brandMarkIcon(), title);
   const bootHint = el('p', styles.hint, t('env.checking'));
   const list = el('ul', styles.steps);
   const actions = el('div', styles.actions);
@@ -164,7 +166,7 @@ bridge.append(bridgeTitle, bridgeWhy, bridgeLines, bridgeCommand.row, wakeNote, 
   diyButtons.append(diyRetry, diySkip);
 diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
 
-  card.append(title, bootHint, list, actions, bridge, diy);
+  card.append(brandHead, bootHint, list, actions, bridge, diy);
   overlay.append(card);
   document.body.append(overlay);
 
