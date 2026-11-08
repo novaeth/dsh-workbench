@@ -52,6 +52,16 @@ function needsFor(manifest: UnitManifest, kind: DependencyKind, name: string): r
   return needsOf(manifest).filter((need) => need.kind === kind && need.name === name);
 }
 
+export function sourceEnvOf(need: Need | undefined): string | undefined {
+  if (need === undefined) return undefined;
+  const sources = 'sources' in need ? need.sources : undefined;
+  for (const source of sources ?? []) {
+    if (source.kind === 'local') return source.env;
+    if (source.kind === 'npm') return source.registryEnv;
+  }
+  return undefined;
+}
+
 function releasedOf(
   manifest: UnitManifest,
   capability: UnitCapability | undefined,

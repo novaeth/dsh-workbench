@@ -36,6 +36,7 @@ import { applyPanelsPref, PANELS_PREF_RESOURCE } from './model/prefs';
 import { panelsFactsOf } from './model/handoff';
 import { createPanelsService } from './model/service';
 import { panelRoutes } from './model/routes';
+import { WORKBENCH_SETTINGS_SERVICE, type WorkbenchSettingsStore } from '@/shared/api/host/workbench-settings';
 import { createPluginLedger } from './model/plugin-ledger';
 import { pluginPanelRefs } from './model/plugin-panel';
 import { pluginRoutes } from './model/plugin-section';
@@ -104,6 +105,8 @@ export const panelsHost: UnitOwnedFace = {
     ctx.provide(DIY_RECORD_SERVICE, record);
 
     const profileDir = supply.profileDirOf(ctx);
+    const includePrerelease = (): boolean =>
+      ctx.get<WorkbenchSettingsStore>(WORKBENCH_SETTINGS_SERVICE)?.read().includePrerelease === true;
     const seam = seamOf(ctx);
     const moduleManifests = (): readonly UnitManifest[] => {
       const list = manifests();
@@ -123,6 +126,7 @@ export const panelsHost: UnitOwnedFace = {
       installed: (pkg) => supply.readInstalledModule(profileDir, pkg),
       modules: () => supply.profileModules(profileDir),
       workbench: (pkg) => supply.readProfilePackage(profileDir, pkg),
+      includePrerelease,
       registries: supply.createRegistryNotebook(profileDir),
       profileDir,
       ledger,
@@ -169,7 +173,12 @@ export const panelsHost: UnitOwnedFace = {
     return {
       routes: {
         ...panelRoutes(panels, values),
-        ...pluginRoutes({ ledger, supply, ...(seam === undefined ? {} : { seam }) }),
+        ...pluginRoutes({
+          ledger,
+          supply,
+          ...(seam === undefined ? {} : { seam }),
+          includePrerelease,
+        }),
         ...diyDebugRoutes(debug),
         ...diyRecordRoutes(record),
         ...marketDiscoverRoutes(discover),

@@ -11,6 +11,7 @@ export interface ReleasePort {
     readonly name: string;
     readonly registry: string;
     readonly force?: boolean;
+    readonly includePrerelease?: boolean;
   }): Promise<string | undefined>;
   missingReleaseParts(options: {
     readonly seam: Seam;
@@ -24,6 +25,7 @@ export interface ReleasePort {
     readonly package: string;
     readonly registry?: string | undefined;
     readonly force?: boolean;
+    readonly includePrerelease?: boolean;
   }): Promise<PluginRelease | undefined>;
   reset(): void;
 }

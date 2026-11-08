@@ -9,16 +9,24 @@ export async function installedPlugins(options: {
   readonly seam?: Seam | undefined;
   readonly force?: boolean;
   readonly check?: boolean;
+  readonly includePrerelease?: boolean;
   readonly supply?: SupplyPort | undefined;
 }): Promise<readonly InstalledPlugin[]> {
-  const { ledger, seam, force = false, check = true } = options;
+  const { ledger, seam, force = false, check = true, includePrerelease = false } = options;
   const supply = options.supply ?? requireSupply();
   const rows: InstalledPlugin[] = [];
   for (const entry of ledger.list()) {
     const release =
       seam === undefined || entry.local === true || entry.registry === undefined
         ? undefined
-        : await supply.probeRelease({ seam, package: entry.package, registry: entry.registry, force, check });
+        : await supply.probeRelease({
+            seam,
+            package: entry.package,
+            registry: entry.registry,
+            force,
+            check,
+            includePrerelease,
+          });
     rows.push({
       pkg: entry.package,
       ...(entry.name === undefined ? {} : { name: entry.name }),
@@ -40,6 +48,7 @@ export async function installedPlugins(options: {
 export function pluginRoutes(options: {
   readonly ledger: PluginLedger;
   readonly seam?: Seam | undefined;
+  readonly includePrerelease?: (() => boolean) | undefined;
   readonly supply?: SupplyPort | undefined;
 }): RouteTable {
   return {
@@ -50,6 +59,7 @@ export function pluginRoutes(options: {
         ...(options.supply === undefined ? {} : { supply: options.supply }),
         force: param(search, 'force') === '1',
         check: param(search, 'check') !== '0',
+        includePrerelease: options.includePrerelease?.() === true,
       });
       const payload: InstalledPluginsPayload = { plugins };
       return { ok: true, ...payload };

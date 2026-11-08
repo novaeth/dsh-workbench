@@ -4,6 +4,7 @@ export const WORKBENCH_SETTINGS_RESOURCE = 'workbenchSettings';
 
 export interface WorkbenchSettings {
   readonly mcpOnDemand: boolean;
+  readonly includePrerelease: boolean;
 }
 
 export interface WorkbenchSettingsSnapshot {
@@ -17,4 +18,5 @@ export interface WorkbenchSettingsApplied {
 
 export interface WorkbenchSettingsRequest {
   readonly mcpOnDemand?: boolean;
+  readonly includePrerelease?: boolean;
 }

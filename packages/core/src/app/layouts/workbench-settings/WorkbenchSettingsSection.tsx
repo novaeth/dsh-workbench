@@ -7,6 +7,7 @@ import { ConfigSyncItem } from './ConfigSyncItem';
 import { McpOnDemandItem } from './McpOnDemandItem';
 import { NewWorkbenchItem } from './NewWorkbenchItem';
 import { SidebarEditionItem } from './SidebarEditionItem';
+import { UpdatePrereleaseItem } from './UpdatePrereleaseItem';
 import styles from './WorkbenchSettingsSection.module.css';
 
 export interface WorkbenchSettingsSectionProps {
@@ -26,6 +27,7 @@ export function WorkbenchSettingsSection({ t }: WorkbenchSettingsSectionProps): 
         <SidebarEditionItem t={t} />
         <ConfigSyncItem t={t} />
         <McpOnDemandItem t={t} />
+        <UpdatePrereleaseItem t={t} />
         {desktop ? null : <NewWorkbenchItem t={t} />}
       </div>
     </SettingsSection>

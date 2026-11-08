@@ -123,7 +123,9 @@ export function harness(options: {
   ledger?: PluginLedger;
   references?: { readonly trustworthy: boolean };
   npmLatest?: string;
+  npmVersions?: readonly string[];
   npmMissing?: readonly string[];
+  includePrerelease?: boolean;
   profileName?: string | null;
   marketSources?: MarketSourceGateway;
 }) {
@@ -144,6 +146,9 @@ export function harness(options: {
   const fake = createFakeShell((call) => {
     if ((options.npmMissing ?? []).some((name) => call.command.includes(name))) {
       return { exitCode: 1, stdout: '' };
+    }
+    if (options.npmVersions !== undefined && call.command.includes('versions --json')) {
+      return { stdout: JSON.stringify(options.npmVersions) };
     }
     return options.npmLatest !== undefined && call.command.includes('npm view')
       ? { stdout: `${options.npmLatest}\n` }
@@ -186,6 +191,9 @@ export function harness(options: {
     ...(references === undefined ? {} : { references: () => ({ ...references, unreadable: [] }) }),
     dshHome: () => '/tmp/dsh-home',
     profileName: () => (options.profileName === undefined ? 'workbench' : options.profileName),
+    ...(options.includePrerelease === undefined
+      ? {}
+      : { includePrerelease: () => options.includePrerelease === true }),
     selfUpdate: (request) => {
       selfUpdates.push(request);
       return { started: true, paths: selfUpdatePathsOf(request.dshHome), forward: '' };

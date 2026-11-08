@@ -77,6 +77,27 @@ describe('「已安装 opencli 插件」那一段的数据：台账说了算', (
     );
   });
 
+  it('★ 打开 includePrerelease：插件的最新版也取版本表里最高的预发布', async () => {
+    const ledger = rig();
+    ledger.intend({ package: PKG, registry: REGISTRY });
+    ledger.complete(PKG, 'inventory');
+    putPlugin('inventory');
+    const fake = createFakeShell((call) =>
+      call.command.startsWith('npm ls')
+        ? { stdout: JSON.stringify({ dependencies: { [PKG]: { version: '1.0.24' } } }) }
+        : { stdout: JSON.stringify(['1.0.24', '1.0.25-beta.0']) },
+    );
+
+    const rows = await installedPlugins({
+      ledger,
+      seam: fakeSeamOf(fake.shell),
+      includePrerelease: true,
+    });
+
+    expect(rows[0]?.latest).toBe('1.0.25-beta.0');
+    expect(fake.commands().some((line) => line.includes('versions --json'))).toBe(true);
+  });
+
   it('★ 只看已安装那一趟（check=false）：照旧发 npm ls 拿版本，但一个 npm view 都不发', async () => {
     const ledger = rig();
     ledger.intend({ package: PKG, registry: REGISTRY });

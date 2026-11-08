@@ -62,6 +62,7 @@ export interface SupplyLatestOptions {
   readonly name: string;
   readonly registry: string;
   readonly force?: boolean;
+  readonly includePrerelease?: boolean;
 }
 
 export interface SupplyMissingPartsOptions {
@@ -78,6 +79,7 @@ export interface SupplyProbeReleaseOptions {
   readonly registry?: string | undefined;
   readonly force?: boolean;
   readonly check?: boolean;
+  readonly includePrerelease?: boolean;
 }
 
 export interface EnvSupplyPort {

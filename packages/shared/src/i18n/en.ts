@@ -696,6 +696,11 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'mcpOnDemand.toggle': 'Let MCP tools load as packs too',
   'mcpOnDemand.on': 'On: the model cannot see these tools until a tool pack is enabled; MCP tools keep their own dsh approval.',
   'mcpOnDemand.failed': 'Could not save the setting',
+  'updatePrerelease.nav': 'Prereleases',
+  'updatePrerelease.lead': 'Include beta and release-candidate builds when checking for updates. Off by default: stable releases only.',
+  'updatePrerelease.toggle': 'Check prereleases too',
+  'updatePrerelease.on': 'On: prerelease builds can prompt for an update.',
+  'updatePrerelease.failed': 'Could not save the setting',
   'workbenchSettings.nav': 'Workbench settings',
   'workbenchSettings.lead': 'Settings the workbench itself owns live here.',
 

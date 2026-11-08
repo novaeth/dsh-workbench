@@ -5,7 +5,7 @@ import type { PluginRelease } from '../contract/unit.js';
 
 import { RELEASE_PACKAGES } from './release-packages.generated.js';
 import { VERSION_CHECK_TIMEOUT_MS, VERSION_CHECK_TTL_MS } from '../config/constants.js';
-import { isValidVersion } from './version.js';
+import { compareVersions, isValidVersion } from './version.js';
 import { parseJsonLoose } from '../lib/text.js';
 import { quoteShellArg } from './shell-text.js';
 
@@ -31,6 +31,16 @@ export function parseLedgerVersion(
 function parseVersion(stdout: string): string | undefined {
   const value = stdout.trim();
   return isValidVersion(value) ? value : undefined;
+}
+
+function parseNewestVersion(stdout: string, includePrerelease: boolean): string | undefined {
+  if (!includePrerelease) return parseVersion(stdout);
+  const parsed = parseJsonLoose(stdout);
+  const list = Array.isArray(parsed) ? parsed : typeof parsed === 'string' ? [parsed] : [];
+  return list
+    .filter((value): value is string => typeof value === 'string' && isValidVersion(value))
+    .map((value) => value.trim())
+    .sort((left, right) => (compareVersions(right, left) ?? 0))[0];
 }
 
 interface CacheEntry {
@@ -66,6 +76,7 @@ interface LatestVersionOptions {
   readonly name: string;
   readonly registry: string;
   readonly force?: boolean;
+  readonly includePrerelease?: boolean;
   readonly cacheDir?: string | undefined;
 }
 
@@ -84,6 +95,7 @@ interface ProbeReleaseOptions {
   readonly registry?: string | undefined;
   readonly force?: boolean;
   readonly check?: boolean;
+  readonly includePrerelease?: boolean;
   readonly cacheDir?: string | undefined;
   readonly prefix?: string | undefined;
 }
@@ -93,24 +105,28 @@ async function latestVersionOf(latestCache: Map<string, CacheEntry>, options: {
   name: string;
   registry: string;
   force?: boolean;
+  includePrerelease?: boolean;
   cacheDir?: string | undefined;
 }): Promise<string | undefined> {
-  const { seam, name, registry, force = false, cacheDir } = options;
-  const key = `${registry}|${name}`;
+  const { seam, name, registry, force = false, includePrerelease = false, cacheDir } = options;
+  const key = `${registry}|${name}|${includePrerelease ? 'pre' : 'stable'}`;
   const hit = latestCache.get(key);
   if (!force && hit !== undefined && now() - hit.at < VERSION_CHECK_TTL_MS)
     return hit.value;
 
+  const command = includePrerelease
+    ? `npm view ${quoteShellArg(name)} versions --json --registry ${quoteShellArg(registry)}${cacheFlag(cacheDir)}`
+    : `npm view ${quoteShellArg(name)} version --registry ${quoteShellArg(registry)}${cacheFlag(cacheDir)}`;
   const result = await seam
     .run({
-      command: `npm view ${quoteShellArg(name)} version --registry ${quoteShellArg(registry)}${cacheFlag(cacheDir)}`,
+      command,
       intent: productWrite(),
       retry: 'safe',
       timeoutMs: VERSION_CHECK_TIMEOUT_MS,
       bestEffort: true,
     })
     .catch(() => undefined);
-  const read = result?.exitCode === 0 ? parseVersion(result.stdout) : undefined;
+  const read = result?.exitCode === 0 ? parseNewestVersion(result.stdout, includePrerelease) : undefined;
   latestCache.set(key, { at: now(), value: read });
   return read;
 }
@@ -180,10 +196,11 @@ async function probeOf(
   registry?: string | undefined;
   force?: boolean;
   check?: boolean;
+  includePrerelease?: boolean;
   cacheDir?: string | undefined;
   prefix?: string | undefined;
 }): Promise<PluginRelease | undefined> {
-  const { seam, package: pkg, registry, force = false, check = true, cacheDir, prefix } = options;
+  const { seam, package: pkg, registry, force = false, check = true, includePrerelease = false, cacheDir, prefix } = options;
   if (pkg === "") return undefined;
 
   const ledger = await seam
@@ -206,7 +223,14 @@ async function probeOf(
   const latest =
     source === undefined || !check
       ? undefined
-      : await latestVersionOf(latestCache, { seam, name: pkg, registry: source, force, cacheDir });
+      : await latestVersionOf(latestCache, {
+          seam,
+          name: pkg,
+          registry: source,
+          force,
+          includePrerelease,
+          cacheDir,
+        });
 
   return {
     installed,

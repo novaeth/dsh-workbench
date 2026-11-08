@@ -31,6 +31,7 @@ function fakeContext(
 function fakeShell(
   versions: Readonly<Record<string, string>>,
   declarations: Readonly<Record<string, string>> = {},
+  lists: Readonly<Record<string, readonly string[]>> = {},
 ): { seam: unknown; commands: string[] } {
   const commands: string[] = [];
   const shell = {
@@ -42,7 +43,11 @@ function fakeShell(
       const command = String(spec?.command ?? '');
       const name = (/npm view (\S+)/.exec(command)?.[1] ?? '').replace(/^'|'$/g, '');
       const declared = /\sdsh(?:\s|$)/.test(command) ? declarations[name] : undefined;
-      const text = declared ?? versions[name] ?? '';
+      const listed =
+        command.includes('versions --json') && lists[name] !== undefined
+          ? JSON.stringify(lists[name])
+          : undefined;
+      const text = declared ?? listed ?? versions[name] ?? '';
       return {
         result: async () => ({
           exitCode: text === '' ? 1 : 0,
@@ -481,6 +486,40 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
       },
     });
     expect(result.modules[0]?.latestBlocked).toBeUndefined();
+    cleanup();
+  });
+
+  it('★ 非正式版本默认不参与：版本表里有更新的 beta 也仍提示稳定版；打开后才提示 beta', async () => {
+    const { dir, cleanup } = profileWith('0.1.2');
+    const listed = {
+      status: 'listed' as const,
+      installed: '0.1.2',
+      registry: 'https://declared.example/',
+      attempts: [{ registry: 'https://declared.example/' }],
+      omitted: 0,
+      versions: [
+        { version: '0.3.0-beta.0', tags: ['beta'], prerelease: true, bundle: true },
+        { version: '0.2.0', tags: ['latest'], prerelease: false, bundle: true },
+      ],
+    };
+    const manager = { ...MANAGER, listVersions: async () => listed };
+    const shell = fakeShell(
+      { '@a/mod': '0.2.0' },
+      {},
+      { '@a/mod': ['0.2.0', '0.3.0-beta.0'] },
+    );
+
+    const stable = (await moduleVersionsHandler(fakeContext(manager, dir), shell.seam as never, undefined, undefined, () => false)(
+      new URLSearchParams('force=1'),
+    )) as { modules: { latest?: string; versions?: unknown }[] };
+    expect(stable.modules[0]?.latest).toBe('0.2.0');
+    expect(shell.commands.some((line) => line.includes('versions --json'))).toBe(false);
+
+    const prerelease = (await moduleVersionsHandler(fakeContext(manager, dir), shell.seam as never, undefined, undefined, () => true)(
+      new URLSearchParams('force=1'),
+    )) as { modules: { latest?: string; versions?: unknown }[] };
+    expect(prerelease.modules[0]?.latest).toBe('0.3.0-beta.0');
+    expect(shell.commands.some((line) => line.includes('versions --json'))).toBe(true);
     cleanup();
   });
 

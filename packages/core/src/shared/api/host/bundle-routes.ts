@@ -113,6 +113,7 @@ async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: 
   readonly fallback: string | undefined;
   readonly force: boolean;
   readonly check: boolean;
+  readonly includePrerelease: boolean;
   readonly manager?: BundleManager | undefined;
   readonly running?: string | undefined;
   readonly followUp?: WorkbenchMigrationFollowUp | undefined;
@@ -126,7 +127,13 @@ async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: 
   const queried =
     read.local === true || !input.check || seam === undefined || registry === undefined
       ? undefined
-      : await supply.latestVersion({ seam, name: read.pkg, registry, force: input.force });
+      : await supply.latestVersion({
+          seam,
+          name: read.pkg,
+          registry,
+          force: input.force,
+          includePrerelease: input.includePrerelease,
+        });
   const listed =
     read.local === true ||
     !input.check ||
@@ -139,7 +146,8 @@ async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: 
       ? null
       : await input.manager.listVersions(read.pkg, registry).catch(() => null);
   const versions = listed?.status === 'listed' ? listed.versions : [];
-  const newest = versions[0]?.version;
+  const visible = input.includePrerelease ? versions : versions.filter((entry) => !entry.prerelease);
+  const newest = visible[0]?.version;
   const chosen =
     newest !== undefined && (queried === undefined || supply.isNewerVersion(newest, queried))
       ? newest
@@ -159,7 +167,7 @@ async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: 
           logger: input.logger,
         });
   const blocked: 'incompatible' | undefined =
-    latest === undefined || versions.find((entry) => entry.version === latest)?.incompatible === undefined
+    latest === undefined || visible.find((entry) => entry.version === latest)?.incompatible === undefined
       ? undefined
       : 'incompatible';
   return {
@@ -180,9 +188,11 @@ export function moduleVersionsHandler(
   seam: Seam | undefined,
   running?: string | undefined,
   selfUpdate?: (() => WorkbenchSelfUpdate | undefined) | undefined,
+  includePrerelease?: (() => boolean) | undefined,
 ): RouteHandler {
   return async (search) => {
     const supply = supplyPortOf(ctx);
+    const includePrereleaseNow = includePrerelease?.() === true;
     const manager = supply.readBundleManager(ctx);
     if (manager === undefined) {
       const payload: ModuleVersionsPayload = { modules: [] };
@@ -208,7 +218,13 @@ export function moduleVersionsHandler(
         const probed =
           local || !fromRegistry || !check || seam === undefined || registry === undefined
             ? undefined
-            : await supply.latestVersion({ seam, name: module.pkg, registry, force });
+            : await supply.latestVersion({
+                seam,
+                name: module.pkg,
+                registry,
+                force,
+                includePrerelease: includePrereleaseNow,
+              });
         const list =
           !local &&
           fromRegistry &&
@@ -222,7 +238,8 @@ export function moduleVersionsHandler(
             ? await manager.listVersions(module.pkg, registry).catch(() => null)
             : null;
         const listed = list?.status === 'listed' ? list.versions : [];
-        const newest = listed[0]?.version;
+        const visible = includePrereleaseNow ? listed : listed.filter((entry) => !entry.prerelease);
+        const newest = visible[0]?.version;
         const latest =
           newest === undefined
             ? probed
@@ -241,7 +258,7 @@ export function moduleVersionsHandler(
           latestRaw === undefined
             ? undefined
             : updateBlockOf(latestRaw, declarationProblemsOf(module.pkg, latestRaw));
-        const incompatible = listed.find((entry) => entry.version === latest)?.incompatible;
+        const incompatible = visible.find((entry) => entry.version === latest)?.incompatible;
         const latestBlocked = peerBlocked ?? (incompatible === undefined ? undefined : 'incompatible');
         if (refused === undefined) {
           refusalLog.delete(module.pkg);
@@ -296,6 +313,7 @@ export function moduleVersionsHandler(
       fallback,
       force,
       check,
+      includePrerelease: includePrereleaseNow,
       manager,
       ...(running === undefined ? {} : { running }),
       ...(followUp === undefined ? {} : { followUp }),

@@ -12,7 +12,9 @@ import { WORKBENCH_SETTINGS_RESOURCE, WORKBENCH_SETTINGS_ROUTE } from '@/kernel/
 
 export { WORKBENCH_SETTINGS_ROUTE } from '@/kernel/contract/workbench-settings';
 
-export const DEFAULT_WORKBENCH_SETTINGS: WorkbenchSettings = { mcpOnDemand: false };
+export const WORKBENCH_SETTINGS_SERVICE = 'workbenchSettingsStore';
+
+export const DEFAULT_WORKBENCH_SETTINGS: WorkbenchSettings = { mcpOnDemand: false, includePrerelease: false };
 
 export interface WorkbenchSettingsStore {
   read(): WorkbenchSettings;
@@ -28,6 +30,8 @@ function settingsOf(raw: unknown): WorkbenchSettings {
   const record = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
   return {
     mcpOnDemand: booleanOf(record['mcpOnDemand']) ?? DEFAULT_WORKBENCH_SETTINGS.mcpOnDemand,
+    includePrerelease:
+      booleanOf(record['includePrerelease']) ?? DEFAULT_WORKBENCH_SETTINGS.includePrerelease,
   };
 }
 
@@ -52,11 +56,17 @@ export function createWorkbenchSettingsStore(options: { readonly root: string })
       const request = (typeof payload === 'object' && payload !== null ? payload : {}) as WorkbenchSettingsRequest;
       const next: WorkbenchSettings = {
         mcpOnDemand: booleanOf(request.mcpOnDemand) ?? read().mcpOnDemand,
+        includePrerelease: booleanOf(request.includePrerelease) ?? read().includePrerelease,
       };
       if (request.mcpOnDemand !== undefined && booleanOf(request.mcpOnDemand) === undefined) {
         throw new Error('mcpOnDemand 要是 true / false');
       }
-      const changed = next.mcpOnDemand !== read().mcpOnDemand;
+      if (request.includePrerelease !== undefined && booleanOf(request.includePrerelease) === undefined) {
+        throw new Error('includePrerelease 要是 true / false');
+      }
+      const changed =
+        next.mcpOnDemand !== read().mcpOnDemand ||
+        next.includePrerelease !== read().includePrerelease;
       if (changed) writeJsonFile(file, next);
       cached = next;
       if (changed) for (const listener of [...listeners]) listener(next);
@@ -77,6 +87,7 @@ export function mountWorkbenchSettings(options: {
   readonly root: string;
 }): WorkbenchSettingsStore {
   const store = createWorkbenchSettingsStore({ root: options.root });
+  options.ctx.provide(WORKBENCH_SETTINGS_SERVICE, store);
   options.routes[WORKBENCH_SETTINGS_ROUTE] = () => ({ ok: true, settings: store.read() });
   return store;
 }

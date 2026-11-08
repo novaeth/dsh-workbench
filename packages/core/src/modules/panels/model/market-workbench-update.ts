@@ -15,6 +15,7 @@ export interface WorkbenchUpdateDeps {
   readonly selfUpdate?:
     | ((request: SelfUpdateRequest, onError: (message: string) => void) => SelfUpdateStart)
     | undefined;
+  readonly includePrerelease?: (() => boolean) | undefined;
   readonly logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
   readonly supply?: SupplyPort | undefined;
   readonly manager?: BundleManager | undefined;
@@ -39,7 +40,13 @@ export async function updateWorkbenchOnce(deps: WorkbenchUpdateDeps): Promise<Bu
   const askedLatest =
     seam === undefined || registry === undefined
       ? undefined
-      : await supply.latestVersion({ seam, name: read.pkg, registry, force: true });
+      : await supply.latestVersion({
+          seam,
+          name: read.pkg,
+          registry,
+          force: true,
+          includePrerelease: deps.includePrerelease?.() === true,
+        });
   if (askedLatest !== undefined && registry !== undefined && deps.manager?.listVersions !== undefined) {
     const listed = await deps.manager.listVersions(read.pkg, registry).catch(() => null);
     const entry =

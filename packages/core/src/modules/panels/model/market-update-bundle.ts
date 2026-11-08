@@ -20,6 +20,7 @@ export interface BundleUpdateDeps {
   readonly profile?: string | undefined;
   readonly dshHome?: string | undefined;
   readonly profileName?: string | undefined;
+  readonly includePrerelease?: (() => boolean) | undefined;
   readonly swapWaitMs?: number | undefined;
   readonly swapPollMs?: number | undefined;
 }
@@ -91,7 +92,13 @@ export async function updateModuleBundle(
   const latest =
     deps.seam === undefined || registry === undefined
       ? undefined
-      : await supply.latestVersion({ seam: deps.seam, name: pkg, registry, force: true });
+      : await supply.latestVersion({
+          seam: deps.seam,
+          name: pkg,
+          registry,
+          force: true,
+          includePrerelease: deps.includePrerelease?.() === true,
+        });
   if (latest !== undefined && deps.seam !== undefined && registry !== undefined) {
     const declared = await supply.registryDeclarationOf({
       seam: deps.seam,

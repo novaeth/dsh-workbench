@@ -692,6 +692,11 @@ export const zh = {
   'mcpOnDemand.toggle': '让 MCP 工具也按需开启工具包',
   'mcpOnDemand.on': '已开启：开启工具包之前，模型看不到这些工具；MCP 工具自己的审批仍走 dsh。',
   'mcpOnDemand.failed': '存设置失败',
+  'updatePrerelease.nav': '非正式版本',
+  'updatePrerelease.lead': '检查更新时也看 beta、rc 这类版本；默认只看正式版。',
+  'updatePrerelease.toggle': '也检查非正式版本',
+  'updatePrerelease.on': '已开启：非正式版也会提示更新。',
+  'updatePrerelease.failed': '存设置失败',
   'workbenchSettings.nav': '工作台设置',
   'workbenchSettings.lead': '工作台自己这一侧的配置都收在这里。',
 

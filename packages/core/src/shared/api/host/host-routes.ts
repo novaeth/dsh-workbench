@@ -5,6 +5,7 @@ import { changesHandler, healthHandler, seamOf } from '@dsh-workbench/shared/hos
 import { dshHome } from '@dsh-workbench/shared/host';
 import type { RuntimeStatus } from '@dsh-workbench/shared/host';
 import { DSH_PLUGINS_ROUTE } from '@/kernel/contract/dsh-plugins';
+import { WORKBENCH_SETTINGS_SERVICE, type WorkbenchSettingsStore } from '@/shared/api/host/workbench-settings';
 import {
   bundleInspectHandler,
   bundleRegistriesHandler,
@@ -25,6 +26,8 @@ export function createHostRoutes(input: {
   readonly profile: ProfilePort;
 }): RouteTable {
   const { ctx, facts, runtimes, running, profile } = input;
+  const includePrerelease = (): boolean =>
+    ctx.get<WorkbenchSettingsStore>(WORKBENCH_SETTINGS_SERVICE)?.read().includePrerelease === true;
   return {
     health: healthHandler(ctx, runtimes),
     changes: changesHandler(facts),
@@ -37,6 +40,7 @@ export function createHostRoutes(input: {
       seamOf(ctx),
       running,
       () => profile.selfUpdateView(dshHome(), basename(profile.dirOf(ctx) ?? '')),
+      includePrerelease,
     ),
   };
 }

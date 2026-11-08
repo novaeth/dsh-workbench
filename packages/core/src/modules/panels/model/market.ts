@@ -14,6 +14,7 @@ import { installError } from './market-install-error';
 import {
   affectedUnitsOf,
   findDependency,
+  sourceEnvOf,
   sourceProblemText,
   sharedDependencies,
   type DependencyTarget,
@@ -74,6 +75,7 @@ export function createMarketService(options: {
   dshHome?: (() => string) | undefined;
   profileName?: (() => string | null) | undefined;
   selfUpdate?: ((request: SelfUpdateRequest, onError: (message: string) => void) => SelfUpdateStart) | undefined;
+  includePrerelease?: (() => boolean) | undefined;
   runMigration?: WorkbenchFollowUpDeps['runMigration'];
   logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
   supply?: SupplyPort | undefined;
@@ -98,6 +100,7 @@ export function createMarketService(options: {
     references,
     dshHome,
     profileName,
+    includePrerelease,
   } = options;
   const supply = supplyOption ?? requireSupply();
   const command = options.command;
@@ -121,16 +124,6 @@ export function createMarketService(options: {
         detail: '没有探测能力（缺少执行缝或探测服务）',
       }
     );
-  }
-
-  function sourceEnvOf(need: Need | undefined): string | undefined {
-    if (need === undefined) return undefined;
-    const sources = 'sources' in need ? need.sources : undefined;
-    for (const source of sources ?? []) {
-      if (source.kind === 'local') return source.env;
-      if (source.kind === 'npm') return source.registryEnv;
-    }
-    return undefined;
   }
 
   function needsOf(unit: string): readonly Need[] {
@@ -289,6 +282,7 @@ export function createMarketService(options: {
     runAll,
     claimedBy: (plugin) => pluginUsersOf(plugin),
     ...(references === undefined ? {} : { references }),
+    ...(includePrerelease === undefined ? {} : { includePrerelease }),
     ...(logger === undefined ? {} : { logger }),
     supply,
   });
@@ -442,6 +436,7 @@ export function createMarketService(options: {
         manager,
         ...(profile === undefined ? {} : { profile, profileName: profile }),
         ...(home === undefined ? {} : { dshHome: home }),
+        ...(includePrerelease === undefined ? {} : { includePrerelease }),
         routeDeps: routeDeps(manager),
         sweep: async () => {
           await plugins.sweep((plugin) => envDropper.usersOf(plugin, undefined, catalog()));
@@ -470,6 +465,7 @@ export function createMarketService(options: {
           }
         },
         ...(options.selfUpdate === undefined ? {} : { selfUpdate: options.selfUpdate }),
+        ...(includePrerelease === undefined ? {} : { includePrerelease }),
         ...(logger === undefined ? {} : { logger }),
       });
     },
