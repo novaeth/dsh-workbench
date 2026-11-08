@@ -102,13 +102,23 @@ export function blockerOfError(
         actions: [retryAction(t)],
       };
 
-    default:
+    case 'project-unsupported':
       return {
         id: error.code,
         severity: 'block',
         title: error.message,
         ...(error.hint === undefined ? {} : { hint: error.hint }),
         ...(error.detail === undefined ? {} : { detail: error.detail }),
+        actions: [retryAction(t)],
+      };
+
+    default:
+      return {
+        id: error.code,
+        severity: 'block',
+        title: t('blocker.unknown.title'),
+        ...(error.hint === undefined ? {} : { hint: error.hint }),
+        detail: error.detail ?? error.message,
         actions: [retryAction(t)],
       };
   }

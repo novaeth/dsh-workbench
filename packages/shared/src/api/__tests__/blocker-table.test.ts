@@ -91,10 +91,11 @@ describe('blockerOfError', () => {
     expect(blocker.actions.map((action) => action.kind)).toEqual(['retry']);
   });
 
-  it('未知错误 → 照原样说，并给重试', () => {
+  it('未知错误 → 说人话，原文收进详情，并给重试', () => {
     const blocker = blockerOfError({ code: 'weird', message: '怪错误' }, t);
 
-    expect(blocker.title).toBe('怪错误');
+    expect(blocker.title).toBe('blocker.unknown.title');
+    expect(blocker.detail).toBe('怪错误');
     expect(blocker.actions.map((action) => action.kind)).toEqual(['retry']);
   });
 
