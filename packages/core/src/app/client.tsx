@@ -62,12 +62,14 @@ import * as unitBoardModule from '@/shared/hooks/use-unit-board';
 import * as visibleBusyModule from '@/shared/hooks/use-visible-busy';
 import { usePlatform } from '@/shared/hooks/use-platform';
 import * as blockerStateModule from '@/shared/components/BlockerState';
+import { UnitBlocker } from '@/shared/components/UnitBlocker';
+import { useUnitSetup } from '@/shared/hooks/use-unit-setup';
 import {
   ActivityAction, ActivityBlock, ActivityLine, ApprovalDetail, ApprovalPlan, Card, CardAnchor, CardBoundary,
   CardHead, CenteredState, ChoiceGroup, ConfirmBar, EmptyState, Field, Form, FormActions, FormRow, FormRows,
   IconBrandMark, IconConversation, IconModuleMark, IconNpm, IconOpencli, IconPanelScreen, Link, LongTaskRow,
   longTaskIsLive,
-  MIN_BUSY_MS, Note, Row, Rows, SaveBar, SelectField, SettingsSection, SkeletonRows, Spinner, Stack,
+  MIN_BUSY_MS, Note, Row, Rows, SaveBar, SelectField, SettingsSection, SetupShell, SkeletonRows, Spinner, Stack,
   StateBlock, TextField, apiGet, apiPost, blockerOfCapability, blockerOfError, cardIdOf, cx,
   defaultSelectFilter, dictionaries, duplicateKeysOf, errorReasonOf, excerpt, factOfRoute, filterSelectOptions,
   firstProblemOf, formFirstProblemOf, formValuesOf, holdBusy, mergeMessagesSkipping, parseJsonLoose,
@@ -87,6 +89,7 @@ export const kit = {
     ...unitBoardModule,
     ...visibleBusyModule,
     usePlatform,
+    useUnitSetup,
   },
   components: {
     ...blockerStateModule,
@@ -94,7 +97,7 @@ export const kit = {
     CardBoundary, CardHead, CenteredState, ChoiceGroup, ConfirmBar, EmptyState, Field, Form, FormActions, FormRow,
     FormRows, IconBrandMark, IconConversation, IconModuleMark, IconNpm, IconOpencli, IconPanelScreen, Link,
     LongTaskRow, Note, Row, Rows, SaveBar, SelectField, SettingsSection, SkeletonRows, Spinner, Stack,
-    StateBlock, TextField, Tip, },
+    StateBlock, TextField, Tip, UnitBlocker, SetupShell, },
 
   api: { apiGet, apiPost, factOfRoute, ...chipsModule },
   lib: {

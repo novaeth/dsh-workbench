@@ -40,6 +40,27 @@ h(StateBlock, { title: rows.title, hint: `3 条 · ${when}`, resolving: t('myuni
 
 读不到：`detail` 放原始错误码与原文；不显示 0。
 
+### 2.1 卡住（登录 / 权限 / 能力未装）
+
+`UnitBlocker` 把读口错误或能力读数直接翻成统一阻断屏：登录、权限、缺插件、版本旧都由它出文案与动作，
+不要再自己拼 `blockerOfError` + `BlockerState`，也不要自己写登录按钮。
+
+```tsx
+h(UnitBlocker, {
+  t,
+  error: resource.error,             // auth-required / permission-denied / 其它读口错误
+  platform: t('myunit.platform'),    // 有就给「需要登录 {平台}」
+  onRetry: reload,
+  busy: resource.phase === 'loading',
+  flush: true,                       // 嵌在卡里
+})
+h(UnitBlocker, { t, capability: gate.capability, onRetry: reload })
+```
+
+- `error` 与 `capability` 都给时，能力读数优先；
+- 两者都干净时它不画任何东西，可以直接放在卡片体里；
+- `loginUrl` 只在 `auth-required` 且错误没带 `helpUrl` 时用来补登录地址。
+
 ## 3 行与记录
 
 - `Rows` + `Row`：键值行；不手写 `ul` / `li` / div 行。
@@ -97,6 +118,50 @@ h(Form<{ branch: string }>, {
 | 平台事实（Desktop / web、宿主 OS、能力） | `usePlatform`：返回 client（浏览器侧现算）与 host（来自 health，可能还没读到，按未知处理） |
 
 取数链见 [LINKAGE.md](LINKAGE.md) §8；配置见 [PANEL.md](PANEL.md) §5。
+
+## 4″ 初始化与配置
+
+模块要“先配一次、之后进主页”时，用 `useUnitSetup` + `SetupShell`；不要自己写相位机、步骤条与保存后重读。
+
+```tsx
+const setup = useUnitSetup({
+  steps: [
+    {
+      id: 'identity',
+      title: t('myunit.step.identity'),
+      render: (ctx) => h(IdentityFields, { t, values: ctx.values, onChange: ctx.setValues }),
+      canLeave: (values) => values['name'] !== '',
+    },
+    {
+      id: 'envs',
+      title: t('myunit.step.envs'),
+      render: (ctx) => h(EnvPicker, { t, values: ctx.values, onChange: ctx.setValues }),
+      submit: (values) => saveUnitConfig(values),
+    },
+  ],
+  read: async () => {
+    const response = await apiGet(MYUNIT_CONFIG_ROUTE, { path });
+    if (!response.ok) throw new Error(response.error.message);
+    return { configured: response.config !== null, values: { ...(response.config ?? {}) } };
+  },
+});
+
+h(SetupShell, {
+  setup,
+  labels: {
+    back: t('myunit.back'), next: t('myunit.next'), finish: t('myunit.finish'),
+    save: t('myunit.save'), saving: t('myunit.saving'), cancel: t('myunit.cancel'),
+    reading: t('myunit.reading'), failed: t('myunit.failed'),
+  },
+  renderHome: () => h(HomeBody, { t }),
+});
+```
+
+- 步骤是**动态**的：`canLeave` 决定能不能走，`next(values)` 返回下一步 id（`null` 表示完成）；不给 `next` 就按数组顺序走。
+- 每步想存就挂 `submit`；最后一步 `next` 返回 `null` 时相位到 `ready`，壳把 `renderHome()` 换进来。
+- `edit` 模式把同一组步骤摊成一页，底部 `SaveBar` 走 `write(values)`；保存成功回调 `onSaved`。
+- 读失败时壳只给一句失败文案；需要登录/权限的阻断在卡里用 `UnitBlocker` 判（壳不认错误码）。
+- `values` 是 `Record<string, unknown>`，字段强转留在模块自己的 type guard 里。
 
 ## 5 表单三层：面 → 行 → 控件
 

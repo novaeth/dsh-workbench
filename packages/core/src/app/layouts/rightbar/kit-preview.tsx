@@ -8,10 +8,14 @@ import {
   CenteredState,
   EmptyState,
   Note,
+  SetupShell,
   SkeletonRows,
   StateBlock,
 } from '@dsh-workbench/shared';
-import { IconBrandMark, IconPanelScreen } from '@dsh-workbench/shared';
+import type { UnitSetup } from '@dsh-workbench/shared';
+import { IconPanelScreen } from '@dsh-workbench/shared';
+import { EmptyIllustration } from '@/shared/components/EmptyIllustration';
+import { UnitBlocker } from '@/shared/components/UnitBlocker';
 import { IconModules } from '@/shared/components/IconModules';
 import { StateDot } from '@deepseek-ai/dsh-client-ui-primitives';
 import {
@@ -124,7 +128,7 @@ function CardSection({ t }: { readonly t: BoardModuleProps['t'] }) {
   );
 }
 
-function StateSection() {
+function StateSection({ t }: { readonly t: BoardModuleProps['t'] }) {
   return (
     <Section title="状态与提示" note="Note / StateBlock / CenteredState / EmptyState / SkeletonRows：卡里那几种“没东西可看”的说法">
       <Grid>
@@ -152,8 +156,78 @@ function StateSection() {
           <CenteredState compact icon={<IconModules size={20} />} title="紧凑的那一档" />
         </Cell>
         <Cell label="EmptyState 与 SkeletonRows">
-          <EmptyState text="一条都还没有" icon={<IconBrandMark size={20} />} />
+          <EmptyState text="一条都还没有" icon={<EmptyIllustration size={64} />} />
           <SkeletonRows rows={2} />
+        </Cell>
+        <Cell label="UnitBlocker（登录 / 权限 / 能力）">
+          <UnitBlocker
+            t={t}
+            error={{ code: 'auth-required', message: '需要登录', helpUrl: 'https://example.com/login' }}
+            platform="示例平台"
+            onRetry={() => {}}
+            flush
+          />
+          <UnitBlocker
+            t={t}
+            capability={{ unit: 'sample', status: 'missing', needs: [], detail: '插件没装' }}
+            onRetry={() => {}}
+            flush
+          />
+        </Cell>
+      </Grid>
+    </Section>
+  );
+}
+
+const setupLabels = {
+  back: '上一步',
+  next: '下一步',
+  finish: '完成',
+  save: '保存',
+  saving: '保存中',
+  cancel: '取消',
+  reading: '正在读',
+  failed: '读不到',
+};
+
+function setupSample(phase: UnitSetup['phase'], error: string | null, canBack: boolean): UnitSetup {
+  const steps = [
+    { id: 'identity', title: '身份', render: () => h(Note, null, '填名字与服务名') },
+    { id: 'envs', title: '环境', render: () => h(Note, null, '挑一个环境') },
+  ];
+  return {
+    phase,
+    steps,
+    step: steps[canBack ? 1 : 0],
+    values: {},
+    setValues: () => {},
+    busy: false,
+    error,
+    canLeave: true,
+    canBack,
+    next: () => {},
+    back: () => {},
+    retry: () => {},
+    saveAll: () => {},
+  };
+}
+
+function SetupSection() {
+  return (
+    <Section title="初始化与配置" note="useUnitSetup + SetupShell：步骤条、上一步 / 下一步 / 完成、错误与编辑模式">
+      <Grid>
+        <Cell label="分步（第一步 / 第二步）">
+          <SetupShell setup={setupSample('needs-setup', null, false)} labels={setupLabels} />
+          <SetupShell setup={setupSample('needs-setup', null, true)} labels={setupLabels} />
+        </Cell>
+        <Cell label="错误与编辑模式">
+          <SetupShell setup={setupSample('needs-setup', '名字冲突', false)} labels={setupLabels} />
+          <SetupShell
+            setup={setupSample('ready', null, false)}
+            labels={setupLabels}
+            mode="edit"
+            onCancel={() => {}}
+          />
         </Cell>
       </Grid>
     </Section>
@@ -184,7 +258,8 @@ export function KitPreview({ t }: BoardModuleProps) {
           <FormSurfaceSection />
           <ConfirmSection />
           <CardSection t={t} />
-          <StateSection />
+          <StateSection t={t} />
+          <SetupSection />
           <ActivitySection />
           <LongTaskSection />
           <IconSection />

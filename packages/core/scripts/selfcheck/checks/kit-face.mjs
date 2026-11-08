@@ -17,13 +17,13 @@ const FROZEN = {
     'Card', 'CardAnchor', 'CardBoundary', 'CardHead', 'CenteredState', 'ChoiceGroup', 'EmptyState',
     'Field', 'Form', 'FormActions', 'FormRow', 'FormRows', 'IconBrandMark', 'IconConversation',
     'IconModuleMark', 'IconNpm', 'IconOpencli', 'IconPanelScreen', 'Link', 'LongTaskRow', 'Note', 'Row',
-    'Rows', 'SaveBar', 'SelectField', 'SettingsSection', 'SkeletonRows', 'Spinner', 'Stack', 'StateBlock',
-    'TextField', 'Tip',
+    'Rows', 'SaveBar', 'SelectField', 'SettingsSection', 'SetupShell', 'SkeletonRows', 'Spinner', 'Stack', 'StateBlock',
+    'TextField', 'Tip', 'UnitBlocker',
   ],
   hooks: [
     'busyView', 'heldPhase', 'readKeyOf', 'requestResource', 'resourceIdentity', 'subscribeFactRevision',
     'useApiResource', 'useCapabilityGate', 'useCapabilityMap', 'useCardSummary', 'useFactInvalidate',
-    'useFactRevision', 'useHostWrite', 'useLongTask', 'useUnitBoard', 'useVisibleBusy',
+    'useFactRevision', 'useHostWrite', 'useLongTask', 'useUnitBoard', 'useUnitSetup', 'useVisibleBusy',
   ],
   lib: [
     'MIN_BUSY_MS', 'blockerOfCapability', 'blockerOfError', 'cardIdOf', 'cx', 'defaultSelectFilter',

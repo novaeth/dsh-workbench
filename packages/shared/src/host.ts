@@ -20,6 +20,7 @@ export * from './api/blocker-table.js';
 export * from './contract/unit-declaration.js';
 export * from './host/board-fact.js';
 export * from './host/toolbox-port.js';
+export * from './host/unit-config.js';
 export * from './host/bundle-manager.js';
 export * from './host/installed-module.js';
 export * from './host/local-declaration.js';

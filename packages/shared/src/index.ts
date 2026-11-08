@@ -27,6 +27,7 @@ export * from './components/SaveBar.js';
 export * from './components/SelectField.js';
 export * from './components/SelectFieldNodes.js';
 export * from './components/SettingsSection.js';
+export * from './components/SetupShell.js';
 export * from './components/Spinner.js';
 export * from './components/Stack.js';
 export * from './components/StateBlock.js';

@@ -315,13 +315,13 @@ export const checks = [
         '客户端导出 kit（模块作者唯一的入口）：四个面都在，hooks / components / api 各交出模块要用的成员',
         kit !== undefined &&
           ['hooks', 'components', 'api', 'lib'].every((face) => typeof kit[face] === 'object') &&
-          ['useApiResource', 'useCardSummary', 'useUnitBoard', 'useVisibleBusy'].every(
+          ['useApiResource', 'useCardSummary', 'useUnitBoard', 'useUnitSetup', 'useVisibleBusy'].every(
             (name) => typeof kit.hooks[name] === 'function',
           ) &&
           [
             'ActivityAction', 'ActivityBlock', 'ActivityLine', 'ApprovalPlan', 'BlockerState', 'Card',
             'CardHead', 'ConfirmBar', 'Note', 'Row', 'Rows', 'SettingsSection', 'Stack', 'StateBlock', 'CenteredState',
-            'EmptyState', 'SkeletonRows', 'TextField', 'Tip', 'IconBrandMark',
+            'EmptyState', 'SetupShell', 'SkeletonRows', 'TextField', 'Tip', 'UnitBlocker', 'IconBrandMark',
           ].every((name) => kit.components[name] !== undefined) &&
 
           ['apiGet', 'apiPost', 'addContextChip', 'installContextChips', 'serializeChipRef'].every(
