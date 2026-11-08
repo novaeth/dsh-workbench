@@ -23,6 +23,23 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
     expect(marketActions(row as MarketRow)).toEqual(['update-workbench']);
   });
 
+  it('① 官方版本表说这一版跟当前 dsh 不兼容 → 不给更新，说明原因', () => {
+    const row = workbenchRow({
+      pkg: CORE,
+      installed: '0.1.18',
+      latest: '0.1.19',
+      latestBlocked: 'incompatible',
+    });
+
+    expect(row).toMatchObject({
+      state: 'outdated',
+      canUpdate: false,
+      hint: 'panels.market.workbenchUpdateNeedsDsh',
+      moduleUpdate: { installed: '0.1.18', latest: '0.1.19', blocked: 'incompatible' },
+    });
+    expect(marketActions(row as MarketRow)).toEqual([]);
+  });
+
   it('② 已经最新 → 只显示版本，不给按钮（也不许说"有新版"）', () => {
     const row = workbenchRow({ pkg: CORE, installed: '0.1.19', latest: '0.1.19' });
 

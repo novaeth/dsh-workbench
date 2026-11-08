@@ -113,6 +113,7 @@ async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: 
   readonly fallback: string | undefined;
   readonly force: boolean;
   readonly check: boolean;
+  readonly manager?: BundleManager | undefined;
   readonly running?: string | undefined;
   readonly followUp?: WorkbenchMigrationFollowUp | undefined;
   readonly logger?: { warn?(message: string): void } | undefined;
@@ -126,24 +127,46 @@ async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: 
     read.local === true || !input.check || seam === undefined || registry === undefined
       ? undefined
       : await supply.latestVersion({ seam, name: read.pkg, registry, force: input.force });
-  const latest =
+  const listed =
+    read.local === true ||
+    !input.check ||
+    !input.force ||
     queried === undefined ||
     seam === undefined ||
     registry === undefined ||
-    !supply.isNewerVersion(queried, read.version)
+    !supply.isNewerVersion(queried, read.version) ||
+    input.manager?.listVersions === undefined
+      ? null
+      : await input.manager.listVersions(read.pkg, registry).catch(() => null);
+  const versions = listed?.status === 'listed' ? listed.versions : [];
+  const newest = versions[0]?.version;
+  const chosen =
+    newest !== undefined && (queried === undefined || supply.isNewerVersion(newest, queried))
+      ? newest
+      : queried;
+  const latest =
+    chosen === undefined ||
+    seam === undefined ||
+    registry === undefined ||
+    !supply.isNewerVersion(chosen, read.version)
       ? undefined
       : await latestIfReleaseReady(supply, {
           pkg: read.pkg,
-          version: queried,
+          version: chosen,
           registry,
           seam,
           force: input.force,
           logger: input.logger,
         });
+  const blocked: 'incompatible' | undefined =
+    latest === undefined || versions.find((entry) => entry.version === latest)?.incompatible === undefined
+      ? undefined
+      : 'incompatible';
   return {
     pkg: read.pkg,
     installed: read.version,
     ...(latest === undefined ? {} : { latest }),
+    ...(blocked === undefined ? {} : { latestBlocked: blocked }),
     ...(input.running === undefined ? {} : { running: input.running }),
     ...(read.local === true ? { local: true } : {}),
     ...(input.followUp === undefined ? {} : { followUp: input.followUp }),
@@ -273,6 +296,7 @@ export function moduleVersionsHandler(
       fallback,
       force,
       check,
+      manager,
       ...(running === undefined ? {} : { running }),
       ...(followUp === undefined ? {} : { followUp }),
       logger: ctx.logger,

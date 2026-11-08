@@ -107,6 +107,49 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
     cleanup();
   });
 
+  it('★ 官方版本表说这一版跟当前 dsh 不兼容 → 照给 latest，但标 latestBlocked', async () => {
+    const { dir, cleanup } = coreProfile({});
+    const { seam } = shellWith(released('0.1.19'));
+    const manager = {
+      ...MANAGER,
+      listVersions: async () => ({
+        status: 'listed',
+        installed: '0.1.18',
+        registry: 'https://self.example/',
+        attempts: [],
+        omitted: 0,
+        versions: [
+          {
+            version: '0.1.19',
+            tags: [],
+            prerelease: false,
+            bundle: true,
+            incompatible: {
+              name: CORE,
+              version: '0.1.19',
+              runtimeVersion: '0.2.2-rc.1',
+              requirements: { '@deepseek-ai/dsh-web': '9.9.9' },
+            },
+          },
+        ],
+      }),
+    };
+
+    const result = (await moduleVersionsHandler(fakeContext(manager, dir), seam)(
+      new URLSearchParams('force=1'),
+    )) as { workbench?: Record<string, unknown> };
+
+    expect(result.workbench).toEqual({
+      pkg: CORE,
+      installed: '0.1.18',
+      latest: '0.1.19',
+      latestBlocked: 'incompatible',
+      spec: '^0.1.18',
+      registry: 'https://self.example/',
+    });
+    cleanup();
+  });
+
   it('★ 只有外壳这一份上去了（同批平台包还没铺到这一版）→ 不给「更新」，只记一次日志', async () => {
     resetHoldLog();
     const { dir, cleanup } = coreProfile({});

@@ -1,6 +1,6 @@
 import { PLUGIN_ID, type Seam } from '@dsh-workbench/shared/host';
 import { requireSupply } from '@dsh-workbench/shared/host';
-import type { InstalledModule, ProfilePackage, SupplyPort } from '@dsh-workbench/shared/host';
+import type { BundleManager, InstalledModule, ProfilePackage, SupplyPort } from '@dsh-workbench/shared/host';
 import type { SelfUpdateRequest, SelfUpdateStart } from '@dsh-workbench/shared/host';
 import type { BundleInstallOutcome } from './market-types';
 
@@ -17,6 +17,7 @@ export interface WorkbenchUpdateDeps {
     | undefined;
   readonly logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
   readonly supply?: SupplyPort | undefined;
+  readonly manager?: BundleManager | undefined;
 }
 
 export async function updateWorkbenchOnce(deps: WorkbenchUpdateDeps): Promise<BundleInstallOutcome> {
@@ -39,6 +40,19 @@ export async function updateWorkbenchOnce(deps: WorkbenchUpdateDeps): Promise<Bu
     seam === undefined || registry === undefined
       ? undefined
       : await supply.latestVersion({ seam, name: read.pkg, registry, force: true });
+  if (askedLatest !== undefined && registry !== undefined && deps.manager?.listVersions !== undefined) {
+    const listed = await deps.manager.listVersions(read.pkg, registry).catch(() => null);
+    const entry =
+      listed?.status === 'listed' ? listed.versions.find((one) => one.version === askedLatest) : undefined;
+    if (entry?.incompatible !== undefined) {
+      const need = Object.entries(entry.incompatible.requirements)
+        .map(([name, range]) => `${name} ${range}`)
+        .join('、');
+      throw new Error(
+        `源上 ${read.pkg}@${askedLatest} 要的是 ${need === '' ? '更高的 dsh' : need}，这一台是 dsh ${entry.incompatible.runtimeVersion} —— 先升级 dsh，再更新工作台。`,
+      );
+    }
+  }
   if (seam !== undefined && registry !== undefined && askedLatest !== undefined) {
     const missing = await supply.missingReleaseParts({
       seam,

@@ -85,6 +85,40 @@ describe('workbench_modules_update_workbench（工作台自己那一份）', () 
     expect((payload.change as { application?: string }).application).toBe('restart-required');
   });
 
+  it('★ 官方版本表说这一版跟当前 dsh 不兼容 → 不启动外部换版，给一句人话', async () => {
+    const h = harness({
+      manifests: [],
+      bundles: fakeBundles({
+        listVersions: async () => ({
+          status: 'listed',
+          installed: '0.1.18',
+          registry: 'https://r.example/',
+          attempts: [],
+          omitted: 0,
+          versions: [
+            {
+              version: '0.1.19',
+              tags: [],
+              prerelease: false,
+              bundle: true,
+              incompatible: {
+                name: '@dsh-workbench/core',
+                version: '0.1.19',
+                runtimeVersion: '0.2.2-rc.1',
+                requirements: { '@deepseek-ai/dsh-web': '9.9.9' },
+              },
+            },
+          ],
+        }),
+      }),
+      workbench: (pkg) => ({ pkg, version: '0.1.18', registry: 'https://r.example/' }),
+      npmLatest: '0.1.19',
+    });
+
+    await expect(call(h, MODULES_UPDATE_WORKBENCH_TOOL, {})).rejects.toThrow(/先升级 dsh/);
+    expect(h.selfUpdates).toEqual([]);
+  });
+
   it('★ 拿不到 DSH_HOME 或 profile 名字 → 不硬来，给一句能照做的人话', async () => {
     const h = harness({
       manifests: [],

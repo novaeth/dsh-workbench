@@ -222,6 +222,7 @@ export const zh = {
   'panels.market.moduleOutdated': '有新版',
   'panels.market.updateNeedsWorkbench': '新版本要先把工作台升级才能用',
   'panels.market.updateIncompatible': '新版本和当前的工作台不匹配，暂时不能更新',
+  'panels.market.workbenchUpdateNeedsDsh': '新版本要先把 dsh 升级才能用',
   'panels.market.moduleRefused': '模块版本与工作台不匹配，暂时无法使用',
   'panels.market.moduleRestartHint': '重启后生效',
   'panels.market.pendingRestart': '重启后生效',
