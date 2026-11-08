@@ -53,12 +53,13 @@ export function BlockerState({
     (action) => !(action.kind === 'open-url' && action.inline === true) || blocker.hint === undefined,
   );
 
+  const primaryIndex = buttonActions.findIndex((action) => action.kind !== 'retry');
   const buttons = buttonActions.map((action, index) => (
     <Button
       key={`${action.kind}:${action.label}`}
       type="button"
       size="sm"
-      variant={index === 0 ? 'primary' : 'ghost'}
+      variant={index === primaryIndex ? 'primary' : action.kind === 'retry' ? 'outline' : 'ghost'}
       disabled={pending}
       onClick={() => run(action)}
     >
@@ -82,8 +83,8 @@ export function BlockerState({
           <span className={styles.noticeTitle}>{blocker.title}</span>
           {blocker.hint === undefined ? null : <span className={styles.noticeHint}>{blocker.hint}</span>}
         </span>
-        <span className={styles.noticeActions}>{buttons}</span>
         {failureBlock}
+        <span className={styles.noticeActions}>{buttons}</span>
       </div>
     );
   }

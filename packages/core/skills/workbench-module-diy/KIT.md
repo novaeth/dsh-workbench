@@ -42,6 +42,8 @@ h(StateBlock, { title: rows.title, hint: `3 条 · ${when}`, resolving: t('myuni
 
 要先自己判断有没有阻断（比如卡片里不能直接整块换屏），用 `kit.lib.blockerOf({ error, capability, t })`：能力闸优先，两者都干净时回 `undefined`。
 
+卡片正文里的动作统一放**右下角**：`StateBlock.actions`、`FormActions`、`BlockerState` 的 notice / inline 都这么排；`重试` 用 outline，一颗 primary 只给推进动作（安装 / 登录 / 打开）。卡片标题栏只留刷新 / 设置这类图标钮，整卡替换的阻断屏（图标 + 话 + 按钮）居中，是例外。
+
 `EmptyState` 默认带空态插画；要纯文字给 `icon: null`，要换图标给 `icon: h(Icon*, { size })`。
 
 ### 2.1 卡住（登录 / 权限 / 能力未装）

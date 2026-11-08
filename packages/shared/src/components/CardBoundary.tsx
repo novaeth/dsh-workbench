@@ -1,8 +1,9 @@
-import { Button } from '@deepseek-ai/dsh-client-ui-primitives';
 import type { Translate } from '../lib/dsh-client.js';
 import type { ReactNode } from '../lib/react.js';
 import { Component, h } from '../lib/react.js';
 import { Note } from './Note.js';
+import { FormActions } from './FormActions.js';
+import styles from './CardBoundary.module.css';
 
 /**
  * `CardBoundary` 的契约：被守的 unit、重来键与失败回调。
@@ -69,10 +70,19 @@ export class CardBoundary extends Component<CardBoundaryProps, CardBoundaryState
     if (reason === null) return this.props.children;
     return (
       <Note tone="problem">
-        <span>{this.props.t('panels.cardBroken', { unit: this.props.unit, reason })}</span>{' '}
-        <Button type="button" variant="outline" size="sm" onClick={this.retry}>
-          {this.props.t('panels.cardRetry')}
-        </Button>
+        <div className={styles.failure}>
+          <span>{this.props.t('panels.cardBroken', { unit: this.props.unit, reason })}</span>
+          <FormActions
+            actions={[
+              {
+                key: 'retry',
+                label: this.props.t('panels.cardRetry'),
+                kind: 'default',
+                onClick: this.retry,
+              },
+            ]}
+          />
+        </div>
       </Note>
     );
   }
