@@ -1,6 +1,6 @@
 import { createElement as h } from 'react';
-import type { ApiError, CapabilityPayload, ModuleBlocker, Translate } from '@dsh-workbench/shared';
-import { blockerOfCapability, blockerOfError } from '@dsh-workbench/shared';
+import type { ApiError, CapabilityPayload, Translate } from '@dsh-workbench/shared';
+import { blockerOf } from '@dsh-workbench/shared';
 import { BlockerState } from './BlockerState';
 
 /**
@@ -42,7 +42,7 @@ export function UnitBlocker({
   flush = false,
   onOpenMarket,
 }: UnitBlockerProps) {
-  const blocker = blockerFor(error, capability, t, platform, loginUrl);
+  const blocker = blockerOf({ error, capability, t, platform, loginUrl });
   if (blocker === undefined) return null;
   return (
     <BlockerState
@@ -54,22 +54,4 @@ export function UnitBlocker({
       {...(onOpenMarket === undefined ? {} : { onOpenMarket })}
     />
   );
-}
-
-function blockerFor(
-  error: ApiError | undefined,
-  capability: CapabilityPayload | undefined,
-  t: Translate,
-  platform: string | undefined,
-  loginUrl: string | undefined,
-): ModuleBlocker | undefined {
-  if (capability !== undefined) {
-    const fromCapability = blockerOfCapability(capability, t);
-    if (fromCapability !== undefined) return fromCapability;
-  }
-  if (error === undefined) return undefined;
-  const helpUrl =
-    error.helpUrl !== undefined || error.code !== 'auth-required' ? error.helpUrl : loginUrl;
-  const withHelp = helpUrl === undefined ? error : { ...error, helpUrl };
-  return blockerOfError(withHelp, t, platform === undefined ? {} : { platform });
 }

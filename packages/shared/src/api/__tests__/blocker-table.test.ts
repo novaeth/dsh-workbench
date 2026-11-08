@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Translate } from '../../lib/dsh-client.js';
 import type { CapabilityPayload } from '../../contract/workbench-contract.js';
 import type { NeedState } from '../../contract/unit-capability.js';
-import { blockerOfCapability, blockerOfError } from '../blocker-table.js';
+import { blockerOf, blockerOfCapability, blockerOfError } from '../blocker-table.js';
 
 const t: Translate = (key, params) => (params === undefined ? key : `${key}(${JSON.stringify(params)})`);
 
@@ -336,5 +336,40 @@ describe('执行类失败的话术由适配器给', () => {
       { diagnose: { exec: '确认 MCP server 起得来' } },
     );
     expect(blocker.hint).toBe('端口被占了');
+  });
+});
+
+describe('blockerOf', () => {
+  it('★ 能力闸优先：能力缺东西时，读口错误排在它后面', () => {
+    const blocker = blockerOf({
+      capability: capability({
+        status: 'missing',
+        needs: [needOf({ kind: 'extension', name: 'demo', status: 'missing' })],
+      }),
+      error: { code: 'auth-required', message: '未登录' },
+      t,
+    });
+
+    expect(blocker?.id).not.toBe('auth-required');
+  });
+
+  it('★ 两者都干净：不画任何东西', () => {
+    expect(blockerOf({ capability: capability({}), t })).toBeUndefined();
+    expect(blockerOf({ t })).toBeUndefined();
+  });
+
+  it('★ 没给 helpUrl 时用 loginUrl 补「去登录」', () => {
+    const blocker = blockerOf({
+      error: { code: 'auth-required', message: '未登录' },
+      loginUrl: 'https://example.com/login',
+      t,
+    });
+
+    expect(blocker?.actions).toContainEqual({
+      kind: 'open-url',
+      label: 'blocker.login.go',
+      url: 'https://example.com/login',
+      inline: true,
+    });
   });
 });

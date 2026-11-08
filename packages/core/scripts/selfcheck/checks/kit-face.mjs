@@ -41,6 +41,7 @@ const ADDITIONS = [
   { key: 'api.factOfRoute', why: 'named' },
   { key: 'hooks.usePlatform', why: 'named' },
   { key: 'lib.pathBase', why: 'named' },
+  { key: 'lib.blockerOf', why: 'named' },
 ];
 
 function mdFilesUnder(dir) {

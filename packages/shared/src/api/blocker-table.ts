@@ -115,6 +115,39 @@ export function blockerOfError(
 }
 
 /**
+ * 把一次读失败与一份能力读数合成一张卡住态：能力闸优先，其次读口错误；两者都干净时返回 `undefined`。
+ * @param parts.error - 读口回的错误；`auth-required` 会带上去登录那一颗动作。
+ * @param parts.capability - 宿主回的单元环境读数；`ok` 时忽略。
+ * @param parts.t - 文案函数，只取 `blocker.*` 命名空间的键。
+ * @param parts.platform - 平台名；给了就用「需要登录 {平台}」那一句。
+ * @param parts.loginUrl - 登录地址；`error.helpUrl` 没给时用它补上。
+ * @returns 一张卡住态，或 `undefined`。
+ */
+export function blockerOf(parts: {
+  readonly error?: ApiError | undefined;
+  readonly capability?: CapabilityPayload | undefined;
+  readonly t: Translate;
+  readonly platform?: string | undefined;
+  readonly loginUrl?: string | undefined;
+}): ModuleBlocker | undefined {
+  if (parts.capability !== undefined) {
+    const fromCapability = blockerOfCapability(parts.capability, parts.t);
+    if (fromCapability !== undefined) return fromCapability;
+  }
+  if (parts.error === undefined) return undefined;
+  const helpUrl =
+    parts.error.helpUrl !== undefined || parts.error.code !== 'auth-required'
+      ? parts.error.helpUrl
+      : parts.loginUrl;
+  const withHelp = helpUrl === undefined ? parts.error : { ...parts.error, helpUrl };
+  return blockerOfError(
+    withHelp,
+    parts.t,
+    parts.platform === undefined ? {} : { platform: parts.platform },
+  );
+}
+
+/**
  * 把宿主回的环境读数翻成卡住态：探针没查过（unchecked）只算提示，不挡卡片。
  * @param capability 宿主回的单元环境读数。
  * @param t 文案函数，键都在 env.unit.* / blocker.* 下。

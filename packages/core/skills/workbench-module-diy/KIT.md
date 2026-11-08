@@ -40,6 +40,8 @@ h(StateBlock, { title: rows.title, hint: `3 条 · ${when}`, resolving: t('myuni
 
 读不到：`detail` 放原始错误码与原文；不显示 0。
 
+要先自己判断有没有阻断（比如卡片里不能直接整块换屏），用 `kit.lib.blockerOf({ error, capability, t })`：能力闸优先，两者都干净时回 `undefined`。
+
 `EmptyState` 默认带空态插画；要纯文字给 `icon: null`，要换图标给 `icon: h(Icon*, { size })`。
 
 ### 2.1 卡住（登录 / 权限 / 能力未装）

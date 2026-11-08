@@ -70,7 +70,7 @@ import {
   IconBrandMark, IconConversation, IconModuleMark, IconNpm, IconOpencli, IconPanelScreen, Link, LongTaskRow,
   longTaskIsLive,
   MIN_BUSY_MS, Note, Row, Rows, SaveBar, SelectField, SettingsSection, SetupShell, SkeletonRows, Spinner, Stack,
-  StateBlock, TextField, apiGet, apiPost, blockerOfCapability, blockerOfError, cardIdOf, cx,
+  StateBlock, TextField, apiGet, apiPost, blockerOf, blockerOfCapability, blockerOfError, cardIdOf, cx,
   defaultSelectFilter, dictionaries, duplicateKeysOf, errorReasonOf, excerpt, factOfRoute, filterSelectOptions,
   firstProblemOf, formFirstProblemOf, formValuesOf, holdBusy, mergeMessagesSkipping, parseJsonLoose,
   parseLocalTimestamp, pathBase, readText, relativeTime, relativeTimeAgo, relativeTimeBucket, relativeTimeCompact,
@@ -102,7 +102,7 @@ export const kit = {
   api: { apiGet, apiPost, factOfRoute, ...chipsModule },
   lib: {
     longTaskIsLive,
-    MIN_BUSY_MS, blockerOfCapability, blockerOfError, cardIdOf, cx, defaultSelectFilter, duplicateKeysOf,
+    MIN_BUSY_MS, blockerOf, blockerOfCapability, blockerOfError, cardIdOf, cx, defaultSelectFilter, duplicateKeysOf,
     errorReasonOf, excerpt, filterSelectOptions, firstProblemOf, formFirstProblemOf, formValuesOf, holdBusy,
     parseJsonLoose, parseLocalTimestamp, pathBase, readText, relativeTime, relativeTimeAgo, relativeTimeBucket,
     relativeTimeCompact, revealFirstProblem, searchTextOf, selectCursorValue, selectEntries, shortenPath,
