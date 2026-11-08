@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { IconBrandMark, IconNpm, IconOpencli } from '@dsh-workbench/shared';
+import { IconBrandMarkColor, IconNpm, IconOpencli } from '@dsh-workbench/shared';
 import { PluginArtworkDefault } from '@deepseek-ai/dsh-client-ui-primitives';
 import {
   marketRowKind,
@@ -61,8 +61,8 @@ describe('包那一类行的图标', () => {
     expect(sharedRowKind(sharedRow('lib'))).toBe('lib');
   });
 
-  it('★ 工作台那一行用的是工作台自己的标（显示器里放鲸鱼尾巴）', () => {
-    expect((packageIcon('workbench') as { type?: unknown }).type).toBe(IconBrandMark);
+  it('★ 工作台那一行用的是工作台自己的彩色标（市场里不跟文字色走）', () => {
+    expect((packageIcon('workbench') as { type?: unknown }).type).toBe(IconBrandMarkColor);
   });
 
   it('★ 模块那枚用 dsh 的默认插画（跟发现页卡片同一枚）', () => {
