@@ -65,7 +65,7 @@ describe('mountUnits', () => {
     );
 
     expect(plan.mounted).toHaveLength(2);
-    expect(plan.gate?.deniedTools({ workspace: '/w', preset: null })).toEqual(['workbench_x']);
+    expect(plan.gate?.deniedTools({ workspace: '/w', preset: null, session: null })).toEqual(['workbench_x']);
   });
 
   it('没有闸门时外壳不该拿到一个"全关"的闸门', () => {
@@ -162,7 +162,7 @@ describe('mountUnits', () => {
       { ctx: ctxWith([]), manifests: () => [] },
     );
 
-    expect(plan.gate?.deniedTools({ workspace: '/w', preset: null })).toEqual(['workbench_x']);
+    expect(plan.gate?.deniedTools({ workspace: '/w', preset: null, session: null })).toEqual(['workbench_x']);
     expect(plan.failed).toEqual([
       { id: 'b', reason: '启停闸门只能有一个提供者，现在是：a、b' },
     ]);

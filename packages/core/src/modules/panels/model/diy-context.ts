@@ -6,29 +6,18 @@ import type { BundleChange } from '@/kernel/contract/bundle-install';
 import { hostSurface } from '@dsh-workbench/shared/host';
 import { supplyPortOf } from '@dsh-workbench/shared/host';
 import type { PanelsService } from './service';
+import { textOutput } from './tool-output';
 
-export const OUTPUT_SCHEMA = {
-  type: 'object',
-  properties: {
-    text: { type: 'string' },
-    workspace: { type: 'string' },
-    modules: { type: 'array', items: { type: 'object', additionalProperties: true } },
-    unit: { type: 'string' },
-    path: { type: 'string' },
-    install: { oneOf: [{ type: 'object', additionalProperties: true }, { type: 'string' }] },
-    alreadyInstalled: { type: 'boolean' },
-    panel: { type: 'object', additionalProperties: true },
-  },
-  additionalProperties: true,
-};
+export const OUTPUT = textOutput({
+  workspace: { type: 'string' },
+  modules: { type: 'array', items: { type: 'object', additionalProperties: true } },
+  unit: { type: 'string' },
+  path: { type: 'string' },
+  install: { oneOf: [{ type: 'object', additionalProperties: true }, { type: 'string' }] },
+  alreadyInstalled: { type: 'boolean' },
+  panel: { type: 'object', additionalProperties: true },
+});
 
-export const OUTPUT = {
-  schema: OUTPUT_SCHEMA,
-  render: (_args: unknown, value: unknown) => {
-    const payload = value as { text?: unknown } | null;
-    return [{ type: 'text', text: typeof payload?.text === 'string' ? payload.text : JSON.stringify(value) }];
-  },
-};
 
 export function asRecord(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};

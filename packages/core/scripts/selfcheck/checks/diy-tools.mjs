@@ -51,19 +51,25 @@ export const checks = [
     },
   },
   {
-    title: '★ 这一族只在 DIY 模式里出现（清单按会话 preset 收窄，不看工作区），调到时还有一道自己的落点闸',
+    title: '★ DIY 那一族收在 diy 工具包里：开包才进上下文，调到时还有一道自己的落点闸',
     run(_ctx, report) {
 
       const tools = diyToolsSource();
       const index = read(pkg('src/modules/panels/index.ts'));
+      const unit = read(pkg('src/modules/panels/unit.ts'));
+      const toolbox = read(pkg('src/modules/panels/model/toolbox.ts'));
       const visibility =
-        index.includes('context.preset === DIY_PRESET_ID') && !index.includes('inWorkshopSession(ctx, workspace)');
+        toolbox.includes('DIY_PACK_TOOLS') &&
+        unit.includes('...DIY_DEBUG_TOOLS,') &&
+        unit.includes('...DIY_RECORD_TOOLS,') &&
+        index.includes('toolbox.deniedTools(') &&
+        index.includes('registerToolboxTools(');
       const door = tools.includes('workspaceOf(ctx, exec)') && tools.includes('throw new Error');
       report(
-        '★ 这一族只在 DIY 模式里出现（清单按会话 preset 收窄，不看工作区），调到时还有一道自己的落点闸',
+        '★ DIY 那一族收在 diy 工具包里：开包才进上下文，调到时还有一道自己的落点闸',
         visibility && door,
         !visibility
-          ? '清单不是按会话 preset 收窄的（或又退回按工作区收窄）⇒ 没选 DIY 模式的会话也会看到 DIY 那一族'
+          ? 'DIY 那些工具没被 diy 工具包收着（或收窄没走 toolbox.deniedTools）⇒ 没开包的会话也会看到 DIY 那一族'
           : '执行期那道闸没了：没有落点也照发命令',
       );
     },
@@ -86,7 +92,6 @@ export const checks = [
     title: '★ DIY 那一族一起被收走（两份清单里逐个列着，收窄时一个都不能漏）',
     run(_ctx, report) {
       const unit = read(pkg('src/modules/panels/unit.ts'));
-      const index = read(pkg('src/modules/panels/index.ts'));
       const constants = [...unit.matchAll(/export const (DIY_[A-Z_]+)_TOOL = '(workbench_diy_[a-z_]+)'/g)];
       const listed = new Set([...unit.matchAll(/^\s+(DIY_[A-Z_]+)_TOOL,$/gm)].map((one) => one[1]));
       const names = new Set(constants.map((one) => one[2]));
@@ -109,7 +114,11 @@ export const checks = [
       ];
       const stale = REMOVED.filter((one) => unit.includes(one));
 
-      const gateList = '[...DIY_TOOLS, ...DIY_DEBUG_TOOLS, ...DIY_RECORD_TOOLS]';
+      const toolbox = read(pkg('src/modules/panels/model/toolbox.ts'));
+      const inPack =
+        toolbox.includes('DIY_PACK_TOOLS') &&
+        unit.includes('...DIY_DEBUG_TOOLS,') &&
+        unit.includes('...DIY_RECORD_TOOLS,');
       const wrong =
         missing.length > 0
           ? `没进清单的：${missing.map((one) => one[2]).join('、')}`
@@ -117,15 +126,15 @@ export const checks = [
             ? `枚举表里有、DIY_TOOLS 里没有：${browserMissing.join('、')}`
             : stale.length > 0
               ? `被删的七把还在：${stale.join('、')}`
-              : !index.includes(gateList)
-                ? `收窄名单不是这一份：${gateList}`
+              : !inPack
+                ? 'diy 工具包不是这份名单（或漏了调试 / 录制那两族）'
                 : '';
       report(
         '★ DIY 那一族一起被收走（两份清单里逐个列着，收窄时一个都不能漏；浏览器那 14 把对着枚举表核）',
         names.size >= 32 &&
           rows.length === 14 &&
           new Set(rows).size === 14 &&
-          index.includes(gateList) &&
+          inPack &&
           missing.length === 0 &&
           browserMissing.length === 0 &&
           stale.length === 0,

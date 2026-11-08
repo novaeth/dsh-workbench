@@ -12,7 +12,9 @@ import {
   MARKET_ENABLE_TOOL,
   MODULES_INSTALL_TOOL,
   MODULES_UPDATE_TOOL,
+  TOOLBOX_OPEN_TOOL,
 } from '@/modules/panels/client';
+import { toolboxApprovalRows } from './approval-toolbox';
 import { readMarketSources, readPublishPreview } from '@/shared/hooks/market-queries';
 import styles from './approval-detail.module.css';
 
@@ -415,6 +417,8 @@ export function shellClaimsApprovalDetail(tool: string): boolean {
   return (ALL_TOOLS as readonly string[]).includes(tool);
 }
 
+export { toolboxApprovalRows } from './approval-toolbox';
+
 function stopApprovalRows(
   args: Readonly<Record<string, unknown>>,
   t: Translate,
@@ -437,6 +441,9 @@ export function shellApprovalPlan(
 ): ApprovalPlanView | undefined {
   const origin = pluginTools?.get(input.tool);
   if (origin !== undefined) return { rows: pluginApprovalRows(origin, input.args, t) };
+  if (input.tool === TOOLBOX_OPEN_TOOL) {
+    return { rows: toolboxApprovalRows(input.args, manifests ?? [], t) };
+  }
   if (input.tool === MODULES_INSTALL_TOOL || input.tool === MODULES_UPDATE_TOOL) {
     const id = textOf(input.args, 'id');
     return { rows: moduleSupplyRows(manifests?.find((one) => one.id === id), id, t) };

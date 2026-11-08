@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { approvalFor } from '@dsh-workbench/shared/host';
-import { panelsApproval, panelsApprovalFor } from '../model/approval';
+import { panelsApproval, panelsApprovalFor } from '../model/approval-policy';
 import { DIY_RECORD_PREPARE_TOOL } from '../unit';
 import { heldStore } from './record-fixtures';
 

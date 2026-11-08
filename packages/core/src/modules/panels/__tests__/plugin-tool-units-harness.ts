@@ -61,7 +61,7 @@ export interface Harness {
 
 export function deny(h: Harness, workspace: string, preset: string | null = null): string[] {
   const workshop = new Set<string>([...DIY_TOOLS, ...DIY_DEBUG_TOOLS, ...DIY_RECORD_TOOLS]);
-  return [...h.gate.deniedTools({ workspace, preset })].filter((name) => !workshop.has(name));
+  return [...h.gate.deniedTools({ workspace, preset, session: null })].filter((name) => !workshop.has(name));
 }
 
 export function harnessOf(options: {

@@ -2,6 +2,7 @@ import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunCont
 import { sessionWorkspace } from '@dsh-workbench/shared/host';
 import type { ValueHandoff } from '@dsh-workbench/shared/host';
 import { panelsHandoffEntry } from './handoff';
+import { textOutput } from './tool-output';
 import { BOARD_TARGETS, DEFAULT_BOARD_TARGET, type BoardTarget, type PanelEntry } from './config';
 import type { PanelsService } from './service';
 import {
@@ -51,10 +52,8 @@ function parseScope(raw: unknown): BoardTarget {
   throw new Error(`不认识的 scope：${String(raw)}（可用：workspace / machine）`);
 }
 
-const OUTPUT_SCHEMA = {
-  type: 'object',
-  properties: {
-    text: { type: 'string' },
+const panelsOutput = () =>
+  textOutput({
     units: {
       type: 'array',
       items: {
@@ -69,17 +68,9 @@ const OUTPUT_SCHEMA = {
         additionalProperties: true,
       },
     },
-  },
-  additionalProperties: true,
-};
+  });
 
-const OUTPUT = {
-  schema: OUTPUT_SCHEMA,
-  render: (_args: unknown, value: unknown) => {
-    const payload = value as { text?: unknown } | null;
-    return [{ type: 'text', text: typeof payload?.text === 'string' ? payload.text : JSON.stringify(value) }];
-  },
-};
+const OUTPUT = panelsOutput();
 
 function idOf(raw: unknown): string | undefined {
   if (typeof raw !== 'object' || raw === null) return undefined;

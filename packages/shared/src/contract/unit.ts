@@ -35,11 +35,13 @@ export interface UnitToolRuntime {
 
 /**
  * 一条工具在清单里的样子：全名加会不会写；审批按 writes 认领。
+ * `elevates` 为真表示这次调用会抬高工具面（开工具包），审批按它认领、与写无关。
  * `runtime` 只有「按已装插件合成」的单元写，手写模块的工具没有这一格。
  */
 export interface UnitTool {
   readonly name: string;
   readonly writes: boolean;
+  readonly elevates?: boolean;
   readonly runtime?: UnitToolRuntime;
 }
 

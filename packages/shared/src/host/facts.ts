@@ -52,13 +52,18 @@ export function createFactLog(options: { readonly epoch?: string } = {}): FactLo
 export interface ToolUnit {
   readonly unit: string;
   readonly writes: boolean;
+  readonly elevates?: boolean;
 }
 
 export function toolUnits(manifests: readonly UnitManifest[]): Map<string, ToolUnit> {
   const map = new Map<string, ToolUnit>();
   for (const manifest of manifests) {
     for (const tool of manifest.tools ?? []) {
-      map.set(tool.name, { unit: manifest.id, writes: tool.writes });
+      map.set(tool.name, {
+        unit: manifest.id,
+        writes: tool.writes,
+        ...(tool.elevates === true ? { elevates: true } : {}),
+      });
     }
   }
   return map;

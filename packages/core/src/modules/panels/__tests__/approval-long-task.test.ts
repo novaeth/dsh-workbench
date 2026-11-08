@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { APPROVAL_HEADLINE_LIMIT } from '@dsh-workbench/shared/host';
-import { panelsApproval, panelsApprovalFor } from '../model/approval';
+import { panelsApproval, panelsApprovalFor } from '../model/approval-policy';
 import { stopRuns } from './approval-samples';
 import { LONG_TASKS_STOP_TOOL } from '../unit';
 

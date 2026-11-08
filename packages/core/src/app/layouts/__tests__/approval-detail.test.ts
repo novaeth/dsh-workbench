@@ -12,6 +12,7 @@ import {
   shellApprovalDetail,
   shellApprovalRenderer,
   shellClaimsApprovalDetail,
+  toolboxApprovalRows,
   versionLineOf,
 } from '../approval-detail';
 import {
@@ -21,6 +22,7 @@ import {
   MARKET_DISABLE_TOOL,
   MARKET_ENABLE_TOOL,
   MODULES_INSTALL_TOOL,
+  TOOLBOX_OPEN_TOOL,
 } from '@/modules/panels/client';
 
 const HERE = new URL('../', import.meta.url);
@@ -443,6 +445,53 @@ describe('模块外部供给审批：要装的插件与库摆进详情座', () =
     const seat = seatOf(MODULES_INSTALL_TOOL, { id: 'inventory' }, shellApprovalRenderer(() => [unit]));
 
     expect(seat?.props?.rows).toHaveLength(3);
+    expect(seat?.props?.code).toBeUndefined();
+  });
+});
+
+describe('工具包审批：详情座一行一个包，范围与写工具的口径都写清', () => {
+  const unit: UnitManifest = {
+    id: 'inventory',
+    title: { zh: '库存', en: 'Inventory' },
+    titleKey: 'dsh-workbench.unit.inventory.title',
+    card: null,
+    tools: [
+      { name: 'workbench_inventory_list', writes: false },
+      { name: 'workbench_inventory_build', writes: true },
+    ],
+    host: { inject: [] },
+  };
+
+  it('★ 外壳包与单元包各一行：名字 + 共 N 把（读 / 写）', () => {
+    expect(toolboxApprovalRows({ targets: ['manage', 'unit:inventory'] }, [unit], t)).toEqual([
+      { label: '工具包', value: '工作台管理 · 共 20 把（读 4 / 写 16）' },
+      { label: '工具包', value: '库存 · 共 2 把（读 1 / 写 1）' },
+      { label: '范围', value: '这个会话' },
+      { label: '写入', value: '包里的写工具仍逐条确认' },
+    ]);
+  });
+
+  it('不认识的 target 原样写出来，不编名字', () => {
+    expect(toolboxApprovalRows({ targets: ['unit:nope'] }, [], t)[0]).toEqual({
+      label: '工具包',
+      value: 'unit:nope',
+    });
+  });
+
+  it('★ 座位画的正是这张表（批量开包时一行一个包）', () => {
+    const seat = seatOf(
+      TOOLBOX_OPEN_TOOL,
+      { targets: ['unit:inventory', 'manage'] },
+      shellApprovalRenderer(() => [unit]),
+    );
+
+    expect(seat?.props?.rows).toHaveLength(4);
+    expect(seat?.props?.rows?.map((row) => (row as { label: string }).label)).toEqual([
+      '工具包',
+      '工具包',
+      '范围',
+      '写入',
+    ]);
     expect(seat?.props?.code).toBeUndefined();
   });
 });

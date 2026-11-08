@@ -105,6 +105,7 @@ export type ApprovalPolicy = (call: ApprovalCall) => ApprovalVerdict | undefined
  */
 export interface ApprovalContext {
   readonly writes?: boolean | undefined;
+  readonly elevates?: boolean | undefined;
   readonly policy?: ApprovalPolicy | undefined;
   readonly declaredNote?: boolean | undefined;
   readonly skipAsk?: boolean | undefined;
@@ -137,7 +138,8 @@ export async function approvalFor(
   call: ApprovalCall,
   context: ApprovalContext = {},
 ): Promise<AskDecision | undefined> {
-  if (context.writes !== true) return undefined;
+  const asked = context.writes === true || context.elevates === true;
+  if (!asked) return undefined;
 
   let verdict: ApprovalVerdict | undefined;
   try {
@@ -157,8 +159,10 @@ export async function approvalFor(
     return {
       kind: 'deny',
       reason:
-        `${call.name ?? '这把工具'} 在清单里声明会写东西，但它的套件没认领这次调用 —— 停下：` +
-        '在套件的 needsApproval 里补一条审批（含"这次会发生什么"），别让写静默过去',
+        `${call.name ?? '这把工具'} 在清单里声明` +
+        (context.elevates === true ? '会抬高工具面' : '会写东西') +
+        '，但它的套件没认领这次调用 —— 停下：' +
+        '在套件的 needsApproval 里补一条审批（含"这次会发生什么"），别让它静默过去',
     };
   }
 

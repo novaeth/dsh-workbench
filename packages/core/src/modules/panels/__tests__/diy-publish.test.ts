@@ -3,7 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { marketSourceKey } from '@dsh-workbench/shared/host';
 import type { MarketSourceConfig } from '@/kernel/contract/market-index';
-import { panelsApprovalFor } from '../model/approval';
+import { panelsApprovalFor } from '../model/approval-policy';
 import { PUBLISH_TIMEOUT_MS, registerPublishTool } from '../model/diy-publish';
 import type { GitRunner } from '@/shared/api/host/git-process';
 import { inferredAuthorOf, publishPreviewOf } from '@/shared/api/host/diy-publish-preview';

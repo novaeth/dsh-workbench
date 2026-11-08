@@ -17,12 +17,17 @@ function fakeTools() {
   return { registry, calls, disposed: () => disposed };
 }
 
-function agentWith(tools: ScopedToolRegistry | undefined, cwd?: string, preset?: string) {
+function agentWith(tools: ScopedToolRegistry | undefined, cwd?: string, preset?: string, id?: string) {
   return {
     ctx: tools === undefined ? {} : { tools },
     ...(cwd === undefined
       ? {}
-      : { session: { header: { cwd, ...(preset === undefined ? {} : { agentPreset: preset }) } } }),
+      : {
+          session: {
+            ...(id === undefined ? {} : { id }),
+            header: { cwd, ...(preset === undefined ? {} : { agentPreset: preset }) },
+          },
+        }),
   };
 }
 
@@ -65,7 +70,7 @@ describe('tool-scope', () => {
 
     scope.apply(agentWith(registry, '/w/a'));
 
-    expect(seen).toEqual([{ workspace: '/w/a', preset: 'workbench-diy' }]);
+    expect(seen).toEqual([{ workspace: '/w/a', preset: 'workbench-diy', session: null }]);
   });
 
   it('presetOf 读不到就退回会话 header 里的创建事实', () => {
@@ -81,8 +86,25 @@ describe('tool-scope', () => {
     scope.apply(agentWith(registry, '/w/a', 'workbench-diy'));
     scope.apply(agentWith(registry));
 
-    expect(seen[0]).toEqual({ workspace: '/w/a', preset: 'workbench-diy' });
-    expect(seen[1]).toEqual({ workspace: null, preset: null });
+    expect(seen[0]).toEqual({ workspace: '/w/a', preset: 'workbench-diy', session: null });
+    expect(seen[1]).toEqual({ workspace: null, preset: null, session: null });
+  });
+
+  it('★ 会话 id 也进 context：工具包状态按会话分，签名里也有它', () => {
+    const { registry, calls } = fakeTools();
+    const seen: ToolScopeContext[] = [];
+    const scope = createToolScope({
+      deniedTools: (context) => {
+        seen.push(context);
+        return ['workbench_demo_issues'];
+      },
+    });
+
+    scope.apply(agentWith(registry, '/w/a', undefined, 's-1'));
+    scope.apply(agentWith(registry, '/w/a', undefined, 's-2'));
+
+    expect(seen.map((context) => context.session)).toEqual(['s-1', 's-2']);
+    expect(calls).toHaveLength(2);
   });
 
   it('★★ preset 选上了：reapply 之后整条限制撤掉（那 34 把放出来）', () => {

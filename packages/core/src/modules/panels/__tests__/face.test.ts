@@ -7,7 +7,7 @@ import { createFakeShell, createNoopDataReader,
 import type { DshShell, UnitManifest } from '@dsh-workbench/shared';
 import { createHostKit, createWorkspaceStore, hostSurface } from '@dsh-workbench/shared/host';
 import { PANELS_FILE, PANELS_MODULE_ID, RELEASED_FILE } from '../model/service';
-import { DIY_DEBUG_TOOLS, DIY_RECORD_TOOLS, DIY_TOOLS, panelsUnit } from '../unit';
+import { ALL_TOOLS, DIY_PACK_TOOLS, MANAGE_TOOLS, TOOLBOX_TOOLS, panelsUnit } from '../unit';
 import { WORKBENCH_ADAPTERS } from '@dsh-workbench/shared/host';
 import { testAdaptersWith } from './test-adapters';
 import { fakeSeamOf } from './seam-fake';
@@ -100,36 +100,27 @@ describe('panelsHost', () => {
     expect(result.prefs?.resource).toBe('panels');
   });
 
-  it('闸门：没有卡片的套件**永远不会被收起来**（否则"放回来"的入口会被自己收掉）', () => {
+  it('闸门：默认只留三把控制工具，其余工作台工具都收在各包里', () => {
     const { ctx } = fakeCtx();
     const result = mount({ ctx, manifests: [panelsUnit] });
 
-    expect(result.gate?.deniedTools({ workspace: '/w/a', preset: null })).toEqual([
-      ...DIY_TOOLS,
-      ...DIY_DEBUG_TOOLS,
-      ...DIY_RECORD_TOOLS,
-    ]);
+    const denied = result.gate?.deniedTools({ workspace: '/w/a', preset: null, session: 's-1' }) ?? [];
+
+    expect(denied).toHaveLength(ALL_TOOLS.length - TOOLBOX_TOOLS.length);
+    expect(new Set(denied)).toEqual(new Set([...MANAGE_TOOLS, ...DIY_PACK_TOOLS]));
+    for (const control of TOOLBOX_TOOLS) expect(denied).not.toContain(control);
   });
 
-  it('★★ 那 35 把 DIY 工具只跟模式走：与工作区无关，选了 workbench-diy 才有', () => {
+  it('★★ 工具包是会话级开关：DIY 模式默认开 manage + diy（与工作区无关）', () => {
     const workshop = path.join(dir, 'workbench', 'diy');
-const ctx = {
-      get: (name: string) =>
-        name === WORKBENCH_ADAPTERS ? adapters :
-        name === WORKBENCH_ADAPTERS ? adapters :
-        name === 'dshHomePath' ? (relative: string) => path.join(dir, relative) : undefined,
-      provide: () => () => {},
-      logger: { info: () => {}, warn: () => {} },
-    };
-    const result = mount({ ctx, manifests: [panelsUnit] });
-    const diy = [...DIY_TOOLS, ...DIY_DEBUG_TOOLS, ...DIY_RECORD_TOOLS];
+    const result = mount({ ctx: fakeCtx().ctx, manifests: [panelsUnit] });
+    const all = new Set([...MANAGE_TOOLS, ...DIY_PACK_TOOLS]);
 
-    expect(result.gate?.deniedTools({ workspace: workshop, preset: null })).toEqual(diy);
-    expect(result.gate?.deniedTools({ workspace: '/w/a', preset: null })).toEqual(diy);
-    expect(result.gate?.deniedTools({ workspace: '/w/a', preset: 'workbench-diy' })).toEqual([]);
-    expect(result.gate?.deniedTools({ workspace: workshop, preset: 'workbench-diy' })).toEqual([]);
-    expect(result.gate?.deniedTools({ workspace: null, preset: 'workbench-diy' })).toEqual([]);
-    expect(result.gate?.deniedTools({ workspace: null, preset: null })).toEqual(diy);
+    expect(new Set(result.gate?.deniedTools({ workspace: '/w/a', preset: null, session: 's-1' }))).toEqual(all);
+    expect(new Set(result.gate?.deniedTools({ workspace: workshop, preset: null, session: 's-2' }))).toEqual(all);
+    expect(result.gate?.deniedTools({ workspace: '/w/a', preset: 'workbench-diy', session: 's-3' })).toEqual([]);
+    expect(result.gate?.deniedTools({ workspace: workshop, preset: 'workbench-diy', session: 's-4' })).toEqual([]);
+    expect(result.gate?.deniedTools({ workspace: null, preset: 'workbench-diy', session: 's-5' })).toEqual([]);
   });
 
   it('偏好写处理器真的改配置（与 agent 工具同一个服务）', () => {

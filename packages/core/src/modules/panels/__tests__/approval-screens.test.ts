@@ -4,7 +4,9 @@ import type { Translate, UnitManifest } from '@dsh-workbench/shared';
 import { zh } from '@dsh-workbench/shared';
 import { approvalFor, type ApprovalCall } from '@dsh-workbench/shared/host';
 import { pluginToolIndexOf, shellApprovalPlan, type ApprovalPlanView } from '@/app/layouts/approval-detail';
-import { panelsApprovalFor } from '../model/approval';
+import { panelsApprovalFor } from '../model/approval-policy';
+import { createToolbox } from '../model/toolbox';
+import { TOOLBOX_OPEN_TOOL } from '../unit';
 import { ASK_TOOLS, WRITE_CALLS, stopRuns } from './approval-samples';
 
 const GOLDEN = new URL('../../../../test/golden/approval-screens.md', import.meta.url);
@@ -92,6 +94,35 @@ const MODULE_UNIT: UnitManifest = {
     { kind: 'lib', name: 'acme-sdk', version: '^2.1', purpose: '调库存接口' },
   ],
 };
+
+const TOOLBOX_UNIT: UnitManifest = {
+  ...MODULE_UNIT,
+  tools: [
+    { name: 'workbench_inventory_list', writes: false },
+    { name: 'workbench_inventory_build', writes: true },
+  ],
+};
+
+async function toolboxScreenOf(targets: readonly string[]): Promise<readonly string[]> {
+  const args = { targets };
+  const call: ApprovalCall = { name: TOOLBOX_OPEN_TOOL, arguments: args };
+  const decision = await approvalFor(call, {
+    writes: false,
+    elevates: true,
+    policy: panelsApprovalFor(stopRuns(), undefined, undefined, undefined, createToolbox({ manifests: () => [TOOLBOX_UNIT] })),
+  });
+  const title = decision?.kind === 'ask' ? decision.displayReason.zh : '（不问）';
+
+  return [
+    `## ${TOOLBOX_OPEN_TOOL}（${targets.join(' + ')}）`,
+    '',
+    ...box(
+      title,
+      ['', title, '', ...planLines(shellApprovalPlan({ tool: TOOLBOX_OPEN_TOOL, args }, t, undefined, [TOOLBOX_UNIT]))],
+    ),
+    '',
+  ];
+}
 
 interface PluginCommand {
   readonly plugin: string;
@@ -211,9 +242,15 @@ async function document(): Promise<string> {
     '具体清单进详情座 —— 外壳按浏览器侧已有的清单画 模块 / 插件 / 库 各一行（来源是 `needs` 里的 extension 与 lib）；',
     '没有声明就写"没有声明"，清单没读回来就写"读不到"。',
     '',
+    '**2026-11-08 加 `workbench_toolbox_open` 那三屏**：开工具包按 `elevates` 问（与 `writes` 无关）；',
+    '标题点名第一个包 + 数量，详情座一行一个包（名字 · 共 N 把：读/写），再画范围与"写工具仍逐条确认"。',
+    '',
   ];
   for (const tool of ASK_TOOLS) parts.push(...(await screenOf(tool)));
   parts.push(...(await pluginScreen()));
+  parts.push(...(await toolboxScreenOf(['manage'])));
+  parts.push(...(await toolboxScreenOf(['unit:inventory'])));
+  parts.push(...(await toolboxScreenOf(['unit:inventory', 'manage'])));
   return parts.join('\n');
 }
 

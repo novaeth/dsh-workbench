@@ -1,4 +1,4 @@
-import type { ApprovalCall, ApprovalDetail, ApprovalPolicy, ApprovalVerdict, RecordState } from '@dsh-workbench/shared/host';
+import type { ApprovalCall, ApprovalDetail, ApprovalVerdict } from '@dsh-workbench/shared/host';
 import {
   DIY_DEBUG_PAUSE_TOOL,
   DIY_DEBUG_RESUME_TOOL,
@@ -24,10 +24,10 @@ import {
   DIY_RECORD_PREPARE_TOOL,
   DIY_PUBLISH_TOOL,
 } from '../unit';
+import type { Toolbox } from './toolbox';
+import { toolboxVerdictFor } from './toolbox-approval';
 import type { MarketSourceConfig, PublishPreview } from '@dsh-workbench/shared/contract/protocol/market-index';
-import type { MarketSourcesStore } from '@/shared/api/host/market-sources-store';
 import type { LongTaskRunsLookup } from './long-task-tools';
-import { recordRefusalText } from './diy-record-text';
 import { publishClaimDenyOf } from './publish-claim';
 import { copiesOf } from './approval-questions';
 
@@ -216,7 +216,24 @@ function publishVerdict(
 
 export type MarketSourceLookup = (id: string | undefined) => MarketSourceConfig | undefined;
 
-function approvalVerdict(call: ApprovalCall, marketSource?: MarketSourceLookup): ApprovalVerdict | undefined {
+export function stopVerdictFor(call: ApprovalCall, longTaskRuns: LongTaskRunsLookup | undefined): ApprovalVerdict | undefined {
+  return stopVerdict(call, longTaskRuns);
+}
+
+export function publishVerdictFor(
+  call: ApprovalCall,
+  preview: ((unit: string, author?: string) => PublishApprovalPreview | null) | undefined,
+): ApprovalVerdict | undefined {
+  return publishVerdict(call, preview);
+}
+
+export function approvalVerdict(
+  call: ApprovalCall,
+  marketSource?: MarketSourceLookup,
+  toolbox?: Toolbox,
+): ApprovalVerdict | undefined {
+  const boxed = toolboxVerdictFor(call, toolbox);
+  if (boxed !== undefined) return boxed;
   if (call.name === LONG_TASKS_STOP_TOOL) return stopVerdict(call, undefined);
   if (call.name === DIY_PUBLISH_TOOL) return publishVerdict(call);
   if (call.name === DIY_DEBUG_START_TOOL || call.name === DIY_DEBUG_RESUME_TOOL) {
@@ -465,36 +482,3 @@ function approvalVerdict(call: ApprovalCall, marketSource?: MarketSourceLookup):
   }
 }
 
-export const panelsApproval: ApprovalPolicy = (call) => approvalVerdict(call);
-
-function recordHeldVerdict(
-  call: ApprovalCall,
-  recording: (() => RecordState | null) | undefined,
-): ApprovalVerdict | undefined {
-  if (call.name !== DIY_RECORD_PREPARE_TOOL || recording === undefined) return undefined;
-  const held = recording();
-  if (held === null) return undefined;
-  const code = held.sessionId === call.session ? 'already-held' : 'held-by-other';
-  return { kind: 'deny', reason: recordRefusalText(code, held) };
-}
-
-export function panelsApprovalFor(
-  longTaskRuns?: LongTaskRunsLookup | undefined,
-  recording?: (() => RecordState | null) | undefined,
-  publishPreview?: ((unit: string, author?: string) => PublishApprovalPreview | null) | undefined,
-  marketSources?: MarketSourcesStore | undefined,
-): ApprovalPolicy {
-  const sourceOf: MarketSourceLookup | undefined =
-    marketSources === undefined
-      ? undefined
-      : (id) => {
-          const payload = marketSources.read();
-          const wanted = id === undefined || id === '' ? payload.selected : id;
-          return wanted === null ? undefined : payload.sources.find((one) => one.id === wanted);
-        };
-  return (call) => {
-    if (call.name === LONG_TASKS_STOP_TOOL) return stopVerdict(call, longTaskRuns);
-    if (call.name === DIY_PUBLISH_TOOL) return publishVerdict(call, publishPreview);
-    return recordHeldVerdict(call, recording) ?? approvalVerdict(call, sourceOf);
-  };
-}

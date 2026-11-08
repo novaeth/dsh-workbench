@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { MarketSourceConfig } from '@dsh-workbench/shared/contract/protocol/market-index';
 import type { MarketSourcesStore } from '@/shared/api/host/market-sources-store';
-import { panelsApproval, panelsApprovalFor } from '../model/approval';
+import { panelsApproval, panelsApprovalFor } from '../model/approval-policy';
 import { MARKET_DISABLE_TOOL, MARKET_ENABLE_TOOL } from '../unit';
 
 const gitSource = {

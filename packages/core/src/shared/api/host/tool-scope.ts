@@ -41,10 +41,12 @@ function contextOf(handle: ToolScopeAgent, options: ToolScopeOptions): ToolScope
   const header = handle.session?.header;
   const cwd = header?.cwd;
   const declared = header?.agentPreset;
+  const session = handle.session?.id;
   const read = options.presetOf?.(handle);
   return {
     workspace: typeof cwd === 'string' && cwd !== '' ? cwd : null,
     preset: read ?? (typeof declared === 'string' && declared !== '' ? declared : null),
+    session: typeof session === 'string' && session !== '' ? session : null,
   };
 }
 
@@ -68,7 +70,7 @@ export function createToolScope(options: ToolScopeOptions): ToolScope {
 
     const context = contextOf(handle, options);
     const deny = [...options.deniedTools(context)];
-    const signature = `${context.workspace ?? ''}\u0000${context.preset ?? ''}\u0000${deny.join(',')}`;
+    const signature = `${context.workspace ?? ''}\u0000${context.preset ?? ''}\u0000${context.session ?? ''}\u0000${deny.join(',')}`;
 
     const previous = applied.get(handle);
     if (previous !== undefined && previous.signature === signature) return;

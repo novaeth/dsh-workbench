@@ -54,12 +54,25 @@ export const DIY_RECORD_STOP_TOOL = 'workbench_diy_record_stop';
 export const LONG_TASKS_LIST_TOOL = 'workbench_long_tasks_list';
 export const LONG_TASKS_STOP_TOOL = 'workbench_long_tasks_stop';
 
+export const TOOLBOX_LIST_TOOL = 'workbench_toolbox_list';
+export const TOOLBOX_OPEN_TOOL = 'workbench_toolbox_open';
+export const TOOLBOX_CLOSE_TOOL = 'workbench_toolbox_close';
+
+export const TOOLBOX_TOOLS = [TOOLBOX_LIST_TOOL, TOOLBOX_OPEN_TOOL, TOOLBOX_CLOSE_TOOL] as const;
+
+export const ELEVATING_TOOLS: readonly PanelsToolName[] = [TOOLBOX_OPEN_TOOL];
+
+export const PACK_TARGET_LIMIT = 8;
+
 export const DIY_DEBUG_START_TOOL = 'workbench_diy_debug_start';
 export const DIY_DEBUG_PAUSE_TOOL = 'workbench_diy_debug_pause';
 export const DIY_DEBUG_RESUME_TOOL = 'workbench_diy_debug_resume';
 export const DIY_DEBUG_STOP_TOOL = 'workbench_diy_debug_stop';
 
 export const ALL_TOOLS = [
+  TOOLBOX_LIST_TOOL,
+  TOOLBOX_OPEN_TOOL,
+  TOOLBOX_CLOSE_TOOL,
   PANELS_LIST_TOOL,
   PANELS_SHOW_TOOL,
   PANELS_HIDE_TOOL,
@@ -118,6 +131,9 @@ export const ALL_TOOLS = [
 export type PanelsToolName = (typeof ALL_TOOLS)[number];
 
 export const READ_TOOLS = [
+  TOOLBOX_LIST_TOOL,
+  TOOLBOX_OPEN_TOOL,
+  TOOLBOX_CLOSE_TOOL,
   PANELS_LIST_TOOL,
   MODULES_LIST_TOOL,
   MARKET_SOURCES_TOOL,
@@ -233,6 +249,47 @@ export const DIY_LOGS_TOOLS = [
   DIY_LOGS_STOP_TOOL,
 ] as const satisfies readonly PanelsToolName[];
 
+export const MANAGE_TOOLS = [
+  PANELS_LIST_TOOL,
+  PANELS_SHOW_TOOL,
+  PANELS_HIDE_TOOL,
+  PANELS_MOVE_TOOL,
+  PANELS_RESET_TOOL,
+  PANELS_FOLLOW_TOOL,
+  MODULES_LIST_TOOL,
+  MODULES_INSTALL_TOOL,
+  MODULES_UPDATE_TOOL,
+  MODULES_UNINSTALL_TOOL,
+  MODULES_INSTALL_BUNDLE_TOOL,
+  MODULES_UPDATE_DEPENDENCY_TOOL,
+  MODULES_UPDATE_PLUGIN_TOOL,
+  MODULES_UNINSTALL_PLUGIN_TOOL,
+  MODULES_UPDATE_WORKBENCH_TOOL,
+  MARKET_SOURCES_TOOL,
+  MARKET_ENABLE_TOOL,
+  MARKET_DISABLE_TOOL,
+  LONG_TASKS_LIST_TOOL,
+  LONG_TASKS_STOP_TOOL,
+] as const satisfies readonly PanelsToolName[];
+
+export const DIY_PACK_TOOLS = [
+  ...DIY_TOOLS,
+  ...DIY_RECORD_TOOLS,
+  ...DIY_DEBUG_TOOLS,
+] as const satisfies readonly PanelsToolName[];
+
+type PackAssigned =
+  | (typeof TOOLBOX_TOOLS)[number]
+  | (typeof MANAGE_TOOLS)[number]
+  | (typeof DIY_PACK_TOOLS)[number];
+type Unassigned = Exclude<PanelsToolName, PackAssigned>;
+type PackOverlap = Extract<(typeof MANAGE_TOOLS)[number], (typeof DIY_PACK_TOOLS)[number]>;
+
+const EVERY_TOOL_IN_ONE_PACK: Unassigned extends never ? true : never = true;
+const NO_PACK_OVERLAP: PackOverlap extends never ? true : never = true;
+void EVERY_TOOL_IN_ONE_PACK;
+void NO_PACK_OVERLAP;
+
 export function screenOnlyToolsFor(pageDebug: boolean): readonly PanelsToolName[] {
   return pageDebug ? [] : [...DIY_DEBUG_TOOLS, ...DIY_LOGS_TOOLS];
 }
@@ -242,7 +299,11 @@ export const panelsUnit: UnitManifest = {
   titleKey: 'panels.title',
   card: null,
   tools: [
-    ...READ_TOOLS.map((name) => ({ name, writes: false })),
+    ...READ_TOOLS.map((name) => ({
+      name,
+      writes: false,
+      ...(ELEVATING_TOOLS.includes(name) ? { elevates: true } : {}),
+    })),
     ...WRITE_TOOLS.map((name) => ({ name, writes: true })),
   ],
   host: {

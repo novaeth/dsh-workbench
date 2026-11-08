@@ -16,6 +16,7 @@ import type { HostKit } from './host-kit.js';
 export interface ToolScopeContext {
   readonly workspace: string | null;
   readonly preset: string | null;
+  readonly session: string | null;
 }
 
 export interface UnitMountDeps extends HostKit {

@@ -1,14 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import type { DshHostContext, DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared';
+import { createRecordStore } from '@dsh-workbench/shared/host';
 import { registerPanelTools } from '@/modules/panels/model/tools';
 import { registerMarketTools } from '@/modules/panels/model/market-tools';
 import { registerDiyTools } from '@/modules/panels/model/diy-tools';
+import { registerRecordTools } from '@/modules/panels/model/diy-record-tools';
 import { registerLongTaskTools } from '@/modules/panels/model/long-task-tools';
+import { registerToolboxTools } from '@/modules/panels/model/toolbox-tools';
+import { createToolbox } from '@/modules/panels/model/toolbox';
+import { TOOLBOX_TOOLS } from '@/modules/panels/unit';
 
-const RESIDENT_CHAR_BUDGET = 1710;
-const WORKSHOP_CHAR_BUDGET = 4232;
+const TOOLBOX_CHAR_BUDGET = 394;
+const MANAGE_CHAR_BUDGET = 1651;
+const DIY_CHAR_BUDGET = 5012;
 
-function registeredTools(workshop = false): DshToolDefinition[] {
+type Surface = 'toolbox' | 'manage' | 'diy';
+
+function registered(surface: Surface): DshToolDefinition[] {
   const seen: DshToolDefinition[] = [];
   const registry = {
     register: (definition: DshToolDefinition) => {
@@ -22,13 +30,18 @@ function registeredTools(workshop = false): DshToolDefinition[] {
   } as unknown as DshHostContext;
   const none = {} as never;
 
-  if (workshop) {
-    registerDiyTools(ctx, none, none, none);
+  if (surface === 'toolbox') {
+    registerToolboxTools(ctx, createToolbox({ manifests: () => [] }));
     return seen;
   }
-  registerPanelTools(ctx, none);
-  registerMarketTools(ctx, none, none);
-  registerLongTaskTools(ctx, undefined);
+  if (surface === 'manage') {
+    registerPanelTools(ctx, none);
+    registerMarketTools(ctx, none, none);
+    registerLongTaskTools(ctx, undefined);
+    return seen;
+  }
+  registerDiyTools(ctx, none, none, none);
+  registerRecordTools(ctx, createRecordStore());
   return seen;
 }
 
@@ -73,37 +86,63 @@ function schemaKeyOffenders(node: unknown, path: string): string[] {
   return [...own, ...nested, ...items, ...oneOf];
 }
 
+const TOTAL_OF = (surface: Surface): string =>
+  `${String(registered(surface).length)} 把工具 / 共 ${String(
+    registered(surface).reduce((sum, tool) => sum + promptTextOf(tool).length, 0),
+  )} 字`;
+
 describe('工具面是常驻上下文：话要一句顶一句', () => {
   it('★ 参数 schema 只用 dsh 认的关键字（多一个 maxLength / pattern 这种：整把工具注册当场被判 UNSUPPORTED_SCHEMA，夹具里看不出来）', () => {
-    const offenders = registeredTools().flatMap((tool) => schemaKeyOffenders(tool.parameters, tool.name));
+    const offenders = (['toolbox', 'manage', 'diy'] as const).flatMap((surface) =>
+      registered(surface).flatMap((tool) => schemaKeyOffenders(tool.parameters, tool.name)),
+    );
 
     expect(offenders).toEqual([]);
   });
-  it('★ 常驻工具面（面板 6 + 市场 10 + 长任务 2，共 20 把）的描述与参数说明按实测重算：2026-10-21 加长任务那两把（ADR-0070），把上限从旧那个 1833 收到当下的实测 1579；2026-10-23 模块名去标识化后实测 1592；2026-10-27 加 workbench_market_enable（索引源设为可发布）后实测 1636；再加 workbench_market_disable（设为只读）后实测 1682；再加 workbench_market_sources（只读索引源清单）后实测 1710（口径见 内部设计记录：棘轮跟着实测走）', () => {
-    const tools = registeredTools();
+  it('★ 默认工具面 = 三把控制工具（list / open / close），描述与参数说明按实测钉住：2026-11-08 开工具包之后，常驻面从 manage 那一包 20 把收到这里（ADR-0020 的装配期收窄 + 工具包按需）', () => {
+    const tools = registered('toolbox');
     const total = tools.reduce((sum, tool) => sum + promptTextOf(tool).length, 0);
 
-    expect(total, `${String(tools.length)} 把工具 / 共 ${String(total)} 字 / 预算 ${String(RESIDENT_CHAR_BUDGET)}`).toBeLessThanOrEqual(
-      RESIDENT_CHAR_BUDGET,
+    expect(tools.map((tool) => tool.name)).toEqual([...TOOLBOX_TOOLS]);
+    expect(total, `${TOTAL_OF('toolbox')} / 预算 ${String(TOOLBOX_CHAR_BUDGET)}`).toBeLessThanOrEqual(
+      TOOLBOX_CHAR_BUDGET,
     );
   });
 
-  it('★ DIY 那 29 把另算一份（+调试约定四把，ADR-0055；枚举 opencli 后按实测重算 —— ADR-0062；组件那把见 ADR-0063 §5；2026-10-20 删 probe、改由那族的只读线档承担，按实测 3721 → 3658（删掉 workbench_diy_list，入口收成 _status）；2026-10-24 加 workbench_diy_publish（发布闸）；2026-10-26 加 workbench_diy_changelog（发布前的更新日志）、publish 加 refresh（只刷市集元数据），描述收短后实测 4176；2026-10-26 publish 加 author（没写作者时审批屏显示推断的署名），实测 4226；2026-10-27 publish 加 source（多索引源时指定发到哪个）后实测 4275；同一天把更新日志并进 publish（changelogNote / changelogType，删 workbench_diy_changelog）后实测 4131；2026-10-28 publish 加 labels（还没有市集标签时必须给 1–2 个）后实测 4232，预算跟实测走）', () => {
-    const tools = registeredTools(true);
+  it('★ manage 包：面板 6 + 模块 9 + 市场 3 + 长任务 2，共 20 把；开包才付这份钱（2026-11-08 实测 1651）', () => {
+    const tools = registered('manage');
     const total = tools.reduce((sum, tool) => sum + promptTextOf(tool).length, 0);
 
-    expect(tools).toHaveLength(29);
-    expect(total, `${String(tools.length)} 把工具 / 共 ${String(total)} 字 / 预算 ${String(WORKSHOP_CHAR_BUDGET)}`).toBeLessThanOrEqual(
-      WORKSHOP_CHAR_BUDGET,
+    expect(tools).toHaveLength(20);
+    expect(total, `${TOTAL_OF('manage')} / 预算 ${String(MANAGE_CHAR_BUDGET)}`).toBeLessThanOrEqual(
+      MANAGE_CHAR_BUDGET,
+    );
+  });
+
+  it('★ diy 包：DIY 25 + 调试 4 + 录制 4，共 33 把；开包才付这份钱（2026-11-08 实测 5012）', () => {
+    const tools = registered('diy');
+    const total = tools.reduce((sum, tool) => sum + promptTextOf(tool).length, 0);
+
+    expect(tools).toHaveLength(33);
+    expect(total, `${TOTAL_OF('diy')} / 预算 ${String(DIY_CHAR_BUDGET)}`).toBeLessThanOrEqual(
+      DIY_CHAR_BUDGET,
     );
   });
 
   it('每把工具都有描述（空描述 = 模型只能靠名字猜）', () => {
-    const empty = registeredTools()
+    const empty = (['toolbox', 'manage', 'diy'] as const)
+      .flatMap((surface) => registered(surface))
       .filter((tool) => tool.description.trim() === '')
       .map((tool) => tool.name);
 
     expect(empty).toEqual([]);
   });
 
+  it('★ 控制工具的 schema 里没有 `action`（ADR-0046：一个动词一把，多路复用会在一个 schema 里混读与写）', () => {
+    const withAction = registered('toolbox')
+      .filter((tool) => 'action' in ((tool.parameters as { properties?: Record<string, unknown> }).properties ?? {}))
+      .map((tool) => tool.name);
+
+    expect(withAction).toEqual([]);
+  });
 });

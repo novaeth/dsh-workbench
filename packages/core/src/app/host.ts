@@ -180,6 +180,10 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     deniedTools: (context) => deniedNow(context),
     logger: ctx.logger,
   });
+  ctx.effect(
+    () => units.subscribe(() => toolScope.reapply()),
+    `${PLUGIN_ID}: 单元清单变了就把工具面重新收一遍`,
+  );
   const pluginTools: PluginUnitsPort | undefined =
     seam === undefined
       ? undefined

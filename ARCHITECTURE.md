@@ -654,6 +654,20 @@ ctx.get('workbenchUnits').registerUnit({
 - `gate` 与 `provision` 全壳只能有一个提供者。
 - `mount()` 失败要撤回已注册工具（路由在 mount 成功后才收）。
 - 清单 `tools[].name` 与 `registerTools()` 实际名字对账；`writes: true` 必须有审批。
+- `tools[].elevates: true` 表示这次调用会抬高工具面（开工具包），审批按它认领，与 `writes` 无关。
+
+### 5.6.1 工具包（按需加载）
+
+默认工具面只有三把控制工具（`workbench_toolbox_list` / `_open` / `_close`），其余工作台工具收在
+工具包里按会话打开：
+
+- 三个包：`manage`（面板 / 模块 / 市场 / 长任务）、`diy`（DIY 与页面调试）、以及每个挂在板子上的
+  模块 / 插件各一个 `unit:<id>`。包不是新注册的工具 —— 注册照旧，包只决定"进不进上下文、能不能调"。
+- 状态按会话（宿主内存）；DIY 模式默认开 `manage + diy`，其余会话从空开始；显式 open/close 覆盖默认。
+- 开包要用户审批（`elevates`）；非法 / 没在板子上的单元在审批之前就被拒；收包不审批。
+- `system-prompt/assemble` 的 `narrow` 与注册期的 `restrict` 共用同一份 deny（ADR-0020）；
+  板子隐藏的单元与今天一样始终收着，开包也绕不过去。
+- 装配期、工具面、审批的实现落在 `modules/panels/model/toolbox*.ts` 与 `modules/panels/unit.ts`。
 
 ### 5.7 生命周期
 

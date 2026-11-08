@@ -1,21 +1,11 @@
 import type { DshToolDefinition } from '@dsh-workbench/shared';
 import type { MarketSourcesPayload } from '@dsh-workbench/shared/contract/protocol/market-index';
 import { MARKET_SOURCES_TOOL } from '../unit';
+import { textOutput } from './tool-output';
 
-const OUTPUT = {
-  schema: {
-    type: 'object',
-    properties: {
-      text: { type: 'string' },
-      sources: { type: 'array', items: { type: 'object', additionalProperties: true } },
-    },
-    additionalProperties: true,
-  },
-  render: (_args: unknown, value: unknown) => {
-    const payload = value as { text?: unknown } | null;
-    return [{ type: 'text', text: typeof payload?.text === 'string' ? payload.text : JSON.stringify(value) }];
-  },
-};
+const OUTPUT = textOutput({
+  sources: { type: 'array', items: { type: 'object', additionalProperties: true } },
+});
 
 export function marketSourcesTool(
   read: (() => MarketSourcesPayload) | undefined,

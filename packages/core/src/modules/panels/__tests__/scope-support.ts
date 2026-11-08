@@ -102,7 +102,7 @@ export function gate(
 
 export function denied(mounted: ReturnType<typeof gate>, workspace: string, preset: string | null = null): string[] {
   const workshop = new Set<string>([...DIY_TOOLS, ...DIY_DEBUG_TOOLS, ...DIY_RECORD_TOOLS]);
-  return [...(mounted.gate?.deniedTools({ workspace, preset }) ?? [])].filter((name) => !workshop.has(name));
+  return [...(mounted.gate?.deniedTools({ workspace, preset, session: null }) ?? [])].filter((name) => !workshop.has(name));
 }
 
 export const EXEC = { agent: { session: { header: { cwd: A } } } };

@@ -12,6 +12,7 @@ import type { SharedDependency } from './market-dependency';
 import { pluginKeptText, type PluginUninstallOutcome } from './plugin-actions';
 import { pluginTermOf } from '@/shared/api/host/plugin-term';
 import { marketSourcesTool } from './market-sources-tool';
+import { textOutput } from './tool-output';
 import {
   MODULES_INSTALL_BUNDLE_TOOL,
   MODULES_INSTALL_TOOL,
@@ -131,23 +132,12 @@ function describeInstall(
   return `${verdict}：${who}${tail}（spec：${spec}）`;
 }
 
-const OUTPUT_SCHEMA = {
-  type: 'object',
-  properties: {
-    text: { type: 'string' },
-    modules: { type: 'array', items: { type: 'object', additionalProperties: true } },
-    shared: { type: 'array', items: { type: 'object', additionalProperties: true } },
-  },
-  additionalProperties: true,
-};
+const OUTPUT = textOutput({
+  modules: { type: 'array', items: { type: 'object', additionalProperties: true } },
+  shared: { type: 'array', items: { type: 'object', additionalProperties: true } },
+});
 
-const OUTPUT = {
-  schema: OUTPUT_SCHEMA,
-  render: (_args: unknown, value: unknown) => {
-    const payload = value as { text?: unknown } | null;
-    return [{ type: 'text', text: typeof payload?.text === 'string' ? payload.text : JSON.stringify(value) }];
-  },
-};
+
 
 function textArg(raw: unknown, key: string): string {
   if (typeof raw !== 'object' || raw === null) return '';

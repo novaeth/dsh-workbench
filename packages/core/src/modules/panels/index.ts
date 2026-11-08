@@ -2,12 +2,11 @@ import type { UnitManifest } from '@dsh-workbench/shared';
 import type { RecordStore, UnitOwnedFace } from '@dsh-workbench/shared/host';
 import { DIY_DEBUG_SERVICE, DIY_RECORD_SERVICE, createDebugStore, createRecordStore, supplyNeedsOf, PANELS_SERVICE, dshHome, seamOf, supplyPortOf, workbenchRoot } from '@dsh-workbench/shared/host';
 import { basename } from 'node:path';
-import { DIY_PRESET_ID } from '@/shared/api/diy';
 import { workshopPathOf } from '@/shared/api/host/diy';
 import { hostSurface } from '@dsh-workbench/shared/host';
 import { BROWSER_RECORD_SESSION } from '@dsh-workbench/shared/host';
 import { cliCommandOf } from '@dsh-workbench/shared/host';
-import { panelsApprovalFor } from './model/approval';
+import { panelsApprovalFor } from './model/approval-policy';
 import { resolveScope } from './model/config';
 import { registerLongTaskTools } from './model/long-task-tools';
 import { registerDiyTools } from './model/diy-tools';
@@ -40,7 +39,9 @@ import { createPluginLedger } from './model/plugin-ledger';
 import { pluginPanelRefs } from './model/plugin-panel';
 import { pluginRoutes } from './model/plugin-section';
 import { registerPanelTools } from './model/tools';
-import { DIY_DEBUG_TOOLS, DIY_RECORD_TOOLS, DIY_TOOLS, panelsUnit, screenOnlyToolsFor } from './unit';
+import { createToolbox } from './model/toolbox';
+import { registerToolboxTools } from './model/toolbox-tools';
+import { panelsUnit, screenOnlyToolsFor } from './unit';
 
 export const panelsHost: UnitOwnedFace = {
   unit: panelsUnit.id,
@@ -64,6 +65,16 @@ export const panelsHost: UnitOwnedFace = {
       logger,
     });
     ctx.provide(PANELS_SERVICE, panels);
+    const visibleUnits = (workspace: string | null): ReadonlySet<string> => {
+      const boards = panels.boards(workspace);
+      const owned = new Set(ownedUnits());
+      return new Set(
+        manifests()
+          .filter((manifest) => owned.has(manifest.id) || resolveScope({ id: manifest.id, boards }))
+          .map((manifest) => manifest.id),
+      );
+    };
+    const toolbox = createToolbox({ manifests, visibleUnits });
     const debug = withObserverCleanup(createDebugStore(), (workspace) => stopObservers(ctx, workspace), logger);
     ctx.provide(DIY_DEBUG_SERVICE, debug);
     const base = createRecordStore();
@@ -170,6 +181,7 @@ export const panelsHost: UnitOwnedFace = {
         ),
       },
       registerTools: () => [
+        ...registerToolboxTools(ctx, toolbox),
         ...registerPanelTools(ctx, panels, values),
         ...registerMarketTools(ctx, market, {
           read: () => marketSources.read(),
@@ -194,25 +206,34 @@ export const panelsHost: UnitOwnedFace = {
         (unit, author) =>
           publishPreviewOf(workshopPathOf(ctx), unit, author === undefined ? {} : { author }),
         marketSources,
+        toolbox,
       ),
       gate: {
         deniedTools: (context) => {
           const boards = panels.boards(context.workspace);
           const owned = new Set(ownedUnits());
           const surface = hostSurface({ profile: profileDir === null ? undefined : basename(profileDir) });
-          const screenOnly = screenOnlyToolsFor(surface.capabilities.pageDebug);
+          const hidden = manifests().flatMap((manifest) =>
+            owned.has(manifest.id) || resolveScope({ id: manifest.id, boards })
+              ? []
+              : manifest.tools.map((tool) => tool.name),
+          );
           return [
-            ...manifests().flatMap((manifest) =>
-              owned.has(manifest.id) || resolveScope({ id: manifest.id, boards })
-                ? []
-                : manifest.tools.map((tool) => tool.name),
-            ),
-            ...(context.preset === DIY_PRESET_ID
-              ? screenOnly
-              : [...DIY_TOOLS, ...DIY_DEBUG_TOOLS, ...DIY_RECORD_TOOLS]),
+            ...new Set([
+              ...toolbox.deniedTools(context),
+              ...hidden,
+              ...screenOnlyToolsFor(surface.capabilities.pageDebug),
+            ]),
           ];
         },
-        subscribe: (listener) => panels.subscribe(listener),
+        subscribe: (listener) => {
+          const offPanels = panels.subscribe(listener);
+          const offBox = toolbox.subscribe(listener);
+          return () => {
+            offPanels();
+            offBox();
+          };
+        },
       },
       actions: [marketSourcesAction(marketSources, marketInit)],
       prefs: { resource: PANELS_PREF_RESOURCE, handle: (payload: unknown) => applyPanelsPref(panels, payload) },

@@ -36,7 +36,10 @@ export function createApprovalGate(
     const policy = owner?.needsApproval;
     const declaredNote = name !== undefined && deps.declaredNotes().has(name);
     const writes = tool?.writes ?? false;
-    const skipAsk = writes && fullPermissionOf(deps.ctx, exec.agent);
-    return (await approvalFor(call, { detailOf, policy, writes, declaredNote, skipAsk })) ?? decision;
+    const elevates = tool?.elevates ?? false;
+    const skipAsk = (writes || elevates) && fullPermissionOf(deps.ctx, exec.agent);
+    return (
+      (await approvalFor(call, { detailOf, policy, writes, elevates, declaredNote, skipAsk })) ?? decision
+    );
   };
 }
