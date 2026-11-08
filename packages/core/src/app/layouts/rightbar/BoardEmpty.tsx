@@ -1,8 +1,6 @@
 import { createElement as h } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
-import { CenteredState } from '@dsh-workbench/shared';
-
-import { EmptyIllustration } from '@/shared/components/EmptyIllustration';
+import { CenteredState, EmptyIllustration } from '@dsh-workbench/shared';
 
 import { Button } from '@deepseek-ai/dsh-client-ui-primitives';
 

@@ -34,11 +34,13 @@ h(Card, { t: props.t, title: t('myunit.cardTitle'),
 ```tsx
 h(CenteredState, { icon: null, title: t('myunit.loading'), hint: t('myunit.loadingHint'), compact: true })
 h(CenteredState, { icon: null, title: t('myunit.errorTitle'), detail: `${code}: ${message}`, hint: t('myunit.errorHint'), compact: true })
-h(EmptyState, { text: t('myunit.empty'), icon: h(IconPanelScreen, { size: 20 }), compact: true })
+h(EmptyState, { text: t('myunit.empty'), compact: true })
 h(StateBlock, { title: rows.title, hint: `3 条 · ${when}`, resolving: t('myunit.rows') }, table)
 ```
 
 读不到：`detail` 放原始错误码与原文；不显示 0。
+
+`EmptyState` 默认带空态插画；要纯文字给 `icon: null`，要换图标给 `icon: h(Icon*, { size })`。
 
 ### 2.1 卡住（登录 / 权限 / 能力未装）
 

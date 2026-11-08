@@ -1,7 +1,7 @@
 import { createElement as h } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
+import { EmptyIllustration } from '@dsh-workbench/shared';
 import { DiscoverSkeleton } from '../market/discover-states';
-import { EmptyIllustration } from '@/shared/components/EmptyIllustration';
 import styles from '../market/MarketPage.module.css';
 
 export function MarketChecking({ t }: { readonly t: Translate }) {

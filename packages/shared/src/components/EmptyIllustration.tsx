@@ -1,6 +1,18 @@
-import { createElement as h } from 'react';
+import { h } from '../lib/react.js';
 
-export function EmptyIllustration({ size = 110 }: { size?: number }) {
+/**
+ * `EmptyIllustration` 的 prop：边长。
+ */
+export interface EmptyIllustrationProps {
+  readonly size?: number;
+}
+
+/**
+ * 空态插画：dsh 那枚 170×170 的空态图（右下角是四宫格，不是时钟）。
+ * @param props.size - 边长，默认 110；色值全部走 `--dsw-alias-illustration-*`。
+ * @returns 一个 `aria-hidden` 的 SVG。
+ */
+export function EmptyIllustration({ size = 110 }: EmptyIllustrationProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 170 170" fill="none" aria-hidden="true" focusable="false">
       <path d="M163.819 97.9382C163.819 126.572 144.48 135.329 115.847 135.329C87.2129 135.329 60.1276 126.572 60.1276 97.9382C60.1276 69.3047 101.003 46.0927 129.637 46.0927C158.27 46.0927 163.819 69.3047 163.819 97.9382Z" fill="var(--dsw-alias-illustration-background)" />

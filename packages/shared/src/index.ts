@@ -12,6 +12,7 @@ export * from './components/CardBoundary.js';
 export * from './components/CardHead.js';
 export * from './components/ChoiceGroup.js';
 export * from './components/ConfirmBar.js';
+export * from './components/EmptyIllustration.js';
 export * from './components/Field.js';
 export * from './components/Form.js';
 export * from './components/FormActions.js';

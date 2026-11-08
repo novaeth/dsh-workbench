@@ -3,11 +3,10 @@ import { Tip } from '@/shared/components/Tip';
 import type { Translate } from '@dsh-workbench/shared';
 import { MIN_BUSY_MS } from '@dsh-workbench/shared';
 import { useHostWrite } from '@/shared/hooks/use-host-write';
-import { CenteredState } from '@dsh-workbench/shared';
+import { CenteredState, EmptyIllustration } from '@dsh-workbench/shared';
 import type { CapabilityMap } from '@/shared/hooks/use-capabilities';
 
 import { PanelFoot } from '@/shared/components/PanelFoot';
-import { EmptyIllustration } from '@/shared/components/EmptyIllustration';
 import styles from './ModulesPage.module.css';
 import { Button, RiskConfirmation } from '@deepseek-ai/dsh-client-ui-primitives';
 import { panelDropTarget, rowAtPoint, selectPanelRows, type PanelRow } from './board-selection';

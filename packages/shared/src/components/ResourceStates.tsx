@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { h } from '../lib/react.js';
+import { EmptyIllustration } from './EmptyIllustration.js';
 import './ResourceStates.css';
 
 /**
@@ -61,10 +62,18 @@ export function CenteredState({ icon, title, hint, detail, action, compact = fal
 /**
  * 就绪但空：它只是 `CenteredState` 的简写，标题就是那句空态文案。
  * @param props.text - 空态那句话。
- * @param props.icon - 标题上方的图标；默认 `null`，不画图标。
+ * @param props.icon - 标题上方的图标；不给就用空态插画，要纯文字给 `null`。
  * @param props.compact - 紧凑档，默认 false。
  * @returns 一个居中块。
  */
-export function EmptyState({ text, icon = null, compact = false }: { text: string; icon?: ReactNode; compact?: boolean }) {
+export function EmptyState({
+  text,
+  icon = h(EmptyIllustration, { size: 72 }),
+  compact = false,
+}: {
+  text: string;
+  icon?: ReactNode;
+  compact?: boolean;
+}) {
   return <CenteredState icon={icon} title={text} compact={compact} />;
 }

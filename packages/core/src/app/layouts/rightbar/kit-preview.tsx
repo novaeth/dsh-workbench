@@ -5,6 +5,7 @@ import styles from './kit-preview.module.css';
 import {
   Card,
   CardHead,
+  EmptyIllustration,
   CenteredState,
   EmptyState,
   Note,
@@ -14,7 +15,6 @@ import {
 } from '@dsh-workbench/shared';
 import type { UnitSetup } from '@dsh-workbench/shared';
 import { IconPanelScreen } from '@dsh-workbench/shared';
-import { EmptyIllustration } from '@/shared/components/EmptyIllustration';
 import { UnitBlocker } from '@/shared/components/UnitBlocker';
 import { IconModules } from '@/shared/components/IconModules';
 import { StateDot } from '@deepseek-ai/dsh-client-ui-primitives';
