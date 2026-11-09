@@ -3,6 +3,7 @@ import {
   longTaskIsLive,
   longTaskPollMs,
   longTaskRunsOf,
+  recheckRouteOf,
   runsRouteOf,
   stopRouteOf,
   type LongTaskStatus,
@@ -14,9 +15,10 @@ import { useApiResource } from './use-api-resource';
 import { useHostWrite } from './use-host-write';
 
 /**
- * 这一单元的长任务清单与停止口：`runs` 是这次读交回的那一批（读数还没回来时是空数组）；
+ * 这一单元的长任务清单与两个写口：`runs` 是这次读交回的那一批（读数还没回来时是空数组）；
  * `stop(id)` 请外壳停某一趟 —— 回执没成就带回一句人话（调用点自己决定说不说）；
  * `stopping` 是正在请求停止的那一趟 id（没有就是 `null`），`stopFailed` 是上一次停止请求失败那句话（没有就是 `null`）。
+ * `recheck(id)` 是「我处理完了」：只请模块再看一眼、外壳不承诺恢复；`rechecking` / `recheckFailed` 与停止那一对同形。
  * `refresh()` 让这一格**立刻**重读一次（不必等下一拍轮询）—— 自己写完/发起完之后用它，
  * 别去拼读口路由、也别为一个读数去碰事实通道。
  */
@@ -25,6 +27,9 @@ export interface LongTaskFeed<T> {
   stop(id: string): Promise<WriteOutcome<unknown>>;
   readonly stopping: string | null;
   readonly stopFailed: string | null;
+  recheck(id: string): Promise<WriteOutcome<unknown>>;
+  readonly rechecking: string | null;
+  readonly recheckFailed: string | null;
   refresh(): void;
 }
 
@@ -33,6 +38,7 @@ export interface LongTaskFeed<T> {
  * `workspace` 为 `null`、`mocked: true` 或 `enabled: false` 时不轮。换单元 / 换工作区就是换读数身份，
  * 旧那批立刻清空、读数回来前 `runs` 是空数组。
  * `stop(id)` 走 actions 通道的 `<单元>/runs/stop`；不在跑的那一趟会带回一句人话，不抛错。
+ * `recheck(id)` 走 actions 通道的 `<单元>/runs/recheck`（「我处理完了」）：同样不抛错。
  */
 export function useLongTask<T extends { readonly id: string; readonly status: LongTaskStatus }>(options: {
   readonly unit: string;
@@ -55,8 +61,15 @@ export function useLongTask<T extends { readonly id: string; readonly status: Lo
     resource: stopRouteOf(options.unit),
     networkText: '网络不通，停止请求没发出去',
   });
+  const recheckWrite = useHostWrite<unknown>({
+    channel: 'actions',
+    resource: recheckRouteOf(options.unit),
+    networkText: '网络不通，重查请求没发出去',
+  });
   const [stopping, setStopping] = useState<string | null>(null);
+  const [rechecking, setRechecking] = useState<string | null>(null);
   const send = write.send;
+  const sendRecheck = recheckWrite.send;
 
   const stop = useCallback(
     async (id: string): Promise<WriteOutcome<unknown>> => {
@@ -68,6 +81,20 @@ export function useLongTask<T extends { readonly id: string; readonly status: Lo
       }
     },
     [send],
+  );
+
+  const recheck = useCallback(
+    async (id: string): Promise<WriteOutcome<unknown>> => {
+      setRechecking(id);
+      try {
+        const outcome = await sendRecheck({ id });
+        setTick((count) => count + 1);
+        return outcome;
+      } finally {
+        setRechecking((current) => (current === id ? null : current));
+      }
+    },
+    [sendRecheck],
   );
 
   const live = runs.some((run) => longTaskIsLive(run.status));
@@ -89,5 +116,14 @@ export function useLongTask<T extends { readonly id: string; readonly status: Lo
 
   const refresh = useCallback(() => setTick((count) => count + 1), []);
 
-  return { runs, stop, stopping, stopFailed: write.failed, refresh };
+  return {
+    runs,
+    stop,
+    stopping,
+    stopFailed: write.failed,
+    recheck,
+    rechecking,
+    recheckFailed: recheckWrite.failed,
+    refresh,
+  };
 }

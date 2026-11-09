@@ -124,7 +124,7 @@ export const face: UnitModuleFace = {
 | 逐项 + 轮询 | `forEach` 与 `poll` 同一步；每项单独轮询 |
 | 子流程 | `{ id, flow: subFlow, with: { ... } }`；结果在 `steps.<id>` |
 | 提前结束 | `flow.stopWhen` |
-| 人工干预 | 动作里调 `ctx.need(intervention)`（`title` 说清要人做什么，可选 `hint` / `actions`），长任务进 `needs-human`；报完继续自己轮询，条件满足再发下一步（v1 没有「我处理完了」钮，`recheck` 留 v2） |
+| 人工干预 | 动作里调 `ctx.need(intervention)`（`title` 说清要人做什么，可选 `hint` / `actions`），长任务进 `needs-human`；报完继续自己轮询，条件满足再发下一步；要「我处理完了」那颗钮，就在 `longTasks.create` 里再给可选 `recheck`（点了只请模块再看一眼，外壳不承诺恢复） |
 | 登录 | 动作用 `withLoginRetry(action)`：认证失败自动 `ctx.login(url)` 并在原地重试；长任务进 `needs-login`，超过 `maxMs` 仍停在那里等用户停止。这是旧路，新代码用 `ctx.need` 的 `open-url` 动作 |
 
 分支（`already_merged` / `can_merge` / `REVIEW_WAITING`）继续写在动作里；flow 只保留稳定的外层顺序。

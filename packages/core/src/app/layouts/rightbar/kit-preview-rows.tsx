@@ -235,6 +235,18 @@ export function LongTaskSection() {
           intervention={{ title: '去平台重新生成 Token' }}
         />
         <LongTaskRow
+          status="needs-human"
+          headline="等你处理完再继续"
+          intervention={{
+            title: '去控制台点「确认发布」',
+            hint: '点完回来按「我处理完了」',
+            actions: [
+              { key: 'open', label: '打开', primary: true, onPress: () => undefined },
+              { key: 'handled', label: '我处理完了', onPress: () => undefined },
+            ],
+          }}
+        />
+        <LongTaskRow
           status="ok"
           headline="发布完成"
           rawTitle="原文"

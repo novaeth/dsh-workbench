@@ -15,8 +15,11 @@ export interface SchemaLongTaskViewProps {
   readonly overrides?: readonly CardViewLongTask[] | undefined;
   readonly stopping: string | null;
   readonly stopFailed: string | null;
+  readonly rechecking: string | null;
+  readonly recheckFailed: string | null;
   readonly t: Translate;
   readonly onStop: (id: string) => void;
+  readonly onRecheck: (id: string) => void;
   readonly onLogin: (url: string) => void;
   readonly onOpenUrl: (url: string) => void;
   readonly onCopy: (text: string) => void;
@@ -29,6 +32,9 @@ function interventionOf(
   onOpenUrl: (url: string) => void,
   onCopy: (text: string) => void,
   copied: string | null,
+  onRecheck: (id: string) => void,
+  rechecking: string | null,
+  recheckFailed: string | null,
 ): LongTaskRowIntervention | undefined {
   const intervention = row.intervention;
   if (row.status !== 'needs-human' || intervention === undefined) return undefined;
@@ -52,10 +58,19 @@ function interventionOf(
       onPress: () => onCopy(action.text),
     });
   });
+  if (row.resumable === true) {
+    actions.push({
+      key: `${row.id}:handled`,
+      label: t('longTask.handled'),
+      busy: rechecking === row.id,
+      onPress: () => onRecheck(row.id),
+    });
+  }
   return {
     title: intervention.title,
     ...(intervention.hint === undefined ? {} : { hint: intervention.hint }),
     ...(actions.length === 0 ? {} : { actions }),
+    ...(recheckFailed === null ? {} : { failed: recheckFailed }),
   };
 }
 
@@ -64,8 +79,11 @@ export function SchemaLongTaskView({
   overrides,
   stopping,
   stopFailed,
+  rechecking,
+  recheckFailed,
   t,
   onStop,
+  onRecheck,
   onLogin,
   onOpenUrl,
   onCopy,
@@ -87,7 +105,7 @@ export function SchemaLongTaskView({
         row.status === 'needs-login' && loginUrl !== undefined
           ? { label: t('longTask.login'), onOpen: () => onLogin(loginUrl) }
           : undefined;
-      const intervention = interventionOf(row, t, onOpenUrl, onCopy, copied ?? null);
+      const intervention = interventionOf(row, t, onOpenUrl, onCopy, copied ?? null, onRecheck, rechecking, recheckFailed);
       const stop = longTaskIsLive(row.status)
         ? {
             onStop: () => onStop(row.id),

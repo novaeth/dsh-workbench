@@ -27,7 +27,9 @@ describe('SchemaLongTaskView：needs-human 投影成人待那一行（接线，n
 
   it('★★ 只有 needs-human 且带 intervention 才翻；其余行一个键都不多', () => {
     expect(VIEW).toContain("if (row.status !== 'needs-human' || intervention === undefined) return undefined;");
-    expect(VIEW).toContain('const intervention = interventionOf(row, t, onOpenUrl, onCopy, copied ?? null);');
+    expect(VIEW).toContain(
+      'const intervention = interventionOf(row, t, onOpenUrl, onCopy, copied ?? null, onRecheck, rechecking, recheckFailed);',
+    );
     expect(VIEW).toContain('...(intervention === undefined ? {} : { intervention }),');
   });
 
@@ -58,6 +60,21 @@ describe('SchemaLongTaskView：needs-human 投影成人待那一行（接线，n
     expect(VIEW).toContain('key: `${row.id}:${index}:copy`,');
     expect(VIEW).toContain('onPress: () => onOpenUrl(action.url),');
     expect(VIEW).toContain('onPress: () => onCopy(action.text),');
+  });
+
+  it('★★ 可重查的行追加「我处理完了」：key / 文案 / busy 跟 rechecking 走、onPress 调 onRecheck', () => {
+    expect(VIEW).toContain('readonly onRecheck: (id: string) => void;');
+    expect(VIEW).toContain('readonly rechecking: string | null;');
+    expect(VIEW).toContain('readonly recheckFailed: string | null;');
+    expect(VIEW).toContain('if (row.resumable === true) {');
+    expect(VIEW).toContain('key: `${row.id}:handled`,');
+    expect(VIEW).toContain("label: t('longTask.handled'),");
+    expect(VIEW).toContain('busy: rechecking === row.id,');
+    expect(VIEW).toContain('onPress: () => onRecheck(row.id),');
+  });
+
+  it('★★ recheckFailed 非空才往 intervention 上传 failed（照 stopFailed 那条）', () => {
+    expect(VIEW).toContain('...(recheckFailed === null ? {} : { failed: recheckFailed }),');
   });
 });
 
@@ -124,6 +141,20 @@ describe('SchemaCard / SchemaCardView：两条卡片路径都接上 openExternal
     expect(CARD_VIEW).toContain('onCopy: onLongTaskCopy ?? (() => {}),');
     expect(CARD_VIEW).toContain('copied: longTaskCopied ?? null,');
   });
+
+  it('★★ 两条路径都接上 recheck：FrameCard 直给，ReadCard 经 SchemaCardView（props 只加法、缺省空回调）', () => {
+    expect(CARD).toContain('rechecking: longTasks.rechecking,');
+    expect(CARD).toContain('recheckFailed: longTasks.recheckFailed,');
+    expect(CARD).toContain('void longTasks.recheck(id);');
+    expect(CARD).toContain('longTaskRechecking: longTasks.rechecking,');
+    expect(CARD).toContain('longTaskRecheckFailed: longTasks.recheckFailed,');
+    expect(CARD_VIEW).toContain('readonly longTaskRechecking?: string | null | undefined;');
+    expect(CARD_VIEW).toContain('readonly longTaskRecheckFailed?: string | null | undefined;');
+    expect(CARD_VIEW).toContain('readonly onLongTaskRecheck?: ((id: string) => void) | undefined;');
+    expect(CARD_VIEW).toContain('rechecking: longTaskRechecking ?? null,');
+    expect(CARD_VIEW).toContain('recheckFailed: longTaskRecheckFailed ?? null,');
+    expect(CARD_VIEW).toContain('onRecheck: onLongTaskRecheck ?? (() => {}),');
+  });
 });
 
 describe('kit 预览画廊：六态都摆得出来，needs-human 那条带两个动作', () => {
@@ -138,6 +169,11 @@ describe('kit 预览画廊：六态都摆得出来，needs-human 那条带两个
   it('★★ 还留了一条没有动作的 needs-human（只画标题）与旧的 needs-login 行', () => {
     expect(PREVIEW).toContain('intervention={{ title: \'去平台重新生成 Token\' }}');
     expect(PREVIEW).toContain('<LongTaskRow status="needs-login" headline="要登录腾讯云" problem="凭证过期了" />');
+  });
+
+  it('★★ 画廊加了一条带「我处理完了」的 needs-human（可重查那一档的观感）', () => {
+    expect(PREVIEW).toContain("key: 'handled', label: '我处理完了', onPress: () => undefined");
+    expect(PREVIEW).toContain("hint: '点完回来按「我处理完了」',");
   });
 
   it('★ 说明从「五种状态」改成覆盖新态', () => {

@@ -254,6 +254,61 @@ describe('createLongTaskRegistry 的人工干预节点（needs-human）', () => 
   });
 });
 
+describe('createLongTaskRegistry.recheck（「我处理完了」只请模块再看一眼）', () => {
+  const need: LongTaskIntervention = { title: '要登录腾讯云' };
+
+  it('★★ 给了 deps.recheck：resumable 为真，recheck 调到 handler 且不改状态', () => {
+    const seen: string[] = [];
+    const h = harness({
+      recheck: (current) => {
+        seen.push(current.id);
+      },
+    });
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+    h.step({ kind: 'info', text: '等人', intervention: need });
+
+    expect(runs.resumable).toBe(true);
+    expect(runs.recheck(started.id)).toBe(true);
+    expect(seen).toEqual([started.id]);
+    expect(runs.snapshot(started.id)?.status).toBe('needs-human');
+  });
+
+  it('★★ 没给 handler：resumable 为假、recheck 回 false、什么都不做', () => {
+    const h = harness();
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+    h.step({ kind: 'info', text: '等人', intervention: need });
+
+    expect(runs.resumable).toBe(false);
+    expect(runs.recheck(started.id)).toBe(false);
+    expect(runs.snapshot(started.id)?.status).toBe('needs-human');
+  });
+
+  it('★ 不在跑的那一趟：recheck 回 false（收尾后没有可重查的口）', async () => {
+    const h = harness({ recheck: () => undefined });
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+
+    h.done({});
+    await flush();
+
+    expect(runs.recheck(started.id)).toBe(false);
+  });
+
+  it('★★ current() 的投影在 resumable 时带上这个键（浏览器据此画「我处理完了」）', () => {
+    const open = harness({ recheck: () => undefined });
+    const openRuns = createLongTaskRegistry(open.deps);
+    openRuns.start({ workspace: '/w/a', target: 'release' });
+    expect(openRuns.current('/w/a')[0]?.['resumable']).toBe(true);
+
+    const closed = harness();
+    const closedRuns = createLongTaskRegistry(closed.deps);
+    closedRuns.start({ workspace: '/w/a', target: 'release' });
+    expect('resumable' in (closedRuns.current('/w/a')[0] ?? {})).toBe(false);
+  });
+});
+
 describe('createLongTaskRegistry.live（外壳侧栏那颗 loading 点读的：不分工作区，只给活着的）', () => {
   it('★★ 两个工作区各一趟在跑 ⇒ 两趟都在；收尾的 / 停掉的不在', async () => {
     const h = harness();

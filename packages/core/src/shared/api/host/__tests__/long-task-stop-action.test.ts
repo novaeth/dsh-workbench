@@ -56,7 +56,11 @@ describe('mountUnits：长任务的停止（外壳按单元自动挂那条动作
   it('★ 交回长任务表 → 这条停止动作挂在单元的动作表上，模块自己那条照在', () => {
     const { plan, stop } = mountStopFace();
 
-    expect(plan.actions.map((item) => item.resource).sort()).toEqual(['demo/release', 'demo/runs/stop']);
+    expect(plan.actions.map((item) => item.resource).sort()).toEqual([
+      'demo/release',
+      'demo/runs/recheck',
+      'demo/runs/stop',
+    ]);
     expect(stop?.unit).toBe('demo');
   });
 
@@ -126,10 +130,125 @@ describe('mountUnits：长任务的停止（外壳按单元自动挂那条动作
     const stop = plan.actions.find((item) => item.resource === 'demo/runs/stop');
 
     expect(Object.keys(plan.routes)).toEqual(['demo/runs']);
-    expect(plan.actions.map((item) => item.resource)).toEqual(['demo/runs/stop']);
+    expect(plan.actions.map((item) => item.resource)).toEqual(['demo/runs/stop', 'demo/runs/recheck']);
     expect(stop?.handle({})).toEqual({
       ok: false,
       text: '这一份工作台还是上一版的注册表，停不了 —— 重新起一下工作台就能停',
+    });
+  });
+});
+
+describe('mountUnits：长任务的重查（外壳按单元自动挂「我处理完了」那条动作）', () => {
+  const pending = (): Promise<never> => new Promise<never>(() => {});
+
+  function recheckFace(
+    options: { readonly unit?: string; readonly recheck?: ((current: LongTaskBase) => void) | undefined } = {},
+  ): {
+    plan: ReturnType<typeof mountUnits>;
+    recheck: { handle(payload: unknown): unknown } | undefined;
+    start: () => string;
+    statusOf: (id: string) => string | undefined;
+    runs: (path: string) => unknown;
+  } {
+    const unit = options.unit ?? 'demo';
+    const box: { start?: () => string; status?: (id: string) => string | undefined } = {};
+    const host = hostOf(manifest(unit, { inject: [] }), (deps) => {
+      const runs = deps.longTasks?.create({
+        key: 'release',
+        run: pending,
+        ...(options.recheck === undefined ? {} : { recheck: options.recheck }),
+        view: (snapshot: { id: string; workspace: string; target: string; status: string }) => ({
+          id: snapshot.id,
+          env: snapshot.target,
+          status: snapshot.status,
+        }),
+      });
+      if (runs !== undefined) {
+        box.start = () => runs.start({ workspace: '/w/a', target: 'test' }).id;
+        box.status = (id: string) => runs.snapshot(id)?.status;
+      }
+      return { routes: {}, registerTools: () => [], ...(runs === undefined ? {} : { longTasks: runs }) };
+    });
+    const plan = mountUnits([host], {
+      ctx: ctxWith([]),
+      manifests: () => [],
+      longTasks: { scope: `test-${String(Date.now())}-${Math.random()}`, bump: () => {} },
+    });
+    const routes = plan.routes as Record<string, (search: URLSearchParams) => unknown>;
+    return {
+      plan,
+      recheck: plan.actions.find((item) => item.resource === `${unit}/runs/recheck`),
+      start: () => box.start?.() ?? '',
+      statusOf: (id) => box.status?.(id),
+      runs: (path) => routes[`${unit}/runs`]?.(new URLSearchParams(`path=${path}`)),
+    };
+  }
+
+  it('★★ 模块给了 recheck → 这条动作挂上；按下转给 handler、回 `{ ok:true, rechecked:true }`，状态一个都不动', () => {
+    const seen: string[] = [];
+    const face = recheckFace({ recheck: (current) => seen.push(current.id) });
+    const id = face.start();
+    expect(face.statusOf(id)).toBe('running');
+
+    expect(face.plan.actions.map((item) => item.resource).sort()).toEqual(['demo/runs/recheck', 'demo/runs/stop']);
+    expect(face.recheck?.handle({ id })).toEqual({ ok: true, rechecked: true });
+
+    expect(seen).toEqual([id]);
+    expect(face.statusOf(id)).toBe('running');
+    expect(face.runs('/w/a')).toEqual({ ok: true, runs: [expect.objectContaining({ id, resumable: true })] });
+  });
+
+  it('★★ 模块没给重查处理 → 动作照挂，按下去回「模块没给重查处理」那句；投影行不带 `resumable`', () => {
+    const face = recheckFace();
+    const id = face.start();
+
+    expect(face.recheck?.handle({ id })).toEqual({
+      ok: false,
+      text: '这一趟没有可重查的口 —— 模块没给重查处理',
+    });
+    expect(face.statusOf(id)).toBe('running');
+    expect(face.runs('/w/a')).toEqual({ ok: true, runs: [expect.objectContaining({ id })] });
+    const rows = (face.runs('/w/a') as { runs: readonly unknown[] }).runs;
+    expect(rows[0]).not.toHaveProperty('resumable');
+  });
+
+  it('★★ 空 id / 不认识的 id → 各回一句人话，handler 一次没调', () => {
+    const seen: string[] = [];
+    const face = recheckFace({ recheck: (current) => seen.push(current.id) });
+    const id = face.start();
+
+    expect(face.recheck?.handle({})).toEqual({ ok: false, text: '要重查哪一趟？给一个 id 才成' });
+    expect(face.recheck?.handle({ id: '' })).toMatchObject({ ok: false });
+    expect(face.recheck?.handle({ id: '不认识的-id' })).toEqual({
+      ok: false,
+      text: '没有这一趟 —— id 对不上，没什么可重查的',
+    });
+
+    expect(seen).toEqual([]);
+    expect(face.statusOf(id)).toBe('running');
+  });
+
+  it('★ 上一版那份注册表（没有 `recheck`）→ 动作照挂，按下去回「重起工作台」那句', () => {
+    const legacy = {
+      start: () => ({}) as never,
+      snapshot: () => null,
+      active: () => null,
+      current: () => [],
+      onChange: () => () => {},
+    } as unknown as LongTaskRegistry<LongTaskBase>;
+    const spy = hostOf(manifest('demo', { inject: [] }), () => ({
+      routes: {},
+      registerTools: () => [],
+      longTasks: legacy,
+    }));
+
+    const plan = mountUnits([spy], { ctx: ctxWith([]), manifests: () => [] });
+    const recheck = plan.actions.find((item) => item.resource === 'demo/runs/recheck');
+
+    expect(plan.actions.map((item) => item.resource)).toEqual(['demo/runs/stop', 'demo/runs/recheck']);
+    expect(recheck?.handle({ id: 'any' })).toEqual({
+      ok: false,
+      text: '这一份工作台还是上一版的注册表，重查不了 —— 重新起一下工作台就能重查',
     });
   });
 });

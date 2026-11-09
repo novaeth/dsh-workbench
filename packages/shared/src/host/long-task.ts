@@ -51,6 +51,7 @@ export interface LongTaskDeps<S extends LongTaskBase> {
   readonly step?: ((step: LongTaskStep, current: S) => Partial<S>) | undefined;
   readonly outcome?: ((result: unknown, current: S) => Partial<S>) | undefined;
   readonly stopped?: ((current: S) => Partial<S>) | undefined;
+  readonly recheck?: ((current: S) => void) | undefined;
   readonly view: (snapshot: S) => Readonly<Record<string, unknown>>;
   readonly now?: (() => string) | undefined;
   readonly nextId?: (() => string) | undefined;
@@ -63,12 +64,14 @@ export interface LongTaskDeps<S extends LongTaskBase> {
  * loading 点要的（**不分工作区、不分目标**，把现在活着的每一趟交出来），`stop` 只把中断信号转给生产方。
  */
 export interface LongTaskRegistry<S extends LongTaskBase> {
+  readonly resumable: boolean;
   start(options: LongTaskStart): S;
   snapshot(id: string): S | null;
   active(workspace: string, target: string): S | null;
   current(workspace: string): readonly Readonly<Record<string, unknown>>[];
   live(): readonly S[];
   stop(id: string, by?: string): boolean;
+  recheck(id: string): boolean;
   onChange(listener: (change: LongTaskChange<S>) => void): () => void;
 }
 
@@ -105,6 +108,8 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
   };
 
   return {
+    resumable: deps.recheck !== undefined,
+
     active(workspace, target) {
       for (const snapshot of runs.values()) {
         if (snapshot.workspace !== workspace || snapshot.target !== target) continue;
@@ -125,7 +130,11 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
           (snapshot) => isLiveStatus(snapshot.status) || epochOf(snapshot.at) >= floor,
         )
         .reverse()
-        .map((snapshot) => ({ ...deps.view(snapshot as S), id: snapshot.id }));
+        .map((snapshot) => ({
+          ...deps.view(snapshot as S),
+          id: snapshot.id,
+          ...(deps.recheck === undefined ? {} : { resumable: true }),
+        }));
     },
 
     live() {
@@ -228,6 +237,13 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
         });
 
       return runs.get(id) as S;
+    },
+
+    recheck(id) {
+      const current = live(id);
+      if (current === null || deps.recheck === undefined) return false;
+      deps.recheck(current as S);
+      return true;
     },
 
     stop(id, by) {

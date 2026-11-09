@@ -12,6 +12,7 @@ export interface ShellLongTaskRow {
   readonly step?: string | undefined;
   readonly steps?: readonly string[] | undefined;
   readonly intervention?: LongTaskIntervention | undefined;
+  readonly resumable?: boolean | undefined;
   readonly loginUrl?: string | undefined;
   readonly why?: string | undefined;
   readonly session?: string | undefined;

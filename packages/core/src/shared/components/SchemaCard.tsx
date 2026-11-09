@@ -78,9 +78,14 @@ function SchemaFrameCard(props: SchemaCardProps) {
           : { overrides: props.view.customLongTask(longTasks.runs, props.t) }),
         stopping: longTasks.stopping,
         stopFailed: longTasks.stopFailed,
+        rechecking: longTasks.rechecking,
+        recheckFailed: longTasks.recheckFailed,
         t: props.t,
         onStop: (id: string) => {
           void longTasks.stop(id);
+        },
+        onRecheck: (id: string) => {
+          void longTasks.recheck(id);
         },
         onLogin: openLogin,
         onOpenUrl: openExternal,
@@ -155,6 +160,11 @@ function SchemaReadCard(props: SchemaCardProps) {
           longTaskStopFailed: longTasks.stopFailed,
           onLongTaskStop: (id: string) => {
             void longTasks.stop(id);
+          },
+          longTaskRechecking: longTasks.rechecking,
+          longTaskRecheckFailed: longTasks.recheckFailed,
+          onLongTaskRecheck: (id: string) => {
+            void longTasks.recheck(id);
           },
           onLongTaskLogin: openLogin,
           onLongTaskOpenUrl: openExternal,

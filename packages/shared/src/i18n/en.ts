@@ -823,6 +823,7 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'card.chatFailed': 'Could not insert it (the composer may not be ready)',
   'longTask.act.open': 'Open',
   'longTask.act.copy': 'Copy',
+  'longTask.handled': 'Done, continue',
   'longTask.login': 'Sign in',
   'longTask.steps': 'Steps',
   'longTask.stop': 'Stop {label}',

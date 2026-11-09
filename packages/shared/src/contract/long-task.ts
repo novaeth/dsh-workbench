@@ -52,6 +52,16 @@ export function stopRouteOf(unit: string): string {
 }
 
 /**
+ * 重查那条写路由（走 actions 通道的资源名）：`<单元>/runs/recheck`。
+ * 用户在人工干预节点上按「我处理完了」时发它：只请模块再看一眼，外壳不承诺恢复。
+ * @param unit 单元 id。
+ * @returns <单元>/runs/recheck。
+ */
+export function recheckRouteOf(unit: string): string {
+  return `${unit}/runs/recheck`;
+}
+
+/**
  * 长任务读口回的载荷：一串 run，形状由模块自己定，外壳只透传。
  */
 export interface LongTasksPayload {

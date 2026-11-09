@@ -7,6 +7,7 @@ import {
   longTaskStopPress,
   longTaskStopStage,
   LONG_TASK_STOP_ARM_MS,
+  recheckRouteOf,
   runsRouteOf,
   stopRouteOf,
 } from '../long-task.js';
@@ -23,6 +24,13 @@ describe('stopRouteOf（停止那条写路由）', () => {
     expect(stopRouteOf('inventory')).toBe('inventory/runs/stop');
     expect(stopRouteOf('issues')).toBe('issues/runs/stop');
     expect(stopRouteOf('inventory')).toBe(`${runsRouteOf('inventory')}/stop`);
+  });
+});
+
+describe('recheckRouteOf（「我处理完了」那条写路由）', () => {
+  it('★ 就是读路由 + `/recheck`', () => {
+    expect(recheckRouteOf('inventory')).toBe('inventory/runs/recheck');
+    expect(recheckRouteOf('inventory')).toBe(`${runsRouteOf('inventory')}/recheck`);
   });
 });
 

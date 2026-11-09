@@ -818,6 +818,7 @@ export const zh = {
   'card.chatFailed': '没能插进输入框（会话可能还没准备好）',
   'longTask.act.open': '去处理',
   'longTask.act.copy': '复制',
+  'longTask.handled': '我处理完了',
   'longTask.login': '去登录',
   'longTask.steps': '步骤',
   'longTask.stop': '停止任务 {label}',

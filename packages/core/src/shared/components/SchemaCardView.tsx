@@ -43,6 +43,9 @@ export interface SchemaCardViewProps extends BoardModuleProps {
   readonly longTaskStopping?: string | null | undefined;
   readonly longTaskStopFailed?: string | null | undefined;
   readonly onLongTaskStop?: ((id: string) => void) | undefined;
+  readonly longTaskRechecking?: string | null | undefined;
+  readonly longTaskRecheckFailed?: string | null | undefined;
+  readonly onLongTaskRecheck?: ((id: string) => void) | undefined;
   readonly onLongTaskLogin?: ((url: string) => void) | undefined;
   readonly onLongTaskOpenUrl?: ((url: string) => void) | undefined;
   readonly onLongTaskCopy?: ((text: string) => void) | undefined;
@@ -305,6 +308,9 @@ export function SchemaCardView({
   longTaskStopping,
   longTaskStopFailed,
   onLongTaskStop,
+  longTaskRechecking,
+  longTaskRecheckFailed,
+  onLongTaskRecheck,
   onLongTaskLogin,
   onLongTaskOpenUrl,
   onLongTaskCopy,
@@ -338,8 +344,11 @@ export function SchemaCardView({
           ...(model === undefined ? {} : { overrides: view.sections.longTask(model, t) }),
           stopping: longTaskStopping ?? null,
           stopFailed: longTaskStopFailed ?? null,
+          rechecking: longTaskRechecking ?? null,
+          recheckFailed: longTaskRecheckFailed ?? null,
           t,
           onStop: onLongTaskStop ?? (() => {}),
+          onRecheck: onLongTaskRecheck ?? (() => {}),
           onLogin: onLongTaskLogin ?? (() => {}),
           onOpenUrl: onLongTaskOpenUrl ?? (() => {}),
           onCopy: onLongTaskCopy ?? (() => {}),

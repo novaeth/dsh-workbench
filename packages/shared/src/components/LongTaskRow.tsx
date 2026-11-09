@@ -44,22 +44,24 @@ export interface LongTaskRowLogin {
 }
 
 /**
- * 人工干预节点上的一个动作：文案与点击。
+ * 人工干预节点上的一个动作：文案与点击；`busy` 为真时那颗钮禁用（请求在飞）。
  */
 export interface LongTaskRowInterventionAction {
   readonly key: string;
   readonly label: string;
   readonly primary?: boolean | undefined;
+  readonly busy?: boolean | undefined;
   readonly onPress: () => void;
 }
 
 /**
- * 人工干预节点（`needs-human`）：要人做什么、为什么、行内动作。
+ * 人工干预节点（`needs-human`）：要人做什么、为什么、行内动作，以及动作失败时那一行。
  */
 export interface LongTaskRowIntervention {
   readonly title: string;
   readonly hint?: string | undefined;
   readonly actions?: readonly LongTaskRowInterventionAction[] | undefined;
+  readonly failed?: string | null | undefined;
 }
 
 /**
@@ -164,23 +166,31 @@ export function LongTaskRow(props: LongTaskRowProps) {
         )}
       </p>
       {props.intervention === undefined ? null : (
-        <p className="wb-longTaskNeed">
-          <span className="wb-longTaskNeedTitle">{props.intervention.title}</span>
-          {props.intervention.hint === undefined ? null : (
-            <span className="wb-longTaskNeedHint">{props.intervention.hint}</span>
+        <Fragment>
+          <p className="wb-longTaskNeed">
+            <span className="wb-longTaskNeedTitle">{props.intervention.title}</span>
+            {props.intervention.hint === undefined ? null : (
+              <span className="wb-longTaskNeedHint">{props.intervention.hint}</span>
+            )}
+            {(props.intervention.actions ?? []).map((action) => (
+              <Button
+                key={action.key}
+                type="button"
+                size="sm"
+                variant={action.primary === true ? 'primary' : 'outline'}
+                disabled={action.busy === true}
+                onClick={action.onPress}
+              >
+                {action.label}
+              </Button>
+            ))}
+          </p>
+          {props.intervention.failed === undefined ||
+          props.intervention.failed === null ||
+          props.intervention.failed === '' ? null : (
+            <p className="wb-longTaskNeedWhy">{props.intervention.failed}</p>
           )}
-          {(props.intervention.actions ?? []).map((action) => (
-            <Button
-              key={action.key}
-              type="button"
-              size="sm"
-              variant={action.primary === true ? 'primary' : 'outline'}
-              onClick={action.onPress}
-            >
-              {action.label}
-            </Button>
-          ))}
-        </p>
+        </Fragment>
       )}
       {problem === '' ? null : <p className="wb-longTaskProblem">{problem}</p>}
       {stopWhy === '' ? null : <p className="wb-longTaskStopWhy">{stopWhy}</p>}
