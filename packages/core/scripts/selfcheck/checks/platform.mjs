@@ -16,6 +16,12 @@ const ENV_PREFIX_ALLOWED = new Map([
 const SHELL_INVOCATION_OWN = 'packages/shared/src/host/shell-render.ts';
 const SHELL_INVOCATION_PATTERNS = [/-NoProfile/, /-NonInteractive/, /'bash', args: \['-c'/];
 
+const PLAN_SCAN_DIRS = ['packages/adapter-supply/src', 'packages/adapter-runtime/src/data'];
+const PLAN_FORBIDDEN = [/rm -rf/, /mkdir -p/, /ln -s/, /cp -R/, /\|\| true/];
+const PLAN_ENV_PREFIX = /[A-Z][A-Z0-9_]*=\$\{/;
+const PLAN_ENV_FIELD = /(?:^|[\s{(,])env\s*:/;
+const PLAN_POSIX_ALLOWED = new Map();
+
 function packageSources() {
   const out = [];
   const packagesRoot = join(REPO, 'packages');
@@ -179,6 +185,35 @@ export const checks = [
         '★ DIY 录制这一层没有 POSIX-only 的壳命令（Windows 上没有那些东西）',
         hits.length === 0,
         hits.length === 0 ? '用 node:fs 与执行缝的 argv：不拼 wc / cat / tail / grep / tr / pkill / kill -0' : hits.join(' · '),
+      );
+    },
+  },
+  {
+    title: '★ 安装计划里没有 POSIX-only 编排（Windows 上没有 rm -rf / ln -s / cp -R，pwsh 5.1 也不认 ||）',
+    run(_ctx, report) {
+      const hits = [];
+      let scanned = 0;
+      for (const dir of PLAN_SCAN_DIRS) {
+        for (const file of walk(join(REPO, dir))) {
+          if (!SOURCE_EXT.test(file)) continue;
+          const rel = file.slice(REPO.length + 1).replaceAll('\\', '/');
+          if (isTest(rel) || PLAN_POSIX_ALLOWED.has(rel)) continue;
+          scanned += 1;
+          for (const [index, line] of read(file).split('\n').entries()) {
+            for (const pattern of PLAN_FORBIDDEN) {
+              if (pattern.test(line)) hits.push(`${rel}:${index + 1} 命中 ${String(pattern)}`);
+            }
+            if (PLAN_ENV_FIELD.test(line)) continue;
+            if (PLAN_ENV_PREFIX.test(line)) hits.push(`${rel}:${index + 1} 命中裸环境变量前缀`);
+          }
+        }
+      }
+      report(
+        '★ 安装计划里没有 POSIX-only 编排（Windows 上没有 rm -rf / ln -s / cp -R，pwsh 5.1 也不认 ||）',
+        hits.length === 0,
+        hits.length === 0
+          ? `计划步骤是 PluginPlanStep[]（run 的 env 字段带环境变量），扫 ${scanned} 个文件零命中`
+          : `改成 PluginPlanStep[]：${hits.join(' · ')}`,
       );
     },
   },

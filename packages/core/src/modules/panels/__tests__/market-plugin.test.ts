@@ -6,7 +6,7 @@ import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 const PLUGIN_MANIFEST_FILE = 'opencli-plugin.json';
 import type { BundleChange, BundleInstallRequest } from '@/kernel/contract/bundle-install';
 import type { BundleManager, SupplyPort } from '@dsh-workbench/shared/host';
-import { createPackageRouter } from '@dsh-workbench/shared/host';
+import { createPackageRouter, planStepText } from '@dsh-workbench/shared/host';
 import { installRouted, type BundleInstallDeps } from '../model/market-route';
 import { createPluginLedger, type PluginLedger } from '../model/plugin-ledger';
 
@@ -69,7 +69,7 @@ function pluginSupply(): SupplyPort {
     packageRouteOf: router.packageRouteOf,
     pluginInstallPlan: (plan: { spec: string; command: string }) => ({
       ok: true,
-      commands: [{ line: `'${plan.command}' plugin install '${plan.spec}'` }],
+      steps: [{ kind: 'run', line: `'${plan.command}' plugin install '${plan.spec}'` }],
     }),
   } as unknown as SupplyPort;
 }
@@ -94,7 +94,7 @@ function rig(options: {
         await options.run(ledger, commands);
         return;
       }
-      for (const step of steps) commands.push(step.line);
+      for (const step of steps) commands.push(planStepText(step));
     },
     supplyAfter: async () => ({ state: 'no-needs' }),
     rememberSource: async () => {},

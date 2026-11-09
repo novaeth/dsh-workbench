@@ -1,8 +1,10 @@
 import { fileURLToPath } from 'node:url';
 import {
   DEFAULT_RECIPE_MAX_BYTES,
+  PlanStepError,
   productWrite,
   quoteShellArg,
+  runPlan,
   type Seam,
 } from '@dsh-workbench/shared/host';
 import {
@@ -140,9 +142,15 @@ export async function ensureChannel(
     state.value = 'unavailable';
     return false;
   }
-  const result = await seam.run({ command: plan.line, intent: productWrite(), timeoutMs: 120_000 });
-  state.value = result.exitCode === 0 && !result.timedOut ? 'ready' : 'unavailable';
-  return state.value === 'ready';
+  try {
+    await runPlan(plan.steps, { seam, intent: productWrite(), timeoutMs: 120_000 });
+  } catch (error) {
+    if (!(error instanceof PlanStepError)) throw error;
+    state.value = 'unavailable';
+    return false;
+  }
+  state.value = 'ready';
+  return true;
 }
 
 export function channelCommandLine(call: ChannelCall): string {

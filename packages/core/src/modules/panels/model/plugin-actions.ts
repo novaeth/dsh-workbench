@@ -1,5 +1,5 @@
 import { pluginRetentionOf, quoteShellArg, type PluginLedgerEntry } from '@dsh-workbench/shared/host';
-import { requireSupply, type PluginSourceCommand, type Seam, type SupplyPort } from '@dsh-workbench/shared/host';
+import { requireSupply, type PluginPlanStep, type Seam, type SupplyPort } from '@dsh-workbench/shared/host';
 import { sourceProblemText } from './market-dependency';
 import { pluginNameOf, type PluginFiles } from './plugin-name';
 import type { PluginLedger } from './plugin-ledger';
@@ -63,7 +63,7 @@ export function createPluginActions(options: {
   readonly ledger?: PluginLedger | undefined;
   readonly seam?: Seam | undefined;
   readonly command: string;
-  readonly runAll: (commands: readonly PluginSourceCommand[]) => Promise<void>;
+  readonly runAll: (steps: readonly PluginPlanStep[]) => Promise<void>;
   readonly claimedBy?: ((plugin: string) => readonly string[]) | undefined;
   readonly references?: (() => PluginReferences) | undefined;
   readonly logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
@@ -119,7 +119,7 @@ export function createPluginActions(options: {
 
   async function removeFiles(plugin: string): Promise<void> {
     if (seam === undefined) throw new Error('没有执行缝（shell 服务不可用），删不掉插件文件。');
-    await runAll([{ line: `${quoteShellArg(command)} plugin uninstall ${quoteShellArg(plugin)}` }]);
+    await runAll([{ kind: 'run', line: `${quoteShellArg(command)} plugin uninstall ${quoteShellArg(plugin)}` }]);
   }
 
   return {
@@ -144,7 +144,7 @@ export function createPluginActions(options: {
         ...(entry.name === undefined ? {} : { pluginName: entry.name }),
       });
       if (!plan.ok) throw new Error(sourceProblemText(plan.problem, plan.env));
-      await runAll(plan.commands);
+      await runAll(plan.steps);
       logger?.info?.(`[dsh-workbench] 把 ${entry.package} 更新到 ${latest}`);
       return { name: pluginNameOf(entry, pluginFilesOf()) ?? entry.name ?? entry.package };
     },

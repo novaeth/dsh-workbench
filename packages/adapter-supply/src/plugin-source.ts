@@ -1,11 +1,11 @@
 import { join } from 'node:path';
 import type { SupplySource } from '@dsh-workbench/shared';
 import type {
-  PluginSourceCommand,
+  PluginPlanStep,
   PluginSourceOptions,
   ResolvedPluginSource,
 } from '@dsh-workbench/shared';
-import { npmRegistryOf, quoteShellArg } from '@dsh-workbench/shared/host';
+import { npmRegistryOf, planLineOf, quoteShellArg } from '@dsh-workbench/shared/host';
 import {
   npmCacheDir,
   pnpmIsolationFlags,
@@ -14,9 +14,7 @@ import {
   vendorPrefix,
 } from '@dsh-workbench/adapter-runtime';
 
-
 export type {
-  PluginSourceCommand,
   PluginSourceOptions,
   ResolvedPluginSource,
 } from '@dsh-workbench/shared';
@@ -30,13 +28,9 @@ function envValue(
   return value === undefined || value === '' ? { ok: false } : { ok: true, value };
 }
 
-function mergeLines(commands: readonly PluginSourceCommand[]): string {
-  return commands.map((item) => (item.optional === true ? `(${item.line} || true)` : item.line)).join(' && ');
-}
-
 function installOne(command: string, spec: string): ResolvedPluginSource {
   const line = `${quoteShellArg(command)} plugin install ${quoteShellArg(spec)}`;
-  return { ok: true, commands: [{ line }], line };
+  return { ok: true, steps: [{ kind: 'run', line }], line };
 }
 
 function pluginPackageOf(source: SupplySource, plugin: string): string {
@@ -66,8 +60,9 @@ function npmSource(
   const dirInPrefix = join(prefix, 'node_modules', name);
   const peer = vendorPeerLink();
 
-  const commands: PluginSourceCommand[] = [
+  const steps: PluginPlanStep[] = [
     {
+      kind: 'run',
       line: [
         `${pnpm} add`,
         `--dir ${quoteShellArg(prefix)}`,
@@ -78,24 +73,27 @@ function npmSource(
         `--allow-build=${quoteShellArg(name)}`,
       ].join(' '),
     },
-    {
-      line: `rm -rf ${quoteShellArg(peer.dir)} && mkdir -p ${quoteShellArg(peer.parent)} && ln -s ${quoteShellArg(toolchainOpencliDir())} ${quoteShellArg(peer.dir)}`,
-    },
+    { kind: 'remove', path: peer.dir },
+    { kind: 'mkdir', path: peer.parent },
+    { kind: 'link', target: toolchainOpencliDir(), path: peer.dir },
   ];
 
   if (mode === 'install') {
     if (plugin !== '') {
-      commands.push({
+      steps.push({
+        kind: 'run',
         line: `${quoteShellArg(command)} plugin uninstall ${quoteShellArg(plugin)}`,
         optional: true,
       });
     }
-    commands.push({
-      line: `NPM_CONFIG_REGISTRY=${quoteShellArg(registry.value)} ${quoteShellArg(command)} plugin install ${quoteShellArg(dirInPrefix)}`,
+    steps.push({
+      kind: 'run',
+      line: `${quoteShellArg(command)} plugin install ${quoteShellArg(dirInPrefix)}`,
+      env: { NPM_CONFIG_REGISTRY: registry.value },
     });
   }
 
-  return { ok: true, commands, line: mergeLines(commands) };
+  return { ok: true, steps, line: planLineOf(steps) };
 }
 
 export function resolvePluginSource(

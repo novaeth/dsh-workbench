@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { UnitCapability } from '@dsh-workbench/shared/host';
+import { planStepText, type UnitCapability } from '@dsh-workbench/shared/host';
 import type { UnitManifest } from '@dsh-workbench/shared';
 import { dependencyStillBehind } from '../model/market-verify';
 import { updateDependencyRow } from '../model/market-dependency-update';
@@ -40,7 +40,7 @@ describe('共用依赖那一跳：跑完要强探，仍落后就抛', () => {
   
       capabilityOf: async () => state(ran ? 'ok' : 'outdated'),
       runAll: async (commands) => {
-        expect(commands.map((one) => one.line)).toEqual(["'opencli' plugin update 'demo'"]);
+        expect(commands.map((one) => planStepText(one))).toEqual(["'opencli' plugin update 'demo'"]);
         ran = true;
       },
       snapshot: async () => [],

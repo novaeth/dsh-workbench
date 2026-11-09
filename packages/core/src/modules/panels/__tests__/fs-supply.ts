@@ -86,9 +86,9 @@ export function fsSupply(options: {
     probeRelease: release.probeRelease,
     pluginInstallPlan: (plan: { spec: string; command: string }): unknown => ({
       ok: true,
-      commands: [
-        { line: `npm i --prefix '${join(options.root(), 'workbench', 'opencli', 'plugins-npm')}' '${plan.spec}'` },
-        { line: `'${plan.command}' plugin install '${plan.spec}'` },
+      steps: [
+        { kind: 'run', line: `npm i --prefix '${join(options.root(), 'workbench', 'opencli', 'plugins-npm')}' '${plan.spec}'` },
+        { kind: 'run', line: `'${plan.command}' plugin install '${plan.spec}'` },
       ],
     }),
     splitNpmSpec: () => undefined,

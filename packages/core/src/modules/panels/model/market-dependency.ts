@@ -1,6 +1,7 @@
 import type {
   Need,
   NeedState,
+  PluginPlanStep,
   ProvisionProblem,
   SupplySource,
   UnitCapability,
@@ -195,7 +196,7 @@ export function sharedDependencies(options: {
     });
 }
 
-export type DependencyPlan = readonly { readonly line: string; readonly optional?: true }[] | undefined;
+export type DependencyPlan = readonly PluginPlanStep[] | undefined;
 
 export function dependencyCommandPlan(options: {
   readonly target: DependencyTarget;
@@ -209,7 +210,7 @@ export function dependencyCommandPlan(options: {
     const state = seen?.needs.find((item) => item.kind === target.kind && item.name === target.name);
     if (state === undefined || state.command === undefined) continue;
     if (state.status === 'missing' || state.status === 'ok') continue;
-    return [{ line: state.command }];
+    return [{ kind: 'run', line: state.command }];
   }
   return undefined;
 }

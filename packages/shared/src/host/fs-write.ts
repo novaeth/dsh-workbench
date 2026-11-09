@@ -1,6 +1,9 @@
-import { appendFileSync, chmodSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { appendFileSync, chmodSync, cpSync, mkdirSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join } from 'node:path';
 import writeFileAtomic from 'write-file-atomic';
+import type { ShellKind } from './shell-text.js';
+import { shellKindOf } from './shell-text.js';
+import { dirLinkTypeOf } from './shell-render.js';
 
 export type WriteMode = number | 'keep';
 
@@ -144,4 +147,37 @@ export function ensureDir(dir: string): void {
  */
 export function makeExecutable(path: string): void {
   chmodSync(path, 0o755);
+}
+
+/**
+ * 删掉一个路径（目录整棵删），不存在当成功。
+ * @param path 目标路径。
+ */
+export function removePath(path: string): void {
+  rmSync(path, { recursive: true, force: true });
+}
+
+/**
+ * 把 `from` 目录里的内容倒进 `to` 目录（等价 `cp -R from/. to/`）：`to` 先清空再建。
+ * @param from 源目录。
+ * @param to 目标目录。
+ */
+export function copyDirInto(from: string, to: string): void {
+  removePath(to);
+  ensureDir(to);
+  for (const entry of readdirSync(from)) {
+    cpSync(join(from, entry), join(to, basename(entry)), { recursive: true });
+  }
+}
+
+/**
+ * 建一条指向目录的链接：POSIX 是符号链接，Windows 是 junction（不需要开发者模式或管理员）。
+ * @param target 被指向的目录。
+ * @param path 链接落在哪。
+ * @param kind 目标 shell 种类，默认当前平台。
+ */
+export function linkDir(target: string, path: string, kind: ShellKind = shellKindOf()): void {
+  removePath(path);
+  ensureDir(dirname(path));
+  symlinkSync(target, path, dirLinkTypeOf(kind));
 }

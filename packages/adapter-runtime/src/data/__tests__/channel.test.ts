@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DshShell } from '@dsh-workbench/shared';
 import { createSeam } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
@@ -6,6 +9,23 @@ import { createFakeShell } from '@dsh-workbench/shared/testing';
 function seamFor(shell: DshShell) {
   return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
 }
+
+const homes: string[] = [];
+
+beforeEach(() => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-channel-home-'));
+  homes.push(home);
+  vi.stubEnv('DSH_HOME', home);
+  fs.mkdirSync(
+    path.join(home, 'workbench', 'opencli', 'toolchain', 'node_modules', '@jackwener', 'opencli'),
+    { recursive: true },
+  );
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+  for (const home of homes.splice(0)) fs.rmSync(home, { recursive: true, force: true });
+});
 import type { RequestRecipe } from '@dsh-workbench/shared/host';
 import { createDataReader } from '../index.js';
 import { channelCallOf, channelUrlOf, wireBodyOf } from '../channel.js';
@@ -95,25 +115,25 @@ describe('channel · 端口怎么用', () => {
   it('通道通了就不发 eval；信封解包成 data', async () => {
     const { reader, fake } = readerOf([
       installed(),
+      installed(),
       { stdout: JSON.stringify({ ok: true, data: { data: { balance: 3 } } }) },
     ], true, false);
     const result = await reader.request(COOKIE);
 
     expect(result).toEqual({ ok: true, data: { balance: 3 } });
-    expect(fake.commands()).toHaveLength(2);
-    const install = fake.commands()[0] ?? '';
-    expect(install).toContain('cp -R');
-    expect(install).toContain('ln -s');
-    expect(install).toContain('plugin uninstall');
-    expect(install).toContain('plugin install');
-    expect(install.indexOf('ln -s')).toBeLessThan(install.indexOf('plugin install'));
-    expect(fake.commands()[1]).toContain("'workbench' 'fetch'");
+    expect(fake.commands()).toHaveLength(3);
+    expect(fake.commands()[0]).toContain('plugin uninstall');
+    expect(fake.commands()[1]).toContain('plugin install');
+    expect(fake.commands().join(' ')).not.toContain('cp -R');
+    expect(fake.commands().join(' ')).not.toContain('ln -s');
+    expect(fake.commands()[2]).toContain("'workbench' 'fetch'");
     expect(fake.commands().join(' ')).not.toContain("'eval'");
   });
 
   it('装一次就够：第二个配方不再装', async () => {
     const { reader, fake } = readerOf(
       [
+        installed(),
         installed(),
         { stdout: JSON.stringify({ ok: true, data: { data: 1 } }) },
         { stdout: JSON.stringify({ ok: true, data: { data: 2 } }) },
@@ -128,13 +148,17 @@ describe('channel · 端口怎么用', () => {
   });
 
   it('submit 走 send，带 --method 与表单体', async () => {
-    const { reader, fake } = readerOf([installed(), { stdout: JSON.stringify({ ok: true, data: { id: 9 } }) }], true, false);
+    const { reader, fake } = readerOf(
+      [installed(), installed(), { stdout: JSON.stringify({ ok: true, data: { id: 9 } }) }],
+      true,
+      false,
+    );
     const result = await reader.submit(CSRF);
 
     expect(result).toEqual({ ok: true, data: { id: 9 } });
-    expect(fake.commands()[1]).toContain("'send'");
-    expect(fake.commands()[1]).toContain("'--content-type' 'form'");
-    expect(fake.commands()[1]).toContain("'title=t'");
+    expect(fake.commands()[2]).toContain("'send'");
+    expect(fake.commands()[2]).toContain("'--content-type' 'form'");
+    expect(fake.commands()[2]).toContain("'title=t'");
   });
 
   it('通道跑不起来 → 回落页面脚本，且只回落一次', async () => {
@@ -152,6 +176,7 @@ describe('channel · 端口怎么用', () => {
   it('回落之后一直走页面脚本，不再试通道', async () => {
     const { reader, fake } = readerOf([
       installed(),
+      installed(),
       { exitCode: 1 },
       { stdout: JSON.stringify({ ok: true, data: 1 }) },
       { stdout: JSON.stringify({ ok: true, data: 2 }) },
@@ -164,6 +189,7 @@ describe('channel · 端口怎么用', () => {
 
   it('信封回了就不再回落：auth / http 按页面码映射', async () => {
     const { reader, fake } = readerOf([
+      installed(),
       installed(),
       { stdout: JSON.stringify({ ok: false, code: 'not-logged-in' }) },
     ], true, false);
@@ -179,7 +205,11 @@ describe('channel · 端口怎么用', () => {
   });
 
   it('通道给 http-503 → http + status', async () => {
-    const { reader } = readerOf([installed(), { stdout: JSON.stringify({ ok: false, code: 'http-503', message: '炸' }) }], true, false);
+    const { reader } = readerOf(
+      [installed(), installed(), { stdout: JSON.stringify({ ok: false, code: 'http-503', message: '炸' }) }],
+      true,
+      false,
+    );
     const result = await reader.request(COOKIE);
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -189,13 +219,18 @@ describe('channel · 端口怎么用', () => {
   });
 
   it('text 响应原样回字符串', async () => {
-    const { reader } = readerOf([installed(), { stdout: JSON.stringify({ ok: true, text: '<rss />' }) }], true, false);
+    const { reader } = readerOf(
+      [installed(), installed(), { stdout: JSON.stringify({ ok: true, text: '<rss />' }) }],
+      true,
+      false,
+    );
     const result = await reader.request({ ...COOKIE, response: { kind: 'text' } });
     expect(result).toEqual({ ok: true, data: '<rss />' });
   });
 
   it('通道没装好（装不上）→ 直接走页面脚本', async () => {
     const { reader, fake } = readerOf([
+      installed(),
       { exitCode: 1 },
       { stdout: JSON.stringify({ ok: true, data: { viaEval: true } }) },
     ], true, false);
@@ -203,7 +238,7 @@ describe('channel · 端口怎么用', () => {
 
     expect(result).toEqual({ ok: true, data: { viaEval: true } });
     expect(fake.commands().filter((one) => one.includes('plugin install'))).toHaveLength(1);
-    expect(fake.commands()[1]).toContain("'eval'");
+    expect(fake.commands()[2]).toContain("'eval'");
   });
 
   it('channel: false 时一条通道命令都不发', async () => {

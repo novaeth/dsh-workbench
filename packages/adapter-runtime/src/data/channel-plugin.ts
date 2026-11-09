@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { quoteShellArg } from '@dsh-workbench/shared/host';
+import type { PluginPlanStep } from '@dsh-workbench/shared/host';
+import { planLineOf, quoteShellArg } from '@dsh-workbench/shared/host';
 import { isolatedHome, toolchainOpencliDir, vendorPeerLink, vendorPluginsDir } from '../foundation/paths.js';
 
 
@@ -10,7 +11,7 @@ export const CHANNEL_PLUGIN_SITE = 'workbench';
 export interface ChannelPluginPlan {
   readonly dest: string;
   readonly version: string;
-  readonly commands: readonly string[];
+  readonly steps: readonly PluginPlanStep[];
   readonly line: string;
 }
 
@@ -38,13 +39,19 @@ export function channelPluginPlan(options: {
   const command = options.command ?? 'opencli';
   const dest = join(vendorPluginsDir(), CHANNEL_PLUGIN_NAME);
   const peer = vendorPeerLink();
-  const commands = [
-    `rm -rf ${quoteShellArg(dest)} && mkdir -p ${quoteShellArg(dest)} && cp -R ${quoteShellArg(options.channelDir)}/. ${quoteShellArg(dest)}/`,
-    `rm -rf ${quoteShellArg(peer.dir)} && mkdir -p ${quoteShellArg(peer.parent)} && ln -s ${quoteShellArg(toolchainOpencliDir())} ${quoteShellArg(peer.dir)}`,
-    `(${quoteShellArg(command)} plugin uninstall ${quoteShellArg(CHANNEL_PLUGIN_SITE)} || true)`,
-    `${quoteShellArg(command)} plugin install ${quoteShellArg(dest)}`,
+  const steps: PluginPlanStep[] = [
+    { kind: 'copy', from: options.channelDir, to: dest },
+    { kind: 'remove', path: peer.dir },
+    { kind: 'mkdir', path: peer.parent },
+    { kind: 'link', target: toolchainOpencliDir(), path: peer.dir },
+    {
+      kind: 'run',
+      line: `${quoteShellArg(command)} plugin uninstall ${quoteShellArg(CHANNEL_PLUGIN_SITE)}`,
+      optional: true,
+    },
+    { kind: 'run', line: `${quoteShellArg(command)} plugin install ${quoteShellArg(dest)}` },
   ];
-  return { dest, version, commands, line: commands.join(' && ') };
+  return { dest, version, steps, line: planLineOf(steps) };
 }
 
 export function channelInstalledVersion(): string | undefined {

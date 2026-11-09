@@ -1,4 +1,4 @@
-import type { PluginSourceCommand, Seam } from '@dsh-workbench/shared/host';
+import type { PluginPlanStep, Seam } from '@dsh-workbench/shared/host';
 import type { BundleChange, BundleInstalledPlugin } from '@/kernel/contract/bundle-install';
 import type { BundleManager } from '@dsh-workbench/shared/host';
 import type { InstalledModule } from '@dsh-workbench/shared/host';
@@ -20,7 +20,7 @@ export interface BundleInstallDeps {
   readonly installed?: ((pkg: string) => InstalledModule) | undefined;
   readonly logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
   readonly ledger?: PluginLedger | undefined;
-  readonly runAll: (commands: readonly PluginSourceCommand[]) => Promise<void>;
+  readonly runAll: (steps: readonly PluginPlanStep[]) => Promise<void>;
   readonly supplyAfter: (module: InstalledModule, change: BundleChange) => Promise<BundleSupply>;
   readonly rememberSource: (
     manager: BundleManager,
@@ -173,7 +173,7 @@ export async function installRouted(deps: BundleInstallDeps): Promise<BundleInst
     ...(localDirOf(spec) === undefined ? {} : { local: true }),
   });
   try {
-    await deps.runAll(plan.commands);
+    await deps.runAll(plan.steps);
   } catch (error) {
     deps.ledger?.drop(pkg);
     throw error;

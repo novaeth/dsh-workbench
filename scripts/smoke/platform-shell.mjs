@@ -1,61 +1,15 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execa } from 'execa';
+import { PWSH_PREAMBLE, SHELL_KIND, createRealShell, createReporter, loadHost } from './harness.mjs';
 
-const ROOT = fileURLToPath(new URL('../..', import.meta.url));
-const host = await import(pathToFileURL(join(ROOT, 'packages', 'shared', 'dist', 'host.js')).href);
-
-const KIND = process.platform === 'win32' ? 'pwsh' : 'bash';
-const PWSH_PREAMBLE = '[Console]::OutputEncoding=[Text.Encoding]::UTF8;';
+const host = await loadHost();
+const KIND = SHELL_KIND;
 const WORK = mkdtempSync(join(tmpdir(), 'dsh-platform-smoke-'));
-const failures = [];
+const { bad, check, finish, same } = createReporter();
 
-function ok(name, extra = '') {
-  process.stdout.write(`✅ ${name}${extra === '' ? '' : ` —— ${extra}`}\n`);
-}
-
-function bad(name, detail) {
-  failures.push(`${name}：${detail}`);
-  process.stdout.write(`❌ ${name} —— ${detail}\n`);
-}
-
-function check(name, pass, detail) {
-  if (pass) ok(name, detail ?? '');
-  else bad(name, detail ?? '');
-}
-
-function same(a, b) {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
-
-const realShell = {
-  resolve(request) {
-    const script = KIND === 'pwsh' ? `${PWSH_PREAMBLE}${request.command}` : request.command;
-    const invocation = host.invocationOf(KIND, script);
-    return { file: invocation.file, args: invocation.args, timeoutMs: request.timeoutMs };
-  },
-  async execute(spec) {
-    const result = async () => {
-      const done = await execa(spec.file, spec.args, {
-        reject: false,
-        timeout: spec.timeoutMs ?? 20000,
-        windowsHide: true,
-        stripFinalNewline: false,
-        maxBuffer: 8 * 1024 * 1024,
-      });
-      return {
-        exitCode: typeof done.exitCode === 'number' ? done.exitCode : null,
-        timedOut: done.timedOut === true,
-        aborted: false,
-        stdout: { text: done.stdout ?? '', truncated: false },
-        stderr: { text: done.stderr ?? '', truncated: false },
-      };
-    };
-    return { result };
-  },
-};
+const realShell = createRealShell(host);
 
 const seam = host.createSeam({
   shell: realShell,
@@ -217,9 +171,4 @@ try {
   rmSync(WORK, { recursive: true, force: true });
 }
 
-if (failures.length > 0) {
-  process.stdout.write(`\n${String(failures.length)} 项没过：\n${failures.map((one) => `- ${one}`).join('\n')}\n`);
-  process.exitCode = 1;
-} else {
-  process.stdout.write('\n全部通过。\n');
-}
+finish();

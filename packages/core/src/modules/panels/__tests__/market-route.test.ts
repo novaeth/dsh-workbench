@@ -9,7 +9,7 @@ import { fakeSeamOf } from './seam-fake';
 import type { DshShell } from '@dsh-workbench/shared';
 import type { BundleChange, BundleInstallRequest } from '@/kernel/contract/bundle-install';
 import type { BundleManager, Seam, SupplyPort } from '@dsh-workbench/shared/host';
-import { refusalReason } from '@dsh-workbench/shared/host';
+import { refusalReason, planStepText } from '@dsh-workbench/shared/host';
 import { createMarketService } from '../model/market';
 import { bundleNameOf, installRouted, type BundleInstallDeps } from '../model/market-route';
 import type { BundleInstallOutcome } from '../model/market-types';
@@ -41,12 +41,12 @@ function pluginSupply(
     packageRouteOf: async (options: { spec: string }) => route(options) as never,
     pluginInstallPlan: (plan: { spec: string; command: string }) => ({
       ok: true,
-      commands:
+      steps:
         style === 'plugin-only'
-          ? [{ line: `'${plan.command}' plugin install '${plan.spec}'` }]
+          ? [{ kind: 'run', line: `'${plan.command}' plugin install '${plan.spec}'` }]
           : [
-              { line: `npm i --prefix '/tmp/wb-route-plugins' '${plan.spec}'` },
-              { line: `'${plan.command}' plugin install '${plan.spec}'` },
+              { kind: 'run', line: `npm i --prefix '/tmp/wb-route-plugins' '${plan.spec}'` },
+              { kind: 'run', line: `'${plan.command}' plugin install '${plan.spec}'` },
             ],
     }),
     modules: { isolatedRoot: () => '/tmp/wb-route-runtime', isolatedHome: () => '/tmp/wb-route-home' },
@@ -156,7 +156,7 @@ function rig(options: {
       manager,
       installed: (pkg) => ({ kind: 'unknown', pkg }),
       runAll: async (steps) => {
-        for (const step of steps) commands.push(step.line);
+        for (const step of steps) commands.push(planStepText(step));
       },
       supplyAfter: async () => ({ state: 'no-needs' }),
       rememberSource: async () => {},
@@ -326,5 +326,39 @@ describe('接线：市场那条路交给路由，且没有插件管理器时还�
     const market = createMarketService({ command: 'opencli', manifests: [] });
 
     await expect(market.installBundle('@a/b')).rejects.toThrow(/没有插件管理器/);
+  });
+
+  it('★ 计划里的文件步走 node:fs（不进 shell）：remove / mkdir 真的落到盘上', async () => {
+    const at = pluginFixture();
+    const doomed = path.join(at, 'doomed.txt');
+    fs.writeFileSync(doomed, 'x', 'utf8');
+    const made = path.join(at, 'made');
+    const fake = createFakeShell([{ stdout: '' }]);
+    const { manager } = bundlesOf();
+    const market = createMarketService({
+      command: 'opencli',
+      manifests: [],
+      seam: fakeSeamOf(fake.shell),
+      bundles: manager,
+      supply: {
+        env: { isolatedRoot: () => '/tmp/wb-route-runtime', isolatedHome: () => '/tmp/wb-route-home' },
+        packageRouteOf: async () => ({ kind: 'runtime-plugin', pkg: '@t/plugin-a', pluginName: 'plugina' }),
+        pluginInstallPlan: () => ({
+          ok: true,
+          steps: [
+            { kind: 'remove', path: doomed },
+            { kind: 'mkdir', path: made },
+            { kind: 'run', line: `'opencli' plugin install '${at}'` },
+          ],
+        }),
+        modules: { isolatedRoot: () => '/tmp/wb-route-runtime', isolatedHome: () => '/tmp/wb-route-home' },
+      } as unknown as SupplyPort,
+    });
+
+    await market.installBundle(at);
+
+    expect(fs.existsSync(doomed)).toBe(false);
+    expect(fs.existsSync(made)).toBe(true);
+    expect(fake.commands()).toEqual([`'opencli' plugin install '${at}'`]);
   });
 });

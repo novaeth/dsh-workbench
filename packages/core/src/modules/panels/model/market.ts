@@ -1,16 +1,15 @@
 import { basename } from 'node:path';
 import type { Need, UnitManifest } from '@dsh-workbench/shared';
-import { INSTALL_TIMEOUT_MS, needsOf as needsOfManifest } from '@dsh-workbench/shared/host';
+import { needsOf as needsOfManifest } from '@dsh-workbench/shared/host';
 import type { BundleChange } from '@/kernel/contract/bundle-install';
 import type { BundleManager } from '@dsh-workbench/shared/host';
 import type { InstalledModule, LibNeed, ProfileModule, ProfilePackage } from '@dsh-workbench/shared/host';
 import type { RegistryNotebook } from '@dsh-workbench/shared/host';
 import type { UnitCapability } from '@dsh-workbench/shared/host';
 import { requireSupply, type SupplyPort, type UnitMountDeps } from '@dsh-workbench/shared/host';
-import { productWrite, type Seam } from '@dsh-workbench/shared/host';
+import type { Seam } from '@dsh-workbench/shared/host';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
-import { diagnoseInstallFailure, installWriteProblem } from '@dsh-workbench/shared/host';
-import { installError } from './market-install-error';
+import { createInstallRunner } from './market-install-run';
 import {
   affectedUnitsOf,
   findDependency,
@@ -140,28 +139,7 @@ export function createMarketService(options: {
     };
   }
 
-  async function run(line: string, optional = false): Promise<void> {
-    if (seam === undefined) {
-      throw new Error('没有执行缝（shell 服务不可用），装 / 卸做不了。');
-    }
-    const blocked = installWriteProblem({ command: line, fallback: supply.modules.isolatedRoot() });
-    if (blocked !== undefined) throw installError(blocked);
-    const result = await seam.run({ command: line, intent: productWrite(), timeoutMs: INSTALL_TIMEOUT_MS });
-    if (result.exitCode !== 0 && !optional) {
-      throw installError(
-        diagnoseInstallFailure({
-          command: line,
-          exitCode: result.exitCode,
-          output: result.stderr || result.stdout,
-          fallback: supply.modules.isolatedRoot(),
-        }),
-      );
-    }
-  }
-
-  async function runAll(commands: readonly { readonly line: string; readonly optional?: true }[]): Promise<void> {
-    for (const step of commands) await run(step.line, step.optional === true);
-  }
+  const { run, runAll } = createInstallRunner({ seam, supply });
 
   async function probeSharing(request: {
     readonly action: MarketAction;

@@ -64,6 +64,9 @@ jobs:
       - name: Platform smoke (argv quoting / timeout / append)
         shell: bash
         run: node scripts/smoke/platform-shell.mjs
+      - name: Install plan smoke (真 shell 跑 run → remove → mkdir → copy → link → optional → env)
+        shell: bash
+        run: node scripts/smoke/install-plan.mjs
       - name: Renderer + seam tests
         shell: bash
         run: pnpm --filter @dsh-workbench/shared exec vitest run src/host/__tests__/shell-render.test.ts src/host/__tests__/seam.test.ts

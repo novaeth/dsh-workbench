@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DshShell } from '@dsh-workbench/shared';
+import type { DshShell, PluginPlanStep } from '@dsh-workbench/shared';
 import { createSeam } from '@dsh-workbench/shared/host';
 import { OPENCLI_MANIFEST_FILE } from '../index.js';
 import { LOCAL_PLUGIN_ENV, packageRouteOf, pluginInstallPlan, resetPackageRouteCache } from '../index.js';
@@ -11,6 +11,15 @@ const DSH_HOME = '/tmp/dshhome';
 const PREFIX = path.join(DSH_HOME, 'workbench', 'opencli', 'plugins-npm');
 const REGISTRY = 'https://npm.example.com/team/';
 const roots: string[] = [];
+
+function runLineOf(step: PluginPlanStep | undefined): string {
+  if (step?.kind !== 'run') throw new Error('这一步该是命令步');
+  return step.line;
+}
+
+function runLines(steps: readonly PluginPlanStep[]): string[] {
+  return steps.flatMap((step) => (step.kind === 'run' ? [step.line] : []));
+}
 
 function dirOf(name: string): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-route-'));
@@ -185,7 +194,7 @@ describe('插件的安装命令（复用 plugin-source 那两条既有分支）'
 
     expect(plan).toEqual({
       ok: true,
-      commands: [{ line: "'opencli' plugin install '/opt/plugin'" }],
+      steps: [{ kind: 'run', line: "'opencli' plugin install '/opt/plugin'" }],
       line: "'opencli' plugin install '/opt/plugin'",
     });
     expect(LOCAL_PLUGIN_ENV).toBe('DSH_WB_OPENCLI_PLUGIN_PATH');
@@ -201,14 +210,17 @@ describe('插件的安装命令（复用 plugin-source 那两条既有分支）'
     });
 
     if (!plan.ok) throw new Error('这条该装得上');
-    expect(plan.commands[0]?.line).toBe(
+    expect(runLineOf(plan.steps[0])).toBe(
       `pnpm add --dir '${PREFIX}' 'opencli-plugin-demo@1.2.3' --registry '${REGISTRY}' --store-dir '${path.join(DSH_HOME, 'workbench', 'opencli', 'npm-cache')}' --config.cache-dir='${path.join(DSH_HOME, 'workbench', 'opencli', 'pnpm-cache')}' --config.state-dir='${path.join(DSH_HOME, 'workbench', 'opencli', 'pnpm-state')}' --allow-build='opencli-plugin-demo'`,
     );
-    expect(plan.commands.some((step) => step.line.includes("'opencli' plugin uninstall 'demo'"))).toBe(true);
-    expect(plan.commands.at(-1)?.line).toContain(
+    expect(plan.steps.map((step) => step.kind)).toEqual(['run', 'remove', 'mkdir', 'link', 'run', 'run']);
+    expect(runLines(plan.steps).some((line) => line.includes("'opencli' plugin uninstall 'demo'"))).toBe(true);
+    expect(runLineOf(plan.steps.at(-1))).toContain(
       `'opencli' plugin install '${path.join(PREFIX, 'node_modules', 'opencli-plugin-demo')}'`,
     );
-    expect(plan.line).toContain('NPM_CONFIG_REGISTRY=');
+    expect(plan.steps.at(-1)).toMatchObject({ env: { NPM_CONFIG_REGISTRY: REGISTRY } });
+    expect(JSON.stringify(plan.steps.filter((step) => step.kind === 'run'))).not.toContain('NPM_CONFIG_REGISTRY=');
+    expect(plan.line).toContain(`NPM_CONFIG_REGISTRY='${REGISTRY}'`);
   });
 
   it('★ 用户挑的源说了算：进程环境里那个 npm_config_registry 不许把它顶掉', () => {
@@ -217,7 +229,7 @@ describe('插件的安装命令（复用 plugin-source 那两条既有分支）'
     const plan = pluginInstallPlan({ spec: 'opencli-plugin-demo', command: 'opencli', registry: REGISTRY });
 
     if (!plan.ok) throw new Error('这条该装得上');
-    expect(plan.commands[0]?.line).toContain(`--registry '${REGISTRY}'`);
+    expect(runLineOf(plan.steps[0])).toContain(`--registry '${REGISTRY}'`);
   });
 
   it('★ 不带版本就是 latest（源决定），插件名只在"先卸旧的"那一步用', () => {
@@ -225,8 +237,8 @@ describe('插件的安装命令（复用 plugin-source 那两条既有分支）'
     const plan = pluginInstallPlan({ spec: 'opencli-plugin-demo', command: 'opencli', registry: REGISTRY });
 
     if (!plan.ok) throw new Error('这条该装得上');
-    expect(plan.commands[0]?.line).toContain("'opencli-plugin-demo@latest'");
-    expect(plan.commands.some((step) => step.line.includes('plugin uninstall'))).toBe(false);
+    expect(runLineOf(plan.steps[0])).toContain("'opencli-plugin-demo@latest'");
+    expect(runLines(plan.steps).some((line) => line.includes('plugin uninstall'))).toBe(false);
   });
 
   it('不是 npm 包名也不是本地目录 → malformed（不猜地址）', () => {

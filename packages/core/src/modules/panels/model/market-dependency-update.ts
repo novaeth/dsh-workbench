@@ -1,4 +1,4 @@
-import type { UnitCapability } from '@dsh-workbench/shared/host';
+import type { PluginPlanStep, UnitCapability } from '@dsh-workbench/shared/host';
 import {
   dependencyCommandPlan,
   type DependencyTarget,
@@ -8,7 +8,7 @@ import { dependencyStillBehind } from './market-verify';
 
 export interface DependencyUpdateDeps {
   readonly capabilityOf: (unit: string, force?: boolean) => Promise<UnitCapability>;
-  readonly runAll: (commands: readonly { readonly line: string; readonly optional?: true }[]) => Promise<void>;
+  readonly runAll: (steps: readonly PluginPlanStep[]) => Promise<void>;
   readonly snapshot: () => Promise<readonly SharedDependency[]>;
   readonly logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
 }

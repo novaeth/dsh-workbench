@@ -33,6 +33,7 @@
     "deploy:docs": "node scripts/deploy-docs.mjs",
     "verify": "./scripts/verify.sh",
     "smoke:platform": "node scripts/smoke/platform-shell.mjs",
+    "smoke:install-plan": "node scripts/smoke/install-plan.mjs",
     "check:bundles": "node packages/module-tools/bin/dsh-wb-module.mjs check --only bundles",
     "check:source": "node packages/module-tools/bin/dsh-wb-module.mjs check --only source",
     "check:cards": "node packages/module-tools/bin/dsh-wb-module.mjs check --only cards",

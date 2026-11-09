@@ -30,9 +30,9 @@ function pluginSupply(): SupplyPort {
     packageRouteOf: router.packageRouteOf,
     pluginInstallPlan: (plan: { spec: string; command: string }) => ({
       ok: true,
-      commands: [
-        { line: `npm i --prefix '/tmp/wb-dispatch-plugins' '${plan.spec}'` },
-        { line: `'${plan.command}' plugin install '${plan.spec}'` },
+      steps: [
+        { kind: 'run', line: `npm i --prefix '/tmp/wb-dispatch-plugins' '${plan.spec}'` },
+        { kind: 'run', line: `'${plan.command}' plugin install '${plan.spec}'` },
       ],
     }),
   } as unknown as SupplyPort;

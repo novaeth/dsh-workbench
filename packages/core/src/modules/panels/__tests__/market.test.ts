@@ -162,6 +162,18 @@ describe('createMarketService：install', () => {
     await expect(market.install('issues')).rejects.toThrow(/DSH_WORKBENCH_TEST_UNSET/);
     expect(fake.commands()).toEqual([]);
   });
+
+  it('★ 命令非零退出 → 还是那条带退出码与输出的诊断（不是裸错）', async () => {
+    const fake = createFakeShell([{ exitCode: 1, stderr: 'npm ERR! EACCES: permission denied' }]);
+    const market = createMarketService({
+
+      command: 'opencli',      manifests: [unit('issues')],
+      probe: probeWith({ issues: { unit: 'issues', status: 'missing', needs: [missingState()] } }),
+      seam: fakeSeamOf(fake.shell),
+    });
+
+    await expect(market.install('issues')).rejects.toThrow(/（退出码 1）.*EACCES: permission denied/);
+  });
 });
 
 describe('createMarketService：update', () => {

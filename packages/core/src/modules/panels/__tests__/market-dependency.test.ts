@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { capabilityOf, extensionNeedOf, libNeedOf, manifestOf, needStateOf } from '@dsh-workbench/shared/testing';
-import type { NeedState, UnitManifest } from '@dsh-workbench/shared/host';
+import { planStepText, type NeedState, type UnitManifest } from '@dsh-workbench/shared/host';
 import {
   affectedUnitsOf,
   dependencyCommandPlan,
@@ -180,7 +180,7 @@ describe('dependencyCommandPlan：只跑探测给出的那条修法', () => {
       ]),
     });
 
-    expect(plan?.map((step) => step.line)).toEqual(['opencli plugin update demo']);
+    expect(plan?.map((step) => planStepText(step))).toEqual(['opencli plugin update demo']);
   });
 
   it('★ 能力按声明者配对：第一家没命令、第二家有 → 用第二家的', () => {
@@ -194,7 +194,7 @@ describe('dependencyCommandPlan：只跑探测给出的那条修法', () => {
       ]),
     });
 
-    expect(plan?.map((step) => step.line)).toEqual(['opencli plugin update demo']);
+    expect(plan?.map((step) => planStepText(step))).toEqual(['opencli plugin update demo']);
   });
 
   it('★ 已经是最新 → 幂等（undefined，一条命令都不跑）', () => {
@@ -233,6 +233,6 @@ describe('dependencyCommandPlan：只跑探测给出的那条修法', () => {
       ]),
     });
 
-    expect(plan?.[0]?.line).toContain('opencli-workflow@1.1.22');
+    expect(plan?.[0] === undefined ? undefined : planStepText(plan[0])).toContain('opencli-workflow@1.1.22');
   });
 });

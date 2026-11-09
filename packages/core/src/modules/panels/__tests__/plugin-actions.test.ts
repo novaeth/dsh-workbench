@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createWorkspaceStore } from '@dsh-workbench/shared/host';
+import { createWorkspaceStore, planStepText } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { fakeSeamOf } from './seam-fake';
 import { createPluginActions } from '../model/plugin-actions';
@@ -85,7 +85,7 @@ describe('用户持有的 opencli 插件：更新与卸载（台账那一笔说�
       seam: fakeSeamOf(fake.shell),
       command: 'opencli',
       runAll: async (commands) => {
-        runs.push(commands.map((step) => step.line));
+        runs.push(commands.map((step) => planStepText(step)));
       },
       supply: supplyAt(dirOf('supply')),
     });
@@ -197,7 +197,7 @@ describe('物理去留：谁主张谁说话（动作永远可用，删不删看�
       claimedBy: () => [],
       references: () => ({ trustworthy: true, unreadable: [] }),
       runAll: async (commands) => {
-        runs.push(commands.map((step) => step.line));
+        runs.push(commands.map((step) => planStepText(step)));
       },
     });
 
@@ -220,7 +220,7 @@ describe('物理去留：谁主张谁说话（动作永远可用，删不删看�
       claimedBy: () => ['issues', 'inventory'],
       references: () => ({ trustworthy: true, unreadable: [] }),
       runAll: async (commands) => {
-        runs.push(commands.map((step) => step.line));
+        runs.push(commands.map((step) => planStepText(step)));
       },
       logger: { info: (message) => logs.push(message) },
     });
@@ -249,7 +249,7 @@ describe('物理去留：谁主张谁说话（动作永远可用，删不删看�
       claimedBy: () => [],
       references: () => ({ trustworthy: false, unreadable: ['@a/mod'] }),
       runAll: async (commands) => {
-        runs.push(commands.map((step) => step.line));
+        runs.push(commands.map((step) => planStepText(step)));
       },
       logger: { info: (message) => logs.push(message) },
     });
@@ -271,7 +271,7 @@ describe('物理去留：谁主张谁说话（动作永远可用，删不删看�
       seam: fakeSeamOf(createFakeShell([{ stdout: '' }]).shell),
       command: 'opencli',
       runAll: async (commands) => {
-        runs.push(commands.map((step) => step.line));
+        runs.push(commands.map((step) => planStepText(step)));
       },
     });
 
@@ -302,7 +302,7 @@ describe('自动清：先前放手、现在没人要的那一份，跟着删掉'
       claimedBy: () => [],
       references: () => ({ trustworthy: true, unreadable: [] }),
       runAll: async (commands) => {
-        runs.push(commands.map((step) => step.line));
+        runs.push(commands.map((step) => planStepText(step)));
       },
       logger: { info: (message) => logs.push(message) },
     });
@@ -377,7 +377,7 @@ describe('自动清：先前放手、现在没人要的那一份，跟着删掉'
       claimedBy: () => [],
       references: () => ({ trustworthy: true, unreadable: [] }),
       runAll: async (commands) => {
-        throw new Error(`命令失败：${commands[0]?.line ?? ''}`);
+        throw new Error(`命令失败：${commands[0] === undefined ? '' : planStepText(commands[0])}`);
       },
       logger: { warn: (message) => logs.push(message) },
     });
@@ -416,7 +416,7 @@ describe('插件名：台账没记上就现读一次（名字也是主张的键�
       claimedBy: (plugin) => (plugin === 'inventory' ? ['issues'] : []),
       references: () => ({ trustworthy: true, unreadable: [] }),
       runAll: async (commands) => {
-        runs.push(commands.map((step) => step.line));
+        runs.push(commands.map((step) => planStepText(step)));
       },
       supply: supplyAt(dirOf('supply')),
     });
@@ -442,7 +442,7 @@ describe('插件名：台账没记上就现读一次（名字也是主张的键�
       claimedBy: () => [],
       references: () => ({ trustworthy: true, unreadable: [] }),
       runAll: async (commands) => {
-        runs.push(commands.map((step) => step.line));
+        runs.push(commands.map((step) => planStepText(step)));
       },
       supply: supplyAt(dirOf('supply')),
     });
@@ -463,7 +463,7 @@ describe('插件名：台账没记上就现读一次（名字也是主张的键�
       claimedBy: () => [],
       references: () => ({ trustworthy: true, unreadable: [] }),
       runAll: async (commands) => {
-        runs.push(commands.map((step) => step.line));
+        runs.push(commands.map((step) => planStepText(step)));
       },
       logger: { info: (message) => logs.push(message) },
     });

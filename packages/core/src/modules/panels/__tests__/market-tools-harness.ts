@@ -167,9 +167,9 @@ export function harness(options: {
     packageRouteOf: async () => undefined,
     pluginInstallPlan: (plan: { spec: string; command: string }) => ({
       ok: true,
-      commands: [
-        { line: `npm i --prefix '/tmp/wb-harness-plugins' '${plan.spec}'` },
-        { line: `'${plan.command}' plugin install '${plan.spec}'` },
+      steps: [
+        { kind: 'run', line: `npm i --prefix '/tmp/wb-harness-plugins' '${plan.spec}'` },
+        { kind: 'run', line: `'${plan.command}' plugin install '${plan.spec}'` },
       ],
     }),
   } as unknown as SupplyPort;
