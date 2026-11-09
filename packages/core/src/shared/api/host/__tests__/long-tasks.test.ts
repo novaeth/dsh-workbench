@@ -126,6 +126,33 @@ describe('liveLongTaskRows：左栏那颗 loading 点读的那份清单', () => 
     expect(rows[2]).not.toHaveProperty('resumable');
   });
 
+  it('★★ 模块给了 answer → 每行带 `answerable: true`；没给的、上一版那份注册表都不带这个键', () => {
+    const answerable = createLongTaskRegistry<LongTaskBase>({
+      run: pending,
+      answer: () => undefined,
+      view: (snapshot) => ({ target: snapshot.target }),
+    });
+    answerable.start({ workspace: '/w/a', target: 'env-prod' });
+
+    const legacy = {
+      live: () => [{ id: 'x', workspace: '/w/c', target: 't', status: 'running' }],
+    } as unknown as LongTaskRegistry<LongTaskBase>;
+
+    const rows = liveLongTaskRows(
+      new Map<string, LongTaskRegistry<LongTaskBase>>([
+        ['inventory', answerable],
+        ['board', registry({ workspace: '/w/b', target: 'board' })],
+        ['stale', legacy],
+      ]),
+    );
+
+    expect(rows[0]?.answerable).toBe(true);
+    expect(rows[0]?.resumable).toBeUndefined();
+    expect(rows[1]?.answerable).toBeUndefined();
+    expect(rows[1]).not.toHaveProperty('answerable');
+    expect(rows[2]).not.toHaveProperty('answerable');
+  });
+
   it('★★ 上一版那份注册表（没有 `live()`）跳过它，别的单元照旧 —— 不抛、不整条读口一起瞎', () => {
     const stale = { current: () => [] } as unknown as LongTaskRegistry<LongTaskBase>;
 

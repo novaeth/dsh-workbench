@@ -160,52 +160,46 @@
 
 ## 9 长任务
 
-耗时几十秒以上的操作做成长任务。宿主侧用 `mount` deps 的 `longTasks`，并挂回返回值：
+耗时几十秒以上的操作做成长任务：`mount` deps 的 `longTasks` 并挂回：
 
-`longTasks.create({ key, run, step, outcome, view, stopped, recheck? })`；`run({ payload, onStep, signal })` 里用
+`longTasks.create({ key, run, view, recheck?, answer? })`；`run({ payload, onStep, signal })` 里用
 `onStep({ kind: 'start', text })` 报步骤、return 结果。
 
 - 来源：工具里 `runs.start({ …, session: deps.sessionIdOf(exec) ?? undefined })`。不记 = 用户按的 → 停止需审批。
 - 流程事件默认用 `longTaskStepOf(event)`。
 - **要人处理的节点**：给这一步带 `intervention`（类型从 `@dsh-workbench/shared` 取）：
-  `{ title, hint?, actions?: ({kind:'open-url',url,label?} | {kind:'copy',text,label?})[] }`；`title` / `hint` 是字面量（宿主侧没有 `t`），
-  `label` 缺省用外壳的词（去处理 / 复制）。带它的步骤停在 `needs-human`，下一条不带就回 `running`。
-  **恢复**：默认靠模块自己轮询（条件满足再发下一步）；给了 `recheck?(current)`，行上才有「我处理完了」——
-  点了只发 `<单元>/runs/recheck` 请模块再看一眼，外壳不承诺恢复。
-  例：`onStep({ …, intervention: { title: '要登录腾讯云', actions: [{ kind: 'open-url', url: '…' }] } })`。
+  `{ title, hint?, actions?: ({kind:'open-url',url,label?} | {kind:'copy',text,label?})[], fields?, submitLabel? }`；
+  `title` / `hint` 是字面量（宿主侧没有 `t`），`label` 缺省用外壳的词；带它的步骤停在 `needs-human`，下一条不带就回 `running`。
+- **结构化回执**：`fields` 是 `({key,label,kind?:'text'|'secret',placeholder?,required?})[]`，行上出表单，`submitLabel` 是提交钮；
+  接住回执给 `longTasks.create({ answer?(current, values) })`，`<单元>/runs/answer` 把 values 交给模块。values 只回给模块，不进快照 / agent 可读处。
+- **恢复**：默认靠模块自己轮询。给了 `recheck?(current)` 行上才有「我处理完了」（只发 `<单元>/runs/recheck`，外壳不承诺恢复）；
+  要重试恢复就用 `withInterventionRetry(check, { attempts, delayMs })`（`@dsh-workbench/shared/host`）当 `recheck` handler：有界重试，check 回 `true` 即停。
+- 进入 `needs-human` 时外壳自动向起它的会话发「在等你处理」notice（hold、按 run 去重），模块不做。
 - 流程侧对应 `ctx.need(intervention)`；`ctx.login(url)` 是旧路（仍产 `needs-login` + `loginUrl`，标 deprecated）。
-- 浏览器侧：`useLongTask` → `feed.runs` / `feed.stop(id)` / `feed.stopping` / `feed.stopFailed`；
-  画 `LongTaskRow`（六态：`running` 跑着 / `needs-human` 要人处理 / `needs-login` 要登录 / `ok` 好了 /
-  `failed` 失败 / `stopped` 按停）。
+- 浏览器侧：`useLongTask` → `feed.runs` / `feed.stop(id)` / `feed.recheck(id)` / `feed.answer(id, values)` /
+  `feed.stopping` / `feed.stopFailed`；画 `LongTaskRow`（六态：`running` / `needs-human` / `needs-login` /
+  `stopped` / `ok` / `failed`）。
 
 ```
-● 正在发布（2/3）                       [⏹]
-● 发布会话等你确认                      [⏹]
-  去控制台点「确认发布」 · 先确认发布会话   [打开]
-● 要登录腾讯云                    [登录 →]
-● 发布完成                        [日志 →]
-● 发布失败
-   站点回的是 HTTP 403
-   ▸ 步骤    ▸ 原文
-● 发布已停止（用户按停）
+● 正在发布（2/3） [⏹]
+● 发布会话等你确认 · 去控制台点「确认」 [打开]
+● 要登录腾讯云 [登录 →] / 完成 [日志 →] / 失败 [步骤 · 原文] / 已停止
 ```
 
-- 行尾是链接；要人处理的行多一行「要人做什么 + 为什么 + 动作」；失败才展开「步骤」「原文」。
+- 行尾是链接；失败才展开「步骤」「原文」。
 
 - 停止：`run` 收到 `signal` 被 abort = 有人按停止；在循环点与每条子命令前后查 `signal.aborted`。
-  不认 signal 就不要画停止钮。画钮传 `stop`（`onStop: () => feed.stop(run.id)`、`busy: feed.stopping === run.id`、
-  `failed: feed.stopFailed`、`label: 停止任务 {label}`、`askLabel: '确认停止'`）；失败文案画在行下，
-  不写"停止失败"。两按确认归组件；未传 `stop` 的行不变。
-- `feed.stopping` / `feed.stopFailed` 只有一格（最后一次）。多行并行时要分行状态就按 id 自记。
+  不认 signal 就不要画停止钮。画钮传 `stop`（`onStop: () => feed.stop(run.id)`、`busy`、`failed`、
+  `label: 停止任务 {label}`、`askLabel: '确认停止'`）；失败文案画行下；两按确认归组件。
 - 外壳自带 `workbench_long_tasks_list`（读）与 `workbench_long_tasks_stop`（写）。自己起的免审批；
-  别人的 / 用户按的 / 没记来源的要审批；跨工作区直接拒。被停时外壳向起它的会话发 notice（完成 / 失败不发）。
-- `contracts` 查形状：注册表八个方法（含 `stop` / `live`）、`create` 的 `key` / `run` / `view`、
+  别人的 / 用户按的 / 没记来源的要审批；跨工作区直接拒。被停时外壳向起它的会话发 notice。
+- `contracts` 查形状：注册表九个方法（含 `stop` / `live` / `answer`）、`create` 的 `key` / `run` / `view`、
   产物含 `useLongTask` / `LongTaskRow` 之一。是否真响应 signal 不在射程内。
 - 左栏那颗点由外壳按 `live()` 驱动；等人时升成「等你处理」的 warning，模块不做。
 - 用 `stop` / `session` / 长任务工具需把 `@dsh-workbench/core` peer 下限抬到含它们的版本（`check --only kit` 查）。
 
-`registerTools()` 是**调用时才注册**、返回清理函数；工具名必须与 `dsh.workbench.tools` 一字不差，
-没有工具就 `() => []`。可跑样板：`dsh-wb-module init` 生成的模块（长任务与工具的 `mount` 接线看 `template-diy`）。
+`registerTools()` 调用时才注册、返回清理函数；工具名与 `dsh.workbench.tools` 一字不差，没有就 `() => []`。
+样板：`dsh-wb-module init` 的 `template-diy` 模块。
 
 ## 9.1 多步流程（workflow）
 

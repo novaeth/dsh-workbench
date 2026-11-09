@@ -151,11 +151,12 @@ export function registerProvision(
 export interface PostResource {
   readonly resource: string;
   readonly unit?: string;
+  readonly redact?: boolean | undefined;
   handle(payload: unknown): Promise<unknown> | unknown;
 }
 
 export interface PostWrite {
-  readonly args: unknown;
+  readonly args?: unknown;
   readonly result: unknown;
 }
 
@@ -170,7 +171,7 @@ function registerPost(
   },
 ): () => void {
   const { prefix, what, resources, refusedCode, wrote } = options;
-  const table = new Map(resources.map((item) => [item.resource, item.handle] as const));
+  const table = new Map(resources.map((item) => [item.resource, item] as const));
   return ctx.webServer.register({
     kind: 'prefix',
     path: prefix,
@@ -195,14 +196,14 @@ function registerPost(
       }
 
       const requested = (req.url ?? '/').slice(prefix.length).replace(/^\//, '').split('?')[0] ?? '';
-      const handle = table.get(requested);
-      if (handle === undefined) {
+      const resource = table.get(requested);
+      if (resource === undefined) {
         sendJson(res, 404, { ok: false, error: { code: 'not-found', message: `没有这个${what}资源：${requested}` } });
         return;
       }
       try {
-        const result = await handle(payload);
-        wrote?.(requested, { args: payload, result });
+        const result = await resource.handle(payload);
+        wrote?.(requested, { ...(resource.redact === true ? {} : { args: payload }), result });
         sendJson(res, 200, writeResultForClient(result, refusedCode));
       } catch (error) {
         sendJson(res, 200, { ok: false, error: toErrorPayload(error) });

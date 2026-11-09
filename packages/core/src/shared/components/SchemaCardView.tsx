@@ -46,6 +46,11 @@ export interface SchemaCardViewProps extends BoardModuleProps {
   readonly longTaskRechecking?: string | null | undefined;
   readonly longTaskRecheckFailed?: string | null | undefined;
   readonly onLongTaskRecheck?: ((id: string) => void) | undefined;
+  readonly longTaskAnswering?: string | null | undefined;
+  readonly longTaskAnswerFailed?: string | null | undefined;
+  readonly onLongTaskAnswer?:
+    | ((id: string, values: Readonly<Record<string, string>>) => void)
+    | undefined;
   readonly onLongTaskLogin?: ((url: string) => void) | undefined;
   readonly onLongTaskOpenUrl?: ((url: string) => void) | undefined;
   readonly onLongTaskCopy?: ((text: string) => void) | undefined;
@@ -311,6 +316,9 @@ export function SchemaCardView({
   longTaskRechecking,
   longTaskRecheckFailed,
   onLongTaskRecheck,
+  longTaskAnswering,
+  longTaskAnswerFailed,
+  onLongTaskAnswer,
   onLongTaskLogin,
   onLongTaskOpenUrl,
   onLongTaskCopy,
@@ -346,9 +354,12 @@ export function SchemaCardView({
           stopFailed: longTaskStopFailed ?? null,
           rechecking: longTaskRechecking ?? null,
           recheckFailed: longTaskRecheckFailed ?? null,
+          answering: longTaskAnswering ?? null,
+          answerFailed: longTaskAnswerFailed ?? null,
           t,
           onStop: onLongTaskStop ?? (() => {}),
           onRecheck: onLongTaskRecheck ?? (() => {}),
+          onAnswer: onLongTaskAnswer ?? (() => {}),
           onLogin: onLongTaskLogin ?? (() => {}),
           onOpenUrl: onLongTaskOpenUrl ?? (() => {}),
           onCopy: onLongTaskCopy ?? (() => {}),

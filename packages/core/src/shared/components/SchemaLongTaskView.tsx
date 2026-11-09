@@ -17,9 +17,12 @@ export interface SchemaLongTaskViewProps {
   readonly stopFailed: string | null;
   readonly rechecking: string | null;
   readonly recheckFailed: string | null;
+  readonly answering: string | null;
+  readonly answerFailed: string | null;
   readonly t: Translate;
   readonly onStop: (id: string) => void;
   readonly onRecheck: (id: string) => void;
+  readonly onAnswer: (id: string, values: Readonly<Record<string, string>>) => void;
   readonly onLogin: (url: string) => void;
   readonly onOpenUrl: (url: string) => void;
   readonly onCopy: (text: string) => void;
@@ -35,6 +38,9 @@ function interventionOf(
   onRecheck: (id: string) => void,
   rechecking: string | null,
   recheckFailed: string | null,
+  onAnswer: (id: string, values: Readonly<Record<string, string>>) => void,
+  answering: string | null,
+  answerFailed: string | null,
 ): LongTaskRowIntervention | undefined {
   const intervention = row.intervention;
   if (row.status !== 'needs-human' || intervention === undefined) return undefined;
@@ -66,10 +72,23 @@ function interventionOf(
       onPress: () => onRecheck(row.id),
     });
   }
+  const fields = intervention.fields ?? [];
+  const withForm = row.answerable === true && fields.length > 0;
   return {
     title: intervention.title,
     ...(intervention.hint === undefined ? {} : { hint: intervention.hint }),
     ...(actions.length === 0 ? {} : { actions }),
+    ...(withForm
+      ? {
+          fields,
+          submit: {
+            label: intervention.submitLabel ?? t('longTask.submit'),
+            busy: answering === row.id,
+            failed: answerFailed,
+            onSubmit: (values: Readonly<Record<string, string>>) => onAnswer(row.id, values),
+          },
+        }
+      : {}),
     ...(recheckFailed === null ? {} : { failed: recheckFailed }),
   };
 }
@@ -81,9 +100,12 @@ export function SchemaLongTaskView({
   stopFailed,
   rechecking,
   recheckFailed,
+  answering,
+  answerFailed,
   t,
   onStop,
   onRecheck,
+  onAnswer,
   onLogin,
   onOpenUrl,
   onCopy,
@@ -105,7 +127,19 @@ export function SchemaLongTaskView({
         row.status === 'needs-login' && loginUrl !== undefined
           ? { label: t('longTask.login'), onOpen: () => onLogin(loginUrl) }
           : undefined;
-      const intervention = interventionOf(row, t, onOpenUrl, onCopy, copied ?? null, onRecheck, rechecking, recheckFailed);
+      const intervention = interventionOf(
+        row,
+        t,
+        onOpenUrl,
+        onCopy,
+        copied ?? null,
+        onRecheck,
+        rechecking,
+        recheckFailed,
+        onAnswer,
+        answering,
+        answerFailed,
+      );
       const stop = longTaskIsLive(row.status)
         ? {
             onStop: () => onStop(row.id),

@@ -127,3 +127,45 @@
   color: var(--dsw-alias-state-error-primary);
   overflow-wrap: anywhere;
 }
+
+.wb-longTaskForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--wb-len-6);
+  margin: 0;
+}
+
+.wb-longTaskField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-4);
+  min-width: var(--wb-len-120);
+}
+
+.wb-longTaskFieldLabel {
+  font-size: var(--dsw-font-xxxs-11-font-size);
+  line-height: var(--wb-line-16);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.wb-longTaskFieldRequired {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.wb-longTaskFieldInput {
+  box-sizing: border-box;
+  min-height: var(--wb-len-28);
+  padding: var(--wb-len-4) var(--wb-len-10);
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-3);
+  font: var(--dsw-font-xs-13);
+  color: var(--dsw-alias-label-primary);
+  outline: none;
+}
+
+.wb-longTaskFieldInput:focus {
+  border-color: var(--dsw-alias-state-business-primary);
+  box-shadow: inset 0 0 0 0.5px var(--dsw-alias-state-business-primary);
+}

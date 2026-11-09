@@ -58,6 +58,7 @@ describe('mountUnits：长任务的停止（外壳按单元自动挂那条动作
 
     expect(plan.actions.map((item) => item.resource).sort()).toEqual([
       'demo/release',
+      'demo/runs/answer',
       'demo/runs/recheck',
       'demo/runs/stop',
     ]);
@@ -130,7 +131,11 @@ describe('mountUnits：长任务的停止（外壳按单元自动挂那条动作
     const stop = plan.actions.find((item) => item.resource === 'demo/runs/stop');
 
     expect(Object.keys(plan.routes)).toEqual(['demo/runs']);
-    expect(plan.actions.map((item) => item.resource)).toEqual(['demo/runs/stop', 'demo/runs/recheck']);
+    expect(plan.actions.map((item) => item.resource)).toEqual([
+      'demo/runs/stop',
+      'demo/runs/recheck',
+      'demo/runs/answer',
+    ]);
     expect(stop?.handle({})).toEqual({
       ok: false,
       text: '这一份工作台还是上一版的注册表，停不了 —— 重新起一下工作台就能停',
@@ -190,7 +195,11 @@ describe('mountUnits：长任务的重查（外壳按单元自动挂「我处理
     const id = face.start();
     expect(face.statusOf(id)).toBe('running');
 
-    expect(face.plan.actions.map((item) => item.resource).sort()).toEqual(['demo/runs/recheck', 'demo/runs/stop']);
+    expect(face.plan.actions.map((item) => item.resource).sort()).toEqual([
+      'demo/runs/answer',
+      'demo/runs/recheck',
+      'demo/runs/stop',
+    ]);
     expect(face.recheck?.handle({ id })).toEqual({ ok: true, rechecked: true });
 
     expect(seen).toEqual([id]);
@@ -245,10 +254,89 @@ describe('mountUnits：长任务的重查（外壳按单元自动挂「我处理
     const plan = mountUnits([spy], { ctx: ctxWith([]), manifests: () => [] });
     const recheck = plan.actions.find((item) => item.resource === 'demo/runs/recheck');
 
-    expect(plan.actions.map((item) => item.resource)).toEqual(['demo/runs/stop', 'demo/runs/recheck']);
+    expect(plan.actions.map((item) => item.resource)).toEqual([
+      'demo/runs/stop',
+      'demo/runs/recheck',
+      'demo/runs/answer',
+    ]);
     expect(recheck?.handle({ id: 'any' })).toEqual({
       ok: false,
       text: '这一份工作台还是上一版的注册表，重查不了 —— 重新起一下工作台就能重查',
+    });
+  });
+});
+
+describe('mountUnits：长任务的回执（answer 动作连同 redact 一起挂上）', () => {
+  function answerFace(): {
+    plan: ReturnType<typeof mountUnits>;
+    seen: Array<[string, Readonly<Record<string, string>>]>;
+    start: () => string;
+    runs: (path: string) => unknown;
+  } {
+    const seen: Array<[string, Readonly<Record<string, string>>]> = [];
+    const box: { start?: () => string } = {};
+    const host = hostOf(manifest('demo', { inject: [] }), (deps) => {
+      const runs = deps.longTasks?.create({
+        key: 'release',
+        run: async ({ onStep, signal }) => {
+          onStep({
+            kind: 'info',
+            text: '等回执',
+            intervention: {
+              title: '填回执',
+              fields: [{ key: 'operator', label: '操作人', required: true }],
+            },
+          });
+          await new Promise<void>((resolve) => {
+            signal.addEventListener('abort', () => resolve(), { once: true });
+          });
+          return 'ok';
+        },
+        answer: (current, values) => {
+          seen.push([current.id, values]);
+        },
+        view: (snapshot: { id: string; workspace: string; target: string; status: string }) => ({
+          id: snapshot.id,
+          env: snapshot.target,
+          status: snapshot.status,
+        }),
+      });
+      if (runs !== undefined) box.start = () => runs.start({ workspace: '/w/a', target: 'test' }).id;
+      return { routes: {}, registerTools: () => [], ...(runs === undefined ? {} : { longTasks: runs }) };
+    });
+    const plan = mountUnits([host], {
+      ctx: ctxWith([]),
+      manifests: () => [],
+      longTasks: { scope: `test-${String(Date.now())}-${Math.random()}`, bump: () => {} },
+    });
+    const routes = plan.routes as Record<string, (search: URLSearchParams) => unknown>;
+    return {
+      plan,
+      seen,
+      start: () => box.start?.() ?? '',
+      runs: (path) => routes['demo/runs']?.(new URLSearchParams(`path=${path}`)),
+    };
+  }
+
+  it('★★ 动作挂上且带 `redact: true`（回执值不进 facts）；按下转给 handler、读路由投影带 answerable', () => {
+    const face = answerFace();
+    const id = face.start();
+    const actions = face.plan.actions as ReadonlyArray<{
+      readonly resource: string;
+      readonly redact?: boolean | undefined;
+      handle(payload: unknown): unknown;
+    }>;
+    const answer = actions.find((item) => item.resource === 'demo/runs/answer');
+
+    expect(answer?.redact).toBe(true);
+    expect(actions.find((item) => item.resource === 'demo/runs/stop')?.redact).toBeUndefined();
+    expect(actions.find((item) => item.resource === 'demo/runs/recheck')?.redact).toBeUndefined();
+
+    expect(answer?.handle({ id, values: { operator: '甲' } })).toEqual({ ok: true, answered: true });
+    expect(face.seen).toEqual([[id, { operator: '甲' }]]);
+    expect(face.runs('/w/a')).toEqual({
+      ok: true,
+      runs: [expect.objectContaining({ id, answerable: true })],
     });
   });
 });

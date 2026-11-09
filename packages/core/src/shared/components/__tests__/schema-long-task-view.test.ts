@@ -28,7 +28,21 @@ describe('SchemaLongTaskView：needs-human 投影成人待那一行（接线，n
   it('★★ 只有 needs-human 且带 intervention 才翻；其余行一个键都不多', () => {
     expect(VIEW).toContain("if (row.status !== 'needs-human' || intervention === undefined) return undefined;");
     expect(VIEW).toContain(
-      'const intervention = interventionOf(row, t, onOpenUrl, onCopy, copied ?? null, onRecheck, rechecking, recheckFailed);',
+      [
+        'const intervention = interventionOf(',
+        '        row,',
+        '        t,',
+        '        onOpenUrl,',
+        '        onCopy,',
+        '        copied ?? null,',
+        '        onRecheck,',
+        '        rechecking,',
+        '        recheckFailed,',
+        '        onAnswer,',
+        '        answering,',
+        '        answerFailed,',
+        '      );',
+      ].join('\n'),
     );
     expect(VIEW).toContain('...(intervention === undefined ? {} : { intervention }),');
   });
@@ -75,6 +89,35 @@ describe('SchemaLongTaskView：needs-human 投影成人待那一行（接线，n
 
   it('★★ recheckFailed 非空才往 intervention 上传 failed（照 stopFailed 那条）', () => {
     expect(VIEW).toContain('...(recheckFailed === null ? {} : { failed: recheckFailed }),');
+  });
+
+  it('★★ 有 fields 且 answerable 才带表单：声明照抄、submit 调 onAnswer(id, values)、failed 透传', () => {
+    expect(VIEW).toContain('readonly onAnswer: (id: string, values: Readonly<Record<string, string>>) => void;');
+    expect(VIEW).toContain('readonly answering: string | null;');
+    expect(VIEW).toContain('readonly answerFailed: string | null;');
+    expect(VIEW).toContain('const fields = intervention.fields ?? [];');
+    expect(VIEW).toContain('const withForm = row.answerable === true && fields.length > 0;');
+    expect(VIEW).toContain(
+      [
+        '...(withForm',
+        '      ? {',
+        '          fields,',
+        '          submit: {',
+        "            label: intervention.submitLabel ?? t('longTask.submit'),",
+        '            busy: answering === row.id,',
+        '            failed: answerFailed,',
+        '            onSubmit: (values: Readonly<Record<string, string>>) => onAnswer(row.id, values),',
+        '          },',
+        '        }',
+        '      : {}),',
+      ].join('\n'),
+    );
+  });
+
+  it('★★ 表单只有这一处出口：answerable 假 / 没 fields 就不会多出 fields 或 submit 键', () => {
+    expect(VIEW.match(/submit:/g)).toHaveLength(1);
+    expect(VIEW.match(/fields,/g)).toHaveLength(1);
+    expect(VIEW).toContain('const withForm = row.answerable === true && fields.length > 0;');
   });
 });
 
@@ -155,6 +198,20 @@ describe('SchemaCard / SchemaCardView：两条卡片路径都接上 openExternal
     expect(CARD_VIEW).toContain('recheckFailed: longTaskRecheckFailed ?? null,');
     expect(CARD_VIEW).toContain('onRecheck: onLongTaskRecheck ?? (() => {}),');
   });
+
+  it('★★ 两条路径都接上 answer：FrameCard 直给，ReadCard 经 SchemaCardView（props 只加法、缺省空回调）', () => {
+    expect(CARD).toContain('answering: longTasks.answering,');
+    expect(CARD).toContain('answerFailed: longTasks.answerFailed,');
+    expect(CARD).toContain('void longTasks.answer(id, values);');
+    expect(CARD).toContain('longTaskAnswering: longTasks.answering,');
+    expect(CARD).toContain('longTaskAnswerFailed: longTasks.answerFailed,');
+    expect(CARD_VIEW).toContain('readonly longTaskAnswering?: string | null | undefined;');
+    expect(CARD_VIEW).toContain('readonly longTaskAnswerFailed?: string | null | undefined;');
+    expect(CARD_VIEW).toContain('readonly onLongTaskAnswer?:');
+    expect(CARD_VIEW).toContain('answering: longTaskAnswering ?? null,');
+    expect(CARD_VIEW).toContain('answerFailed: longTaskAnswerFailed ?? null,');
+    expect(CARD_VIEW).toContain('onAnswer: onLongTaskAnswer ?? (() => {}),');
+  });
 });
 
 describe('kit 预览画廊：六态都摆得出来，needs-human 那条带两个动作', () => {
@@ -174,6 +231,14 @@ describe('kit 预览画廊：六态都摆得出来，needs-human 那条带两个
   it('★★ 画廊加了一条带「我处理完了」的 needs-human（可重查那一档的观感）', () => {
     expect(PREVIEW).toContain("key: 'handled', label: '我处理完了', onPress: () => undefined");
     expect(PREVIEW).toContain("hint: '点完回来按「我处理完了」',");
+  });
+
+  it('★★ 画廊再加一条带 fields（text + secret 必填）与 submit 的 needs-human（回执那一档的观感）', () => {
+    expect(PREVIEW).toContain(
+      "key: 'operator', label: '操作人', kind: 'text', required: true, placeholder: '你的名字'",
+    );
+    expect(PREVIEW).toContain("key: 'token', label: '控制台口令', kind: 'secret', required: true");
+    expect(PREVIEW).toContain("submit: { label: '提交', onSubmit: () => undefined }");
   });
 
   it('★ 说明从「五种状态」改成覆盖新态', () => {

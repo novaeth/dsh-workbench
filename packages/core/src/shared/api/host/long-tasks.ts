@@ -18,6 +18,7 @@ export function liveLongTaskRows(
         step: snapshot.step,
         steps: snapshot.steps,
         ...(registry.resumable === true ? { resumable: true } : {}),
+        ...(registry.answerable === true ? { answerable: true } : {}),
         ...(snapshot.intervention === undefined ? {} : { intervention: snapshot.intervention }),
         ...(snapshot.loginUrl === undefined ? {} : { loginUrl: snapshot.loginUrl }),
         ...(snapshot.why === undefined ? {} : { why: snapshot.why }),

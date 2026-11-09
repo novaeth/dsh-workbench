@@ -9,6 +9,8 @@ import {
 
 export const LONG_TASK_NOTICE_KIND = 'workbench-long-task';
 
+export const LONG_TASK_WAIT_NOTICE_KIND = 'workbench-long-task-wait';
+
 export interface LongTaskStopNotice {
   readonly session: string;
   readonly message: NoticeMessage;
@@ -39,4 +41,44 @@ export function notifyLongTaskStop(
   const notice = longTaskStopNotice(unit, change);
   if (notice === null) return null;
   return deliverDebugNotice(agents, notice.session, notice.message, 'drop');
+}
+
+export interface LongTaskWaitNotice {
+  readonly session: string;
+  readonly message: NoticeMessage;
+  readonly summary: string;
+}
+
+export function longTaskWaitNotice(unit: string, change: LongTaskChange<LongTaskBase>): LongTaskWaitNotice | null {
+  if (change.kind !== 'step') return null;
+  const snapshot = change.snapshot;
+  if (snapshot.status !== 'needs-human') return null;
+  const intervention = change.step?.intervention;
+  if (intervention === undefined) return null;
+  const session = snapshot.session;
+  if (session === undefined || session === '') return null;
+  if (change.by === session) return null;
+  const target = snapshot.target;
+  const summary = `长任务：${unit} 的「${target}」在等你处理`;
+  const text =
+    `［长任务 · ${unit}］「${target}」停在「${intervention.title}」—— 要你处理才能继续。` +
+    '处理完在界面上按「我处理完了」（模块给了才有），或它自己会继续；' +
+    'workbench_long_tasks_list 看当前这几趟。';
+  return { session, summary, message: noticeMessage(text, summary, LONG_TASK_WAIT_NOTICE_KIND) };
+}
+
+export function createLongTaskWaitNotifier(): (
+  agents: AgentsLookup | undefined,
+  unit: string,
+  change: LongTaskChange<LongTaskBase>,
+) => NoticeDelivery | null {
+  const seen = new Set<string>();
+  return (agents, unit, change) => {
+    const notice = longTaskWaitNotice(unit, change);
+    if (notice === null) return null;
+    const key = `${unit}:${change.snapshot.id}`;
+    if (seen.has(key)) return null;
+    seen.add(key);
+    return deliverDebugNotice(agents, notice.session, notice.message, 'hold');
+  };
 }

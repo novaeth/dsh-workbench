@@ -4,6 +4,7 @@ import {
   createLongTaskHost,
   createLongTaskRegistry,
   sharedLongTaskRegistry,
+  withInterventionRetry,
   type LongTaskBase,
   type LongTaskDeps,
 } from '../long-task.js';
@@ -306,6 +307,269 @@ describe('createLongTaskRegistry.recheck（「我处理完了」只请模块再�
     const closedRuns = createLongTaskRegistry(closed.deps);
     closedRuns.start({ workspace: '/w/a', target: 'release' });
     expect('resumable' in (closedRuns.current('/w/a')[0] ?? {})).toBe(false);
+  });
+});
+
+describe('createLongTaskRegistry.answer（结构化回执：值只回给模块）', () => {
+  const need: LongTaskIntervention = {
+    title: '要连数据库',
+    fields: [
+      { key: 'host', label: '主机', required: true },
+      { key: 'token', label: '口令', kind: 'secret', required: true },
+      { key: 'note', label: '备注' },
+    ],
+    submitLabel: '提交',
+  };
+
+  function answering(runs = harness()) {
+    const seen: Array<Readonly<Record<string, string>>> = [];
+    const deps = {
+      ...runs.deps,
+      answer: (_current: Probe, values: Readonly<Record<string, string>>) => {
+        seen.push({ ...values });
+      },
+    };
+    const registry = createLongTaskRegistry({ ...deps, nextId: () => 'run-1' });
+    const started = registry.start({ workspace: '/w/a', target: 'release' });
+    runs.step({ kind: 'info', text: '等人填回执', intervention: need });
+    return { seen, registry, started, ...runs };
+  }
+
+  it('★★ 给了 deps.answer：answerable 为真；按声明字段收 key、trim 后交 handler，状态不动', () => {
+    const h = answering();
+
+    expect(h.registry.answerable).toBe(true);
+    expect(h.registry.answer(h.started.id, { host: ' db.internal ', token: ' s3cret ', note: '   ' })).toBe(true);
+    expect(h.seen).toEqual([{ host: 'db.internal', token: 's3cret' }]);
+    expect(h.registry.snapshot(h.started.id)?.status).toBe('needs-human');
+    expect(h.registry.snapshot(h.started.id)?.intervention).toEqual(need);
+  });
+
+  it('★★ 未知键丢掉：只收声明字段（回执不是随便塞的口子）', () => {
+    const h = answering();
+
+    expect(h.registry.answer(h.started.id, { host: 'h', token: 't', extra: 'x', '': 'y' })).toBe(true);
+    expect(h.seen).toEqual([{ host: 'h', token: 't' }]);
+  });
+
+  it('★★ 必填缺失（没给 / 空串 / 全空白）⇒ false，handler 一次没调', () => {
+    const h = answering();
+
+    expect(h.registry.answer(h.started.id, { token: 't' })).toBe(false);
+    expect(h.registry.answer(h.started.id, { host: 'h', token: '   ' })).toBe(false);
+    expect(h.registry.answer(h.started.id, { host: '', token: 't' })).toBe(false);
+    expect(h.seen).toEqual([]);
+  });
+
+  it('★★ 没给 handler：answerable 为假、answer 回 false、什么都不做', () => {
+    const h = harness();
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+    h.step({ kind: 'info', text: '等人填回执', intervention: need });
+
+    expect(runs.answerable).toBe(false);
+    expect(runs.answer(started.id, { host: 'h', token: 't' })).toBe(false);
+    expect(runs.snapshot(started.id)?.status).toBe('needs-human');
+  });
+
+  it('★★ 不在跑 / 没有 intervention / intervention 没有 fields ⇒ false（三处都不给口子）', async () => {
+    const h = answering();
+    expect(h.registry.answer(h.started.id, { host: 'h', token: 't' })).toBe(true);
+
+    const plain = answering();
+    plain.step({ kind: 'info', text: '继续跑' });
+    expect(plain.registry.answer(plain.started.id, { host: 'h', token: 't' })).toBe(false);
+
+    const bare = answering();
+    bare.step({ kind: 'info', text: '只说不填', intervention: { title: '看一眼' } });
+    expect(bare.registry.answer(bare.started.id, { host: 'h', token: 't' })).toBe(false);
+
+    const empty = answering();
+    empty.step({ kind: 'info', text: '空字段', intervention: { title: '看一眼', fields: [] } });
+    expect(empty.registry.answer(empty.started.id, { host: 'h', token: 't' })).toBe(false);
+
+    const done = answering();
+    done.done({});
+    await flush();
+    expect(done.registry.answer(done.started.id, { host: 'h', token: 't' })).toBe(false);
+  });
+
+  it('★★ 回执值不落快照、不进变更通知（值只走 handler，不进任何 agent 可读处）', () => {
+    const secret = 'SECRET-TOKEN-123';
+    let changes = 0;
+    const h = harness({
+      answer: () => {},
+    });
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+    h.step({ kind: 'info', text: '等人填回执', intervention: need });
+    runs.onChange(() => {
+      changes += 1;
+    });
+
+    expect(runs.answer(started.id, { host: 'h', token: secret })).toBe(true);
+
+    expect(JSON.stringify(runs.snapshot(started.id))).not.toContain(secret);
+    expect(JSON.stringify(runs.current('/w/a'))).not.toContain(secret);
+    expect(changes).toBe(0);
+  });
+
+  it('★★ current() 的投影在 answerable 时带上这个键（浏览器据此画表单）', () => {
+    const open = answering();
+    expect(open.registry.current('/w/a')[0]?.['answerable']).toBe(true);
+
+    const closed = harness();
+    const closedRuns = createLongTaskRegistry(closed.deps);
+    closedRuns.start({ workspace: '/w/a', target: 'release' });
+    expect('answerable' in (closedRuns.current('/w/a')[0] ?? {})).toBe(false);
+  });
+});
+
+describe('withInterventionRetry（看一眼没接上就有界地再试，永不抛错）', () => {
+  const current = (id = 'run-1'): Probe => ({
+    id,
+    workspace: '/w/a',
+    target: 'release',
+    status: 'needs-human',
+    step: '',
+    steps: [],
+    startedAt: '2026-10-21T02:00:00.000Z',
+    at: '2026-10-21T02:00:00.000Z',
+  });
+
+  const settle = async (): Promise<void> => {
+    for (let i = 0; i < 8; i += 1) await new Promise((resolve) => setTimeout(resolve, 0));
+  };
+
+  function fakeSleep() {
+    const waits: number[] = [];
+    return {
+      waits,
+      sleep: (ms: number): Promise<void> => {
+        waits.push(ms);
+        return Promise.resolve();
+      },
+    };
+  }
+
+  it('★★ 最多 attempts 次；第一轮立刻试、之后每轮先睡 delayMs；用尽就清单飞', async () => {
+    const clock = fakeSleep();
+    let calls = 0;
+    const handler = withInterventionRetry(
+      () => {
+        calls += 1;
+        return false;
+      },
+      { attempts: 3, delayMs: 7, sleep: clock.sleep },
+    );
+
+    handler(current());
+    await settle();
+
+    expect(calls).toBe(3);
+    expect(clock.waits).toEqual([7, 7]);
+
+    handler(current());
+    await settle();
+    expect(calls).toBe(6);
+  });
+
+  it('★★ check 返回 true = 已经接上，不用再试', async () => {
+    const clock = fakeSleep();
+    let calls = 0;
+    const handler = withInterventionRetry(
+      () => {
+        calls += 1;
+        return calls === 2;
+      },
+      { attempts: 5, delayMs: 1, sleep: clock.sleep },
+    );
+
+    handler(current());
+    await settle();
+
+    expect(calls).toBe(2);
+    expect(clock.waits).toEqual([1]);
+  });
+
+  it('★★ delayMs 可给函数（按第几次等待算，从 1 开始）', async () => {
+    const clock = fakeSleep();
+    const handler = withInterventionRetry(() => false, {
+      attempts: 3,
+      delayMs: (attempt) => attempt * 10,
+      sleep: clock.sleep,
+    });
+
+    handler(current());
+    await settle();
+
+    expect(clock.waits).toEqual([10, 20]);
+  });
+
+  it('★★ 单飞：同一 id 在飞时再按直接忽略（不会并发放大 check）', async () => {
+    let release: (() => void) | undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let waits = 0;
+    let calls = 0;
+    const handler = withInterventionRetry(
+      () => {
+        calls += 1;
+        return false;
+      },
+      {
+        attempts: 2,
+        delayMs: 1,
+        sleep: async () => {
+          waits += 1;
+          await gate;
+        },
+      },
+    );
+
+    handler(current());
+    handler(current());
+    for (let i = 0; i < 3; i += 1) await Promise.resolve();
+
+    expect(waits).toBe(1);
+    expect(calls).toBe(1);
+
+    release?.();
+    await settle();
+
+    expect(waits).toBe(1);
+    expect(calls).toBe(2);
+  });
+
+  it('★★ check 抛错继续下一轮，不往外抛', async () => {
+    const clock = fakeSleep();
+    let calls = 0;
+    const handler = withInterventionRetry(
+      () => {
+        calls += 1;
+        if (calls < 3) throw new Error(`第 ${calls} 轮没接上`);
+        return true;
+      },
+      { attempts: 5, delayMs: 1, sleep: clock.sleep },
+    );
+
+    expect(() => handler(current())).not.toThrow();
+    await settle();
+
+    expect(calls).toBe(3);
+    expect(clock.waits).toHaveLength(2);
+  });
+
+  it('★★ 连 sleep 都不许把错抛出去（fire-and-forget 的路由可不听拒绝）', async () => {
+    const handler = withInterventionRetry(() => false, {
+      attempts: 2,
+      delayMs: 1,
+      sleep: () => Promise.reject(new Error('等不下去了')),
+    });
+
+    expect(() => handler(current())).not.toThrow();
+    await settle();
   });
 });
 

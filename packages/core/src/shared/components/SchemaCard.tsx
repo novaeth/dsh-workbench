@@ -80,12 +80,17 @@ function SchemaFrameCard(props: SchemaCardProps) {
         stopFailed: longTasks.stopFailed,
         rechecking: longTasks.rechecking,
         recheckFailed: longTasks.recheckFailed,
+        answering: longTasks.answering,
+        answerFailed: longTasks.answerFailed,
         t: props.t,
         onStop: (id: string) => {
           void longTasks.stop(id);
         },
         onRecheck: (id: string) => {
           void longTasks.recheck(id);
+        },
+        onAnswer: (id: string, values: Readonly<Record<string, string>>) => {
+          void longTasks.answer(id, values);
         },
         onLogin: openLogin,
         onOpenUrl: openExternal,
@@ -165,6 +170,11 @@ function SchemaReadCard(props: SchemaCardProps) {
           longTaskRecheckFailed: longTasks.recheckFailed,
           onLongTaskRecheck: (id: string) => {
             void longTasks.recheck(id);
+          },
+          longTaskAnswering: longTasks.answering,
+          longTaskAnswerFailed: longTasks.answerFailed,
+          onLongTaskAnswer: (id: string, values: Readonly<Record<string, string>>) => {
+            void longTasks.answer(id, values);
           },
           onLongTaskLogin: openLogin,
           onLongTaskOpenUrl: openExternal,

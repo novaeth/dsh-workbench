@@ -247,6 +247,19 @@ export function LongTaskSection() {
           }}
         />
         <LongTaskRow
+          status="needs-human"
+          headline="等你把控制台的回执填回来"
+          intervention={{
+            title: '把控制台给出的口令填回来',
+            hint: '口令只交给模块，不进工作台快照',
+            fields: [
+              { key: 'operator', label: '操作人', kind: 'text', required: true, placeholder: '你的名字' },
+              { key: 'token', label: '控制台口令', kind: 'secret', required: true },
+            ],
+            submit: { label: '提交', onSubmit: () => undefined },
+          }}
+        />
+        <LongTaskRow
           status="ok"
           headline="发布完成"
           rawTitle="原文"

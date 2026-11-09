@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  answerRouteOf,
   longTaskDot,
   longTaskIsLive,
   longTaskPollMs,
@@ -31,6 +32,14 @@ describe('recheckRouteOf（「我处理完了」那条写路由）', () => {
   it('★ 就是读路由 + `/recheck`', () => {
     expect(recheckRouteOf('inventory')).toBe('inventory/runs/recheck');
     expect(recheckRouteOf('inventory')).toBe(`${runsRouteOf('inventory')}/recheck`);
+  });
+});
+
+describe('answerRouteOf（结构化回执那条写路由）', () => {
+  it('★ 就是读路由 + `/answer`（与 stop / recheck 同一套命名）', () => {
+    expect(answerRouteOf('inventory')).toBe('inventory/runs/answer');
+    expect(answerRouteOf('inventory')).toBe(`${runsRouteOf('inventory')}/answer`);
+    expect(answerRouteOf('inventory')).not.toBe(recheckRouteOf('inventory'));
   });
 });
 

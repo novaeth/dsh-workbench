@@ -824,6 +824,7 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'longTask.act.open': 'Open',
   'longTask.act.copy': 'Copy',
   'longTask.handled': 'Done, continue',
+  'longTask.submit': 'Submit',
   'longTask.login': 'Sign in',
   'longTask.steps': 'Steps',
   'longTask.stop': 'Stop {label}',

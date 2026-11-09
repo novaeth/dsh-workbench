@@ -13,13 +13,33 @@ export type LongTaskInterventionAction =
   | { readonly kind: 'copy'; readonly text: string; readonly label?: string | undefined };
 
 /**
- * 一轮「要人处理」：要人做什么、为什么、去哪做。
+ * 回执字段的输入类型：`text` 明文，`secret` 密码框（值同样只回给模块）。
+ */
+export type LongTaskInterventionFieldKind = 'text' | 'secret';
+
+/**
+ * 人工干预节点里的一项结构化回执：让人填一个值，提交后原样交给模块。
+ * 字段是给人填的回执，值只回给模块 —— 绝不进快照、不进 agent 可读处，密钥类用 `kind: 'secret'`。
+ */
+export interface LongTaskInterventionField {
+  readonly key: string;
+  readonly label: string;
+  readonly kind?: LongTaskInterventionFieldKind | undefined;
+  readonly placeholder?: string | undefined;
+  readonly required?: boolean | undefined;
+}
+
+/**
+ * 一轮「要人处理」：要人做什么、为什么、去哪做；需要人填回执时带上 `fields` / `submitLabel`。
  * 步骤带上它，这一趟就停在 `needs-human`；下一条不带它的步骤表示继续跑。
+ * 字段是给人填的回执，值只回给模块 —— 绝不进快照、不进 agent 可读处。
  */
 export interface LongTaskIntervention {
   readonly title: string;
   readonly hint?: string | undefined;
   readonly actions?: readonly LongTaskInterventionAction[] | undefined;
+  readonly fields?: readonly LongTaskInterventionField[] | undefined;
+  readonly submitLabel?: string | undefined;
 }
 
 /**
@@ -59,6 +79,16 @@ export function stopRouteOf(unit: string): string {
  */
 export function recheckRouteOf(unit: string): string {
   return `${unit}/runs/recheck`;
+}
+
+/**
+ * 回执那条写路由（走 actions 通道的资源名）：`<单元>/runs/answer`。
+ * 用户在人工干预节点上填完结构化回执后发它：值只回给模块，外壳不落快照、不进事实。
+ * @param unit 单元 id。
+ * @returns <单元>/runs/answer。
+ */
+export function answerRouteOf(unit: string): string {
+  return `${unit}/runs/answer`;
 }
 
 /**

@@ -819,6 +819,7 @@ export const zh = {
   'longTask.act.open': '去处理',
   'longTask.act.copy': '复制',
   'longTask.handled': '我处理完了',
+  'longTask.submit': '提交',
   'longTask.login': '去登录',
   'longTask.steps': '步骤',
   'longTask.stop': '停止任务 {label}',

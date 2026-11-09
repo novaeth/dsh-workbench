@@ -4,12 +4,19 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { LongTaskBase, LongTaskChange } from '@dsh-workbench/shared/host';
 import {
+  takeHeldNotices,
   type AgentsLookup,
   type NoticeAgent,
   type NoticeMessage,
 } from '../diy-debug-act';
 import { approvalCallOf, type ApprovalExec } from '../approval-call';
-import { longTaskStopNotice, notifyLongTaskStop } from '../long-task-notice';
+import {
+  createLongTaskWaitNotifier,
+  LONG_TASK_WAIT_NOTICE_KIND,
+  longTaskStopNotice,
+  longTaskWaitNotice,
+  notifyLongTaskStop,
+} from '../long-task-notice';
 
 const PKG_ROOT = fileURLToPath(new URL('../../../../../', import.meta.url));
 
@@ -24,6 +31,34 @@ function change(over: Partial<LongTaskBase> & { readonly by?: string | undefined
       target: 'env-prod',
       status: 'stopped',
       step: '',
+      steps: [],
+      startedAt: '2026-10-21T00:00:00.000Z',
+      at: '2026-10-21T00:00:01.000Z',
+      ...snapshot,
+    },
+  };
+}
+
+function waitChange(
+  over: Partial<LongTaskBase> & {
+    readonly by?: string | undefined;
+    readonly title?: string | undefined;
+  } = {},
+): LongTaskChange<LongTaskBase> {
+  const { by, title, ...snapshot } = over;
+  return {
+    kind: 'step',
+    by,
+    step:
+      title === undefined
+        ? { kind: 'info', text: '等你处理' }
+        : { kind: 'info', text: '等你处理', intervention: { title } },
+    snapshot: {
+      id: 'run-1',
+      workspace: '/w/a',
+      target: 'env-prod',
+      status: 'needs-human',
+      step: '等你处理',
       steps: [],
       startedAt: '2026-10-21T00:00:00.000Z',
       at: '2026-10-21T00:00:01.000Z',
@@ -90,6 +125,97 @@ describe('longTaskStopNotice：被停了要不要回流给发起它的那个会�
 
     expect(notifyLongTaskStop({ get: () => undefined }, 'inventory', change({ session: 's-1' }))).toBe('none');
     expect(notifyLongTaskStop(busy.lookup, 'inventory', change({ session: 's-1', by: 's-1' }))).toBeNull();
+  });
+});
+
+describe('longTaskWaitNotice：进入 needs-human 要不要通知发起它的那个会话', () => {
+  it('★ 正常一条：summary 逐字，正文说清停在什么上、怎么继续、看哪把工具', () => {
+    const notice = longTaskWaitNotice('inventory', waitChange({ session: 's-1', title: '去控制台点确认' }));
+
+    expect(notice?.session).toBe('s-1');
+    expect(notice?.summary).toBe('长任务：inventory 的「env-prod」在等你处理');
+    expect(notice?.message.source.kind).toBe(LONG_TASK_WAIT_NOTICE_KIND);
+    const text = notice?.message.content[0]?.text ?? '';
+    expect(text).toContain('［长任务 · inventory］');
+    expect(text).toContain('停在「去控制台点确认」');
+    expect(text).toContain('我处理完了');
+    expect(text).toContain('workbench_long_tasks_list');
+  });
+
+  it('★ 只认 step + needs-human + intervention：跑着 / 结算 / 没 intervention / 没会话 / 自己触发，都不发', () => {
+    expect(longTaskWaitNotice('inventory', change({ session: 's-1', status: 'needs-human' }))).toBeNull();
+    expect(
+      longTaskWaitNotice(
+        'inventory',
+        waitChange({ session: 's-1', status: 'running', title: '去控制台点确认' }),
+      ),
+    ).toBeNull();
+    expect(longTaskWaitNotice('inventory', waitChange({ session: 's-1' }))).toBeNull();
+    expect(longTaskWaitNotice('inventory', waitChange({ title: '去控制台点确认' }))).toBeNull();
+    expect(
+      longTaskWaitNotice('inventory', waitChange({ session: 's-1', title: '去控制台点确认', by: 's-1' })),
+    ).toBeNull();
+  });
+
+  it('★★ 投递走 hold：忙着 inject；闲着的进 held 队列且不 wake；没有 agents 也落 held', () => {
+    const busy = fakeAgents('running');
+    expect(
+      createLongTaskWaitNotifier()(
+        busy.lookup,
+        'inventory',
+        waitChange({ session: 's-1', title: '去控制台点确认' }),
+      ),
+    ).toBe('inject');
+    expect(busy.log).toEqual(['inject']);
+
+    const idle = fakeAgents('idle');
+    expect(
+      createLongTaskWaitNotifier()(
+        idle.lookup,
+        'inventory',
+        waitChange({ session: 's-1', title: '去控制台点确认' }),
+      ),
+    ).toBe('held');
+    expect(idle.log).toEqual([]);
+    const held = takeHeldNotices('s-1');
+    expect(held).toHaveLength(1);
+    expect(held[0]?.content[0]?.text).toContain('去控制台点确认');
+
+    expect(
+      createLongTaskWaitNotifier()(undefined, 'inventory', waitChange({ session: 's-1', title: '去控制台点确认' })),
+    ).toBe('held');
+    expect(takeHeldNotices('s-1')).toHaveLength(1);
+  });
+
+  it('★★ 同一趟重复 step 只发一次（按 unit:id 去重）；换了趟才再发', () => {
+    const noticer = createLongTaskWaitNotifier();
+    const busy = fakeAgents('running');
+    const one = waitChange({ session: 's-1', title: '去控制台点确认' });
+
+    expect(noticer(busy.lookup, 'inventory', one)).toBe('inject');
+    expect(noticer(busy.lookup, 'inventory', one)).toBeNull();
+    expect(busy.box).toHaveLength(1);
+
+    expect(
+      noticer(busy.lookup, 'inventory', { ...one, snapshot: { ...one.snapshot, id: 'run-2' } }),
+    ).toBe('inject');
+    expect(busy.box).toHaveLength(2);
+  });
+
+  it('★ 不该发的那几种：notifier 一条都不投递', () => {
+    const noticer = createLongTaskWaitNotifier();
+    const busy = fakeAgents('running');
+
+    expect(noticer(busy.lookup, 'inventory', change({ session: 's-1', status: 'needs-human' }))).toBeNull();
+    expect(
+      noticer(busy.lookup, 'inventory', waitChange({ session: 's-1', status: 'running', title: '去看一眼' })),
+    ).toBeNull();
+    expect(noticer(busy.lookup, 'inventory', waitChange({ session: 's-1' }))).toBeNull();
+    expect(noticer(busy.lookup, 'inventory', waitChange({ title: '去看一眼' }))).toBeNull();
+    expect(
+      noticer(busy.lookup, 'inventory', waitChange({ session: 's-1', title: '去看一眼', by: 's-1' })),
+    ).toBeNull();
+    expect(busy.log).toEqual([]);
   });
 });
 

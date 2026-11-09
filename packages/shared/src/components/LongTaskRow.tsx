@@ -1,4 +1,12 @@
-import { longTaskDot, longTaskStopPress, longTaskStopStage, LONG_TASK_STOP_ARM_MS, type LongTaskStatus } from '../contract/long-task.js';
+import type { FormEvent } from 'react';
+import {
+  longTaskDot,
+  longTaskStopPress,
+  longTaskStopStage,
+  LONG_TASK_STOP_ARM_MS,
+  type LongTaskInterventionField,
+  type LongTaskStatus,
+} from '../contract/long-task.js';
 import { Link } from './Link.js';
 import { Fragment, h, useEffect, useState } from '../lib/react.js';
 import {
@@ -54,13 +62,23 @@ export interface LongTaskRowInterventionAction {
   readonly onPress: () => void;
 }
 
+interface InterventionSubmit {
+  readonly label: string;
+  readonly busy?: boolean | undefined;
+  readonly failed?: string | null | undefined;
+  readonly onSubmit: (values: Readonly<Record<string, string>>) => void;
+}
+
 /**
  * 人工干预节点（`needs-human`）：要人做什么、为什么、行内动作，以及动作失败时那一行。
+ * 需要人填结构化回执时给 `fields` 与 `submit`：每项一个 label + 输入框，提交把整份值交给 `submit.onSubmit`。
  */
 export interface LongTaskRowIntervention {
   readonly title: string;
   readonly hint?: string | undefined;
   readonly actions?: readonly LongTaskRowInterventionAction[] | undefined;
+  readonly fields?: readonly LongTaskInterventionField[] | undefined;
+  readonly submit?: InterventionSubmit | undefined;
   readonly failed?: string | null | undefined;
 }
 
@@ -91,6 +109,53 @@ function RowLink({ href, text }: LongTaskRowLink) {
   );
 }
 
+interface InterventionFormProps {
+  readonly fields: readonly LongTaskInterventionField[];
+  readonly submit: InterventionSubmit;
+}
+
+function InterventionForm({ fields, submit }: InterventionFormProps) {
+  const [values, setValues] = useState<Readonly<Record<string, string>>>({});
+  const submitBusy = submit.busy === true;
+  const requiredMissing = fields.some(
+    (field) => field.required === true && (values[field.key] ?? '').trim() === '',
+  );
+  const submitFailed = submit.failed ?? '';
+
+  const onSubmit = (event: FormEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+    if (submitBusy || requiredMissing) return;
+    submit.onSubmit({ ...values });
+  };
+
+  return (
+    <Fragment>
+      <form className="wb-longTaskForm" onSubmit={onSubmit}>
+        {fields.map((field) => (
+          <label className="wb-longTaskField" key={field.key}>
+            <span className="wb-longTaskFieldLabel">
+              {field.label}
+              {field.required === true ? <span className="wb-longTaskFieldRequired">*</span> : null}
+            </span>
+            <input
+              className="wb-longTaskFieldInput"
+              type={field.kind === 'secret' ? 'password' : 'text'}
+              autoComplete="off"
+              placeholder={field.placeholder}
+              value={values[field.key] ?? ''}
+              onChange={(event) => setValues({ ...values, [field.key]: event.target.value })}
+            />
+          </label>
+        ))}
+        <Button type="submit" size="sm" variant="primary" disabled={submitBusy || requiredMissing}>
+          {submit.label}
+        </Button>
+      </form>
+      {submitFailed === '' ? null : <p className="wb-longTaskNeedWhy">{submitFailed}</p>}
+    </Fragment>
+  );
+}
+
 /**
  * 长任务那一行：状态点 + 标题 + 链接，跑失败时把步骤与原始输出收在两处可展开里。
  * 发布、扫描、迁移这类跑得久的事都用它，别自己画进度。
@@ -118,6 +183,8 @@ export function LongTaskRow(props: LongTaskRowProps) {
   const stop = props.stop;
   const busy = stop?.busy === true;
   const stopWhy = stop?.failed ?? '';
+  const fields = props.intervention?.fields ?? [];
+  const submit = props.intervention?.submit;
 
   useEffect(() => {
     if (!armed) return undefined;
@@ -185,6 +252,9 @@ export function LongTaskRow(props: LongTaskRowProps) {
               </Button>
             ))}
           </p>
+          {fields.length === 0 || submit === undefined ? null : (
+            <InterventionForm fields={fields} submit={submit} />
+          )}
           {props.intervention.failed === undefined ||
           props.intervention.failed === null ||
           props.intervention.failed === '' ? null : (

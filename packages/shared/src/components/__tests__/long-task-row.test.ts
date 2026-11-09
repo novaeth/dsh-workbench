@@ -114,6 +114,75 @@ describe('两按停止钮：样式跟 dsh 那颗钮同款（组件自带，同�
   });
 });
 
+describe('人工干预节点：结构化回执表单（fields + submit）', () => {
+  it('★★ fields 与 submit 都在才画表单：input 只长在表单子组件里，没有 fields 的旧行不碰它', () => {
+    const gate = ROW.indexOf('{fields.length === 0 || submit === undefined ? null : (');
+    const usage = ROW.indexOf('<InterventionForm fields={fields} submit={submit} />');
+    const helper = ROW.indexOf('function InterventionForm(');
+    const form = ROW.indexOf('<form className="wb-longTaskForm" onSubmit={onSubmit}>');
+    const input = ROW.indexOf('<input');
+
+    expect(ROW).toContain('const fields = props.intervention?.fields ?? [];');
+    expect(ROW).toContain('const submit = props.intervention?.submit;');
+    expect(gate).toBeGreaterThan(0);
+    expect(usage).toBeGreaterThan(gate);
+    expect(helper).toBeGreaterThan(0);
+    expect(form).toBeGreaterThan(helper);
+    expect(input).toBeGreaterThan(helper);
+    expect(ROW.indexOf('<input', input + 1)).toBe(-1);
+  });
+
+  it('★★ 每项一个 label + 输入框；secret 是 password，其余 text；autoComplete="off"', () => {
+    expect(ROW).toContain('{fields.map((field) => (');
+    expect(ROW).toContain('<label className="wb-longTaskField" key={field.key}>');
+    expect(ROW).toContain('<span className="wb-longTaskFieldLabel">');
+    expect(ROW).toContain("type={field.kind === 'secret' ? 'password' : 'text'}");
+    expect(ROW).toContain('autoComplete="off"');
+    expect(ROW).toContain('placeholder={field.placeholder}');
+  });
+
+  it('★★ 必填带 *；必填没填（或空串）时提交钮 disabled，busy 也禁用', () => {
+    expect(ROW).toContain(
+      '{field.required === true ? <span className="wb-longTaskFieldRequired">*</span> : null}',
+    );
+    expect(ROW).toContain("(field) => field.required === true && (values[field.key] ?? '').trim() === '',");
+    expect(ROW).toContain('disabled={submitBusy || requiredMissing}');
+    expect(ROW).toContain('type="submit"');
+  });
+
+  it('★★ 提交把整份 values 交给 submit.onSubmit；label 也由调用点给', () => {
+    expect(ROW).toContain('const [values, setValues] = useState<Readonly<Record<string, string>>>({});');
+    expect(ROW).toContain('submit.onSubmit({ ...values });');
+    expect(ROW).toContain('{submit.label}');
+    expect(ROW).toContain('setValues({ ...values, [field.key]: event.target.value })');
+  });
+
+  it('★★ submit.failed 用 wb-longTaskNeedWhy 画在表单下面（与动作失败同一行样式）', () => {
+    const form = ROW.indexOf('<form');
+    const why = ROW.indexOf('{submitFailed ===');
+
+    expect(ROW).toContain('const submitFailed =');
+    expect(ROW).toContain('<p className="wb-longTaskNeedWhy">{submitFailed}</p>');
+    expect(why).toBeGreaterThan(form);
+    expect(CSS).toContain('.wb-longTaskNeedWhy {');
+  });
+
+  it('★★ 表单样式在同目录 .css，尺寸 / 颜色全走令牌，零注释', () => {
+    for (const cls of [
+      '.wb-longTaskForm {',
+      '.wb-longTaskField {',
+      '.wb-longTaskFieldLabel {',
+      '.wb-longTaskFieldRequired {',
+      '.wb-longTaskFieldInput {',
+    ]) {
+      expect(CSS).toContain(cls);
+    }
+    expect(CSS).toContain('min-width: var(--wb-len-120)');
+    expect(CSS).toContain('var(--dsw-alias-label-secondary)');
+    expect(CSS).not.toContain('/*');
+  });
+});
+
 describe('人工干预节点（needs-human）：标题 + 说明 + 动作，组件仍是哑的', () => {
   it('★★ 不给 intervention ⇒ 那一行整个不出现（旧行一个像素不变）', () => {
     expect(ROW).toContain('{props.intervention === undefined ? null : (');
