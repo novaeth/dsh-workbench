@@ -1,3 +1,7 @@
+.fixtureCard {
+  width: var(--wb-len-240);
+}
+
 .gallery {
   display: flex;
   flex-direction: column;

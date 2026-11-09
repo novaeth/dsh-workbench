@@ -12,12 +12,15 @@ import {
   SetupShell,
   SkeletonRows,
   StateBlock,
+  blockerOfCapability,
+  blockerOfError,
 } from '@dsh-workbench/shared';
 import type { UnitSetup } from '@dsh-workbench/shared';
 import { IconPanelScreen } from '@dsh-workbench/shared';
 import { UnitBlocker } from '@/shared/components/UnitBlocker';
+import { BlockerState } from '@/shared/components/BlockerState';
 import { IconModules } from '@/shared/components/IconModules';
-import { StateDot } from '@deepseek-ai/dsh-client-ui-primitives';
+import { Button, StateDot } from '@deepseek-ai/dsh-client-ui-primitives';
 import {
   AppearanceDemo,
   ChoiceDemo,
@@ -179,6 +182,82 @@ function StateSection({ t }: { readonly t: BoardModuleProps['t'] }) {
   );
 }
 
+function StatesSection({ t }: { readonly t: BoardModuleProps['t'] }) {
+  const timeout = blockerOfError({ code: 'cli-timeout', message: '浏览器没起来' }, t);
+  const fetchFailed = blockerOfError({ code: 'weird', message: 'Failed to fetch' }, t);
+  const login = blockerOfError(
+    { code: 'auth-required', message: '需要登录', helpUrl: 'https://example.com/login' },
+    t,
+    { platform: '示例平台' },
+  );
+  const denied = blockerOfError(
+    { code: 'permission-denied', message: '没有权限', helpUrl: 'https://example.com/settings' },
+    t,
+    { platform: '示例平台' },
+  );
+  const missing = blockerOfCapability(
+    {
+      unit: 'sample',
+      status: 'missing',
+      needs: [
+        {
+          id: 'extension',
+          kind: 'extension',
+          name: '浏览器插件',
+          status: 'missing',
+          detail: '装一下浏览器插件',
+          provision: 'ready',
+        },
+      ],
+    },
+    t,
+  );
+
+  return (
+    <Section
+      title="卡片状态（统一版）"
+      note="同一套动作区：正文标题 12.5/600、提示 11.5/17、动作右下；重试是 outline，整卡阻断居中为例外"
+    >
+      <Grid>
+        <Cell label="通知 notice · 卡片里的右下动作（重试 = outline）">
+          <div className={styles.fixtureCard}>
+            <Card t={t} title="示例模块" refreshing={false} onRefresh={() => {}}>
+              <BlockerState blocker={timeout} t={t} busy={false} flush onRetry={() => {}} />
+            </Card>
+          </div>
+        </Cell>
+        <Cell label="卡内阻断 inline · Failed to fetch（人话标题 + 详情折叠）">
+          <div className={styles.fixtureCard}>
+            <Card t={t} title="示例模块" refreshing={false} onRefresh={() => {}}>
+              <BlockerState blocker={fetchFailed} t={t} busy={false} flush onRetry={() => {}} />
+            </Card>
+          </div>
+        </Cell>
+        <Cell label="整卡阻断 block · 居中（唯一例外）">
+          <BlockerState blocker={login} t={t} busy={false} onRetry={() => {}} />
+        </Cell>
+        <Cell label="没有权限 · 链接动作 + 重试">
+          <BlockerState blocker={denied} t={t} busy={false} onRetry={() => {}} />
+        </Cell>
+        <Cell label="能力缺失 · 装一下 / 去市场">
+          {missing === undefined ? null : <BlockerState blocker={missing} t={t} busy={false} onRetry={() => {}} />}
+        </Cell>
+        <Cell label="StateBlock · 动作右下">
+          <StateBlock
+            title="这个仓库不在 Coding 上"
+            hint="代码分析只读 Coding 仓库"
+            actions={
+              <Button type="button" size="sm" variant="outline" onClick={() => {}}>
+                重试
+              </Button>
+            }
+          />
+        </Cell>
+      </Grid>
+    </Section>
+  );
+}
+
 const setupLabels = {
   back: '上一步',
   next: '下一步',
@@ -259,6 +338,7 @@ export function KitPreview({ t }: BoardModuleProps) {
           <ConfirmSection />
           <CardSection t={t} />
           <StateSection t={t} />
+          <StatesSection t={t} />
           <SetupSection />
           <ActivitySection />
           <LongTaskSection />
