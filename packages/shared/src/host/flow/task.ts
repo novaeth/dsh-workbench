@@ -33,11 +33,20 @@ function longStepOf(event: FlowStepEvent): LongTaskStep {
   }
   if (event.status === 'skipped') return { kind: 'info', text: `${event.title}（跳过）` };
   if (event.status === 'ok') return { kind: 'succeed', text: event.title };
+  if (event.status === 'needs-human') {
+    return {
+      kind: 'info',
+      text: event.intervention?.title ?? event.message ?? event.title,
+      ...(event.intervention === undefined ? {} : { intervention: event.intervention }),
+    };
+  }
   if (event.status === 'needs-login') {
     return {
       kind: 'info',
       text: event.message ?? `${event.title}：需要登录`,
-      loginUrl: event.loginUrl ?? '',
+      ...(event.loginUrl === undefined || event.loginUrl === ''
+        ? {}
+        : { loginUrl: event.loginUrl }),
     };
   }
   if (event.message !== undefined) return { kind: 'info', text: `${event.title}：${event.message}` };
@@ -92,6 +101,7 @@ export function flowTaskDeps(
       status: snapshot.status,
       step: snapshot.step,
       steps: snapshot.steps,
+      intervention: snapshot.intervention,
       loginUrl: snapshot.loginUrl,
       why: snapshot.why,
     }),

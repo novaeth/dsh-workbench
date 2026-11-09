@@ -27,8 +27,9 @@ describe('stopRouteOf（停止那条写路由）', () => {
 });
 
 describe('longTaskDot', () => {
-  it('★ 两个"还在等"的状态都转圈：等编排与等你登录是同一个信号', () => {
+  it('★ 三个"还在等"的状态都转圈：等编排、等你处理、等你登录是同一个信号', () => {
     expect(longTaskDot('running')).toBe('ongoing');
+    expect(longTaskDot('needs-human')).toBe('ongoing');
     expect(longTaskDot('needs-login')).toBe('ongoing');
     expect(longTaskDot('ok')).toBe('done');
     expect(longTaskDot('failed')).toBe('error');
@@ -40,10 +41,15 @@ describe('longTaskDot', () => {
 });
 
 describe('longTaskIsLive（调用点判「还在跑」用的那个谓词）', () => {
-  it('★ 只认 running 与 needs-login —— 与 longTaskDot 的 ongoing 同一口径', () => {
-    for (const status of ['running', 'needs-login', 'ok', 'failed', 'stopped'] as const) {
+  it('★ 只认 running / needs-human / needs-login —— 与 longTaskDot 的 ongoing 同一口径', () => {
+    for (const status of ['running', 'needs-human', 'needs-login', 'ok', 'failed', 'stopped'] as const) {
       expect(longTaskIsLive(status)).toBe(longTaskDot(status) === 'ongoing');
     }
+  });
+
+  it('★ 等人工与旧的等登录都还能停（两颗状态点同一档）', () => {
+    expect(longTaskIsLive('needs-human')).toBe(true);
+    expect(longTaskIsLive('needs-login')).toBe(true);
   });
 
   it('★ 结束的三态（成功 / 失败 / 用户按停）都不是"在跑"', () => {

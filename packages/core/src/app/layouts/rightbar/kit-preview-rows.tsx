@@ -189,7 +189,7 @@ export function LongTaskSection() {
   return (
     <Section
       title="长任务那一行"
-      note="五种状态：跑着 / 要登录 / 好了 / 失败（带步骤与原文）/ 用户按停；带 stop 的那条最右边有一颗两按确认的停止钮"
+      note="六种状态：跑着 / 要登录（旧路）/ 等你处理（人工干预节点）/ 好了 / 失败（带步骤与原文）/ 用户按停；带 stop 的那条最右边有一颗两按确认的停止钮"
     >
       <div className={styles.stack}>
         <LongTaskRow
@@ -211,6 +211,29 @@ export function LongTaskSection() {
           }}
         />
         <LongTaskRow status="needs-login" headline="要登录腾讯云" problem="凭证过期了" />
+        <LongTaskRow
+          status="needs-human"
+          headline="发布会话 123 等你确认"
+          intervention={{
+            title: '去控制台点「确认发布」',
+            hint: '凭证过期了',
+            actions: [
+              { key: 'open', label: '打开', primary: true, onPress: () => undefined },
+              { key: 'copy', label: '复制地址', onPress: () => undefined },
+            ],
+          }}
+          stop={{
+            onStop: () => undefined,
+            label: '停止任务 发布会话 123',
+            askLabel: '确认停止',
+            armedLabel: '再次点击确认停止',
+          }}
+        />
+        <LongTaskRow
+          status="needs-human"
+          headline="等你在平台重新生成 Token"
+          intervention={{ title: '去平台重新生成 Token' }}
+        />
         <LongTaskRow
           status="ok"
           headline="发布完成"

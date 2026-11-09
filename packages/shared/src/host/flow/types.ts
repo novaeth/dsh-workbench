@@ -1,3 +1,5 @@
+import type { LongTaskIntervention } from '../../contract/long-task.js';
+
 /**
  * 一条流程：按顺序跑的步骤清单；步骤里的动作按名字从注册表取。
  */
@@ -97,7 +99,7 @@ export interface FlowScope {
 }
 
 /**
- * 动作执行时拿到的现场：取消信号、这次跑的 id 与工作区、当前步骤 id、一行进度、登录提示。
+ * 动作执行时拿到的现场：取消信号、这次跑的 id 与工作区、当前步骤 id、一行进度、登录与人工干预提示。
  */
 export interface FlowActionContext {
   readonly signal: AbortSignal;
@@ -106,6 +108,7 @@ export interface FlowActionContext {
   readonly stepId: string;
   log(text: string): void;
   login(url: string): void;
+  need(intervention: LongTaskIntervention): void;
 }
 
 /**
@@ -144,15 +147,16 @@ export interface FlowActionRegistry {
 }
 
 /**
- * 步骤事件：开始、成功、跳过、失败、需要登录；重试时带第几次。
+ * 步骤事件：开始、成功、跳过、失败、需要登录、需要人工处理；重试时带第几次。
  */
 export interface FlowStepEvent {
   readonly stepId: string;
   readonly title: string;
-  readonly status: 'running' | 'ok' | 'skipped' | 'failed' | 'needs-login';
+  readonly status: 'running' | 'ok' | 'skipped' | 'failed' | 'needs-login' | 'needs-human';
   readonly attempt?: number | undefined;
   readonly message?: string | undefined;
   readonly loginUrl?: string | undefined;
+  readonly intervention?: LongTaskIntervention | undefined;
 }
 
 /**

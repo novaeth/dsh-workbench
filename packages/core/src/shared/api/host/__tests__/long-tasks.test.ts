@@ -53,6 +53,53 @@ describe('liveLongTaskRows：左栏那颗 loading 点读的那份清单', () => 
     });
   });
 
+  it('★★ 人工干预节点跟着行走：needs-human 的 intervention 原样透传，没这一步的行不带这个键', async () => {
+    const runs = createLongTaskRegistry<LongTaskBase>({
+      run: async ({ onStep, signal }) => {
+        onStep({
+          kind: 'info',
+          text: '去控制台确认',
+          intervention: {
+            title: '去控制台点「确认发布」',
+            hint: '凭证过期了',
+            actions: [
+              { kind: 'open-url', url: 'https://example.test/console', label: '打开控制台' },
+              { kind: 'copy', text: 'abc-123' },
+            ],
+          },
+        });
+        await new Promise<void>((resolve) => {
+          signal.addEventListener('abort', () => resolve(), { once: true });
+        });
+        return 'ok';
+      },
+      view: (snapshot) => ({ target: snapshot.target }),
+    });
+    runs.start({ workspace: '/w/a', target: 'env-prod' });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    const rows = liveLongTaskRows(
+      new Map([
+        ['board', runs],
+        ['inventory', registry({ workspace: '/w/b', target: 'board' })],
+      ]),
+    );
+
+    expect(rows[0]).toMatchObject({
+      status: 'needs-human',
+      intervention: {
+        title: '去控制台点「确认发布」',
+        hint: '凭证过期了',
+        actions: [
+          { kind: 'open-url', url: 'https://example.test/console', label: '打开控制台' },
+          { kind: 'copy', text: 'abc-123' },
+        ],
+      },
+    });
+    expect(rows[1]?.intervention).toBeUndefined();
+    expect(rows[1]).not.toHaveProperty('intervention');
+  });
+
   it('★★ 上一版那份注册表（没有 `live()`）跳过它，别的单元照旧 —— 不抛、不整条读口一起瞎', () => {
     const stale = { current: () => [] } as unknown as LongTaskRegistry<LongTaskBase>;
 

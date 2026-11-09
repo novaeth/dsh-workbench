@@ -3,7 +3,12 @@ import type { SessionStatus, SessionsSnapshot, WorkspaceView } from '@dsh-workbe
 import type { LongTaskPresence } from '@/modules/sessions';
 import { blankSessionIdOf, firstSessionIdOf, openNewSession, openPickedProject } from '../session-pick';
 
-const NO_LONG_TASKS: LongTaskPresence = { bySession: new Set(), byWorkspace: new Map() };
+const NO_LONG_TASKS: LongTaskPresence = {
+  bySession: new Set(),
+  byWorkspace: new Map(),
+  waitingBySession: new Set(),
+  waitingByWorkspace: new Map(),
+};
 
 function session(id: string, patch: Partial<SessionsSnapshot['byId'][string]> = {}) {
   return {
@@ -174,13 +179,52 @@ describe('firstSessionIdOf（切项目打开哪条会话）', () => {
       sessions: many,
       statusById: new Map<string, SessionStatus>(),
       archivedIds: new Set<string>(),
-      longTasks: { bySession: new Set(['s-task']), byWorkspace: new Map([['/tmp/demo', 1]]) },
+      longTasks: {
+        bySession: new Set(['s-task']),
+        byWorkspace: new Map([['/tmp/demo', 1]]),
+        waitingBySession: new Set(),
+        waitingByWorkspace: new Map(),
+      },
       openSession: (id) => calls.push(`open:${id}`),
       startSession: (id) => calls.push(`new:${id}`),
       workspaceId: 'w1',
     });
 
     expect(calls).toEqual(['open:s-task']);
+  });
+
+  it('★★ 停在等人的长任务那条会话挑得到，且压过"跑完没看"与在跑（warning 那一档）', () => {
+    const calls: string[] = [];
+    const many: WorkspaceView = { ...workspace, sessionIds: ['s-wait', 's-done', 's-run'] };
+    const rows: SessionsSnapshot = {
+      byId: {
+        's-wait': session('s-wait', { updatedAt: 3 }),
+        's-done': session('s-done', { updatedAt: 9 }),
+        's-run': session('s-run', { updatedAt: 8 }),
+      },
+      projectionsBySession: {},
+    };
+
+    openPickedProject({
+      items: [many],
+      sessions: rows,
+      statusById: new Map<string, SessionStatus>([
+        ['s-done', { completionUnread: true }],
+        ['s-run', { running: true }],
+      ]),
+      archivedIds: new Set<string>(),
+      longTasks: {
+        bySession: new Set(['s-wait']),
+        byWorkspace: new Map([['/tmp/demo', 1]]),
+        waitingBySession: new Set(['s-wait']),
+        waitingByWorkspace: new Map([['/tmp/demo', 1]]),
+      },
+      openSession: (id) => calls.push(`open:${id}`),
+      startSession: (id) => calls.push(`new:${id}`),
+      workspaceId: 'w1',
+    });
+
+    expect(calls).toEqual(['open:s-wait']);
   });
 });
 

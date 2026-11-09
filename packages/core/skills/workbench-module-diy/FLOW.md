@@ -14,7 +14,7 @@
 |---|---|
 | 用户说「以后 / 每次 / 每周 / 按这个流程 / 固化 / 做成按钮」 | 固化 |
 | 三步以上、有先后依赖 | 固化 |
-| 要等、轮询、重试、取消、中途登录 | 固化 |
+| 要等、轮询、重试、取消、中途要人处理（登录等） | 固化 |
 | 要写平台、要审批、要留痕 | 固化 |
 | 只这一次、还在探、单步读 / 写 | 一次性 |
 | 拿不准 | 先一次性，跑通后用户再要固化 |
@@ -29,7 +29,7 @@
 一条 workflow = 模块宿主半侧的一份 `FlowDefinition` + 动作表 + 长任务 + 工具（可选卡片）。
 **v0 没有 flow 仓库，固化就是写进模块**，不是存一份 JSON。
 
-跑起来用户看到一条长任务行（五态与停止钮见 [TOOLS.md](TOOLS.md) §9）：
+跑起来用户看到一条长任务行（六态与停止钮见 [TOOLS.md](TOOLS.md) §9）：
 
 - 写平台前有一次审批（模块清单 `writes: true` + `needsApproval`）。
 - 工具返回 `runId`；再调可看同一条。
@@ -104,7 +104,7 @@ export const face: UnitModuleFace = {
 在模块 `mount` 里：
 
 - **优先用 `createFlowTask({ key, flow, actions, flowHost: deps.flow, longTasks: deps.longTasks, tool })`**（`@dsh-workbench/shared/host`）：它做 `flow.check`、建长任务注册表，返回 `{ runs, start, tool }`；`tool` 的 `execute` 与 `start` 共用同一实现，`runId` 参数自动支持「只看那条」。
-- 要自定义 `view` / `step` / `outcome` 时才手写 `const runs = deps.longTasks.create({ key, run, view, outcome, stopped })`；`run` 调 `deps.flow.run`，把 `onStep` 映射到长任务的 `onStep`；返回 `status === 'failed'` 时 throw，让注册表标 failed。默认映射用 `longTaskStepOf(event)`（`@dsh-workbench/shared/host` 导出，`running`/`ok`/`skipped`/`failed`/`needs-login` 各对应一种 `kind`）；要改文案或过滤步骤就自己写映射。
+- 要自定义 `view` / `step` / `outcome` 时才手写 `const runs = deps.longTasks.create({ key, run, view, outcome, stopped })`；`run` 调 `deps.flow.run`，把 `onStep` 映射到长任务的 `onStep`；返回 `status === 'failed'` 时 throw，让注册表标 failed。默认映射用 `longTaskStepOf(event)`（`@dsh-workbench/shared/host` 导出，`running`/`ok`/`skipped`/`failed`/`needs-login`/`needs-human` 各对应一种 `kind`，`needs-human` 带 `intervention`、空 `loginUrl` 不再带键）；要改文案或过滤步骤就自己写映射。自己写 `view` 时要把 `intervention` 带上（默认 `view` 已透传），否则面板行只知道停在 `needs-human`、不知道要人做什么。
 - `registerTools()`：**调用时才注册**，返回一组清理函数；里面 `tools.register(tool)`（`execute` 里 `start` 或 `runs.start`，返回 `{ ok, runId, status, text }`；再按 `runId` 查）。
 - 写平台的工具：清单 `writes: true` + `needsApproval` / `approvalDetail`；动作里不要自己再问一遍。
 - 校验：`deps.flow.check(flow, actions)`；有问题先修，不装。
@@ -124,7 +124,8 @@ export const face: UnitModuleFace = {
 | 逐项 + 轮询 | `forEach` 与 `poll` 同一步；每项单独轮询 |
 | 子流程 | `{ id, flow: subFlow, with: { ... } }`；结果在 `steps.<id>` |
 | 提前结束 | `flow.stopWhen` |
-| 登录 | 动作用 `withLoginRetry(action)`：认证失败自动 `ctx.login(url)` 并在原地重试；长任务进 `needs-login`，超过 `maxMs` 仍停在那里等用户停止 |
+| 人工干预 | 动作里调 `ctx.need(intervention)`（`title` 说清要人做什么，可选 `hint` / `actions`），长任务进 `needs-human`；报完继续自己轮询，条件满足再发下一步（v1 没有「我处理完了」钮，`recheck` 留 v2） |
+| 登录 | 动作用 `withLoginRetry(action)`：认证失败自动 `ctx.login(url)` 并在原地重试；长任务进 `needs-login`，超过 `maxMs` 仍停在那里等用户停止。这是旧路，新代码用 `ctx.need` 的 `open-url` 动作 |
 
 分支（`already_merged` / `can_merge` / `REVIEW_WAITING`）继续写在动作里；flow 只保留稳定的外层顺序。
 
@@ -139,6 +140,6 @@ export const face: UnitModuleFace = {
 ## 5 验收
 
 - `deps.flow.check` 无问题；`dsh-wb-module build` / `check` 绿。
-- 真跑一遍：长任务行出现、进度对、能停止、失败给原因；要登录时给链接。
+- 真跑一遍：长任务行出现、进度对、能停止、失败给原因；要人处理时那行说清做什么、去哪做（`ctx.need` 的 `intervention` 或旧的 `ctx.login`）。
 - 写平台前审批屏能看到对象 / 环境 / 影响；拒绝后不跑。
 - 用户只说过需求；没被问实现。

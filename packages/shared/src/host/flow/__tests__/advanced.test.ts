@@ -200,6 +200,32 @@ describe('runFlow advanced', () => {
     });
   });
 
+  it('★★ 动作能发 needs-human 事件（人工干预节点），流程继续跑', async () => {
+    const intervention = {
+      title: '去控制台点确认',
+      actions: [{ kind: 'open-url' as const, url: 'https://example.com/console' }],
+    };
+    const actions = actionsOf({
+      confirm: async (_input, context) => {
+        context.need(intervention);
+        return 'ok';
+      },
+    });
+
+    const { result, events } = await runFlowWith(
+      { id: 'human', title: '等人', steps: [{ id: 'confirm', action: 'confirm' }] },
+      actions,
+    );
+
+    expect(result.status).toBe('ok');
+    expect(events).toContainEqual({
+      stepId: 'confirm',
+      title: 'confirm',
+      status: 'needs-human',
+      intervention,
+    });
+  });
+
   it('子流程：with 作为 in，结果挂 steps.<id>，事件带前缀', async () => {
     const actions = actionsOf({
       read: async (input) => ({ mergedSha: (input as { sha: string }).sha }),

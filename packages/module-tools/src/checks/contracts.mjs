@@ -761,7 +761,7 @@ export async function run() {
       if (!LONG_TASK_RENDERERS.some((one) => clientText.includes(one))) {
         problems.push(
           `${name}: 注册了长任务，但客户端产物里没有 ${LONG_TASK_RENDERERS.join(' / ')}（kit 里那套）—— ` +
-            `用户点完只看得到"没反应"，看不到进行中 / 要登录 / 停下的 / 完成 / 出错`,
+            `用户点完只看得到"没反应"，看不到进行中 / 等人处理 / 要登录 / 停下的 / 完成 / 出错`,
         );
       }
     }

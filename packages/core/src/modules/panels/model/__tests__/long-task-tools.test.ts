@@ -8,7 +8,7 @@ import { LONG_TASKS_LIST_TOOL, LONG_TASKS_STOP_TOOL } from '../../unit';
 
 const NOW = '2026-10-21T00:00:00.000Z';
 
-type Mode = 'running' | 'needs-login' | 'stopped' | 'ok' | 'failed';
+type Mode = 'running' | 'needs-human' | 'needs-login' | 'stopped' | 'ok' | 'failed';
 
 function registryOf(options: {
   readonly id: string;
@@ -24,6 +24,14 @@ function registryOf(options: {
       if (options.step !== undefined) onStep({ kind: 'info', text: options.step });
       if (options.mode === 'running') return new Promise(() => {});
       if (options.mode === 'failed') return Promise.reject(new Error('炸了'));
+      if (options.mode === 'needs-human') {
+        onStep({
+          kind: 'info',
+          text: '等你确认发布会话',
+          intervention: { title: '去控制台点确认' },
+        });
+        return new Promise(() => {});
+      }
       if (options.mode === 'needs-login') {
         onStep({ kind: 'info', text: '凭证过期了', loginUrl: 'https://example.com/login' });
         return new Promise(() => {});
@@ -116,23 +124,57 @@ describe('workbench_long_tasks_list：一个工作区现在有哪几趟，一眼
     );
   });
 
-  it('★ 五种口径词一一对应五种态（running / needs-login / stopped / ok / failed）', async () => {
+  it('★ 六种口径词一一对应六种态（running / needs-human / needs-login / stopped / ok / failed）', async () => {
     const runs = seeded([
       ['a', registryOf({ id: 'run-1', target: 'one', mode: 'running' })],
-      ['b', registryOf({ id: 'run-2', target: 'two', mode: 'needs-login' })],
-      ['c', registryOf({ id: 'run-3', target: 'three', mode: 'stopped' })],
-      ['d', registryOf({ id: 'run-4', target: 'four', mode: 'ok' })],
-      ['e', registryOf({ id: 'run-5', target: 'five', mode: 'failed' })],
+      ['b', registryOf({ id: 'run-2', target: 'two', mode: 'needs-human' })],
+      ['c', registryOf({ id: 'run-3', target: 'three', mode: 'needs-login' })],
+      ['d', registryOf({ id: 'run-4', target: 'four', mode: 'stopped' })],
+      ['e', registryOf({ id: 'run-5', target: 'five', mode: 'ok' })],
+      ['f', registryOf({ id: 'run-6', target: 'six', mode: 'failed' })],
     ]);
     await tick();
     const result = await run(LONG_TASKS_LIST_TOOL, runs, {}, execAt('/w/x', 's1'));
     const text = String(result['text']);
 
     expect(text).toContain('进行中');
+    expect(text).toContain('等人处理');
     expect(text).toContain('要登录');
     expect(text).toContain('被停了');
     expect(text).toContain('已完成');
     expect(text).toContain('出错');
+  });
+
+  it('★★ 等人处理那行补「要人做：<intervention.title>」，步骤那句照旧', async () => {
+    const runs = seeded([
+      ['inventory', registryOf({ id: 'run-1', target: 'env-prod', mode: 'needs-human', session: 's1' })],
+    ]);
+    await tick();
+    const result = await run(LONG_TASKS_LIST_TOOL, runs, {}, execAt('/w/x', 's1'));
+
+    expect(result['text']).toBe(
+      '当前工作区：/w/x\n' +
+        '1. inventory · env-prod · 等人处理 · 等你确认发布会话 · 要人做：去控制台点确认 · id=run-1 · 我起的',
+    );
+  });
+
+  it('★ 没人等人的行不补那句；要登录那行也不补（intervention 只属于等人节点）', async () => {
+    const runs = seeded([
+      ['a', registryOf({ id: 'run-1', target: 'one', mode: 'running', session: 's1' })],
+      ['b', registryOf({ id: 'run-2', target: 'two', mode: 'needs-login', session: 's1' })],
+    ]);
+    await tick();
+    const result = await run(LONG_TASKS_LIST_TOOL, runs, {}, execAt('/w/x', 's1'));
+    const text = String(result['text']);
+
+    expect(text).not.toContain('要人做');
+  });
+
+  it('★ 列表工具描述提到「等人处理」（agent 读到就知道行里会写明要人做什么）', () => {
+    const seen = harness(undefined);
+    const description = String(seen.get(LONG_TASKS_LIST_TOOL)?.description);
+
+    expect(description).toContain('等人处理');
   });
 
   it('★ 三种来源词：我起的（session === 调用方会话）/ 用户按的（没记来源）/ 别的会话起的', async () => {

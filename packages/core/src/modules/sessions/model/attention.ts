@@ -13,23 +13,39 @@ export interface WorkspaceAttention {
   readonly severity: AttentionSeverity;
   readonly count: number;
   readonly longTask?: boolean | undefined;
+  readonly longTaskWaiting?: boolean | undefined;
 }
 
 export interface LongTaskPresence {
   readonly bySession: ReadonlySet<string>;
   readonly byWorkspace: ReadonlyMap<string, number>;
+  readonly waitingBySession: ReadonlySet<string>;
+  readonly waitingByWorkspace: ReadonlyMap<string, number>;
+}
+
+function longTaskWaitingStatus(status: string | undefined): boolean {
+  return status === 'needs-human' || status === 'needs-login';
 }
 
 export function longTaskPresenceOf(
-  rows: readonly { readonly workspace: string; readonly session?: string | undefined }[],
+  rows: readonly {
+    readonly workspace: string;
+    readonly session?: string | undefined;
+    readonly status?: string | undefined;
+  }[],
 ): LongTaskPresence {
   const bySession = new Set<string>();
   const byWorkspace = new Map<string, number>();
+  const waitingBySession = new Set<string>();
+  const waitingByWorkspace = new Map<string, number>();
   for (const row of rows) {
     if (row.session !== undefined) bySession.add(row.session);
     byWorkspace.set(row.workspace, (byWorkspace.get(row.workspace) ?? 0) + 1);
+    if (!longTaskWaitingStatus(row.status)) continue;
+    if (row.session !== undefined) waitingBySession.add(row.session);
+    waitingByWorkspace.set(row.workspace, (waitingByWorkspace.get(row.workspace) ?? 0) + 1);
   }
-  return { bySession, byWorkspace };
+  return { bySession, byWorkspace, waitingBySession, waitingByWorkspace };
 }
 
 export interface Attention {
@@ -69,14 +85,26 @@ const WORDS: Record<AttentionSeverity, string> = {
 
 const NO_IDS: ReadonlySet<string> = new Set();
 
+function sessionAttentionOf(
+  summary: SessionSummary,
+  statusById: SessionStatusSnapshot,
+  sessions: SessionsSnapshot,
+  longTasks: LongTaskPresence | undefined,
+): AttentionSeverity | undefined {
+  return attentionOfSession(summary, statusById, sessions, longTasks?.bySession, longTasks?.waitingBySession);
+}
+
+
 export function attentionOfSession(
   summary: SessionSummary,
   statusById: SessionStatusSnapshot,
   sessions: SessionsSnapshot,
   longTaskIds: ReadonlySet<string> = NO_IDS,
+  longTaskWaitingIds: ReadonlySet<string> = NO_IDS,
 ): AttentionSeverity | undefined {
-  const node = sessionNode(summary, statusById, sessions, NO_IDS, NO_IDS, longTaskIds);
+  const node = sessionNode(summary, statusById, sessions, NO_IDS, NO_IDS, longTaskIds, longTaskWaitingIds);
   if (node.pendingInteraction !== undefined) return 'warning';
+  if (node.longTaskWaiting) return 'warning';
   if (node.running || node.runningSubagentCount > 0 || node.longTask) return 'ongoing';
   if (node.completed) return 'done';
   return undefined;
@@ -97,7 +125,7 @@ export function attentionSessionIdOf(input: AttentionPickInput): string | null {
   let best: SessionSummary | undefined;
   let bestRank = -1;
   for (const summary of sessionRows(workspace.sessionIds, input.sessions, input.archivedIds)) {
-    const ofSession = attentionOfSession(summary, input.statusById, input.sessions, input.longTasks?.bySession);
+    const ofSession = sessionAttentionOf(summary, input.statusById, input.sessions, input.longTasks);
     if (ofSession === undefined) continue;
     const rank = RANK[ofSession];
     if (best === undefined || rank > bestRank || (rank === bestRank && isLater(summary, best))) {
@@ -125,7 +153,7 @@ export function attentionOf(input: AttentionInput): Attention {
     let taggedCount = 0;
 
     for (const summary of sessionRows(workspace.sessionIds, input.sessions, input.archivedIds)) {
-      const ofSession = attentionOfSession(summary, input.statusById, input.sessions, input.longTasks?.bySession);
+      const ofSession = sessionAttentionOf(summary, input.statusById, input.sessions, input.longTasks);
       if (ofSession === undefined) continue;
 
       if (severity === undefined || RANK[ofSession] > RANK[severity]) {
@@ -143,6 +171,20 @@ export function attentionOf(input: AttentionInput): Attention {
           taggedCount += 1;
         }
       }
+    }
+
+    const waiting = input.longTasks?.waitingByWorkspace.get(workspace.path) ?? 0;
+    if (waiting > 0) {
+      const own: WorkspaceAttention = {
+        severity: 'warning',
+        count: waiting,
+        longTask: true,
+        longTaskWaiting: true,
+      };
+      byWorkspace.set(workspace.workspaceId, own);
+      overall = merge(overall, own);
+      if (workspace.workspaceId !== input.currentWorkspaceId) elsewhere = merge(elsewhere, own);
+      continue;
     }
 
     const longTasks = input.longTasks?.byWorkspace.get(workspace.path) ?? 0;
@@ -165,10 +207,23 @@ export function attentionOf(input: AttentionInput): Attention {
 function merge(current: WorkspaceAttention | null, next: WorkspaceAttention): WorkspaceAttention {
   if (current === null || RANK[next.severity] > RANK[current.severity]) return next;
   if (next.severity !== current.severity) return current;
-  return { severity: current.severity, count: current.count + next.count };
+  const waiting = current.longTaskWaiting === true && next.longTaskWaiting === true;
+  return {
+    severity: current.severity,
+    count: current.count + next.count,
+    ...(waiting ? { longTask: true, longTaskWaiting: true } : {}),
+  };
 }
 
 export function attentionLabel(attention: WorkspaceAttention, t: Translate): string {
+  if (attention.longTaskWaiting === true) {
+    return t(
+      attention.count === 1
+        ? 'project.attention.longTaskWaiting.one'
+        : 'project.attention.longTaskWaiting.other',
+      { n: attention.count },
+    );
+  }
   if (attention.longTask === true) {
     return t(attention.count === 1 ? 'project.attention.longTask.one' : 'project.attention.longTask.other', {
       n: attention.count,
@@ -179,5 +234,6 @@ export function attentionLabel(attention: WorkspaceAttention, t: Translate): str
 }
 
 export function attentionWordLabel(attention: WorkspaceAttention, t: Translate): string {
+  if (attention.longTaskWaiting === true) return t('project.attention.state.longTaskWaiting');
   return t(WORDS[attention.severity]);
 }

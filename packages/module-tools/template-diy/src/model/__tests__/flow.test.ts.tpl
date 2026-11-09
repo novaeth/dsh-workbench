@@ -17,20 +17,22 @@ describe('样板流程的模型', () => {
     expect(flow.target).toEqual({ $ref: 'in.path' });
   });
 
-  it('只有 running / needs-login 算还在跑', () => {
+  it('running / needs-human / needs-login 都算还在跑', () => {
     expect(runIsLive(run())).toBe(true);
+    expect(runIsLive(run({ status: 'needs-human' }))).toBe(true);
     expect(runIsLive(run({ status: 'needs-login' }))).toBe(true);
     expect(runIsLive(run({ status: 'ok' }))).toBe(false);
     expect(runIsLive(run({ status: 'failed' }))).toBe(false);
     expect(runIsLive(run({ status: 'stopped' }))).toBe(false);
   });
 
-  it('标题按五态与当前步骤说人话', () => {
+  it('标题按六态与当前步骤说人话', () => {
     expect(headlineOf(run())).toBe('样板流程正在跑');
     expect(headlineOf(run({ step: '读目录' }))).toBe('样板流程：读目录');
     expect(headlineOf(run({ status: 'ok' }))).toBe('样板流程跑完了');
     expect(headlineOf(run({ status: 'failed' }))).toBe('样板流程失败');
     expect(headlineOf(run({ status: 'stopped' }))).toBe('样板流程已停止');
+    expect(headlineOf(run({ status: 'needs-human' }))).toBe('样板流程在等人处理');
     expect(headlineOf(run({ status: 'needs-login' }))).toBe('样板流程要登录');
   });
 });

@@ -44,6 +44,25 @@ export interface LongTaskRowLogin {
 }
 
 /**
+ * 人工干预节点上的一个动作：文案与点击。
+ */
+export interface LongTaskRowInterventionAction {
+  readonly key: string;
+  readonly label: string;
+  readonly primary?: boolean | undefined;
+  readonly onPress: () => void;
+}
+
+/**
+ * 人工干预节点（`needs-human`）：要人做什么、为什么、行内动作。
+ */
+export interface LongTaskRowIntervention {
+  readonly title: string;
+  readonly hint?: string | undefined;
+  readonly actions?: readonly LongTaskRowInterventionAction[] | undefined;
+}
+
+/**
  * `LongTaskRow` 的契约：状态、标题、问题、链接、登录钮，两处可展开的原始输出，与最右边那颗可选的停止钮。
  */
 export interface LongTaskRowProps {
@@ -58,6 +77,7 @@ export interface LongTaskRowProps {
   readonly copyLabel?: string | undefined;
   readonly copiedLabel?: string | undefined;
   readonly login?: LongTaskRowLogin | undefined;
+  readonly intervention?: LongTaskRowIntervention | undefined;
   readonly stop?: LongTaskRowStop | undefined;
 }
 
@@ -81,6 +101,7 @@ function RowLink({ href, text }: LongTaskRowLink) {
  * @param props.stepsTitle - 步骤那块展开行的标题；`rawTitle` 同理是原始输出那块。
  * @param props.copyLabel - 复制钮文案：给了才画复制钮；`copiedLabel` 是复制成功后那句。
  * @param props.login - `needs-login` 时那颗「去登录」；不给不画。
+ * @param props.intervention - `needs-human` 时的「要人做什么」那一行与动作；不给不画。
  * @param props.stop - 给了才在最右边画那颗两按停止钮；**不给就一个像素都不变**。只在生产方认 `signal` 时给。
  * @returns 一行长任务。
  */
@@ -142,6 +163,25 @@ export function LongTaskRow(props: LongTaskRowProps) {
           </button>
         )}
       </p>
+      {props.intervention === undefined ? null : (
+        <p className="wb-longTaskNeed">
+          <span className="wb-longTaskNeedTitle">{props.intervention.title}</span>
+          {props.intervention.hint === undefined ? null : (
+            <span className="wb-longTaskNeedHint">{props.intervention.hint}</span>
+          )}
+          {(props.intervention.actions ?? []).map((action) => (
+            <Button
+              key={action.key}
+              type="button"
+              size="sm"
+              variant={action.primary === true ? 'primary' : 'outline'}
+              onClick={action.onPress}
+            >
+              {action.label}
+            </Button>
+          ))}
+        </p>
+      )}
       {problem === '' ? null : <p className="wb-longTaskProblem">{problem}</p>}
       {stopWhy === '' ? null : <p className="wb-longTaskStopWhy">{stopWhy}</p>}
       {!failed ? null : (

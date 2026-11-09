@@ -29,7 +29,7 @@ export interface LongTaskFeed<T> {
 }
 
 /**
- * 卡片要轮询长任务那一行时调用：有在跑的（`running` / `needs-login`）按 `longTaskPollMs` 走快档、空闲走慢档；
+ * 卡片要轮询长任务那一行时调用：有在跑的（`running` / `needs-human` / `needs-login`）按 `longTaskPollMs` 走快档、空闲走慢档；
  * `workspace` 为 `null`、`mocked: true` 或 `enabled: false` 时不轮。换单元 / 换工作区就是换读数身份，
  * 旧那批立刻清空、读数回来前 `runs` 是空数组。
  * `stop(id)` 走 actions 通道的 `<单元>/runs/stop`；不在跑的那一趟会带回一句人话，不抛错。

@@ -1,14 +1,35 @@
 /**
- * 一条长任务的五种态；needs-login 与 running 一样算还没结束，stopped 是用户自己按停的。
+ * 一条长任务的六种态；`needs-human` 与旧的 `needs-login` 都跟 `running` 一样算还没结束，
+ * `stopped` 是用户自己按停的。
  */
-export type LongTaskStatus = 'running' | 'needs-login' | 'stopped' | 'ok' | 'failed';
+export type LongTaskStatus = 'running' | 'needs-human' | 'needs-login' | 'stopped' | 'ok' | 'failed';
 
 /**
- * 长任务步骤流里的一行：kind 定样式，登录那一步带 loginUrl 给用户去点。
+ * 人工干预节点里的一个动作：打开一个地址，或复制一段文字。
+ * `label` 不给就用外壳的词（去处理 / 复制）。
+ */
+export type LongTaskInterventionAction =
+  | { readonly kind: 'open-url'; readonly url: string; readonly label?: string | undefined }
+  | { readonly kind: 'copy'; readonly text: string; readonly label?: string | undefined };
+
+/**
+ * 一轮「要人处理」：要人做什么、为什么、去哪做。
+ * 步骤带上它，这一趟就停在 `needs-human`；下一条不带它的步骤表示继续跑。
+ */
+export interface LongTaskIntervention {
+  readonly title: string;
+  readonly hint?: string | undefined;
+  readonly actions?: readonly LongTaskInterventionAction[] | undefined;
+}
+
+/**
+ * 长任务步骤流里的一行：kind 定样式；带 `intervention` 的那一步是人工干预节点。
+ * `loginUrl` 是旧的登录节点（deprecated，用 `intervention` 的 `open-url` 动作代替），保留到下一个主版本。
  */
 export interface LongTaskStep {
   readonly kind: 'start' | 'succeed' | 'fail' | 'info' | 'warn';
   readonly text: string;
+  readonly intervention?: LongTaskIntervention | undefined;
   readonly loginUrl?: string | undefined;
 }
 
@@ -72,25 +93,25 @@ export function longTaskRunsOf<T>(state: {
 
 /**
  * 把长任务态折成状态点的那一档。
- * @param status 长任务的五种态。
- * @returns ongoing / done / error / idle；needs-login 也算进行中；`stopped` 落进 idle —— 灰点：不是成功、不是出错，是用户自己按停的。
+ * @param status 长任务的六种态。
+ * @returns ongoing / done / error / idle；needs-human 与 needs-login 都算进行中；`stopped` 落进 idle —— 灰点：不是成功、不是出错，是用户自己按停的。
  */
 export function longTaskDot(status: LongTaskStatus): 'ongoing' | 'done' | 'error' | 'idle' {
   if (status === 'ok') return 'done';
   if (status === 'failed') return 'error';
-  if (status === 'running' || status === 'needs-login') return 'ongoing';
+  if (status === 'running' || status === 'needs-human' || status === 'needs-login') return 'ongoing';
   return 'idle';
 }
 
 /**
- * 这一趟还在不在跑（`running` 与 `needs-login` 都算）。
+ * 这一趟还在不在跑（`running`、`needs-human` 与 `needs-login` 都算）。
  * 卡片要判"这一行要不要摆停止钮""这套环境里有没有活着的跑"时用这个 —— **不是** `longTaskDot`：
  * 那一件是状态点的**长相**（四档），归 `LongTaskRow` 自己用，不该被调用点拿去当判据。
- * @param status 长任务的五种态。
+ * @param status 长任务的六种态。
  * @returns 在跑 `true`；成功 / 失败 / 用户按停都是 `false`。
  */
 export function longTaskIsLive(status: LongTaskStatus): boolean {
-  return status === 'running' || status === 'needs-login';
+  return status === 'running' || status === 'needs-human' || status === 'needs-login';
 }
 
 /**

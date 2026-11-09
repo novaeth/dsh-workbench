@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { LongTaskStep } from '../../contract/long-task.js';
+import type { LongTaskIntervention, LongTaskStep } from '../../contract/long-task.js';
 import {
   createLongTaskHost,
   createLongTaskRegistry,
@@ -137,6 +137,120 @@ describe('createLongTaskRegistry.stop（停止只是转发给生产方，认不�
 
     expect(started.id).toBe('run-1');
     expect(row?.['id']).toBe('run-1');
+  });
+});
+
+describe('createLongTaskRegistry 的人工干预节点（needs-human）', () => {
+  const need: LongTaskIntervention = {
+    title: '要登录腾讯云',
+    hint: '凭证过期了',
+    actions: [
+      { kind: 'open-url', url: 'https://example.com/login', label: '去登录' },
+      { kind: 'copy', text: 'token-123' },
+    ],
+  };
+
+  it('★★ 步骤带 intervention：进 needs-human、存载荷、步骤文案照旧进快照', () => {
+    const h = harness();
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+
+    h.step({ kind: 'start', text: '发布停在第 2 步', intervention: need });
+
+    const snapshot = runs.snapshot(started.id);
+    expect(snapshot?.status).toBe('needs-human');
+    expect(snapshot?.intervention).toEqual(need);
+    expect(snapshot?.step).toBe('发布停在第 2 步');
+    expect(snapshot?.loginUrl).toBeUndefined();
+  });
+
+  it('★★ 下一条不带干预的步骤：退回 running，载荷清掉', () => {
+    const h = harness();
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+
+    h.step({ kind: 'start', text: '等人', intervention: need });
+    h.step({ kind: 'info', text: '人处理完了，继续' });
+
+    expect(runs.snapshot(started.id)?.status).toBe('running');
+    expect(runs.snapshot(started.id)?.intervention).toBeUndefined();
+  });
+
+  it('★★ 从旧的 needs-login 进新干预：loginUrl 清掉，状态换成 needs-human', () => {
+    const h = harness();
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+
+    h.step({ kind: 'info', text: '未登录', loginUrl: 'https://example.com/login' });
+    expect(runs.snapshot(started.id)?.status).toBe('needs-login');
+
+    h.step({ kind: 'info', text: '换人工确认', intervention: need });
+
+    expect(runs.snapshot(started.id)?.status).toBe('needs-human');
+    expect(runs.snapshot(started.id)?.loginUrl).toBeUndefined();
+  });
+
+  it('★ 空 loginUrl 不算登录（不再画出点不动的「去登录」）', () => {
+    const h = harness();
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+
+    h.step({ kind: 'info', text: '未登录', loginUrl: '' });
+
+    expect(runs.snapshot(started.id)?.status).toBe('running');
+    expect(runs.snapshot(started.id)?.loginUrl).toBeUndefined();
+  });
+
+  it('★★ 结算三态都清载荷：ok / failed / stopped', async () => {
+    const okHarness = harness();
+    const okRuns = createLongTaskRegistry(okHarness.deps);
+    const okStarted = okRuns.start({ workspace: '/w/a', target: 'release' });
+    okHarness.step({ kind: 'info', text: '等人', intervention: need });
+    okHarness.done({});
+    await flush();
+    expect(okRuns.snapshot(okStarted.id)?.status).toBe('ok');
+    expect(okRuns.snapshot(okStarted.id)?.intervention).toBeUndefined();
+
+    const failedHarness = harness();
+    const failedRuns = createLongTaskRegistry(failedHarness.deps);
+    const failedStarted = failedRuns.start({ workspace: '/w/a', target: 'release' });
+    failedHarness.step({ kind: 'info', text: '等人', intervention: need });
+    failedHarness.boom(new Error('炸了'));
+    await flush();
+    expect(failedRuns.snapshot(failedStarted.id)?.status).toBe('failed');
+    expect(failedRuns.snapshot(failedStarted.id)?.intervention).toBeUndefined();
+
+    const stoppedHarness = harness();
+    const stoppedRuns = createLongTaskRegistry(stoppedHarness.deps);
+    const stoppedStarted = stoppedRuns.start({ workspace: '/w/a', target: 'release' });
+    stoppedHarness.step({ kind: 'info', text: '等人', intervention: need });
+    expect(stoppedRuns.stop(stoppedStarted.id)).toBe(true);
+    expect(stoppedRuns.snapshot(stoppedStarted.id)?.intervention).toBeUndefined();
+  });
+
+  it('★★ live / current / active 三处都认 needs-human', () => {
+    const h = harness();
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+
+    h.step({ kind: 'info', text: '等人', intervention: need });
+
+    expect(runs.live().map((one) => one.id)).toEqual([started.id]);
+    expect(runs.live()[0]?.status).toBe('needs-human');
+    expect(runs.current('/w/a')).toHaveLength(1);
+    expect(runs.current('/w/a')[0]?.['status']).toBe('needs-human');
+    expect(runs.active('/w/a', 'release')?.status).toBe('needs-human');
+  });
+
+  it('★ 等人那一趟能停，载荷跟着清掉', () => {
+    const h = harness();
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+    h.step({ kind: 'info', text: '等人', intervention: need });
+
+    expect(runs.stop(started.id)).toBe(true);
+    expect(runs.snapshot(started.id)?.status).toBe('stopped');
+    expect(runs.snapshot(started.id)?.intervention).toBeUndefined();
   });
 });
 

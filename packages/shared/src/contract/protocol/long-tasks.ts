@@ -1,4 +1,4 @@
-import type { LongTaskStatus } from '../long-task.js';
+import type { LongTaskIntervention, LongTaskStatus } from '../long-task.js';
 
 export const LONG_TASKS_ROUTE = 'long-tasks';
 
@@ -11,6 +11,7 @@ export interface ShellLongTaskRow {
   readonly status: LongTaskStatus;
   readonly step?: string | undefined;
   readonly steps?: readonly string[] | undefined;
+  readonly intervention?: LongTaskIntervention | undefined;
   readonly loginUrl?: string | undefined;
   readonly why?: string | undefined;
   readonly session?: string | undefined;

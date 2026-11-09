@@ -367,6 +367,23 @@ const PROBE_LONG_TASKS = [
     step: '完成',
     steps: [],
   },
+  {
+    unit: 'probe',
+    id: 'run-3',
+    workspace: '/tmp/repo',
+    target: 'probe-waiting',
+    status: 'needs-human',
+    step: '等确认',
+    steps: ['等确认'],
+    intervention: {
+      title: '去控制台确认发布',
+      hint: '发布会话还等着你点「确认」',
+      actions: [
+        { kind: 'open-url', url: 'https://example.test/console' },
+        { kind: 'copy', text: 'release-session-123' },
+      ],
+    },
+  },
 ];
 
 const PROBE_VIEW = {

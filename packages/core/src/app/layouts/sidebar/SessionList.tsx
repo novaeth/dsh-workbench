@@ -307,7 +307,7 @@ export function SessionList({
       {rows.map((row) => (
         <SessionRow
           key={row.id}
-          node={sessionNode(row, statusById, list, pinned, archivedSet, longTasks.bySession)}
+          node={sessionNode(row, statusById, list, pinned, archivedSet, longTasks.bySession, longTasks.waitingBySession)}
           active={row.id === currentId}
           onOpen={onOpen}
           renderSlot={renderSlot}

@@ -162,29 +162,35 @@
 
 耗时几十秒以上的操作做成长任务。宿主侧用 `mount` deps 的 `longTasks`，并挂回返回值：
 
-```ts
-longTasks.create({ key, run, step, outcome, view, stopped })
-// run({ payload, onStep, signal })：onStep({ kind: 'start', text }) 报步骤；return 结果
-```
+`longTasks.create({ key, run, step, outcome, view, stopped })`；`run({ payload, onStep, signal })` 里用
+`onStep({ kind: 'start', text })` 报步骤、return 结果。
 
 - 来源：在工具里 `runs.start({ …, session: deps.sessionIdOf(exec) ?? undefined })`。不记 = 用户按的 → 停止需审批。
 - 流程事件默认用 `longTaskStepOf(event)`。
+- **要人处理的节点**：给这一步带 `intervention`（类型从 `@dsh-workbench/shared` 取），形状是
+  `{ title, hint?, actions?: ({kind:'open-url',url,label?} | {kind:'copy',text,label?})[] }`；`title` / `hint` 是字面量（宿主侧没有 `t`），
+  `label` 缺省用外壳的词（去处理 / 复制）。带它的步骤让这趟停在 `needs-human`，下一条不带它就回 `running`。
+  **v1 的恢复靠模块自己轮询**（条件满足再发下一步，与登录同构），行上没有「我处理完了」那颗钮 —— `recheck` 留 v2。
+  例：`onStep({ …, intervention: { title: '要登录腾讯云', actions: [{ kind: 'open-url', url: '…' }] } })`。
+- 流程侧对应 `ctx.need(intervention)`；`ctx.login(url)` 是旧路（仍产 `needs-login` + `loginUrl`，标 deprecated）。
 - 浏览器侧：`useLongTask` → `feed.runs` / `feed.stop(id)` / `feed.stopping` / `feed.stopFailed`；
-  画 `LongTaskRow`（五态：`running` / `needs-login` / `stopped` / `ok` / `failed`）。
+  画 `LongTaskRow`（六态：`running` / `needs-human` / `needs-login` / `stopped` / `ok` / `failed`）。
 
-五态长这样（自上而下：跑着 / 要登录 / 好了 / 失败 / 按停）：
+六态：跑着 / 要人处理 / 要登录 / 好了 / 失败 / 按停。
 
 ```
-● 正在发布（2/3）                                        [⏹]
-● 要登录腾讯云                                      [登录 →]
-● 发布完成                                          [日志 →]
+● 正在发布（2/3）                       [⏹]
+● 发布会话等你确认                      [⏹]
+  去控制台点「确认发布」 · 先确认发布会话   [打开]
+● 要登录腾讯云                    [登录 →]
+● 发布完成                        [日志 →]
 ● 发布失败
    站点回的是 HTTP 403
    ▸ 步骤    ▸ 原文
 ● 发布已停止（用户按停）
 ```
 
-- 链接在行尾；失败才展开「步骤」「原文」两块。
+- 行尾是链接；要人处理的行多一行「要人做什么 + 为什么 + 动作」；失败才展开「步骤」「原文」。
 
 - 停止：`run` 收到 `signal` 被 abort = 有人按停止；在循环点与每条子命令前后查 `signal.aborted`。
   不认 signal 就不要画停止钮。画钮传 `stop`（`onStop: () => feed.stop(run.id)`、`busy: feed.stopping === run.id`、
@@ -195,31 +201,11 @@ longTasks.create({ key, run, step, outcome, view, stopped })
   别人的 / 用户按的 / 没记来源的要审批；跨工作区直接拒。被停时外壳向起它的会话发 notice（完成 / 失败不发）。
 - `contracts` 查形状：注册表七个方法（含 `stop` / `live`）、`create` 的 `key` / `run` / `view`、
   产物含 `useLongTask` / `LongTaskRow` 之一。是否真响应 signal 不在射程内。
-- 左栏 loading 点由外壳按 `live()` 驱动，模块不做。
+- 左栏那颗点由外壳按 `live()` 驱动；等人时升成「等你处理」的 warning，模块不做。
 - 用 `stop` / `session` / 外壳长任务工具需把 `@dsh-workbench/core` peer 下限抬到含它们的版本（`check --only kit` 查）。
 
-长任务与工具在 `mount` 里长这样（类型从 `@dsh-workbench/core/contract` 取，`TEXT_OUTPUT` 从 `@dsh-workbench/shared/host` 取）：
-
-```ts
-mount(deps) {
-  const runs = deps.longTasks?.create<LongTaskBase>({ key, run, step, outcome, view, stopped });
-  const tool: DshToolDefinition = {
-    name: RUN_TOOL, description: '…', parameters: { type: 'object', properties: {} },
-    output: TEXT_OUTPUT, async execute(args, exec) { /* runs.start(...) → { ok, runId, text } */ },
-  };
-  return {
-    routes: {},
-    registerTools: () => {
-      const tools = deps.ctx.get<DshToolRegistry>('tools');
-      return tools === undefined ? [] : [tools.register(tool)];
-    },
-    ...(runs === undefined ? {} : { longTasks: runs }),
-  };
-}
-```
-
 `registerTools()` 是**调用时才注册**、返回清理函数；工具名必须与 `dsh.workbench.tools` 一字不差，
-没有工具就 `() => []`。可跑样板：`dsh-wb-module init` 生成的模块。
+没有工具就 `() => []`。可跑样板：`dsh-wb-module init` 生成的模块（长任务与工具的 `mount` 接线看 `template-diy`）。
 
 ## 9.1 多步流程（workflow）
 
@@ -228,7 +214,7 @@ mount(deps) {
 - 固化 = 模块宿主半侧的 `FlowDefinition`（类型从 `@dsh-workbench/core/contract` 取）+ `deps.flow.run` + §9 的长任务 + `registerTools`。
 - 一次性 = 直接用现有工具 / 命令跑，不建模块。
 - 写平台的 flow 工具在清单里 `writes: true` + `needsApproval`；跑前给对象 / 环境 / 影响。
-- `deps.flow.check(flow, actions)` 先过；动作里用 `ctx.login(url)` 报登录，`ctx.log` 报进度。
+- `deps.flow.check(flow, actions)` 先过；动作里用 `ctx.need(intervention)` 报人工干预节点（旧的 `ctx.login(url)` 仍可用），`ctx.log` 报进度。
 - flow 的运行时只走 `deps.flow`，类型只走 `@dsh-workbench/core/contract`；不要为 flow 直接 import `@dsh-workbench/shared/host`。
 - 不要在 flow 里存凭据；不要把一次性任务静默固化。
 - 工具描述写「跑已固化的 <标题> 流程」；不要用它新建 flow，新需求先问用户。

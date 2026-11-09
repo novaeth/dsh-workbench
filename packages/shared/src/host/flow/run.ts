@@ -147,6 +147,9 @@ async function runOneInner(options: RunOneOptions): Promise<unknown> {
     login: (url) => {
       emit({ stepId, title, status: 'needs-login', loginUrl: url });
     },
+    need: (intervention) => {
+      emit({ stepId, title, status: 'needs-human', intervention });
+    },
   };
 
   if (step.poll !== undefined) {

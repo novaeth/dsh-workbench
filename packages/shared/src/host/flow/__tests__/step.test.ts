@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { LongTaskIntervention } from '../../../contract/long-task.js';
 import type { FlowStepEvent } from '../types.js';
 import { longTaskStepOf } from '../step.js';
 
@@ -32,6 +33,25 @@ describe('longTaskStepOf：流程事件 → 长任务步骤的默认映射', () 
       kind: 'info',
       text: '读目录',
       loginUrl: 'https://example.com/login',
+    });
+  });
+
+  it('★ needs-login 的空 URL 不落键（不再画出点不动的「去登录」）', () => {
+    expect(longTaskStepOf(eventOf('needs-login', { loginUrl: '' }))).toEqual({
+      kind: 'info',
+      text: '读目录',
+    });
+  });
+
+  it('★★ needs-human 带 intervention，文字取干预节点的标题', () => {
+    const intervention: LongTaskIntervention = {
+      title: '要登录腾讯云',
+      actions: [{ kind: 'open-url', url: 'https://example.com/login' }],
+    };
+    expect(longTaskStepOf(eventOf('needs-human', { intervention }))).toEqual({
+      kind: 'info',
+      text: '要登录腾讯云',
+      intervention,
     });
   });
 

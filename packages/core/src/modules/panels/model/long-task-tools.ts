@@ -12,6 +12,7 @@ export type LongTaskRunsLookup = () => ReadonlyMap<string, LongTaskRegistry<Long
 
 const STATUS_WORDS: Readonly<Record<string, string>> = {
   running: '进行中',
+  'needs-human': '等人处理',
   'needs-login': '要登录',
   stopped: '被停了',
   ok: '已完成',
@@ -81,6 +82,7 @@ interface ListedRun {
   readonly target: string;
   readonly status: string;
   readonly step: string;
+  readonly intervention: string;
   readonly session: string;
 }
 
@@ -113,6 +115,7 @@ function listed(runs: LongTaskRunsLookup | undefined, workspace: string): readon
         target: str(row['target']) || str(run?.target),
         status: str(row['status']) || str(run?.status),
         step: str(row['step']) || str(row['why']) || str(run?.step) || str(run?.why),
+        intervention: run?.status === 'needs-human' ? str(run.intervention?.title) : '',
         session: str(row['session']) || str(run?.session),
       });
     }
@@ -126,6 +129,7 @@ function lineOf(run: ListedRun, index: number, caller: string | null): string {
     run.target,
     statusWord(run.status),
     run.step,
+    run.intervention === '' ? '' : `要人做：${run.intervention}`,
     run.id === '' ? '' : `id=${run.id}`,
     originOf(run.session, caller),
   ];
@@ -153,7 +157,7 @@ export function registerLongTaskTools(
   const listTool: DshToolDefinition = {
     name: LONG_TASKS_LIST_TOOL,
     description:
-      '看这个工作区在跑（十分钟内也算）的长任务：每行是 模块 · 目标 · 状态 · 这一步 · id · 谁起的；' +
+      '看这个工作区在跑（十分钟内也算）的长任务；等人处理的行会写明要人做什么；' +
       '要停就调 workbench_long_tasks_stop。',
     parameters: { type: 'object', properties: {}, additionalProperties: false },
     output: LIST_OUTPUT,

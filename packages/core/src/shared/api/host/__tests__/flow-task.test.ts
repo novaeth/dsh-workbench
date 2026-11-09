@@ -136,4 +136,45 @@ describe('flowTaskDeps / startFlow', () => {
     await tick();
     expect(runs.snapshot(started.id)?.status).toBe('ok');
   });
+
+  it('动作发 need：进 needs-human，intervention 随快照与 view 一起出去，恢复后回 ok', async () => {
+    const actions = createFlowActionRegistry();
+    let release: (() => void) | undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const intervention = {
+      title: '去控制台点「确认发布」',
+      hint: '发布会话在等你',
+      actions: [
+        { kind: 'open-url', url: 'https://example.com/console', label: '打开控制台' },
+        { kind: 'copy', text: 'abc-123' },
+      ],
+    } as const;
+    actions.register('slow', async (_input, context) => {
+      context.need(intervention);
+      await gate;
+      return 'ok';
+    });
+    const runs = runsOf(actions);
+    const started = startFlow({
+      runs,
+      flow: { id: 'need', title: '等人', steps: [{ id: 'slow', action: 'slow' }] },
+      input: {},
+      workspace: '/w/a',
+    });
+
+    await tick();
+    const waiting = runs.snapshot(started.id);
+    expect(waiting?.status).toBe('needs-human');
+    expect(waiting?.intervention).toEqual(intervention);
+    expect(flowTaskDeps(actions).view?.(waiting as NonNullable<typeof waiting>)).toMatchObject({
+      status: 'needs-human',
+      intervention,
+    });
+
+    release?.();
+    await tick();
+    expect(runs.snapshot(started.id)?.status).toBe('ok');
+  });
 });

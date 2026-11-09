@@ -187,6 +187,44 @@ describe('sessionStatuses：优先级顺序', () => {
       'warning',
     );
   });
+
+  it('★★ 长任务停在等人 → 一颗 warning 的点、那句「长任务在等你处理」（不占尾格）', () => {
+    const dots = sessionStatuses({ ...plain, longTaskWaiting: true }, t);
+
+    expect(dots).toEqual([{ state: 'warning', label: 'status.longTaskWaiting' }]);
+    expect(dots[0]?.trailingLabel).toBeUndefined();
+  });
+
+  it('★★ 等人 + 自己还在跑：warning 之后**再带一颗** running（别让「在跑」的信息消失）', () => {
+    const dots = sessionStatuses({ ...plain, longTaskWaiting: true, running: true, longTask: true }, t);
+
+    expect(dots.map((dot) => dot.state)).toEqual(['warning', 'ongoing']);
+    expect(dots.map((dot) => dot.label)).toEqual(['status.longTaskWaiting', 'status.running']);
+  });
+
+  it('★★ 等人 + 子代理在跑：warning 之后带子代理那颗', () => {
+    const dots = sessionStatuses({ ...plain, longTaskWaiting: true, runningSubagentCount: 2 }, t);
+
+    expect(dots.map((dot) => dot.label)).toEqual([
+      'status.longTaskWaiting',
+      'status.subagentsRunning.other:2',
+    ]);
+  });
+
+  it('★★ 待交互仍然最高：同一条会话既待人又待审批时，只出待审批那颗', () => {
+    const dots = sessionStatuses(
+      { ...plain, longTaskWaiting: true, running: true, pendingInteraction: 'approval' },
+      t,
+    );
+
+    expect(dots).toEqual([
+      {
+        state: 'warning',
+        label: 'status.waitingApproval',
+        trailingLabel: 'status.compact.approval',
+      },
+    ]);
+  });
 });
 
 describe('sessionNode 与 longTaskIds', () => {
@@ -196,6 +234,23 @@ describe('sessionNode 与 longTaskIds', () => {
     expect(sessionNode(list.byId.a as SessionSummary, new Map(), list, new Set(), new Set(), new Set(['a'])).longTask).toBe(true);
     expect(sessionNode(list.byId.b as SessionSummary, new Map(), list, new Set(), new Set(), new Set(['a'])).longTask).toBe(false);
     expect(sessionNode(list.byId.a as SessionSummary, new Map(), list, new Set(), new Set()).longTask).toBe(false);
+  });
+
+  it('★ longTaskWaiting 与 longTask 各算各的：等人那沓走第七个参数', () => {
+    const list = snapshot([summary({ id: 'a' }), summary({ id: 'b' })]);
+
+    expect(
+      sessionNode(list.byId.a as SessionSummary, new Map(), list, new Set(), new Set(), new Set(), new Set(['a']))
+        .longTaskWaiting,
+    ).toBe(true);
+    expect(
+      sessionNode(list.byId.a as SessionSummary, new Map(), list, new Set(), new Set(), new Set(['a']), new Set())
+        .longTaskWaiting,
+    ).toBe(false);
+    expect(
+      sessionNode(list.byId.b as SessionSummary, new Map(), list, new Set(), new Set(), new Set(), new Set(['a']))
+        .longTaskWaiting,
+    ).toBe(false);
   });
 });
 

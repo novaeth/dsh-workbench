@@ -17,6 +17,7 @@ export function liveLongTaskRows(
         status: snapshot.status,
         step: snapshot.step,
         steps: snapshot.steps,
+        ...(snapshot.intervention === undefined ? {} : { intervention: snapshot.intervention }),
         ...(snapshot.loginUrl === undefined ? {} : { loginUrl: snapshot.loginUrl }),
         ...(snapshot.why === undefined ? {} : { why: snapshot.why }),
         ...(snapshot.session === undefined ? {} : { session: snapshot.session }),

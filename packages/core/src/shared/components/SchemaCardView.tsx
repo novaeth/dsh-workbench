@@ -44,6 +44,9 @@ export interface SchemaCardViewProps extends BoardModuleProps {
   readonly longTaskStopFailed?: string | null | undefined;
   readonly onLongTaskStop?: ((id: string) => void) | undefined;
   readonly onLongTaskLogin?: ((url: string) => void) | undefined;
+  readonly onLongTaskOpenUrl?: ((url: string) => void) | undefined;
+  readonly onLongTaskCopy?: ((text: string) => void) | undefined;
+  readonly longTaskCopied?: string | null | undefined;
 }
 
 const DOT_STATE: Record<CardViewTone, StateDotState> = {
@@ -303,6 +306,9 @@ export function SchemaCardView({
   longTaskStopFailed,
   onLongTaskStop,
   onLongTaskLogin,
+  onLongTaskOpenUrl,
+  onLongTaskCopy,
+  longTaskCopied,
   world,
   refreshToken,
   onRefresh,
@@ -335,6 +341,9 @@ export function SchemaCardView({
           t,
           onStop: onLongTaskStop ?? (() => {}),
           onLogin: onLongTaskLogin ?? (() => {}),
+          onOpenUrl: onLongTaskOpenUrl ?? (() => {}),
+          onCopy: onLongTaskCopy ?? (() => {}),
+          copied: longTaskCopied ?? null,
         });
   const actions = actionNodes(view, t, onRefresh);
   const settings = view.settings;

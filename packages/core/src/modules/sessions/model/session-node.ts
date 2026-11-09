@@ -12,6 +12,7 @@ export interface SessionNode {
   readonly running: boolean;
   readonly runningSubagentCount: number;
   readonly longTask: boolean;
+  readonly longTaskWaiting: boolean;
   readonly completed: boolean;
   readonly pinned: boolean;
   readonly updatedAt: number;
@@ -44,6 +45,7 @@ export function sessionNode(
   pinnedIds: ReadonlySet<string>,
   archivedIds: ReadonlySet<string>,
   longTaskIds: ReadonlySet<string> = NO_IDS,
+  longTaskWaitingIds: ReadonlySet<string> = NO_IDS,
 ): SessionNode {
   const status = statusById.get(summary.id);
   const catalog = list.projectionsBySession[summary.id]?.values?.subagentCatalog;
@@ -63,6 +65,7 @@ export function sessionNode(
     running: status?.running ?? summary.running,
     runningSubagentCount,
     longTask: longTaskIds.has(summary.id),
+    longTaskWaiting: longTaskWaitingIds.has(summary.id),
     completed: status?.completionUnread === true,
     pinned: !archivedIds.has(summary.id) && pinnedIds.has(summary.id),
     updatedAt: summary.updatedAt,
@@ -85,6 +88,11 @@ export function sessionStatuses(node: SessionNode, t: Translate): SessionStatusD
       : undefined;
 
   const longTask: SessionStatusDot = { state: 'ongoing', label: t('status.longTask') };
+
+  const longTaskWaiting: SessionStatusDot = {
+    state: 'warning',
+    label: t('status.longTaskWaiting'),
+  };
 
   let pending: SessionStatusDot | undefined;
   switch (node.pendingInteraction) {
@@ -115,6 +123,13 @@ export function sessionStatuses(node: SessionNode, t: Translate): SessionStatusD
   }
 
   if (pending !== undefined) return subagents === undefined ? [pending] : [pending, subagents];
+  if (node.longTaskWaiting) {
+    const rest: SessionStatusDot[] = node.running
+      ? [{ state: 'ongoing', label: t('status.running') }]
+      : [];
+    if (subagents !== undefined) rest.push(subagents);
+    return [longTaskWaiting, ...rest];
+  }
   if (node.running) {
     const primary: SessionStatusDot = { state: 'ongoing', label: t('status.running') };
     const rest = node.longTask ? [longTask] : [];

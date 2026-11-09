@@ -1,7 +1,14 @@
 import { epochOf, now as clockNow, nowIso } from './time.js';
-import { runsRouteOf, type LongTaskStatus, type LongTaskStep } from '../contract/long-task.js';
+import {
+  runsRouteOf,
+  type LongTaskIntervention,
+  type LongTaskStatus,
+  type LongTaskStep,
+} from '../contract/long-task.js';
 
-const LIVE: ReadonlySet<string> = new Set<LongTaskStatus>(['running', 'needs-login']);
+function isLiveStatus(status: LongTaskStatus): boolean {
+  return status === 'running' || status === 'needs-human' || status === 'needs-login';
+}
 
 const RECENT_MS = 10 * 60 * 1000;
 
@@ -13,6 +20,7 @@ export interface LongTaskBase {
   readonly status: LongTaskStatus;
   readonly step: string;
   readonly steps: readonly string[];
+  readonly intervention?: LongTaskIntervention | undefined;
   readonly loginUrl?: string | undefined;
   readonly why?: string | undefined;
   readonly startedAt: string;
@@ -75,7 +83,7 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
 
   const live = (id: string): S | null => {
     const current = runs.get(id);
-    if (current === undefined || !LIVE.has(current.status)) return null;
+    if (current === undefined || !isLiveStatus(current.status)) return null;
     return current as S;
   };
 
@@ -100,7 +108,7 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
     active(workspace, target) {
       for (const snapshot of runs.values()) {
         if (snapshot.workspace !== workspace || snapshot.target !== target) continue;
-        if (snapshot.status === 'running' || snapshot.status === 'needs-login') return snapshot as S;
+        if (isLiveStatus(snapshot.status)) return snapshot as S;
       }
       return null;
     },
@@ -114,14 +122,14 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
       }
       return [...newest.values()]
         .filter(
-          (snapshot) => LIVE.has(snapshot.status) || epochOf(snapshot.at) >= floor,
+          (snapshot) => isLiveStatus(snapshot.status) || epochOf(snapshot.at) >= floor,
         )
         .reverse()
         .map((snapshot) => ({ ...deps.view(snapshot as S), id: snapshot.id }));
     },
 
     live() {
-      return [...runs.values()].filter((snapshot) => LIVE.has(snapshot.status)) as S[];
+      return [...runs.values()].filter((snapshot) => isLiveStatus(snapshot.status)) as S[];
     },
 
     start(options) {
@@ -147,7 +155,22 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
         if (current === null) return;
         const steps = [...current.steps, `${step.kind === 'fail' ? '✗ ' : ''}${step.text}`].slice(-20);
         const extra = deps.step?.(step, current) ?? {};
-        if (step.loginUrl !== undefined) {
+        if (step.intervention !== undefined) {
+          patch(
+            id,
+            {
+              ...extra,
+              status: 'needs-human',
+              step: step.text,
+              steps,
+              intervention: step.intervention,
+              loginUrl: undefined,
+            },
+            { kind: 'step', step },
+          );
+          return;
+        }
+        if (step.loginUrl !== undefined && step.loginUrl !== '') {
           patch(
             id,
             { ...extra, status: 'needs-login', step: step.text, steps, loginUrl: step.loginUrl },
@@ -159,10 +182,11 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
           id,
           {
             ...extra,
-            status: current.status === 'needs-login' ? 'running' : current.status,
+            status: 'running',
             step: step.text,
             steps,
-            ...(current.status === 'needs-login' ? { loginUrl: undefined } : {}),
+            intervention: undefined,
+            loginUrl: undefined,
           },
           { kind: 'step', step },
         );
@@ -179,7 +203,12 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
           controls.delete(id);
           patch(
             id,
-            { status: 'ok', ...(deps.outcome?.(result, current) ?? {}), loginUrl: undefined },
+            {
+              status: 'ok',
+              ...(deps.outcome?.(result, current) ?? {}),
+              intervention: undefined,
+              loginUrl: undefined,
+            },
             { kind: 'settle' },
           );
         })
@@ -191,6 +220,7 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
             {
               status: 'failed',
               why: error instanceof Error ? error.message : String(error),
+              intervention: undefined,
               loginUrl: undefined,
             },
             { kind: 'settle' },
@@ -207,7 +237,12 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
       controls.delete(id);
       patch(
         id,
-        { ...(deps.stopped?.(current) ?? {}), status: 'stopped', loginUrl: undefined },
+        {
+          ...(deps.stopped?.(current) ?? {}),
+          status: 'stopped',
+          intervention: undefined,
+          loginUrl: undefined,
+        },
         { kind: 'settle', by },
       );
       return true;

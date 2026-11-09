@@ -113,3 +113,25 @@ describe('两按停止钮：样式跟 dsh 那颗钮同款（组件自带，同�
     expect(CSS).not.toMatch(/(^|[^a-z-])rgb\(/);
   });
 });
+
+describe('人工干预节点（needs-human）：标题 + 说明 + 动作，组件仍是哑的', () => {
+  it('★★ 不给 intervention ⇒ 那一行整个不出现（旧行一个像素不变）', () => {
+    expect(ROW).toContain('{props.intervention === undefined ? null : (');
+    expect(ROW).toContain('className="wb-longTaskNeed"');
+  });
+
+  it('★★ 动作的 key / label / onPress 全由调用点给，primary 决定主按钮', () => {
+    expect(ROW).toContain('(props.intervention.actions ?? []).map((action) => (');
+    expect(ROW).toContain('key={action.key}');
+    expect(ROW).toContain("variant={action.primary === true ? 'primary' : 'outline'}");
+    expect(ROW).toContain('onClick={action.onPress}');
+  });
+
+  it('★ 标题与说明是两个 span，类都在同目录 .css 里', () => {
+    expect(ROW).toContain('className="wb-longTaskNeedTitle">{props.intervention.title}');
+    expect(ROW).toContain('className="wb-longTaskNeedHint"');
+    for (const cls of ['.wb-longTaskNeed {', '.wb-longTaskNeedTitle {', '.wb-longTaskNeedHint {']) {
+      expect(CSS).toContain(cls);
+    }
+  });
+});

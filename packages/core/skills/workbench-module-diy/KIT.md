@@ -77,7 +77,7 @@ h(Rows, null,
 ```
 
 - `ActivityBlock` / `ActivityLine` / `ActivityAction`：活动记录；时间用它。
-- `LongTaskRow`：长任务行（五态）；不画进度条。传 `stop` 需宿主响应 signal 且 peer 下限到位（[TOOLS.md](TOOLS.md) §9）。
+- `LongTaskRow`：长任务行（六态见 [TOOLS.md](TOOLS.md)）。`needs-human` 传 `intervention`（`{title,hint?,actions?:[{key,label,primary?,onPress}]}`），旧登录走 `login`。传 `stop` 要宿主认 signal。
 - `ApprovalDetail` / `ApprovalPlan`：审批屏两格；形状见 [DESIGN.md](DESIGN.md) §3 末节。
 - 路径显示：`shortenPath` 缩主目录（macOS / Linux / Windows 都认），`pathBase` 取末段（`/` 与 `\` 都认）。
 
