@@ -71,12 +71,10 @@ export const BRAND_MARK_GEOMETRY = {
 } as const;
 
 /**
- * 品牌标的彩色：框的渐变两端、鲸鱼的实心色。
+ * 品牌标的彩色：整枚标一个实心蓝，不跟主题走。
  */
 export const BRAND_MARK_COLORS = {
-  frameFrom: '#5BB8FF',
-  frameTo: '#3565DD',
-  whale: '#2F5FD8',
+  mark: '#658EFF',
 } as const;
 
 /**
@@ -103,16 +101,10 @@ export function IconBrandMark({ size = 24 }: IconProps) {
 export function IconBrandMarkColor({ size = 24 }: IconProps) {
   return (
     <Shell size={size} viewBox="0 0 64 64">
-      <defs>
-        <linearGradient id="wb-brand-mark" x1="8" y1="2" x2="56" y2="62" gradientUnits="userSpaceOnUse">
-          <stop stopColor={BRAND_MARK_COLORS.frameFrom} />
-          <stop stopColor={BRAND_MARK_COLORS.frameTo} />
-        </linearGradient>
-      </defs>
-      <path d={BRAND_BODY} stroke="url(#wb-brand-mark)" strokeWidth={4} />
-      <path d={BRAND_NECK} fill="url(#wb-brand-mark)" />
-      <path d={BRAND_BASE} fill="url(#wb-brand-mark)" />
-      <path d={BRAND_WHALE} fill={BRAND_MARK_COLORS.whale} />
+      <path d={BRAND_BODY} stroke={BRAND_MARK_COLORS.mark} strokeWidth={4} />
+      <path d={BRAND_NECK} fill={BRAND_MARK_COLORS.mark} />
+      <path d={BRAND_BASE} fill={BRAND_MARK_COLORS.mark} />
+      <path d={BRAND_WHALE} fill={BRAND_MARK_COLORS.mark} />
     </Shell>
   );
 }
