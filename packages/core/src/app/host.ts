@@ -52,7 +52,7 @@ import { asArgs, warn } from '../shared/api/host/host-args';
 import { createApprovalGate } from '@/shared/api/host/approval-gate';
 import { registerBootThemeGuard } from '@/shared/api/host/boot-theme-guard';
 import { registerDiyPreset } from '@/shared/api/host/diy-preset';
-import { createLongTaskWaitNotifier, notifyLongTaskStop } from '@/shared/api/host/long-task-notice';
+import { notifyLongTaskChange } from '@/shared/api/host/long-task-notice';
 export const name = 'dsh-workbench';
 interface ReleasedLookup { isReleased(id: string): boolean }
 export const inject = ['webServer'];
@@ -257,7 +257,6 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   }
   function mountUnit(host: HostUnit): void {
     const id = host.unit;
-    const waitNoticer = createLongTaskWaitNotifier();
     let one: UnitsPlan;
     try {
       one = mountUnits([host], {
@@ -277,11 +276,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
         longTasks: {
           scope: process.env['DSH_HOME'] ?? '',
           bump: (names) => facts.bump([...names, LONG_TASKS_ROUTE]),
-          notify: (change) => {
-            const agents = ctx.get<AgentsLookup>('agents');
-            notifyLongTaskStop(agents, host.unit, change);
-            waitNoticer(agents, host.unit, change);
-          },
+          notify: (change) => notifyLongTaskChange(ctx.get<AgentsLookup>('agents'), host.unit, change),
         },
         longTaskRuns,
       });

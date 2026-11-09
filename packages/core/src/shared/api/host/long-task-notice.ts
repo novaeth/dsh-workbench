@@ -82,3 +82,19 @@ export function createLongTaskWaitNotifier(): (
     return deliverDebugNotice(agents, notice.session, notice.message, 'hold');
   };
 }
+
+const WAIT_NOTICERS = new Map<string, ReturnType<typeof createLongTaskWaitNotifier>>();
+
+export function notifyLongTaskChange(
+  agents: AgentsLookup | undefined,
+  unit: string,
+  change: LongTaskChange<LongTaskBase>,
+): void {
+  let wait = WAIT_NOTICERS.get(unit);
+  if (wait === undefined) {
+    wait = createLongTaskWaitNotifier();
+    WAIT_NOTICERS.set(unit, wait);
+  }
+  notifyLongTaskStop(agents, unit, change);
+  wait(agents, unit, change);
+}
