@@ -115,7 +115,6 @@ export function BlockerState({
         </p>
       )}
 
-      {buttonActions.length === 0 ? null : <div className={styles.actions}>{buttons}</div>}
       {failureBlock}
 
       {blocker.detail === undefined ? null : (
@@ -137,6 +136,8 @@ export function BlockerState({
           />
         </DisclosureRow>
       )}
+
+      {buttonActions.length === 0 ? null : <div className={styles.actions}>{buttons}</div>}
     </div>
   );
 }
