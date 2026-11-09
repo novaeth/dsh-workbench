@@ -28,6 +28,6 @@ export interface ProfileCreateApplied {
   readonly profile: string;
   readonly source: string;
   readonly home: string;
-  readonly command: string;
+  readonly command?: string;
   readonly copied: readonly string[];
 }

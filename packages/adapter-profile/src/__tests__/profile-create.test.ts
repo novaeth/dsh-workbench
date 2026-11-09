@@ -53,6 +53,26 @@ describe('新建工作台：来源列表', () => {
 });
 
 describe('新建工作台：创建', () => {
+  it('★ win32 上不给命令：那边的独立启动器还没移植，给条跑不通的命令等于骗人', async () => {
+    const home = homeOf();
+    const result = await profileCreateApply(
+      {
+        home,
+        self: 'workbench',
+        packageRoot: '/pkg',
+        platform: 'win32',
+        runSetup: async () => {
+          makeTarget(home, 'wb3');
+          return { ok: true, log: 'ok' };
+        },
+      },
+      { profile: 'wb3', source: 'web', copy: { settings: false } },
+    );
+    if (!('profile' in result)) throw new Error(`该建得成：${result.text}`);
+    expect(result.ok).toBe(true);
+    expect(result.command).toBeUndefined();
+  });
+
   it('把选择传给 setup，并回报启动命令', async () => {
     const home = homeOf();
     let seen: Readonly<Record<string, string>> | null = null;
@@ -79,7 +99,8 @@ describe('新建工作台：创建', () => {
       expect(result.profile).toBe('wb2');
       expect(result.home).toBe(join(home, 'wb2'));
       expect(result.copied).toEqual(['settings']);
-      expect(result.command).toContain("WORKBENCH_PROFILE='wb2'");
+      expect(result.command).toContain("bin/dsh-workbench' --profile 'wb2'");
+      expect(result.command).not.toContain('WORKBENCH_PROFILE=');
     }
     expect(seen).toMatchObject({
       WORKBENCH_PROFILE: 'wb2',

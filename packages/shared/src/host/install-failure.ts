@@ -4,7 +4,11 @@ import type { InstallFailure, InstallFailureKind } from '../contract/command.js'
 
 const TARGET_FLAGS = ['--prefix', '--cache', '--dir', '--store-dir'];
 
-const INSTALL_VERBS = /^\s*(?:npm\s+(?:i|install|add)|pnpm\s+(?:add|install))\b/;
+const PACKAGE_MANAGER = /^(?:pnpm|npm)(?:\.c?m?js|\.cmd|\.exe)?$/;
+
+const INSTALL_VERB = /^(?:add|install|i)$/;
+
+const LAUNCHER_TOKENS = 2;
 
 const NPM_PATH = /^npm (?:error|ERR!) path (.+)$/m;
 
@@ -21,6 +25,21 @@ export function commandTokens(command: string): string[] {
     tokens.push(match[1] ?? match[2] ?? match[3] ?? '');
   }
   return tokens;
+}
+
+export function installVerbAt(command: string): number | undefined {
+  const tokens = commandTokens(command);
+  const limit = Math.min(tokens.length - 1, LAUNCHER_TOKENS + 1);
+  for (let index = 0; index < limit; index += 1) {
+    if (!PACKAGE_MANAGER.test(binNameOf(tokens[index] ?? ''))) continue;
+    return INSTALL_VERB.test((tokens[index + 1] ?? '').toLowerCase()) ? index + 1 : undefined;
+  }
+  return undefined;
+}
+
+function binNameOf(token: string): string {
+  const at = Math.max(token.lastIndexOf('/'), token.lastIndexOf('\\'));
+  return (at >= 0 ? token.slice(at + 1) : token).toLowerCase();
 }
 
 export function installTargets(command: string): string[] {
@@ -171,7 +190,7 @@ export function installWriteProblem(input: {
   readonly command: string;
   readonly fallback?: string | undefined;
 }): InstallFailure | undefined {
-  if (!INSTALL_VERBS.test(input.command)) return undefined;
+  if (installVerbAt(input.command) === undefined) return undefined;
   const current = currentUser();
   const candidates = [...installTargets(input.command), input.fallback].filter(
     (path): path is string => path !== undefined && path !== '',

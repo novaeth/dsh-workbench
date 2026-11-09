@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
 import type { PostResource, RouteHandler } from './http.js';
-import { quoteShellArg } from './shell-text.js';
+import { quoteShellArgFor, shellKindOf } from './shell-text.js';
 import type {
   ProfileCreateApplied,
   ProfileCreateProfile,
@@ -16,6 +16,7 @@ export interface ProfileCreateDeps {
   readonly home: string;
   readonly self: string;
   readonly packageRoot: string;
+  readonly platform?: NodeJS.Platform | undefined;
   readonly runSetup?: ((env: Readonly<Record<string, string>>) => Promise<{ ok: boolean; log: string }>) | undefined;
 }
 
@@ -52,6 +53,12 @@ function inside(base: string, path: string): boolean {
   const root = resolve(base);
   const target = resolve(path);
   return target === root ? false : target.startsWith(`${root}${sep}`);
+}
+
+function startCommandOf(deps: ProfileCreateDeps, profile: string): string | undefined {
+  if (shellKindOf(deps.platform) === 'pwsh') return undefined;
+  const bin = join(deps.packageRoot, 'bin', 'dsh-workbench');
+  return `${quoteShellArgFor(bin, deps.platform)} --profile ${quoteShellArgFor(profile, deps.platform)}`;
 }
 
 export async function profileCreateApply(
@@ -114,13 +121,13 @@ export async function profileCreateApply(
   const copied = Object.entries(flags)
     .filter(([, on]) => on)
     .map(([name]) => name);
-  const bin = join(deps.packageRoot, 'bin', 'dsh-workbench');
+  const command = startCommandOf(deps, profile);
   return {
     ok: true,
     profile,
     source,
     home: targetHome,
-    command: `WORKBENCH_PROFILE=${quoteShellArg(profile)} ${quoteShellArg(bin)}`,
+    ...(command === undefined ? {} : { command }),
     copied,
   };
 }

@@ -121,8 +121,14 @@ export function NewWorkbenchItem({ t }: NewWorkbenchItemProps): JSX.Element {
         {applied === null ? null : (
           <Note>
             {t('profileCreate.created', { profile: applied.profile })}
-            <span className={styles.commandLabel}>{t('profileCreate.command')}</span>
-            <code className={styles.command}>{applied.command}</code>
+            {applied.command === undefined ? (
+              <span>{t('profileCreate.commandUnsupported')}</span>
+            ) : (
+              <>
+                <span className={styles.commandLabel}>{t('profileCreate.command')}</span>
+                <code className={styles.command}>{applied.command}</code>
+              </>
+            )}
           </Note>
         )}
       </div>

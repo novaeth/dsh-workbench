@@ -3,6 +3,7 @@ import {
   classifyInstallFailure,
   installFailureOf,
   installTargets,
+  installVerbAt,
   installWriteProblem,
 } from '../install-failure.js';
 
@@ -117,5 +118,13 @@ describe('installWriteProblem（装之前先看一眼，省得白跑）', () => 
 
   it('目录不存在 → 退到最近的祖先，不报假问题', () => {
     expect(installWriteProblem({ command: `npm i --prefix ${process.cwd()}/definitely-missing-dir foo` })).toBeUndefined();
+  });
+
+  it('★ 包管理器是绝对路径 / 经 node 起的时候照样认得出安装动词（DSH_WB_PNPM 指向具体文件）', () => {
+    expect(installVerbAt("'/Applications/x/node' '/Users/me/.dsh/workbench/pnpm.cjs' add --dir '/x' foo")).toBe(2);
+    expect(installVerbAt("'/usr/local/bin/pnpm' add --dir '/x' foo")).toBe(1);
+    expect(installVerbAt("C:\\node\\node.exe C:\\tools\\pnpm.cmd install --dir C:\\x")).toBe(2);
+    expect(installVerbAt("'/usr/local/bin/pnpm' remove --dir '/x' foo")).toBeUndefined();
+    expect(installVerbAt("echo 'warehouse'")).toBeUndefined();
   });
 });
