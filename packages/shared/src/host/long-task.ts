@@ -9,6 +9,7 @@ export interface LongTaskBase {
   readonly id: string;
   readonly workspace: string;
   readonly target: string;
+  readonly headline?: string | undefined;
   readonly status: LongTaskStatus;
   readonly step: string;
   readonly steps: readonly string[];

@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { discoverModulePackages } from '../discover.mjs';
-import { shellClientPathOf, shellKitOf } from './shell-artifact.mjs';
+import { shellClientPathOf, shellKitOf, shellSchemaCardOf } from './shell-artifact.mjs';
 
 export const title = '卡片渲染';
 
@@ -302,6 +302,265 @@ function render(node, depth, budget) {
   return count;
 }
 
+const PROBE_MESSAGES = {
+  zh: {
+    'probe.title': '探针',
+    'probe.platform': '平台',
+    'probe.idle': '先打开一个项目',
+  'probe.metric': '指标',
+    'probe.row': '一行',
+    'probe.chat': '让 agent 看',
+  'probe.action': '查看',
+    'probe.activity': '动过',
+    'probe.open': '打开',
+    'probe.retry': '重试',
+    'probe.settings': '设置',
+    'probe.gear': '设置',
+    'probe.cancel': '取消',
+    'probe.save': '保存',
+    'probe.saving': '保存中',
+    'probe.failed': '保存失败',
+    'probe.empty': '没有内容',
+    'probe.env': '环境',
+    'probe.dev': '开发',
+  },
+  en: {
+    'probe.title': 'Probe',
+    'probe.platform': 'Platform',
+    'probe.idle': '先打开一个项目',
+  'probe.metric': 'Metric',
+    'probe.row': 'Row',
+    'probe.chat': '让 agent 看',
+  'probe.action': 'Open',
+    'probe.activity': 'Moved',
+    'probe.open': 'Open',
+    'probe.retry': 'Retry',
+    'probe.settings': 'Settings',
+    'probe.gear': 'Settings',
+    'probe.cancel': 'Cancel',
+    'probe.save': 'Save',
+    'probe.saving': 'Saving',
+    'probe.failed': 'Save failed',
+    'probe.empty': 'Nothing yet',
+    'probe.env': 'Environment',
+    'probe.dev': 'Development',
+  },
+};
+
+const PROBE_LONG_TASKS = [
+  {
+    unit: 'probe',
+    id: 'run-1',
+    workspace: '/tmp/repo',
+    target: 'probe-target',
+    status: 'needs-login',
+    step: '等待登录',
+    steps: ['等待登录'],
+    loginUrl: 'https://example.test/login',
+  },
+  {
+    unit: 'probe',
+    id: 'run-2',
+    workspace: '/tmp/repo',
+    target: 'probe-done',
+    status: 'ok',
+    step: '完成',
+    steps: [],
+  },
+];
+
+const PROBE_VIEW = {
+  version: 1,
+  titleKey: 'probe.title',
+  idleKey: 'probe.idle',
+  platform: { href: 'https://example.test', labelKey: 'probe.platform' },
+  read: {
+    route: 'probe',
+    map: (payload) => {
+      const size = Number(payload?.length ?? 2);
+      return size === 0
+        ? { phase: 'empty', hintKey: 'probe.empty' }
+        : { phase: 'ready', model: { count: size } };
+    },
+  },
+  sections: {
+    metrics: () => [{ labelKey: 'probe.metric', value: '2', tone: 'ok' }],
+    rows: () => [
+      {
+        key: 'row',
+        titleKey: 'probe.row',
+        meta: 'meta',
+        tone: 'warn',
+        href: 'https://example.test/row',
+        action: { labelKey: 'probe.action', href: 'https://example.test/action' },
+      },
+    ],
+    activity: () => [{ key: 'act', textKey: 'probe.activity', at: 'just now', tone: 'bad' }],
+    longTask: () => [
+      {
+        id: 'run-1',
+        headline: '探针长任务',
+        links: [{ href: 'https://example.test/run-1', labelKey: 'probe.action' }],
+      },
+    ],
+  },
+  settings: {
+    gearKey: 'probe.gear',
+    titleKey: 'probe.settings',
+    fields: [
+      {
+        kind: 'select',
+        key: 'env',
+        labelKey: 'probe.env',
+        options: [{ value: 'dev', labelKey: 'probe.dev' }],
+      },
+    ],
+    values: () => ({ env: 'dev' }),
+    save: { route: 'probe/config', body: (values) => values },
+    labels: {
+      cancelKey: 'probe.cancel',
+      saveKey: 'probe.save',
+      savingKey: 'probe.saving',
+      failedKey: 'probe.failed',
+    },
+  },
+  actions: [
+    { kind: 'open-url', labelKey: 'probe.open', href: 'https://example.test' },
+    { kind: 'retry', labelKey: 'probe.retry' },
+  ],
+  custom: () => fakeReact().createElement('p', null, 'custom'),
+};
+
+function schemaProbeShell(modulePackages) {
+  const local = join(process.cwd(), 'packages/core/client.js');
+  if (existsSync(local)) return local;
+  const first = modulePackages[0];
+  return first === undefined ? undefined : shellClientPathOf(first.dir);
+}
+
+function runSchemaProbe(modulePackages, shellDictionaries, problems, rows, footnotes) {
+  if (shellDictionaries === undefined) {
+    footnotes.push('schema 卡探针跳过：取不出 @dsh-workbench/shared 的字典');
+    return false;
+  }
+  const shellClient = schemaProbeShell(modulePackages);
+  if (shellClient === undefined || !existsSync(shellClient)) {
+    footnotes.push('schema 卡探针跳过：找不到外壳 client.js');
+    return false;
+  }
+
+  let schemaCard;
+  let kit;
+  try {
+    schemaCard = shellSchemaCardOf(shellClient, {
+      react: fakeReact(),
+      dshPackage: fakeDshPackage(),
+    });
+    kit = shellKitOf(shellClient, { react: fakeReact(), dshPackage: fakeDshPackage() });
+  } catch (error) {
+    footnotes.push(`schema 卡探针跳过：取不出外壳（${error instanceof Error ? error.message : String(error)}）`);
+    return false;
+  }
+  if (typeof schemaCard !== 'function') {
+    footnotes.push('schema 卡探针跳过：这份外壳还没导出 schemaCard');
+    return false;
+  }
+
+  const missing = [];
+  const counts = new Map();
+  const textsBySnapshot = new Map();
+  const classNames = new Set();
+  const stubs = new Set();
+
+  for (const snapshot of SNAPSHOTS) {
+    counts.set(snapshot.name, []);
+    for (const language of LANGUAGES) {
+      const budget = { left: 20000, maxDepth: 0, classNames: new Set(), stubs: new Set(), texts: [] };
+      const t = translatorOf(language, PROBE_MESSAGES, shellDictionaries, missing, snapshot.name);
+      const capability = snapshot.capability?.('probe') ?? null;
+      const blocker =
+        capability !== null && typeof kit?.lib?.blockerOfCapability === 'function'
+          ? kit.lib.blockerOfCapability(capability, t)
+          : snapshot.resource.phase === 'error' && typeof kit?.lib?.blockerOfError === 'function'
+            ? kit.lib.blockerOfError(snapshot.resource.error, t)
+            : undefined;
+      const where = `${snapshot.name}（${language}）`;
+
+      let tree;
+      try {
+        tree = schemaCard({
+          unit: 'probe',
+          view: PROBE_VIEW,
+          state: snapshot.resource,
+          refreshing: snapshot.resource.phase === 'loading',
+          ...(blocker === undefined ? {} : { blocker }),
+          longTasks: PROBE_LONG_TASKS,
+          longTaskStopping: null,
+          longTaskStopFailed: null,
+          onLongTaskStop: () => {},
+          onLongTaskLogin: () => {},
+          world: { current: { sessionId: null, workspace: snapshot.workspace } },
+          t,
+          refreshToken: 0,
+          onRefresh: () => {},
+          onNavigate: () => {},
+          onOpenMarket: () => {},
+          onSummary: () => {},
+        });
+      } catch (error) {
+        problems.push(`schema 卡: ${where} 抛了 —— ${error.message}`);
+        continue;
+      }
+
+      let count;
+      try {
+        count = render(tree, 0, budget);
+      } catch (error) {
+        const stack = (error.stack ?? '').split('\n').slice(1, 4).join(' | ');
+        problems.push(`schema 卡: ${where} 渲染抛了 —— ${error.message}\n      ${stack}`);
+        continue;
+      }
+      if (count <= 1) {
+        problems.push(`schema 卡: ${where} 只画出 ${count} 个节点 —— 这一态下卡体会没跑`);
+        continue;
+      }
+      counts.get(snapshot.name).push(count);
+      for (const one of budget.classNames) classNames.add(one);
+      for (const one of budget.stubs) stubs.add(one);
+      const bucket = textsBySnapshot.get(snapshot.name) ?? [];
+      bucket.push(...budget.texts);
+      textsBySnapshot.set(snapshot.name, bucket);
+      for (const hit of forbiddenHitsOf(budget.texts)) {
+        problems.push(
+          `schema 卡: ${where} 屏上出现了 ${hit.token} —— 命中的那串：${hit.text.slice(0, 120)}`,
+        );
+      }
+    }
+  }
+
+  if (missing.length > 0) {
+    const keys = [...new Set(missing.map((one) => `${one.language}:${one.key}`))];
+    problems.push(`schema 卡: 探针文案缺落点 —— ${keys.join('、')}`);
+  }
+  if (!(classNames.has('wb-card') || stubs.has('Card'))) {
+    problems.push('schema 卡: 探针没套外壳的卡壳（wb-card / Card）');
+    return true;
+  }
+
+  const per = SNAPSHOTS.map(
+    (snapshot) => `${snapshot.name} ${counts.get(snapshot.name).join('/') || '—'}`,
+  ).join(' · ');
+  rows.push(`schema 卡: ${SNAPSHOTS.length} 态 × zh/en 都画得出 —— ${per} 个节点`);
+
+  const shapes = new Set(
+    SNAPSHOTS.map((snapshot) => [...new Set(textsBySnapshot.get(snapshot.name) ?? [])].sort().join('\n')),
+  );
+  if (shapes.size === 1) {
+    footnotes.push('schema 卡: 8 个快照渲染出来的文本完全一样 —— 只当线索');
+  }
+  return true;
+}
+
 async function shellDictionariesOf() {
   const require = createRequire(import.meta.url);
   const entry = require.resolve('@dsh-workbench/shared');
@@ -452,10 +711,13 @@ export async function run() {
     }
 
     const card = registered?.card;
+    const view = registered?.view;
+    const hasView = typeof view === 'object' && view !== null;
+    const unitId = registered?.unit ?? pkg.manifest.dsh?.workbench?.unit ?? name;
     if (!declaresCard) {
-      if (typeof card === 'function') {
+      if (typeof card === 'function' || hasView) {
         problems.push(
-          `${name}: 清单写的是 "card": null，产物却登记了一张卡片 —— 两处说法不一致：` +
+          `${name}: 清单写的是 "card": null，产物却登记了一张卡片 / 一条 view —— 两处说法不一致：` +
             '要么把清单补成一张卡（`"card": { "order": … }`），要么把这张卡从产物里去掉',
         );
         continue;
@@ -463,8 +725,8 @@ export async function run() {
       rows.push(`${name}: 清单写的是 "card": null —— 这个模块没有卡片，产物里也确实没登记（跳过渲染判定）`);
       continue;
     }
-    if (typeof card !== 'function') {
-      problems.push(`${name}: 清单写了 card，apply 之后却没登记卡片（registerUnit 没拿到 card）`);
+    if (typeof card !== 'function' && !hasView) {
+      problems.push(`${name}: 清单写了 card，apply 之后却没登记卡片 / view（registerUnit 没拿到 card）`);
       continue;
     }
 
@@ -478,6 +740,48 @@ export async function run() {
       onSummary: () => {},
     };
 
+    let schemaCard;
+    if (hasView && realKit !== undefined && hasShell) {
+      try {
+        schemaCard = shellSchemaCardOf(shellClient, { react: fakeReact(), dshPackage: fakeDshPackage() });
+      } catch (error) {
+        shellProblem = error instanceof Error ? error.message : String(error);
+      }
+    }
+
+    if (hasView && schemaCard === undefined) {
+      const why =
+        shellProblem !== undefined
+          ? `取不出这份外壳的 schema 探针（${shellClient ?? '没有外壳'}）—— ${shellProblem}`
+          : '这份外壳还没导出 schemaCard 探针';
+      footnotes.push(`${name}: ${why} —— schema 卡逐态渲染跳过`);
+      rows.push(`${name}: schema 卡没有探针，单次全桩渲染也跳过`);
+      degraded += 1;
+      continue;
+    }
+
+    const renderCard =
+      schemaCard === undefined
+        ? card
+        : (p) => {
+            const snapshot = current.snapshot;
+            const capability = snapshot.capability?.(unitId) ?? null;
+            const blocker =
+              capability !== null
+                ? realKit.lib.blockerOfCapability(capability, p.t)
+                : snapshot.resource.phase === 'error'
+                  ? realKit.lib.blockerOfError(snapshot.resource.error, p.t)
+                  : undefined;
+            return schemaCard({
+              ...p,
+              unit: unitId,
+              view,
+              state: snapshot.resource,
+              refreshing: snapshot.resource.phase === 'loading',
+              ...(blocker === undefined ? {} : { blocker }),
+            });
+          };
+
     if (realKit === undefined) {
       const why =
         shellProblem !== undefined
@@ -487,7 +791,7 @@ export async function run() {
             : '没装外壳（@dsh-workbench/core）';
       let tree;
       try {
-        tree = card(props);
+        tree = renderCard(props);
       } catch (error) {
         problems.push(`${name}: 空数据下卡片抛了 —— ${error.message}`);
         continue;
@@ -545,7 +849,7 @@ export async function run() {
 
         let tree;
         try {
-          tree = card(props);
+          tree = renderCard(props);
         } catch (error) {
           problems.push(`${name}: ${where} 卡片抛了 —— ${error.message}`);
           continue;
@@ -624,6 +928,8 @@ export async function run() {
     }
   }
 
+  const schemaProbeRan = runSchemaProbe(modulePackages, shellDictionaries, problems, rows, footnotes);
+
   const shellClients = shellDictionaries === undefined ? [] : shellClientsOf(modulePackages);
 
   if (problems.length > 0) {
@@ -639,7 +945,7 @@ export async function run() {
   return {
     status: 'pass',
     notes: [
-      `${rows.length} 个模块过了卡片这一关：` +
+      `${modulePackages.length} 个模块${schemaProbeRan ? ' + 1 条 schema 探针' : ''}过了卡片这一关：` +
         (degraded === 0
           ? `${SNAPSHOTS.length} 态 × zh/en 各渲染一遍`
           : `逐态那半这次有 ${degraded} 个模块跳过（没装外壳 / 取不出外壳，见下），其余 ${SNAPSHOTS.length} 态 × zh/en 各渲染一遍`) +

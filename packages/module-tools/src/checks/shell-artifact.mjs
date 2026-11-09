@@ -31,7 +31,7 @@ export function shellClientPathOf(pkgDir) {
   }
 }
 
-export function shellKitOf(clientPath, options = {}) {
+function loadShellExports(clientPath, options = {}) {
   const react = options.react ?? defaultReact();
   const seed = options.dshPackage ?? defaultSeed();
   let exports;
@@ -47,5 +47,13 @@ export function shellKitOf(clientPath, options = {}) {
   };
   const window = { __ModuleLoader__: { load } };
   new Function('window', readFileSync(clientPath, 'utf8'))(window);
-  return exports?.kit ?? {};
+  return exports;
+}
+
+export function shellKitOf(clientPath, options = {}) {
+  return loadShellExports(clientPath, options)?.kit ?? {};
+}
+
+export function shellSchemaCardOf(clientPath, options = {}) {
+  return loadShellExports(clientPath, options)?.schemaCard;
 }

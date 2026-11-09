@@ -29,6 +29,30 @@ describe('liveLongTaskRows：左栏那颗 loading 点读的那份清单', () => 
     expect(rows[1]?.session).toBeUndefined();
   });
 
+  it('★ 登录那一步的 loginUrl / step / why 跟着行走，外壳才画得出「去登录」', async () => {
+    const runs = createLongTaskRegistry<LongTaskBase>({
+      run: async ({ onStep, signal }) => {
+        onStep({ kind: 'start', text: '未登录', loginUrl: 'https://example.test/login' });
+        await new Promise<void>((resolve) => {
+          signal.addEventListener('abort', () => resolve(), { once: true });
+        });
+        return 'ok';
+      },
+      view: (snapshot) => ({ target: snapshot.target }),
+    });
+    runs.start({ workspace: '/w/a', target: 'env-prod' });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    const rows = liveLongTaskRows(new Map([['inventory', runs]]));
+
+    expect(rows[0]).toMatchObject({
+      status: 'needs-login',
+      step: '未登录',
+      steps: ['未登录'],
+      loginUrl: 'https://example.test/login',
+    });
+  });
+
   it('★★ 上一版那份注册表（没有 `live()`）跳过它，别的单元照旧 —— 不抛、不整条读口一起瞎', () => {
     const stale = { current: () => [] } as unknown as LongTaskRegistry<LongTaskBase>;
 

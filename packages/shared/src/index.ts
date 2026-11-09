@@ -7,6 +7,7 @@ export * from './components/Activity.js';
 export * from './components/ApprovalDetail.js';
 export * from './components/ApprovalPlan.js';
 export * from './components/Card.js';
+export * from './components/card-view-validate.js';
 export * from './components/CardAnchor.js';
 export * from './components/CardBoundary.js';
 export * from './components/CardHead.js';

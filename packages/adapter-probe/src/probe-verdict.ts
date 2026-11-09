@@ -152,12 +152,9 @@ export function aggregate(unit: string, needs: readonly Need[], states: readonly
     if (!required.has(state.id)) continue;
     if (RANK[state.status] > RANK[worst]) worst = state.status;
   }
-  const optionalGap = states.some((state) => state.status !== 'ok' && !required.has(state.id));
   const status: UnitCapability['status'] =
     worst === 'ok'
-      ? optionalGap
-        ? 'degraded'
-        : 'ok'
+      ? 'ok'
       : worst === 'missing' || worst === 'unsatisfied'
         ? 'missing'
         : worst;

@@ -2,6 +2,7 @@ import { longTaskDot, longTaskStopPress, longTaskStopStage, LONG_TASK_STOP_ARM_M
 import { Link } from './Link.js';
 import { Fragment, h, useEffect, useState } from '../lib/react.js';
 import {
+  Button,
   CodeBlock,
   DisclosureRow,
   IconCodeOutlineRegular,
@@ -35,7 +36,15 @@ export interface LongTaskRowStop {
 }
 
 /**
- * `LongTaskRow` 的契约：状态、标题、问题、链接，两处可展开的原始输出，与最右边那颗可选的停止钮。
+ * 跑在 `needs-login` 时那颗「去登录」：文案与点击。
+ */
+export interface LongTaskRowLogin {
+  readonly label: string;
+  readonly onOpen: () => void;
+}
+
+/**
+ * `LongTaskRow` 的契约：状态、标题、问题、链接、登录钮，两处可展开的原始输出，与最右边那颗可选的停止钮。
  */
 export interface LongTaskRowProps {
   readonly status: LongTaskStatus;
@@ -48,6 +57,7 @@ export interface LongTaskRowProps {
   readonly rawTitle?: string | undefined;
   readonly copyLabel?: string | undefined;
   readonly copiedLabel?: string | undefined;
+  readonly login?: LongTaskRowLogin | undefined;
   readonly stop?: LongTaskRowStop | undefined;
 }
 
@@ -70,6 +80,7 @@ function RowLink({ href, text }: LongTaskRowLink) {
  * @param props.raw - 原始输出；只在失败时画，且要同时给 `rawTitle` 才成一块可展开。
  * @param props.stepsTitle - 步骤那块展开行的标题；`rawTitle` 同理是原始输出那块。
  * @param props.copyLabel - 复制钮文案：给了才画复制钮；`copiedLabel` 是复制成功后那句。
+ * @param props.login - `needs-login` 时那颗「去登录」；不给不画。
  * @param props.stop - 给了才在最右边画那颗两按停止钮；**不给就一个像素都不变**。只在生产方认 `signal` 时给。
  * @returns 一行长任务。
  */
@@ -111,6 +122,11 @@ export function LongTaskRow(props: LongTaskRowProps) {
         {(props.links ?? []).map((link) => (
           <RowLink href={link.href} key={`${link.text}@${link.href}`} text={link.text} />
         ))}
+        {props.login === undefined ? null : (
+          <Button type="button" size="sm" variant="outline" onClick={props.login.onOpen}>
+            {props.login.label}
+          </Button>
+        )}
         {stop === undefined ? null : (
           <button
             type="button"

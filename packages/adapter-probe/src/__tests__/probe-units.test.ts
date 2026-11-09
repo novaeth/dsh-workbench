@@ -293,10 +293,10 @@ describe('probeUnits：bin / env 两类', () => {
 });
 
 describe('probeUnits：汇总', () => {
-  it('required: false 缺了 → unit degraded，need 仍报 missing', async () => {
+  it('required: false 缺了 → unit 仍 ok，need 仍报 missing', async () => {
     const { capability } = await probeOne([binNeedOf('nope', { required: false })], [{ exitCode: 1, stdout: '' }]);
 
-    expect(capability.status).toBe('degraded');
+    expect(capability.status).toBe('ok');
     expect(stateOf(capability, 'bin', 'nope')?.status).toBe('missing');
   });
 

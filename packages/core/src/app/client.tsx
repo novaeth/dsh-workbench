@@ -1,4 +1,5 @@
 import '@/shared/dev-surface/install';
+import { createElement } from 'react';
 import type { DshClientContext, PanelEntry } from '@dsh-workbench/shared';
 import type { PanelStep } from '@dsh-workbench/shared';
 import { LOCALE_NS, UNITS_SERVICE } from '@dsh-workbench/shared';
@@ -14,6 +15,7 @@ import type { MessagesContribution } from '@dsh-workbench/shared';
 import { assembleClientUnits } from '@/app/units';
 import { unitTitlesOf } from '@/app/units/unit-titles';
 import { createClientUnitRegistry } from '@/kernel/client/registry';
+import { SchemaCard } from '@/shared/components/SchemaCard';
 import { createUnitManifestLoader } from '@/app/units/manifests';
 import type { UnitClientApi, UnitClientFace } from '@dsh-workbench/shared';
 import { createBootGate } from '@/app/layouts/env-gate/boot-gate';
@@ -77,6 +79,7 @@ import {
   revealFirstProblem, searchTextOf, selectCursorValue, selectEntries, shortenPath, stepSelectCursor,
   writeText,
 } from '@dsh-workbench/shared';
+export { SchemaCardView as schemaCard } from '@/shared/components/SchemaCardView';
 
 export const kit = {
   hooks: {
@@ -156,7 +159,11 @@ export function apply(ctx: DshClientContext): void {
 function mount(ctx: DshClientContext): void {
   setRuntimeTextResolver((text) => ctx.locale.resolveText?.({ zh: text.zh, en: text.en }) ?? text.zh);
   const loadUnitManifests = createUnitManifestLoader();
-  const units = createClientUnitRegistry({ onUnknownUnit: () => loadUnitManifests(units) });
+  const units = createClientUnitRegistry({
+    onUnknownUnit: () => loadUnitManifests(units),
+    viewOf: (view, manifest) => (props) =>
+      createElement(SchemaCard, { ...props, unit: manifest.id, view }),
+  });
   ctx.provide(UNITS_SERVICE, {
     registerUnit: (face: UnitClientFace) => units.register(face),
     manifests: () => units.manifests(),

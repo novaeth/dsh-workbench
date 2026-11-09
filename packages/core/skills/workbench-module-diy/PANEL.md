@@ -132,3 +132,33 @@ write.send({ ignored, timeoutSeconds, workspace });   // 控件：Field + TextFi
 - 宿主侧不引：`source` 判据红；宿主 import `src/components/**` 还会被 `arch` 的 S23 判红。
 
 kit 优先：kit 跟随外壳主题与语言。
+
+## 10 schema 卡：模块只交 view model（可选）
+
+卡片仍可以是一整块 React（`card`），也可以改交一条 `view`（`CardView` v1）。后者由外壳画卡头、
+五态、阻断、刷新、状态点、动作排法和通用 section，模块只给读口、归一化模型与文案键。
+
+- 契约在 `@dsh-workbench/core/contract` 的 `CardView`；`apiVersion` 仍是 3，`card` 原样保留。
+- 卡头补充可由 `meta(model, t)` 给（如「共 N 条」）；`read` 的 `idleKey` 管没选工作区那一屏。
+- 领域内容实在塞不进 sections 时，`customBody(props)` 让外壳只留卡框、正文整块交给模块（cmdb/argocd 这类向导）；它绕过 `read`，状态与刷新由模块正文自己负责。
+- 给 `settingsGearKey` 就把齿轮放回外壳卡头；`customBody(props, frame)` 拿 `frame.settingsOpen / frame.onSettingsOpenChange` 控制正文里的设置屏。`customBody` 配 `customLongTask(runs, t)`：外壳仍然读 `<unit>/runs`、画长任务行、接停止 / 去登录 / 回跳重试；模块只把 host 行映射成标题与链接。
+- `read` 给 `route` / `query`（对象或 `(props) => 对象`）/ `fact` / 可选的 `enabled(props)` 与 `map(payload)`；`map` 只回
+  `{ phase: 'ready', model }` 或 `{ phase: 'empty', hintKey }`。`loading` / `error` / 能力门 / 阻断由外壳接。
+  卡片需要先选工作区时，用 `enabled` 关掉请求；`idleKey` 是关掉时那句文案。
+- v1 能画：`metrics`（标签 + 值 + 档位 + 可选 `percent` 画进度条 + 动作）、`rows`（状态点 + 标题 + 补充 + 行尾时间 + 行尾动作）、
+  `activity`（时间线）、`longTask`（读 `<unit>/runs`、停止、去登录、回跳刷新）、
+  `settings`（select / text 字段 + 保存）、`custom`（业务块逃生口）。
+- section 函数拿到 `(model, t)`；动态标题 / 值用 `label` / `title` / `text` 直接给数据，静态文案才用 `*Key`。
+  标签动态时给 `key` 做 React key。动作是 `open-url` / `retry` / `chat`（对话引用）；`metrics` / `rows` 都能带。
+  动作给 `iconOnly: true` + `icon`（`open` / `chat` / `retry`）就画成旧式图标钮；chat 的 chip 文案用 `chip.label`（动态数据）或 `chip.labelKey`，不拿按钮名；行尾时间用 `at` / `atTone` / `atTitle`；
+  任务列表把 `rows` 的行设成 `layout: 'activity'`，外壳会用旧的 `ActivityLine` 排版（列表间距 / 滚动 / 两行标题）；
+  卡头平台地址可给 `platformOf(model)`；要定时刷新给 `refreshMs`。
+- `settings` 只给字段、`values(model)`、`save.route` + `save.body(values, model, props)` 和四句文案；
+  下拉候选可用 `optionsOf(model)` 给，或 `load: { route, query, pick }` 让外壳在设置打开时取；`search` 打开搜索；`openWhen(model)` 可在歧义时自动打开。多步向导仍放 `custom`。
+- 确认条不单独做 schema：在 `custom` 里用 kit `ConfirmBar`，触发与业务字段归模块。
+- 未知 `CardView.version` / 拼错的 section 会被外壳拒绝并回退 `card`；没有 `card` 就不出卡片。
+  schema-only 模块要在 peer 里抬到认识 `view` 的外壳版本。
+- 旧卡不自动获得 schema 行为；要迁就逐模块交 `view`，先留 `card` 做回退。
+- 已迁样板：`llm-wallet`（`view` + `walletCardOf` 纯 model；`read.enabled` 保留「先打开项目」）；
+  `coding-analysis`（三行指标 + 扫描时间线 + 分支设置；外链 / 对话动作；特殊态留 `custom`）；
+  `coding-missions` / `coding-issues` 随后。

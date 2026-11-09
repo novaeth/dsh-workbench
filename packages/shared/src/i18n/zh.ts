@@ -811,6 +811,12 @@ export const zh = {
   'markdown.copy': '复制',
   'markdown.copied': '已复制',
   'markdown.footnotes': '脚注',
+  'card.chatFailed': '没能插进输入框（会话可能还没准备好）',
+  'longTask.login': '去登录',
+  'longTask.steps': '步骤',
+  'longTask.stop': '停止任务 {label}',
+  'longTask.stopConfirm': '确认停止',
+  'longTask.stopArmed': '再次点击确认停止',
   ...zhNeedText,
 } as const;
 

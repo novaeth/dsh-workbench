@@ -127,6 +127,10 @@ describe('flowTaskDeps / startFlow', () => {
     const waiting = runs.snapshot(started.id);
     expect(waiting?.status).toBe('needs-login');
     expect(waiting?.loginUrl).toBe('https://example.com/login');
+    expect(flowTaskDeps(actions).view?.(waiting as NonNullable<typeof waiting>)).toMatchObject({
+      status: 'needs-login',
+      loginUrl: 'https://example.com/login',
+    });
 
     release?.();
     await tick();

@@ -816,5 +816,11 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'markdown.copy': 'Copy',
   'markdown.copied': 'Copied',
   'markdown.footnotes': 'Footnotes',
+  'card.chatFailed': 'Could not insert it (the composer may not be ready)',
+  'longTask.login': 'Sign in',
+  'longTask.steps': 'Steps',
+  'longTask.stop': 'Stop {label}',
+  'longTask.stopConfirm': 'Confirm stop',
+  'longTask.stopArmed': 'Click again to stop',
   ...enNeedText,
 };

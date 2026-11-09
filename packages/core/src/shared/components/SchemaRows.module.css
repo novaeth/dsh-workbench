@@ -1,0 +1,48 @@
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-10);
+  max-height: var(--wb-len-360);
+  overflow-y: auto;
+}
+
+.activityText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.activityTitle {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  max-width: var(--wb-len-240);
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-size: var(--dsw-font-xs-13-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-primary);
+}
+
+.activityMeta {
+  font-size: var(--dsw-font-xxxs-11-font-size);
+  line-height: var(--wb-line-16);
+  color: var(--dsw-alias-label-tertiary);
+  white-space: nowrap;
+}
+
+.activityAtWarn {
+  color: var(--dsw-alias-state-warn-primary);
+}
+
+.activityAtBad {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.activityAtOk {
+  color: var(--dsw-alias-state-success-primary);
+}
+
+.activityAtBusy {
+  color: var(--dsw-alias-state-business-primary);
+}

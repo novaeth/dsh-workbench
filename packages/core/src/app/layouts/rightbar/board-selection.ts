@@ -22,7 +22,12 @@ export interface PanelRow {
 export function available(capability: CapabilityMap[string] | undefined): boolean {
   if (capability === undefined) return true;
   if (capability.released === true) return false;
-  return capability.status === 'ok' || capability.status === 'unchecked' || capability.status === 'failed';
+  return (
+    capability.status === 'ok' ||
+    capability.status === 'degraded' ||
+    capability.status === 'unchecked' ||
+    capability.status === 'failed'
+  );
 }
 
 export function selectPanelUnits<T extends SelectableUnit>(

@@ -66,11 +66,12 @@ describe('aggregate：交叉依赖并进结论', () => {
     expect(out.needs.map((need) => need.kind)).toEqual(['extension']);
   });
 
-  it('required: false 缺了 → degraded，而不是 missing', () => {
+  it('required: false 缺了 → 不影响结论（ok），不是 missing', () => {
     const optional = libNeedOf('optional-lib', { required: false });
     const out = aggregate('inventory', [optional], [needStateOf(optional, 'missing')]);
 
-    expect(out.status).toBe('degraded');
+    expect(out.status).toBe('ok');
+    expect(out.needs[0]?.status).toBe('missing');
   });
 });
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { BlockerAction } from '@dsh-workbench/shared';
 
 import { useHostWrite } from './use-host-write';
+import { watchLoginReturn } from './login-return';
 import { writeClipboard } from '@deepseek-ai/dsh-client-ui-primitives';
 
 export interface BlockerActions {
@@ -17,10 +18,18 @@ export function useBlockerActions(onRetry: () => void, onOpenMarket?: () => void
   const [failure, setFailure] = useState<{ message: string; detail?: string } | null>(null);
   const retryRef = useRef(onRetry);
   const marketRef = useRef(onOpenMarket);
+  const retryWatch = useRef<(() => void) | null>(null);
   useEffect(() => {
     retryRef.current = onRetry;
     marketRef.current = onOpenMarket;
   }, [onRetry, onOpenMarket]);
+  useEffect(
+    () => () => {
+      retryWatch.current?.();
+      retryWatch.current = null;
+    },
+    [],
+  );
   const provision = useHostWrite({
     channel: 'provision',
     networkText: '网络不通',
@@ -66,7 +75,13 @@ export function useBlockerActions(onRetry: () => void, onOpenMarket?: () => void
       });
       return;
     }
+    retryWatch.current?.();
     window.open(action.url, '_blank', 'noopener');
+    retryWatch.current = watchLoginReturn({
+      onRetry: () => {
+        retryRef.current();
+      },
+    });
   }, [provision]);
 
   return { run, copied, running, failure };

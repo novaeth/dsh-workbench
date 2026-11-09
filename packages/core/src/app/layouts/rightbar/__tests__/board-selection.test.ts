@@ -54,6 +54,7 @@ describe('available（能不能上板 / 能不能进候选）', () => {
     expect(available(undefined)).toBe(true);
     expect(available(capability('ok'))).toBe(true);
     expect(available(capability('unchecked'))).toBe(true);
+    expect(available(capability('degraded'))).toBe(true);
   });
 
   it('★ 起不来（宿主挂它这份面时抛了）→ **照画**（卡片带着"起不来 + 原因"的阻断态，而不是静默消失）', () => {

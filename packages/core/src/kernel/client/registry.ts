@@ -1,4 +1,5 @@
-import type { UnitManifest } from '@dsh-workbench/shared';
+import type { CardView, UnitManifest } from '@dsh-workbench/shared';
+import { cardViewProblemsOf } from '@dsh-workbench/shared';
 import type { BoardModule, UnitClientFace } from '@dsh-workbench/shared';
 import { createBoardRegistry, type BoardRegistry } from './board-registry';
 
@@ -23,8 +24,25 @@ export interface ClientUnitRegistry {
   version(): number;
 }
 
-export function toBoardModule(face: UnitClientFace, manifest: UnitManifest): BoardModule | undefined {
-  const View = face.card;
+export type BoardViewOf = (view: CardView, manifest: UnitManifest) => BoardModule['View'] | undefined;
+
+export function toBoardModule(
+  face: UnitClientFace,
+  manifest: UnitManifest,
+  viewOf?: BoardViewOf,
+): BoardModule | undefined {
+  let view = face.view;
+  if (view !== undefined) {
+    const problems = cardViewProblemsOf(view);
+    if (problems.length > 0) {
+      console.warn(
+        `[dsh-workbench] ${manifest.id} 的 schema 卡没挂上：${problems.join('；')}`,
+      );
+      view = undefined;
+    }
+  }
+  const View =
+    view === undefined ? face.card : (viewOf?.(view, manifest) ?? face.card);
   if (View === undefined) return undefined;
   return {
     id: manifest.id,
@@ -42,7 +60,10 @@ interface Registration {
 }
 
 export function createClientUnitRegistry(
-  options: { readonly onUnknownUnit?: (unit: string) => void } = {},
+  options: {
+    readonly onUnknownUnit?: (unit: string) => void;
+    readonly viewOf?: BoardViewOf;
+  } = {},
 ): ClientUnitRegistry {
   const registrations: Registration[] = [];
   const refusals: ClientUnitRefusal[] = [];
@@ -89,7 +110,7 @@ export function createClientUnitRegistry(
   function attach(entry: Registration): boolean {
     const manifest = known.get(entry.unit);
     if (manifest === undefined) return false;
-    const boardModule = toBoardModule(entry.face, manifest);
+    const boardModule = toBoardModule(entry.face, manifest, options.viewOf);
     entry.mounted = {
       manifest,
       unmount: boardModule === undefined ? () => {} : board.register(boardModule),

@@ -78,6 +78,15 @@ export function useLongTask<T extends { readonly id: string; readonly status: Lo
     return () => clearInterval(timer);
   }, [enabled, every]);
 
+  useEffect(() => {
+    if (!enabled || !live || typeof document === 'undefined') return undefined;
+    const onVisible = (): void => {
+      if (!document.hidden) setTick((count) => count + 1);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [enabled, live]);
+
   const refresh = useCallback(() => setTick((count) => count + 1), []);
 
   return { runs, stop, stopping, stopFailed: write.failed, refresh };

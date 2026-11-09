@@ -1,17 +1,15 @@
 import type { DshToolDefinition, UnitMountDeps } from '@dsh-workbench/core/contract';
 import {
   TEXT_OUTPUT,
-  longTaskStepOf,
+  createFlowTask,
   recordOf,
-  sessionIdOf,
-  sessionWorkspace,
   textOf,
   type LongTaskBase,
   type LongTaskRegistry,
 } from '@dsh-workbench/shared/host';
 import { LIST_LIMIT } from '../model/overview';
 import { DECLARED_TOOLS } from '../declared-tools';
-import { FLOW_TARGET, RUN_TASK, headlineOf, sampleFlow } from '../model/flow';
+import { RUN_TASK, headlineOf, sampleFlow } from '../model/flow';
 import { readOverview } from './overview';
 
 export interface StartResult {
@@ -34,6 +32,8 @@ export interface Sample {
 export function createSample(deps: UnitMountDeps): Sample {
   const flowDefinition = sampleFlow();
   const actions = deps.flow.createActions();
+  const runDescription =
+    '跑一遍样板流程（读目录 → 汇总）；只读本机目录，不写平台，不用点头；再传 runId 可只看同一趟。';
 
   actions.register(
     'read',
@@ -55,85 +55,36 @@ export function createSample(deps: UnitMountDeps): Sample {
     { title: '汇总' },
   );
 
-  const checked = deps.flow.check(flowDefinition, actions);
-  if (!checked.ok) {
-    throw new Error(
-      `流程定义有问题：${checked.problems.map((one) => `${one.path}: ${one.problem}`).join('；')}`,
-    );
-  }
-
-  const runs = deps.longTasks?.create<LongTaskBase>({
-    key: RUN_TASK,
-    run: async ({ payload, onStep, signal }) => {
-      const path = textOf(recordOf(payload)['path']);
-      const result = await deps.flow.run({
-        flow: flowDefinition,
-        input: { path },
-        actions,
-        signal,
-        runId: `${DECLARED_TOOLS.run.name}-${String(Date.now())}`,
-        workspace: path,
-        onStep: (event) => {
-          onStep(longTaskStepOf(event));
-        },
-      });
-      if (result.status === 'failed') {
-        throw result.error instanceof Error
-          ? result.error
-          : new Error(`流程失败在 ${result.failedStep ?? '未知步骤'}`);
-      }
-      return result;
-    },
-    step: (step) => ({ step: step.text }),
-    outcome: () => ({ step: '完成：读目录 → 汇总' }),
-    stopped: (current) => ({ step: current.step === '' ? '已停止' : `停在「${current.step}」` }),
-    view: (snapshot) => ({
-      status: snapshot.status,
-      step: snapshot.step,
-      steps: snapshot.steps,
-      ...(snapshot.why === undefined ? {} : { why: snapshot.why }),
-    }),
-  });
+  const flowTask =
+    deps.longTasks === undefined
+      ? undefined
+      : createFlowTask({
+          key: RUN_TASK,
+          flow: flowDefinition,
+          actions,
+          flowHost: deps.flow,
+          longTasks: deps.longTasks,
+          tool: { name: DECLARED_TOOLS.run.name, description: runDescription },
+        });
+  const runs = flowTask?.runs;
 
   const start = (workspace: string, session: string | null): StartResult => {
-    if (runs === undefined) return { ok: false, text: '外壳没有给长任务服务：这一版起不了流程' };
-    const run = runs.start({
+    if (flowTask === undefined) return { ok: false, text: '外壳没有给长任务服务：这一版起不了流程' };
+    const run = flowTask.start({
       workspace,
-      target: FLOW_TARGET,
-      payload: { path: workspace },
+      input: { path: workspace },
       ...(session === null ? {} : { session }),
     });
     return { ok: true, runId: run.id, status: run.status, text: headlineOf(run) };
   };
 
-  const runTool: DshToolDefinition = {
+  const runTool: DshToolDefinition = flowTask?.tool ?? {
     name: DECLARED_TOOLS.run.name,
-    description:
-      '跑一遍样板流程（读目录 → 汇总）；只读本机目录，不写平台，不用点头；再传 runId 可只看同一趟。',
-    parameters: {
-      type: 'object',
-      properties: {
-        runId: {
-          type: 'string',
-          description: '填上一次的 runId = 只看那条；不填 = 起一条新的。',
-        },
-      },
-      additionalProperties: false,
-    },
+    description: runDescription,
+    parameters: { type: 'object', properties: {}, additionalProperties: true },
     output: TEXT_OUTPUT,
-    async execute(raw, exec) {
-      const args = recordOf(raw);
-      const runId = textOf(args['runId']);
-      if (runId !== '') {
-        const snapshot = runs?.snapshot(runId) ?? null;
-        if (snapshot === null) return { ok: false, text: `没有这条 run：${runId}` };
-        return { ok: true, runId, status: snapshot.status, text: headlineOf(snapshot) };
-      }
-      const workspace = sessionWorkspace(exec);
-      if (workspace === null || workspace === '') {
-        return { ok: false, text: '这个会话没有工作区：先打开一个项目再跑。' };
-      }
-      return start(workspace, sessionIdOf(exec));
+    async execute() {
+      return { ok: false, text: '外壳没有给长任务服务：这一版起不了流程' };
     },
   };
 

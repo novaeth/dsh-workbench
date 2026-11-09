@@ -103,15 +103,16 @@ export const face: UnitModuleFace = {
 
 在模块 `mount` 里：
 
-- `const runs = deps.longTasks.create({ key, run, view, outcome, stopped })`；`run` 调 `deps.flow.run`，把 `onStep` 映射到长任务的 `onStep`；返回 `status === 'failed'` 时 throw，让注册表标 failed。默认映射用 `longTaskStepOf(event)`（`@dsh-workbench/shared/host` 导出，`running`/`ok`/`skipped`/`failed`/`needs-login` 各对应一种 `kind`）；要改文案或过滤步骤就自己写映射。
-- `registerTools()`：**调用时才注册**，返回一组清理函数；里面 `tools.register(tool)`（`execute` 里 `runs.start`，返回 `{ ok, runId, status, text }`；再按 `runId` 查）。
+- **优先用 `createFlowTask({ key, flow, actions, flowHost: deps.flow, longTasks: deps.longTasks, tool })`**（`@dsh-workbench/shared/host`）：它做 `flow.check`、建长任务注册表，返回 `{ runs, start, tool }`；`tool` 的 `execute` 与 `start` 共用同一实现，`runId` 参数自动支持「只看那条」。
+- 要自定义 `view` / `step` / `outcome` 时才手写 `const runs = deps.longTasks.create({ key, run, view, outcome, stopped })`；`run` 调 `deps.flow.run`，把 `onStep` 映射到长任务的 `onStep`；返回 `status === 'failed'` 时 throw，让注册表标 failed。默认映射用 `longTaskStepOf(event)`（`@dsh-workbench/shared/host` 导出，`running`/`ok`/`skipped`/`failed`/`needs-login` 各对应一种 `kind`）；要改文案或过滤步骤就自己写映射。
+- `registerTools()`：**调用时才注册**，返回一组清理函数；里面 `tools.register(tool)`（`execute` 里 `start` 或 `runs.start`，返回 `{ ok, runId, status, text }`；再按 `runId` 查）。
 - 写平台的工具：清单 `writes: true` + `needsApproval` / `approvalDetail`；动作里不要自己再问一遍。
 - 校验：`deps.flow.check(flow, actions)`；有问题先修，不装。
 
 `registerTools()` 的返回值是**清理函数数组**（外壳卸载 / 热换时逐个调），不是“注册函数数组”。
 清单里每一条 `dsh.workbench.tools` 必须在这里注册一把、名字逐字一致；没有工具就 `() => []`。
 可跑的完整样板：`dsh-wb-module init --template diy` 生成的模块里那把 `__UNIT___run`
-（工具 + 长任务 + 动作通道三处共用一个 `startRun`）。
+（`createFlowTask` 把工具 + 长任务 + 动作通道收成一份实现）。
 
 ### v0.1 能用的形状
 
@@ -123,7 +124,7 @@ export const face: UnitModuleFace = {
 | 逐项 + 轮询 | `forEach` 与 `poll` 同一步；每项单独轮询 |
 | 子流程 | `{ id, flow: subFlow, with: { ... } }`；结果在 `steps.<id>` |
 | 提前结束 | `flow.stopWhen` |
-| 登录 | 动作里 `ctx.login(url)`；长任务进 `needs-login`，动作自己等 / 重试 |
+| 登录 | 动作用 `withLoginRetry(action)`：认证失败自动 `ctx.login(url)` 并在原地重试；长任务进 `needs-login`，超过 `maxMs` 仍停在那里等用户停止 |
 
 分支（`already_merged` / `can_merge` / `REVIEW_WAITING`）继续写在动作里；flow 只保留稳定的外层顺序。
 

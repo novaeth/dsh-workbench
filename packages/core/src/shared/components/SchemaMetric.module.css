@@ -1,0 +1,50 @@
+.metricBarRow {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-len-8);
+  margin: var(--wb-len-2) 0 var(--wb-len-10);
+}
+
+.metricTrack {
+  flex: 1 1 auto;
+  height: var(--wb-len-6);
+  overflow: hidden;
+  border-radius: var(--wb-radius-pill);
+  corner-shape: round;
+  background: var(--dsw-alias-bg-skeleton);
+}
+
+.metricFill {
+  height: 100%;
+  margin-left: auto;
+  border-radius: var(--wb-radius-pill);
+  corner-shape: round;
+  transition: width var(--wb-dur-1-5) ease;
+}
+
+.metricPercent {
+  flex: none;
+  font-size: var(--wb-font-12-5);
+  color: var(--dsw-alias-label-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.metricFillNeutral {
+  background: var(--dsw-alias-label-tertiary);
+}
+
+.metricFillOk {
+  background: var(--dsw-alias-state-success-primary);
+}
+
+.metricFillWarn {
+  background: var(--dsw-alias-state-warn-primary);
+}
+
+.metricFillBad {
+  background: var(--dsw-alias-state-error-primary);
+}
+
+.metricFillBusy {
+  background: var(--dsw-alias-state-business-primary);
+}

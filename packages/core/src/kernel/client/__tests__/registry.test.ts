@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { UnitClientFace, UnitManifest } from '@dsh-workbench/shared';
-import { createClientUnitRegistry } from '../registry';
+import type { CardView, UnitClientFace, UnitManifest } from '@dsh-workbench/shared';
+import { createClientUnitRegistry, toBoardModule } from '../registry';
 
 function face(unit: string): UnitClientFace {
   return { unit, card: () => null };
@@ -223,5 +223,56 @@ describe('createClientUnitRegistry', () => {
       order: 3,
     });
     expect(registry.board.stepOwner('panel')?.id).toBe('inventory');
+  });
+
+  it('★ 有 view 时走 schema 卡，旧 card 只当回退', () => {
+    const card = () => null;
+    const viewOf = vi.fn((_view: CardView) => () => null);
+    const view: CardView = {
+      version: 1,
+      titleKey: 'inventory.title',
+      read: { route: '/inventory', map: () => ({ phase: 'empty', hintKey: 'inventory.empty' }) },
+    };
+
+    expect(toBoardModule({ unit: 'inventory', card, view }, manifest('inventory'), viewOf)?.View).not.toBe(card);
+    expect(toBoardModule({ unit: 'inventory', card }, manifest('inventory'), viewOf)?.View).toBe(card);
+    expect(toBoardModule({ unit: 'inventory', view }, manifest('inventory'), viewOf)?.View).toBeTypeOf('function');
+    expect(toBoardModule({ unit: 'inventory', view }, manifest('inventory'))).toBeUndefined();
+    expect(toBoardModule({ unit: 'inventory' }, manifest('inventory'), viewOf)).toBeUndefined();
+  });
+
+  it('★ 不认识的 CardView 版本回退到旧 card；没有 card 就不出卡片', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const card = () => null;
+    const viewOf = vi.fn((_view: CardView) => () => null);
+    const view: CardView = {
+      version: 1,
+      titleKey: 'inventory.title',
+      read: { route: '/inventory', map: () => ({ phase: 'empty', hintKey: 'inventory.empty' }) },
+    };
+    const unknown = { ...view, version: 2 } as unknown as CardView;
+
+    expect(toBoardModule({ unit: 'inventory', card, view: unknown }, manifest('inventory'), viewOf)?.View).toBe(card);
+    expect(toBoardModule({ unit: 'inventory', view: unknown }, manifest('inventory'), viewOf)).toBeUndefined();
+    expect(warnLines(warn)).toMatch(/version 必须是 1/);
+    warn.mockRestore();
+  });
+
+  it('★ 形状不对的 view 不挂 schema 卡：回退旧 card，并说清哪里不对', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const card = () => null;
+    const viewOf = vi.fn((_view: CardView) => () => null);
+    const view = {
+      version: 1,
+      titleKey: 'inventory.title',
+      read: undefined,
+      sections: { metrcs: () => [] },
+    } as unknown as CardView;
+
+    expect(toBoardModule({ unit: 'inventory', card, view }, manifest('inventory'), viewOf)?.View).toBe(card);
+    expect(toBoardModule({ unit: 'inventory', card: undefined, view }, manifest('inventory'), viewOf)).toBeUndefined();
+    expect(warnLines(warn)).toMatch(/read 必须是对象/);
+    expect(warnLines(warn)).toMatch(/不认识的 section：metrcs/);
+    warn.mockRestore();
   });
 });
