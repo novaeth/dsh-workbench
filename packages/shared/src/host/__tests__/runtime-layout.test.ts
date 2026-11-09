@@ -11,5 +11,6 @@ describe('运行时根的算法（这里不认识任何具体运行时）', () =
     expect(layout.vendorPluginsDir).toBe(join(layout.root, 'plugins-npm', 'node_modules'));
     expect(layout.libsPrefix).toBe(join(layout.root, 'libs'));
     expect(layout.npmCacheDir).toBe(join(layout.root, 'npm-cache'));
+    expect(layout.pnpmStoreDir).toBe(join(layout.root, 'pnpm-store'));
   });
 });

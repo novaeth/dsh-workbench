@@ -11,7 +11,7 @@ export function libInstallCommand(options: {
   readonly version?: string | undefined;
   readonly env?: NodeJS.ProcessEnv | undefined;
   readonly prefix: string;
-  readonly cacheDir?: string | undefined;
+  readonly storeDir?: string | undefined;
   readonly pnpm?: string | undefined;
 }): string {
   const { need, source, version } = options;
@@ -19,7 +19,7 @@ export function libInstallCommand(options: {
   const registry = npmRegistryOf(source, options.env ?? process.env);
   const spec = version ?? need.version ?? 'latest';
   const registryFlag = registry.ok ? ` --registry ${quoteShellArg(registry.value)}` : '';
-  const storeFlag = options.cacheDir === undefined ? '' : ` --store-dir ${quoteShellArg(options.cacheDir)}`;
+  const storeFlag = options.storeDir === undefined ? '' : ` --store-dir ${quoteShellArg(options.storeDir)}`;
   return `${pnpm} add --dir ${quoteShellArg(options.prefix)} ${quoteShellArg(`${need.name}@${spec}`)}${registryFlag}${storeFlag} --allow-build=${quoteShellArg(need.name)}`;
 }
 
@@ -28,7 +28,7 @@ export function binInstallCommand(
   os: HostOs,
   env: NodeJS.ProcessEnv,
   prefix: string,
-  cacheDir?: string,
+  storeDir?: string,
 ): string | undefined {
   const install = need.install;
   if (install === undefined) return undefined;
@@ -41,7 +41,7 @@ export function binInstallCommand(
   if (packageName === '') return undefined;
   return libInstallCommand({
     prefix,
-    ...(cacheDir === undefined ? {} : { cacheDir }),
+    ...(storeDir === undefined ? {} : { storeDir }),
     need: { kind: 'lib', name: packageName, purpose: need.purpose },
     source: {
       kind: 'npm',

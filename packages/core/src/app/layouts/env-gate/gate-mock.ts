@@ -1,7 +1,7 @@
 import styles from './BootGate.module.css';
 import type { PreflightBridgeIssue, PreflightGuidance, PreflightSnapshot } from '@dsh-workbench/shared/host';
 
-const INSTALL_COMMAND = "pnpm add --dir '/Users/you/.dsh/workbench/opencli/toolchain' @jackwener/opencli@1.8.8 --store-dir '/Users/you/.dsh/workbench/opencli/npm-cache' --allow-build=@jackwener/opencli";
+const INSTALL_COMMAND = "pnpm add --dir '/Users/you/.dsh/workbench/opencli/toolchain' @jackwener/opencli@1.8.8 --store-dir '/Users/you/.dsh/workbench/opencli/pnpm-store' --allow-build=@jackwener/opencli";
 
 export interface GateMockExpect {
   readonly hint: 'checking' | 'installing' | 'installingToolchain' | 'failed' | 'hold';

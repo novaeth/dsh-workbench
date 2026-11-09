@@ -2,9 +2,10 @@ import lockfile from 'proper-lockfile';
 
 import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { quoteShellArg, quoteShellArgFor, writeTextFile } from '@dsh-workbench/shared/host';
+import { quoteShellArg, quoteShellArgFor, removePath, writeTextFile } from '@dsh-workbench/shared/host';
 import type { Seam } from '@dsh-workbench/shared/host';
 import { bootstrapEnv, runBootstrapCommand } from './bootstrap-run.js';
+import { storeMismatchIn } from './store-mismatch.js';
 import { hostSurface } from './platform.js';
 import { desktopPnpmPath } from './desktop-runtime.js';
 import type { PnpmProcess } from './desktop-runtime.js';
@@ -71,6 +72,23 @@ export interface LocalNpmProvision {
   readonly binDir?: string | undefined;
 }
 
+async function runWithStoreHeal(
+  run: (command: string) => Promise<{ ok: boolean; detail: string }>,
+  command: string,
+  nodeModules: string,
+  remove: (path: string) => void,
+): Promise<{ ok: boolean; detail: string }> {
+  const first = await run(command);
+  if (first.ok || !storeMismatchIn(first.detail)) return first;
+  try {
+    remove(nodeModules);
+  } catch (error) {
+    return { ok: false, detail: `${first.detail}；清 ${nodeModules} 没清掉：${String(error)}` };
+  }
+  const second = await run(command);
+  return second.ok ? second : { ok: false, detail: `清掉 node_modules 重装后还是没装上：${second.detail}` };
+}
+
 export async function provisionLocalNpm(options: {
   readonly root: string;
   readonly run: (command: string) => Promise<{ ok: boolean; detail: string }>;
@@ -78,6 +96,7 @@ export async function provisionLocalNpm(options: {
   readonly platform?: NodeJS.Platform | undefined;
   readonly proc?: PnpmProcess | undefined;
   readonly exists?: ((path: string) => boolean) | undefined;
+  readonly remove?: ((path: string) => void) | undefined;
 }): Promise<LocalNpmProvision> {
   const command = localNpmInstallCommand(
     options.root,
@@ -90,7 +109,12 @@ export async function provisionLocalNpm(options: {
   } catch (error) {
     return { ok: false, detail: `建不了 ${localNpmRoot(options.root)}：${String(error)}` };
   }
-  const result = await options.run(command);
+  const result = await runWithStoreHeal(
+    options.run,
+    command,
+    join(localNpmRoot(options.root), 'node_modules'),
+    options.remove ?? removePath,
+  );
   if (!result.ok) return { ok: false, detail: result.detail };
   const platform = options.platform ?? process.platform;
   const installed = options.installed?.() ?? existsSync(localNpmCommand(options.root, platform));
@@ -160,6 +184,7 @@ export async function provisionLocalPnpm(options: {
   readonly exists?: ((path: string) => boolean) | undefined;
   readonly pnpm?: string | undefined;
   readonly npm?: string | undefined;
+  readonly remove?: ((path: string) => void) | undefined;
 }): Promise<LocalPnpmProvision> {
   const platform = options.platform ?? process.platform;
   const bootstrap = options.pnpm?.trim();
@@ -182,7 +207,12 @@ export async function provisionLocalPnpm(options: {
   let detail = '';
   const run = options.run ?? hostProvisionRun(options.root, options.seam);
   for (const command of commands) {
-    const result = await run(command);
+    const result = await runWithStoreHeal(
+      run,
+      command,
+      join(localPnpmRoot(options.root), 'node_modules'),
+      options.remove ?? removePath,
+    );
     if (result.ok) {
       const installed = options.installed?.() ?? existsSync(localPnpmCommand(options.root, platform));
       if (installed) {

@@ -1,10 +1,13 @@
+import { existsSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import type { DshHostContext, RuntimeCapabilities } from '@dsh-workbench/shared';
 import type { RouteTable } from '@dsh-workbench/shared/host';
-import { PREFLIGHT_INSTALL_TIMEOUT_MS, preflightHandler, type Seam, workbenchRoot } from '@dsh-workbench/shared/host';
+import { PREFLIGHT_INSTALL_TIMEOUT_MS, preflightHandler, removePath, type Seam, workbenchRoot } from '@dsh-workbench/shared/host';
+import { toolchainDir, toolchainOpencliDir } from '@dsh-workbench/adapter-runtime';
 import { WAKE_BROWSER_ROUTE } from '@dsh-workbench/shared/contract/protocol/preflight-wake';
 import { runBootstrapCommand } from './bootstrap-run.js';
 import { createDiyPresetProbe } from './diy-preset-health.js';
+import { installIsolatedRuntime } from './isolated-install.js';
 import { opencliInstallCommand } from './install.js';
 import { hostSurface } from './platform.js';
 import { createPreflight } from './preflight.js';
@@ -55,15 +58,27 @@ export function registerPreflight(input: {
       seam: input.seam,
       command,
     });
+  const installLogger = input.ctx.logger;
+  const installLog =
+    installLogger === undefined ? undefined : (message: string) => installLogger.warn?.(message);
   const preflight = createPreflight({
     seam: input.seam,
     command,
     installCommand,
     install: () =>
-      runBootstrapCommand(installCommand, {
-        timeoutMs: PREFLIGHT_INSTALL_TIMEOUT_MS,
-        seam: input.seam,
-      }),
+      installIsolatedRuntime(
+        {
+          run: (line) =>
+            runBootstrapCommand(line, {
+              timeoutMs: PREFLIGHT_INSTALL_TIMEOUT_MS,
+              seam: input.seam,
+            }),
+          resolves: () => existsSync(join(toolchainOpencliDir(), 'package.json')),
+          drop: () => removePath(join(toolchainDir(), 'node_modules')),
+          ...(installLog === undefined ? {} : { log: installLog }),
+        },
+        installCommand,
+      ),
     logger: input.ctx.logger,
     warmReads: input.warmReads,
     ...(input.runtimeCapabilities === undefined ? {} : { capabilities: input.runtimeCapabilities }),

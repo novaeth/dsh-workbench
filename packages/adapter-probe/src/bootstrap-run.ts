@@ -77,6 +77,15 @@ async function seamSpawn(
   };
 }
 
+function failureDetail(text: string): string {
+  const trimmed = text.trim();
+  if (trimmed === '') return '';
+  const tail = tailLines(trimmed, 4);
+  const head = trimmed.split('\n')[0]?.trim() ?? '';
+  if (head === '' || tail.split('\n').some((line) => line.trim() === head)) return tail;
+  return `${head}\n…\n${tail}`;
+}
+
 export async function runBootstrapCommand(
   line: string,
   options: BootstrapRunOptions,
@@ -91,7 +100,7 @@ export async function runBootstrapCommand(
         : await options.spawn(command.file, command.args, { env, timeout: options.timeoutMs });
     if (result.timedOut === true) return { ok: false, detail: `超时（${String(options.timeoutMs)} ms）：${line}` };
     if (result.exitCode === 0) return { ok: true, detail: tailLines(result.stdout, 1) };
-    const detail = tailLines(result.stderr || result.stdout, 4);
+    const detail = failureDetail(result.stderr || result.stdout);
     return {
       ok: false,
       detail: detail === '' ? `没跑通（退出码 ${String(result.exitCode)}）：${line}` : detail,

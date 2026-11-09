@@ -7,8 +7,8 @@ import type {
 } from '@dsh-workbench/shared';
 import { npmRegistryOf, planLineOf, quoteShellArg } from '@dsh-workbench/shared/host';
 import {
-  npmCacheDir,
   pnpmIsolationFlags,
+  storeDirFor,
   toolchainOpencliDir,
   vendorPeerLink,
   vendorPrefix,
@@ -68,7 +68,7 @@ function npmSource(
         `--dir ${quoteShellArg(prefix)}`,
         quoteShellArg(`${name}@${version}`),
         `--registry ${quoteShellArg(registry.value)}`,
-        `--store-dir ${quoteShellArg(npmCacheDir())}`,
+        `--store-dir ${quoteShellArg(storeDirFor(prefix))}`,
         pnpmIsolationFlags(),
         `--allow-build=${quoteShellArg(name)}`,
       ].join(' '),

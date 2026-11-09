@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { OPENCLI_CATALOG_ENV, OPENCLI_PIN } from '@dsh-workbench/shared/host';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
-import { isolatedRoot, libsPrefix, npmCacheDir, toolchainOpencliDir } from '../foundation/paths.js';
+import { isolatedRoot, libsPrefix, storeDirFor, toolchainOpencliDir } from '../foundation/paths.js';
 import { OPENCLI_NPM_PACKAGE } from '../foundation/paths.js';
 
 
@@ -53,11 +53,11 @@ export function pnpmIsolationFlags(): string {
 
 export function isolatedInstallCommand(): string {
   const pnpm = process.env.DSH_WB_PNPM?.trim() || 'pnpm';
-  return `${pnpm} add --dir ${quoteShellArg(toolchainDir())} ${OPENCLI_NPM_PACKAGE}@${OPENCLI_PIN} --store-dir ${quoteShellArg(npmCacheDir())} ${pnpmIsolationFlags()} --allow-build=${OPENCLI_NPM_PACKAGE}`;
+  return `${pnpm} add --dir ${quoteShellArg(toolchainDir())} ${OPENCLI_NPM_PACKAGE}@${OPENCLI_PIN} --store-dir ${quoteShellArg(storeDirFor(toolchainDir()))} ${pnpmIsolationFlags()} --allow-build=${OPENCLI_NPM_PACKAGE}`;
 }
 
 export function isolatedPnpmInstallCommand(pnpmCjs: string): string {
-  const store = join(isolatedRoot(), 'pnpm-store');
+  const store = storeDirFor(toolchainDir());
   return (
     `node ${quoteShellArg(pnpmCjs)} add --dir ${quoteShellArg(toolchainDir())} ` +
     `${OPENCLI_NPM_PACKAGE}@${OPENCLI_PIN} --store-dir ${quoteShellArg(store)} ` +

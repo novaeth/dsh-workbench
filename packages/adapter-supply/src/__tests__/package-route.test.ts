@@ -3,7 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DshShell, PluginPlanStep } from '@dsh-workbench/shared';
+import type { LibNeed } from '@dsh-workbench/shared/host';
 import { createSeam } from '@dsh-workbench/shared/host';
+import { isolatedInstallCommand, libInstallCommand } from '@dsh-workbench/adapter-runtime';
 import { OPENCLI_MANIFEST_FILE } from '../index.js';
 import { LOCAL_PLUGIN_ENV, packageRouteOf, pluginInstallPlan, resetPackageRouteCache } from '../index.js';
 
@@ -211,7 +213,7 @@ describe('插件的安装命令（复用 plugin-source 那两条既有分支）'
 
     if (!plan.ok) throw new Error('这条该装得上');
     expect(runLineOf(plan.steps[0])).toBe(
-      `pnpm add --dir '${PREFIX}' 'opencli-plugin-demo@1.2.3' --registry '${REGISTRY}' --store-dir '${path.join(DSH_HOME, 'workbench', 'opencli', 'npm-cache')}' --config.cache-dir='${path.join(DSH_HOME, 'workbench', 'opencli', 'pnpm-cache')}' --config.state-dir='${path.join(DSH_HOME, 'workbench', 'opencli', 'pnpm-state')}' --allow-build='opencli-plugin-demo'`,
+      `pnpm add --dir '${PREFIX}' 'opencli-plugin-demo@1.2.3' --registry '${REGISTRY}' --store-dir '${path.join(DSH_HOME, 'workbench', 'opencli', 'pnpm-store')}' --config.cache-dir='${path.join(DSH_HOME, 'workbench', 'opencli', 'pnpm-cache')}' --config.state-dir='${path.join(DSH_HOME, 'workbench', 'opencli', 'pnpm-state')}' --allow-build='opencli-plugin-demo'`,
     );
     expect(plan.steps.map((step) => step.kind)).toEqual(['run', 'remove', 'mkdir', 'link', 'run', 'run']);
     expect(runLines(plan.steps).some((line) => line.includes("'opencli' plugin uninstall 'demo'"))).toBe(true);
@@ -246,5 +248,45 @@ describe('插件的安装命令（复用 plugin-source 那两条既有分支）'
       ok: false,
       problem: 'malformed',
     });
+  });
+
+  it('★ 既有 plugins-npm/node_modules 记的 store 说了算（装好的那份不翻面）', () => {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-route-'));
+    roots.push(home);
+    vi.stubEnv('DSH_HOME', home);
+    const store = path.join(home, 'workbench', 'opencli', 'npm-cache');
+    const file = path.join(home, 'workbench', 'opencli', 'plugins-npm', 'node_modules', '.modules.yaml');
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, `storeDir: ${store}\n`, 'utf8');
+
+    const plan = pluginInstallPlan({ spec: 'opencli-plugin-demo', command: 'opencli', registry: REGISTRY });
+
+    if (!plan.ok) throw new Error('这条该装得上');
+    expect(runLineOf(plan.steps[0])).toContain(`--store-dir '${store}'`);
+  });
+
+  it('★ toolchain / vendor / libs 三处的 `--store-dir` 同源（都读既有 node_modules）', () => {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-route-'));
+    roots.push(home);
+    vi.stubEnv('DSH_HOME', home);
+    const runtime = path.join(home, 'workbench', 'opencli');
+    const store = path.join(runtime, 'npm-cache');
+    for (const project of ['toolchain', 'libs', 'plugins-npm']) {
+      const file = path.join(runtime, project, 'node_modules', '.modules.yaml');
+      const manifest = { hoistedDependencies: {}, storeDir: store, virtualStoreDir: 'node_modules/.pnpm' };
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+    }
+    const need: LibNeed = { kind: 'lib', name: 'demo-lib', purpose: '测试' };
+    const plan = pluginInstallPlan({ spec: 'opencli-plugin-demo', command: 'opencli', registry: REGISTRY });
+
+    if (!plan.ok) throw new Error('这条该装得上');
+    const lines = [
+      isolatedInstallCommand(),
+      libInstallCommand({ need, source: { kind: 'npm', package: 'demo-lib' } }),
+      runLineOf(plan.steps[0]),
+    ];
+
+    for (const line of lines) expect(line).toContain(`--store-dir '${store}'`);
   });
 });

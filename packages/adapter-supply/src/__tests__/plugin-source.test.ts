@@ -1,4 +1,6 @@
 import path from 'node:path';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PluginPlanStep } from '@dsh-workbench/shared';
 import { planLineOf, planStepText } from '@dsh-workbench/shared/host';
@@ -28,7 +30,33 @@ function kindOf(step: PluginPlanStep | undefined): string {
 
 afterEach(() => {
   vi.unstubAllEnvs();
+  for (const root of tempRoots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
+
+const tempRoots: string[] = [];
+
+function tempHome(recordStore: string | undefined): string {
+  const dir = mkdtempSync(path.join(tmpdir(), 'wb-plugin-'));
+  tempRoots.push(dir);
+  if (recordStore !== undefined) {
+    const file = path.join(dir, 'workbench', 'opencli', 'plugins-npm', 'node_modules', '.modules.yaml');
+    mkdirSync(path.dirname(file), { recursive: true });
+    writeFileSync(file, `storeDir: ${recordStore}\n`, 'utf8');
+  }
+  return dir;
+}
+
+function npmAt(dshHome: string): string {
+  vi.stubEnv('DSH_HOME', dshHome);
+  vi.stubEnv(ENV, REGISTRY);
+  const resolved = resolvePluginSource(
+    { kind: 'npm', package: 'opencli-plugin-demo', registryEnv: ENV },
+    process.env,
+    { plugin: 'demo' },
+  );
+  if (!resolved.ok) throw new Error('应该解析得出');
+  return runLineOf(resolved.steps[0]);
+}
 
 function npm(
   options: {
@@ -149,7 +177,7 @@ describe("resolvePluginSource：npm（装进工作台自己的隔离运行时）
       kind: 'run',
       line:
         `pnpm add --dir '${at('plugins-npm')}' 'opencli-plugin-demo@latest' ` +
-        `--registry '${REGISTRY}' --store-dir '${at('npm-cache')}' --config.cache-dir='${at('pnpm-cache')}' --config.state-dir='${at('pnpm-state')}' --allow-build='opencli-plugin-demo'`,
+        `--registry '${REGISTRY}' --store-dir '${at('pnpm-store')}' --config.cache-dir='${at('pnpm-cache')}' --config.state-dir='${at('pnpm-state')}' --allow-build='opencli-plugin-demo'`,
     });
     expect(resolved.steps[1]).toEqual({ kind: 'remove', path: PEER_DIR });
     expect(resolved.steps[2]).toEqual({ kind: 'mkdir', path: PEER_PARENT });
@@ -223,7 +251,7 @@ describe("resolvePluginSource：npm（装进工作台自己的隔离运行时）
     expect(resolved.line).toBe(
       [
         `pnpm add --dir '${at('plugins-npm')}' 'opencli-plugin-demo@latest' ` +
-          `--registry '${REGISTRY}' --store-dir '${at('npm-cache')}' --config.cache-dir='${at('pnpm-cache')}' --config.state-dir='${at('pnpm-state')}' --allow-build='opencli-plugin-demo'`,
+          `--registry '${REGISTRY}' --store-dir '${at('pnpm-store')}' --config.cache-dir='${at('pnpm-cache')}' --config.state-dir='${at('pnpm-state')}' --allow-build='opencli-plugin-demo'`,
         `rm -rf '${PEER_DIR}'`,
         `mkdir -p '${PEER_PARENT}'`,
         `ln -s '${PEER_TARGET}' '${PEER_DIR}'`,
@@ -349,5 +377,31 @@ describe("resolvePluginSource：npm（装进工作台自己的隔离运行时）
     if (!resolved.ok) throw new Error("应该解析得出");
     expect(resolved.steps).toHaveLength(5);
     expect(resolved.line).not.toContain("plugin uninstall");
+  });
+});
+
+describe("pnpm 的 store 跟随既有 node_modules（vendor 那一处）", () => {
+  function atHome(home: string, ...parts: string[]): string {
+    return path.join(home, 'workbench', 'opencli', ...parts);
+  }
+
+  it("★ 事故那一幕：既有 plugins-npm/node_modules 记 pnpm-store → 命令里就是 pnpm-store", () => {
+    const home = tempHome(atHome('/tmp/other-home', 'pnpm-store'));
+
+    expect(npmAt(home)).toContain(`--store-dir '${atHome('/tmp/other-home', 'pnpm-store')}'`);
+  });
+
+  it("★ 既有记的是 npm-cache → 跟着 npm-cache（装好的那份 store 不翻面）", () => {
+    const home = tempHome(atHome('/tmp/other-home', 'npm-cache'));
+    const line = npmAt(home);
+
+    expect(line).toContain(`--store-dir '${atHome('/tmp/other-home', 'npm-cache')}'`);
+    expect(line).not.toContain(`--store-dir '${atHome(home, 'pnpm-store')}'`);
+  });
+
+  it("没有既有 node_modules → 默认 pnpm-store", () => {
+    const home = tempHome(undefined);
+
+    expect(npmAt(home)).toContain(`--store-dir '${atHome(home, 'pnpm-store')}'`);
   });
 });

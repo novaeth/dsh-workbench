@@ -328,3 +328,108 @@ describe('本地 pnpm 10', () => {
     expect(result.pnpmDir).toBe(bin);
   });
 });
+
+const STORE_ERROR = 'ERR_PNPM_UNEXPECTED_STORE  Unexpected store location';
+
+describe('种子工具链：store 位置与既有 node_modules 对不上时清一次重装', () => {
+  it('★ 本地 pnpm：第一遍 store 报错 → 清 pnpm-10/node_modules → 第二遍装上', async () => {
+    const root = tempRoot();
+    const calls: string[] = [];
+    const removed: string[] = [];
+    const result = await provisionLocalPnpm({
+      root,
+      proc: desktopPnpm,
+      exists: (path) => path === pnpmCjs,
+      installed: () => true,
+      remove: (path) => removed.push(path),
+      run: async (command) => {
+        calls.push(command);
+        return calls.length === 1 ? { ok: false, detail: STORE_ERROR } : { ok: true, detail: '' };
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(calls).toHaveLength(2);
+    expect(calls[1]).toBe(calls[0]);
+    expect(removed).toEqual([join(root, 'pnpm-10', 'node_modules')]);
+  });
+
+  it('★ 本地 pnpm：清掉重装后还是没装上 → 不假装装好，说清重装过', async () => {
+    const root = tempRoot();
+    const result = await provisionLocalPnpm({
+      root,
+      proc: desktopPnpm,
+      exists: (path) => path === pnpmCjs,
+      remove: () => undefined,
+      run: async () => ({ ok: false, detail: STORE_ERROR }),
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.detail).toContain('清掉 node_modules 重装后还是没装上');
+    expect(result.detail).toContain(STORE_ERROR);
+  });
+
+  it('本地 pnpm：不是 store 的失败不动 node_modules，也不重跑', async () => {
+    const root = tempRoot();
+    const calls: string[] = [];
+    const removed: string[] = [];
+    const result = await provisionLocalPnpm({
+      root,
+      proc: desktopPnpm,
+      exists: (path) => path === pnpmCjs,
+      remove: (path) => removed.push(path),
+      run: async (command) => {
+        calls.push(command);
+        return { ok: false, detail: 'network down' };
+      },
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.detail).toContain('network down');
+    expect(calls).toHaveLength(1);
+    expect(removed).toEqual([]);
+  });
+
+  it('本地 pnpm：第一遍就装上 → 不清也不重跑', async () => {
+    const root = tempRoot();
+    const calls: string[] = [];
+    const removed: string[] = [];
+    const result = await provisionLocalPnpm({
+      root,
+      proc: desktopPnpm,
+      exists: (path) => path === pnpmCjs,
+      installed: () => true,
+      remove: (path) => removed.push(path),
+      run: async (command) => {
+        calls.push(command);
+        return { ok: true, detail: '' };
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(calls).toHaveLength(1);
+    expect(removed).toEqual([]);
+  });
+
+  it('★ 本地 npm：同样清一次 npm/node_modules 再装', async () => {
+    const root = tempRoot();
+    const calls: string[] = [];
+    const removed: string[] = [];
+    const result = await provisionLocalNpm({
+      root,
+      proc: desktopPnpm,
+      exists: (path) => path === pnpmCjs,
+      installed: () => true,
+      remove: (path) => removed.push(path),
+      run: async (command) => {
+        calls.push(command);
+        return calls.length === 1 ? { ok: false, detail: STORE_ERROR } : { ok: true, detail: '' };
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.binDir).toBe(localNpmBin(root));
+    expect(calls).toHaveLength(2);
+    expect(removed).toEqual([join(root, 'npm', 'node_modules')]);
+  });
+});

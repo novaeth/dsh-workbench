@@ -6,7 +6,7 @@ import {
   libUninstallCommand as uninstallAt,
   type NpmSource,
 } from '@dsh-workbench/shared/host';
-import { libsPrefix, npmCacheDir } from './paths.js';
+import { libsPrefix, storeDirFor } from './paths.js';
 
 export type { NpmSource };
 
@@ -16,7 +16,7 @@ export function libInstallCommand(options: {
   readonly version?: string | undefined;
   readonly env?: NodeJS.ProcessEnv | undefined;
 }): string {
-  return libAt({ ...options, prefix: libsPrefix(), cacheDir: npmCacheDir() });
+  return libAt({ ...options, prefix: libsPrefix(), storeDir: storeDirFor(libsPrefix()) });
 }
 
 export function binInstallCommand(
@@ -24,7 +24,7 @@ export function binInstallCommand(
   os: HostOs,
   env: NodeJS.ProcessEnv = process.env,
 ): string | undefined {
-  return binAt(need, os, env, libsPrefix(), npmCacheDir());
+  return binAt(need, os, env, libsPrefix(), storeDirFor(libsPrefix()));
 }
 
 export function libUninstallCommand(options: { readonly need: LibNeed }): string {

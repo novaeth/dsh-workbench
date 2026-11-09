@@ -9,6 +9,7 @@ export interface RuntimeLayout {
   readonly libsPrefix: string;
   readonly libsBinDir: string;
   readonly npmCacheDir: string;
+  readonly pnpmStoreDir: string;
 }
 
 export function runtimeRootOf(id: string): string {
@@ -27,5 +28,6 @@ export function runtimeLayoutOf(id: string): RuntimeLayout {
     libsPrefix,
     libsBinDir: join(libsPrefix, 'node_modules', '.bin'),
     npmCacheDir: join(root, 'npm-cache'),
+    pnpmStoreDir: join(root, 'pnpm-store'),
   };
 }

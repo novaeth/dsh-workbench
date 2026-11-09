@@ -1,10 +1,22 @@
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createSeam, type Seam } from '@dsh-workbench/shared/host';
 import { createFakeProcesses, createFakeShell, type FakeProcessReply } from '@dsh-workbench/shared/testing';
 import { bootstrapEnv, runBootstrapCommand, type BootstrapSpawn } from '../bootstrap-run.js';
+import { installIsolatedRuntime } from '../isolated-install.js';
+
+const PNPM_STORE_ERROR = ` ERR_PNPM_UNEXPECTED_STORE  Unexpected store location
+
+The dependencies at "/private/tmp/p5/node_modules" are currently linked from the store at "/tmp/sA/v10".
+
+pnpm now wants to use the store at "/tmp/sB/v10" to link dependencies.
+
+If you want to use the new store location, reinstall your dependencies with "pnpm install".
+
+You may change the global store location by running "pnpm config set store-dir <dir> --global".
+(This error may happen if the node_modules was installed with a different major version of pnpm)`;
 
 function tempHome(): string {
   return mkdtempSync(join(tmpdir(), 'wb-bootstrap-'));
@@ -80,6 +92,48 @@ describe('runBootstrapCommand（自举命令走宿主域）', () => {
 
     expect(result.ok).toBe(false);
     expect(result.detail).toContain('EPERM: nope');
+  });
+
+  it('★ 非零退出保留首行：pnpm 的 ERR_PNPM_UNEXPECTED_STORE 不被尾部截掉', async () => {
+    const spawn: BootstrapSpawn = async () => ({ exitCode: 1, stdout: '', stderr: PNPM_STORE_ERROR });
+
+    const result = await runBootstrapCommand('pnpm add --dir /x', { timeoutMs: 1000, shellKind: 'posix', spawn });
+
+    expect(result.ok).toBe(false);
+    expect(result.detail.split('\n')[0]).toBe('ERR_PNPM_UNEXPECTED_STORE  Unexpected store location');
+    expect(result.detail).toContain('ERR_PNPM_UNEXPECTED_STORE');
+    expect(result.detail).toContain('different major version of pnpm');
+  });
+
+  it('失败输出没被截掉时不重复首行', async () => {
+    const spawn: BootstrapSpawn = async () => ({ exitCode: 3, stdout: '', stderr: 'one\ntwo\nthree\n' });
+
+    const result = await runBootstrapCommand('cmd', { timeoutMs: 1000, shellKind: 'posix', spawn });
+
+    expect(result.detail).toBe('one\ntwo\nthree');
+  });
+
+  it('★ 真实 pnpm store 报错串到 installIsolatedRuntime：清一次并把命令重跑一遍', async () => {
+    let attempts = 0;
+    const run = vi.fn(async () => {
+      attempts += 1;
+      return runBootstrapCommand('pnpm add --dir /x', {
+        timeoutMs: 1000,
+        shellKind: 'posix',
+        spawn: async () =>
+          attempts === 1
+            ? { exitCode: 1, stdout: '', stderr: PNPM_STORE_ERROR }
+            : { exitCode: 0, stdout: '+ @jackwener/opencli 1.2.1\n', stderr: '' },
+      });
+    });
+    const drop = vi.fn();
+
+    const result = await installIsolatedRuntime({ run, resolves: () => true, drop }, 'pnpm add --dir /x');
+
+    expect(drop).toHaveBeenCalledTimes(1);
+    expect(run).toHaveBeenCalledTimes(2);
+    expect(result.ok).toBe(true);
+    expect(result.reinstalled).toBe(true);
   });
 
   it('超时 → ok:false 且提示超时', async () => {
