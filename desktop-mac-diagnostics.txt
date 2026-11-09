@@ -1,0 +1,162 @@
+
+=== meta ===
+collected-at: 2026-11-09T05:45:16.938Z
+platform: darwin arm64 · node v24.22.2
+cwd: /Users/runner/work/dsh-workbench/dsh-workbench
+home: /Users/runner
+dsh-home: /Users/runner/.dsh
+workbench-home: /Users/runner/.dsh/workbench
+GITHUB_RUN_ID: 42568829418
+GITHUB_RUN_ATTEMPT: 1
+GITHUB_SHA: bd56cbee3b4856e3fcabc248f5a02d40354aedb1
+GITHUB_JOB: macos
+DESKTOP_SMOKE_STATUS: failure
+probe-log: /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-probe.log
+git: bd56cbe chore: 发布版本 v1.2.0
+git-status: 干净
+
+=== triage ===
+探针总结: （没有）
+第一处错误: （没有）
+
+里程碑:
+（没有）
+
+现场文件:
+（没有）
+
+体检失败快照:
+（没有）
+
+=== smoke results ===
+desktop-mac-smoke.json:
+（读不出 JSON）: ENOENT: no such file or directory, open '/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-smoke.json'
+desktop-mac-after-restart-smoke.json:
+（读不出 JSON）: ENOENT: no such file or directory, open '/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-smoke.json'
+
+=== checklist ===
+profile 里有 @dsh-workbench/core: 否
+profile 里有 @dsh-workbench/module-hello: 否
+opencli 装上了: 否（/Users/runner/.dsh/workbench/opencli/toolchain/node_modules/@jackwener/opencli/package.json）
+市场索引列出模块: 否: ENOENT: no such file or directory, open '/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-market-body.txt'
+市场装上了模块: 否: ENOENT: no such file or directory, open '/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-market-installed.txt'
+重启后看到了模块卡片: 否: ENOENT: no such file or directory, open '/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-verify-body.txt'
+截图: （没有）
+
+=== probe log ===
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-probe.log（不存在）
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-probe.log（不存在）
+
+=== app stdout/stderr ===
+DESKTOP_SMOKE_APP_LOG: /Users/runner/work/_temp/desktop-mac-app.log
+/Users/runner/work/_temp/desktop-mac-app.log（不存在）
+DESKTOP_SMOKE_APP_ERR: /Users/runner/work/_temp/desktop-mac-app.err.log
+/Users/runner/work/_temp/desktop-mac-app.err.log（不存在）
+DESKTOP_SMOKE_APP_LOG_2: /Users/runner/work/_temp/desktop-mac-app2.log
+/Users/runner/work/_temp/desktop-mac-app2.log（不存在）
+DESKTOP_SMOKE_APP_ERR_2: /Users/runner/work/_temp/desktop-mac-app2.err.log
+/Users/runner/work/_temp/desktop-mac-app2.err.log（不存在）
+
+=== market artifacts ===
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-market-body.txt（不存在）
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-market-installed.txt（不存在）
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-verify-body.txt（不存在）
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-verify-body.txt（不存在）
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-final-body.txt（不存在）
+
+=== desktop install tree ===
+resources: /Applications/DeepSeek Harness.app/Contents/Resources（在）
+  dir app.asar.unpacked/dsh/node_modules
+  dir app.asar.unpacked/dsh/node_modules/@deepseek-ai/node-addon-system-darwin-arm64
+  file app.asar.unpacked/dsh/node_modules/clone/.npmignore
+  dir app.asar.unpacked/dsh/node_modules/node-addon-require-builtin-darwin-arm64
+  dir app.asar.unpacked/dsh/node_modules/node-pty
+  dir runtime
+  dir runtime/primary-runtime
+  dir runtime/primary-runtime/dependencies/node
+  dir runtime/primary-runtime/dependencies/node/bin
+  dir runtime/primary-runtime/dependencies/node/node_modules
+  dir runtime/primary-runtime/dependencies/pnpm
+  dir runtime/primary-runtime/dependencies/pnpm/bin
+  dir runtime/primary-runtime/dependencies/pnpm/dist
+  dir runtime/primary-runtime/dependencies/python
+  dir runtime/primary-runtime/dependencies/python/bin
+  dir runtime/primary-runtime/dependencies/python/include
+  dir runtime/primary-runtime/dependencies/python/lib
+  dir runtime/primary-runtime/dependencies/python/share
+
+=== opencli doctor ===
+bin: /Users/runner/.dsh/workbench/opencli/bin/opencli（不在）
+
+=== runner os ===
+platform: darwin · release: 25.6.0 · version: Darwin Kernel Version 25.6.0: Mon Oct 12 00:39:04 PDT 2026; root:xnu-12377.161.15.701.48~2/RELEASE_ARM64_VMAPPLE
+OS env: （无）
+
+=== extension prep ===
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-prep.log（197 字节，末尾 5 行）
+cft: https://storage.googleapis.com/chrome-for-testing-public/157.0.8103.38/mac-arm64/chrome-mac-arm64.zip
+chrome: Google Chrome for Testing 157.0.8103.38
+opencli pin: 1.8.8
+latest release: latest
+
+
+=== smoke browser ===
+chrome: （未设置）
+extension: （未设置）
+opencli bin: （未设置）
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-chrome.log（不存在）
+
+=== units and client injection ===
+desktop-mac-units.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-units.json（不存在）
+desktop-mac-after-restart-units.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-units.json（不存在）
+desktop-mac-client-bundles.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-client-bundles.json（不存在）
+desktop-mac-after-restart-client-bundles.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-client-bundles.json（不存在）
+desktop-mac-page-internals.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-page-internals.json（不存在）
+desktop-mac-after-restart-page-internals.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-page-internals.json（不存在）
+desktop-mac-scripts.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-scripts.json（不存在）
+desktop-mac-after-restart-scripts.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-scripts.json（不存在）
+desktop-mac-console-events.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-console-events.json（不存在）
+desktop-mac-after-restart-console-events.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-console-events.json（不存在）
+
+=== dsh startup logs ===
+/Users/runner/.dsh/logs（不存在）
+
+=== desktop app logs ===
+（没找到 Desktop 自己的日志文件）
+
+=== workbench home tree（/Users/runner/.dsh/workbench） ===
+/Users/runner/.dsh/workbench（不存在）
+
+=== seed.log ===
+/Users/runner/.dsh/workbench/seed.log（不存在）
+
+=== diy/.sync.json ===
+/Users/runner/.dsh/workbench/diy/.sync.json（不存在）
+
+=== profile package.json ===
+/Users/runner/.dsh/profiles/desktop/package.json（不存在）
+
+=== profile cordis.patch.yml ===
+/Users/runner/.dsh/profiles/desktop/cordis.patch.yml（不存在）
+
+=== profile cordis.yml ===
+/Users/runner/.dsh/profiles/desktop/cordis.yml（不存在）
+
+=== workbench browser.json ===
+/Users/runner/.dsh/workbench/browser.json（不存在）
+
+=== dsh home tree（/Users/runner/.dsh） ===
+/Users/runner/.dsh（不存在）
+
+=== processes ===
+
