@@ -71,7 +71,12 @@ describe('添加模块的夹具：只切状态，且每个状态都喂给真函�
     const wrong: string[] = [];
     for (const mock of ADD_MODULE_MOCKS) {
       if (mock.phase === 'preview' && mock.preview === undefined) wrong.push(`${mock.id} 是预览却没有预览内容`);
-      if (mock.phase === 'result' && mock.outcome === undefined) wrong.push(`${mock.id} 是结果却没有结果`);
+      if (mock.phase === 'result' && mock.outcome === undefined && mock.failure === undefined) {
+        wrong.push(`${mock.id} 是结果，既没有结果也没有那句失败原因`);
+      }
+      if (mock.phase !== 'result' && mock.failure !== undefined) {
+        wrong.push(`${mock.id} 说了失败原因，却不是结果那一屏`);
+      }
       if (mock.phase === 'idle' && mock.problem !== undefined && mock.spec.trim() === '') {
         wrong.push(`${mock.id} 说预检没过，输入框却是空的（用户改不了）`);
       }
@@ -95,6 +100,7 @@ describe('添加模块的夹具：只切状态，且每个状态都喂给真函�
       preview: null,
       outcome: null,
       failure: null,
+      installFailure: null,
       builds: [],
       setSpec: vi.fn(),
       setChoice: vi.fn(),

@@ -65,6 +65,35 @@ export function AddModulePreview({ t, state }: { t: Translate; state: AddModuleS
   );
 }
 
+export function AddModuleFailure({ t, state }: { t: Translate; state: AddModuleState }) {
+  const failure = state.installFailure;
+  return (
+    <div className={styles.body}>
+      <div className={styles.hero}>
+        <span className={styles.heroIcon} data-state="error" aria-hidden="true">
+          <IconWarningOutlineRegular size={28} />
+        </span>
+        <h2 className={styles.wizardTitle} role="alert">
+          {t('panels.market.add.failedTitle')}
+        </h2>
+      </div>
+
+      {state.failure === null ? null : (
+        <p className={styles.resultWarn} role="alert">
+          {state.failure}
+        </p>
+      )}
+
+      {failure === null ? null : (
+        <Fragment>
+          <p className={styles.detailLabel}>{t('panels.market.add.details')}</p>
+          <p className={styles.detail}>{failure.command}</p>
+        </Fragment>
+      )}
+    </div>
+  );
+}
+
 export function AddModuleResult({ t, state }: { t: Translate; state: AddModuleState }) {
   const outcome = state.outcome;
   if (outcome === null) return null;

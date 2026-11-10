@@ -11,7 +11,7 @@ import {
 import { devSurface } from '@/shared/dev-surface';
 import { AddModuleForm } from './AddModuleForm';
 import { SafetyNote } from './SafetyNote';
-import { AddModulePending, AddModulePreview, AddModuleResult } from './AddModuleStages';
+import { AddModulePending, AddModulePreview, AddModuleFailure, AddModuleResult } from './AddModuleStages';
 import type { AddModuleMock } from './add-module-mock';
 import { useAddModule, type AddModuleState } from './use-add-module';
 
@@ -36,7 +36,7 @@ function AddModuleContent({ t, onClose, onInstalled }: Omit<AddModuleDialogProps
   const installing = state.phase === 'installing';
   const checking = state.phase === 'inspecting';
   const empty = state.spec.trim() === '';
-  const failed = state.outcome?.change.application === 'failed';
+  const failed = state.outcome === null || state.outcome.change.application === 'failed';
   const builds = state.builds;
   const notModule = state.outcome?.supply.state === 'not-a-module';
 
@@ -136,7 +136,9 @@ function AddModuleContent({ t, onClose, onInstalled }: Omit<AddModuleDialogProps
         {state.phase === 'inspecting' ? <AddModulePending t={t} kind="inspecting" /> : null}
         {state.phase === 'preview' ? <AddModulePreview t={t} state={state} /> : null}
         {state.phase === 'installing' ? <AddModulePending t={t} kind="installing" /> : null}
-        {state.phase === 'result' ? <AddModuleResult t={t} state={state} /> : null}
+        {state.phase === 'result' ? (
+          state.outcome === null ? <AddModuleFailure t={t} state={state} /> : <AddModuleResult t={t} state={state} />
+        ) : null}
 
       </div>
     </Modal>

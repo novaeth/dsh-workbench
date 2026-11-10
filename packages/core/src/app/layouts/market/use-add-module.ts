@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MIN_BUSY_MS } from '@dsh-workbench/shared';
+import type { InstallFailure } from '@dsh-workbench/shared';
 
 import type {
   BundleCancellationPayload,
@@ -59,6 +60,7 @@ export interface AddModuleState {
   readonly preview: AddModulePreview | null;
   readonly outcome: AddModuleOutcome | null;
   readonly failure: string | null;
+  readonly installFailure: InstallFailure | null;
   readonly removing: boolean;
   readonly builds: readonly string[];
   setSpec(value: string): void;
@@ -95,6 +97,7 @@ export function useAddModule(options: {
   const [preview, setPreview] = useState<AddModulePreview | null>(null);
   const [outcome, setOutcome] = useState<AddModuleOutcome | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
+  const [installFailure, setInstallFailure] = useState<InstallFailure | null>(null);
   const generationRef = useRef(0);
   const requestIdRef = useRef('');
   const { busy: classifying } = useVisibleBusy(phase === 'inspecting', MIN_BUSY_MS);
@@ -127,6 +130,7 @@ export function useAddModule(options: {
     generationRef.current = mine;
     setProblem(null);
     setFailure(null);
+    setInstallFailure(null);
     setPreview(null);
     setOutcome(null);
     setRegistryOpen(false);
@@ -158,7 +162,8 @@ export function useAddModule(options: {
       const id = newRequestId();
       requestIdRef.current = id;
       setFailure(null);
-        setPhase('installing');
+      setInstallFailure(null);
+      setPhase('installing');
       void write
         .send({
           action: 'install-bundle',
@@ -171,6 +176,7 @@ export function useAddModule(options: {
           if (generationRef.current !== mine) return;
           if (!response.ok) {
             setFailure(response.message);
+            setInstallFailure(response.failure ?? null);
             setPhase('result');
             return;
           }
@@ -216,6 +222,7 @@ export function useAddModule(options: {
     generationRef.current += 1;
     setProblem(null);
     setFailure(null);
+    setInstallFailure(null);
     setPreview(null);
     setPhase('idle');
   }, []);
@@ -242,6 +249,7 @@ export function useAddModule(options: {
     preview,
     outcome,
     failure,
+    installFailure,
     removing,
     builds: outcome?.change.pendingBuilds ?? [],
     setSpec,

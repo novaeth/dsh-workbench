@@ -1,3 +1,4 @@
+import type { InstallFailure } from '@dsh-workbench/shared';
 import type { BundleChange, BundleInspectProblem, BundleSupplyState } from '@/kernel/contract/bundle-install';
 import type {
   AddModuleOutcome,
@@ -17,6 +18,7 @@ export interface AddModuleMock {
   readonly preview?: AddModulePreview;
   readonly outcome?: AddModuleOutcome;
   readonly failure?: string;
+  readonly installFailure?: InstallFailure;
 }
 
 function change(over: Partial<BundleChange>): BundleChange {
@@ -132,6 +134,23 @@ export const ADD_MODULE_MOCKS: readonly AddModuleMock[] = [
       errorDetail: 'ERR_PNPM_FETCH_404 GET https://registry.example.com/@dsh-workbench%2Fmodule-hello: Not Found',
     }),
   },
+  {
+    id: 'failed-host',
+    label: '失败：宿主只回了一句话（这一屏原本是空白的）',
+    phase: 'result',
+    spec: 'opencli-plugin-grafana',
+    failure:
+      '命令失败（退出码 1）：ERR_PNPM_FETCH_401 GET https://registry.example.com/opencli-plugin-grafana: Unauthorized',
+    installFailure: {
+      kind: 'unknown',
+      command:
+        "opencli plugin install 'C:\\Users\\me\\.dsh\\workbench\\opencli\\plugins-npm\\node_modules\\opencli-plugin-grafana'",
+      exitCode: 1,
+      output: 'ERR_PNPM_FETCH_401 GET https://registry.example.com/opencli-plugin-grafana: Unauthorized',
+      current: { uid: 0, gid: 0 },
+      fix: { kind: 'handoff' },
+    },
+  },
   { id: 'done-applied', label: '装好了（已生效）', phase: 'result', spec: '@dsh-workbench/module-hello', outcome: outcome({}) },
   {
     id: 'done-plugin',
@@ -212,6 +231,7 @@ export function stateOfMock(base: AddModuleState, mock: AddModuleMock): AddModul
     preview: mock.preview ?? null,
     outcome: mock.outcome ?? null,
     failure: mock.failure ?? null,
+    installFailure: mock.installFailure ?? null,
     builds: mock.outcome?.change.pendingBuilds ?? [],
     setSpec: frozen,
     setChoice: frozen,
