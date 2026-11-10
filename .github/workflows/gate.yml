@@ -41,4 +41,13 @@ jobs:
       - name: Install (immutable)
         run: pnpm install --frozen-lockfile
       - name: Full gate (整条链，与本地 `pnpm run check` 同一条)
-        run: pnpm -w run check
+        shell: bash
+        run: |
+          set -o pipefail
+          if ! pnpm -w run check > gate.log 2>&1; then
+            tail -n 80 gate.log
+            body=$(grep -aE '✖|error TS|FAIL|Failed|失败|ELIFECYCLE' gate.log | tail -n 14 | sed -e 's/%/%25/g' | awk 'NF { printf "%s%%0A", $0 }')
+            echo "::error title=gate failed::${body:0:1800}"
+            exit 1
+          fi
+          tail -n 3 gate.log
