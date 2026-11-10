@@ -136,6 +136,7 @@ grep -q "旧启动器判错的产物" "$work/heal.out" || fail "④ 改了却没
 
 # ⑤ 新入口：一条命令以 web 为模板建新 profile（不再是五个环境变量）；数据根跟 web 共用
 home="$(run_setup "$PKG_DIR" flags "" --from web --profile wb3)"
+wb3_home="$home"
 [ -f "$home/profiles/wb3/package.json" ] || fail "⑤ --from/--profile 没建出目标 profile"
 spec="$(node -p "require('$home/profiles/wb3/package.json').dependencies['@dsh-workbench/core']")"
 [ "$spec" = "$PKG_DIR" ] || fail "⑤ 目标 profile 没装对（装的是 ${spec}）"
@@ -177,5 +178,21 @@ if PATH="$work/desktop-bin:$PATH" \
 fi
 grep -q "Desktop app" "$work/desktop.out" || fail "⑧ 拒的时候没说清 desktop 归谁管"
 [ -f "$home/profiles/desktop/cordis.patch.yml" ] && fail "⑧ 拒之前已经往 desktop 的 profile 写了东西"
+
+# ⑨ 独立实例的端口写在 **profile** 里，不是只由启动器的 --port 决定：裸 `dsh workbench`
+#    （不带 --port）起的是同一个实例，也得落在同一个端口上，否则掉回 dsh 的 3080 跟 dsh web 撞。
+patch="$wb3_home/profiles/wb3/cordis.patch.yml"
+grep -q '^- id: webserver$' "$patch" ||
+  fail "⑨ setup 没把独立实例的端口写进 profile（裸 dsh workbench 会掉回 3080）"
+grep -qF 'ctx.webStartup.port ?? (+process.env.WORKBENCH_PORT || 3081)' "$patch" ||
+  fail "⑨ 端口行没保留 --port / WORKBENCH_PORT 的优先级"
+grep -q 'webserver' "$PKG_DIR/cordis.patch.yml" &&
+  fail "⑨ 端口写进了 bundle 层（会跟着工作台装进 dsh web 自己的 profile 与 Desktop）"
+cp "$patch" "$work/wb3.patch.pinned"
+DSH_HOME="$wb3_home" WORKBENCH_PROFILE=wb3 \
+  bash "$PKG_DIR/scripts/seed-profile.sh" pin-port >"$work/pin.out" 2>&1 ||
+  fail "⑨ pin-port 单跑失败（见 $work/pin.out）"
+cmp -s "$patch" "$work/wb3.patch.pinned" || fail "⑨ pin-port 不幂等：第二次跑改了字节"
+grep -q "已有 webserver 行" "$work/pin.out" || fail "⑨ 第二次跑没说清「一个字节没动」"
 
 echo "ALL OK"

@@ -2,6 +2,7 @@
 #
 # 一次性引导：从 shipped 的 web 模板创建 workbench profile，
 # 继承 web 的 **bundle 清单**（这台机器上装了哪些 bundle），
+# 把**独立实例的端口**写进 profile 自己的 patch（见下面"第 4 步"），
 # 清掉旧版留下的可写根那一行（现在由产品代码声明）；新 profile 直接跟 web 共用数据根，旧 profile 保持原状，等用户跑 migrate。
 #
 # **设置不在这里继承**（这里曾经把 web 的 cordis.patch.yml 快照一份过来）：
@@ -18,6 +19,9 @@
 #   ./scripts/seed-profile.sh ensure-selected         # 只做"确保选中"这一步：
 #                                                     # 把工作台 bundle 补进 dsh.profile.bundles
 #                                                     # （setup 在 `dsh plugin add` **之后**调它）
+#   ./scripts/seed-profile.sh pin-port                # 只做"端口"这一步：把独立实例的端口写进
+#                                                     # 这个 profile 的 cordis.patch.yml（幂等；
+#                                                     # 老实例升上来、手工改坏之后修复都用它）
 
 set -euo pipefail
 
@@ -90,8 +94,67 @@ console.log("→ 已把工作台 bundle 补进 dsh.profile.bundles: " + pkg);
     die "'$PKG' 没被选中，也没能补上（原因见上一行）。"
 }
 
+# ── 独立实例的端口写进 profile（`pin-port` 子命令 + 主流程，幂等）───────────────
+#
+# 为什么写在 profile 里、而不只靠启动器：`dsh-workbench` 与裸 `dsh workbench` 起的是**同一个实例**
+# （同一个 profile、同一份设置），端口不该由"谁把它 boot 起来"决定 —— 裸起来时没有 `--port`，
+# webserver 那行就落回 dsh 的默认 3080，跟 `dsh web` 撞。启动器传的 `--port` 仍然优先，
+# `WORKBENCH_PORT` 也照旧。
+#
+# 为什么不能写进 bundle 层（packages/core/cordis.patch.yml）：那一层会跟着工作台装进
+# `dsh web` 自己的 profile 与 Desktop（ADR-0037），写端口会把宿主也挪到 3081。
+#
+# 为什么整份 config 重述：dsh 的 patch 是**整键替换**（cordis-plugin-include 的 applyPatches
+# 对每个键直接赋值，不深合并）—— webserver 那行的 config 少写一个键就是删掉那个键。
+# 实测（2026-11-10，`dsh web --dump-config`）：profile 层写这一行，组合树里 webserver 的
+# config 换成这里这份、`name` 与 `inject` 原样保留、没有 "entry not found" 警告。
+# ⚠️ dsh 将来若给这行换 id，这里会静默不生效（applyPatches 只 warn），裸 `dsh workbench`
+# 会退回 3080 —— 判据钉在 scripts/check-launcher-spec.sh ⑨。
+pin_instance_port() {
+  local patch="$DST_PROFILE/cordis.patch.yml"
+  [ -f "$patch" ] || die "找不到 $patch —— 先跑一次 '$REPO_DIR/bin/dsh-workbench setup'。"
+
+  if grep -qE '^[[:space:]]*- id:[[:space:]]*"?webserver"?[[:space:]]*$' "$patch"; then
+    echo "→ 独立实例端口：$patch 里已有 webserver 行，一个字节没动"
+    return 0
+  fi
+
+  WB_PATCH="$patch" WB_BLOCKS="$REPO_DIR/scripts/patch-blocks.mjs" node --input-type=module -e '
+import { readFileSync, writeFileSync } from "node:fs";
+import { pathToFileURL } from "node:url";
+const { appendBlocks } = await import(pathToFileURL(process.env.WB_BLOCKS).href);
+const block = [
+  "# 独立实例的端口：**这个 profile 自己的属性**，不取决于谁把它 boot 起来 ——",
+  "# `dsh-workbench` 与裸 `dsh workbench` 起的是同一个实例（同一个 profile、同一份设置），",
+  "# 所以端口写在这里，而不是只由启动器的 --port 决定（裸起来会掉回 dsh 的 3080，跟 dsh web 撞）。",
+  "# bundle 层不能写这一行：它会跟着工作台装进 `dsh web` 自己的 profile 与 Desktop（ADR-0037），",
+  "# 那样会把宿主也挪到 3081。",
+  "#",
+  "# 为什么整份 config 重述：dsh 的 patch 是**整键替换**（cordis-plugin-include 的 applyPatches",
+  "# 对每个键直接赋值，不深合并）—— webserver 那行的 config 少写一个键就是把它删掉。",
+  "# 优先级：命令行 --port（启动器的 WORKBENCH_PORT 走的就是它）> 环境变量 WORKBENCH_PORT（非零数字）> 3081。",
+  "# 由 `dsh-workbench setup` 写入（scripts/seed-profile.sh pin-port）；自己改这一行也一样生效。",
+  "- id: webserver",
+  "  config:",
+  "    host: !!js ctx.webStartup.host ?? \"127.0.0.1\"",
+  "    port: !!js ctx.webStartup.port ?? (+process.env.WORKBENCH_PORT || 3081)",
+  "    tls: !!js ctx.webStartup.tls",
+  "    compression: gzip",
+  "    compressionLevel: 1",
+  "    compressionThresholdBytes: 1024",
+].join("\n");
+writeFileSync(process.env.WB_PATCH, appendBlocks(readFileSync(process.env.WB_PATCH, "utf8"), block));
+console.log("→ 独立实例端口：写进 " + process.env.WB_PATCH + "（--port > WORKBENCH_PORT > 3081）");
+'
+}
+
 if [ "${1:-}" = "ensure-selected" ]; then
   ensure_selected
+  exit 0
+fi
+
+if [ "${1:-}" = "pin-port" ]; then
+  pin_instance_port
   exit 0
 fi
 
@@ -185,7 +248,13 @@ fi
 WORKBENCH_PROFILE="$PROFILE" DSH_HOME="$DSH_HOME" DSH_WORKBENCH_HOME="$WORKBENCH_HOME" \
   node "$REPO_DIR/scripts/share-data-root.mjs" || die "整理数据根失败（见上一行）"
 
-# ── 第 4 步：建 DIY 工坊 ────────────────────────────────────────────────
+# ── 第 4 步：独立实例的端口 ─────────────────────────────────────────────
+#
+# 排在数据根整理**之后**：那一步会重写 profile patch（只删它认得的那些行），
+# 这里再写端口行，谁后写谁说了算，不被顺手带走。
+pin_instance_port
+
+# ── 第 5 步：建 DIY 工坊 ────────────────────────────────────────────────
 #
 # 工坊是 DIY 模式的落点：agent 在那里造模块（一个模块一个目录），而 **DIY 会话的 cwd 就是它**。
 # 骨架 + 依赖 + 稳定入口都交给 `scripts/seed-workshop.sh` —— 启动器（bin/dsh-workbench）

@@ -131,7 +131,8 @@ npx @dsh-workbench/core
 > 与 `setup` 在 Windows 上会报找不到 `bash`。用 `dsh web` 的插件页或 Desktop 的插件页装，效果一样。
 
 打开 <http://localhost:3081>。原来的 `dsh web` 继续用 `:3080`；会话、项目和附件是同一份，
-设置与插件各一份。
+设置与插件各一份。端口写在实例自己的 profile 里，所以 `dsh workbench` 起的是同一个实例、
+同一个端口（要临时换就 `WORKBENCH_PORT=3091`）。
 
 > **第一次打开还要装一次浏览器扩展**
 >
@@ -210,7 +211,7 @@ Desktop 里个别浏览器调试能力不可用；网页浏览与录制照常。
 | 症状 | 怎么办 |
 |---|---|
 | 启动被拒，说 dsh 太旧 | `npm i -g @deepseek-ai/dsh@latest`，再重启工作台 |
-| `:3081` 被占 | `WORKBENCH_PORT=3091 npx @dsh-workbench/core` |
+| `:3081` 被占 | `WORKBENCH_PORT=3091 npx @dsh-workbench/core`（直接 `dsh workbench` 时同一个变量也认） |
 | 左栏恢复出厂、右侧看板消失 | 插件被关了；Settings → 插件把 `@dsh-workbench/core` 拨回来，进不去就按 `Meta+,` |
 | 自检说浏览器没连上 / 看板取不到数据 | 装一次 [OpenCLI 扩展](https://chromewebstore.google.com/detail/opencli/ildkmabpimmkaediidaifkhjpohdnifk)并启用，保持浏览器开着，回「准备工作台」那一屏点「重试」；Desktop 可点「打开浏览器」 |
 | 看板一直空着 / 一直转 | 先确认这个工作区装了模块、平台账号登了、浏览器连接通了；第一次加载可能要几秒 |

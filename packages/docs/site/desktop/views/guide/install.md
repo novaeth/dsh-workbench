@@ -15,7 +15,8 @@
 
 ## 独立实例
 
-与 `dsh web` 并存：它在 `:3081`，web 在 `:3080`。
+与 `dsh web` 并存：它在 `:3081`，web 在 `:3080`。端口写在实例自己的 profile 里，
+所以启动器（`npx @dsh-workbench/core`）与直接 `dsh workbench` 起的是同一个实例、同一个端口。
 
 :::warning Windows 上别走这条
 独立实例的启动器还是 bash 脚本，`create` 与 `setup` 在 Windows 上会报找不到 `bash`。

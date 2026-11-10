@@ -18,7 +18,8 @@
 ## 装
 
 推荐独立实例：它有自己的端口（`:3081`）和 profile，跟 `dsh web` 的 `:3080` 并存；
-会话、项目、附件是同一份。
+会话、项目、附件是同一份。端口写在实例自己的 profile 里，所以用 `npx @dsh-workbench/core`
+起、还是直接 `dsh workbench` 起，都是同一个实例、同一个端口。
 
 ```bash
 npx @dsh-workbench/core create

@@ -120,4 +120,24 @@ echo ok
       );
     },
   },
+  {
+    title:
+      '★ 独立实例的端口写在 profile 里（`dsh-workbench` 与裸 `dsh workbench` 是同一个实例，端口不该由启动方式决定）',
+    run(_ctx, report) {
+      const seed = read(pkg('scripts/seed-profile.sh'));
+      const bundleLayer = read(pkg('cordis.patch.yml'));
+      const needles = [
+        'pin_instance_port',
+        'id:[[:space:]]*"?webserver',
+        'ctx.webStartup.port ?? (+process.env.WORKBENCH_PORT || 3081)',
+      ];
+      const found = needles.filter((needle) => seed.includes(needle)).length;
+      const inBundleLayer = bundleLayer.includes('webserver');
+      report(
+        '★ 独立实例的端口写在 profile 里（`dsh-workbench` 与裸 `dsh workbench` 是同一个实例，端口不该由启动方式决定）',
+        found === needles.length && !inBundleLayer,
+        `seed 里 ${String(found)}/${String(needles.length)} 处 · bundle 层${inBundleLayer ? '写了（会跟着装进 dsh web 的 profile）' : '没写'}`,
+      );
+    },
+  },
 ];

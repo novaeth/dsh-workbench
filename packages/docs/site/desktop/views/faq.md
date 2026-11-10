@@ -5,7 +5,7 @@
 | 症状 | 怎么办 |
 | --- | --- |
 | 启动被拒，说 dsh 太旧 | `npm i -g @deepseek-ai/dsh@latest`，再重启工作台 |
-| `:3081` 被占 | `WORKBENCH_PORT=3091 npx @dsh-workbench/core` |
+| `:3081` 被占 | `WORKBENCH_PORT=3091 npx @dsh-workbench/core`（直接 `dsh workbench` 时同一个变量也认） |
 | 起得来但页面没反应 | 换现代浏览器；看终端有没有报错；插件冲突也会这样 |
 
 ## 浏览器连接

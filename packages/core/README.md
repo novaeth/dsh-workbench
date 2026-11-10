@@ -85,6 +85,11 @@ dsh-workbench migrate --force  # 已经迁过一次、想再补并一次
 | `DSH_HOME` | `~/.dsh` | dsh 的数据根；会话 / 项目 / 附件都在这里，工作台跟 web 共用 |
 | `DSH_WORKBENCH_HOME` | `$DSH_HOME/<profile>` | 工作台运行时根（opencli 隔离运行时、工坊、模块市场、自更新） |
 
+独立实例的端口写在**它自己的 profile** 里（`setup` 写进 `~/.dsh/profiles/<名字>/cordis.patch.yml`），
+所以端口跟"谁把它 boot 起来"无关：用 `dsh-workbench` 起、还是直接 `dsh workbench` 起，都是 `:3081`。
+要临时换端口，`--port` 与 `WORKBENCH_PORT` 仍然优先。老实例（macOS / Linux）升上来后重跑一次
+`dsh-workbench setup` 就会补上这一行（幂等，不覆盖你已经改过的行）。
+
 装进 `dsh web` 或 Desktop 时没有启动命令：它们用自己那一份 profile，工作台只是其中一层插件。
 
 ## 包里有什么

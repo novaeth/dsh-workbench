@@ -6,7 +6,9 @@
 ## 工作台
 
 **工作台**：本项目的产品形态 —— 给 dsh 换一层外壳（左栏 + 常驻对话 + 自研右侧面板）。
-两种装法：**独立实例**（`setup` 出的 `workbench` profile，自己的端口与进程）与
+两种装法：**独立实例**（`setup` 出的 `workbench` profile，自己的端口与进程；端口写在
+profile 自己的 patch 里，所以走启动器 `dsh-workbench` 起、还是直接 `dsh workbench` 起，
+都是同一个实例、同一个端口）与
 **单 profile 安装**（装进 `dsh web` 自己那个 profile，同一个实例、同一份会话，见
 ADR-0037）。
 _Avoid_: 工作区、面板、dashboard
