@@ -596,7 +596,11 @@ async function waitForGateAndReady(cdp) {
 }
 
 async function openMarket(cdp) {
-  const opened = await click(cdp, ['Browse the module market', 'Choose modules'], 3000);
+  const opened = await click(
+    cdp,
+    ['Browse the module market', 'Choose modules', 'Browse modules', 'Open the module market', '模块市场', '浏览模块'],
+    3000,
+  );
   if (opened === 'missing') await fail(cdp, '打开市场页没找到入口', await bodyOf(cdp));
   await waitForBody(cdp, /Workbench module market|Discover/u, MARKET_WAIT_MS, 'market-page');
   mark('market-open');

@@ -100,6 +100,7 @@ jobs:
             Get-Content $log -Tail 20 | Write-Host
             $body = ((Get-Content $log -Tail 20) | Where-Object { $_ -ne '' } | ForEach-Object { ($_ -replace '%', '%25') + '%0A' }) -join ''
             Write-Host "::warning title=$label (回退 E2E 试验中，不挡这条腿)::$body"
+            $global:LASTEXITCODE = 0
             return $false
           }
           function Wait-Page([int]$port) {
@@ -131,6 +132,7 @@ jobs:
           }
           Invoke-Logged 'probe-after-restart' { node scripts/desktop-smoke/cdp-probe.mjs 9223 desktop-${{ inputs.label }}-after-restart.png --verify-only --expect-workbench }
           # 回退这条 E2E 还在试验中：它自己红只发警告，不挡这条腿既有的信号。
+          # pwsh 会把最后一条原生命令的退出码留到步骤末尾，所以每处告警后都把它抹平。
           $appRoot = Join-Path $env:USERPROFILE '.dsh'
           if (Invoke-Warned 'rollback-fixture' { node scripts/desktop-smoke/self-update-rollback-fixture.mjs $appRoot 'desktop' 1.2.3-beta.2 }) {
             Stop-App
@@ -151,6 +153,7 @@ jobs:
               Write-Host '::warning title=rollback instance (回退 E2E 试验中，不挡这条腿)::启动后没有页面'
             }
           }
+          $global:LASTEXITCODE = 0
       - name: Assert opencli installed
         shell: pwsh
         run: |
