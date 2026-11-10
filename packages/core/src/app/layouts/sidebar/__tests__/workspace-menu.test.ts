@@ -24,11 +24,25 @@ describe('工作区行的三点菜单：悬停换图标、点开是菜单', () =
     expect(ROW_ACTION).toContain("onMenu({ anchor: event.currentTarget.getBoundingClientRect(), align: 'end' })");
   });
 
-  it('★ 菜单不跟行走：行 hover 才在、点开菜单就把下拉关掉、行随即卸载', () => {
+  it('★ 菜单不跟行走：行 hover 才在，开菜单时选择器留着（关掉选择器 = 用户点开的那把列表凭空没了）', () => {
+    const branch = SWITCHER.slice(
+      SWITCHER.indexOf('onMenu: (workspace, open) =>'),
+      SWITCHER.indexOf('[sections, currentId, hoverId'),
+    );
+
     expect(ITEMS).toContain('onMenu={openMenu}');
     expect(ITEMS).not.toContain('<Menu');
-    expect(SWITCHER).toContain('setMenu({ workspace, anchor: open.anchor, align: open.align })');
-    expect(SWITCHER).toContain('setOpen(false)');
+    expect(branch).toContain('setMenu({ workspace, anchor: open.anchor, align: open.align })');
+    expect(branch).not.toContain('setOpen(false)');
+  });
+
+  it('★ 选中一项之后才把选择器收起来（三个动作都收）', () => {
+    const branch = SWITCHER.slice(SWITCHER.indexOf('<WorkspaceRowMenu'), SWITCHER.indexOf('{naming === null'));
+
+    expect(branch.match(/setOpen\(false\)/g)).toHaveLength(3);
+    expect(branch).toContain('setNaming(workspace)');
+    expect(branch).toContain('setDeleting(workspace)');
+    expect(branch).toContain('onReveal(path)');
   });
 
   it('★ 菜单本体挂在开关上（SelectField 的兄弟），靠点的那一刻量到的 rect 定位', () => {
@@ -102,7 +116,8 @@ describe('删除工作区：点菜单不删，二次确认之后才删', () => {
 
     expect(branch).toContain('onDelete(workspace)');
     expect(branch).not.toContain('workspaces.delete');
-    expect(SWITCHER).toContain('onDelete={(workspace) => setDeleting(workspace)}');
+    expect(SWITCHER).toContain('onDelete={(workspace) => {');
+    expect(SWITCHER).toMatch(/setDeleting\(workspace\)/);
     expect(SWITCHER).toMatch(/onConfirm=\{\(\) => onDelete\(deleting\.workspaceId\)\}/);
   });
 

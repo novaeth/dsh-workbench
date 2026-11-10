@@ -13,11 +13,12 @@ export function useWorkspaceWrite(write: () => Promise<boolean>, onWritten: () =
     if (busy) return;
     setBusy(true);
     setFailed(false);
-    void write().then((ok) => {
+    const settle = (ok: boolean): void => {
       setBusy(false);
       if (ok) onWritten();
       else setFailed(true);
-    });
+    };
+    void write().then(settle, () => settle(false));
   };
   return { busy, failed, submit };
 }

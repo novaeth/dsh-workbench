@@ -75,10 +75,7 @@ export function ProjectSwitcher({
         t,
         attention: attention.byWorkspace,
         onHover: setHoverId,
-        onMenu: (workspace, open) => {
-          setOpen(false);
-          setMenu({ workspace, anchor: open.anchor, align: open.align });
-        },
+        onMenu: (workspace, open) => setMenu({ workspace, anchor: open.anchor, align: open.align }),
       }),
     [sections, currentId, hoverId, t, attention.byWorkspace],
   );
@@ -146,9 +143,18 @@ export function ProjectSwitcher({
         target={menu}
         t={t}
         onClose={() => setMenu(null)}
-        onAlias={(workspace) => setNaming(workspace)}
-        onDelete={(workspace) => setDeleting(workspace)}
-        onReveal={onReveal}
+        onAlias={(workspace) => {
+          setOpen(false);
+          setNaming(workspace);
+        }}
+        onDelete={(workspace) => {
+          setOpen(false);
+          setDeleting(workspace);
+        }}
+        onReveal={(path) => {
+          setOpen(false);
+          onReveal(path);
+        }}
       />
       {naming === null ? null : (
         <WorkspaceAliasDialog
