@@ -13,6 +13,7 @@ export interface WorkspaceItemsOptions {
   readonly sections: readonly WorkspaceSectionPlan<WorkspaceView>[];
   readonly currentId: string | null;
   readonly hoverId: string | null;
+  readonly openMenuId: string | null;
   readonly t: Translate;
   readonly attention: ReadonlyMap<string, WorkspaceAttention>;
   readonly onHover: (workspaceId: string | null) => void;
@@ -20,7 +21,7 @@ export interface WorkspaceItemsOptions {
 }
 
 export function workspaceOptions(options: WorkspaceItemsOptions): SelectFieldOption[] {
-  const { sections, currentId, hoverId, t, attention, onHover, onMenu } = options;
+  const { sections, currentId, hoverId, openMenuId, t, attention, onHover, onMenu } = options;
   const rowOf = (workspace: WorkspaceView, group: string | undefined): SelectFieldOption => {
     const own = attention.get(workspace.workspaceId) ?? null;
     const openMenu = (open: WorkspaceMenuOpen): void => onMenu(workspace, open);
@@ -36,7 +37,12 @@ export function workspaceOptions(options: WorkspaceItemsOptions): SelectFieldOpt
           onMenu={openMenu}
           action={
             hoverId === workspace.workspaceId ? (
-              <WorkspaceRowAction workspace={workspace} t={t} onMenu={openMenu} />
+              <WorkspaceRowAction
+                workspace={workspace}
+                t={t}
+                menuOpen={openMenuId === workspace.workspaceId}
+                onMenu={openMenu}
+              />
             ) : undefined
           }
         />

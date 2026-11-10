@@ -9,10 +9,11 @@ import type { WorkspaceMenuOpen } from './WorkspaceRowMenu';
 export interface WorkspaceRowActionProps {
   readonly workspace: WorkspaceView;
   readonly t: Translate;
+  readonly menuOpen: boolean;
   readonly onMenu: (open: WorkspaceMenuOpen) => void;
 }
 
-export function WorkspaceRowAction({ workspace, t, onMenu }: WorkspaceRowActionProps) {
+export function WorkspaceRowAction({ workspace, t, menuOpen, onMenu }: WorkspaceRowActionProps) {
   return (
     <Button
       type="button"
@@ -22,6 +23,7 @@ export function WorkspaceRowAction({ workspace, t, onMenu }: WorkspaceRowActionP
       icon={<IconEllipsisOutlineRegular size={14} />}
       aria-label={t('project.menu.row', { name: displayNameOf(workspace).dir })}
       aria-haspopup="menu"
+      aria-expanded={menuOpen}
       data-workspace-menu-trigger=""
       onClick={(event) => {
         event.stopPropagation();

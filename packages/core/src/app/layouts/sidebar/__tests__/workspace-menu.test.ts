@@ -24,6 +24,9 @@ describe('工作区行的三点菜单：悬停换图标、点开是菜单', () =
     expect(ROW_ACTION).toContain('aria-haspopup="menu"');
     expect(ROW_ACTION).toContain("onMenu({ anchor: event.currentTarget.getBoundingClientRect(), align: 'end', mode: 'toggle' })");
     expect(ROW_ACTION).toContain('data-workspace-menu-trigger=""');
+    expect(ROW_ACTION).toContain('aria-expanded={menuOpen}');
+    expect(ITEMS).toContain('menuOpen={openMenuId === workspace.workspaceId}');
+    expect(SWITCHER).toContain('openMenuId: menu?.workspace.workspaceId ?? null');
   });
 
   it('★ 三点那颗是 toggle（照 dsh 官方那一条判据）：开着再点同一条就是关，其余都是重新开', () => {

@@ -72,12 +72,13 @@ export function ProjectSwitcher({
         sections,
         currentId,
         hoverId,
+        openMenuId: menu?.workspace.workspaceId ?? null,
         t,
         attention: attention.byWorkspace,
         onHover: setHoverId,
         onMenu: (workspace, open) => setMenu((current) => nextWorkspaceMenu(current, workspace, open)),
       }),
-    [sections, currentId, hoverId, t, attention.byWorkspace],
+    [sections, currentId, hoverId, menu, t, attention.byWorkspace],
   );
   const valueNodes = useMemo(() => {
     const out = new Map<string, ReactNode>();
