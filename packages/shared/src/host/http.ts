@@ -5,6 +5,7 @@ import { parseCardsReport, parseCrashReport, type PanelStateStore } from './pane
 import { ACTIONS_PREFIX, API_PREFIX, DIY_DEBUG_PATH, DIY_RECORD_PATH, PANEL_STATE_PREFIX, PLUGIN_ID, PREFS_PREFIX, PROVISION_PREFIX } from '../config/constants.js';
 import {
   parseProvisionBody,
+  provisionTargetOf,
   type ProvisionHandler,
   type ProvisionRequest,
 } from './provision.js';
@@ -142,6 +143,10 @@ export function registerProvision(
         sendJson(res, 200, result);
       } catch (error) {
         log?.bump(provisionFacts(provision, request));
+        const target = request[provisionTargetOf(request.action)] ?? '';
+        ctx.logger?.warn?.(
+          `[dsh-workbench] provision ${request.action} ${target} 失败：${error instanceof Error ? error.message : String(error)}`,
+        );
         sendJson(res, 200, { ok: false, error: toErrorPayload(error) });
       }
     },
