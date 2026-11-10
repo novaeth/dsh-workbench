@@ -35,7 +35,7 @@ export function WorkspaceRowLabel({ workspace, current, action, onHover, onMenu 
       event.preventDefault();
       event.stopPropagation();
       row.focus({ preventScroll: true });
-      menuRef.current?.({ anchor: new DOMRect(x, y, 0, 0), align: 'start' });
+      menuRef.current?.({ anchor: new DOMRect(x, y, 0, 0), align: 'start', mode: 'open' });
     };
     const context = (event: MouseEvent): void => {
       const keyboard = event.clientX === 0 && event.clientY === 0;

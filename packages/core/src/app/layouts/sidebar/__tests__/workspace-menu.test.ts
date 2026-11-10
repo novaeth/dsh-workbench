@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { dictionaries } from '@dsh-workbench/shared';
+import { shouldToggleWorkspaceMenu } from '../workspace-menu-toggle';
 
 const HERE = new URL('../', import.meta.url);
 const read = (name: string): string => readFileSync(new URL(name, HERE), 'utf8');
@@ -21,7 +22,17 @@ describe('工作区行的三点菜单：悬停换图标、点开是菜单', () =
     expect(ROW_ACTION).toContain('IconEllipsisOutlineRegular');
     expect(ROW_ACTION).not.toContain('IconEditOutlineRegular');
     expect(ROW_ACTION).toContain('aria-haspopup="menu"');
-    expect(ROW_ACTION).toContain("onMenu({ anchor: event.currentTarget.getBoundingClientRect(), align: 'end' })");
+    expect(ROW_ACTION).toContain("onMenu({ anchor: event.currentTarget.getBoundingClientRect(), align: 'end', mode: 'toggle' })");
+    expect(ROW_ACTION).toContain('data-workspace-menu-trigger=""');
+  });
+
+  it('★ 三点那颗是 toggle（照 dsh 官方那一条判据）：开着再点同一条就是关，其余都是重新开', () => {
+    expect(shouldToggleWorkspaceMenu('toggle', 'w1', 'w1')).toBe(true);
+    expect(shouldToggleWorkspaceMenu('toggle', 'w1', 'w2')).toBe(false);
+    expect(shouldToggleWorkspaceMenu('toggle', null, 'w1')).toBe(false);
+    expect(shouldToggleWorkspaceMenu('open', 'w1', 'w1')).toBe(false);
+    expect(MENU).toContain('shouldToggleWorkspaceMenu(open.mode, openFor, workspace.workspaceId)');
+    expect(SWITCHER).toContain('setMenu((current) => nextWorkspaceMenu(current, workspace, open))');
   });
 
   it('★ 菜单不跟行走：行 hover 才在，开菜单时选择器留着（关掉选择器 = 用户点开的那把列表凭空没了）', () => {
@@ -32,7 +43,7 @@ describe('工作区行的三点菜单：悬停换图标、点开是菜单', () =
 
     expect(ITEMS).toContain('onMenu={openMenu}');
     expect(ITEMS).not.toContain('<Menu');
-    expect(branch).toContain('setMenu({ workspace, anchor: open.anchor, align: open.align })');
+    expect(branch).toContain('setMenu((current) => nextWorkspaceMenu(current, workspace, open))');
     expect(branch).not.toContain('setOpen(false)');
   });
 
@@ -81,7 +92,7 @@ describe('右键工作区那一项：跟 dsh 官方同一套（指针位置开�
     expect(ROW_LABEL).toContain("row.addEventListener('contextmenu', context)");
     expect(ROW_LABEL).toContain('event.preventDefault()');
     expect(ROW_LABEL).toContain('event.stopPropagation()');
-    expect(ROW_LABEL).toContain("menuRef.current?.({ anchor: new DOMRect(x, y, 0, 0), align: 'start' })");
+    expect(ROW_LABEL).toContain("menuRef.current?.({ anchor: new DOMRect(x, y, 0, 0), align: 'start', mode: 'open' })");
     expect(MENU).toContain("align={target?.align ?? 'end'}");
   });
 

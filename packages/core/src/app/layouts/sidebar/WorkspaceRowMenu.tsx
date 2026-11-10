@@ -8,15 +8,32 @@ import {
   Menu,
 } from '@deepseek-ai/dsh-client-ui-primitives';
 import { clientSurface } from '@/shared/api/platform/client';
+import { shouldToggleWorkspaceMenu } from './workspace-menu-toggle';
 import styles from './WorkspaceRowMenu.module.css';
 
-export interface WorkspaceMenuOpen {
+export const WORKSPACE_MENU_TRIGGER = 'data-workspace-menu-trigger';
+
+export interface WorkspaceMenuAnchor {
   readonly anchor: DOMRect;
   readonly align: 'start' | 'end';
 }
 
-export interface WorkspaceMenuTarget extends WorkspaceMenuOpen {
+export interface WorkspaceMenuOpen extends WorkspaceMenuAnchor {
+  readonly mode: 'toggle' | 'open';
+}
+
+export interface WorkspaceMenuTarget extends WorkspaceMenuAnchor {
   readonly workspace: WorkspaceView;
+}
+
+export function nextWorkspaceMenu(
+  current: WorkspaceMenuTarget | null,
+  workspace: WorkspaceView,
+  open: WorkspaceMenuOpen,
+): WorkspaceMenuTarget | null {
+  const openFor = current?.workspace.workspaceId ?? null;
+  if (shouldToggleWorkspaceMenu(open.mode, openFor, workspace.workspaceId)) return null;
+  return { workspace, anchor: open.anchor, align: open.align };
 }
 
 export interface WorkspaceRowMenuProps {
@@ -61,7 +78,12 @@ export function WorkspaceRowMenu({ target, t, onClose, onAlias, onDelete, onReve
     if (!open) return;
     const dismiss = (event: Event): void => {
       const node = event.target;
-      if (node instanceof Element && node.closest(`.${styles.list}`) !== null) return;
+      if (!(node instanceof Element)) return;
+      if (node.closest(`.${styles.list}`) !== null) return;
+      if (node.closest(`[${WORKSPACE_MENU_TRIGGER}]`) !== null) {
+        event.stopPropagation();
+        return;
+      }
       onClose();
     };
     const escape = (event: KeyboardEvent): void => {

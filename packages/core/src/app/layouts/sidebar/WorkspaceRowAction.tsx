@@ -22,9 +22,10 @@ export function WorkspaceRowAction({ workspace, t, onMenu }: WorkspaceRowActionP
       icon={<IconEllipsisOutlineRegular size={14} />}
       aria-label={t('project.menu.row', { name: displayNameOf(workspace).dir })}
       aria-haspopup="menu"
+      data-workspace-menu-trigger=""
       onClick={(event) => {
         event.stopPropagation();
-        onMenu({ anchor: event.currentTarget.getBoundingClientRect(), align: 'end' });
+        onMenu({ anchor: event.currentTarget.getBoundingClientRect(), align: 'end', mode: 'toggle' });
       }}
     />
   );

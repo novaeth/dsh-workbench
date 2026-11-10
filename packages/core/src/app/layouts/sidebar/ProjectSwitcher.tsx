@@ -9,7 +9,7 @@ import { WorkspaceAttentionDot } from './WorkspaceAttentionDot';
 import { WorkspaceAttentionTag } from './WorkspaceAttentionTag';
 import { WorkspaceAliasDialog } from './WorkspaceAliasDialog';
 import { WorkspaceDeleteDialog } from './WorkspaceDeleteDialog';
-import { WorkspaceRowMenu } from './WorkspaceRowMenu';
+import { WorkspaceRowMenu, nextWorkspaceMenu } from './WorkspaceRowMenu';
 import type { WorkspaceMenuTarget } from './WorkspaceRowMenu';
 import { displayNameOf, matchWorkspaces } from './workspace-name';
 import { workspaceSections } from './workspace-groups';
@@ -75,7 +75,7 @@ export function ProjectSwitcher({
         t,
         attention: attention.byWorkspace,
         onHover: setHoverId,
-        onMenu: (workspace, open) => setMenu({ workspace, anchor: open.anchor, align: open.align }),
+        onMenu: (workspace, open) => setMenu((current) => nextWorkspaceMenu(current, workspace, open)),
       }),
     [sections, currentId, hoverId, t, attention.byWorkspace],
   );
