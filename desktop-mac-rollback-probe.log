@@ -1,0 +1,34 @@
+[0.2s] MILESTONE cdp-ready @ 0.2s
+[0.2s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.2s] pages: dsh-app://app/
+[0.2s] MILESTONE app-page @ 0.2s
+[0.2s] target: dsh-app://app/
+[0.2s] MILESTONE cdp-connected @ 0.2s
+[0.2s] health wait [] none :: HARNESS | Loading plugins…
+[0.3s] ready wait [] none :: HARNESS | Loading plugins…
+[2.3s] ready wait [] none :: HARNESS | Loading plugins…
+[4.4s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[4.4s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[7.7s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: HARNESS | Loading plugins… | Preparing the workbench |  | Getting the runtime ready…
+[7.7s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[9.7s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[9.7s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[11.7s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[11.7s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[13.7s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[13.7s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[15.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: rd mode | Describe what you want to build, / commands, @ files or sessions | Workspace Write | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[15.7s] MILESTONE ready @ 15.7s
+[15.7s] STEP click ["Browse the module market","Choose modules"]: "missing"
+[18.8s] FAIL 打开市场页没找到入口
+[18.8s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-rollback-console-events.json (9558 bytes)
+[18.8s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-rollback-failed-body.txt (356 bytes)
+[18.9s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-rollback-failed.png (64519 bytes)
+[18.9s] FATAL Error: 打开市场页没找到入口（现场：desktop-mac-rollback-failed-body.txt / desktop-mac-rollback-failed-preflight.json）
+    at fail (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:236:9)
+    at async openMarket (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:600:29)
+    at async smokeRollback (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:676:3)
+    at async main (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:941:7)
+[18.9s] SMOKE_SUMMARY {"outcome":"failed","elapsed":"18.9s","milestones":{"cdp-ready":"0.2s","app-page":"0.2s","cdp-connected":"0.2s","ready":"15.7s"},"reason":"打开市场页没找到入口（现场：desktop-mac-rollback-failed-body.txt / desktop-mac-rollback-failed-preflight.json）"}
+[18.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-rollback-fatal-body.txt (356 bytes)
+[19.0s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-rollback-fatal.png (64519 bytes)
