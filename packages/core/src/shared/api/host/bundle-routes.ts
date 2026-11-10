@@ -3,6 +3,7 @@ import type { DshHostContext } from '@dsh-workbench/shared';
 import {
   declarationApiVersionOf,
   declarationProblemsOf,
+  declaresPackage,
   param,
   PLUGIN_ID,
   SUPPORTED_API_VERSIONS,
@@ -78,6 +79,20 @@ function titleOf(raw: unknown): UnitTitle | undefined {
   return { zh, en };
 }
 
+function brokenWorkbench(
+  supply: ReturnType<typeof supplyPortOf>,
+  dir: string,
+  spec: string | undefined,
+): WorkbenchVersion {
+  return {
+    pkg: PLUGIN_ID,
+    installed: '',
+    broken: true,
+    rescue: supply.recoveryCommand({ profile: basename(dir), version: 'latest' }),
+    ...(spec === undefined ? {} : { spec }),
+  };
+}
+
 async function latestIfReleaseReady(supply: ReturnType<typeof supplyPortOf>, input: {
   readonly pkg: string;
   readonly version: string;
@@ -120,7 +135,10 @@ async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: 
   readonly logger?: { warn?(message: string): void } | undefined;
 }): Promise<WorkbenchVersion | undefined> {
   const read = supply.readProfilePackage(input.dir, PLUGIN_ID);
-  if (read === undefined) return undefined;
+  if (read === undefined) {
+    if (input.dir === null || !declaresPackage(input.dir, PLUGIN_ID)) return undefined;
+    return brokenWorkbench(supply, input.dir, dependencyReader(input.dir)(PLUGIN_ID));
+  }
   const spec = dependencyReader(input.dir)(PLUGIN_ID);
   const registry = read.registry ?? input.fallback;
   const seam = input.seam;

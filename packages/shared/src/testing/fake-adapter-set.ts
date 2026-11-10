@@ -15,6 +15,7 @@ import {
 } from '../host/installed-module.js';
 import { isNewerVersion } from '../host/version.js';
 import { refusalReason } from '../host/spec.js';
+import { PLUGIN_ID } from '../config/constants.js';
 import { declarationRefusalOf, pathDeclarationOf } from '../host/local-declaration.js';
 import { createRegistryLookup } from '../host/registry-declaration.js';
 import { createPackageRouter } from '../host/package-route.js';
@@ -46,6 +47,7 @@ const supply: EnvSupplyPort = {
   libInstallCommand: () => '',
   libUninstallCommand: () => '',
   pluginInstallPlan: () => ({ ok: false, problem: 'not-declared' }),
+  recoveryCommand: ({ profile, version }) => `dsh plugin --profile ${profile} add ${PLUGIN_ID}@${version}`,
   latestVersion: async () => undefined,
   missingReleaseParts: async () => [],
   probeRelease: async () => undefined,

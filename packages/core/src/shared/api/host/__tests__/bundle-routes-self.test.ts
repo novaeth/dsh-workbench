@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { DshHostContext } from '@dsh-workbench/shared';
 import type { Seam } from '@dsh-workbench/shared/host';
 import { PLUGIN_ID, RELEASE_PACKAGES } from '@dsh-workbench/shared/host';
+import { SELF_UPDATE_STATES } from '@dsh-workbench/shared/contract/protocol/bundle-install';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { moduleVersionsHandler, resetHoldLog } from '../bundle-routes';
 import { fakeSeamOf } from './seam-fake';
@@ -80,6 +81,16 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
         publishConfig: { registry: 'https://self.example/' },
         ...options.manifest,
       }),
+      'utf8',
+    );
+    return { dir, cleanup: () => fs.rmSync(dir, { recursive: true, force: true }) };
+  }
+
+  function declaredProfile(manifest: Record<string, unknown>): { dir: string; cleanup: () => void } {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-self-declared-'));
+    fs.writeFileSync(
+      path.join(dir, 'package.json'),
+      JSON.stringify({ name: 'dsh-profile-workbench', ...manifest }),
       'utf8',
     );
     return { dir, cleanup: () => fs.rmSync(dir, { recursive: true, force: true }) };
@@ -335,6 +346,68 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
     fs.rmSync(empty, { recursive: true, force: true });
   });
 
+  it('★ profile 里还写着工作台、盘上那份读不到 → 不再「没有这一条」，改成「装坏了」+ 救法', async () => {
+    const { dir, cleanup } = declaredProfile({
+      dsh: { profile: { bundles: [CORE] } },
+      dependencies: { [CORE]: '^0.1.18' },
+    });
+    const { seam, commands } = shellWith(released('0.1.19'));
+
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam)(
+      new URLSearchParams(),
+    )) as { workbench?: Record<string, unknown> };
+
+    expect(result.workbench).toEqual({
+      pkg: CORE,
+      installed: '',
+      broken: true,
+      rescue: `dsh plugin --profile ${path.basename(dir)} add ${CORE}@latest`,
+      spec: '^0.1.18',
+    });
+    expect(commands().filter((line) => line.includes('npm view'))).toEqual([]);
+    cleanup();
+  });
+
+  it('★ 只在 bundles 里写着（dependencies 没这一条）→ 也算这一份还在，别当它没装', async () => {
+    const { dir, cleanup } = declaredProfile({ dsh: { profile: { bundles: [CORE] } } });
+    const { seam } = shellWith(released('0.1.19'));
+
+    const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam)(
+      new URLSearchParams(),
+    )) as { workbench?: Record<string, unknown> };
+
+    expect(result.workbench).toEqual({
+      pkg: CORE,
+      installed: '',
+      broken: true,
+      rescue: `dsh plugin --profile ${path.basename(dir)} add ${CORE}@latest`,
+    });
+    cleanup();
+  });
+
+  it('★ 装回来之后（盘上又读得到）→ 「装坏了」这一档自己退场，回到正常那一格', async () => {
+    const { dir, cleanup } = declaredProfile({
+      dsh: { profile: { bundles: [CORE] } },
+      dependencies: { [CORE]: '^0.1.18' },
+    });
+    const { seam } = shellWith(released('0.1.18'));
+
+    const broken = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam)(
+      new URLSearchParams(),
+    )) as { workbench?: Record<string, unknown> };
+    const at = path.join(dir, 'node_modules', CORE);
+    fs.mkdirSync(at, { recursive: true });
+    fs.writeFileSync(path.join(at, 'package.json'), JSON.stringify({ name: CORE, version: '0.1.18' }), 'utf8');
+    const fixed = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam)(
+      new URLSearchParams(),
+    )) as { workbench?: Record<string, unknown> };
+
+    expect(broken.workbench).toMatchObject({ installed: '', broken: true });
+    expect(fixed.workbench).toMatchObject({ pkg: CORE, installed: '0.1.18', spec: '^0.1.18' });
+    expect(fixed.workbench?.broken).toBeUndefined();
+    cleanup();
+  });
+
   it('★ 外面那个自更新进程的现场跟着工作台那一格回（没有就少一格）', async () => {
     const { dir, cleanup } = coreProfile({});
     const { seam } = shellWith(released('0.1.18'));
@@ -359,6 +432,38 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
 
     expect(withUpdate.selfUpdate).toEqual(update);
     expect(without.selfUpdate).toBeUndefined();
+    cleanup();
+  });
+
+  it('★ marker 的每一档都原样回 —— 新加的 queued 与 restored 的原因不许在路上丢', async () => {
+    const { dir, cleanup } = coreProfile({});
+    const { seam } = shellWith(released('0.1.18'));
+
+    for (const state of SELF_UPDATE_STATES) {
+      const update = {
+        state,
+        from: '0.1.18',
+        to: '0.1.19',
+        version: '0.1.18',
+        at: '2026-11-09T05:31:00.000Z',
+        ...(state === 'restored' ? { reason: 'occupied' as const } : {}),
+      };
+      const payload = (await moduleVersionsHandler(
+        fakeContext({ ...MANAGER }, dir),
+        seam,
+        undefined,
+        () => update,
+      )(new URLSearchParams())) as { selfUpdate?: Record<string, unknown> };
+
+      expect(payload.selfUpdate).toEqual(update);
+    }
+
+    const queued = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam, undefined, () => ({
+      state: 'queued' as const,
+      from: '0.1.18',
+      version: '0.1.18',
+    }))(new URLSearchParams())) as { selfUpdate?: { state?: string } };
+    expect(queued.selfUpdate?.state).toBe('queued');
     cleanup();
   });
 });

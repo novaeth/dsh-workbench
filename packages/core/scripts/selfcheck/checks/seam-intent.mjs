@@ -129,7 +129,7 @@ export function execEntryHits() {
 
 const WRITE_ENTRY = 'packages/shared/src/host/fs-write.ts';
 const WRITE_CALL_OWN = [
-  'packages/adapter-probe/src/self-update.ts',
+  'packages/adapter-probe/src/self-update-node-script.ts',
   'packages/shared/src/host/lib-capabilities.ts',
 ];
 

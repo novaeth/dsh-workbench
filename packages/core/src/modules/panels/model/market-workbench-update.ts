@@ -16,6 +16,8 @@ export interface WorkbenchUpdateDeps {
     | ((request: SelfUpdateRequest, onError: (message: string) => void) => SelfUpdateStart)
     | undefined;
   readonly includePrerelease?: (() => boolean) | undefined;
+  readonly relaunch?: boolean | undefined;
+  readonly hostPid?: number | undefined;
   readonly logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
   readonly supply?: SupplyPort | undefined;
   readonly manager?: BundleManager | undefined;
@@ -90,6 +92,8 @@ export async function updateWorkbenchOnce(deps: WorkbenchUpdateDeps): Promise<Bu
       from: read.version,
       to: askedLatest ?? '',
       pinned: askedLatest !== undefined,
+      hostPid: deps.hostPid ?? process.pid,
+      ...(deps.relaunch === undefined ? {} : { relaunch: deps.relaunch }),
     },
     (message: string) => deps.logger?.warn?.(`[dsh-workbench] ${message}`),
   );

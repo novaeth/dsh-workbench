@@ -50,7 +50,14 @@ export interface MarketNote {
     | 'panels.market.pluginAlsoKnownAs'
     | 'panels.market.pluginBroken'
     | 'panels.market.latestNoRegistry'
-    | 'panels.market.latestProbeFailed';
+    | 'panels.market.latestProbeFailed'
+    | 'panels.market.workbenchBroken'
+    | 'panels.market.workbenchBrokenNoFix'
+    | 'panels.market.selfUpdateQueued'
+    | 'panels.market.selfUpdateRestored'
+    | 'panels.market.selfUpdateRolledBack'
+    | 'panels.market.selfUpdateFailed'
+    | 'panels.market.selfUpdateFailedNoFix';
   readonly params: Readonly<Record<string, string>>;
   readonly tone?: 'plain' | 'alert';
 }
@@ -61,7 +68,11 @@ export type MarketHintKey =
   | 'panels.market.migrationHint'
   | 'panels.market.updateNeedsWorkbench'
   | 'panels.market.updateIncompatible'
-  | 'panels.market.workbenchUpdateNeedsDsh';
+  | 'panels.market.workbenchUpdateNeedsDsh'
+  | 'panels.market.selfUpdateReasonOccupied'
+  | 'panels.market.selfUpdateReasonIncomplete'
+  | 'panels.market.selfUpdateReasonRollbackFailed'
+  | 'panels.market.selfUpdateReasonUnknown';
 
 export interface ModuleUpdate {
   readonly installed: string;
@@ -99,6 +110,7 @@ export interface MarketRow {
   readonly pkg?: string;
   readonly local?: boolean;
   readonly versionLabel?: string;
+  readonly updateLabelKey?: string;
   readonly defaultShown?: boolean;
   readonly defaultChanged?: number;
   readonly broken?: boolean;

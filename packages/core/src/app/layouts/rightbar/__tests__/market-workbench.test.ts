@@ -8,6 +8,7 @@ import { workbenchRow } from '../market-workbench-row';
 import type { MarketRow } from '../market-rows';
 
 const CORE = '@dsh-workbench/core';
+const AT = '2026-10-23T01:00:00.000Z';
 
 describe('市场里「工作台」自己那一行（四种处境）', () => {
   it('① 源上有新版 → 行上给一颗「更新」，段还是它自己那一段', () => {
@@ -162,6 +163,148 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
     expect(workbenchRow(null)).toBeUndefined();
     expect(workbenchRow({ pkg: CORE, installed: '' })).toBeUndefined();
   });
+
+  it('★ profile 里还写着、盘上读不到 → 这一行不消失：说「装坏了」，并给可复制的救法', () => {
+    const rescue = `dsh plugin --profile workbench add ${CORE}@latest`;
+    const row = workbenchRow({ pkg: CORE, installed: '', broken: true, rescue });
+
+    expect(row).toMatchObject({
+      workbench: true,
+      state: 'broken',
+      broken: true,
+      canInstall: false,
+      canUpdate: false,
+      canUninstall: false,
+      pkg: CORE,
+      note: { key: 'panels.market.workbenchBroken', params: { command: rescue }, tone: 'alert' },
+    });
+    expect(row?.note?.params.command).toBe(rescue);
+    expect(MARKET_STATE_KEY['broken']).toBe('panels.market.broken');
+    expect(MARKET_DOT['broken']).toBe('error');
+    expect(marketActions(row as MarketRow)).toEqual([]);
+  });
+
+  it('★ 盘上读不到、又拼不出救法命令 → 照样是那一行，只说装坏了，不摆一条空命令', () => {
+    const row = workbenchRow({ pkg: CORE, installed: '', broken: true });
+
+    expect(row?.state).toBe('broken');
+    expect(row?.note).toEqual({ key: 'panels.market.workbenchBrokenNoFix', params: {}, tone: 'alert' });
+    expect(JSON.stringify(row)).not.toContain('undefined');
+  });
+
+  it('★ 更新刚跑完：装好了静默（只报版本），还排着队就说还排着队', () => {
+    const done = workbenchRow({ pkg: CORE, installed: '0.1.19' }, { state: 'ok', at: AT }, undefined);
+
+    expect(done?.note).toBeUndefined();
+    expect(done?.hint).toBeUndefined();
+    expect(done?.state).toBe('installed');
+
+    const queued = workbenchRow(
+      { pkg: CORE, installed: '0.1.18', latest: '0.1.19' },
+      { state: 'queued', at: AT },
+      undefined,
+    );
+
+    expect(queued).toMatchObject({
+      state: 'outdated',
+      canUpdate: false,
+      note: { key: 'panels.market.selfUpdateQueued', params: {}, tone: 'plain' },
+    });
+    expect(queued?.hint).toBeUndefined();
+  });
+
+  it('★ 没装成（本地还原 / 联网回滚）→ 说清还原到哪一版 + 原因，并留着「再试一次」', () => {
+    for (const state of ['restored', 'rolled-back'] as const) {
+      const row = workbenchRow(
+        { pkg: CORE, installed: '0.1.18' },
+        { state, at: AT, version: '0.1.18', reason: 'occupied' },
+        undefined,
+      );
+
+      expect(row).toMatchObject({
+        state: 'installed',
+        canUpdate: true,
+        hint: 'panels.market.selfUpdateReasonOccupied',
+        note: {
+          key:
+            state === 'restored'
+              ? 'panels.market.selfUpdateRestored'
+              : 'panels.market.selfUpdateRolledBack',
+          params: { version: '0.1.18' },
+          tone: 'alert',
+        },
+      });
+      expect(marketActions(row as MarketRow)).toEqual(['update-workbench']);
+    }
+  });
+
+  it('★ 失败 → 原因 + 日志原文那条救法（可复制）+「再试一次」；没有原文就只说原因', () => {
+    const withFix = workbenchRow(
+      { pkg: CORE, installed: '0.1.18' },
+      { state: 'failed', at: AT, version: '0.1.18', reason: 'incomplete', tail: '换版没成 / 救法：dsh plugin add x' },
+      undefined,
+    );
+
+    expect(withFix).toMatchObject({
+      canUpdate: true,
+      hint: 'panels.market.selfUpdateReasonIncomplete',
+      note: { key: 'panels.market.selfUpdateFailed', params: { fix: '救法：dsh plugin add x' }, tone: 'alert' },
+    });
+    expect(marketActions(withFix as MarketRow)).toEqual(['update-workbench']);
+
+    const bare = workbenchRow({ pkg: CORE, installed: '0.1.18' }, { state: 'failed', at: AT }, undefined);
+
+    expect(bare?.note).toEqual({ key: 'panels.market.selfUpdateFailedNoFix', params: {}, tone: 'alert' });
+    expect(bare?.hint).toBe('panels.market.selfUpdateReasonUnknown');
+  });
+
+  it('★ 同一条 marker 已经告知过 → 下次打开那一行只报版本，不再打扰', () => {
+    const update = { state: 'failed' as const, at: AT, version: '0.1.18' };
+    const again = workbenchRow({ pkg: CORE, installed: '0.1.18' }, update, AT);
+
+    expect(again?.note).toBeUndefined();
+    expect(again?.hint).toBeUndefined();
+    expect(workbenchRow({ pkg: CORE, installed: '0.1.18' }, update, undefined)?.note?.key).toBe(
+      'panels.market.selfUpdateFailedNoFix',
+    );
+  });
+
+  it('★ 没读到 marker（老宿主 / 还没读过那一格）→ 那一行跟以前一模一样', () => {
+    const row = workbenchRow({ pkg: CORE, installed: '0.1.18', latest: '0.1.19' });
+
+    expect(row?.note).toBeUndefined();
+    expect(row?.hint).toBeUndefined();
+    expect(marketActions(row as MarketRow)).toEqual(['update-workbench']);
+  });
+
+  it('★ Desktop 上那颗钮叫「更新并重启」，dsh web 里照旧叫「更新」', () => {
+    const version = { pkg: CORE, installed: '0.1.18', latest: '0.1.19' };
+
+    expect(workbenchRow(version, undefined, undefined, true)?.updateLabelKey).toBe(
+      'panels.market.updateAndRestart',
+    );
+    expect(workbenchRow(version, undefined, undefined, false)?.updateLabelKey).toBeUndefined();
+    expect(workbenchRow(version)?.updateLabelKey).toBeUndefined();
+    expect(dictionaries.zh['panels.market.updateAndRestart']).toBe('更新并重启');
+    expect(dictionaries.en['panels.market.updateAndRestart']).toBe('Update and restart');
+    expect(readFileSync(new URL('../market-section.tsx', import.meta.url), 'utf8')).toContain(
+      'row.updateLabelKey',
+    );
+  });
+
+  it('★ 还排着队 / 正在换的时候：那一行不给第二次点击的机会', () => {
+    const version = { pkg: CORE, installed: '0.1.18', latest: '0.1.19' };
+    const queued = workbenchRow(version, { state: 'queued', at: AT }, undefined);
+    const running = workbenchRow(version, { state: 'running', at: new Date().toISOString() }, undefined);
+    const stale = workbenchRow(version, { state: 'running', at: '2020-01-01T00:00:00.000Z' }, undefined);
+
+    expect(queued?.canUpdate).toBe(false);
+    expect(marketActions(queued as MarketRow)).toEqual([]);
+    expect(running?.canUpdate).toBe(false);
+    expect(marketActions(running as MarketRow)).toEqual([]);
+    expect(stale?.canUpdate).toBe(true);
+    expect(marketActions(stale as MarketRow)).toEqual(['update-workbench']);
+  });
 });
 
 describe('工作台那一行：不混进模块里，也不单占一段', () => {
@@ -225,6 +368,10 @@ describe('工作台那一行：不混进模块里，也不单占一段', () => {
       labelKey: 'panels.market.pendingFollowUp',
       tone: 'warning',
     });
+    expect(hintOf({ pkg: CORE, installed: '', broken: true, rescue: 'dsh plugin add x' })).toEqual({
+      labelKey: 'panels.market.hasProblem',
+      tone: 'danger',
+    });
   });
 });
 
@@ -240,5 +387,54 @@ describe('工作台那一行上的人话', () => {
     }
     expect(dictionaries.zh['panels.market.workbenchName']).toBe('工作台');
     expect(dictionaries.en['panels.market.workbenchName']).toBe('Workbench');
+  });
+
+  it('★ 「装坏了」那两句两种语言都有：有命令的带 {command}，两种语言都不混排、不出内部词', () => {
+    const internal = ['profile', 'bundle', 'payload', 'schema'];
+    const han = (text: string): boolean => /[\u4e00-\u9fff]/.test(text);
+    const englishRun = (text: string): boolean =>
+      /[A-Za-z]+(?:\s+[A-Za-z]+)+/.test(text.replace('{command}', ''));
+    for (const language of ['zh', 'en'] as const) {
+      const withCommand = dictionaries[language]['panels.market.workbenchBroken'] ?? '';
+      const noFix = dictionaries[language]['panels.market.workbenchBrokenNoFix'] ?? '';
+      for (const [key, sentence] of [
+        ['panels.market.workbenchBroken', withCommand],
+        ['panels.market.workbenchBrokenNoFix', noFix],
+      ] as const) {
+        expect(sentence.length, `${language}:${key}`).toBeGreaterThan(0);
+        expect(han(sentence), `${language}:${key}:han`).toBe(language === 'zh');
+        expect(englishRun(sentence), `${language}:${key}:english`).toBe(language === 'en');
+        for (const word of internal) expect(sentence, `${language}:${key}:${word}`).not.toContain(word);
+      }
+      expect(withCommand, `${language}:withCommand`).toContain('{command}');
+      expect(noFix, `${language}:noFix`).not.toContain('{command}');
+    }
+    expect(dictionaries.zh['panels.market.workbenchBroken']).toContain('读不到工作台那一份（装坏了）');
+  });
+
+  it('★ 自更新那四档的话两种语言都有：不混排、不出内部词', () => {
+    const keys = [
+      'panels.market.selfUpdateQueued',
+      'panels.market.selfUpdateFailed',
+      'panels.market.selfUpdateFailedNoFix',
+      'panels.market.selfUpdateRestored',
+      'panels.market.selfUpdateRolledBack',
+      'panels.market.selfUpdateReasonOccupied',
+      'panels.market.selfUpdateReasonIncomplete',
+      'panels.market.selfUpdateReasonRollbackFailed',
+      'panels.market.selfUpdateReasonUnknown',
+    ] as const;
+    const internal = ['profile', 'bundle', 'payload', 'schema', 'adapter', 'probe'];
+    const han = (text: string): boolean => /[\u4e00-\u9fff]/.test(text);
+    for (const language of ['zh', 'en'] as const) {
+      for (const key of keys) {
+        const sentence = dictionaries[language][key] ?? '';
+        expect(sentence.length, `${language}:${key}`).toBeGreaterThan(0);
+        expect(han(sentence), `${language}:${key}:han`).toBe(language === 'zh');
+        for (const word of internal) expect(sentence, `${language}:${key}:${word}`).not.toContain(word);
+      }
+    }
+    expect(dictionaries.zh['panels.market.selfUpdateQueued']).toContain('退出 Desktop');
+    expect(dictionaries.zh['panels.market.selfUpdateFailed']).toContain('{fix}');
   });
 });

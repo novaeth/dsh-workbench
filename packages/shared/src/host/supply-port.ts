@@ -20,6 +20,7 @@ export function supplyPortOf(ctx: DshHostContext): SupplyPort {
     libInstallCommand: (options) => env.libInstallCommand(options),
     libUninstallCommand: (options) => env.libUninstallCommand(options),
     pluginInstallPlan: (options) => env.pluginInstallPlan(options),
+    recoveryCommand: (options) => env.recoveryCommand(options),
     latestVersion: (options) => env.latestVersion(options),
     missingReleaseParts: (options) => env.missingReleaseParts(options),
     probeRelease: (options) => env.probeRelease(options),

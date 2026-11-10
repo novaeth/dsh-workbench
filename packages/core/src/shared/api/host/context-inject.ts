@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import type { DshHostContext } from '@dsh-workbench/shared';
 import { encodeRef, parseMarkers, type ContextRef } from '@dsh-workbench/shared/host';
 import type { ContextRenderer } from '@dsh-workbench/shared/host';
 
@@ -36,6 +37,32 @@ export function buildContextMessage(text: string, summary: string): unknown {
     content: [{ type: 'text', text }],
     source: { kind: CONTEXT_SOURCE_KIND, form: 'notice', summary },
   };
+}
+
+export function installContextInject(options: {
+  ctx: DshHostContext;
+  injector: ContextInjector;
+  apply(agent: unknown): void;
+  held(agentId: string): readonly unknown[];
+}): () => void {
+  const off = options.ctx.on?.('agent/pre-step', async (payload, next) => {
+    options.apply(payload?.agent);
+    const decision = await next();
+    if (decision.kind === 'reject') return decision;
+    try {
+      const message = await options.injector.inject(
+        (decision.messages ?? []) as readonly ScannableMessage[],
+        payload?.agent,
+      );
+      const queued = options.held(String((payload?.agent as { id?: unknown } | undefined)?.id ?? ''));
+      const extra = [...queued, ...(message === undefined ? [] : [message])];
+      return extra.length === 0 ? decision : { ...decision, messages: [...(decision.messages ?? []), ...extra] };
+    } catch (error) {
+      options.ctx.logger?.warn?.(`[dsh-workbench] 对话引用注入失败：${String(error)}`);
+      return decision;
+    }
+  });
+  return () => off?.();
 }
 
 export interface ContextInjector {

@@ -70,6 +70,7 @@ const FULL = `{
     libInstallCommand: () => '',
     libUninstallCommand: () => '',
     pluginInstallPlan: () => ({ ok: false, problem: 'not-declared' }),
+    recoveryCommand: () => '',
     latestVersion: async () => undefined,
     missingReleaseParts: async () => [],
     probeRelease: async () => undefined,

@@ -5,7 +5,7 @@ import { isolatedRoot } from '@dsh-workbench/adapter-runtime';
 import { createRegistryNotebook, isNewerVersion } from '@dsh-workbench/adapter-profile';
 import { latestVersion, missingReleaseParts, probeRelease } from './release-port.js';
 import { opencliInstallCommand } from './install.js';
-import { startSelfUpdate, type SelfUpdateRequest } from './self-update.js';
+import { recoveryCommand, selfUpdateCliFor, startSelfUpdate, type SelfUpdateRequest } from './self-update.js';
 import {
   declarationGaps,
   declarationRefusalOf,
@@ -21,7 +21,7 @@ import {
   resolvePluginSource,
   splitNpmSpec,
 } from '@dsh-workbench/adapter-supply';
-import { readBundleManager, refusalReason } from '@dsh-workbench/shared/host';
+import { PLUGIN_ID, readBundleManager, refusalReason } from '@dsh-workbench/shared/host';
 import { OPENCLI_MANIFEST_FILE } from '@dsh-workbench/adapter-runtime';
 
 export interface ProbeSupplyOptions {
@@ -64,6 +64,8 @@ export function createSupplyPort(options: ProbeSupplyOptions = {}): SupplyPort {
     splitNpmSpec,
     libInstallCommand,
     libUninstallCommand,
+    recoveryCommand: (options: { readonly profile: string; readonly version: string }) =>
+      recoveryCommand({ profile: options.profile, pkg: PLUGIN_ID, version: options.version, cli: selfUpdateCliFor(options.profile) }),
     startSelfUpdate: (request: SelfUpdateRequest, onError: (message: string) => void) =>
       startSelfUpdate(request, onError, seam),
   };

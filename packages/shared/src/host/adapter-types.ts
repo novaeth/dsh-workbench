@@ -66,6 +66,8 @@ export interface SelfUpdatePaths {
   readonly script: string;
   readonly marker: string;
   readonly log: string;
+  readonly backup: string;
+  readonly hostLock: string;
 }
 
 export interface SelfUpdateRequest {
@@ -75,6 +77,12 @@ export interface SelfUpdateRequest {
   readonly from: string;
   readonly to: string;
   readonly pinned: boolean;
+  readonly attempts?: number | undefined;
+  readonly retryMs?: number | undefined;
+  readonly hostPid?: number | undefined;
+  readonly waitMs?: number | undefined;
+  readonly holdMs?: number | undefined;
+  readonly relaunch?: boolean | undefined;
 }
 
 export interface SelfUpdateStart {

@@ -29,8 +29,10 @@ interface AdapterSet {
 <!-- doc-facts:end adapter-set -->
 
 - `EnvSupplyPort` 是第三方可实现的窄口：`resolvePluginSource`、`libInstallCommand`、
-  `libUninstallCommand`、`pluginInstallPlan`、`latestVersion`、`missingReleaseParts`、
-  `probeRelease`、`splitNpmSpec`（8 个方法，参数/返回都有类型）。
+  `libUninstallCommand`、`pluginInstallPlan`、`recoveryCommand`、`latestVersion`、
+  `missingReleaseParts`、`probeRelease`、`splitNpmSpec`（9 个方法，参数/返回都有类型）。
+  `recoveryCommand` 给的是"装坏了怎么救"那条命令 —— 由适配器按自己这套 CLI 拼（Desktop 上
+  是 app 自带那条，PATH 上的 `dsh` 在那儿会被拒）。
 - `ModulePort` 是模块/profile/registry/自更新那一组；`supply` 与 `modules` 分开，
   `supply` 只给探针与市场用。
 - `ProbePort`：`probeUnits` / `registerPreflight` / `declaredPluginCommands`。

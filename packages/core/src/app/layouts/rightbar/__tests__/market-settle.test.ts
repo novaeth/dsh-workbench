@@ -8,6 +8,10 @@ import {
   holdBack,
   holdWindowMs,
   readBackDone,
+  selfUpdateMark,
+  selfUpdateNote,
+  selfUpdateReasonHint,
+  selfUpdateSwapping,
   settleLanded,
   selfUpdateStop,
   swapLanded,
@@ -189,29 +193,39 @@ describe('模块行的更新：解锁要等读数追上来，不是等写响应�
 describe('工作台自更新：外面那个进程判死了就别再让用户等', () => {
   const at = '2026-10-23T01:00:00.000Z';
 
-  it('★ 目标对得上、时间不早于点下去那一刻 → failed 带日志尾最后一句', () => {
+  it('★ 目标对得上、时间不早于点下去那一刻 → failed 带日志尾那条救法', () => {
     expect(
       selfUpdateStop({
         until: '0.3.10',
         since: dayjs(at).valueOf() - 1000,
         update: { state: 'failed', to: '0.3.10', version: '0.3.9', at, tail: '开始 / 换版没成 / 救法：dsh plugin add x' },
       }),
-    ).toEqual({ kind: 'failed', version: '0.3.9', reason: '救法：dsh plugin add x' });
+    ).toEqual({ kind: 'failed', at, version: '0.3.9', fix: '救法：dsh plugin add x' });
   });
 
-  it('★ 回滚成功也算收尾（不再等 3 分钟）', () => {
+  it('★ 本地还原 / 联网回滚都算收尾（不再等 3 分钟），原因分类跟着走', () => {
+    expect(
+      selfUpdateStop({
+        until: '0.3.10',
+        since: dayjs(at).valueOf() - 1000,
+        update: { state: 'restored', to: '0.3.10', version: '0.3.9', at, reason: 'occupied' },
+      }),
+    ).toEqual({ kind: 'restored', at, cause: 'occupied', version: '0.3.9' });
     expect(
       selfUpdateStop({
         until: '0.3.10',
         since: dayjs(at).valueOf() - 1000,
         update: { state: 'rolled-back', to: '0.3.10', version: '0.3.9', at },
       }),
-    ).toEqual({ kind: 'rolled-back', version: '0.3.9' });
+    ).toEqual({ kind: 'rolled-back', at, version: '0.3.9' });
   });
 
-  it('★ 还在跑、目标不是这一版、或现场比点下去还早 → 不算', () => {
+  it('★ 还在跑 / 还排着队 / 目标不是这一版 / 现场比点下去还早 → 不算', () => {
     expect(
       selfUpdateStop({ until: '0.3.10', since: 0, update: { state: 'running', to: '0.3.10', at } }),
+    ).toBeUndefined();
+    expect(
+      selfUpdateStop({ until: '0.3.10', since: 0, update: { state: 'queued', to: '0.3.10', at } }),
     ).toBeUndefined();
     expect(
       selfUpdateStop({ until: '0.3.10', since: 0, update: { state: 'failed', to: '0.3.9', at } }),
@@ -223,5 +237,105 @@ describe('工作台自更新：外面那个进程判死了就别再让用户等'
         update: { state: 'failed', to: '0.3.10', at },
       }),
     ).toBeUndefined();
+  });
+});
+
+describe('工作台自更新：四档结果落在那一行，下次打开只说一次', () => {
+  const at = '2026-10-23T01:00:00.000Z';
+  const earlier = '2026-10-22T01:00:00.000Z';
+
+  it('★ 四档各成一档：ok 静默、queued 说排队、restored / rolled-back / failed 说没成', () => {
+    expect(selfUpdateMark({ update: { state: 'ok', at }, toldAt: undefined })).toEqual({ kind: 'ok', at });
+    expect(selfUpdateMark({ update: { state: 'queued', at }, toldAt: undefined })).toEqual({
+      kind: 'queued',
+      at,
+    });
+    expect(
+      selfUpdateMark({ update: { state: 'restored', at, version: '0.3.9', reason: 'incomplete' }, toldAt: undefined }),
+    ).toEqual({ kind: 'restored', at, cause: 'incomplete', version: '0.3.9' });
+    expect(
+      selfUpdateMark({ update: { state: 'rolled-back', at, version: '0.3.9' }, toldAt: undefined }),
+    ).toEqual({ kind: 'rolled-back', at, version: '0.3.9' });
+    expect(
+      selfUpdateMark({
+        update: { state: 'failed', at, version: '0.3.9', tail: '换版没成 / 救法：dsh plugin add x' },
+        toldAt: undefined,
+      }),
+    ).toEqual({ kind: 'failed', at, version: '0.3.9', fix: '救法：dsh plugin add x' });
+  });
+
+  it('★ 还在跑 / 没读到 marker → 这一档不出现（不瞎报）', () => {
+    expect(selfUpdateMark({ update: { state: 'running', at }, toldAt: undefined })).toBeUndefined();
+    expect(selfUpdateMark({ update: null, toldAt: undefined })).toBeUndefined();
+    expect(selfUpdateMark({ update: undefined, toldAt: undefined })).toBeUndefined();
+  });
+
+  it('★ 同一条 marker 告知过了 → 第二次打开不再提示；新一条（更晚）照说；排队与装好不算「结果」', () => {
+    const update = { state: 'failed', at, version: '0.3.9' } as const;
+
+    expect(selfUpdateMark({ update, toldAt: at })).toBeUndefined();
+    expect(selfUpdateMark({ update, toldAt: earlier })).toEqual({ kind: 'failed', at, version: '0.3.9' });
+    expect(selfUpdateMark({ update, toldAt: null })).toEqual({ kind: 'failed', at, version: '0.3.9' });
+    expect(selfUpdateMark({ update: { state: 'ok', at }, toldAt: at })).toEqual({ kind: 'ok', at });
+    expect(selfUpdateMark({ update: { state: 'queued', at }, toldAt: at })).toEqual({ kind: 'queued', at });
+  });
+
+  it('★ 那一行上的话：ok 不给文案；其余三档各有文案，失败带日志原文', () => {
+    expect(selfUpdateNote({ kind: 'ok' })).toBeUndefined();
+    expect(selfUpdateNote({ kind: 'queued', at })).toEqual({
+      key: 'panels.market.selfUpdateQueued',
+      params: {},
+      tone: 'plain',
+    });
+    expect(selfUpdateNote({ kind: 'restored', version: '0.3.9' })).toEqual({
+      key: 'panels.market.selfUpdateRestored',
+      params: { version: '0.3.9' },
+      tone: 'alert',
+    });
+    expect(selfUpdateNote({ kind: 'rolled-back', version: '0.3.9' })).toEqual({
+      key: 'panels.market.selfUpdateRolledBack',
+      params: { version: '0.3.9' },
+      tone: 'alert',
+    });
+    expect(selfUpdateNote({ kind: 'failed', version: '0.3.9', fix: 'dsh plugin add x' })).toEqual({
+      key: 'panels.market.selfUpdateFailed',
+      params: { fix: 'dsh plugin add x' },
+      tone: 'alert',
+    });
+    expect(selfUpdateNote({ kind: 'failed', version: '0.3.9' })).toEqual({
+      key: 'panels.market.selfUpdateFailedNoFix',
+      params: {},
+      tone: 'alert',
+    });
+    expect(selfUpdateNote({ kind: 'restored' })).toMatchObject({ params: { version: '?' } });
+  });
+
+  it('★ 原因分类翻成一句人话；认不出就说认不出；排队与装好没有原因', () => {
+    expect(selfUpdateReasonHint({ kind: 'failed', cause: 'occupied' })).toBe(
+      'panels.market.selfUpdateReasonOccupied',
+    );
+    expect(selfUpdateReasonHint({ kind: 'failed', cause: 'incomplete' })).toBe(
+      'panels.market.selfUpdateReasonIncomplete',
+    );
+    expect(selfUpdateReasonHint({ kind: 'rolled-back', cause: 'rollback-failed' })).toBe(
+      'panels.market.selfUpdateReasonRollbackFailed',
+    );
+    expect(selfUpdateReasonHint({ kind: 'restored' })).toBe('panels.market.selfUpdateReasonUnknown');
+    expect(selfUpdateReasonHint({ kind: 'failed' })).toBe('panels.market.selfUpdateReasonUnknown');
+    expect(selfUpdateReasonHint({ kind: 'queued' })).toBeUndefined();
+    expect(selfUpdateReasonHint({ kind: 'ok' })).toBeUndefined();
+  });
+
+  it('★ 还排着队 / 正在换（还没到超时）→ 不给第二次点击的机会；换了很久没动静 → 放行', () => {
+    const fresh = new Date().toISOString();
+
+    expect(selfUpdateSwapping({ state: 'queued', at: fresh })).toBe(true);
+    expect(selfUpdateSwapping({ state: 'running', at: fresh })).toBe(true);
+    expect(selfUpdateSwapping({ state: 'running' })).toBe(true);
+    expect(selfUpdateSwapping({ state: 'running', at: '2020-01-01T00:00:00.000Z' })).toBe(false);
+    expect(selfUpdateSwapping({ state: 'failed', at: fresh })).toBe(false);
+    expect(selfUpdateSwapping({ state: 'ok', at: fresh })).toBe(false);
+    expect(selfUpdateSwapping(null)).toBe(false);
+    expect(selfUpdateSwapping(undefined)).toBe(false);
   });
 });

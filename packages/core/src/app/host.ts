@@ -1,5 +1,6 @@
 import type { DshHostContext, DshWorkspaceRegistry, UnitManifest } from '@dsh-workbench/shared';
 import { provideWorkbenchSeam } from '@/shared/api/host/workbench-seam';
+import { holdHostLock } from '@/shared/api/host/host-lock';
 import { provideGitProcessSeam } from '@/shared/api/host/git-process';
 import { shippedAdapterSet } from '@/shared/api/host/shipped-adapter-set';
 import { createHostRoutes } from '@/shared/api/host/host-routes';
@@ -16,6 +17,7 @@ import {
   type RouteTable,
 } from '@dsh-workbench/shared/host';
 import { PANEL_STATE_SERVICE, createFactLog, createPanelStateStore, toolUnits, wroteNow } from '@dsh-workbench/shared/host';
+
 import { createMcpScope } from '@/shared/api/host/pack-scope';
 import { mountWorkbenchSettings, workbenchSettingsAction } from '@/shared/api/host/workbench-settings';
 import { basename } from 'node:path';
@@ -26,11 +28,7 @@ import { WORKBENCH_ADAPTERS, needsOf, resolveAdapterSet, type AdapterSet, type N
 import { UNIT_MANIFESTS_ROUTE } from '@/kernel/contract/unit-manifests';
 import { LONG_TASKS_ROUTE } from '@/kernel/contract/long-tasks';
 import { liveLongTaskRows } from '@/shared/api/host/long-tasks';
-import {
-  createContextInjector,
-  type ContextRenderer,
-  type ScannableMessage,
-} from '@/shared/api/host/context-inject';
+import { createContextInjector, installContextInject, type ContextRenderer } from '@/shared/api/host/context-inject';
 import type { LongTaskBase, LongTaskRegistry, UnitCall, UnitMountResult, ToolScopeContext } from '@dsh-workbench/shared/host';
 import { applyPlanFailures, declaredNotesOf, mountUnits, failureReasonOf, type UnitsPlan } from '@/kernel/host/mount-units';
 import {
@@ -39,8 +37,7 @@ import {
   type HostUnit,
 } from '@/kernel/host/unit-registry';
 import { bindRosterFacts } from '@/shared/api/host/unit-roster-facts';
-import { createWorkspaceStore } from '@dsh-workbench/shared/host';
-import { withLibRunners } from '@dsh-workbench/shared/host';
+import { createWorkspaceStore, withLibRunners } from '@dsh-workbench/shared/host';
 import { CONFIG_SYNC_ROUTE } from '@/kernel/contract/config-sync';
 import { PROFILE_CREATE_ROUTE } from '@/kernel/contract/profile-create';
 import { SIDEBAR_EDITION_ROUTE } from '@/kernel/contract/sidebar-edition';
@@ -418,6 +415,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     postChannels.dispose();
   }, `${PLUGIN_ID}: 卸载时把单元摘干净`);
   ctx.effect(() => units.subscribe(sync), `${PLUGIN_ID}: 注册表变了就增删（装/卸一个模块 = 挂/卸它的面）`);
+  ctx.effect(() => holdHostLock((message) => warn(ctx, message)), `${PLUGIN_ID}: 宿主在跑就留一枚锁，自更新等它退了才换包`);
   ctx.effect(
     () => bindRosterFacts({ units, bump: (names) => facts.bump(names) }),
     `${PLUGIN_ID}: 花名册变了就把清单那条事实记一笔（浏览器据此重读，不用刷新页面）`,
@@ -472,26 +470,16 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   }, `${PLUGIN_ID}: 写操作的用户审批`);
 
   const injector = createContextInjector({ logger: ctx.logger, renderers });
-  ctx.effect(() => {
-    const off = ctx.on?.('agent/pre-step', async (payload, next) => {
-      toolScope.apply(payload?.agent);
-      const decision = await next();
-      if (decision.kind === 'reject') return decision;
-      try {
-        const message = await injector.inject(
-          (decision.messages ?? []) as readonly ScannableMessage[],
-          payload?.agent,
-        );
-        const queued = takeHeldNotices(String((payload?.agent as { id?: unknown } | undefined)?.id ?? ''));
-        const extra = [...queued, ...(message === undefined ? [] : [message])];
-        return extra.length === 0 ? decision : { ...decision, messages: [...(decision.messages ?? []), ...extra] };
-      } catch (error) {
-        ctx.logger?.warn?.(`[dsh-workbench] 对话引用注入失败：${String(error)}`);
-        return decision;
-      }
-    });
-    return () => off?.();
-  }, `${PLUGIN_ID}: 对话引用注入`);
+  ctx.effect(
+    () =>
+      installContextInject({
+        ctx,
+        injector,
+        apply: (agent) => toolScope.apply(agent),
+        held: (agentId) => takeHeldNotices(agentId),
+      }),
+    `${PLUGIN_ID}: 对话引用注入`,
+  );
   ctx.effect(() => registerFactStream(ctx, facts), `${PLUGIN_ID}: 变更流`);
   ctx.effect(() => registerPanelState(ctx, panelState), `${PLUGIN_ID}: 面板运行态上报（浏览器半侧报自己的取数与渲染收尾）`);
   ctx.effect(() => registerDiyActs(ctx, { bump: (names) => facts.bump(names) }), `${PLUGIN_ID}: DIY 的两族键（用户按的）`);

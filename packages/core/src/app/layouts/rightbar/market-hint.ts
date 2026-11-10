@@ -1,4 +1,4 @@
-import type { ModuleVersion, WorkbenchVersion } from '@/kernel/contract/bundle-install';
+import type { ModuleVersion, WorkbenchSelfUpdate, WorkbenchVersion } from '@/kernel/contract/bundle-install';
 import type { InstalledPlugin } from '@/shared/api/installed-plugins';
 import type { CapabilityMap } from '@/shared/hooks/use-capabilities';
 import type { UnitManifest } from '@dsh-workbench/shared';
@@ -24,6 +24,8 @@ export interface MarketHintInput {
   readonly installed?: readonly InstalledWorkbenchModule[] | undefined;
   readonly plugins?: readonly InstalledPlugin[] | null | undefined;
   readonly workbench?: WorkbenchVersion | null | undefined;
+  readonly selfUpdate?: WorkbenchSelfUpdate | null | undefined;
+  readonly toldAt?: string | null | undefined;
   readonly busy?: ReadonlySet<string> | undefined;
   readonly installing?: boolean | undefined;
   readonly applied?: ReadonlySet<string> | undefined;
@@ -35,12 +37,20 @@ const FOLLOWUP_KEY = 'panels.market.pendingFollowUp';
 const UNKNOWN_KEY = 'panels.market.unchecked';
 const UPDATES_KEY = 'panels.market.hasNew';
 
+const SELF_UPDATE_NOTES: ReadonlySet<string> = new Set<string>([
+  'panels.market.selfUpdateFailed',
+  'panels.market.selfUpdateFailedNoFix',
+  'panels.market.selfUpdateRestored',
+  'panels.market.selfUpdateRolledBack',
+]);
+
 function isProblem(row: MarketRow): boolean {
   return (
     row.broken === true ||
     row.state === 'broken' ||
     row.state === 'unusable' ||
-    row.note?.key === 'panels.market.moduleRefused'
+    row.note?.key === 'panels.market.moduleRefused' ||
+    (row.workbench === true && SELF_UPDATE_NOTES.has(row.note?.key ?? ''))
   );
 }
 
@@ -73,7 +83,7 @@ export function marketHintOf(input: MarketHintInput): PanelHint | null {
   const installed = (input.installed ?? []).filter((module) => !held.has(module.unit));
   const catalog = marketRows(marketable, input.capabilities, marketUpdatesOf(input.modules));
   const listed = new Set(catalog.map((row) => row.id));
-  const self = workbenchRow(input.workbench);
+  const self = workbenchRow(input.workbench, input.selfUpdate, input.toldAt);
   const rows = [
     ...catalog,
     ...installedRows(installed, input.manifests, listed),

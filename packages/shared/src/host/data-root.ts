@@ -13,6 +13,10 @@ export function workbenchRoot(): string {
   return join(dshHome(), 'workbench');
 }
 
+export function workbenchHostLock(): string {
+  return join(workbenchRoot(), 'host.lock');
+}
+
 export function workspacesRoot(): string {
   return join(workbenchRoot(), 'workspaces');
 }

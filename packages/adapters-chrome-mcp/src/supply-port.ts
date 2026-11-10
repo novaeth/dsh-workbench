@@ -2,6 +2,7 @@ import type { BinNeed, LibNeed, SupplyPort } from '@dsh-workbench/shared/host';
 import type { HostOs } from '@dsh-workbench/shared';
 import type { SelfUpdateRequest } from '@dsh-workbench/shared/host';
 import {
+  PLUGIN_ID,
   binInstallCommand,
   createRegistryLookup,
   createReleaseProbe,
@@ -55,6 +56,8 @@ export function createSupplyPort(): SupplyPort {
     missingReleaseParts: release.missingReleaseParts,
     probeRelease: release.probeRelease,
     isNewerVersion,
+    recoveryCommand: (options: { readonly profile: string; readonly version: string }) =>
+      `dsh plugin --profile ${options.profile} add ${PLUGIN_ID}@${options.version}`,
     resolvePluginSource: () => NO_PLUGINS,
     pluginInstallPlan: () => NO_PLUGINS,
     packageRouteOf: async () => undefined,
@@ -72,6 +75,8 @@ export function createSupplyPort(): SupplyPort {
         script: '',
         marker: '',
         log: '',
+        backup: '',
+        hostLock: '',
       },
       forward: '',
     }),

@@ -357,7 +357,7 @@ packages/core/src/
 |---|---|---|
 | `DataReader` | `shared/contract/data.ts` | 统一传输：`http` / `browser` / `command`，以及配方 `request` / `submit` |
 | `ProfilePort` | `shared/host/port-types.ts` | profile 目录、dsh 插件、自更新视图 |
-| `EnvSupplyPort` | `shared/host/port-types.ts` | 供给窄口：插件来源、安装/卸载命令、release（8 个方法） |
+| `EnvSupplyPort` | `shared/host/port-types.ts` | 供给窄口：插件来源、安装/卸载命令、救法命令、release（9 个方法） |
 | `ModulePort` | `shared/host/port-types.ts` | 已安装模块、registry、bundle、profile 包、自更新 |
 | `ProbePort` | `shared/host/port-types.ts` | `probeUnits` / `registerPreflight` / `declaredPluginCommands` |
 | `RuntimePort` | `shared/host/port-types.ts` | 包根、能力、运行时命令/执行器/状态（按名字给）、自举、运行时根 |

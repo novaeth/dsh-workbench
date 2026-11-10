@@ -13,6 +13,7 @@ import { publishPanelHint } from '../panel-hint';
 import { marketSettled, type MarketFreshness } from '../rightbar/market-freshness';
 import { marketUpdatesOf, withClientRefusals } from '../rightbar/market-rows';
 import { marketHintOf } from '../rightbar/market-hint';
+import { useSelfUpdateTold } from '../rightbar/market-settle-hold';
 import { useMarketBusy } from '../rightbar/market-busy';
 import { useMarketInstallState } from '../rightbar/market-install';
 import { MarketView } from '../rightbar/MarketView';
@@ -50,7 +51,8 @@ function makeMarketEntryIcon(units: ClientUnitRegistry) {
     const manifests = useLiveManifests(units);
     const installable = useInstallableUnits(units);
     const { capabilities } = useCapabilityMap(0);
-    const { modules, plugins, workbench } = useModuleVersions();
+    const { modules, plugins, workbench, selfUpdate } = useModuleVersions();
+    const toldAt = useSelfUpdateTold(selfUpdate);
     const installed = modules === null ? undefined : withClientRefusals(modules, units.refusals());
     const busy = useMarketBusy();
     const install = useMarketInstallState();
@@ -62,6 +64,8 @@ function makeMarketEntryIcon(units: ClientUnitRegistry) {
       installed,
       plugins,
       workbench,
+      selfUpdate,
+      toldAt,
       busy,
       ...install,
     });

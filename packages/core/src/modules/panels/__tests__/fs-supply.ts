@@ -92,6 +92,8 @@ export function fsSupply(options: {
       ],
     }),
     splitNpmSpec: () => undefined,
+    recoveryCommand: (options: { readonly profile: string; readonly version: string }) =>
+      `dsh plugin --profile ${options.profile} add @dsh-workbench/core@${options.version}`,
   };
   return { ...port, env: port, modules: port } as SupplyPort;
 }

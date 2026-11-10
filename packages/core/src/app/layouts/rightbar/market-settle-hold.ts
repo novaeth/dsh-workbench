@@ -1,9 +1,29 @@
-import { useEffect, useRef } from 'react';
-import type { Translate } from '@dsh-workbench/shared';
+import { useEffect, useRef, useState } from 'react';
+import { readText, writeText, type Translate } from '@dsh-workbench/shared';
 import type { WorkbenchSelfUpdate } from '@/kernel/contract/bundle-install';
 
-import { REMOVAL_ACTIONS, WORKBENCH_SWAP_POLL_MS, holdWindowMs, selfUpdateStop } from './market-settle';
+import type { MarketFailure } from './market-row-types';
+import { REMOVAL_ACTIONS, WORKBENCH_SWAP_POLL_MS, holdWindowMs, selfUpdateNote, selfUpdateStop } from './market-settle';
 import type { Pending } from './market-view-text';
+
+const TOLD_KEY = 'dsh-workbench.market.selfUpdate.told';
+
+export function useSelfUpdateTold(
+  update: WorkbenchSelfUpdate | null | undefined,
+  mark = false,
+): string | undefined {
+  const [seen] = useState<string | undefined>(() => readText(TOLD_KEY) ?? undefined);
+  const marked = useRef<string | undefined>(seen);
+  useEffect(() => {
+    if (!mark) return;
+    const at = update?.at;
+    if (at === undefined || at === '') return;
+    if (marked.current !== undefined && at <= marked.current) return;
+    marked.current = at;
+    writeText(TOLD_KEY, at);
+  }, [mark, update?.at]);
+  return seen;
+}
 
 export function useSettleHold(input: {
   readonly pending: Pending | null;
@@ -12,7 +32,7 @@ export function useSettleHold(input: {
   readonly onChanged: () => void;
   readonly selfUpdate?: WorkbenchSelfUpdate | null | undefined;
   readonly setPending: (next: Pending | null) => void;
-  readonly setFailed: (next: { readonly id: string; readonly message: string } | null) => void;
+  readonly setFailed: (next: MarketFailure | null) => void;
 }): void {
   const { pending, landed, t, onChanged, selfUpdate, setPending, setFailed } = input;
   const until = pending?.until;
@@ -23,9 +43,11 @@ export function useSettleHold(input: {
       ? 'panels.market.removeSlow'
       : 'panels.market.swapSlow';
   const sinceRef = useRef(0);
+  const stopRef = useRef('');
   const stop = selfUpdateStop({ until, since: pending?.since, update: selfUpdate });
   const stopKind = stop?.kind;
-  const stopReason = stop?.reason;
+  const stopCause = stop?.cause;
+  const stopFix = stop?.fix;
   const stopVersion = stop?.version;
 
   useEffect(() => {
@@ -35,17 +57,19 @@ export function useSettleHold(input: {
 
   useEffect(() => {
     if (stopKind === undefined) return;
+    const key = `${stopKind}:${stopCause ?? ''}:${stopFix ?? ''}:${stopVersion ?? ''}:${id}`;
+    if (stopRef.current === key) return;
+    stopRef.current = key;
     setPending(null);
-    setFailed({
-      id,
-      message:
-        stopKind === 'failed'
-          ? t('panels.market.selfUpdateFailed', {
-              reason: stopReason ?? t('panels.market.selfUpdateUnknown'),
-            })
-          : t('panels.market.selfUpdateRolledBack', { version: stopVersion ?? '?' }),
+    const note = selfUpdateNote({
+      kind: stopKind,
+      ...(stopCause === undefined ? {} : { cause: stopCause }),
+      ...(stopFix === undefined ? {} : { fix: stopFix }),
+      ...(stopVersion === undefined ? {} : { version: stopVersion }),
     });
-  }, [stopKind, stopReason, stopVersion, id, setPending, setFailed, t]);
+    if (note === undefined) return;
+    setFailed({ id, message: t(note.key, note.params) });
+  }, [stopKind, stopCause, stopFix, stopVersion, id, setPending, setFailed, t]);
 
   useEffect(() => {
     if (!watching) {

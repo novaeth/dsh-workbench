@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { spawnSync } from 'node:child_process';
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -9,6 +9,7 @@ import {
   planSelfUpdate,
   selfUpdateNodeScript,
   selfUpdatePaths,
+  startSelfUpdate,
   type SelfUpdateCli,
   type SelfUpdateRequest,
 } from '../index.js';
@@ -109,9 +110,13 @@ describe('Windows 自更新（Node，不依赖 bash）', () => {
         "const profile = args[args.indexOf('--profile') + 1];",
         'const spec = args[args.length - 1];',
         "const version = spec.split('@').pop();",
-        "const file = join(process.env.DSH_HOME, 'profiles', profile, 'node_modules', '@dsh-workbench', 'core', 'package.json');",
-        'mkdirSync(dirname(file), { recursive: true });',
-        'writeFileSync(file, JSON.stringify({ version }));',
+        "const root = join(process.env.DSH_HOME, 'profiles', profile, 'node_modules', '@dsh-workbench', 'core');",
+        "mkdirSync(join(root, 'dist', 'client'), { recursive: true });",
+        "mkdirSync(join(root, 'dist', 'host'), { recursive: true });",
+        "writeFileSync(join(root, 'package.json'), JSON.stringify({ version }));",
+        "writeFileSync(join(root, 'client.js'), '');",
+        "writeFileSync(join(root, 'dist', 'client', 'index.js'), '');",
+        "writeFileSync(join(root, 'dist', 'host', 'index.js'), '');",
         '',
       ].join('\n'),
       'utf8',
@@ -172,7 +177,7 @@ describePosix('win32 分支真跑一次（假 ComSpec）', () => {
     const comspec = join(root, 'fake-comspec.sh');
     writeFileSync(
       comspec,
-      ['#!/bin/sh', `printf '%s\\n' "$@" > "${argvFile}"`, `printf '{"version":"0.2.7"}' > "${installed}"`, ''].join(
+      ['#!/bin/sh', `printf '%s\\n' "$@" > "${argvFile}"`, `mkdir -p "${dirname(installed)}"`, `mkdir -p "${join(dirname(installed), 'dist', 'client')}" "${join(dirname(installed), 'dist', 'host')}"`, `printf '{"version":"0.2.7"}' > "${installed}"`, `: > "${join(dirname(installed), 'client.js')}"`, `: > "${join(dirname(installed), 'dist', 'client', 'index.js')}"`, `: > "${join(dirname(installed), 'dist', 'host', 'index.js')}"`, ''].join(
         '\n',
       ),
       'utf8',
@@ -204,5 +209,313 @@ describePosix('win32 分支真跑一次（假 ComSpec）', () => {
     expect(argv[3]).toBe(`"${inner}"`);
     expect(JSON.parse(readFileSync(paths.marker, 'utf8')).state).toBe('ok');
     expect(readFileSync(paths.log, 'utf8')).toContain('换好了');
+  });
+});
+
+describe('Windows 自更新的闭环：装坏了必须能自己还原（不联网）', () => {
+  const CORE = '@dsh-workbench/core';
+  const profile = 'workbench';
+  const ARTIFACTS = ['client.js', 'dist/client/index.js', 'dist/host/index.js'];
+
+  const FAKE_CLI = [
+    "import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';",
+    "import { dirname, join } from 'node:path';",
+    'const args = process.argv.slice(2);',
+    "const profile = args[args.indexOf('--profile') + 1];",
+    'const spec = args[args.length - 1];',
+    "const version = spec.split('@').pop();",
+    "const root = join(process.env.DSH_HOME, 'profiles', profile, 'node_modules', '@dsh-workbench', 'core');",
+    "appendFileSync(join(process.env.DSH_HOME, 'calls.log'), `cli add ${spec}\\n`);",
+    "let mode = '';",
+    "const breakFile = join(process.env.DSH_HOME, 'break');",
+    "if (existsSync(breakFile)) mode = readFileSync(breakFile, 'utf8').trim();",
+    "if (mode === 'occupied') { process.stderr.write('[ERR_PNPM_EPERM] operation not permitted, rename core_tmp -> core\\n'); rmSync(root, { recursive: true, force: true }); process.exit(1); }",
+    'rmSync(root, { recursive: true, force: true });',
+    'mkdirSync(root, { recursive: true });',
+    "if (mode !== 'no-package') {",
+    "  writeFileSync(join(root, 'package.json'), JSON.stringify({ name: '@dsh-workbench/core', version }));",
+    "  writeFileSync(join(root, 'client.js'), '');",
+    "  mkdirSync(join(root, 'dist', 'client'), { recursive: true });",
+    "  mkdirSync(join(root, 'dist', 'host'), { recursive: true });",
+    "  writeFileSync(join(root, 'dist', 'client', 'index.js'), '');",
+    "  writeFileSync(join(root, 'dist', 'host', 'index.js'), '');",
+    "  if (mode === 'half') rmSync(join(root, 'dist'), { recursive: true, force: true });",
+    '}',
+    '',
+  ].join('\n');
+
+  function treeOf(root: string, version: string, artifacts: readonly string[] = ARTIFACTS): void {
+    const dir = join(root, 'profiles', profile, 'node_modules', '@dsh-workbench', 'core');
+    rmSync(dir, { recursive: true, force: true });
+    mkdirSync(join(dir, 'dist', 'client'), { recursive: true });
+    mkdirSync(join(dir, 'dist', 'host'), { recursive: true });
+    writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: CORE, version }));
+    for (const artifact of artifacts) writeFileSync(join(dir, artifact), '');
+  }
+
+  function runClosedLoop(
+    mode: string,
+    host?: { file: string; args: readonly string[]; env: Readonly<Record<string, string>> },
+    over: Partial<SelfUpdateRequest> = {},
+    prefetch?: { file: string; args: readonly string[]; env: Readonly<Record<string, string>> },
+  ): {
+    root: string;
+    status: number | null;
+    marker: Record<string, unknown>;
+    log: string;
+  } {
+    const root = home();
+    const cliFile = join(root, 'fake-cli.mjs');
+    writeFileSync(cliFile, FAKE_CLI, 'utf8');
+    writeFileSync(join(root, 'break'), mode, 'utf8');
+    treeOf(root, '0.2.6');
+    const paths = pathsOf(root, 'win32');
+    mkdirSync(paths.dir, { recursive: true });
+    writeFileSync(
+      paths.script,
+      selfUpdateNodeScript(
+        request({ dshHome: root, profile, pkg: CORE, attempts: 1, retryMs: 0, ...over }),
+        paths,
+        { file: process.execPath, args: [cliFile], env: {} },
+        process.platform,
+        host,
+        prefetch,
+      ),
+      'utf8',
+    );
+    const run = spawnSync(process.execPath, [paths.script], {
+      encoding: 'utf8',
+      env: { ...process.env, DSH_HOME: root },
+    });
+    return {
+      root,
+      status: run.status,
+      marker: JSON.parse(readFileSync(paths.marker, 'utf8')) as Record<string, unknown>,
+      log: readFileSync(paths.log, 'utf8'),
+    };
+  }
+
+  function versionOnDisk(root: string): string {
+    return (
+      JSON.parse(
+        readFileSync(
+          join(root, 'profiles', profile, 'node_modules', '@dsh-workbench', 'core', 'package.json'),
+          'utf8',
+        ),
+      ) as { version: string }
+    ).version;
+  }
+
+  it('★ 客户端产物装没了（package.json 都没了）→ 本地还原，marker=restored，不再多调一次 CLI', () => {
+    const { root, status, marker } = runClosedLoop('no-package');
+
+    expect(status).toBe(0);
+    expect(marker).toMatchObject({ state: 'restored', version: '0.2.6', reason: 'occupied' });
+    expect(versionOnDisk(root)).toBe('0.2.6');
+    expect(readFileSync(join(root, 'calls.log'), 'utf8')).toBe(`cli add ${CORE}@0.2.7\n`);
+  });
+
+  it('★ 目录被占用（EPERM，Windows 那种）→ 还原 + reason=occupied + 日志单记一条', () => {
+    const { root, status, marker, log } = runClosedLoop('occupied');
+
+    expect(status).toBe(0);
+    expect(marker).toMatchObject({ state: 'restored', version: '0.2.6', reason: 'occupied' });
+    expect(versionOnDisk(root)).toBe('0.2.6');
+    expect(log).toContain('撞上目录被占用');
+    expect(readFileSync(join(root, 'calls.log'), 'utf8')).toBe(`cli add ${CORE}@0.2.7\n`);
+  });
+
+  it('★ 只剩一半文件（dist 没了）→ 还原 + reason=incomplete（盘上读得到，就是不全）', () => {
+    const { root, status, marker } = runClosedLoop('half');
+
+    expect(status).toBe(0);
+    expect(marker).toMatchObject({ state: 'restored', version: '0.2.6', reason: 'incomplete' });
+    expect(versionOnDisk(root)).toBe('0.2.6');
+  });
+
+  it('★ 装好了（完整树）→ ok，不还原', () => {
+    const root = home();
+    const cliFile = join(root, 'fake-cli.mjs');
+    writeFileSync(cliFile, FAKE_CLI, 'utf8');
+    writeFileSync(join(root, 'break'), '', 'utf8');
+    treeOf(root, '0.2.6');
+    const paths = pathsOf(root, 'win32');
+    mkdirSync(paths.dir, { recursive: true });
+    writeFileSync(
+      paths.script,
+      selfUpdateNodeScript(
+        request({ dshHome: root, profile, pkg: CORE, attempts: 1, retryMs: 0 }),
+        paths,
+        { file: process.execPath, args: [cliFile], env: {} },
+      ),
+      'utf8',
+    );
+    const run = spawnSync(process.execPath, [paths.script], {
+      encoding: 'utf8',
+      env: { ...process.env, DSH_HOME: root },
+    });
+
+    expect(run.status, run.stderr).toBe(0);
+    expect(JSON.parse(readFileSync(paths.marker, 'utf8'))).toMatchObject({ state: 'ok', version: '0.2.7' });
+    expect(versionOnDisk(root)).toBe('0.2.7');
+  });
+
+  it('★ 已经有一次在跑（marker 还是 running 且没超时）→ 不起第二个', () => {
+    const root = home();
+    const paths = pathsOf(root, 'win32');
+    mkdirSync(paths.dir, { recursive: true });
+    writeFileSync(
+      paths.marker,
+      JSON.stringify({ state: 'running', at: new Date().toISOString(), pkg: CORE }),
+      'utf8',
+    );
+    const before = readFileSync(paths.marker, 'utf8');
+    const messages: string[] = [];
+
+    const started = startSelfUpdate(request({ dshHome: root, profile, pkg: CORE }), (message) =>
+      messages.push(message),
+    );
+
+    expect(started.started).toBe(false);
+    expect(messages[0]).toContain('已经有一次工作台更新在跑');
+    expect(readFileSync(paths.marker, 'utf8')).toBe(before);
+  });
+
+  it('★ 宿主锁还在 + 等待额度用光 → 一个字都不动、marker=queued、不去调 CLI', () => {
+    const root = home();
+    const cliFile = join(root, 'fake-cli.mjs');
+    writeFileSync(cliFile, FAKE_CLI, 'utf8');
+    treeOf(root, '0.2.6');
+    const paths = pathsOf(root, 'win32');
+    mkdirSync(paths.dir, { recursive: true });
+    writeFileSync(paths.hostLock, JSON.stringify({ pid: 1, at: new Date().toISOString() }), 'utf8');
+    writeFileSync(
+      paths.script,
+      selfUpdateNodeScript(
+        request({ dshHome: root, profile, pkg: CORE, attempts: 1, retryMs: 0, waitMs: 0, holdMs: 0 }),
+        paths,
+        { file: process.execPath, args: [cliFile], env: {} },
+        process.platform,
+        { file: process.execPath, args: ['-e', ''], env: {} },
+      ),
+      'utf8',
+    );
+
+    const run = spawnSync(process.execPath, [paths.script], {
+      encoding: 'utf8',
+      env: { ...process.env, DSH_HOME: root },
+    });
+
+    expect(run.status, run.stderr).toBe(0);
+    expect(JSON.parse(readFileSync(paths.marker, 'utf8'))).toMatchObject({ state: 'queued' });
+    expect(versionOnDisk(root)).toBe('0.2.6');
+    expect(existsSync(join(root, 'calls.log'))).toBe(false);
+  });
+
+  it('★ 装好了 → 拉起宿主那条命令真被调用（后台，不挡收尾）', () => {
+    const root = home();
+    const cliFile = join(root, 'fake-cli.mjs');
+    writeFileSync(cliFile, FAKE_CLI, 'utf8');
+    writeFileSync(join(root, 'break'), '', 'utf8');
+    treeOf(root, '0.2.6');
+    const paths = pathsOf(root, 'win32');
+    mkdirSync(paths.dir, { recursive: true });
+    const launched = join(root, 'launched.txt');
+    writeFileSync(
+      paths.script,
+      selfUpdateNodeScript(
+        request({ dshHome: root, profile, pkg: CORE, attempts: 1, retryMs: 0, waitMs: 0, holdMs: 0 }),
+        paths,
+        { file: process.execPath, args: [cliFile], env: {} },
+        process.platform,
+        {
+          file: process.execPath,
+          args: ['-e', `require('node:fs').writeFileSync(${JSON.stringify(launched)}, 'x')`],
+          env: {},
+        },
+      ),
+      'utf8',
+    );
+
+    const run = spawnSync(process.execPath, [paths.script], {
+      encoding: 'utf8',
+      env: { ...process.env, DSH_HOME: root },
+    });
+
+    expect(run.status, run.stderr).toBe(0);
+    expect(JSON.parse(readFileSync(paths.marker, 'utf8'))).toMatchObject({ state: 'ok' });
+    for (let i = 0; i < 40 && !existsSync(launched); i += 1) {
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50);
+    }
+    expect(existsSync(launched)).toBe(true);
+  });
+
+  it('★ 预取先跑（在等宿主之前），跑挂了也照样换 —— Windows 这一份也要钉住', () => {
+    const root = home();
+    const cliFile = join(root, 'fake-cli.mjs');
+    writeFileSync(cliFile, FAKE_CLI, 'utf8');
+    writeFileSync(join(root, 'break'), '', 'utf8');
+    treeOf(root, '0.2.6');
+    const paths = pathsOf(root, 'win32');
+    mkdirSync(paths.dir, { recursive: true });
+    const fetched = join(root, 'prefetched.txt');
+    writeFileSync(
+      paths.script,
+      selfUpdateNodeScript(
+        request({ dshHome: root, profile, pkg: CORE, attempts: 1, retryMs: 0, waitMs: 0, holdMs: 0 }),
+        paths,
+        { file: process.execPath, args: [cliFile], env: {} },
+        process.platform,
+        { file: process.execPath, args: ['-e', ''], env: {} },
+        {
+          file: process.execPath,
+          args: ['-e', `require('node:fs').writeFileSync(${JSON.stringify(fetched)}, 'x')`],
+          env: {},
+        },
+      ),
+      'utf8',
+    );
+
+    const run = spawnSync(process.execPath, [paths.script], {
+      encoding: 'utf8',
+      env: { ...process.env, DSH_HOME: root },
+    });
+
+    expect(run.status, run.stderr).toBe(0);
+    expect(JSON.parse(readFileSync(paths.marker, 'utf8'))).toMatchObject({ state: 'ok', version: '0.2.7' });
+    expect(existsSync(fetched)).toBe(true);
+    expect(readFileSync(paths.log, 'utf8')).toContain('预取好了');
+  });
+
+  it('★ 预取挂了（命令不存在）→ 记一句，包照样换', () => {
+    const root = home();
+    const cliFile = join(root, 'fake-cli.mjs');
+    writeFileSync(cliFile, FAKE_CLI, 'utf8');
+    writeFileSync(join(root, 'break'), '', 'utf8');
+    treeOf(root, '0.2.6');
+    const paths = pathsOf(root, 'win32');
+    mkdirSync(paths.dir, { recursive: true });
+    writeFileSync(
+      paths.script,
+      selfUpdateNodeScript(
+        request({ dshHome: root, profile, pkg: CORE, attempts: 1, retryMs: 0, waitMs: 0, holdMs: 0 }),
+        paths,
+        { file: process.execPath, args: [cliFile], env: {} },
+        process.platform,
+        { file: process.execPath, args: ['-e', ''], env: {} },
+        { file: join(root, 'no-such-pnpm.mjs'), args: ['store', 'add', 'x'], env: {} },
+      ),
+      'utf8',
+    );
+
+    const run = spawnSync(process.execPath, [paths.script], {
+      encoding: 'utf8',
+      env: { ...process.env, DSH_HOME: root },
+    });
+
+    expect(run.status, run.stderr).toBe(0);
+    expect(JSON.parse(readFileSync(paths.marker, 'utf8'))).toMatchObject({ state: 'ok', version: '0.2.7' });
+    expect(versionOnDisk(root)).toBe('0.2.7');
+    expect(readFileSync(paths.log, 'utf8')).toContain('预取没成');
   });
 });

@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -9,6 +9,7 @@ import { createSeam } from '@dsh-workbench/shared/host';
 import { createFakeProcesses, createFakeShell } from '@dsh-workbench/shared/testing';
 
 import {
+  desktopPnpmEntry,
   desktopSelfUpdateCli,
   planSelfUpdate,
   readSelfUpdateView,
@@ -55,11 +56,11 @@ describePosix('工作台自更新：交给外面那个进程，而且一行都�
     expect(script).toContain('重启一次 dsh');
   });
 
-  it('★ 成功判定看盘上那份的版本，不信 CLI 的退出码', () => {
+  it('★ 成功判定看盘上那份的版本 + 客户端产物，不信 CLI 的退出码', () => {
     const script = selfUpdateScript(request(), pathsOf('/tmp/dsh-home'));
 
-    expect(script).toContain('is_to() { [ "$(on_disk)" = "$TO" ]; }');
-    expect(script).toContain('if install "$TO" && is_to; then');
+    expect(script).toContain('if install "$TO" && verify "$WANT"; then');
+    expect(script).toContain('for p in client.js dist/client/index.js dist/host/index.js; do');
     expect(script).toContain('node -e');
   });
 
@@ -67,15 +68,40 @@ describePosix('工作台自更新：交给外面那个进程，而且一行都�
     const script = selfUpdateScript(request({ to: '', pinned: false }), pathsOf('/tmp/dsh-home'));
 
     expect(script).toContain("TO='latest'");
-    expect(script).toContain('if install "$TO" && is_other; then');
+    expect(script).toContain('if install "$TO" && verify "$WANT"; then');
     expect(script).toContain('dsh plugin --profile "$PROFILE" add "$PKG@$1"');
   });
 
-  it('★ 换版没成 → 把旧版本装回去，并记 rolled-back', () => {
+  it('★ 换版没成先走本地还原，联网装回只是最后一条路', () => {
     const script = selfUpdateScript(request(), pathsOf('/tmp/dsh-home'));
 
-    expect(script).toContain('if install "$FROM" && [ "$(on_disk)" = "$FROM" ]; then');
-    expect(script).toContain('write_marker rolled-back "$FROM"');
+    expect(script).toContain('if restore && verify "$FROM"; then');
+    expect(script).toContain('write_marker restored "$FROM" "$REASON"');
+    expect(script).toContain('if install "$FROM" && verify "$FROM"; then');
+    expect(script).toContain('write_marker rolled-back "$FROM" "$REASON"');
+  });
+
+  it('★ 装前先备份同一份发布的那几个包，失败时按清单还原', () => {
+    const script = selfUpdateScript(request(), pathsOf('/tmp/dsh-home'));
+
+    expect(script).toContain("PACKAGES=('@dsh-workbench/adapter-probe'");
+    expect(script).toContain('@dsh-workbench/core');
+    expect(script).toContain('cp -R "$MODULES/$p" "$BACKUP/$p"');
+    expect(script).toContain('while IFS= read -r p; do');
+    expect(script).toContain('MANIFEST="$BACKUP/packages.txt"');
+  });
+
+  it('★ 工坊工具链不在这一跳里：它不由 core 带进来，就不许挡更新', () => {
+    const script = selfUpdateScript(request(), pathsOf('/tmp/dsh-home'));
+
+    expect(script).not.toContain('@dsh-workbench/module-tools');
+  });
+
+  it('★ 目录被占用单独记一条，不跟普通失败混在一起', () => {
+    const script = selfUpdateScript(request(), pathsOf('/tmp/dsh-home'));
+
+    expect(script).toContain('*EPERM*|*EBUSY*|*"operation not permitted"*');
+    expect(script).toContain('撞上目录被占用');
   });
 
   it('★ 真出事时，日志里给的那条救法就是 recoveryCommand（不另写一份）', () => {
@@ -189,6 +215,62 @@ describePosix('工作台自更新：交给外面那个进程，而且一行都�
     expect(plan.script).toContain("TO='0.2.7'");
     expect(plan.command).toEqual({ file: 'bash', args: [plan.paths.script], env: {}, log: plan.paths.log });
   });
+
+  it('★ 已经有一次在跑（marker 还是 running 且没超时）→ 不起第二个，node_modules 一个字符都不动', () => {
+    const root = home();
+    try {
+      const processes = createFakeProcesses([{}]);
+      const seam = createSeam({
+        shell: createFakeShell([{}]).shell,
+        runtimeRoot: '/tmp/wb-seam-test',
+        allowHost: true,
+        processes: processes.host,
+      });
+      const paths = pathsOf(root);
+      mkdirSync(paths.dir, { recursive: true });
+      writeFileSync(
+        paths.marker,
+        JSON.stringify({ state: 'running', at: new Date().toISOString(), pkg: PKG }),
+      );
+      const before = readFileSync(paths.marker, 'utf8');
+      const messages: string[] = [];
+
+      const started = startSelfUpdate(request({ dshHome: root }), (message) => messages.push(message), seam);
+
+      expect(started.started).toBe(false);
+      expect(messages[0]).toContain('已经有一次工作台更新在跑');
+      expect(processes.calls).toHaveLength(0);
+      expect(readFileSync(paths.marker, 'utf8')).toBe(before);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('★ 上一把是超时留下的僵尸 marker → 不挡今天的更新', () => {
+    const root = home();
+    try {
+      const processes = createFakeProcesses([{}]);
+      const seam = createSeam({
+        shell: createFakeShell([{}]).shell,
+        runtimeRoot: '/tmp/wb-seam-test',
+        allowHost: true,
+        processes: processes.host,
+      });
+      const paths = pathsOf(root);
+      mkdirSync(paths.dir, { recursive: true });
+      writeFileSync(
+        paths.marker,
+        JSON.stringify({ state: 'running', at: new Date(Date.now() - 3_600_000).toISOString() }),
+      );
+
+      const started = startSelfUpdate(request({ dshHome: root }), () => undefined, seam);
+
+      expect(started.started).toBe(true);
+      expect(processes.calls).toHaveLength(1);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });
 
 const PKG = '@dsh-workbench/core';
@@ -236,12 +318,26 @@ describePosix('desktop：保留 profile 只认 Desktop 自带的那份 CLI', () 
       cli,
     );
 
-    expect(script).toContain("install() { env ELECTRON_RUN_AS_NODE='1' '/app/Electron' '--expose-internals'");
+    expect(script).toContain("out=$(env ELECTRON_RUN_AS_NODE='1' '/app/Electron' '--expose-internals'");
     expect(script).toContain("command -v '/app/Electron'");
     expect(script).not.toContain('command -v dsh');
     expect(script).toContain('找不到 Desktop 的 dsh');
     expect(script).toContain('退出并重开 Desktop');
     expect(script).not.toContain('重启一次 dsh');
+  });
+
+  it('★ 预取那条 pnpm 入口按 app 的布局推：找不到就不预取（不许瞎猜一条命令行）', () => {
+    const proc = {
+      execPath: '/app/Electron',
+      argv: ['/app/Electron', '/app/resources/app.asar/dsh/node_modules/@deepseek-ai/dsh-desktop-host/lib/index.js'],
+      versions: { electron: '44.7.0' },
+    };
+
+    expect(desktopPnpmEntry(proc, () => false)).toBeUndefined();
+    expect(desktopPnpmEntry(proc, () => true)).toBe(
+      '/app/resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.mjs',
+    );
+    expect(desktopPnpmEntry({ ...proc, argv: ['/app/Electron', '/tmp/plain.js'] }, () => true)).toBeUndefined();
   });
 
   it('★ 救法也不再是那条会被拒的 dsh plugin', () => {
@@ -265,6 +361,8 @@ describePosix('desktop：保留 profile 只认 Desktop 自带的那份 CLI', () 
   });
 });
 
+const ARTIFACTS = ['client.js', 'dist/client/index.js', 'dist/host/index.js'];
+
 const FAKE_DSH = `#!/usr/bin/env bash
 set -euo pipefail
 ARGS=("$@")
@@ -275,15 +373,42 @@ for i in "\${!ARGS[@]}"; do
   [ "\${ARGS[$i]}" = "add" ] && ADD="\${ARGS[$((i+1))]:-}"
 done
 VERSION="\${ADD##*@}"
+DIR="$DSH_HOME/profiles/$PROFILE/node_modules/${PKG}"
 echo "fake-dsh add $ADD" >>"$DSH_HOME/calls.log"
 if [ -f "$DSH_HOME/fail-first" ]; then
   rm -f "$DSH_HOME/fail-first"
   echo "fake-dsh: 网络断了" >&2
   exit 1
 fi
-mkdir -p "$DSH_HOME/profiles/$PROFILE/node_modules/${PKG}"
-printf '{"name":"${PKG}","version":"%s"}\\n' "$VERSION" >"$DSH_HOME/profiles/$PROFILE/node_modules/${PKG}/package.json"
+MODE=''
+if [ -f "$DSH_HOME/break" ]; then MODE="$(cat "$DSH_HOME/break")"; fi
+if [ -f "$DSH_HOME/break-once" ]; then MODE="$(cat "$DSH_HOME/break-once")"; rm -f "$DSH_HOME/break-once"; fi
+if [ "$MODE" = "occupied" ]; then
+  echo "[ERR_PNPM_EPERM] operation not permitted, rename core_tmp -> core" >&2
+  rm -rf "$DIR"
+  exit 1
+fi
+rm -rf "$DIR"
+mkdir -p "$DIR"
+if [ "$MODE" != "no-package" ]; then
+  printf '{"name":"${PKG}","version":"%s"}\\n' "$VERSION" >"$DIR/package.json"
+  printf '' >"$DIR/client.js"
+  mkdir -p "$DIR/dist/client" "$DIR/dist/host"
+  printf '' >"$DIR/dist/client/index.js"
+  printf '' >"$DIR/dist/host/index.js"
+  if [ "$MODE" = "half" ]; then rm -rf "$DIR/dist"; fi
+fi
 `;
+
+function writeTree(dir: string, version: string, artifacts: readonly string[] = ARTIFACTS): void {
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: PKG, version }));
+  for (const artifact of artifacts) {
+    mkdirSync(dirname(join(dir, artifact)), { recursive: true });
+    writeFileSync(join(dir, artifact), '');
+  }
+}
 
 function onDisk(root: string): string {
   return JSON.parse(
@@ -291,25 +416,49 @@ function onDisk(root: string): string {
   ).version as string;
 }
 
-function runScript(root: string, cli?: SelfUpdateCli): number | null {
+function markerOf(root: string): Record<string, unknown> {
+  return JSON.parse(readFileSync(join(root, 'workbench', 'self-update.json'), 'utf8')) as Record<string, unknown>;
+}
+
+function callsOf(root: string): string {
+  try {
+    return readFileSync(join(root, 'calls.log'), 'utf8');
+  } catch {
+    return '';
+  }
+}
+
+function logOf(root: string): string {
+  return readFileSync(join(root, 'workbench', 'self-update.log'), 'utf8');
+}
+
+function runScript(
+  root: string,
+  cli?: SelfUpdateCli,
+  over: Partial<SelfUpdateRequest> = {},
+  host?: { file: string; args: readonly string[]; env: Readonly<Record<string, string>> },
+  prefetch?: { file: string; args: readonly string[]; env: Readonly<Record<string, string>> },
+): number | null {
   const bin = join(root, 'bin');
   mkdirSync(bin, { recursive: true });
   writeFileSync(join(bin, 'dsh'), FAKE_DSH, { mode: 0o755 });
-  mkdirSync(join(root, 'profiles', 'wb', 'node_modules', PKG), { recursive: true });
-  writeFileSync(join(root, 'profiles', 'wb', 'node_modules', PKG, 'package.json'), '{"version":"0.2.6"}');
+  writeTree(join(root, 'profiles', 'wb', 'node_modules', PKG), '0.2.6');
   vi.stubEnv('DSH_HOME', root);
-  const plan = planSelfUpdate(
-    {
-      dshHome: root,
-      profile: 'wb',
-      pkg: PKG,
-      from: '0.2.6',
-      to: '0.2.7',
-      pinned: true,
-    },
-    new Date(),
-    cli,
-  );
+  const requestValue: SelfUpdateRequest = {
+    dshHome: root,
+    profile: 'wb',
+    pkg: PKG,
+    from: '0.2.6',
+    to: '0.2.7',
+    pinned: true,
+    attempts: 1,
+    retryMs: 0,
+    ...over,
+  };
+  const plan = planSelfUpdate(requestValue, new Date(), cli);
+  if (host !== undefined || prefetch !== undefined) {
+    plan.script = selfUpdateScript(requestValue, plan.paths, cli, host, prefetch);
+  }
   mkdirSync(plan.paths.dir, { recursive: true });
   writeFileSync(plan.paths.script, plan.script, { mode: 0o755 });
   const ran = spawnSync('bash', [plan.paths.script], {
@@ -318,83 +467,151 @@ function runScript(root: string, cli?: SelfUpdateCli): number | null {
   return ran.status;
 }
 
+function sandbox(name: string): string {
+  return mkdtempSync(join(tmpdir(), `wb-su-${name}-`));
+}
+
 describePosix('真跑一遍那个脚本（假 dsh + 沙箱 profile）', () => {
   const maybe = process.platform === 'win32' ? it.skip : it;
+  const roots: string[] = [];
+  afterEach(() => {
+    for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+  });
+  const fresh = (name: string): string => {
+    const root = sandbox(name);
+    roots.push(root);
+    return root;
+  };
 
   maybe('★ 正常：换到新版、marker=ok，而且调用记录里一条 remove 都没有', () => {
-    const root = mkdtempSync(join(tmpdir(), 'wb-su-run-'));
-    try {
-      expect(runScript(root)).toBe(0);
-      const marker = JSON.parse(readFileSync(join(root, 'workbench', 'self-update.json'), 'utf8'));
+    const root = fresh('ok');
+    expect(runScript(root)).toBe(0);
 
-      expect(marker).toMatchObject({ state: 'ok', version: '0.2.7' });
-      expect(onDisk(root)).toBe('0.2.7');
-      expect(readFileSync(join(root, 'calls.log'), 'utf8')).toBe(`fake-dsh add ${PKG}@0.2.7\n`);
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
+    expect(markerOf(root)).toMatchObject({ state: 'ok', version: '0.2.7' });
+    expect(onDisk(root)).toBe('0.2.7');
+    expect(callsOf(root)).toBe(`fake-dsh add ${PKG}@0.2.7\n`);
   });
 
   maybe('★ 指定外部 CLI（desktop 那种）：脚本把 add 交给它，不靠 PATH 上的 dsh', () => {
-    const root = mkdtempSync(join(tmpdir(), 'wb-su-run-'));
-    try {
-      const fake = join(root, 'bin', 'desktop-dsh');
-      mkdirSync(dirname(fake), { recursive: true });
-      writeFileSync(fake, FAKE_DSH, { mode: 0o755 });
+    const root = fresh('cli');
+    const fake = join(root, 'bin', 'desktop-dsh');
+    mkdirSync(dirname(fake), { recursive: true });
+    writeFileSync(fake, FAKE_DSH, { mode: 0o755 });
 
-      expect(runScript(root, { file: fake, args: [], env: {} })).toBe(0);
-      const marker = JSON.parse(readFileSync(join(root, 'workbench', 'self-update.json'), 'utf8'));
-
-      expect(marker).toMatchObject({ state: 'ok', version: '0.2.7' });
-      expect(onDisk(root)).toBe('0.2.7');
-      expect(readFileSync(join(root, 'calls.log'), 'utf8')).toBe(`fake-dsh add ${PKG}@0.2.7\n`);
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
+    expect(runScript(root, { file: fake, args: [], env: {} })).toBe(0);
+    expect(markerOf(root)).toMatchObject({ state: 'ok', version: '0.2.7' });
+    expect(onDisk(root)).toBe('0.2.7');
+    expect(callsOf(root)).toBe(`fake-dsh add ${PKG}@0.2.7\n`);
   });
 
-  maybe('★ 第一次装就断网 → 装回旧版本、marker=rolled-back，工作台那一行没被动过', () => {
-    const root = mkdtempSync(join(tmpdir(), 'wb-su-run-'));
-    try {
-      writeFileSync(join(root, 'fail-first'), '');
-      expect(runScript(root)).toBe(0);
-      const marker = JSON.parse(readFileSync(join(root, 'workbench', 'self-update.json'), 'utf8'));
+  maybe('★ 装不上 → 用本地备份还原（没联网），marker=restored，工作台那一行没被动过', () => {
+    const root = fresh('restore');
+    writeFileSync(join(root, 'fail-first'), '');
 
-      expect(marker).toMatchObject({ state: 'rolled-back', version: '0.2.6' });
-      expect(onDisk(root)).toBe('0.2.6');
-      expect(readFileSync(join(root, 'calls.log'), 'utf8')).toBe(
-        `fake-dsh add ${PKG}@0.2.7\nfake-dsh add ${PKG}@0.2.6\n`,
-      );
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
+    expect(runScript(root)).toBe(0);
+    expect(markerOf(root)).toMatchObject({ state: 'restored', version: '0.2.6' });
+    expect(onDisk(root)).toBe('0.2.6');
+    expect(callsOf(root)).toBe(`fake-dsh add ${PKG}@0.2.7\n`);
+  });
+
+  maybe('★ 装上但不完整（少了客户端产物）→ 一样还原，不留给 dsh 一个起不来的树', () => {
+    const root = fresh('no-artifacts');
+    writeFileSync(join(root, 'break'), 'no-package');
+
+    expect(runScript(root)).toBe(0);
+    expect(markerOf(root)).toMatchObject({ state: 'restored', version: '0.2.6', reason: 'occupied' });
+    expect(onDisk(root)).toBe('0.2.6');
+    expect(callsOf(root)).toBe(`fake-dsh add ${PKG}@0.2.7\n`);
+  });
+
+  maybe('★ 目录被占用（EPERM，Windows 那种）→ 还原 + reason=occupied + 日志单记一条', () => {
+    const root = fresh('occupied');
+    writeFileSync(join(root, 'break'), 'occupied');
+
+    expect(runScript(root)).toBe(0);
+    expect(markerOf(root)).toMatchObject({ state: 'restored', version: '0.2.6', reason: 'occupied' });
+    expect(onDisk(root)).toBe('0.2.6');
+    expect(logOf(root)).toContain('撞上目录被占用');
+    expect(callsOf(root)).toBe(`fake-dsh add ${PKG}@0.2.7\n`);
+  });
+
+  maybe('★ 只有一半文件（dist 没了）→ 还原 + reason=incomplete（盘上读得到，就是不全）', () => {
+    const root = fresh('half');
+    writeFileSync(join(root, 'break'), 'half');
+
+    expect(runScript(root)).toBe(0);
+    expect(markerOf(root)).toMatchObject({ state: 'restored', version: '0.2.6', reason: 'incomplete' });
+    expect(onDisk(root)).toBe('0.2.6');
+  });
+
+  maybe('★ 占用是竞态：会重试几次才认输（次数由 request 定，测试不等真秒）', () => {
+    const root = fresh('retry');
+    writeFileSync(join(root, 'break'), 'occupied');
+
+    expect(runScript(root, undefined, { attempts: 3 })).toBe(0);
+    expect(callsOf(root)).toBe(
+      `fake-dsh add ${PKG}@0.2.7\nfake-dsh add ${PKG}@0.2.7\nfake-dsh add ${PKG}@0.2.7\n`,
+    );
+    expect(markerOf(root)).toMatchObject({ state: 'restored', version: '0.2.6' });
+  });
+
+  maybe('★ 盘上有工坊工具链（版本跟这一跳无关）→ 不许拿它挡更新，仍记 ok', () => {
+    const root = fresh('workshop');
+    writeTree(join(root, 'profiles', 'wb', 'node_modules', '@dsh-workbench', 'module-tools'), '0.2.6');
+
+    expect(runScript(root)).toBe(0);
+    expect(markerOf(root)).toMatchObject({ state: 'ok', version: '0.2.7' });
+  });
+
+  maybe('★ 逐包校验：兄弟包没跟着换（只换了 core）→ 也算没成，一起还原', () => {
+    const root = fresh('siblings');
+    writeTree(join(root, 'profiles', 'wb', 'node_modules', '@dsh-workbench', 'shared'), '0.2.6');
+
+    expect(runScript(root)).toBe(0);
+    expect(markerOf(root)).toMatchObject({ state: 'restored', version: '0.2.6', reason: 'incomplete' });
+    expect(
+      JSON.parse(
+        readFileSync(
+          join(root, 'profiles', 'wb', 'node_modules', '@dsh-workbench', 'shared', 'package.json'),
+          'utf8',
+        ),
+      ).version,
+    ).toBe('0.2.6');
+    expect(callsOf(root)).toBe(`fake-dsh add ${PKG}@0.2.7\n`);
+  });
+
+  maybe('★ 备份都做不成（连清单都没有）→ 才退回联网把旧版本装回去，并记 rolled-back', () => {
+    const root = fresh('net-rollback');
+    writeFileSync(join(root, 'break-once'), 'occupied');
+    mkdirSync(join(root, 'workbench', 'backup'), { recursive: true });
+    writeFileSync(join(root, 'workbench', 'backup', '0.2.6'), '');
+
+    expect(runScript(root)).toBe(0);
+    expect(markerOf(root)).toMatchObject({ state: 'rolled-back', version: '0.2.6' });
+    expect(onDisk(root)).toBe('0.2.6');
+    expect(callsOf(root)).toBe(`fake-dsh add ${PKG}@0.2.7\nfake-dsh add ${PKG}@0.2.6\n`);
   });
 
   maybe('★ PATH 上没有 dsh → marker=failed，一句人话，不假装装上了', () => {
-    const root = mkdtempSync(join(tmpdir(), 'wb-su-run-'));
-    try {
-      vi.stubEnv('DSH_HOME', root);
-      const plan = planSelfUpdate({
-        dshHome: root,
-        profile: 'wb',
-        pkg: PKG,
-        from: '0.2.6',
-        to: '0.2.7',
-        pinned: true,
-      });
-      mkdirSync(plan.paths.dir, { recursive: true });
-      writeFileSync(plan.paths.script, plan.script, { mode: 0o755 });
-      const ran = spawnSync('/bin/bash', [plan.paths.script], {
-        env: { PATH: '/nonexistent', DSH_HOME: root },
-      });
-      const marker = JSON.parse(readFileSync(plan.paths.marker, 'utf8'));
+    const root = fresh('nodsh');
+    vi.stubEnv('DSH_HOME', root);
+    const plan = planSelfUpdate({
+      dshHome: root,
+      profile: 'wb',
+      pkg: PKG,
+      from: '0.2.6',
+      to: '0.2.7',
+      pinned: true,
+    });
+    mkdirSync(plan.paths.dir, { recursive: true });
+    writeFileSync(plan.paths.script, plan.script, { mode: 0o755 });
+    const ran = spawnSync('/bin/bash', [plan.paths.script], {
+      env: { PATH: '/nonexistent', DSH_HOME: root },
+    });
 
-      expect(ran.status).toBe(1);
-      expect(marker.state).toBe('failed');
-      expect(readFileSync(plan.paths.log, 'utf8')).toContain('PATH 上没有 dsh');
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
+    expect(ran.status).toBe(1);
+    expect(markerOf(root).state).toBe('failed');
+    expect(readFileSync(plan.paths.log, 'utf8')).toContain('PATH 上没有 dsh');
   });
 });
 
@@ -443,6 +660,7 @@ describePosix('自更新现场：界面要知道外面那个进程跑成什么�
           pinned: true,
           state: 'failed',
           version: '0.3.8',
+          reason: 'occupied',
           at: '2026-10-23T01:00:00.000Z',
         }),
       );
@@ -455,10 +673,26 @@ describePosix('自更新现场：界面要知道外面那个进程跑成什么�
         to: '0.3.10',
         version: '0.3.8',
         at: '2026-10-23T01:00:00.000Z',
+        reason: 'occupied',
         tail: '第三行 / 第四行 / 第五行 / 第六行',
       });
       expect(readSelfUpdateView(root, 'web')).toBeUndefined();
       expect(readSelfUpdateView(root, 'workbench')).toBeDefined();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('★ restored 与不认识的原因都要老实分开：认识的原样带出，不认识的不带', () => {
+    const root = home();
+    try {
+      mkdirSync(join(root, 'workbench'), { recursive: true });
+      const paths = pathsOf(root);
+      writeFileSync(paths.marker, JSON.stringify({ state: 'restored', version: '0.2.6', reason: 'incomplete' }));
+      expect(readSelfUpdateView(root)).toMatchObject({ state: 'restored', reason: 'incomplete' });
+
+      writeFileSync(paths.marker, JSON.stringify({ state: 'restored', version: '0.2.6', reason: 'vibes' }));
+      expect(readSelfUpdateView(root)?.reason).toBeUndefined();
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -478,5 +712,111 @@ describePosix('自更新现场：界面要知道外面那个进程跑成什么�
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+});
+
+describePosix('换包时机：宿主还在就排队，不在才换，装好了把它拉回来', () => {
+  const roots: string[] = [];
+  afterEach(() => {
+    for (const root of roots.splice(0)) {
+      rmSync(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
+    }
+  });
+  const waitFor = (file: string): boolean => {
+    for (let i = 0; i < 40; i += 1) {
+      if (existsSync(file)) return true;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50);
+    }
+    return false;
+  };
+  const fresh = (name: string): string => {
+    const root = sandbox(name);
+    roots.push(root);
+    return root;
+  };
+  const launchInto = (root: string) => ({
+    file: '/bin/sh',
+    args: ['-c', `printf launched >> '${join(root, 'launched.txt')}'`] as readonly string[],
+    env: {},
+  });
+  const lockOf = (root: string): string => join(root, 'workbench', 'host.lock');
+  const maybe = process.platform === 'win32' ? it.skip : it;
+
+  maybe('★ 宿主还开着（锁在）+ 等待额度用光 → 一个字都不动，marker=queued', () => {
+    const root = fresh('queued');
+    mkdirSync(join(root, 'workbench'), { recursive: true });
+    writeFileSync(lockOf(root), JSON.stringify({ pid: process.pid, at: new Date().toISOString() }));
+
+    expect(runScript(root, undefined, { waitMs: 0, holdMs: 0 }, launchInto(root))).toBe(0);
+    expect(markerOf(root)).toMatchObject({ state: 'queued', version: '0.2.6' });
+    expect(onDisk(root)).toBe('0.2.6');
+    expect(callsOf(root)).toBe('');
+    expect(existsSync(join(root, 'launched.txt'))).toBe(false);
+  });
+
+  maybe('★ 锁不在、宿主也没在跑 → 照常换，marker=ok，并把 Desktop 拉回来', () => {
+    const root = fresh('relaunch');
+
+    expect(runScript(root, undefined, { waitMs: 0, holdMs: 0 }, launchInto(root))).toBe(0);
+    expect(markerOf(root)).toMatchObject({ state: 'ok', version: '0.2.7' });
+    expect(onDisk(root)).toBe('0.2.7');
+    expect(waitFor(join(root, 'launched.txt'))).toBe(true);
+  });
+
+  maybe('★ 用户选「稍后」（relaunch=false）→ 装好了也不拉起', () => {
+    const root = fresh('later');
+
+    expect(runScript(root, undefined, { waitMs: 0, holdMs: 0, relaunch: false }, launchInto(root))).toBe(0);
+    expect(markerOf(root)).toMatchObject({ state: 'ok', version: '0.2.7' });
+    expect(existsSync(join(root, 'launched.txt'))).toBe(false);
+  });
+
+  maybe('★ 没装成（已还原）→ 不许拉起 —— 别把用户弹回一个坏状态', () => {
+    const root = fresh('norelaunch');
+    writeFileSync(join(root, 'break'), 'occupied');
+
+    expect(runScript(root, undefined, { waitMs: 0, holdMs: 0 }, launchInto(root))).toBe(0);
+    expect(markerOf(root)).toMatchObject({ state: 'restored' });
+    expect(existsSync(join(root, 'launched.txt'))).toBe(false);
+  });
+
+  maybe('★ 预取先跑（在等宿主之前），跑挂了也照样换包 —— 只是慢一点', () => {
+    const root = fresh('prefetch');
+    const mark = join(root, 'prefetched.txt');
+
+    expect(
+      runScript(root, undefined, { waitMs: 0, holdMs: 0 }, launchInto(root), {
+        file: '/bin/sh',
+        args: ['-c', `printf fetched >> '${mark}'`],
+        env: {},
+      }),
+    ).toBe(0);
+    expect(markerOf(root)).toMatchObject({ state: 'ok', version: '0.2.7' });
+    expect(waitFor(mark)).toBe(true);
+    expect(logOf(root)).toContain('预取好了');
+  });
+
+  maybe('★ 预取挂了（命令不存在）→ 记一句，照样把包换了', () => {
+    const root = fresh('prefetch-bad');
+
+    expect(
+      runScript(root, undefined, { waitMs: 0, holdMs: 0 }, launchInto(root), {
+        file: '/nonexistent/pnpm',
+        args: ['store', 'add', 'x'],
+        env: {},
+      }),
+    ).toBe(0);
+    expect(markerOf(root)).toMatchObject({ state: 'ok', version: '0.2.7' });
+    expect(logOf(root)).toContain('预取没成');
+  });
+
+  maybe('★ 非 Desktop（没有拉起命令）→ 不等宿主、不排队，照旧立刻换', () => {
+    const root = fresh('headless');
+    mkdirSync(join(root, 'workbench'), { recursive: true });
+    writeFileSync(lockOf(root), JSON.stringify({ pid: process.pid }));
+
+    expect(runScript(root, undefined, { waitMs: 0, holdMs: 0 })).toBe(0);
+    expect(markerOf(root)).toMatchObject({ state: 'ok', version: '0.2.7' });
+    expect(onDisk(root)).toBe('0.2.7');
   });
 });

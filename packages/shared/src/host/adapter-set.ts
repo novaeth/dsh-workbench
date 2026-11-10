@@ -49,6 +49,7 @@ export const CORE_METHODS = [
   ['supply', 'libInstallCommand'],
   ['supply', 'libUninstallCommand'],
   ['supply', 'pluginInstallPlan'],
+  ['supply', 'recoveryCommand'],
   ['supply', 'latestVersion'],
   ['supply', 'missingReleaseParts'],
   ['supply', 'probeRelease'],

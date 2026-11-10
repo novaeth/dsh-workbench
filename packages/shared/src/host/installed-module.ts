@@ -38,6 +38,14 @@ export function profileManifestOf(profileDir: string | null): Readonly<Record<st
   }
 }
 
+export function declaresPackage(profileDir: string | null, pkg: string): boolean {
+  const manifest = profileManifestOf(profileDir);
+  if (manifest === undefined) return false;
+  if (typeof asRecord(manifest.dependencies)?.[pkg] === 'string') return true;
+  const bundles = asRecord(asRecord(manifest.dsh)?.profile)?.bundles;
+  return Array.isArray(bundles) && bundles.includes(pkg);
+}
+
 export function profileModules(profileDir: string | null): readonly ProfileModule[] {
   const record = profileManifestOf(profileDir);
   if (record === undefined) return [];

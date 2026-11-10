@@ -26,6 +26,7 @@ export * from './host/installed-module.js';
 export * from './host/local-declaration.js';
 export * from './host/registry-declaration.js';
 export * from './host/release-probe.js';
+export * from './host/release-packages.generated.js';
 export * from './host/package-kind.js';
 export * from './host/package-content.js';
 export * from './host/package-route.js';

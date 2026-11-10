@@ -241,6 +241,8 @@ export function selfUpdatePathsOf(dshHome: string): {
   script: string;
   marker: string;
   log: string;
+  backup: string;
+  hostLock: string;
 } {
   const dir = path.join(dshHome, 'workbench');
   return {
@@ -248,5 +250,7 @@ export function selfUpdatePathsOf(dshHome: string): {
     script: path.join(dir, 'self-update.sh'),
     marker: path.join(dir, 'self-update.json'),
     log: path.join(dir, 'self-update.log'),
+    backup: path.join(dir, 'backup'),
+    hostLock: path.join(dir, 'host.lock'),
   };
 }

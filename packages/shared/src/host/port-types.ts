@@ -95,6 +95,7 @@ export interface EnvSupplyPort {
   }): string;
   libUninstallCommand(options: { readonly need: LibNeed }): string;
   pluginInstallPlan(options: SupplyPluginInstallOptions): ResolvedPluginSource;
+  recoveryCommand(options: { readonly profile: string; readonly version: string }): string;
   latestVersion(options: SupplyLatestOptions): Promise<string | undefined>;
   missingReleaseParts(options: SupplyMissingPartsOptions): Promise<readonly string[]>;
   probeRelease(options: SupplyProbeReleaseOptions): Promise<SupplyRelease | undefined>;

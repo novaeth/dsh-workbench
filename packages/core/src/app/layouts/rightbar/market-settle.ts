@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
+import { SELF_UPDATE_RUNNING_TTL_MS } from '@dsh-workbench/shared/contract/protocol/bundle-install';
 import type { WorkbenchSelfUpdate } from '@/kernel/contract/bundle-install';
-import type { MarketRowAction, ModuleUpdate } from './market-row-types';
+import type { MarketHintKey, MarketNote, MarketRowAction, ModuleUpdate } from './market-row-types';
 import type { SharedState } from './market-shared-rows';
 
 export const MODULE_SETTLE_MS = 15000;
@@ -105,13 +106,33 @@ export function settleLanded(input: {
   });
 }
 
+export type SelfUpdateCause = NonNullable<WorkbenchSelfUpdate['reason']>;
+
 export interface SelfUpdateStop {
-  readonly kind: 'failed' | 'rolled-back';
-  readonly reason?: string;
+  readonly kind: 'failed' | 'restored' | 'rolled-back';
+  readonly at?: string;
+  readonly cause?: SelfUpdateCause;
+  readonly fix?: string;
   readonly version?: string;
 }
 
-function tailReason(tail: string | undefined): string | undefined {
+export interface SelfUpdateQueued {
+  readonly kind: 'queued';
+  readonly at?: string;
+}
+
+export interface SelfUpdateOk {
+  readonly kind: 'ok';
+  readonly at?: string;
+}
+
+export type SelfUpdateMark = SelfUpdateStop | SelfUpdateQueued | SelfUpdateOk;
+
+function stopKindOf(state: WorkbenchSelfUpdate['state']): SelfUpdateStop['kind'] | undefined {
+  return state === 'failed' || state === 'restored' || state === 'rolled-back' ? state : undefined;
+}
+
+function tailLine(tail: string | undefined): string | undefined {
   if (tail === undefined) return undefined;
   const parts = tail
     .split(' / ')
@@ -122,6 +143,17 @@ function tailReason(tail: string | undefined): string | undefined {
   return last.length <= 240 ? last : `${last.slice(0, 240)}…`;
 }
 
+function markOf(kind: SelfUpdateStop['kind'], update: WorkbenchSelfUpdate): SelfUpdateStop {
+  const fix = update.state === 'failed' ? tailLine(update.tail) : undefined;
+  return {
+    kind,
+    ...(update.at === undefined ? {} : { at: update.at }),
+    ...(update.reason === undefined ? {} : { cause: update.reason }),
+    ...(fix === undefined ? {} : { fix }),
+    ...(update.version === undefined ? {} : { version: update.version }),
+  };
+}
+
 export function selfUpdateStop(input: {
   readonly until: string | undefined;
   readonly since: number | undefined;
@@ -129,19 +161,68 @@ export function selfUpdateStop(input: {
 }): SelfUpdateStop | undefined {
   const { until, since, update } = input;
   if (until === undefined || update === undefined || update === null) return undefined;
-  if (update.state !== 'failed' && update.state !== 'rolled-back') return undefined;
+  const kind = stopKindOf(update.state);
+  if (kind === undefined) return undefined;
   if (update.to !== until && update.version !== until) return undefined;
   if (since !== undefined && update.at !== undefined) {
     const at = dayjs(update.at).valueOf();
     if (Number.isFinite(at) && at < since - 5000) return undefined;
   }
-  return {
-    kind: update.state,
-    ...(update.version === undefined ? {} : { version: update.version }),
-    ...(update.state === 'failed' && tailReason(update.tail) !== undefined
-      ? { reason: tailReason(update.tail) as string }
-      : {}),
-  };
+  return markOf(kind, update);
+}
+
+export function selfUpdateMark(input: {
+  readonly update: WorkbenchSelfUpdate | null | undefined;
+  readonly toldAt: string | null | undefined;
+}): SelfUpdateMark | undefined {
+  const { update, toldAt } = input;
+  if (update === undefined || update === null) return undefined;
+  const at = update.at;
+  if (update.state === 'queued') return { kind: 'queued', ...(at === undefined ? {} : { at }) };
+  if (update.state === 'ok') return { kind: 'ok', ...(at === undefined ? {} : { at }) };
+  const kind = stopKindOf(update.state);
+  if (kind === undefined) return undefined;
+  if (at !== undefined && toldAt !== undefined && toldAt !== null && at <= toldAt) return undefined;
+  return markOf(kind, update);
+}
+
+export function selfUpdateNote(mark: SelfUpdateMark): MarketNote | undefined {
+  if (mark.kind === 'ok') return undefined;
+  if (mark.kind === 'queued') {
+    return { key: 'panels.market.selfUpdateQueued', params: {}, tone: 'plain' };
+  }
+  const version = mark.version ?? '?';
+  if (mark.kind === 'restored') {
+    return { key: 'panels.market.selfUpdateRestored', params: { version }, tone: 'alert' };
+  }
+  if (mark.kind === 'rolled-back') {
+    return { key: 'panels.market.selfUpdateRolledBack', params: { version }, tone: 'alert' };
+  }
+  return mark.fix === undefined
+    ? { key: 'panels.market.selfUpdateFailedNoFix', params: {}, tone: 'alert' }
+    : { key: 'panels.market.selfUpdateFailed', params: { fix: mark.fix }, tone: 'alert' };
+}
+
+const CAUSE_HINT: Readonly<Record<SelfUpdateCause, MarketHintKey>> = {
+  occupied: 'panels.market.selfUpdateReasonOccupied',
+  incomplete: 'panels.market.selfUpdateReasonIncomplete',
+  'rollback-failed': 'panels.market.selfUpdateReasonRollbackFailed',
+};
+
+export function selfUpdateReasonHint(mark: SelfUpdateMark): MarketHintKey | undefined {
+  if (mark.kind !== 'failed' && mark.kind !== 'restored' && mark.kind !== 'rolled-back') return undefined;
+  return mark.cause === undefined ? 'panels.market.selfUpdateReasonUnknown' : CAUSE_HINT[mark.cause];
+}
+
+export const WORKBENCH_SWAP_RUNNING_MS = SELF_UPDATE_RUNNING_TTL_MS;
+
+export function selfUpdateSwapping(update: WorkbenchSelfUpdate | null | undefined): boolean {
+  if (update === undefined || update === null) return false;
+  if (update.state === 'queued') return true;
+  if (update.state !== 'running') return false;
+  if (update.at === undefined) return true;
+  const at = dayjs(update.at).valueOf();
+  return !Number.isFinite(at) || Date.now() - at < WORKBENCH_SWAP_RUNNING_MS;
 }
 
 export function holdWindowMs(until: string | undefined): number {

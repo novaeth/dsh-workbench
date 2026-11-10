@@ -7,9 +7,10 @@ import type { CapabilityMap } from '@/shared/hooks/use-capabilities';
 
 import { MIN_BUSY_MS } from '@dsh-workbench/shared';
 import { useVisibleBusy } from '@/shared/hooks/use-visible-busy';
+import { clientSurface } from '@/shared/api/platform/client';
 
 import { marketSettled } from './market-freshness';
-import { useSettleHold } from './market-settle-hold';
+import { useSelfUpdateTold, useSettleHold } from './market-settle-hold';
 import { useMarketTransient } from './market-transient-state';
 import type { MarketFreshness } from './market-freshness';
 import type { InstalledPlugin } from '@/shared/api/installed-plugins';
@@ -237,8 +238,15 @@ export function MarketView({
     setNotice,
   });
   const { busy: boardBusy } = useVisibleBusy(defaultPending, MIN_BUSY_MS);
+  const effectiveSelfUpdate = mock?.selfUpdate ?? selfUpdate;
+  const selfUpdateTold = useSelfUpdateTold(mock === undefined ? effectiveSelfUpdate : null, mock === undefined);
   const pendingRow = pendingRowOf({ pending, removing, rows, names });
-  const self = workbenchRow(mock === undefined ? workbench : mock.workbench);
+  const self = workbenchRow(
+    mock === undefined ? workbench : mock.workbench,
+    effectiveSelfUpdate,
+    mock === undefined ? selfUpdateTold : undefined,
+    clientSurface().deployment === 'desktop',
+  );
   const shown = withPinnedRow(pendingRow === undefined ? rows : [...rows, pendingRow], pinned);
   const pluginSource = mock?.plugins ?? plugins ?? null;
   const pluginList = installedPluginRows(pluginSource ?? [], byDefault, changed);
@@ -272,7 +280,6 @@ export function MarketView({
       plugins: pluginSource === null ? null : new Set(pluginList.map((row) => row.id)),
     },
   );
-  const effectiveSelfUpdate = mock?.selfUpdate ?? selfUpdate;
   useSettleHold({ pending, landed, t, onChanged, selfUpdate: effectiveSelfUpdate, setPending, setFailed });
   const settled = marketSettled(freshness, installedRead);
   const nothing =
