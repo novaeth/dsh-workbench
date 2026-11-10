@@ -1,6 +1,6 @@
 {
   "name": "@dsh-workbench/adapter-runtime",
-  "version": "1.2.2",
+  "version": "1.2.3-beta.0",
   "description": "Opencli, browser and data runtime adapters.",
   "type": "module",
   "exports": {
