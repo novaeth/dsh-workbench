@@ -83,6 +83,16 @@ jobs:
           function Start-App([int]$port, [string]$log, [string]$logErr) {
             Start-Process -FilePath $env:DESKTOP_EXE -ArgumentList "--remote-debugging-port=$port" -RedirectStandardOutput $log -RedirectStandardError $logErr -PassThru
           }
+          function Invoke-Logged([string]$label, [scriptblock]$what) {
+            $log = Join-Path $env:RUNNER_TEMP "$label.log"
+            & $what *> $log
+            if ($LASTEXITCODE -ne 0) {
+              Get-Content $log -Tail 30 | Write-Host
+              $body = ((Get-Content $log -Tail 30) | Where-Object { $_ -ne '' } | ForEach-Object { ($_ -replace '%', '%25') + '%0A' }) -join ''
+              Write-Host "::error title=$label failed::$body"
+              throw "$label failed"
+            }
+          }
           function Wait-Page([int]$port) {
             for ($i = 0; $i -lt 60; $i++) {
               try {
@@ -98,8 +108,7 @@ jobs:
           $app = Start-App 9222 $out $err
           "desktop pid: $($app.Id)"
           if (-not (Wait-Page 9222)) { throw 'first instance produced no page' }
-          & node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-${{ inputs.label }}.png --install-via-ui
-          if ($LASTEXITCODE -ne 0) { throw "cdp probe failed: $LASTEXITCODE" }
+          Invoke-Logged 'probe-install' { node scripts/desktop-smoke/cdp-probe.mjs 9222 desktop-${{ inputs.label }}.png --install-via-ui }
           Stop-App
           Start-Sleep -Seconds 3
           $app2 = Start-App 9223 $out2 $err2
@@ -111,27 +120,23 @@ jobs:
             $app2 = Start-App 9223 $out2 $err2
             if (-not (Wait-Page 9223)) { throw 'restart still produced no page' }
           }
-          & node scripts/desktop-smoke/cdp-probe.mjs 9223 desktop-${{ inputs.label }}-after-restart.png --verify-only --expect-workbench
-          if ($LASTEXITCODE -ne 0) { throw "cdp verify probe failed: $LASTEXITCODE" }
+          Invoke-Logged 'probe-after-restart' { node scripts/desktop-smoke/cdp-probe.mjs 9223 desktop-${{ inputs.label }}-after-restart.png --verify-only --expect-workbench }
           # 回退这一路要有一版"上一版"可回：把现在这份工作台抄一份进版本目录（版本号改掉），
           # 再落一个"上一次更新已就绪"的 marker —— 界面上那一行就会出现「切回上一版」。
           $appRoot = Join-Path $env:USERPROFILE '.dsh'
-          node scripts/desktop-smoke/self-update-rollback-fixture.mjs $appRoot '' 1.2.3-beta.2
-          if ($LASTEXITCODE -ne 0) { throw "rollback fixture failed: $LASTEXITCODE" }
+          Invoke-Logged 'rollback-fixture' { node scripts/desktop-smoke/self-update-rollback-fixture.mjs $appRoot '' 1.2.3-beta.2 }
           Stop-App
           Start-Sleep -Seconds 3
           $app3 = Start-App 9224 $out3 $err3
           "rollback desktop pid: $($app3.Id)"
           if (-not (Wait-Page 9224)) { throw 'rollback instance produced no page' }
-          & node scripts/desktop-smoke/cdp-probe.mjs 9224 desktop-${{ inputs.label }}-rollback.png --self-update-rollback
-          if ($LASTEXITCODE -ne 0) { throw "cdp rollback probe failed: $LASTEXITCODE" }
+          Invoke-Logged 'probe-rollback' { node scripts/desktop-smoke/cdp-probe.mjs 9224 desktop-${{ inputs.label }}-rollback.png --self-update-rollback }
           Stop-App
           Start-Sleep -Seconds 3
           $app4 = Start-App 9225 $out4 $err4
           "post-rollback desktop pid: $($app4.Id)"
           if (-not (Wait-Page 9225)) { throw 'post-rollback instance produced no page' }
-          & node scripts/desktop-smoke/cdp-probe.mjs 9225 desktop-${{ inputs.label }}-after-rollback.png --verify-only --expect-workbench
-          if ($LASTEXITCODE -ne 0) { throw "cdp post-rollback probe failed: $LASTEXITCODE" }
+          Invoke-Logged 'probe-after-rollback' { node scripts/desktop-smoke/cdp-probe.mjs 9225 desktop-${{ inputs.label }}-after-rollback.png --verify-only --expect-workbench }
       - name: Assert opencli installed
         shell: pwsh
         run: |

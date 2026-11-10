@@ -8,6 +8,7 @@ import type { SelfUpdateRequest } from '@dsh-workbench/shared/host';
 import type { SelfUpdatePaths } from '@dsh-workbench/shared/host';
 import { selfUpdateStepsOf } from '../self-update-steps.js';
 import { runSelfUpdateSteps } from '../self-update-run.js';
+import { versionDirOf } from '../version-dir.js';
 import { isManagedLinkSpec, type VersionLink } from '../version-dir.js';
 
 const ROOT = mkdtempSync(join(tmpdir(), 'dsh-wb-self-update-steps-'));
@@ -156,7 +157,9 @@ describe('自更新：runner 按步骤跑，失败只落在 marker 上', () => {
       dependencies: Record<string, string>;
       dsh: { profile: { bundles: readonly string[] } };
     };
-    expect(manifest.dependencies[CORE]).toBe(`link:${join('..', '..', 'workbench', 'versions', TO, 'node_modules', CORE)}`);
+    expect(manifest.dependencies[CORE]?.replaceAll('\\', '/')).toBe(
+      `link:../../workbench/versions/${TO}/node_modules/${CORE}`,
+    );
     expect(manifest.dsh.profile.bundles).toContain(CORE);
     expect(JSON.parse(readFileSync(plan.markerPath, 'utf8'))).toMatchObject({ state: 'pending-restart', version: TO });
   });
@@ -339,9 +342,9 @@ describe('自动回退窗口：新版起不来就翻回上一版', () => {
       reason: 'boot-failed',
     });
     expect(linkedVersion(plan.profileDir)).toBe(FROM);
-    expect(boot.rollback.links.map((one) => one.target)).toEqual(
-      boot.rollback.links.map((one) => join(paths.versionsDir, FROM, 'node_modules', one.link.split('node_modules/')[1] ?? '')),
-    );
+    const previousDir = versionDirOf(paths.versionsDir, FROM);
+    expect(boot.rollback.links.length).toBeGreaterThan(0);
+    for (const one of boot.rollback.links) expect(one.target.startsWith(previousDir)).toBe(true);
     expect(processes.calls).toHaveLength(1);
     expect(readFileSync(join(plan.profileDir, 'package.json'), 'utf8')).toContain(join('versions', FROM));
   });

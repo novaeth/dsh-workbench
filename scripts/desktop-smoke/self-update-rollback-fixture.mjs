@@ -1,7 +1,8 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
+
 
 const CORE = '@dsh-workbench/core';
 
@@ -28,10 +29,27 @@ export function plantPreviousVersion(input) {
   mkdirSync(versionDir, { recursive: true });
   const installed = packageDirs(profileDir);
   if (installed.length === 0) throw new Error(`profile 里没有装工作台：${profileDir}`);
+  const closure = join(versionDir, 'node_modules');
+  mkdirSync(closure, { recursive: true });
+  for (const entry of readdirSync(join(profileDir, 'node_modules'))) {
+    if (entry === '@dsh-workbench') continue;
+    const from = join(profileDir, 'node_modules', entry);
+    const into = join(closure, entry);
+    if (existsSync(into)) continue;
+    if (lstatSync(from).isDirectory() || lstatSync(from).isSymbolicLink()) {
+      symlinkSync(from, into, 'junction');
+    } else {
+      copyFileSync(from, into);
+    }
+  }
   for (const dir of installed) {
     const name = dir.slice(dir.lastIndexOf('node_modules') + 'node_modules'.length + 1);
     const into = join(versionDir, 'node_modules', name);
-    cpSync(dir, into, { recursive: true, dereference: true });
+    cpSync(dir, into, {
+      recursive: true,
+      dereference: true,
+      filter: (src) => src === dir || !src.slice(dir.length).split(sep).includes('node_modules'),
+    });
     const manifest = join(into, 'package.json');
     if (!existsSync(manifest)) continue;
     const raw = JSON.parse(readFileSync(manifest, 'utf8'));

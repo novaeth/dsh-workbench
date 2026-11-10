@@ -62,9 +62,9 @@ describe('切回上一版：不联网、不重装，只把链翻回去', () => {
     const link = join(profileDir, 'node_modules', CORE);
     expect(existsSync(link)).toBe(true);
     expect(realpathSync(link)).toBe(realpathSync(join(paths.versionsDir, OLD, 'node_modules', CORE)));
-    expect(JSON.parse(readFileSync(join(profileDir, 'package.json'), 'utf8')).dependencies[CORE]).toContain(
-      join('versions', OLD),
-    );
+    expect(
+      JSON.parse(readFileSync(join(profileDir, 'package.json'), 'utf8')).dependencies[CORE]?.replaceAll('\\', '/'),
+    ).toContain(`/versions/${OLD}/node_modules/${CORE}`);
     expect(JSON.parse(readFileSync(paths.marker, 'utf8'))).toMatchObject({
       state: 'rolled-back',
       version: OLD,

@@ -91,6 +91,16 @@ jobs:
           start_app() {
             ( cd / && exec "$BIN" --remote-debugging-port="$1" >> "$APP_LOG" 2>> "$APP_ERR" ) &
           }
+          run_logged() {
+            local label="$1"
+            shift
+            if ! "$@" > "$RUNNER_TEMP/$label.log" 2>&1; then
+              cat "$RUNNER_TEMP/$label.log"
+              body=$(sed -e 's/%/%25/g' "$RUNNER_TEMP/$label.log" | tail -n 30 | awk 'NF { printf "%s%%0A", $0 }')
+              echo "::error title=$label failed::${body:0:1400}"
+              exit 1
+            fi
+          }
           wait_page() {
             for _ in $(seq 1 60); do
               if curl -fsS -m 2 "http://127.0.0.1:$1/json" 2>/dev/null | grep -Eq '"type": ?"page"'; then return 0; fi
@@ -102,7 +112,7 @@ jobs:
           sleep 2
           start_app 9222
           if ! wait_page 9222; then echo 'first instance produced no page'; exit 1; fi
-          node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9222 desktop-mac.png --install-via-ui
+          run_logged probe-install node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9222 desktop-mac.png --install-via-ui
           stop_app
           sleep 2
           start_app 9223
@@ -113,20 +123,20 @@ jobs:
             start_app 9223
             wait_page 9223 || { echo 'restart still produced no page'; exit 1; }
           fi
-          node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9223 desktop-mac-after-restart.png --verify-only --expect-workbench
+          run_logged probe-after-restart node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9223 desktop-mac-after-restart.png --verify-only --expect-workbench
           # 回退这一路要有一版"上一版"可回：把现在这份工作台抄一份进版本目录（版本号改掉），
           # 再落一个"上一次更新已就绪"的 marker —— 界面上那一行就会出现「切回上一版」。
-          node "$GITHUB_WORKSPACE/scripts/desktop-smoke/self-update-rollback-fixture.mjs" "$HOME/.dsh" "" 1.2.3-beta.2
+          run_logged rollback-fixture node "$GITHUB_WORKSPACE/scripts/desktop-smoke/self-update-rollback-fixture.mjs" "$HOME/.dsh" "" 1.2.3-beta.2
           stop_app
           sleep 2
           start_app 9224
           wait_page 9224 || { echo 'rollback instance produced no page'; exit 1; }
-          node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9224 desktop-mac-rollback.png --self-update-rollback
+          run_logged probe-rollback node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9224 desktop-mac-rollback.png --self-update-rollback
           stop_app
           sleep 2
           start_app 9225
           wait_page 9225 || { echo 'post-rollback instance produced no page'; exit 1; }
-          node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9225 desktop-mac-after-rollback.png --verify-only --expect-workbench
+          run_logged probe-after-rollback node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9225 desktop-mac-after-rollback.png --verify-only --expect-workbench
       - name: Assert opencli installed
         shell: bash
         run: |
