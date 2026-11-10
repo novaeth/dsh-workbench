@@ -346,7 +346,9 @@ describe('自动回退窗口：新版起不来就翻回上一版', () => {
     expect(boot.rollback.links.length).toBeGreaterThan(0);
     for (const one of boot.rollback.links) expect(one.target.startsWith(previousDir)).toBe(true);
     expect(processes.calls).toHaveLength(1);
-    expect(readFileSync(join(plan.profileDir, 'package.json'), 'utf8')).toContain(join('versions', FROM));
+    expect(readFileSync(join(plan.profileDir, 'package.json'), 'utf8').replaceAll('\\', '/')).toContain(
+      `/versions/${FROM}/`,
+    );
   });
 
   it('★ 新版起来了但工作台那半没露面（过了宽限）→ 也翻回去（判据 3）', async () => {

@@ -227,7 +227,7 @@ describe('翻链：只换指针，不碰旧版本目录', () => {
     const managed = versionLinksOf({ profileDir, versionDir: join(versionsDir, V2), packages: PACKAGES })[0];
     expect(isManagedLinkSpec(managed?.spec ?? '', versionsDir, profileDir)).toBe(true);
     expect(isManagedLinkSpec('link:../../../../项目/个人项目/dsh-workbench/packages/core', versionsDir, profileDir)).toBe(false);
-    expect(isManagedLinkSpec(`link:${join(ROOT, 'elsewhere', 'core')}`, versionsDir, profileDir)).toBe(false);
+    expect(isManagedLinkSpec(`link:${['..', 'elsewhere', 'core'].join('/')}`, versionsDir, profileDir)).toBe(false);
     expect(isManagedLinkSpec(V2, versionsDir, profileDir)).toBe(false);
   });
 });
