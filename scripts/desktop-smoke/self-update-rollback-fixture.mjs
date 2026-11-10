@@ -28,7 +28,11 @@ export function plantPreviousVersion(input) {
   const versionDir = join(home, 'workbench', 'versions', version);
   mkdirSync(versionDir, { recursive: true });
   const installed = packageDirs(profileDir);
-  if (installed.length === 0) throw new Error(`profile 里没有装工作台：${profileDir}`);
+  if (installed.length === 0) {
+    const nodeModules = join(profileDir, 'node_modules');
+    const seen = existsSync(nodeModules) ? readdirSync(nodeModules).join(', ') : '（没有 node_modules）';
+    throw new Error(`profile 里没有装工作台：${profileDir}；node_modules 里有：${seen}`);
+  }
   const closure = join(versionDir, 'node_modules');
   mkdirSync(closure, { recursive: true });
   for (const entry of readdirSync(join(profileDir, 'node_modules'))) {
@@ -87,9 +91,11 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.a
   if (home === join(homedir(), '.dsh') && !realHomeOffer()) {
     throw new Error('这一版是给 CI 用的：要往真实 ~/.dsh 里铺，得显式带上 DSH_SMOKE_ALLOW_REAL_HOME=1');
   }
-  const profile = process.argv[3] ?? profileWithWorkbench(home);
+  const asked = process.argv[3]?.trim() ?? '';
+  const profile = asked === '' ? profileWithWorkbench(home) : asked;
   if (profile === undefined) throw new Error(`没有哪个 profile 里装着工作台：${join(home, 'profiles')}`);
   const version = process.argv[4] ?? '0.0.0-previous';
   const planted = plantPreviousVersion({ home, profile, version });
+  process.stdout.write(`profile=${profile}\n`);
   process.stdout.write(`已铺好上一版：${planted.versionDir}（${String(planted.packages)} 个包）\n`);
 }

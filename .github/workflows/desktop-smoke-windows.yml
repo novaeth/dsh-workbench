@@ -124,7 +124,7 @@ jobs:
           # 回退这一路要有一版"上一版"可回：把现在这份工作台抄一份进版本目录（版本号改掉），
           # 再落一个"上一次更新已就绪"的 marker —— 界面上那一行就会出现「切回上一版」。
           $appRoot = Join-Path $env:USERPROFILE '.dsh'
-          Invoke-Logged 'rollback-fixture' { node scripts/desktop-smoke/self-update-rollback-fixture.mjs $appRoot '' 1.2.3-beta.2 }
+          Invoke-Logged 'rollback-fixture' { node scripts/desktop-smoke/self-update-rollback-fixture.mjs $appRoot 'desktop' 1.2.3-beta.2 }
           Stop-App
           Start-Sleep -Seconds 3
           $app3 = Start-App 9224 $out3 $err3
