@@ -22,12 +22,30 @@ export function profileWithWorkbench(home) {
   return undefined;
 }
 
+function repoPackageDirs(root) {
+  if (root === undefined || !existsSync(root)) return [];
+  const found = [];
+  for (const entry of readdirSync(root)) {
+    const manifest = join(root, entry, 'package.json');
+    if (!existsSync(manifest)) continue;
+    try {
+      if (String(JSON.parse(readFileSync(manifest, 'utf8')).name ?? '').startsWith('@dsh-workbench/')) {
+        found.push(join(root, entry));
+      }
+    } catch {
+      continue;
+    }
+  }
+  return found;
+}
+
 export function plantPreviousVersion(input) {
-  const { home, profile, version } = input;
+  const { home, profile, version, repoPackages } = input;
   const profileDir = join(home, 'profiles', profile);
   const versionDir = join(home, 'workbench', 'versions', version);
   mkdirSync(versionDir, { recursive: true });
-  const installed = packageDirs(profileDir);
+  const fromProfile = packageDirs(profileDir);
+  const installed = fromProfile.length > 0 ? fromProfile : repoPackageDirs(repoPackages);
   if (installed.length === 0) {
     const nodeModules = join(profileDir, 'node_modules');
     const seen = existsSync(nodeModules) ? readdirSync(nodeModules).join(', ') : '（没有 node_modules）';
@@ -35,9 +53,12 @@ export function plantPreviousVersion(input) {
   }
   const closure = join(versionDir, 'node_modules');
   mkdirSync(closure, { recursive: true });
-  for (const entry of readdirSync(join(profileDir, 'node_modules'))) {
-    if (entry === '@dsh-workbench') continue;
-    const from = join(profileDir, 'node_modules', entry);
+  const closureSource = existsSync(join(profileDir, 'node_modules'))
+    ? join(profileDir, 'node_modules')
+    : join(repoPackages ?? '', '..', 'node_modules');
+  for (const entry of existsSync(closureSource) ? readdirSync(closureSource) : []) {
+    if (entry === '@dsh-workbench' || entry === '.bin') continue;
+    const from = join(closureSource, entry);
     const into = join(closure, entry);
     if (existsSync(into)) continue;
     if (lstatSync(from).isDirectory() || lstatSync(from).isSymbolicLink()) {
@@ -47,7 +68,8 @@ export function plantPreviousVersion(input) {
     }
   }
   for (const dir of installed) {
-    const name = dir.slice(dir.lastIndexOf('node_modules') + 'node_modules'.length + 1);
+    const raw = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
+    const name = String(raw.name);
     const into = join(versionDir, 'node_modules', name);
     cpSync(dir, into, {
       recursive: true,
@@ -56,9 +78,16 @@ export function plantPreviousVersion(input) {
     });
     const manifest = join(into, 'package.json');
     if (!existsSync(manifest)) continue;
-    const raw = JSON.parse(readFileSync(manifest, 'utf8'));
     writeFileSync(manifest, `${JSON.stringify({ ...raw, version }, null, 2)}\n`);
   }
+  const currentOf = (dir) => {
+    try {
+      return String(JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version ?? '');
+    } catch {
+      return '';
+    }
+  };
+  const current = currentOf(join(profileDir, 'node_modules', CORE)) || currentOf(installed.find((dir) => currentOf(dir) !== '') ?? '');
   const marker = join(home, 'workbench', 'self-update.json');
   mkdirSync(dirname(marker), { recursive: true });
   writeFileSync(
@@ -69,17 +98,17 @@ export function plantPreviousVersion(input) {
         profile,
         pkg: CORE,
         from: version,
-        to: version,
+        to: current,
+        version: current,
         pinned: false,
         state: 'ok',
-        version,
         at: new Date().toISOString(),
       },
       null,
       2,
     )}\n`,
   );
-  return { profileDir, versionDir, marker, packages: installed.length };
+  return { profileDir, versionDir, marker, packages: installed.length, current };
 }
 
 function realHomeOffer() {
@@ -95,7 +124,10 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.a
   const profile = asked === '' ? profileWithWorkbench(home) : asked;
   if (profile === undefined) throw new Error(`没有哪个 profile 里装着工作台：${join(home, 'profiles')}`);
   const version = process.argv[4] ?? '0.0.0-previous';
-  const planted = plantPreviousVersion({ home, profile, version });
+  const repoPackages = process.argv[5];
+  const planted = plantPreviousVersion({ home, profile, version, repoPackages });
   process.stdout.write(`profile=${profile}\n`);
-  process.stdout.write(`已铺好上一版：${planted.versionDir}（${String(planted.packages)} 个包）\n`);
+  process.stdout.write(
+    `已铺好上一版：${planted.versionDir}（${String(planted.packages)} 个包；现在是 ${planted.current}）\n`,
+  );
 }

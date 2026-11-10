@@ -674,14 +674,22 @@ async function smokeMarket(cdp) {
 async function smokeRollback(cdp) {
   const result = { rollback: false, alive: false };
   await openMarket(cdp);
+  await click(cdp, ['Installed', '已安装'], 1500);
   const clicked = await cdp.send('Runtime.evaluate', {
-    expression: `(() => {
-      const button = [...document.querySelectorAll('button')].find((node) =>
-        /Back to previous version|切回上一版/u.test(node.textContent ?? ''));
-      if (button === undefined) return 'missing';
-      button.click();
-      return 'clicked';
+    expression: `(async () => {
+      const until = Date.now() + 30000;
+      for (;;) {
+        const button = [...document.querySelectorAll('button')].find((node) =>
+          /Back to previous version|切回上一版/u.test(node.textContent ?? ''));
+        if (button !== undefined) {
+          button.click();
+          return 'clicked';
+        }
+        if (Date.now() > until) return 'missing';
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
     })()`,
+    awaitPromise: true,
     returnByValue: true,
   });
   log(`STEP rollback: ${JSON.stringify(clicked.result?.value)}`);
