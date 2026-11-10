@@ -10,6 +10,7 @@ import { panelsHost } from '../index';
 import {
   DIY_PACK_TOOLS,
   MANAGE_TOOLS,
+  PANELS_SHOW_TOOL,
   TOOLBOX_CLOSE_TOOL,
   TOOLBOX_LIST_TOOL,
   TOOLBOX_OPEN_TOOL,
@@ -28,6 +29,15 @@ const boardUnit: UnitManifest = {
     { name: 'workbench_board_x_do', writes: true },
     { name: 'workbench_board_x_always', writes: false, onDemand: false },
   ],
+};
+
+const offUnit: UnitManifest = {
+  id: 'off-y',
+  title: { zh: '没上板 Y', en: 'Off Y' },
+  titleKey: 'off.y',
+  card: null,
+  host: { inject: [], optional: [] },
+  tools: [{ name: 'workbench_off_y_list', writes: false }],
 };
 
 const adapters = testAdaptersWith({ root: () => dir, profile: () => profileDir });
@@ -50,7 +60,7 @@ afterEach(() => {
 
 const store = () => createWorkspaceStore({ root: dir });
 
-function mount(mcp: readonly McpServerPacks[] = []) {
+function mount(mcp: readonly McpServerPacks[] = [], extra: readonly UnitManifest[] = []) {
   const registered: DshToolDefinition[] = [];
   const ctx = {
     get: (key: string) =>
@@ -73,7 +83,7 @@ function mount(mcp: readonly McpServerPacks[] = []) {
   const mounted = panelsHost.mount({
     manifest: panelsUnit,
     ctx,
-    manifests: () => [panelsUnit, boardUnit],
+    manifests: () => [panelsUnit, boardUnit, ...extra],
     ownedUnits: () => [panelsUnit.id, 'board-x'],
     store: store(),
     data: createNoopDataReader(),
@@ -112,6 +122,13 @@ const deniedOf = (
   session: string | null,
   preset: string | null = null,
 ): readonly string[] => mounted.gate?.deniedTools({ workspace: dir, preset, session }) ?? [];
+
+const reasonOf = (
+  mounted: ReturnType<typeof mount>['mounted'],
+  name: string,
+  session: string | null,
+  preset: string | null = null,
+): string | undefined => mounted.gate?.denyReason?.(name, { workspace: dir, preset, session });
 
 describe('工具箱：默认只留控制面，按会话开包', () => {
   it('清单：三个控制工具都在，开包那把写着 elevates、不算写', () => {
@@ -221,6 +238,73 @@ describe('工具箱：默认只留控制面，按会话开包', () => {
     expect(text).toContain('工作台管理');
     expect(text).toContain('3 把：读 2 / 写 1');
     expect(text).toContain('常驻 1 把');
+  });
+});
+
+describe('收起的工具：拒绝理由指回包与下一步', () => {
+  it('★ 默认会话：被收起的写工具点名包 + 开包工具（不再弹一张白点的审批屏）', () => {
+    const { mounted } = mount();
+
+    const reason = reasonOf(mounted, 'workbench_panels_show', 's-1');
+
+    expect(reason).toContain('manage');
+    expect(reason).toContain(TOOLBOX_OPEN_TOOL);
+    expect(reason).toContain('workbench_panels_show');
+  });
+
+  it('单元包收着时点名 unit:<模块 id>', () => {
+    const { mounted } = mount();
+
+    expect(reasonOf(mounted, 'workbench_board_x_do', 's-1')).toContain('unit:board-x');
+  });
+
+  it('开包之后不再给理由', async () => {
+    const { mounted, registered } = mount();
+
+    await call(registered, TOOLBOX_OPEN_TOOL, { targets: ['manage', 'unit:board-x'] }, 's-1');
+
+    expect(reasonOf(mounted, 'workbench_panels_show', 's-1')).toBeUndefined();
+    expect(reasonOf(mounted, 'workbench_board_x_do', 's-1')).toBeUndefined();
+  });
+
+  it('★ MCP 收着时点名 mcp:<server>；开了就没了', async () => {
+    const { mounted, registered } = mount([{ name: 'chrome', tools: ['mcp__chrome__list_pages'] }]);
+
+    expect(reasonOf(mounted, 'mcp__chrome__list_pages', 's-1')).toContain('mcp:chrome');
+
+    await call(registered, TOOLBOX_OPEN_TOOL, { targets: ['mcp:chrome'] }, 's-1');
+    expect(reasonOf(mounted, 'mcp__chrome__list_pages', 's-1')).toBeUndefined();
+  });
+
+  it('没上板的单元：说的是先上板，不是先开包', () => {
+    const { mounted } = mount([], [offUnit]);
+
+    const reason = reasonOf(mounted, 'workbench_off_y_list', 's-1');
+
+    expect(reason).toContain('off-y');
+    expect(reason).toContain(PANELS_SHOW_TOOL);
+  });
+
+  it('不是工作台的名字：不接这个锅（别人的 unknown tool 照旧）', () => {
+    const { mounted } = mount();
+
+    expect(reasonOf(mounted, 'bash', 's-1')).toBeUndefined();
+    expect(reasonOf(mounted, 'team_task_get', 's-1')).toBeUndefined();
+  });
+
+  it('常驻 opt-out 的工具、控制工具自己：都不是「被收起」', () => {
+    const { mounted } = mount();
+
+    expect(reasonOf(mounted, 'workbench_board_x_always', 's-1')).toBeUndefined();
+    for (const name of [TOOLBOX_LIST_TOOL, TOOLBOX_OPEN_TOOL, TOOLBOX_CLOSE_TOOL]) {
+      expect(reasonOf(mounted, name, 's-1')).toBeUndefined();
+    }
+  });
+
+  it('旧 dsh 没有会话 id：包全开，不给理由', () => {
+    const { mounted } = mount();
+
+    expect(reasonOf(mounted, MANAGE_TOOLS[0], null)).toBeUndefined();
   });
 });
 

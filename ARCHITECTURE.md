@@ -606,7 +606,7 @@ const face = {
       context: { kinds: ['my-thing'], render },
       warmReads: () => [['my-thing']],
       longTasks: registry,
-      gate: { deniedTools, subscribe },
+      gate: { deniedTools, denyReason, subscribe },
     };
   },
 };
@@ -652,6 +652,9 @@ ctx.get('workbenchUnits').registerUnit({
 - 路由名必须是 `<unit>` 或 `<unit>/…`。
 - 路由 / 偏好资源 / 动作资源 / 上下文 kind 重名只废后来那个单元。
 - `gate` 与 `provision` 全壳只能有一个提供者。
+- `gate.denyReason(name, context)` 可选：模型调了当前被收起的名字时，外壳拿它当拒绝理由（给 agent：
+  发生了什么 + 下一步），替掉 dsh 自己的 `unknown tool`。它与 `deniedTools` 必须是同一份真相 ——
+  能给出理由的名字，必须在 `deniedTools` 里。
 - `mount()` 失败要撤回已注册工具（路由在 mount 成功后才收）。
 - 清单 `tools[].name` 与 `registerTools()` 实际名字对账；`writes: true` 必须有审批。
 - `tools[].elevates: true` 表示这次调用会抬高工具面（开工具包），审批按它认领，与 `writes` 无关。
@@ -669,6 +672,14 @@ ctx.get('workbenchUnits').registerUnit({
   `onDemand: false`，表示它不随包收（常驻）。
 - 状态按会话（宿主内存）；DIY 模式默认开 `manage + diy`，其余会话从空开始；显式 open/close 覆盖默认。
 - 开启工具包要用户审批（`elevates`）；非法 / 没在板子上的单元在审批之前就被拒；关闭不审批。
+- **发现性**（ADR-0108）：默认面就是模型能读到的全部索引，所以三把控制工具的文案里带一张最小能力地图
+  （能力 → 包的字面量，含 `mcp:<server>`），且不抬 `tool-surface.test.ts` 的字数棘轮；
+  「这台机器上具体有哪几个 `unit:<id>` / 哪台 `mcp:<server>`」这份**活索引**在 agent 创建时注册成一把
+  运行期 skill（`workbench-capabilities`，走 dsh 已有的 skill 目录消息，一次性进上下文）。
+- **失败转发现**：模型调一个当前被收起的工具时，`gate.denyReason` 把 `unknown tool` 换成"它属于哪个包、
+  下一步调 `workbench_toolbox_open`"；同一道判断也让被收起的写工具不再弹一张点了也白点的审批屏
+  （`shared/api/host/approval-gate.ts` 的 `deniedReasonOf`；从 agent 与挂载面取理由的是
+  `shared/api/host/closed-tool-gate.ts`，`app/host.ts` 只留一行接线）。
 - `system-prompt/assemble` 的 `narrow` 与注册期的 `restrict` 共用同一份 deny（ADR-0020）；
   MCP 那半边多一份"只有看到 assembly 才算得出来"的 deny（`extraDenied`）—— 先认出 `mcp__*` 再收。
   板子隐藏的单元与今天一样始终收着，开启工具包也绕不过去。

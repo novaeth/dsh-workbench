@@ -42,12 +42,14 @@ function gateOf(options: {
   tool?: ToolUnit | undefined;
   face?: UnitMountResult | undefined;
   notes?: ReadonlySet<string>;
+  deniedReasonOf?: ((name: string, agent: unknown) => string | undefined) | undefined;
 }): ReturnType<typeof createApprovalGate> {
   return createApprovalGate({
     ctx: options.ctx ?? contextOf('ask', 'workspace-write'),
     toolOf: () => options.tool,
     faceOf: () => options.face,
     declaredNotes: () => options.notes ?? new Set<string>(),
+    deniedReasonOf: options.deniedReasonOf,
   });
 }
 
@@ -130,5 +132,35 @@ describe('createApprovalGate：先让后面那道闸判，再轮到外壳的写�
     );
 
     expect(decision.kind === 'ask' ? decision.displayReason?.zh : '').toContain('想把预发那条构建发出去');
+  });
+
+  it('★ 名字当前被收起 ⇒ 直接拒并给出下一步，既不弹审批也不问策略', async () => {
+    const policy = vi.fn(asking);
+    const seen: unknown[] = [];
+    const agent = { session: { id: 'session-1' } };
+    const gate = gateOf({
+      tool: writerTool,
+      face: faceOf({ needsApproval: policy }),
+      deniedReasonOf: (name, who) => {
+        seen.push(who);
+        return name === 'workbench_panels_show' ? '收在 manage 工具包里，先开包' : undefined;
+      },
+    });
+
+    const decision = await gate({ name: 'workbench_panels_show', agent }, () => Promise.resolve(allow()));
+
+    expect(decision).toEqual({ kind: 'deny', reason: '收在 manage 工具包里，先开包' });
+    expect(policy).not.toHaveBeenCalled();
+    expect(seen).toEqual([agent]);
+  });
+
+  it('名字没被收起 ⇒ 收起那道判断放过，照旧走后面的审批', async () => {
+    const gate = gateOf({
+      tool: writerTool,
+      face: faceOf(),
+      deniedReasonOf: () => undefined,
+    });
+
+    expect((await gate({ name: 'workbench_write' }, () => Promise.resolve(allow()))).kind).toBe('ask');
   });
 });

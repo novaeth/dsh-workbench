@@ -19,7 +19,7 @@ export interface PresetScopeOptions {
 
 const PRESET_KEY = 'agentPreset';
 
-function presetOf(ctx: DshHostContext, handle: ToolScopeAgent): string | null {
+export function presetOfSession(ctx: DshHostContext, handle: ToolScopeAgent): string | null {
   const projections = ctx.get<SessionProjections>(SESSION_PROJECTIONS_SERVICE);
   if (projections === undefined || handle.session === undefined) return null;
   try {
@@ -48,7 +48,7 @@ export function createPresetScope(options: PresetScopeOptions): ToolScope {
   const scope = createToolScope({
     deniedTools: options.deniedTools,
     ...(options.extraDenied === undefined ? {} : { extraDenied: options.extraDenied }),
-    presetOf: (handle) => presetOf(options.ctx, handle),
+    presetOf: (handle) => presetOfSession(options.ctx, handle),
     logger: options.logger,
   });
   watchPreset(options.ctx, () => scope.reapply());

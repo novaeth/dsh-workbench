@@ -7,11 +7,10 @@ import { PACK_TARGET_LIMIT } from './toolbox';
 
 const OUTPUT = textOutput();
 
-
 const TARGETS_PARAM = {
   type: 'array',
   items: { type: 'string' },
-  description: '工具包 id（可多个）：manage / diy / unit:<模块或插件 id>。先 workbench_toolbox_list 看有哪些。',
+  description: '工具包 id：manage / diy / unit:<模块或插件 id> / mcp:<server>',
 };
 
 function targetsOf(raw: unknown): readonly string[] {
@@ -120,8 +119,8 @@ export function registerToolboxTools(ctx: DshHostContext, toolbox: Toolbox): Arr
   const listTool: DshToolDefinition = {
     name: TOOLBOX_LIST_TOOL,
     description:
-      '列工作台的工具包。默认只挂着三把控制工具，其余能力（面板 / 模块 / 市场 / 调试 / 录制 / 各模块与插件）都收在包里 ——' +
-      '用户要用的能力对不上现有工具时，先看这份目录，再开对应的包。',
+      '列工作台的工具包目录。默认只挂三把控制工具，其余能力都收在包里；' +
+      '不确定调什么、或现有工具里没有你要的能力时先调它。',
     parameters: { type: 'object', properties: {}, additionalProperties: false },
     output: OUTPUT,
     async execute(_raw: unknown, exec: DshToolRunContext) {
@@ -154,8 +153,9 @@ export function registerToolboxTools(ctx: DshHostContext, toolbox: Toolbox): Arr
 
   const openTool = targetTool(
     TOOLBOX_OPEN_TOOL,
-    '开启工作台工具包（manage / diy / unit:<模块或插件 id>），把工具解锁到本次会话。' +
-      '需要面板、调试、录制或某个模块/插件的能力时用它；开启要用户审批。',
+    '开启工作台工具包，把工具解锁到本次会话。' +
+      '面板 / 看板 / 卡片 / 模块 / 市场 开 manage；调试 / 录制 / 日志 / 页面 开 diy；' +
+      'MCP server 开 mcp:<server>；模块或插件自己的工具开 unit:<模块或插件 id>。开启要用户审批。',
     false,
     (plan, exec) => {
       const newly = toolbox.open(plan.session, plan.packs, presetOf(exec));
@@ -169,7 +169,8 @@ export function registerToolboxTools(ctx: DshHostContext, toolbox: Toolbox): Arr
 
   const closeTool = targetTool(
     TOOLBOX_CLOSE_TOOL,
-    '收起已开启的工作台工具包，把这些工具从本次会话的上下文里拿掉。什么时候收由你决定：相关的事做完、或接下来用不到就主动收；不收审批。',
+    '收起已开启的工作台工具包，把这些工具从本次会话的上下文里拿掉。' +
+      '相关的事做完、或接下来用不到就收；不收审批。',
     true,
     (plan, exec) => {
       const closed = toolbox.close(plan.session, plan.packs, presetOf(exec));

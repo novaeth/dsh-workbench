@@ -7,7 +7,7 @@ export { PACK_TARGET_LIMIT } from '../unit';
 
 export type ShellPackId = 'manage' | 'diy';
 
-export type PackId = ShellPackId | `unit:${string}`;
+export type PackId = ShellPackId | `unit:${string}` | `mcp:${string}`;
 
 export interface PackLabel {
   readonly zh: string;
@@ -56,6 +56,7 @@ const SHELL_PACKS: readonly PackEntry[] = [
 export interface Toolbox {
   catalog(workspace?: string | null): readonly PackEntry[];
   packsOf(session: string | null, preset: string | null): ReadonlySet<PackId>;
+  closedPackOf(tool: string, context: ToolScopeContext): PackEntry | undefined;
   open(session: string, packs: readonly PackId[], preset: string | null): readonly PackId[];
   close(session: string, packs: readonly PackId[], preset: string | null): readonly PackId[];
   subscribe(listener: () => void): () => void;
@@ -123,7 +124,7 @@ export function createToolbox(options: {
 
   const mcpPacks = (): readonly PackEntry[] =>
     (options.mcp?.() ?? []).map((server) => ({
-      id: `mcp:${server.name}` as PackId,
+      id: `mcp:${server.name}`,
       label: { zh: `${server.name}（MCP）`, en: `${server.name} (MCP)` },
       hint: 'dsh 的 MCP server —— 工具自己的审批仍走 dsh',
       tools: server.tools,
@@ -154,9 +155,28 @@ export function createToolbox(options: {
     return open;
   };
 
+  const deniedNames = (context: ToolScopeContext): ReadonlySet<string> => {
+    const open = packsOf(context.session, context.preset);
+    const deny = new Set<string>();
+    for (const pack of catalog()) {
+      if (open.has(pack.id)) continue;
+      for (const name of pack.tools) {
+        if (!pack.alwaysOn.includes(name)) deny.add(name);
+      }
+    }
+    for (const name of TOOLBOX_TOOLS) deny.delete(name);
+    return deny;
+  };
+
   return {
     catalog,
     packsOf,
+
+    closedPackOf(tool, context) {
+      if (!deniedNames(context).has(tool)) return undefined;
+      const open = packsOf(context.session, context.preset);
+      return catalog().find((pack) => !open.has(pack.id) && pack.tools.includes(tool));
+    },
 
     open(session, packs, preset) {
       const entries = new Set(catalog().map((pack) => pack.id));
@@ -212,16 +232,7 @@ export function createToolbox(options: {
     },
 
     deniedTools(context) {
-      const open = packsOf(context.session, context.preset);
-      const deny = new Set<string>();
-      for (const pack of catalog()) {
-        if (open.has(pack.id)) continue;
-        for (const name of pack.tools) {
-          if (!pack.alwaysOn.includes(name)) deny.add(name);
-        }
-      }
-      for (const name of TOOLBOX_TOOLS) deny.delete(name);
-      return [...deny];
+      return [...deniedNames(context)];
     },
   };
 }

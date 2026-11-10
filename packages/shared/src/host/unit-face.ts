@@ -66,6 +66,7 @@ export interface UnitMountResult {
   readonly factsOf?: ((call: UnitCall) => readonly string[] | undefined) | undefined;
   readonly gate?: {
     deniedTools(context: ToolScopeContext): readonly string[];
+    denyReason?(name: string, context: ToolScopeContext): string | undefined;
     subscribe(listener: () => void): () => void;
   };
   readonly context?: {

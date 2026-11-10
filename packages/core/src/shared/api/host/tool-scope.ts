@@ -38,12 +38,16 @@ function agentOf(value: unknown): ToolScopeAgent | undefined {
   return typeof value === 'object' && value !== null ? (value as ToolScopeAgent) : undefined;
 }
 
-function contextOf(handle: ToolScopeAgent, options: ToolScopeOptions): ToolScopeContext {
+export type PresetReader = (handle: ToolScopeAgent) => string | null;
+
+export function toolScopeContextOf(agent: unknown, presetOf?: PresetReader | undefined): ToolScopeContext | null {
+  const handle = agentOf(agent);
+  if (handle === undefined) return null;
   const header = handle.session?.header;
   const cwd = header?.cwd;
   const declared = header?.agentPreset;
   const session = handle.session?.id;
-  const read = options.presetOf?.(handle);
+  const read = presetOf?.(handle);
   return {
     workspace: typeof cwd === 'string' && cwd !== '' ? cwd : null,
     preset: read ?? (typeof declared === 'string' && declared !== '' ? declared : null),
@@ -70,7 +74,8 @@ export function createToolScope(options: ToolScopeOptions): ToolScope {
       return;
     }
 
-    const context = contextOf(handle, options);
+    const context = toolScopeContextOf(handle, options.presetOf);
+    if (context === null) return;
     const deny = [...options.deniedTools(context)];
     const signature = `${context.workspace ?? ''}\u0000${context.preset ?? ''}\u0000${context.session ?? ''}\u0000${deny.join(',')}`;
 
@@ -102,10 +107,9 @@ export function createToolScope(options: ToolScopeOptions): ToolScope {
       sync(handle);
     },
     narrow(assembly, agent) {
-      const handle = agentOf(agent);
       const tools = assembly?.tools;
-      if (handle === undefined || tools === undefined) return assembly;
-      const context = contextOf(handle, options);
+      const context = toolScopeContextOf(agent, options.presetOf);
+      if (context === null || tools === undefined) return assembly;
       const deny = new Set([
         ...options.deniedTools(context),
         ...(options.extraDenied?.(assembly, context) ?? []),

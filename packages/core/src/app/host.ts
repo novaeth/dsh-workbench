@@ -43,6 +43,8 @@ import { PROFILE_CREATE_ROUTE } from '@/kernel/contract/profile-create';
 import { SIDEBAR_EDITION_ROUTE } from '@/kernel/contract/sidebar-edition';
 import { sidebarEditionAction, sidebarEditionHandler } from '@/shared/api/host/sidebar-edition';
 import { createPresetScope } from '@/shared/api/host/preset-scope';
+import { createClosedReasonOf } from '@/shared/api/host/closed-tool-gate';
+import { registerCapabilitySkill } from '@/shared/api/host/capability-skill';
 import { createValueHandoff } from '@dsh-workbench/shared/host';
 import { PANELS_SERVICE, PLUGIN_ID, UNITS_SERVICE } from '@dsh-workbench/shared/host';
 import { asArgs, warn } from '../shared/api/host/host-args';
@@ -218,6 +220,10 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
       ...mcpScope.denied(context),
     ]),
   ];
+  const closedReasonOf = createClosedReasonOf({
+    ctx,
+    gates: () => [...mounted.values()].map((item) => item.plan.gate),
+  });
   const declaredNoteTools = (): ReadonlySet<string> =>
     declaredNotesOf([...mounted.values()].map((item) => item.plan));
   const wrote = (resource: string, write: PostWrite): void => {
@@ -442,6 +448,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   ctx.effect(() => {
     const off = ctx.on?.('agent/created', (payload) => {
       toolScope.apply(payload?.agent);
+      registerCapabilitySkill(ctx, payload?.agent);
       pluginTools?.touch();
     });
     return () => off?.();
@@ -464,6 +471,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
         toolOf: (name) => unitsOfTool().get(name),
         faceOf: (unit) => mounted.get(unit)?.result,
         declaredNotes: declaredNoteTools,
+        deniedReasonOf: closedReasonOf,
       }),
     );
     return () => off?.();

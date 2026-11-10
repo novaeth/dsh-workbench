@@ -1,7 +1,7 @@
 import type { UnitManifest } from '@dsh-workbench/shared';
 import type { RecordStore, UnitOwnedFace } from '@dsh-workbench/shared/host';
 import { DIY_DEBUG_SERVICE, DIY_RECORD_SERVICE, MCP_TOOLS_SERVICE, TOOLBOX_SERVICE, createDebugStore, createRecordStore, supplyNeedsOf, PANELS_SERVICE, dshHome, seamOf, supplyPortOf, workbenchRoot } from '@dsh-workbench/shared/host';
-import type { McpToolsPort, ToolboxPort } from '@dsh-workbench/shared/host';
+import type { McpToolsPort, ToolboxPort, ToolScopeContext } from '@dsh-workbench/shared/host';
 import { basename } from 'node:path';
 import { workshopPathOf } from '@/shared/api/host/diy';
 import { hostSurface } from '@dsh-workbench/shared/host';
@@ -42,6 +42,8 @@ import { pluginPanelRefs } from './model/plugin-panel';
 import { pluginRoutes } from './model/plugin-section';
 import { registerPanelTools } from './model/tools';
 import { createToolbox } from './model/toolbox';
+import { capabilityBriefOf } from './model/capability-brief';
+import { absentScreenReason, offBoardReason, packClosedReason } from './model/closed-tool';
 import { registerToolboxTools } from './model/toolbox-tools';
 import { panelsUnit, screenOnlyToolsFor } from './unit';
 
@@ -83,6 +85,7 @@ export const panelsHost: UnitOwnedFace = {
     });
     const toolboxPort: ToolboxPort = {
       packsOf: (session, preset) => toolbox.packsOf(session, preset),
+      capabilityBrief: (workspace) => capabilityBriefOf(toolbox.catalog(workspace)),
     };
     ctx.provide(TOOLBOX_SERVICE, toolboxPort);
     const debug = withObserverCleanup(createDebugStore(), (workspace) => stopObservers(ctx, workspace), logger);
@@ -170,6 +173,22 @@ export const panelsHost: UnitOwnedFace = {
       ...(logger === undefined ? {} : { logger }),
     });
 
+    const denySets = (context: ToolScopeContext) => {
+      const boards = panels.boards(context.workspace);
+      const owned = new Set(ownedUnits());
+      const surface = hostSurface({ profile: profileDir === null ? undefined : basename(profileDir) });
+      const hiddenUnitOf = new Map<string, string>();
+      for (const manifest of manifests()) {
+        if (owned.has(manifest.id) || resolveScope({ id: manifest.id, boards })) continue;
+        for (const tool of manifest.tools) hiddenUnitOf.set(tool.name, manifest.id);
+      }
+      return {
+        packs: toolbox.deniedTools(context),
+        hiddenUnitOf,
+        screen: new Set<string>(screenOnlyToolsFor(surface.capabilities.pageDebug)),
+      };
+    };
+
     return {
       routes: {
         ...panelRoutes(panels, values),
@@ -233,21 +252,16 @@ export const panelsHost: UnitOwnedFace = {
       ),
       gate: {
         deniedTools: (context) => {
-          const boards = panels.boards(context.workspace);
-          const owned = new Set(ownedUnits());
-          const surface = hostSurface({ profile: profileDir === null ? undefined : basename(profileDir) });
-          const hidden = manifests().flatMap((manifest) =>
-            owned.has(manifest.id) || resolveScope({ id: manifest.id, boards })
-              ? []
-              : manifest.tools.map((tool) => tool.name),
-          );
-          return [
-            ...new Set([
-              ...toolbox.deniedTools(context),
-              ...hidden,
-              ...screenOnlyToolsFor(surface.capabilities.pageDebug),
-            ]),
-          ];
+          const sets = denySets(context);
+          return [...new Set([...sets.packs, ...sets.hiddenUnitOf.keys(), ...sets.screen])];
+        },
+        denyReason: (tool, context) => {
+          const sets = denySets(context);
+          if (sets.screen.has(tool)) return absentScreenReason(tool);
+          const unit = sets.hiddenUnitOf.get(tool);
+          if (unit !== undefined) return offBoardReason(tool, unit);
+          const pack = toolbox.closedPackOf(tool, context);
+          return pack === undefined ? undefined : packClosedReason(tool, pack);
         },
         subscribe: (listener) => {
           const offPanels = panels.subscribe(listener);
