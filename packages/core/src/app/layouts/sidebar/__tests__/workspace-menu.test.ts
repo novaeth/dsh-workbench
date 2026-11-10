@@ -52,6 +52,15 @@ describe('工作区行的三点菜单：悬停换图标、点开是菜单', () =
     expect(MENU).toContain('getAnchorRect={getAnchorRect}');
     expect(MENU).toContain('useCallback(() => anchor, [anchor])');
   });
+
+  it('★ 关菜单这件事归菜单自己（window 捕获）：别的弹层先关、或事件被谁 stop 掉，都带不走它', () => {
+    expect(MENU).toContain("window.addEventListener('pointerdown', dismiss, true)");
+    expect(MENU).toContain("window.addEventListener('keydown', escape, true)");
+    expect(MENU).toContain("node.closest(`.${styles.list}`) !== null");
+    expect(MENU).toContain('listClassName={styles.list}');
+    expect(MENU).toContain("if (event.key !== 'Escape') return");
+    expect(MENU).toContain('event.preventDefault()');
+  });
 });
 
 describe('右键工作区那一项：跟 dsh 官方同一套（指针位置开菜单，键盘也认）', () => {

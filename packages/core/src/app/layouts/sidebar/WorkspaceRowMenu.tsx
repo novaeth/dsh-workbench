@@ -1,4 +1,4 @@
-import { createElement as h, useCallback, useMemo } from 'react';
+import { createElement as h, useCallback, useEffect, useMemo } from 'react';
 import type { Translate, WorkspaceView } from '@dsh-workbench/shared';
 import type { MenuEntry } from '@deepseek-ai/dsh-client-ui-primitives';
 import {
@@ -8,6 +8,7 @@ import {
   Menu,
 } from '@deepseek-ai/dsh-client-ui-primitives';
 import { clientSurface } from '@/shared/api/platform/client';
+import styles from './WorkspaceRowMenu.module.css';
 
 export interface WorkspaceMenuOpen {
   readonly anchor: DOMRect;
@@ -54,10 +55,31 @@ export function WorkspaceRowMenu({ target, t, onClose, onAlias, onDelete, onReve
   }, [target, t]);
   const anchor = target?.anchor ?? null;
   const getAnchorRect = useCallback(() => anchor, [anchor]);
+  const open = target !== null;
+
+  useEffect(() => {
+    if (!open) return;
+    const dismiss = (event: Event): void => {
+      const node = event.target;
+      if (node instanceof Element && node.closest(`.${styles.list}`) !== null) return;
+      onClose();
+    };
+    const escape = (event: KeyboardEvent): void => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      onClose();
+    };
+    window.addEventListener('pointerdown', dismiss, true);
+    window.addEventListener('keydown', escape, true);
+    return () => {
+      window.removeEventListener('pointerdown', dismiss, true);
+      window.removeEventListener('keydown', escape, true);
+    };
+  }, [open, onClose]);
 
   return (
     <Menu
-      open={target !== null}
+      open={open}
       onClose={onClose}
       onSelect={(id) => {
         const workspace = target?.workspace;
@@ -79,6 +101,7 @@ export function WorkspaceRowMenu({ target, t, onClose, onAlias, onDelete, onReve
       autoFocus
       align={target?.align ?? 'end'}
       getAnchorRect={getAnchorRect}
+      listClassName={styles.list}
     />
   );
 }
