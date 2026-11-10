@@ -4,6 +4,16 @@ import { join } from 'node:path';
 
 import { BIN, PACKAGES_DIR, FACES, declaration } from '../lib.mjs';
 
+function styleCheckOf(probe) {
+  return String(
+    execFileSync(process.execPath, [BIN, 'check', '--only', 'style'], {
+      cwd: probe,
+      encoding: 'utf8',
+      stdio: 'pipe',
+    }),
+  );
+}
+
 export const checks = [
   {
     title: '表单的行距：`.demoField { gap }` → 红（点名那一行）；`.demoCard { gap }` → 绿（卡片布局放行）',
@@ -39,11 +49,7 @@ export const checks = [
         writeFileSync(join(probe, 'src', 'client.tsx'), 'export const box = () => null;\n');
         const run = () => {
           try {
-            const out = execFileSync(process.execPath, [BIN, 'check', '--only', 'style'], {
-              cwd: probe,
-              encoding: 'utf8',
-              stdio: 'pipe',
-            });
+            const out = styleCheckOf(probe);
             return { failed: false, out: String(out) };
           } catch (error) {
             return { failed: true, out: `${error.stdout ?? ''}${error.stderr ?? ''}` };
@@ -104,11 +110,7 @@ export const checks = [
         );
         const run = () => {
           try {
-            const out = execFileSync(process.execPath, [BIN, 'check', '--only', 'style'], {
-              cwd: probe,
-              encoding: 'utf8',
-              stdio: 'pipe',
-            });
+            const out = styleCheckOf(probe);
             return { failed: false, out: String(out) };
           } catch (error) {
             return { failed: true, out: `${error.stdout ?? ''}${error.stderr ?? ''}` };
@@ -189,11 +191,7 @@ export const checks = [
         let out;
         try {
           out = String(
-            execFileSync(process.execPath, [BIN, 'check', '--only', 'style'], {
-              cwd: probe,
-              encoding: 'utf8',
-              stdio: 'pipe',
-            }),
+            styleCheckOf(probe),
           );
         } catch (error) {
 
@@ -261,11 +259,7 @@ export const checks = [
         );
         const run = () => {
           try {
-            const out = execFileSync(process.execPath, [BIN, 'check', '--only', 'style'], {
-              cwd: probe,
-              encoding: 'utf8',
-              stdio: 'pipe',
-            });
+            const out = styleCheckOf(probe);
             return { failed: false, out: String(out) };
           } catch (error) {
             return { failed: true, out: `${error.stdout ?? ''}${error.stderr ?? ''}` };
@@ -349,11 +343,7 @@ export const checks = [
         );
         const run = () => {
           try {
-            const out = execFileSync(process.execPath, [BIN, 'check', '--only', 'style'], {
-              cwd: probe,
-              encoding: 'utf8',
-              stdio: 'pipe',
-            });
+            const out = styleCheckOf(probe);
             return { failed: false, out: String(out) };
           } catch (error) {
             return { failed: true, out: `${error.stdout ?? ''}${error.stderr ?? ''}` };
@@ -447,11 +437,7 @@ export const checks = [
         let out;
         try {
           out = String(
-            execFileSync(process.execPath, [BIN, 'check', '--only', 'style'], {
-              cwd: probe,
-              encoding: 'utf8',
-              stdio: 'pipe',
-            }),
+            styleCheckOf(probe),
           );
         } catch (error) {
           report(
@@ -507,11 +493,7 @@ export const checks = [
         );
         const run = () => {
           try {
-            const out = execFileSync(process.execPath, [BIN, 'check', '--only', 'style'], {
-              cwd: probe,
-              encoding: 'utf8',
-              stdio: 'pipe',
-            });
+            const out = styleCheckOf(probe);
             return { failed: false, out: String(out) };
           } catch (error) {
             return { failed: true, out: `${error.stdout ?? ''}${error.stderr ?? ''}` };
@@ -603,11 +585,7 @@ export const checks = [
         );
         const run = () => {
           try {
-            const out = execFileSync(process.execPath, [BIN, 'check', '--only', 'style'], {
-              cwd: probe,
-              encoding: 'utf8',
-              stdio: 'pipe',
-            });
+            const out = styleCheckOf(probe);
             return { failed: false, out: String(out) };
           } catch (error) {
             return { failed: true, out: `${error.stdout ?? ''}${error.stderr ?? ''}` };
@@ -709,11 +687,7 @@ export const checks = [
         );
         const run = () => {
           try {
-            const out = execFileSync(process.execPath, [BIN, 'check', '--only', 'style'], {
-              cwd: probe,
-              encoding: 'utf8',
-              stdio: 'pipe',
-            });
+            const out = styleCheckOf(probe);
             return { failed: false, out: String(out) };
           } catch (error) {
             return { failed: true, out: `${error.stdout ?? ''}${error.stderr ?? ''}` };
