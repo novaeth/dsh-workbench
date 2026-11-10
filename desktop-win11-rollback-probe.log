@@ -1,0 +1,30 @@
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [] none :: HARNESS | Loading plugins…
+[4.1s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[4.1s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[8.4s] ready wait [checking] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: HARNESS | Loading plugins…
+[8.4s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[10.8s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: le module |  | hello, workbench |  | This card comes from a standalone workbench module. |  | Preparing the workbench | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode
+[10.8s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[12.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: | Preview | Standard mode | Describe what you want to build, / commands, @ files or sessions | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[12.8s] MILESTONE ready @ 12.8s
+[12.9s] STEP click ["Browse the module market","Choose modules"]: "missing"
+[15.9s] FAIL 打开市场页没找到入口
+[15.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-rollback-console-events.json (9557 bytes)
+[15.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-rollback-failed-body.txt (345 bytes)
+[35.9s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+[35.9s] FATAL Error: 打开市场页没找到入口（现场：desktop-win11-rollback-failed-body.txt / desktop-win11-rollback-failed-preflight.json）
+    at fail (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:236:9)
+    at async openMarket (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:600:29)
+    at async smokeRollback (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:676:3)
+    at async main (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:949:7)
+[35.9s] SMOKE_SUMMARY {"outcome":"failed","elapsed":"35.9s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.1s","ready":"12.8s"},"reason":"打开市场页没找到入口（现场：desktop-win11-rollback-failed-body.txt / desktop-win11-rollback-failed-preflight.json）"}
+[35.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-rollback-fatal-body.txt (345 bytes)
+[36.9s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win11-rollback-fatal.png (45793 bytes)
