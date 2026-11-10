@@ -1,0 +1,71 @@
+[0.2s] MILESTONE cdp-ready @ 0.2s
+[0.2s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.2s] pages: dsh-app://app/
+[0.2s] MILESTONE app-page @ 0.2s
+[0.3s] target: dsh-app://app/
+[1.1s] MILESTONE cdp-connected @ 1.1s
+[1.2s] app-shell: HARNESS | Loading plugins…
+[3.2s] app-shell: HARNESS | Loading plugins…
+[5.3s] app-shell: New Session | ⌘ | N | Plugins | Automation tasks | More | Workspaces | No sessions yet | More | Into the Unknown | Preview | Choose workspace | Choose a workspace to start | Loading settings…
+[5.4s] STEP click ["Plugins"]: "Plugins"
+[6.6s] plugins-page: d reviews, inspect diffs, and send feedback to the agent. Review local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host.
+[6.6s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-plugins-body.txt (1361 bytes)
+[6.7s] STEP click ["Add plugin"]: "Add plugin"
+[7.5s] add-plugin wait: {"ok":true}
+[7.5s] FIELDS: [{"index":0,"tag":"INPUT","type":"text","placeholder":"Search session names","aria":null,"visible":true},{"index":1,"tag":"INPUT","type":"text","placeholder":"for example dsh-plugin-whale-pet","aria":"Package name or address","visible":true}]
+[8.3s] filled: "/Users/runner/work/dsh-workbench/dsh-workbench/packages/core"
+[8.3s] STEP click ["Install"]: "Install"
+[9.5s] MILESTONE install-clicked @ 9.5s
+[11.5s] install wait: orkbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Installed |  | @dsh-workbench/core |  | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 |  | Version 1.2.3-beta.3 |  | Show install details | Enable now
+[11.5s] MILESTONE installed @ 11.5s
+[11.5s] STEP click ["Enable now"]: "Enable now"
+[16.5s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[16.6s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-gate.png (19834 bytes)
+[16.6s] MILESTONE gate-seen @ 16.6s
+[16.6s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-gate-body.txt (1746 bytes)
+[16.6s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-gate-preflight.json (4982 bytes)
+[16.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[18.6s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[18.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[20.6s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[20.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[22.6s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[22.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[24.6s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: ke sure the browser is running and the extension is enabled; install it once from the store if needed (then hit Retry here). | Get the extension in the Chrome Web Store | Open browser | Retry | Enter the workbench anyway
+[24.6s] 模拟用户装扩展：起浏览器 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing（--load-extension=/Users/runner/work/_temp/opencli-ext，日志 /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-chrome.log）
+[24.6s] MILESTONE browser-launched @ 24.6s
+[29.7s] extension wait: connected :: [OK] Extension: connected (v1.0.27)
+[29.7s] chrome targets: browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://webui-toolbar.top-chrome/ | service_worker:chrome-extension://admccjkmockfdflocgggjfgdacdodkdf/background.js | service_worker:chrome-extension://glbjnfimcajjenihimblfaponejbkoph/background.js | service_worker:chrome-extension://kmogdbfhcachbdcbjajeghpiogegbbnh/dist/background.js
+[29.7s] STEP click ["Retry","重试"]: "Retry"
+[32.9s] health wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: /core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[32.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: /core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[32.9s] MILESTONE ready @ 32.9s
+[33.0s] STEP click ["Browse the module market","Choose modules"]: "Browse the module market"
+[36.0s] market-page: al | Installed modules | 0 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[36.0s] MILESTONE market-open @ 36.0s
+[36.0s] STEP click ["Discover"]: "Discover"
+[38.0s] STEP click ["Add index source","Manage index sources…"]: "Add index source"
+[39.5s] source field: ""
+[39.8s] STEP click ["Add"]: "Add"
+[42.9s] MILESTONE market-source-added @ 42.9s
+[44.9s] market-listing: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[44.9s] MILESTONE market-listed @ 44.9s
+[44.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-market-body.txt (580 bytes)
+[44.9s] STEP row install: "Install Sample module"
+[44.9s] confirm install: {"clicked":false,"labels":["Change address","Cancel","Checking…"]}
+[45.5s] confirm install: {"clicked":false,"labels":["Change address","Cancel","Checking…"]}
+[46.0s] confirm install: {"clicked":false,"labels":["Change address","Cancel","Checking…"]}
+[46.5s] confirm install: {"clicked":false,"labels":["Change address","Cancel","Checking…"]}
+[47.0s] confirm install: {"clicked":true}
+[47.0s] MILESTONE market-install-clicked @ 47.0s
+[47.0s] market-install: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[49.0s] market-install: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[51.0s] market-install: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[53.2s] market-install:  · Nov 1, 2026 | Installed | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[53.2s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-market-installed.txt (609 bytes)
+[53.2s] MILESTONE market-installed @ 53.2s
+[53.2s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-smoke.json (214 bytes)
+[53.2s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-final-body.txt (609 bytes)
+[53.2s] TITLE: DeepSeek Harness
+[53.8s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac.png (84750 bytes)
+[53.8s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"53.8s","milestones":{"cdp-ready":"0.2s","app-page":"0.2s","cdp-connected":"1.1s","install-clicked":"9.5s","installed":"11.5s","gate-seen":"16.6s","browser-launched":"24.6s","ready":"32.9s","market-open":"36.0s","market-source-added":"42.9s","market-listed":"44.9s","market-install-clicked":"47.0s","market-installed":"53.2s"},"market":"https://github.com/novaeth/dsh-workbench-market.git","module":"@dsh-workbench/module-hello","listed":true,"installed":true,"restartHint":false}

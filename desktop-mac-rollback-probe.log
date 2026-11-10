@@ -1,0 +1,42 @@
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [] none :: HARNESS | Loading plugins…
+[4.1s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[4.1s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[7.2s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: HARNESS | Loading plugins…
+[7.2s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[9.2s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[9.2s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[11.3s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[11.3s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[13.3s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[13.3s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[15.3s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[15.3s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[17.3s] ready wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: ke sure the browser is running and the extension is enabled; install it once from the store if needed (then hit Retry here). | Get the extension in the Chrome Web Store | Open browser | Retry | Enter the workbench anyway
+[17.3s] 模拟用户装扩展：起浏览器 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing（--load-extension=/Users/runner/work/_temp/opencli-ext，日志 /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-rollback-chrome.log）
+[17.3s] MILESTONE browser-launched @ 17.3s
+[21.6s] extension wait: connected :: [OK] Extension: connected (v1.0.27)
+[21.6s] chrome targets: page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | browser_ui:chrome://webui-toolbar.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://webui-toolbar.top-chrome/ | service_worker:chrome-extension://kmogdbfhcachbdcbjajeghpiogegbbnh/dist/background.js
+[21.7s] STEP click ["Retry","重试"]: "Retry"
+[24.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: rd mode | Describe what you want to build, / commands, @ files or sessions | Workspace Write | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[24.9s] MILESTONE ready @ 24.9s
+[24.9s] STEP click ["Browse the module market","Choose modules"]: "missing"
+[27.9s] FAIL 打开市场页没找到入口
+[27.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-rollback-console-events.json (9550 bytes)
+[27.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-rollback-failed-body.txt (356 bytes)
+[28.0s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-rollback-failed.png (64519 bytes)
+[28.0s] FATAL Error: 打开市场页没找到入口（现场：desktop-mac-rollback-failed-body.txt / desktop-mac-rollback-failed-preflight.json）
+    at fail (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:236:9)
+    at async openMarket (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:600:29)
+    at async smokeRollback (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:676:3)
+    at async main (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:949:7)
+[28.0s] SMOKE_SUMMARY {"outcome":"failed","elapsed":"28.0s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.1s","browser-launched":"17.3s","ready":"24.9s"},"reason":"打开市场页没找到入口（现场：desktop-mac-rollback-failed-body.txt / desktop-mac-rollback-failed-preflight.json）"}
+[28.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-rollback-fatal-body.txt (356 bytes)
+[28.1s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-rollback-fatal.png (64519 bytes)
