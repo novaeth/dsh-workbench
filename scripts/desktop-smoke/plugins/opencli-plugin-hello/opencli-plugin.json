@@ -1,0 +1,9 @@
+{
+  "name": "hello",
+  "version": "1.0.0",
+  "description": "Minimal first-party opencli plugin used as the desktop smoke install target",
+  "author": "dsh-workbench contributors",
+  "license": "Apache-2.0",
+  "site": "hello",
+  "domain": "hello.invalid"
+}

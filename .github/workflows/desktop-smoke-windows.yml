@@ -23,6 +23,7 @@ jobs:
       DESKTOP_SMOKE_OS: ${{ inputs.label }}
       DESKTOP_SMOKE_MARKET: https://github.com/novaeth/dsh-workbench-market.git
       DESKTOP_SMOKE_MODULE: '@dsh-workbench/module-hello'
+      DESKTOP_SMOKE_PLUGIN: opencli-plugin-hello
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -68,6 +69,8 @@ jobs:
           $err3 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app3.err.log'
           $out4 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app4.log'
           $err4 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app4.err.log'
+          $out5 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app5.log'
+          $err5 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app5.err.log'
           "DESKTOP_SMOKE_APP_LOG=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "DESKTOP_SMOKE_APP_ERR=$err" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "DESKTOP_SMOKE_APP_LOG_2=$out2" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
@@ -131,6 +134,13 @@ jobs:
             if (-not (Wait-Page 9223)) { throw 'restart still produced no page' }
           }
           Invoke-Logged 'probe-after-restart' { node scripts/desktop-smoke/cdp-probe.mjs 9223 desktop-${{ inputs.label }}-after-restart.png --verify-only --expect-workbench }
+          Stop-App
+          Start-Sleep -Seconds 3
+          $app5 = Start-App 9226 $out5 $err5
+          "add-plugin desktop pid: $($app5.Id)"
+          if (-not (Wait-Page 9226)) { throw 'add-plugin instance produced no page' }
+          Invoke-Logged 'add-plugin-probe' { node scripts/desktop-smoke/cdp-probe.mjs 9226 desktop-${{ inputs.label }}-add-plugin.png --add-plugin $env:DESKTOP_SMOKE_PLUGIN }
+          $global:LASTEXITCODE = 0
           # 回退这条 E2E 还在试验中：它自己红只发警告，不挡这条腿既有的信号。
           # pwsh 会把最后一条原生命令的退出码留到步骤末尾，所以每处告警后都把它抹平。
           $appRoot = Join-Path $env:USERPROFILE '.dsh'
@@ -184,6 +194,30 @@ jobs:
           if (spec === undefined && !bundles.includes(name)) throw new Error('module-hello 没进 profile');
           console.log('module-hello', spec ?? 'bundle');
           "
+      - name: Assert opencli plugin installed
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrEmpty($env:DESKTOP_SMOKE_PLUGIN)) { throw 'DESKTOP_SMOKE_PLUGIN is empty' }
+          $root = "$env:USERPROFILE\.dsh\workbench\opencli"
+          $pluginRoot = Join-Path $root "plugins-npm\node_modules\$env:DESKTOP_SMOKE_PLUGIN"
+          if (-not (Test-Path -LiteralPath $pluginRoot -PathType Container)) {
+            Write-Host "::error title=plugin dir missing::opencli plugin dir missing: $pluginRoot"
+            throw "plugin dir missing: $pluginRoot"
+          }
+          $bin = Join-Path $root 'bin\opencli.cmd'
+          $raw = (& $bin plugin list 2>&1 | Out-String)
+          Write-Host $raw
+          if ($LASTEXITCODE -ne 0) {
+            $body = ((($raw -split "`r?`n") | Where-Object { $_ -ne '' } | Select-Object -Last 30 | ForEach-Object { ($_ -replace '%', '%25') + '%0A' }) -join '')
+            Write-Host "::error title=plugin list failed::$body"
+            throw "opencli plugin list failed: $LASTEXITCODE"
+          }
+          if (-not $raw.Contains('hello @')) {
+            $body = ((($raw -split "`r?`n") | Where-Object { $_ -ne '' } | Select-Object -Last 30 | ForEach-Object { ($_ -replace '%', '%25') + '%0A' }) -join '')
+            Write-Host "::error title=plugin not listed::$body"
+            throw 'plugin hello not listed'
+          }
+          'plugin hello @ present'
       - name: Collect diagnostics
         if: always()
         continue-on-error: true

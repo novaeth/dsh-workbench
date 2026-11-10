@@ -38,6 +38,7 @@ jobs:
       DESKTOP_SMOKE_OS: mac
       DESKTOP_SMOKE_MARKET: https://github.com/novaeth/dsh-workbench-market.git
       DESKTOP_SMOKE_MODULE: '@dsh-workbench/module-hello'
+      DESKTOP_SMOKE_PLUGIN: opencli-plugin-hello
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -133,6 +134,11 @@ jobs:
             wait_page 9223 || { echo 'restart still produced no page'; exit 1; }
           fi
           run_logged probe-after-restart node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9223 desktop-mac-after-restart.png --verify-only --expect-workbench
+          stop_app
+          sleep 2
+          start_app 9226
+          if ! wait_page 9226; then echo 'add-plugin instance produced no page'; exit 1; fi
+          run_logged add-plugin-probe node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9226 desktop-mac-add-plugin.png --add-plugin "$DESKTOP_SMOKE_PLUGIN"
           # 回退这条 E2E 还在试验中：它自己红只发警告，不挡这条腿既有的信号。
           # 要有一版"上一版"可回：把现在这份工作台抄一份进版本目录（版本号改掉），
           # 再落一个"上一次更新已就绪"的 marker —— 界面上那一行才会出现「切回上一版」。
@@ -182,6 +188,31 @@ jobs:
           if (spec === undefined && !bundles.includes(name)) throw new Error('module-hello 没进 profile');
           console.log('module-hello', spec ?? 'bundle');
           "
+      - name: Assert opencli plugin installed
+        shell: bash
+        run: |
+          if [ -z "$DESKTOP_SMOKE_PLUGIN" ]; then
+            echo '::error title=plugin spec missing::DESKTOP_SMOKE_PLUGIN is empty'
+            exit 1
+          fi
+          root="$HOME/.dsh/workbench/opencli"
+          plugin_root="$root/plugins-npm/node_modules/$DESKTOP_SMOKE_PLUGIN"
+          if [ ! -d "$plugin_root" ]; then
+            echo "::error title=plugin dir missing::opencli plugin dir missing: $plugin_root"
+            exit 1
+          fi
+          if ! list=$("$root/bin/opencli" plugin list 2>&1); then
+            body=$(printf '%s\n' "$list" | sed -e 's/%/%25/g' | tail -n 30 | awk 'NF { printf "%s%%0A", $0 }')
+            echo "::error title=plugin list failed::${body:0:1400}"
+            exit 1
+          fi
+          printf '%s\n' "$list"
+          if [[ "$list" != *'hello @'* ]]; then
+            body=$(printf '%s\n' "$list" | sed -e 's/%/%25/g' | tail -n 30 | awk 'NF { printf "%s%%0A", $0 }')
+            echo "::error title=plugin not listed::${body:0:1400}"
+            exit 1
+          fi
+          echo 'plugin hello @ present'
       - name: Collect diagnostics
         if: always()
         continue-on-error: true

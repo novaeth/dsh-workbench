@@ -8,6 +8,20 @@ const expectWorkbench = process.argv.includes('--expect-workbench');
 const installViaUi = process.argv.includes('--install-via-ui');
 const verifyOnly = process.argv.includes('--verify-only');
 const rollbackFlow = process.argv.includes('--self-update-rollback');
+const flagValue = (name) => {
+  const inline = process.argv.find((one) => one.startsWith(`${name}=`));
+  if (inline !== undefined) return inline.slice(name.length + 1);
+  const index = process.argv.indexOf(name);
+  if (index === -1) return '';
+  const next = process.argv[index + 1];
+  return next === undefined || next.startsWith('--') ? '' : next;
+};
+const addPluginFlagged = process.argv.some(
+  (one) => one === '--add-plugin' || one.startsWith('--add-plugin='),
+);
+const addPluginSpec = (
+  flagValue('--add-plugin') || (addPluginFlagged ? (process.env.DESKTOP_SMOKE_PLUGIN ?? '') : '')
+).trim();
 const workbenchSpec = process.env.DESKTOP_WORKBENCH_SPEC ?? '@dsh-workbench/core';
 const marketSource = process.env.DESKTOP_SMOKE_MARKET ?? 'https://github.com/novaeth/dsh-workbench-market.git';
 const moduleName = process.env.DESKTOP_SMOKE_MODULE ?? '@dsh-workbench/module-hello';
@@ -26,6 +40,14 @@ const BRIDGE_WAIT_MS = 600_000;
 const BRIDGE_RETRY_MS = 15_000;
 const MODULE_WAIT_MS = 90_000;
 const POLL_MS = 2000;
+const DIALOG_SELECTOR = '[role="dialog"], [aria-modal="true"], dialog[open]';
+const SPEC_FIELD_SELECTOR = 'input[aria-label="包名"], input[aria-label="Package"]';
+const addOpenTexts = ['添加模块', 'Add module'];
+const addRunTexts = ['安装', 'Install'];
+const addCloseTexts = ['关闭', 'Close'];
+const specLabels = ['包名', 'Package'];
+const pluginPreviewRe = /这是一份[^\n]*插件|插件名：|This is [^\n]*plugin|Plugin name:/u;
+const pluginInstalledRe = /装上了：|Installed:/u;
 
 const startedAt = Date.now();
 const elapsed = () => `${((Date.now() - startedAt) / 1000).toFixed(1)}s`;
@@ -236,17 +258,34 @@ async function fail(cdp, reason, body, snapshot) {
   throw new Error(`${reason}（现场：${prefix}-failed-body.txt / ${prefix}-failed-preflight.json）`);
 }
 
+function dialogScope() {
+  return `(() => {
+  const direct = document.querySelector(${JSON.stringify(DIALOG_SELECTOR)});
+  if (direct !== null) return direct;
+  const labels = ${JSON.stringify(specLabels)};
+  const field = [...document.querySelectorAll('input[aria-label]')].find((node) => labels.includes(node.getAttribute('aria-label') ?? ''));
+  if (field === undefined) return document.body;
+  const actions = ${JSON.stringify([...addRunTexts, ...addCloseTexts])};
+  let node = field.parentElement;
+  while (node !== null && ![...node.querySelectorAll('button')].some((one) => actions.includes((one.innerText ?? '').trim()))) node = node.parentElement;
+  return node ?? document.body;
+})()`;
+}
+
 function clickExpression(texts, scope = 'document') {
-  const root = scope === 'dialog' ? `(document.querySelector('[role="dialog"], [aria-modal="true"]') ?? document.body)` : 'document';
+  const root = scope === 'dialog' ? dialogScope() : 'document';
   return `(() => {
   const wanted = ${JSON.stringify(texts)};
-  const nodes = [...${root}.querySelectorAll('button, a, [role="button"], [role="tab"]')];
+  const root = ${root};
+  const nodes = [...root.querySelectorAll('button, a, [role="button"], [role="tab"]')].filter((node) => node.disabled !== true && node.getAttribute('aria-disabled') !== 'true');
+  const labelOf = (node) => (node.getAttribute('aria-label') ?? '').trim();
+  const textOf = (node) => (node.innerText ?? '').trim();
   for (const text of wanted) {
-    const exact = nodes.find((node) => node.innerText?.trim() === text);
+    const exact = nodes.find((node) => textOf(node) === text || labelOf(node) === text);
     if (exact !== undefined) { exact.click(); return text; }
   }
   for (const text of wanted) {
-    const loose = nodes.find((node) => node.innerText?.includes(text));
+    const loose = nodes.find((node) => textOf(node).includes(text) || labelOf(node).includes(text));
     if (loose !== undefined) { loose.click(); return '~' + text; }
   }
   return 'missing';
@@ -598,12 +637,152 @@ async function waitForGateAndReady(cdp) {
 async function openMarket(cdp) {
   const opened = await click(
     cdp,
-    ['Browse the module market', 'Choose modules', 'Browse modules', 'Open the module market', '模块市场', '浏览模块'],
+    [
+      'Browse the module market',
+      'Choose modules',
+      'Browse modules',
+      'Open the module market',
+      'Workbench module market',
+      '模块市场',
+      '浏览模块',
+      '工作台模块市场',
+    ],
     3000,
   );
   if (opened === 'missing') await fail(cdp, '打开市场页没找到入口', await bodyOf(cdp));
-  await waitForBody(cdp, /Workbench module market|Discover/u, MARKET_WAIT_MS, 'market-page');
+  await waitForBody(
+    cdp,
+    /装在这台机器上|Installed on this machine|Discover/u,
+    MARKET_WAIT_MS,
+    'market-page',
+  );
   mark('market-open');
+}
+
+async function clickStep(cdp, texts, budgetMs, scope, step) {
+  const until = Date.now() + remaining(step, budgetMs);
+  let last;
+  while (Date.now() < until) {
+    last = await click(cdp, texts, 1200, scope);
+    if (last !== 'missing') return last;
+    await sleep(1000);
+  }
+  await fail(cdp, `${step}：等不到按钮 ${JSON.stringify(texts)}（scope=${scope}，可能是 disabled 或入口文案变了）`, await bodyOf(cdp));
+}
+
+async function alertTextOf(cdp) {
+  const result = await cdp.send('Runtime.evaluate', {
+    expression: `(() => {
+  const field = document.querySelector(${JSON.stringify(SPEC_FIELD_SELECTOR)});
+  if (field === null) return '';
+  const node = ${dialogScope()}.querySelector('[role="alert"]');
+  return (node?.textContent ?? '').trim();
+})()`,
+    returnByValue: true,
+  });
+  return result.result?.value ?? '';
+}
+
+async function waitForAddDialog(cdp) {
+  const until = Date.now() + remaining('等添加模块浮层', MODULE_WAIT_MS);
+  let last = '';
+  while (Date.now() < until) {
+    const state = await cdp.send('Runtime.evaluate', {
+      expression: `(() => {
+        const dialog = ${dialogScope()};
+        const field = document.querySelector(${JSON.stringify(SPEC_FIELD_SELECTOR)});
+        const buttons = [...dialog.querySelectorAll('button')].map((node) => (node.innerText ?? '').trim() || (node.getAttribute('aria-label') ?? '').trim()).filter((one) => one !== '');
+        return JSON.stringify({ field: field !== null, buttons });
+      })()`,
+      returnByValue: true,
+    });
+    last = state.result?.value ?? '';
+    log(`add-plugin dialog wait: ${last}`);
+    if (last.includes('"field":true')) return;
+    await sleep(1500);
+  }
+  await fail(
+    cdp,
+    `添加模块浮层没出来（等不到 ${SPEC_FIELD_SELECTOR}，浮层选择器 ${DIALOG_SELECTOR}；最后看到 ${last}）`,
+    await bodyOf(cdp),
+  );
+}
+
+async function fillAddSpec(cdp, spec) {
+  const focused = await cdp.send('Runtime.evaluate', {
+    expression: `(() => { const field = document.querySelector(${JSON.stringify(SPEC_FIELD_SELECTOR)}); if (field === null) return 'missing'; field.focus(); return field.value; })()`,
+    returnByValue: true,
+  });
+  log(`add-plugin spec field: ${JSON.stringify(focused.result?.value)}`);
+  if (focused.result?.value === 'missing') {
+    await fail(cdp, `添加模块浮层里没有包名输入框 ${SPEC_FIELD_SELECTOR}`, await bodyOf(cdp));
+  }
+  await cdp.send('Input.insertText', { text: spec });
+  await sleep(500);
+  const filled = await cdp.send('Runtime.evaluate', {
+    expression: `document.querySelector(${JSON.stringify(SPEC_FIELD_SELECTOR)})?.value ?? ''`,
+    returnByValue: true,
+  });
+  const value = filled.result?.value ?? '';
+  log(`add-plugin filled: ${JSON.stringify(value)}`);
+  if (value !== spec) {
+    await fail(
+      cdp,
+      `包名没填进去（字段读到 ${JSON.stringify(value)}，要填 ${JSON.stringify(spec)}）`,
+      await bodyOf(cdp),
+    );
+  }
+}
+
+async function waitForPluginPreview(cdp) {
+  const until = Date.now() + remaining('等插件预检预览', MODULE_WAIT_MS);
+  let body = '';
+  while (Date.now() < until) {
+    body = await bodyOf(cdp);
+    const alert = await alertTextOf(cdp);
+    log(`plugin preview wait: ${alert === '' ? '' : `ALERT ${alert} :: `}${tailBody(body, 200)}`);
+    if (pluginPreviewRe.test(body)) return body;
+    if (alert !== '') {
+      writeText(`${prefix}-add-plugin-body.txt`, body);
+      await fail(cdp, `插件预检没通过：${alert}`, body);
+    }
+    await sleep(POLL_MS);
+  }
+  writeText(`${prefix}-add-plugin-body.txt`, body);
+  await fail(cdp, '预检之后没出现插件预览（等不到插件预览/插件名那两行）', body);
+}
+
+async function addPluginViaMarket(cdp, spec) {
+  const result = { spec, preview: false, installed: false, market: false };
+  await openMarket(cdp);
+  result.market = true;
+  mark('add-plugin-market');
+  await clickStep(cdp, addOpenTexts, 60_000, 'document', '点开添加模块');
+  await waitForAddDialog(cdp);
+  await fillAddSpec(cdp, spec);
+  await clickStep(cdp, addRunTexts, 30_000, 'dialog', '点预检');
+  mark('plugin-check-clicked');
+  const previewBody = await waitForPluginPreview(cdp);
+  result.preview = true;
+  mark('plugin-preview');
+  writeText(`${prefix}-add-plugin-preview-body.txt`, previewBody);
+  await clickStep(cdp, addRunTexts, 30_000, 'dialog', '点安装');
+  mark('plugin-install-clicked');
+  const doneBody = await waitForBody(
+    cdp,
+    /装上了：|Installed:|模块安装失败|Module install failed|已取消|Cancelled/u,
+    INSTALL_WAIT_MS,
+    'plugin-installed',
+  );
+  if (!pluginInstalledRe.test(doneBody)) {
+    writeText(`${prefix}-add-plugin-body.txt`, doneBody);
+    await fail(cdp, '安装结果不是「装上了」那一行（失败或被取消）', doneBody);
+  }
+  result.installed = true;
+  mark('plugin-installed');
+  writeText(`${prefix}-add-plugin-body.txt`, doneBody);
+  writeText(`${prefix}-add-plugin.json`, `${JSON.stringify(result, null, 2)}\n`);
+  return result;
 }
 
 async function smokeMarket(cdp) {
@@ -948,14 +1127,28 @@ async function main() {
 
   if (installViaUi) await installFromPluginPage(cdp);
   const snapshot = await waitForGateAndReady(cdp);
+  if (addPluginFlagged && addPluginSpec === '') {
+    await fail(
+      cdp,
+      '--add-plugin 传了但包名是空的（flag 和 DESKTOP_SMOKE_PLUGIN 都没给出 spec，拒绝静默跳过）',
+      await bodyOf(cdp),
+      snapshot,
+    );
+  }
 
-  const result = rollbackFlow
-    ? await smokeRollback(cdp)
-    : verifyOnly
-      ? await verifyFeatures(cdp)
-      : installViaUi
-        ? await smokeMarket(cdp)
-        : { skipped: true };
+  const result =
+    addPluginSpec !== ''
+      ? await addPluginViaMarket(cdp, addPluginSpec)
+      : rollbackFlow
+        ? await smokeRollback(cdp)
+        : verifyOnly
+          ? await verifyFeatures(cdp)
+          : installViaUi
+            ? await smokeMarket(cdp)
+            : { skipped: true };
+  if (addPluginSpec !== '' && (result.preview !== true || result.installed !== true)) {
+    await fail(cdp, '添加模块流程没走完（预览或结果屏没出现）', await bodyOf(cdp), snapshot);
+  }
   if (rollbackFlow && (result.rollback !== true || result.alive !== true)) {
     await fail(cdp, '切回上一版之后工作台没起来（或那句人话没出现）', await bodyOf(cdp), snapshot);
   }

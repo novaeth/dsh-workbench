@@ -1,0 +1,44 @@
+{
+  "name": "opencli-plugin-hello",
+  "version": "1.0.0",
+  "description": "Minimal first-party opencli plugin used as the install target for the dsh-workbench desktop smoke test",
+  "type": "module",
+  "license": "Apache-2.0",
+  "author": "dsh-workbench contributors",
+  "homepage": "https://github.com/novaeth/dsh-workbench#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/novaeth/dsh-workbench.git",
+    "directory": "scripts/desktop-smoke/plugins/opencli-plugin-hello"
+  },
+  "bugs": {
+    "url": "https://github.com/novaeth/dsh-workbench/issues"
+  },
+  "keywords": [
+    "opencli",
+    "opencli-plugin",
+    "hello",
+    "smoke-test"
+  ],
+  "files": [
+    "opencli-plugin.json",
+    "hello.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "engines": {
+    "node": ">=20.18.1"
+  },
+  "peerDependencies": {
+    "@jackwener/opencli": ">=1.8.0 <2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@jackwener/opencli": {
+      "optional": true
+    }
+  }
+}
