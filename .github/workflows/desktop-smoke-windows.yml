@@ -64,6 +64,10 @@ jobs:
           $err = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app.err.log'
           $out2 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app2.log'
           $err2 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app2.err.log'
+          $out3 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app3.log'
+          $err3 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app3.err.log'
+          $out4 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app4.log'
+          $err4 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app4.err.log'
           "DESKTOP_SMOKE_APP_LOG=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "DESKTOP_SMOKE_APP_ERR=$err" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "DESKTOP_SMOKE_APP_LOG_2=$out2" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
@@ -109,6 +113,25 @@ jobs:
           }
           & node scripts/desktop-smoke/cdp-probe.mjs 9223 desktop-${{ inputs.label }}-after-restart.png --verify-only --expect-workbench
           if ($LASTEXITCODE -ne 0) { throw "cdp verify probe failed: $LASTEXITCODE" }
+          # 回退这一路要有一版"上一版"可回：把现在这份工作台抄一份进版本目录（版本号改掉），
+          # 再落一个"上一次更新已就绪"的 marker —— 界面上那一行就会出现「切回上一版」。
+          $appRoot = Join-Path $env:USERPROFILE '.dsh'
+          node scripts/desktop-smoke/self-update-rollback-fixture.mjs $appRoot '' 1.2.3-beta.2
+          if ($LASTEXITCODE -ne 0) { throw "rollback fixture failed: $LASTEXITCODE" }
+          Stop-App
+          Start-Sleep -Seconds 3
+          $app3 = Start-App 9224 $out3 $err3
+          "rollback desktop pid: $($app3.Id)"
+          if (-not (Wait-Page 9224)) { throw 'rollback instance produced no page' }
+          & node scripts/desktop-smoke/cdp-probe.mjs 9224 desktop-${{ inputs.label }}-rollback.png --self-update-rollback
+          if ($LASTEXITCODE -ne 0) { throw "cdp rollback probe failed: $LASTEXITCODE" }
+          Stop-App
+          Start-Sleep -Seconds 3
+          $app4 = Start-App 9225 $out4 $err4
+          "post-rollback desktop pid: $($app4.Id)"
+          if (-not (Wait-Page 9225)) { throw 'post-rollback instance produced no page' }
+          & node scripts/desktop-smoke/cdp-probe.mjs 9225 desktop-${{ inputs.label }}-after-rollback.png --verify-only --expect-workbench
+          if ($LASTEXITCODE -ne 0) { throw "cdp post-rollback probe failed: $LASTEXITCODE" }
       - name: Assert opencli installed
         shell: pwsh
         run: |

@@ -72,11 +72,10 @@ export function createSupplyPort(): SupplyPort {
       started: false,
       paths: {
         dir: `${request.dshHome}/self-update`,
-        script: '',
+        planFile: '',
         marker: '',
         log: '',
-        backup: '',
-        hostLock: '',
+        versionsDir: '',
       },
       forward: '',
     }),

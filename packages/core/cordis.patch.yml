@@ -62,24 +62,36 @@
         description: 允许写工作区外；需要审批的操作仍会继续询问。
 
 # ── 宿主侧热更新 ──────────────────────────────────────────────────────
-# 出厂默认 `root: []` = 不监听任何模块目录，改了宿主代码只能重启。
+# 出厂默认 `root: ["."]` = 监听 profile 目录（没有可换的东西，白白烧 fd）。
 # 这里打开监听，**两个根**：
 #   1. 外壳自己（路径由启动器通过 `DSH_WORKBENCH_ROOT` 给出）。实测过 `'.'`
 #      （以 profile 目录为基准）不行：我们的包在 profile 里只是一个指向本仓库的
 #      符号链接，从 profile 目录出发根本走不到 /Volumes/…，chokidar 收不到事件。
-#   2. **DIY 工坊**（`$DSH_HOME/workbench/diy`）。工坊里的模块是**被 link 进 profile
-#      的第三方目录**（`link:` 依赖），Node 解析到的是工坊里的真路径，而 dsh-hmr 的
-#      归属判定整个走 realpath —— 所以工坊不在 `root` 里，模块重建 `dist/host.js`
-#      就**不热换**，而且**不报错**（症状是"改了一行，界面上没变"）。
+#   2. **DIY 工坊里那些模块**（`$DSH_WORKBENCH_HOME/diy/packages`）。工坊里的模块是
+#      **被 link 进 profile 的第三方目录**（`link:` 依赖），Node 解析到的是工坊里的真
+#      路径，而 dsh-hmr 的归属判定整个走 realpath —— 所以工坊不在 `root` 里，模块重建
+#      `dist/host.js` 就**不热换**，而且**不报错**（症状是"改了一行，界面上没变"）。
 #      外壳自己就是同一个处境的现成反例：它也是 link 进来、也是靠这一条热换的。
+#
+# ⚠️ chokidar 在 macOS 上**每监听一个目录就是一个 fd**（实测：同一个 chokidar +
+# picomatch，根多一个目录就多一个 fd）。所以根的**体积**就是这里的命门：
+#   · 曾经第二个根写的是 `DSH_WORKBENCH_HOME` 本身 —— 那是**数据根**，不是工坊：
+#     实测 8,966 个目录 / **+11,926 个 fd**，把进程额度一次吃光（`~/.dsh/workbench`
+#     底下是 opencli 的 pnpm store、backup、sessions、market-index、attachments…）。
+#   · 改成 `diy/packages`（模块本体所在那一层）之后：41 个目录 / **+89 个 fd**，
+#     而 `packages/<模块>/dist/host.js` 仍在监听里（热换照旧）。
+#   · 第一个根**不再退到 `'.'`**：装出来的部署（Desktop 宿主、装进别人 profile 的
+#     `dsh web`）没有启动器设 `DSH_WORKBENCH_ROOT`，`'.'` 会落到 profile 目录 ——
+#     那里躺着整个 dsh 运行时 + 全部插件的 node_modules，于是没坏东西可换的部署
+#     反而第一个被 fd 打爆（实测 Desktop 宿主 256 的额度下满屏 EMFILE，
+#     hmr / web-search-exa / MCP 条目一个都起不来）。没有 dev 根 = 没有要监听的源码，
+#     此时只剩工坊那一个根；两个都为空才是"什么都不监听"。
 #
 # 注意 `config` 是**整体替换**（不深合并），所以 `root` 必须写全。
 # 工坊目录由启动器每次启动 `mkdir -p` 出来（chokidar 的根不存在时收不到事件）。
 - id: hmr
   config:
-    root:
-      - !!js process.env.DSH_WORKBENCH_ROOT ?? '.'
-      - !!js process.env.DSH_WORKBENCH_HOME ?? dshHomePath('workbench/diy')
+    root: !!js "[process.env.DSH_WORKBENCH_ROOT, (process.env.DSH_WORKBENCH_HOME ? process.env.DSH_WORKBENCH_HOME + '/diy/packages' : dshHomePath('workbench/diy') + '/packages')].filter(Boolean)"
     # ★ followSymlinks: false（2026-10-11 实测：这就是"改了没反应、而且不报错"的根因）
     #
     # 两个根底下的 `node_modules/@dsh-workbench/*` 是一串**互相指向**的软链

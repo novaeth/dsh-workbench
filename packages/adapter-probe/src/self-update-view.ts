@@ -37,8 +37,8 @@ function readTail(file: string): string | undefined {
   }
 }
 
-export function readSelfUpdateView(home: string, profile?: string): WorkbenchSelfUpdate | undefined {
-  const paths = selfUpdatePaths(home);
+export function readSelfUpdateView(profile?: string): WorkbenchSelfUpdate | undefined {
+  const paths = selfUpdatePaths();
   let raw: unknown;
   try {
     raw = JSON.parse(readFileSync(paths.marker, 'utf8'));
@@ -59,6 +59,7 @@ export function readSelfUpdateView(home: string, profile?: string): WorkbenchSel
   const tail = readTail(paths.log);
   return {
     state: state as SelfUpdateState,
+    ...(record.migration === true ? { migration: true } : {}),
     ...(owner === undefined ? {} : { profile: owner }),
     ...(from === undefined ? {} : { from }),
     ...(to === undefined ? {} : { to }),

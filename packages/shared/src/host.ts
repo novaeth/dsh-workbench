@@ -23,6 +23,8 @@ export * from './host/toolbox-port.js';
 export * from './host/unit-config.js';
 export * from './host/bundle-manager.js';
 export * from './host/installed-module.js';
+export * from './host/boot-record.js';
+export * from './host/profile-bundles.js';
 export * from './host/local-declaration.js';
 export * from './host/registry-declaration.js';
 export * from './host/release-probe.js';

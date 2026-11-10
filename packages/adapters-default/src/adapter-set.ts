@@ -38,7 +38,7 @@ export function createAdapterSet(ctx: DshHostContext, options: DefaultAdapterSet
     profile: {
       dirOf: profileDirOf,
       dshPlugins: dshPluginsHandler,
-      selfUpdateView: readSelfUpdateView,
+      selfUpdateView: (profile: string) => readSelfUpdateView(profile),
     },
     probe: createProbePort(),
     runtime,

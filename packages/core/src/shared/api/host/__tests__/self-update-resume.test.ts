@@ -30,7 +30,7 @@ describe('宿主起来时把上次排队那条接着排', () => {
   const supplyWith = (seen: SelfUpdateRequest[], started = true) => ({
     startSelfUpdate: (request: SelfUpdateRequest) => {
       seen.push(request);
-      return { started, paths: { dir: '', script: '', marker: '', log: '', backup: '', hostLock: '' }, forward: '' };
+      return { started, paths: { dir: '', planFile: '', marker: '', log: '', versionsDir: '' }, forward: '' };
     },
   });
 
@@ -49,7 +49,6 @@ describe('宿主起来时把上次排队那条接着排', () => {
       pkg: '@dsh-workbench/core',
       from: '1.2.2',
       to: '1.2.3',
-      hostPid: process.pid,
     });
   });
 

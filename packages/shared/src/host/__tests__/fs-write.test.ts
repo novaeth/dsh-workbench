@@ -1,9 +1,10 @@
-import { chmodSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, lstatSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
   ensureDir,
+  linkDir,
   makeExecutable,
   writeBytesFile,
   writeBytesFileAsync,
@@ -92,5 +93,29 @@ describe('宿主文件写入口', () => {
     writeFileSync(join(dir, 'f'), '', 'utf8');
     chmodSync(join(dir, 'f'), 0o644);
     expect(readdirSync(dir)).toEqual(['f']);
+  });
+
+  it('换链接不删目标：覆盖既有链接后旧目录还在（两条 kind）', () => {
+    for (const kind of ['posix', 'pwsh'] as const) {
+      const base = join(ROOT, 'flip', kind);
+      const first = join(base, 'versions', '1.2.3-beta.2');
+      const second = join(base, 'versions', '1.2.3-beta.3');
+      ensureDir(first);
+      ensureDir(second);
+      writeTextFile(join(first, 'version.txt'), 'old');
+      writeTextFile(join(second, 'version.txt'), 'new');
+      const link = join(base, 'profile', 'node_modules', '@dsh-workbench', 'core');
+
+      linkDir(first, link, kind);
+      expect(lstatSync(link).isSymbolicLink()).toBe(true);
+      expect(readFileSync(join(link, 'version.txt'), 'utf8')).toBe('old');
+
+      linkDir(second, link, kind);
+      expect(lstatSync(link).isSymbolicLink()).toBe(true);
+      expect(readFileSync(join(link, 'version.txt'), 'utf8')).toBe('new');
+      expect(readdirSync(first)).toEqual(['version.txt']);
+      expect(readFileSync(join(first, 'version.txt'), 'utf8')).toBe('old');
+      expect(statSync(second).isDirectory()).toBe(true);
+    }
   });
 });

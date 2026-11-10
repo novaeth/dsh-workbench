@@ -28,7 +28,7 @@ export interface LoggerLike {
 export interface ProfilePort {
   dirOf(ctx: DshHostContext): string | null;
   dshPlugins(ctx: DshHostContext): RouteHandler;
-  selfUpdateView(root: string, profile: string): WorkbenchSelfUpdate | undefined;
+  selfUpdateView(profile: string): WorkbenchSelfUpdate | undefined;
 }
 
 export type SupplyPluginSource = ResolvedPluginSource;
@@ -136,6 +136,29 @@ export interface ModulePort {
   }): Promise<SupplyPackageRoute | undefined>;
   isNewerVersion(left: string, right: string): boolean;
   startSelfUpdate(request: SelfUpdateRequest, onError: (message: string) => void): SelfUpdateStart;
+  restartWorkbench?(onError: (message: string) => void): RestartWorkbenchStart;
+  rollbackSelfUpdate?(request: SelfUpdateRollbackRequest, onError: (message: string) => void): SelfUpdateRollbackStart;
+}
+
+export type RestartRefusal = 'update-running' | 'desktop-manual' | 'no-entry' | 'no-seam';
+
+export interface RestartWorkbenchStart {
+  readonly started: boolean;
+  readonly refusal?: RestartRefusal | undefined;
+}
+
+export type SelfUpdateRollbackRefusal = 'no-marker' | 'no-previous' | 'no-profile' | 'no-seam';
+
+export interface SelfUpdateRollbackRequest {
+  readonly dshHome: string;
+  readonly profile: string;
+  readonly version: string;
+}
+
+export interface SelfUpdateRollbackStart {
+  readonly ok: boolean;
+  readonly version?: string | undefined;
+  readonly refusal?: SelfUpdateRollbackRefusal | undefined;
 }
 
 export interface SupplyPort extends EnvSupplyPort, ModulePort {

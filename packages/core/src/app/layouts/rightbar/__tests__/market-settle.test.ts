@@ -264,6 +264,23 @@ describe('工作台自更新：四档结果落在那一行，下次打开只说�
     ).toEqual({ kind: 'failed', at, version: '0.3.9', fix: '救法：dsh plugin add x' });
   });
 
+  it('★ 翻链成功 = pending-restart：那一行说「已就绪，重启后生效」，告知过也照样说（它还在等重启）', () => {
+    const update = { state: 'pending-restart', at, version: '0.3.9' } as const;
+
+    expect(selfUpdateMark({ update, toldAt: undefined })).toEqual({
+      kind: 'pending-restart',
+      at,
+      version: '0.3.9',
+    });
+    expect(selfUpdateMark({ update, toldAt: at })).toEqual({ kind: 'pending-restart', at, version: '0.3.9' });
+    expect(selfUpdateNote({ kind: 'pending-restart', version: '0.3.9' })).toEqual({
+      key: 'panels.market.selfUpdatePendingRestart',
+      params: {},
+      tone: 'plain',
+    });
+    expect(selfUpdateReasonHint({ kind: 'pending-restart' })).toBeUndefined();
+  });
+
   it('★ 还在跑 / 没读到 marker → 这一档不出现（不瞎报）', () => {
     expect(selfUpdateMark({ update: { state: 'running', at }, toldAt: undefined })).toBeUndefined();
     expect(selfUpdateMark({ update: null, toldAt: undefined })).toBeUndefined();

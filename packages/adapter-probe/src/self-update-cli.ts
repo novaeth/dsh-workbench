@@ -49,17 +49,6 @@ export function desktopSelfUpdateCli(
   };
 }
 
-export interface HostLaunch {
-  readonly file: string;
-  readonly args: readonly string[];
-  readonly env: Readonly<Record<string, string>>;
-}
-
-export function desktopHostLaunch(proc: SelfUpdateProcess = process): HostLaunch | undefined {
-  if (hostSurface({ proc }).deployment !== 'desktop') return undefined;
-  return { file: proc.execPath, args: [], env: {} };
-}
-
 export function desktopPnpmEntry(
   proc: SelfUpdateProcess = process,
   exists: (path: string) => boolean = existsSync,

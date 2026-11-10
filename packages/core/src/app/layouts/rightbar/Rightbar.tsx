@@ -27,6 +27,7 @@ import { rightbarPresentation } from './presentation';
 import { createSuiteWorld } from './suite-world';
 import { useBoardWorkspace, useEnabledUnits, type PanelBoardView } from './use-panels';
 import { reportPanelCrash, setPanelWorkspace } from '@/shared/hooks/panel-state-report';
+import { useBootOk } from '@/shared/hooks/boot-ok';
 import { Button, IconPanelLeftOutlineRegular, IconRefreshOutlineRegular, TextShimmer } from '@deepseek-ai/dsh-client-ui-primitives';
 import styles from './Rightbar.module.css';
 
@@ -237,6 +238,7 @@ function BoardContent({
 }
 
 export function Rightbar(props: RightbarProps) {
+  useBootOk();
   const { modules, manifests, titleKeyOf, state, sessions, workspaces, panelToken, refreshPanel, capabilities, board } = useRightbarWiring(props);
   const boardWorkspace = board.path;
   const panelBoard = useEnabledUnits(panelToken, boardWorkspace);

@@ -21,7 +21,7 @@ function rig(input: {
       if (input.state !== undefined) {
         writeFileSync(marker, JSON.stringify({ pkg: PKG, state: input.state, version: '0.1.1' }));
       }
-      return { started: true, paths: { dir, script: '', marker, log: '' }, forward: '' };
+      return { started: true, paths: { dir, planFile: '', marker, log: '', versionsDir: '' }, forward: '' };
     },
   } as unknown as Pick<SupplyPort, 'startSelfUpdate'>;
   return { dir, marker, supply };

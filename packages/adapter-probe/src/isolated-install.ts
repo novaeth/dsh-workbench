@@ -1,9 +1,6 @@
-import { storeMismatchIn } from './store-mismatch.js';
+import { installWithRetry, type InstallAttempt, type InstallRetryResult } from './install-retry.js';
 
-export interface IsolatedInstallRun {
-  readonly ok: boolean;
-  readonly detail: string;
-}
+export type IsolatedInstallRun = InstallAttempt;
 
 export interface IsolatedInstallDeps {
   readonly run: (command: string) => Promise<IsolatedInstallRun>;
@@ -12,48 +9,19 @@ export interface IsolatedInstallDeps {
   readonly log?: ((message: string) => void) | undefined;
 }
 
-export interface IsolatedInstallResult {
-  readonly ok: boolean;
-  readonly detail: string;
-  readonly reinstalled: boolean;
-}
-
-function isStoreMismatch(run: IsolatedInstallRun): boolean {
-  return !run.ok && storeMismatchIn(run.detail);
-}
-
-function rawOf(detail: string): string {
-  const text = detail.trim();
-  return text === '' ? '（没有输出）' : text;
-}
-
-function rawPair(first: IsolatedInstallRun, second: IsolatedInstallRun): string {
-  return `原始输出：第一遍 ${rawOf(first.detail)}；第二遍 ${rawOf(second.detail)}`;
-}
+export type IsolatedInstallResult = InstallRetryResult;
 
 export async function installIsolatedRuntime(
   deps: IsolatedInstallDeps,
   command: string,
 ): Promise<IsolatedInstallResult> {
-  const first = await deps.run(command);
-  const storeMismatch = isStoreMismatch(first);
-  const unresolved = first.ok && !deps.resolves();
-  if (!storeMismatch && !unresolved) {
-    return { ok: first.ok, detail: first.detail, reinstalled: false };
-  }
-
-  const why = storeMismatch
-    ? '第一遍没装上（下载缓存和已有的 node_modules 对不上）'
-    : '第一遍装完还是读不到';
-  deps.log?.(`[dsh-workbench] opencli 安装重来一遍：${why}`);
-  deps.drop();
-
-  const second = await deps.run(command);
-  const settled = second.ok && deps.resolves();
-  const outcome = settled ? '装好了' : second.ok ? '还是读不到' : '还是没装上';
-  return {
-    ok: settled,
-    detail: `opencli 装了两遍：${why}，清掉 toolchain/node_modules 重装后${outcome}。${rawPair(first, second)}`,
-    reinstalled: true,
-  };
+  return installWithRetry(deps, command, {
+    what: 'opencli',
+    dropLabel: 'toolchain/node_modules',
+    mismatch: '第一遍没装上（下载缓存和已有的 node_modules 对不上）',
+    unresolved: '第一遍装完还是读不到',
+    settled: '装好了',
+    unresolvedAgain: '还是读不到',
+    failedAgain: '还是没装上',
+  });
 }

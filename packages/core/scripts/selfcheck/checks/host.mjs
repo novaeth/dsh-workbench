@@ -3,6 +3,25 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PKG, PKG_URL, fakePost, fakeRes, fakeStreamRes } from '../lib.mjs';
 
+async function withIsolatedHome(fn) {
+  const before = { home: process.env.DSH_HOME, workbench: process.env.DSH_WORKBENCH_HOME };
+  const dir = mkdtempSync(join(tmpdir(), 'wb-selfcheck-host-'));
+  process.env.DSH_HOME = dir;
+  process.env.DSH_WORKBENCH_HOME = join(dir, 'workbench');
+  try {
+    return await fn();
+  } finally {
+    for (const [key, value] of [
+      ['DSH_HOME', before.home],
+      ['DSH_WORKBENCH_HOME', before.workbench],
+    ]) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 export const checks = [
   {
     title: 'dist/host/index.js 导出 apply() 且声明 inject: [webServer]',
@@ -52,7 +71,7 @@ export const checks = [
           },
         },
       };
-      await host.apply(hostCtx);
+      await withIsolatedHome(() => host.apply(hostCtx));
       ctx.routes = routes;
       ctx.listeners = listeners;
       ctx.hostProvided = hostProvided;
@@ -86,7 +105,9 @@ export const checks = [
           logger: { info: () => {}, warn: () => {} },
           webServer: { register: () => () => {} },
         };
-        await host.apply(fakeCtx, { adapterSet: '@dsh-workbench/' + ['adapter', 'fixture'].join('-') });
+        await withIsolatedHome(() =>
+          host.apply(fakeCtx, { adapterSet: '@dsh-workbench/' + ['adapter', 'fixture'].join('-') }),
+        );
         const set = provided.get('workbenchAdapters');
         const data = await set.data.read({ kind: 'http', url: 'http://fixture.invalid/' });
         const defaultsFilled =
@@ -250,7 +271,8 @@ export const checks = [
       process.env.DSH_PROFILE = 'wrong-profile-from-env';
       const withProfile = [];
       const provided = new Map();
-      await host.apply({
+      await withIsolatedHome(() =>
+        host.apply({
         effect: (fn) => {
           fn();
         },
@@ -270,7 +292,8 @@ export const checks = [
             };
           },
         },
-      });
+        }),
+      );
 
       const profileRoute = withProfile.find((r) => r.path === '/workbench/api');
       ctx.profileRoute = profileRoute;

@@ -403,11 +403,15 @@ export function buildMarketMocks(roster: readonly UnitManifest[]): readonly Mark
     },
     {
       id: 'workbench-restart-pending',
-      label: '工作台更新完了但这份进程里还是旧的（盘上 0.1.19、跑着的 0.1.18：状态那格是黄点「重启后生效」——重启一次 dsh 才真的换上）',
+      label: '工作台更新完了但这份进程里还是旧的（盘上 0.1.19、跑着的 0.1.18：黄点「重启后生效」+ 那行话说「新版本已就绪」，钮是「立即重启」与「稍后」——点了才重启，点「稍后」这一拍就收起来）',
       manifests: [],
       capabilities: {},
       workbench: { pkg: '@dsh-workbench/core', installed: '0.1.19', running: '0.1.18' },
-      expect: { rows: 0, workbenchState: 'pending-restart', workbenchActions: [] },
+      expect: {
+        rows: 0,
+        workbenchState: 'pending-restart',
+        workbenchActions: ['restart-workbench', 'later-restart'],
+      },
     },
     {
       id: 'workbench-migrate-pending',

@@ -425,6 +425,23 @@ export function createMarketService(options: {
         ...(logger === undefined ? {} : { logger }),
       });
     },
+    async restartWorkbench() {
+      const restart = supply.restartWorkbench;
+      if (restart === undefined) return { started: false, refusal: 'no-seam' as const };
+      return restart(() => undefined);
+    },
+    async rollbackWorkbench(version: string) {
+      const rollback = supply.rollbackSelfUpdate;
+      const home = dshHome?.();
+      const profile = profileName?.();
+      if (rollback === undefined) return { ok: false, refusal: 'no-seam' as const };
+      if (home === undefined || profile === undefined || profile === null) {
+        return { ok: false, refusal: 'no-profile' as const };
+      }
+      return rollback({ dshHome: home, profile, version }, (message: string) =>
+        logger?.warn?.(`[dsh-workbench] ${message}`),
+      );
+    },
     async updateWorkbench(pkg) {
       return updateWorkbenchOnce({
         supply,

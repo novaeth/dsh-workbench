@@ -120,10 +120,21 @@ export function workshopSeedPlan(
   };
 }
 
-export function runDetached(command: SeedCommand, onError: SeedLog, seam?: Seam | undefined): void {
+export interface DetachedOptions {
+  readonly label?: string | undefined;
+  readonly what?: string | undefined;
+}
+
+export function runDetached(
+  command: SeedCommand,
+  onError: SeedLog,
+  seam?: Seam | undefined,
+  options: DetachedOptions = {},
+): boolean {
+  const what = options.what ?? '自举脚本';
   if (seam === undefined) {
-    onError(`自举脚本没跑起来（${command.file}）：宿主没给执行缝`);
-    return;
+    onError(`${what}没跑起来（${command.file}）：宿主没给执行缝`);
+    return false;
   }
   try {
     const handle = seam.spawn({
@@ -132,11 +143,13 @@ export function runDetached(command: SeedCommand, onError: SeedLog, seam?: Seam 
       lifetime: 'host',
       logFile: command.log,
       env: command.env,
-      label: 'seed',
+      label: options.label ?? 'seed',
     });
-    handle.onError((error) => onError(`自举脚本没跑起来（${command.file}）：${String(error)}`));
+    handle.onError((error) => onError(`${what}没跑起来（${command.file}）：${String(error)}`));
+    return true;
   } catch (error) {
-    onError(`自举脚本没跑起来（${command.file}）：${String(error)}`);
+    onError(`${what}没跑起来（${command.file}）：${String(error)}`);
+    return false;
   }
 }
 

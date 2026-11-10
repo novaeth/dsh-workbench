@@ -1,4 +1,5 @@
 import { createElement as h, useLayoutEffect, useState } from 'react';
+import { clientSurface } from '@/shared/api/platform/client';
 import type { ReactNode, Translate } from '@dsh-workbench/shared';
 import type { UnitManifest } from '@dsh-workbench/shared';
 import { useHostWrite } from '@/shared/hooks/use-host-write';
@@ -7,7 +8,6 @@ import type { CapabilityMap } from '@/shared/hooks/use-capabilities';
 
 import { MIN_BUSY_MS } from '@dsh-workbench/shared';
 import { useVisibleBusy } from '@/shared/hooks/use-visible-busy';
-import { clientSurface } from '@/shared/api/platform/client';
 
 import { marketSettled } from './market-freshness';
 import { useSelfUpdateTold, useSettleHold } from './market-settle-hold';
@@ -182,6 +182,22 @@ function sectionChecksOf(input: {
   };
 }
 
+function workbenchSelfOf(input: {
+  readonly workbench: WorkbenchVersion | null | undefined;
+  readonly selfUpdate?: WorkbenchSelfUpdate | null | undefined;
+  readonly toldAt?: string | null | undefined;
+  readonly canRestart: boolean;
+  readonly dismissedId: string | null;
+}): MarketRow | undefined {
+  const row: MarketRow | undefined = workbenchRow(
+    input.workbench,
+    input.selfUpdate,
+    input.toldAt,
+    input.canRestart,
+  );
+  return row === undefined || input.dismissedId !== row.id ? row : { ...row, restartDismissed: true };
+}
+
 export function MarketView({
   t,
   titleOf,
@@ -208,7 +224,7 @@ export function MarketView({
   changed = {},
   onDetailChange,
 }: MarketViewProps) {
-  const { pending, setPending, confirming, setConfirming, failed, setFailed, notice, setNotice } =
+  const { pending, setPending, confirming, setConfirming, failed, setFailed, notice, setNotice, restartLater, setRestartLater } =
     useMarketTransient({ mock, onPending });
   const [detailId, setDetailId] = useState<string | null>(null);
   const { names, effective, updateMap, rows, shared, installedList, byDefault, steady, pinned, removing, busyId } =
@@ -241,12 +257,13 @@ export function MarketView({
   const effectiveSelfUpdate = mock?.selfUpdate ?? selfUpdate;
   const selfUpdateTold = useSelfUpdateTold(mock === undefined ? effectiveSelfUpdate : null, mock === undefined);
   const pendingRow = pendingRowOf({ pending, removing, rows, names });
-  const self = workbenchRow(
-    mock === undefined ? workbench : mock.workbench,
-    effectiveSelfUpdate,
-    mock === undefined ? selfUpdateTold : undefined,
-    clientSurface().deployment === 'desktop',
-  );
+  const self = workbenchSelfOf({
+    workbench: mock === undefined ? workbench : mock.workbench,
+    selfUpdate: effectiveSelfUpdate,
+    toldAt: mock === undefined ? selfUpdateTold : undefined,
+    canRestart: clientSurface().deployment !== 'desktop',
+    dismissedId: restartLater,
+  });
   const shown = withPinnedRow(pendingRow === undefined ? rows : [...rows, pendingRow], pinned);
   const pluginSource = mock?.plugins ?? plugins ?? null;
   const pluginList = installedPluginRows(pluginSource ?? [], byDefault, changed);
@@ -258,7 +275,7 @@ export function MarketView({
     onDetailChange?.(detailOpen);
   }, [detailOpen, onDetailChange]);
 
-  const seats = { setPending, setHeld: steady.hold, setConfirming, setFailed, setNotice };
+  const seats = { setPending, setHeld: steady.hold, setConfirming, setFailed, setNotice, setLaterRestart: setRestartLater };
   const act = marketActOf({
     t,
     mocked: mock !== undefined,

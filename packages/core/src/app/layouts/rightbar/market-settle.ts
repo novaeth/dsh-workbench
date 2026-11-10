@@ -129,7 +129,13 @@ export interface SelfUpdateOk {
   readonly at?: string;
 }
 
-export type SelfUpdateMark = SelfUpdateStop | SelfUpdateQueued | SelfUpdateOk;
+export interface SelfUpdatePendingRestart {
+  readonly kind: 'pending-restart';
+  readonly at?: string;
+  readonly version?: string;
+}
+
+export type SelfUpdateMark = SelfUpdateStop | SelfUpdateQueued | SelfUpdateOk | SelfUpdatePendingRestart;
 
 function stopKindOf(state: WorkbenchSelfUpdate['state']): SelfUpdateStop['kind'] | undefined {
   return state === 'failed' || state === 'restored' || state === 'rolled-back' ? state : undefined;
@@ -183,6 +189,13 @@ export function selfUpdateMark(input: {
   const at = update.at;
   if (update.state === 'queued') return { kind: 'queued', ...(at === undefined ? {} : { at }) };
   if (update.state === 'ok') return { kind: 'ok', ...(at === undefined ? {} : { at }) };
+  if (update.state === 'pending-restart') {
+    return {
+      kind: 'pending-restart',
+      ...(at === undefined ? {} : { at }),
+      ...(update.version === undefined ? {} : { version: update.version }),
+    };
+  }
   const kind = stopKindOf(update.state);
   if (kind === undefined) return undefined;
   if (at !== undefined && toldAt !== undefined && toldAt !== null && at <= toldAt) return undefined;
@@ -191,6 +204,9 @@ export function selfUpdateMark(input: {
 
 export function selfUpdateNote(mark: SelfUpdateMark): MarketNote | undefined {
   if (mark.kind === 'ok') return undefined;
+  if (mark.kind === 'pending-restart') {
+    return { key: 'panels.market.selfUpdatePendingRestart', params: {}, tone: 'plain' };
+  }
   if (mark.kind === 'queued') {
     return { key: 'panels.market.selfUpdateQueued', params: {}, tone: 'plain' };
   }
@@ -210,6 +226,7 @@ const CAUSE_HINT: Readonly<Record<SelfUpdateCause, MarketHintKey>> = {
   occupied: 'panels.market.selfUpdateReasonOccupied',
   incomplete: 'panels.market.selfUpdateReasonIncomplete',
   'rollback-failed': 'panels.market.selfUpdateReasonRollbackFailed',
+  'boot-failed': 'panels.market.selfUpdateReasonBootFailed',
 };
 
 export function selfUpdateReasonHint(mark: SelfUpdateMark): MarketHintKey | undefined {

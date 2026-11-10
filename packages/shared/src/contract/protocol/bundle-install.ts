@@ -77,7 +77,7 @@ export function isShippedApplication(value: BundleApplication): boolean {
   return (SHIPPED_APPLICATIONS as readonly BundleApplication[]).includes(value);
 }
 
-export const SELF_UPDATE_STATES = ['running', 'queued', 'ok', 'restored', 'rolled-back', 'failed'] as const;
+export const SELF_UPDATE_STATES = ['running', 'queued', 'ok', 'restored', 'rolled-back', 'failed', 'pending-restart'] as const;
 
 export type SelfUpdateState = (typeof SELF_UPDATE_STATES)[number];
 
@@ -85,12 +85,13 @@ export const SELF_UPDATE_RUNNING_TTL_MS = 600_000;
 
 export const SELF_UPDATE_QUEUED_TTL_MS = 43_200_000;
 
-export const SELF_UPDATE_REASONS = ['occupied', 'incomplete', 'rollback-failed'] as const;
+export const SELF_UPDATE_REASONS = ['occupied', 'incomplete', 'rollback-failed', 'boot-failed'] as const;
 
 export type SelfUpdateReason = (typeof SELF_UPDATE_REASONS)[number];
 
 export interface WorkbenchSelfUpdate {
   readonly state: SelfUpdateState;
+  readonly migration?: boolean;
   readonly profile?: string;
   readonly from?: string;
   readonly to?: string;

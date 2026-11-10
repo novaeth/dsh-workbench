@@ -140,18 +140,7 @@ export function MarketRowFailure({
   return <div className={styles.marketFailure}>{failure.message}</div>;
 }
 
-function ActionLabel({
-  t,
-  row,
-  action,
-}: {
-  readonly t: Translate;
-  readonly row: MarketRow;
-  readonly action: MarketRowAction;
-}) {
-  if (action === 'update-workbench' && row.updateLabelKey !== undefined) {
-    return <>{t(row.updateLabelKey)}</>;
-  }
+function ActionLabel({ t, action }: { readonly t: Translate; readonly action: MarketRowAction }) {
   return <>{t(ACTION_LABEL_KEY[action])}</>;
 }
 
@@ -206,7 +195,7 @@ export function MarketRowControls({
                   else onRequest(action);
                 }}
               >
-                <ActionLabel t={t} row={row} action={action} />
+                <ActionLabel t={t} action={action} />
               </Button>
             );
           })}

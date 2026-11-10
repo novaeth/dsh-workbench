@@ -9,7 +9,6 @@ export interface SelfUpdateResumeInput {
   readonly supply: Pick<ModulePort, 'startSelfUpdate'> | undefined;
   readonly home: string;
   readonly profileDir: string | null;
-  readonly hostPid?: number | undefined;
 }
 
 export function resumeQueuedSelfUpdate(ctx: DshHostContext, input: SelfUpdateResumeInput): boolean {
@@ -24,7 +23,6 @@ export function resumeQueuedSelfUpdate(ctx: DshHostContext, input: SelfUpdateRes
       from: marker.from ?? '',
       to: marker.to ?? '',
       pinned: false,
-      hostPid: input.hostPid ?? process.pid,
     },
     (message) => warn(ctx, message),
   );

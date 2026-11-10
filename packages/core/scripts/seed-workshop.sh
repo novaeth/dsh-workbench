@@ -230,6 +230,17 @@ process.stdout.write([shell, installed("core"), installed("module-tools"), insta
 ' "$SHELL_ROOT" "$DIY_DIR" 2>/dev/null || true
 }
 
+# 工坊里那三个包的**实装版本**是否都等于基准。
+#
+# 为什么不能拿 `IN_REPO` 当这个判据：它只说明"跑脚本这份副本在仓库里"，不说明"工坊里那三个
+# 包是 link" —— 两者在 dev 机上正好相反（profile 那份 core 是指进本仓的软链，工坊里却是真
+# 装的一代）。见 run_sync 里那一段。
+installed_generation_is() {
+  local versions=()
+  while IFS= read -r line; do versions+=("$line"); done < <(read_generations)
+  [ "${versions[1]:-}" = "$1" ] && [ "${versions[2]:-}" = "$1" ] && [ "${versions[3]:-}" = "$1" ]
+}
+
 # 退避：上一轮在**同一代**上失败过、且还在窗口内 → 不重试。
 #
 # 为什么必须退避：entry 每次启动都跑，不自愈的话一个装不动的工坊会在每次启动时后台起一轮
@@ -370,7 +381,15 @@ run_sync() {
   fi
 
   # 仓库副本：三个包都是 link 进本仓的，改源码工坊当场就变 —— 天然同代。
-  if [ "$IN_REPO" = "1" ]; then
+  #
+  # ⚠️ `IN_REPO` 说的是**跑脚本这份副本**在仓库里，不是"工坊里那三个包是 link"。dev 机上
+  # profile 那份 core 是指进本仓的软链（于是 IN_REPO=1），工坊里却可能是**真装**的旧一代；
+  # 只看 IN_REPO 就会在这里判"天然同代"、写 ok 走人 —— 那一代永远不动，而 entry 下次启动
+  # 照旧比出不同代、再起一轮后台自愈（实测的死循环：`seed.log` 里"工坊与基准不同代 … 后台
+  # 自愈"和"工坊是仓库副本（link:），天然同代，写 ok"交替刷，每轮还真的去跑 pnpm/npm）。
+  # 所以只认**实装版本**：实装 == 基准才算天然同代；不同代就往下走真自愈（link: 装法会把
+  # 工坊指回本仓，装完复核自然同代）。
+  if [ "$IN_REPO" = "1" ] && installed_generation_is "$shell_v"; then
     write_sync_state ok "$shell_v" ""
     log_line "→ 工坊是仓库副本（link:），天然同代，写 ok（${shell_v}）"
     return 0

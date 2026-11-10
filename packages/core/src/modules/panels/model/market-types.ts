@@ -1,7 +1,7 @@
 import type { Need } from '@dsh-workbench/shared';
 import type { ProvisionAction } from '@dsh-workbench/shared/host';
 import type { BundleCancellation, BundleChange, BundleInstalledPlugin } from '@/kernel/contract/bundle-install';
-import type { InstalledModule } from '@dsh-workbench/shared/host';
+import type { InstalledModule, RestartWorkbenchStart, SelfUpdateRollbackStart } from '@dsh-workbench/shared/host';
 import type { UnitCapability } from '@dsh-workbench/shared/host';
 import type { PluginUninstallOutcome, PluginUpdateOutcome } from './plugin-actions';
 import type { SharedDependency } from './market-dependency';
@@ -58,6 +58,8 @@ export interface MarketService {
   replaceBundle(spec: string, options?: BundleInstallOptions): Promise<BundleInstallOutcome>;
   updateBundle(unit: string): Promise<BundleInstallOutcome | null>;
   updateWorkbench(pkg: string): Promise<BundleInstallOutcome>;
+  restartWorkbench(): Promise<RestartWorkbenchStart>;
+  rollbackWorkbench(version: string): Promise<SelfUpdateRollbackStart>;
   migrateWorkbench(): Promise<{ readonly added: number; readonly files: number }>;
   dismissFollowUp(id: string): Promise<void>;
   removeBundle(pkg: string): Promise<BundleRemoveOutcome>;

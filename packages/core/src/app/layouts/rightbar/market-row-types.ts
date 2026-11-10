@@ -21,6 +21,9 @@ export type MarketRowAction =
   | 'update-plugin'
   | 'uninstall-plugin'
   | 'update-workbench'
+  | 'restart-workbench'
+  | 'rollback-workbench'
+  | 'later-restart'
   | 'migrate-workbench'
   | 'dismiss-followup';
 
@@ -54,6 +57,7 @@ export interface MarketNote {
     | 'panels.market.workbenchBroken'
     | 'panels.market.workbenchBrokenNoFix'
     | 'panels.market.selfUpdateQueued'
+    | 'panels.market.selfUpdatePendingRestart'
     | 'panels.market.selfUpdateRestored'
     | 'panels.market.selfUpdateRolledBack'
     | 'panels.market.selfUpdateFailed'
@@ -72,6 +76,8 @@ export type MarketHintKey =
   | 'panels.market.selfUpdateReasonOccupied'
   | 'panels.market.selfUpdateReasonIncomplete'
   | 'panels.market.selfUpdateReasonRollbackFailed'
+  | 'panels.market.selfUpdateReasonBootFailed'
+  | 'panels.market.selfUpdateMigration'
   | 'panels.market.selfUpdateReasonUnknown';
 
 export interface ModuleUpdate {
@@ -109,8 +115,11 @@ export interface MarketRow {
   readonly market?: MarketInstalledModule;
   readonly pkg?: string;
   readonly local?: boolean;
+  readonly canRestart?: boolean;
+  readonly canRollback?: boolean;
+  readonly rollbackVersion?: string;
+  readonly restartDismissed?: boolean;
   readonly versionLabel?: string;
-  readonly updateLabelKey?: string;
   readonly defaultShown?: boolean;
   readonly defaultChanged?: number;
   readonly broken?: boolean;

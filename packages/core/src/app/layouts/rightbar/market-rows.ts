@@ -13,6 +13,7 @@ import type {
   ModuleUpdate,
 } from './market-row-types';
 import type { SharedRow } from './market-shared-rows';
+import { workbenchActionsOf } from './market-workbench-row';
 
 import type { CapabilityMap } from '@/shared/hooks/use-capabilities';
 
@@ -224,12 +225,7 @@ export function marketSwitchLocked(row: MarketRow): boolean {
 }
 
 export function marketActions(row: MarketRow): MarketRowAction[] {
-  if (row.workbench === true) {
-    if (row.followUp !== undefined && row.state === 'pending-followup') {
-      return row.followUp.hard ? ['migrate-workbench'] : ['migrate-workbench', 'dismiss-followup'];
-    }
-    return row.canUpdate ? ['update-workbench'] : [];
-  }
+  if (row.workbench === true) return workbenchActionsOf(row);
   if (row.plugin === true) {
     return [
       ...(row.canUpdate ? (['update-plugin'] as const) : []),

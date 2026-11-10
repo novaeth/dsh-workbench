@@ -238,19 +238,17 @@ export async function call(
 
 export function selfUpdatePathsOf(dshHome: string): {
   dir: string;
-  script: string;
+  planFile: string;
   marker: string;
   log: string;
-  backup: string;
-  hostLock: string;
+  versionsDir: string;
 } {
   const dir = path.join(dshHome, 'workbench');
   return {
     dir,
-    script: path.join(dir, 'self-update.sh'),
+    planFile: path.join(dir, 'self-update-plan.json'),
     marker: path.join(dir, 'self-update.json'),
     log: path.join(dir, 'self-update.log'),
-    backup: path.join(dir, 'backup'),
-    hostLock: path.join(dir, 'host.lock'),
+    versionsDir: path.join(dir, 'versions'),
   };
 }

@@ -16,6 +16,8 @@ describe('provision 请求体：每类动作各有各的目标字段', () => {
       ['update-plugin', 'name'],
       ['uninstall-plugin', 'name'],
       ['update-workbench', 'name'],
+      ['restart-workbench', 'name'],
+      ['rollback-workbench', 'name'],
       ['migrate-workbench', 'name'],
       ['dismiss-followup', 'id'],
     ]);
@@ -120,5 +122,23 @@ describe('provision 请求体：每类动作各有各的目标字段', () => {
     }
     const parsed = parseProvisionBody({ action: 'destroy' });
     if (!parsed.ok) expect(parsed.message).toContain('不认识的 action：destroy');
+  });
+});
+
+describe('回退请求：要回到哪一版得说清', () => {
+  it('★ name + version 都要；少一个就打回', () => {
+    const ok = parseProvisionBody({ action: 'rollback-workbench', name: '@dsh-workbench/core', version: '1.2.3-beta.2' });
+    expect(ok).toEqual({
+      ok: true,
+      request: { action: 'rollback-workbench', name: '@dsh-workbench/core', version: '1.2.3-beta.2' },
+    });
+    expect(parseProvisionBody({ action: 'rollback-workbench', name: '@dsh-workbench/core' })).toMatchObject({
+      ok: false,
+      code: 'workbench/no-version',
+    });
+    expect(parseProvisionBody({ action: 'rollback-workbench', version: '1.2.3-beta.2' })).toMatchObject({
+      ok: false,
+      code: 'workbench/no-name',
+    });
   });
 });

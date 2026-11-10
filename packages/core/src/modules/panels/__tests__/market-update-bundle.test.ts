@@ -120,7 +120,7 @@ describe('模块更新那一跳：跑完重新读盘对账', () => {
               marker,
               JSON.stringify({ pkg: PKG, profile: 'workbench', from: '0.1.0', to: '0.1.1', state: 'ok', version: '0.1.1' }),
             );
-            return { started: true, paths: { dir, script: '', marker, log: '' }, forward: '' };
+            return { started: true, paths: { dir, planFile: '', marker, log: '', versionsDir: '' }, forward: '' };
           },
         } as unknown as SupplyPort,
       }),
@@ -150,7 +150,7 @@ describe('模块更新那一跳：跑完重新读盘对账', () => {
               marker,
               JSON.stringify({ pkg: PKG, profile: 'workbench', from: '0.1.0', to: '0.1.1', state: 'failed', version: '0.1.0' }),
             );
-            return { started: true, paths: { dir, script: '', marker, log: '' }, forward: '' };
+            return { started: true, paths: { dir, planFile: '', marker, log: '', versionsDir: '' }, forward: '' };
           },
         } as unknown as SupplyPort,
       }),

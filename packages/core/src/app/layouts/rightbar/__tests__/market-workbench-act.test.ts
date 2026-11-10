@@ -25,6 +25,7 @@ function seatsOf() {
     held: [] as Array<HeldRow | undefined>,
     failed: [] as Array<{ id: string; message: string } | null>,
     notice: [] as Array<string | null>,
+    laterRestart: [] as Array<string | null>,
   };
   return {
     seen,
@@ -34,6 +35,7 @@ function seatsOf() {
       setConfirming: () => undefined,
       setFailed: (next: { id: string; message: string } | null) => seen.failed.push(next),
       setNotice: (next: string | null) => seen.notice.push(next),
+      setLaterRestart: (next: string | null) => seen.laterRestart.push(next),
     },
   };
 }
@@ -388,5 +390,71 @@ describe('卸载：名字在点下去那一刻就快照下来', () => {
 
     const shown = pendingRowOf({ pending, removing: 'delivery', rows: [], names: new Map() });
     expect(shown === undefined ? '' : marketRowTitle(shown, () => '###')).toBe('交付流水线');
+  });
+});
+
+describe('就绪态那两颗钮：点了才重启，「稍后」一个请求都不发', () => {
+  it('★ 点「立即重启」→ 宿主被调一次（动作名与包名原样带过去），转圈挂上', async () => {
+    const { seen, seats } = seatsOf();
+    const sent: Record<string, unknown>[] = [];
+    const act = marketActOf({
+      t,
+      mocked: false,
+      rowOf: () => row('workbench'),
+      seats,
+      send: async (body) => {
+        sent.push(body);
+        return { ok: true, value: { action: 'restart-workbench', restart: { started: true } } };
+      },
+      onChanged: () => undefined,
+    });
+
+    await act('workbench', 'restart-workbench');
+
+    expect(sent).toEqual([{ action: 'restart-workbench', name: '@p/workbench' }]);
+    expect(seen.pending.at(-1)).toMatchObject({ id: 'workbench', action: 'restart-workbench' });
+    expect(seen.notice.at(-1)).toBeNull();
+  });
+
+  it('★ 点「稍后」→ 一个请求都不发，只把那一行收起来（状态照旧）', async () => {
+    const { seen, seats } = seatsOf();
+    let calls = 0;
+    const act = marketActOf({
+      t,
+      mocked: false,
+      rowOf: () => row('workbench'),
+      seats,
+      send: async () => {
+        calls += 1;
+        return landed('applied');
+      },
+      onChanged: () => undefined,
+    });
+
+    await act('workbench', 'later-restart');
+
+    expect(calls).toBe(0);
+    expect(seen.laterRestart).toEqual(['workbench']);
+    expect(seen.pending).toEqual([]);
+  });
+
+  it('★ 宿主拒绝（Desktop 那一格）→ 收起转圈，给一句人话', async () => {
+    const { seen, seats } = seatsOf();
+    const act = marketActOf({
+      t,
+      mocked: false,
+      rowOf: () => row('workbench'),
+      seats,
+      send: async () => ({
+        ok: true,
+        value: { action: 'restart-workbench', restart: { started: false, refusal: 'desktop-manual' } },
+      }),
+      onChanged: () => undefined,
+    });
+
+    await act('workbench', 'restart-workbench');
+
+    expect(seen.notice.at(-1)).toBe('panels.market.restartRefused');
+    expect(seen.pending.at(-1)).toBeNull();
   });
 });

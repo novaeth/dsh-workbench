@@ -16,6 +16,8 @@ export type ProvisionAction =
   | 'update-plugin'
   | 'uninstall-plugin'
   | 'update-workbench'
+  | 'restart-workbench'
+  | 'rollback-workbench'
   | 'migrate-workbench'
   | 'dismiss-followup';
 

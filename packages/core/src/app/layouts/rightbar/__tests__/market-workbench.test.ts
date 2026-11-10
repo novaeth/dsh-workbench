@@ -4,6 +4,7 @@ import { dictionaries } from '@dsh-workbench/shared';
 import type { WorkbenchVersion } from '@/kernel/contract/bundle-install';
 import { MARKET_DOT, MARKET_STATE_KEY, installedRows, marketActions, marketRows } from '../market-rows';
 import { marketHintOf } from '../market-hint';
+import { ACTION_LABEL_KEY } from '../market-view-text';
 import { workbenchRow } from '../market-workbench-row';
 import type { MarketRow } from '../market-rows';
 
@@ -75,7 +76,13 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
     expect(row?.hint).toBeUndefined();
     expect(MARKET_DOT['pending-restart']).toBe('warning');
     expect(MARKET_STATE_KEY['pending-restart']).toBe('panels.market.pendingRestart');
-    expect(marketActions(row as MarketRow)).toEqual([]);
+    expect(marketActions(row as MarketRow)).toEqual(['later-restart']);
+    expect(
+      marketActions({ ...(row as MarketRow), canRestart: true }),
+    ).toEqual(['restart-workbench', 'later-restart']);
+    expect(
+      marketActions({ ...(row as MarketRow), canRestart: true, restartDismissed: true }),
+    ).toEqual([]);
   });
 
   it('④ 已经重启过（运行中 = 盘上）→ 就是绿的「已安装」，那半句不再挂', () => {
@@ -132,7 +139,7 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
 
     expect(row).toMatchObject({ state: 'pending-restart', followUp: { id: 'data-root-migration', kind: 'data-migration', hard: false } });
     expect(row?.hint).toBeUndefined();
-    expect(marketActions(row as MarketRow)).toEqual([]);
+    expect(marketActions(row as MarketRow)).toEqual(['later-restart']);
   });
 
   it('⑤ 有新版也有旧数据 → 先迁移 + 不再提醒，不摆更新', () => {
@@ -277,19 +284,57 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
     expect(marketActions(row as MarketRow)).toEqual(['update-workbench']);
   });
 
-  it('★ Desktop 上那颗钮叫「更新并重启」，dsh web 里照旧叫「更新」', () => {
-    const version = { pkg: CORE, installed: '0.1.18', latest: '0.1.19' };
+  it('★ 那颗钮就叫「更新」：Desktop 与 dsh web 一样，重启交给用户自己点', () => {
+    expect(ACTION_LABEL_KEY['update-workbench']).toBe('panels.market.update');
+    expect(dictionaries.zh['panels.market.update']).toBe('更新');
+    expect(dictionaries.en['panels.market.update']).toBe('Update');
+    expect((dictionaries.zh as Record<string, string>)['panels.market.updateAndRestart']).toBeUndefined();
+    expect((dictionaries.en as Record<string, string>)['panels.market.updateAndRestart']).toBeUndefined();
+    expect(readFileSync(new URL('../market-section.tsx', import.meta.url), 'utf8')).not.toContain(
+      'updateLabelKey',
+    );
+  });
 
-    expect(workbenchRow(version, undefined, undefined, true)?.updateLabelKey).toBe(
-      'panels.market.updateAndRestart',
-    );
-    expect(workbenchRow(version, undefined, undefined, false)?.updateLabelKey).toBeUndefined();
-    expect(workbenchRow(version)?.updateLabelKey).toBeUndefined();
-    expect(dictionaries.zh['panels.market.updateAndRestart']).toBe('更新并重启');
-    expect(dictionaries.en['panels.market.updateAndRestart']).toBe('Update and restart');
-    expect(readFileSync(new URL('../market-section.tsx', import.meta.url), 'utf8')).toContain(
-      'row.updateLabelKey',
-    );
+  it('★ 有就绪态那一行说的是「已就绪，重启后生效」；还在装的时候一个字都不许说「已更新」', () => {
+    const swapped = { pkg: CORE, installed: '0.1.19', latest: '0.1.19', running: '0.1.18' };
+    const ready = workbenchRow(swapped, { state: 'pending-restart', at: AT, from: '0.1.18', to: '0.1.19', version: '0.1.19' });
+
+    expect(ready?.state).toBe('pending-restart');
+    expect(ready?.note).toEqual({
+      key: 'panels.market.selfUpdatePendingRestart',
+      params: {},
+      tone: 'plain',
+    });
+    const readyText = dictionaries.zh['panels.market.selfUpdatePendingRestart'] ?? '';
+    expect(readyText).toContain('已就绪');
+    expect(readyText).toContain('重启后生效');
+    expect(readyText).not.toContain('已更新');
+    expect(dictionaries.en['panels.market.selfUpdatePendingRestart'] ?? '').not.toBe('');
+    const installing = { pkg: CORE, installed: '0.1.18', latest: '0.1.19', running: '0.1.18' };
+    expect(workbenchRow(installing, { state: 'running', at: AT, from: '0.1.18', to: '0.1.19' })?.note).toBeUndefined();
+  });
+
+  it('★ 词条判据：自更新这几条人话里不许出现内部词', () => {
+    const keys = [
+      'panels.market.selfUpdatePendingRestart',
+      'panels.market.selfUpdateQueued',
+      'panels.market.selfUpdateRestored',
+      'panels.market.selfUpdateRolledBack',
+      'panels.market.selfUpdateFailed',
+      'panels.market.selfUpdateFailedNoFix',
+      'panels.market.pendingRestart',
+      'panels.market.restartNeeded',
+    ];
+    const forbidden = ['profile', '组合包', 'node_modules', 'pnpm'];
+    for (const key of keys) {
+      for (const [language, dictionary] of [['zh', dictionaries.zh], ['en', dictionaries.en]] as const) {
+        const text = ((dictionary as Record<string, string>)[key] ?? '').toLowerCase();
+        expect(text, `${language}.${key}`).not.toBe('');
+        for (const word of forbidden) {
+          expect(text, `${language}.${key} → ${word}`).not.toContain(word);
+        }
+      }
+    }
   });
 
   it('★ 还排着队 / 正在换的时候：那一行不给第二次点击的机会', () => {
@@ -439,5 +484,59 @@ describe('工作台那一行上的人话', () => {
     }
     expect(dictionaries.zh['panels.market.selfUpdateQueued']).toContain('退出 Desktop');
     expect(dictionaries.zh['panels.market.selfUpdateFailed']).toContain('{fix}');
+  });
+});
+
+describe('迁移现场那一次：行上要说清"这次得先退出"', () => {
+  it('★ 正在装（running）且是迁移现场 → 行上给那句提示', () => {
+    const row = workbenchRow(
+      { pkg: CORE, installed: '0.1.18', latest: '0.1.19' },
+      { state: 'running', to: '0.1.19', migration: true },
+    );
+
+    expect(row?.hint).toBe('panels.market.selfUpdateMigration');
+  });
+
+  it('★ 不是迁移现场（已经迁过）→ 一句提示都不给', () => {
+    const row = workbenchRow({ pkg: CORE, installed: '0.1.18', latest: '0.1.19' }, { state: 'running' });
+    expect(row?.hint).toBeUndefined();
+  });
+
+  it('★ 失败时说清失败的因由，而不是那句迁移提示（因由优先）', () => {
+    const row = workbenchRow(
+      { pkg: CORE, installed: '0.1.18', latest: '0.1.19' },
+      { state: 'failed', to: '0.1.19', migration: true, reason: 'incomplete', at: AT },
+    );
+
+    expect(row?.hint).toBe('panels.market.selfUpdateReasonIncomplete');
+  });
+});
+
+describe('「切回上一版」：更新落定之后才给，回不去就不给', () => {
+  const version = { pkg: CORE, installed: '0.1.19', running: '0.1.19' };
+
+  it('★ 上一次更新落了定（ok / pending-restart）且上一版跟现在不是同一版 → 给这颗钮', () => {
+    const row = workbenchRow(version, {
+      state: 'pending-restart',
+      from: '0.1.18',
+      to: '0.1.19',
+      version: '0.1.19',
+    });
+
+    expect(row).toMatchObject({ canRollback: true, rollbackVersion: '0.1.18' });
+    expect(marketActions(row as MarketRow)).toContain('rollback-workbench');
+  });
+
+  it('★ 还在装 / 失败 / 已经回退过 → 不给（免得点了一颗没用的钮）', () => {
+    for (const state of ['running', 'failed', 'rolled-back'] as const) {
+      const row = workbenchRow(version, { state, from: '0.1.18', to: '0.1.19', version: '0.1.19', at: AT });
+      expect(row?.canRollback).toBeUndefined();
+      expect(marketActions(row as MarketRow)).not.toContain('rollback-workbench');
+    }
+  });
+
+  it('★ 上一版跟现在同一版（没换过）→ 也不给', () => {
+    const row = workbenchRow(version, { state: 'ok', from: '0.1.19', to: '0.1.19', version: '0.1.19' });
+    expect(row?.canRollback).toBeUndefined();
   });
 });

@@ -19,6 +19,9 @@ export const PROGRESS_KEY: Readonly<Record<MarketRowAction, string>> = {
   'update-plugin': 'panels.market.updating',
   'uninstall-plugin': 'panels.market.uninstalling',
   'update-workbench': 'panels.market.updating',
+  'restart-workbench': 'panels.market.restarting',
+  'rollback-workbench': 'panels.market.rollingBack',
+  'later-restart': 'panels.market.restartLater',
   'migrate-workbench': 'panels.market.migrating',
   'dismiss-followup': 'panels.market.dismissing',
 };
@@ -34,6 +37,9 @@ export const ACTION_LABEL_KEY: Readonly<Record<MarketRowAction, string>> = {
   'update-plugin': 'panels.market.update',
   'uninstall-plugin': 'panels.market.uninstall',
   'update-workbench': 'panels.market.update',
+  'restart-workbench': 'panels.market.restartNow',
+  'rollback-workbench': 'panels.market.rollbackWorkbench',
+  'later-restart': 'panels.market.restartLater',
   'migrate-workbench': 'panels.market.migrateAction',
   'dismiss-followup': 'panels.market.dismissFollowUp',
 };

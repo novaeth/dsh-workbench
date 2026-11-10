@@ -7,6 +7,7 @@ const shot = process.argv[3] ?? 'desktop-smoke.png';
 const expectWorkbench = process.argv.includes('--expect-workbench');
 const installViaUi = process.argv.includes('--install-via-ui');
 const verifyOnly = process.argv.includes('--verify-only');
+const rollbackFlow = process.argv.includes('--self-update-rollback');
 const workbenchSpec = process.env.DESKTOP_WORKBENCH_SPEC ?? '@dsh-workbench/core';
 const marketSource = process.env.DESKTOP_SMOKE_MARKET ?? 'https://github.com/novaeth/dsh-workbench-market.git';
 const moduleName = process.env.DESKTOP_SMOKE_MODULE ?? '@dsh-workbench/module-hello';
@@ -594,12 +595,16 @@ async function waitForGateAndReady(cdp) {
   await fail(cdp, 'preflight not ready', readyBody, snapshot);
 }
 
-async function smokeMarket(cdp) {
-  const result = { market: marketSource, module: moduleName, listed: false, installed: false, restartHint: false };
+async function openMarket(cdp) {
   const opened = await click(cdp, ['Browse the module market', 'Choose modules'], 3000);
   if (opened === 'missing') await fail(cdp, '打开市场页没找到入口', await bodyOf(cdp));
   await waitForBody(cdp, /Workbench module market|Discover/u, MARKET_WAIT_MS, 'market-page');
   mark('market-open');
+}
+
+async function smokeMarket(cdp) {
+  const result = { market: marketSource, module: moduleName, listed: false, installed: false, restartHint: false };
+  await openMarket(cdp);
   await click(cdp, ['Discover'], 2000);
 
   let body = await bodyOf(cdp);
@@ -663,6 +668,33 @@ async function smokeMarket(cdp) {
   result.installed = /Installed:|restart once/u.test(doneBody);
   result.restartHint = /restart/u.test(doneBody);
   mark('market-installed');
+  return result;
+}
+
+async function smokeRollback(cdp) {
+  const result = { rollback: false, alive: false };
+  await openMarket(cdp);
+  const clicked = await cdp.send('Runtime.evaluate', {
+    expression: `(() => {
+      const button = [...document.querySelectorAll('button')].find((node) =>
+        /Back to previous version|切回上一版/u.test(node.textContent ?? ''));
+      if (button === undefined) return 'missing';
+      button.click();
+      return 'clicked';
+    })()`,
+    returnByValue: true,
+  });
+  log(`STEP rollback: ${JSON.stringify(clicked.result?.value)}`);
+  if (clicked.result?.value !== 'clicked') {
+    writeText(`${prefix}-rollback-body.txt`, await bodyOf(cdp));
+    await fail(cdp, 'workbench row has no "back to previous version" button', await bodyOf(cdp));
+  }
+  mark('rollback-clicked');
+  const done = await waitForBody(cdp, /Switched back to|已经切回/u, MODULE_WAIT_MS, 'rollback-done');
+  writeText(`${prefix}-rollback-done.txt`, done);
+  result.rollback = /Switched back to|已经切回/u.test(done);
+  result.alive = /Workbench panel|工作台面板/u.test(done);
+  mark('rollback-done');
   return result;
 }
 
@@ -905,11 +937,16 @@ async function main() {
   if (installViaUi) await installFromPluginPage(cdp);
   const snapshot = await waitForGateAndReady(cdp);
 
-  const result = verifyOnly
-    ? await verifyFeatures(cdp)
-    : installViaUi
-      ? await smokeMarket(cdp)
-      : { skipped: true };
+  const result = rollbackFlow
+    ? await smokeRollback(cdp)
+    : verifyOnly
+      ? await verifyFeatures(cdp)
+      : installViaUi
+        ? await smokeMarket(cdp)
+        : { skipped: true };
+  if (rollbackFlow && (result.rollback !== true || result.alive !== true)) {
+    await fail(cdp, '切回上一版之后工作台没起来（或那句人话没出现）', await bodyOf(cdp), snapshot);
+  }
   if (installViaUi && result.installed === false) {
     await fail(cdp, 'market module install did not finish', await bodyOf(cdp), snapshot);
   }

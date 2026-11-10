@@ -22,7 +22,6 @@ describe('workbench_modules_update_workbench（工作台自己那一份）', () 
     expect(h.selfUpdates).toEqual([
       {
         dshHome: '/tmp/dsh-home',
-        hostPid: process.pid,
         profile: 'workbench',
         pkg: '@dsh-workbench/core',
         from: '0.1.18',
@@ -149,7 +148,6 @@ describe('workbench_modules_update_workbench（工作台自己那一份）', () 
     expect(h.selfUpdates).toEqual([
       {
         dshHome: '/tmp/dsh-home',
-        hostPid: process.pid,
         profile: 'workbench',
         pkg: '@dsh-workbench/core',
         from: '0.1.18',
@@ -175,7 +173,6 @@ describe('workbench_modules_update_workbench（工作台自己那一份）', () 
     expect(h.selfUpdates).toEqual([
       {
         dshHome: '/tmp/dsh-home',
-        hostPid: process.pid,
         profile: 'workbench',
         pkg: '@dsh-workbench/core',
         from: '0.1.18',
@@ -222,7 +219,7 @@ describe('workbench_modules_update_workbench（工作台自己那一份）', () 
 describe('updateWorkbenchOnce：外面那个进程收到的现场', () => {
   const recorder = (seen: SelfUpdateRequest[]) => (request: SelfUpdateRequest) => {
     seen.push(request);
-    return { started: true, paths: { dir: '', script: '', marker: '', log: '', backup: '', hostLock: '' }, forward: '' };
+    return { started: true, paths: { dir: '', planFile: '', marker: '', log: '', versionsDir: '' }, forward: '' };
   };
 
   it('★ 不是工作台那个包名 → 当场拒（这条路只服务自己那一份）', async () => {
@@ -278,7 +275,6 @@ describe('updateWorkbenchOnce：外面那个进程收到的现场', () => {
     expect(seen).toEqual([
       {
         dshHome: '/tmp/dsh-home',
-        hostPid: process.pid,
         profile: 'workbench',
         pkg: '@dsh-workbench/core',
         from: '0.1.18',

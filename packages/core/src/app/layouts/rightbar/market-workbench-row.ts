@@ -6,7 +6,7 @@ import {
   selfUpdateSwapping,
   type SelfUpdateMark,
 } from './market-settle';
-import type { MarketHintKey, MarketRow } from './market-row-types';
+import type { MarketHintKey, MarketRow, MarketRowAction } from './market-row-types';
 
 export const WORKBENCH_ROW_ID = 'workbench:self';
 
@@ -38,7 +38,7 @@ export function workbenchRow(
   version: WorkbenchVersion | null | undefined,
   selfUpdate?: WorkbenchSelfUpdate | null,
   toldAt?: string | null,
-  desktop?: boolean,
+  canRestart?: boolean,
 ): MarketRow | undefined {
   if (version === null || version === undefined) return undefined;
   if (version.broken === true) return brokenRow(version);
@@ -47,6 +47,10 @@ export function workbenchRow(
   const note = mark === undefined ? undefined : selfUpdateNote(mark);
   const reason: MarketHintKey | undefined = mark === undefined ? undefined : selfUpdateReasonHint(mark);
   const local = version.local === true;
+  const previous = selfUpdate?.from;
+  const settled = selfUpdate?.state === 'ok' || selfUpdate?.state === 'pending-restart';
+  const canRollback =
+    settled && previous !== undefined && previous !== '' && previous !== (selfUpdate?.version ?? selfUpdate?.to);
   const retry = !local && mark !== undefined && RESULT_KINDS.has(mark.kind);
   const swapping = selfUpdateSwapping(selfUpdate);
   const latest = local ? undefined : version.latest;
@@ -75,8 +79,12 @@ export function workbenchRow(
     canUpdate: !swapping && blocked === undefined && (update !== undefined || retry),
     canUninstall: false,
     ...(local ? { local: true } : {}),
-    ...(desktop === true ? { updateLabelKey: 'panels.market.updateAndRestart' } : {}),
+    ...(canRestart === true ? { canRestart: true } : {}),
+    ...(canRollback && previous !== undefined ? { canRollback: true, rollbackVersion: previous } : {}),
     ...(stale || followUpState || blockedHint === undefined ? {} : { hint: blockedHint }),
+    ...(selfUpdate?.migration === true && selfUpdate.state === 'running'
+      ? { hint: 'panels.market.selfUpdateMigration' as const }
+      : {}),
     ...(reason === undefined ? {} : { hint: reason }),
     ...(note === undefined ? {} : { note }),
     version: {
@@ -92,4 +100,17 @@ export function workbenchRow(
     ...(version.spec === undefined ? {} : { spec: version.spec }),
     ...(version.registry === undefined ? {} : { registry: version.registry }),
   };
+}
+
+export function workbenchActionsOf(row: MarketRow): MarketRowAction[] {
+  if (row.followUp !== undefined && row.state === 'pending-followup') {
+    return row.followUp.hard ? ['migrate-workbench'] : ['migrate-workbench', 'dismiss-followup'];
+  }
+  const ready = row.state === 'pending-restart' && row.restartDismissed !== true;
+  return [
+    ...(ready && row.canRestart === true ? (['restart-workbench'] as const) : []),
+    ...(ready ? (['later-restart'] as const) : []),
+    ...(row.canUpdate ? (['update-workbench'] as const) : []),
+    ...(row.canRollback === true ? (['rollback-workbench'] as const) : []),
+  ];
 }

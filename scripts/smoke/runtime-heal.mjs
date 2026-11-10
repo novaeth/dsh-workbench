@@ -1,5 +1,5 @@
 import { execa } from 'execa';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -177,6 +177,51 @@ async function productHealRound(runtime, probe, sharedHost) {
   );
 }
 
+const BUNDLE = '@dsh-workbench/core';
+
+function profileWithBundles(profileDir, manifest) {
+  mkdirSync(profileDir, { recursive: true });
+  writeFileSync(join(profileDir, 'package.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  return join(profileDir, 'package.json');
+}
+
+async function bundleRowRound(sharedHost) {
+  const profileDir = join(WORK, 'bundle-profile', 'profiles', 'workbench');
+  const deps = { [BUNDLE]: '1.2.3-beta.2' };
+  const only = (bundles) => ({ name: 'workbench', private: true, type: 'module', dependencies: deps, dsh: { profile: { bundles } } });
+
+  const file = profileWithBundles(profileDir, only(['@deepseek-ai/dsh-base']));
+  const first = sharedHost.ensureProfileBundle(profileDir);
+  check('★ 清单那一行被摘掉 → 同一步补回（不靠人再手改一遍）', first.repaired === true && first.selected === true);
+  check(
+    '★ 补在末尾：别的组合包顺序一个不动',
+    JSON.stringify(first.bundles) === JSON.stringify(['@deepseek-ai/dsh-base', BUNDLE]),
+    first.bundles.join(' / '),
+  );
+
+  const after = readFileSync(file, 'utf8');
+  const second = sharedHost.ensureProfileBundle(profileDir);
+  check('★ 补回是幂等的：第二次一个字节都不写', second.repaired === false && readFileSync(file, 'utf8') === after);
+
+  profileWithBundles(profileDir, { name: 'workbench', private: true, type: 'module', dependencies: {}, dsh: { profile: { bundles: [] } } });
+  const before = readFileSync(file, 'utf8');
+  const refused = sharedHost.ensureProfileBundle(profileDir);
+  check(
+    '★ 依赖没装就不硬塞：说清原因，一个字节都不写（人话交给调用点）',
+    refused.refusal === 'dependency-missing' && readFileSync(file, 'utf8') === before,
+    String(refused.refusal),
+  );
+
+  writeFileSync(file, '{ 不是 JSON\n', 'utf8');
+  const broken = readFileSync(file, 'utf8');
+  const unreadable = sharedHost.ensureProfileBundle(profileDir);
+  check(
+    '★ 清单读不了 → 说清 broken-manifest，同样不写',
+    unreadable.refusal === 'broken-manifest' && readFileSync(file, 'utf8') === broken,
+    String(unreadable.refusal),
+  );
+}
+
 async function packAndHeal(runtime, probe, sharedHost) {
   if (!(await packFixture())) return;
   if (!(await reachabilityRound())) return;
@@ -191,6 +236,7 @@ try {
   await storeFollowRound(runtime);
   await danglingRound(runtime);
   await packAndHeal(runtime, probe, sharedHost);
+  await bundleRowRound(sharedHost);
 } finally {
   rmSync(WORK, { recursive: true, force: true });
 }
