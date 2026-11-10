@@ -61,6 +61,11 @@ describe('工作区行的三点菜单：悬停换图标、点开是菜单', () =
     expect(MENU).toContain("if (event.key !== 'Escape') return");
     expect(MENU).toContain('event.preventDefault()');
   });
+
+  it('★ 那张卡上的 .list 是承重的：类没了 styles.list 就是 undefined，点自己那一项也会先关菜单（click 不再产生）', () => {
+    expect(read('WorkspaceRowMenu.module.css')).toContain('.list {');
+    expect(MENU).toContain('listClassName={styles.list}');
+  });
 });
 
 describe('右键工作区那一项：跟 dsh 官方同一套（指针位置开菜单，键盘也认）', () => {
