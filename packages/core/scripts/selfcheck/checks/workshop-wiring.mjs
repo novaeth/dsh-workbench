@@ -1,6 +1,7 @@
-import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { existsSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { delimiter, dirname, join } from 'node:path';
+import { setTimeout as sleep } from 'node:timers/promises';
 
 import { PKG, pkg, read } from '../lib.mjs';
 
@@ -137,7 +138,7 @@ export const checks = [
 
     title: '★ 宿主自举的行为探针（运行时入口 / 工坊入口 / 不装依赖 / PATH）',
     async run(ctx, report) {
-      const fresh = execFileSync('bash', ['-c', 'mktemp -d'], { encoding: 'utf8' }).trim();
+      const fresh = mkdtempSync(join(tmpdir(), 'dsh-wb-bootstrap-'));
       const pathBefore = process.env.PATH;
       const homeBefore = process.env.DSH_HOME;
       const workbenchBefore = process.env.DSH_WORKBENCH_HOME;
@@ -193,31 +194,25 @@ export const checks = [
         );
 
         const entry = join(fresh, 'workbench', 'bin', 'dsh-wb-module');
-        const probe = (() => {
-          try {
-            return execFileSync(
-              'bash',
-              [
-                '-c',
-                `for i in $(seq 1 60); do [ -x ${JSON.stringify(entry)} ] && { echo ok; exit 0; }; sleep 0.25; done; echo missing`,
-              ],
-              { encoding: 'utf8' },
-            ).trim();
-          } catch (error) {
-            return `${error.stdout ?? ''}${error.stderr ?? ''}`.trim();
+        let probe = 'missing';
+        for (let attempt = 0; attempt < 60; attempt += 1) {
+          if (executable(entry)) {
+            probe = 'ok';
+            break;
           }
-        })();
+          await sleep(250);
+        }
         report('★ 宿主自举把工坊入口挂上（脱离执行缝跑随包脚本）', probe === 'ok', probe);
         report(
           '★ 仓库工作树副本不在启动时装工坊依赖（那是启动器/开发路径的事）',
           !existsSync(join(fresh, 'workbench', 'diy', 'package.json')),
         );
-        const pathHead = (process.env.PATH ?? '').split(':').slice(0, 3);
+        const pathHead = (process.env.PATH ?? '').split(delimiter).slice(0, 3);
         report(
           '★ 自举把 workbench/bin 与运行时自己的 bin 一起前插进 PATH（子进程按名字找到同一份）',
           pathHead.includes(join(fresh, 'workbench', 'bin')) &&
             pathHead.includes(dirname(wrapper)),
-          pathHead.join(':'),
+          pathHead.join(delimiter),
         );
       } finally {
         process.env.PATH = pathBefore;
@@ -225,11 +220,16 @@ export const checks = [
         else process.env.DSH_HOME = homeBefore;
         if (workbenchBefore === undefined) delete process.env.DSH_WORKBENCH_HOME;
         else process.env.DSH_WORKBENCH_HOME = workbenchBefore;
-        execFileSync('bash', ['-c', `rm -rf ${JSON.stringify(fresh)}`]);
+        rmSync(fresh, { recursive: true, force: true });
       }
     },
   },
 ];
+
+function executable(file) {
+  if (!existsSync(file)) return false;
+  return process.platform === 'win32' || (statSync(file).mode & 0o111) !== 0;
+}
 
 function entriesUnder(dir) {
   const out = [];

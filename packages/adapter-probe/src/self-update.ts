@@ -219,10 +219,17 @@ exit 1
 `;
 }
 
+const CMD_QUOTE_SOURCE =
+  "const quoteCmdArg = (value) => '\"' + String(value).split('\"').join('\"\"') + '\"';";
+
+const CMD_INSTALL_SOURCE =
+  "const runCli = (args) => { const env = { ...process.env, ...CLI.env }; if (!WINDOWS) return spawnSync(CLI.file, args, { env, encoding: 'utf8' }); const line = [CLI.file, ...args].map(quoteCmdArg).join(' '); return spawnSync(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', '\"' + line + '\"'], { env, encoding: 'utf8', windowsVerbatimArguments: true }); };";
+
 export function selfUpdateNodeScript(
   request: SelfUpdateRequest,
   paths: SelfUpdatePaths,
   cli: SelfUpdateCli = selfUpdateCliFor(request.profile),
+  platform: NodeJS.Platform = process.platform,
 ): string {
   const target = request.to === '' ? 'latest' : request.to;
   const restart = isPathDsh(cli) ? '重启一次 dsh' : '退出并重开 Desktop';
@@ -244,11 +251,14 @@ export function selfUpdateNodeScript(
     `const MARKER = ${JSON.stringify(paths.marker)};`,
     `const LOG = ${JSON.stringify(paths.log)};`,
     `const CLI = ${JSON.stringify(cli)};`,
-    'const say = (message) => appendFileSync(LOG, `${new Date().toISOString()} ${message}\\n`);',
+    `const WINDOWS = ${JSON.stringify(platform === 'win32')};`,
+    CMD_QUOTE_SOURCE,
+    CMD_INSTALL_SOURCE,
+    "const say = (message) => appendFileSync(LOG, `${new Date().toISOString()} ${message}\\n`);",
     "const onDisk = () => { try { const read = JSON.parse(readFileSync(join(DSH_HOME, 'profiles', PROFILE, 'node_modules', PKG, 'package.json'), 'utf8')); return typeof read.version === 'string' ? read.version : ''; } catch { return ''; } };",
     'const writeMarker = (state, version) => writeFileSync(MARKER, JSON.stringify({ pkg: PKG, profile: PROFILE, from: FROM, to: TO, state, version, at: new Date().toISOString() }) + \'\\n\');',
-    "const install = (version) => { const result = spawnSync(CLI.file, [...CLI.args, 'plugin', '--profile', PROFILE, 'add', `${PKG}@${version}`], { env: { ...process.env, ...CLI.env }, encoding: 'utf8' }); if (result.stdout) say(result.stdout.trim()); if (result.stderr) say(result.stderr.trim()); if (result.error) say(String(result.error)); return result.status === 0; };",
-    "const canRun = () => { if (CLI.file.includes('/') || (CLI.file.length > 2 && CLI.file[1] === ':')) return existsSync(CLI.file); const exts = process.platform === 'win32' ? (process.env.PATHEXT ?? '.EXE;.CMD;.BAT').split(';') : ['']; return (process.env.PATH ?? '').split(delimiter).some((dir) => exts.some((ext) => existsSync(join(dir, CLI.file + ext)))); };",
+    "const install = (version) => { const result = runCli([...CLI.args, 'plugin', '--profile', PROFILE, 'add', `${PKG}@${version}`]); if (result.stdout) say(result.stdout.trim()); if (result.stderr) say(result.stderr.trim()); if (result.error) say(String(result.error)); return result.status === 0; };",
+    "const canRun = () => { if (CLI.file.includes('/') || (CLI.file.length > 2 && CLI.file[1] === ':')) return existsSync(CLI.file); const exts = WINDOWS ? (process.env.PATHEXT ?? '.EXE;.CMD;.BAT').split(';') : ['']; return (process.env.PATH ?? '').split(delimiter).some((dir) => exts.some((ext) => existsSync(join(dir, CLI.file + ext)))); };",
     'const isTo = () => onDisk() === TO;',
     "const isOther = () => { const version = onDisk(); return version !== '' && version !== FROM; };",
     `say(\`开始 \${FROM} -> \${TO}（不卸任何一行）\`);`,
@@ -282,7 +292,7 @@ export function planSelfUpdate(
   const windows = platform === 'win32';
   return {
     paths,
-    script: windows ? selfUpdateNodeScript(request, paths, cli) : selfUpdateScript(request, paths, cli),
+    script: windows ? selfUpdateNodeScript(request, paths, cli, platform) : selfUpdateScript(request, paths, cli),
     marker: selfUpdateMarker(request, 'running', request.from, now.toISOString()),
     command: windows
       ? {

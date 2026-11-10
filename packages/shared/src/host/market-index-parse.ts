@@ -63,6 +63,10 @@ function asText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function indexPathOf(value: unknown): string {
+  return asText(value).replace(/\\/g, '/');
+}
+
 function asTextArray(value: unknown): string[] {
   return Array.isArray(value)
     ? value.flatMap((item) => (typeof item === 'string' && item.trim() !== '' ? [item.trim()] : []))
@@ -98,12 +102,12 @@ function sourceOf(raw: unknown, at: string): MarketIndexSource | MarketIndexProb
     if (!GIT_COMMIT.test(commit)) {
       return problem('git-commit', `git source 的 commit 必须是 40 位小写 SHA（现在是 ${JSON.stringify(commit)}）`, at);
     }
-    const path = record['path'];
+    const path = indexPathOf(record['path']);
     return {
       type: 'git',
       url,
       commit,
-      ...(path === undefined || asText(path) === '' ? {} : { path: asText(path) }),
+      ...(path === '' ? {} : { path }),
     };
   }
   return problem('source', 'source.type 只能是 npm 或 git', at);
@@ -365,7 +369,7 @@ export function parseSourceConfig(raw: unknown): SourceConfigParse {
     return { ok: false, problem: problem('source', 'git 地址不合格（只收 https / ssh / scp 形式，且不能带凭据）') };
   }
   const ref = asText(record['ref']);
-  const path = asText(record['path']);
+  const path = indexPathOf(record['path']);
   const localPath = asText(record['localPath']);
   const policy = record['policy'];
   if (policy !== undefined && policy !== 'artifacts-in-repo' && policy !== 'catalog-only') {
@@ -388,7 +392,7 @@ export function parseSourceConfig(raw: unknown): SourceConfigParse {
 
 
 function indexPathBase(dir: string): string {
-  return dir.replace(/^\/+|\/+$/g, '') || MARKET_INDEX_DIR;
+  return indexPathOf(dir).replace(/^\/+|\/+$/g, '') || MARKET_INDEX_DIR;
 }
 
 export function marketEntryPath(dir: string, name: string): string {
@@ -414,5 +418,3 @@ export function parseMarketEntryJson(text: string): MarketEntryParse {
   if ('kind' in parsed) return { ok: false, problems: [parsed] };
   return { ok: true, entry: parsed };
 }
-
-

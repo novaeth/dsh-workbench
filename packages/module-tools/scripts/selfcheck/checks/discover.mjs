@@ -4,6 +4,7 @@ import { join } from 'node:path';
 
 import { discoverPackages, workspaceRootOf } from '../../../src/discover.mjs';
 
+
 const TITLE =
   '模块发现：按 pnpm-workspace / package.json workspaces 的 glob 找包（块列表含无缩进、行内数组、* 与 **、! 排除、符号链接、嵌套工作区；没有声明才退回 packages/*；不支持的 glob 明确报错）';
 
@@ -84,7 +85,7 @@ export const checks = [
         writeYaml(linked, ['packages:', '  - "apps/*"']);
         makePkg(join(linked, 'real', 'pkg'), '@demo/linked');
         mkdirSync(join(linked, 'apps'), { recursive: true });
-        symlinkSync(join(linked, 'real', 'pkg'), join(linked, 'apps', 'alias'));
+        symlinkSync(join(linked, 'real', 'pkg'), join(linked, 'apps', 'alias'), 'junction');
         if (!namesOf(join(linked, 'apps', 'alias')).includes('@demo/linked')) problems.push('符号链接包目录被跳过了');
 
         const outer = join(base, 'outer');

@@ -151,6 +151,7 @@ export async function seedWorkbenchToolchain(
   root: string,
   log: SeedLog,
   seam?: Seam | undefined,
+  platform: NodeJS.Platform = process.platform,
 ): Promise<void> {
   for (const dir of desktopBundledBins()) {
     if (prependPath(dir)) log(`PATH 前插 Desktop 自带 ${dir}`);
@@ -160,13 +161,13 @@ export async function seedWorkbenchToolchain(
   const bundledUsable = bundledPnpm !== undefined && bundledMajor >= 10;
   if (bundledPnpm !== undefined && bundledUsable) {
     const bundledNode = desktopNodeExecutable();
-    const nodePrefix = bundledNode === undefined ? 'node' : quoteShellArgFor(bundledNode, process.platform);
-    process.env.DSH_WB_PNPM = `${nodePrefix} ${quoteShellArgFor(bundledPnpm, process.platform)}`;
+    const nodePrefix = bundledNode === undefined ? 'node' : quoteShellArgFor(bundledNode, platform);
+    process.env.DSH_WB_PNPM = `${nodePrefix} ${quoteShellArgFor(bundledPnpm, platform)}`;
     log(`pnpm 用 Desktop 自带的：${bundledPnpm}（node: ${nodePrefix}）`);
   } else if (bundledPnpm !== undefined) {
     log(`Desktop 自带 pnpm 版本低于 10，优先用 PATH 上的 pnpm`);
   }
-  const toolchain = ensureToolchain({ root, log });
+  const toolchain = ensureToolchain({ root, log, platform });
   for (const file of toolchain.files) log(`工具链写下 ${file}`);
   if (toolchain.pathDir !== undefined && prependPath(toolchain.pathDir)) {
     log(`PATH 前插 ${toolchain.pathDir}`);
@@ -179,12 +180,12 @@ export async function seedWorkbenchToolchain(
   }
   if (toolchain.pnpmDir !== undefined) {
     if (prependPath(toolchain.pnpmDir)) log(`PATH 前插 ${toolchain.pnpmDir}`);
-    if (!bundledUsable) process.env.DSH_WB_PNPM = localPnpmCommand(root);
+    if (!bundledUsable) process.env.DSH_WB_PNPM = quoteShellArgFor(localPnpmCommand(root, platform), platform);
   } else if (!bundledUsable && toolchain.pathDir !== undefined) {
-    const installed = await provisionLocalPnpm({ root, seam });
+    const installed = await provisionLocalPnpm({ root, seam, platform });
     if (installed.ok && installed.binDir !== undefined) {
       if (prependPath(installed.binDir)) log(`PATH 前插 ${installed.binDir}`);
-      process.env.DSH_WB_PNPM = localPnpmCommand(root);
+      process.env.DSH_WB_PNPM = quoteShellArgFor(localPnpmCommand(root, platform), platform);
       log(`工具链 provision ${installed.detail}`);
     } else {
       log(`本地 pnpm 10 没装成：${installed.detail}`);

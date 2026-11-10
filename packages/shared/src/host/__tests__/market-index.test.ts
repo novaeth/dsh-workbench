@@ -338,6 +338,14 @@ describe('索引源与安装目标', () => {
     expect(parsed.ok).toBe(false);
   });
 
+  it('★ 索引目录按 `/` 归一：反斜杠写的和正斜杠写的同解', () => {
+    const base = { id: 'team', label: '团队市场', kind: 'git' as const, url: 'https://git.company.com/wb/market.git' };
+    const back = parseSourceConfig({ ...base, path: 'docs\\market' });
+    const forward = parseSourceConfig({ ...base, path: 'docs/market' });
+    expect(back.ok && back.source.path).toBe('docs/market');
+    expect(forward.ok && forward.source.path).toBe('docs/market');
+  });
+
   it('git 源收 scp 与 ssh 用户名形式，拒带密码', () => {
     expect(parseSourceConfig({ id: 'team', label: '团队', kind: 'git', url: 'git@git.company.com:wb/market.git' }).ok).toBe(true);
     expect(
@@ -362,6 +370,11 @@ describe('条目文件：一个包一个文件', () => {
   it('路径是 market/<包名>.json', () => {
     expect(marketEntryPath('market', '@scope/module-x')).toBe('market/@scope/module-x.json');
     expect(marketEntryPath('market', 'plain')).toBe('market/plain.json');
+  });
+
+  it('★ 反斜杠写的目录也落成同一个条目路径', () => {
+    expect(marketEntryPath('docs\\market', 'plain')).toBe('docs/market/plain.json');
+    expect(marketEntryPath('docs\\market\\', 'plain')).toBe('docs/market/plain.json');
   });
 
   it('包名不合法就不给路径（防止写出目录外）', () => {

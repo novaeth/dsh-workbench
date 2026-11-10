@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 
@@ -15,14 +16,14 @@ import {
   type Toolchain,
   type WorkspaceShape,
 } from '@/shared/api/host/diy-modules';
-import { runningVersionOf } from '@dsh-workbench/shared/host';
+import { runningVersionOf, workbenchRoot } from '@dsh-workbench/shared/host';
 
 export const SYNC_STALE_MINUTES = 15;
 
 export const SYNC_STALE_MS = SYNC_STALE_MINUTES * 60_000;
 
 function fixText(): string {
-  return '   修法：cd "$DSH_HOME/workbench/diy" && pnpm install；还不行就把这个工坊目录删掉再重启一次工作台（骨架会自己重建；`packages/` 下你造的模块先留着或另存）。';
+  return `   修法：在工坊目录里跑一次 pnpm install（${join(workbenchRoot(), 'diy')}）；还不行就把这个目录删掉再重启一次工作台（骨架会自己重建；\`packages/\` 下你造的模块先留着或另存）。`;
 }
 
 function syncingStillRunning(at: string, now: number, windowMs: number): boolean {
@@ -77,7 +78,7 @@ export function syncNotice(input: {
   if (gap === undefined) return undefined;
   return (
     `⏳ 工坊工具链还是上一代（工坊里 ${gap}，工作台 ${shellVersion}）—— ` +
-    `下一轮工作台启动时会对齐到 ${shellVersion}；一直这样就看 $DSH_HOME/workbench/seed.log。`
+    `下一轮工作台启动时会对齐到 ${shellVersion}；一直这样就看工坊的 seed.log（${join(workbenchRoot(), 'seed.log')}）。`
   );
 }
 

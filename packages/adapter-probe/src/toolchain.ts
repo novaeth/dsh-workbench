@@ -102,6 +102,7 @@ export async function provisionLocalNpm(options: {
     options.root,
     options.proc ?? process,
     options.exists ?? existsSync,
+    options.platform,
   );
   if (command === undefined) return { ok: false, detail: '找不到 Desktop 自带 pnpm，装不了本地 npm' };
   try {
@@ -190,7 +191,7 @@ export async function provisionLocalPnpm(options: {
   const bootstrap = options.pnpm?.trim();
   const pnpmCommand =
     bootstrap === undefined || bootstrap === ''
-      ? localPnpmInstallCommand(options.root, options.proc ?? process, options.exists ?? existsSync)
+      ? localPnpmInstallCommand(options.root, options.proc ?? process, options.exists ?? existsSync, platform)
       : `${bootstrap} add --dir ${quoteShellArgFor(localPnpmRoot(options.root), platform)} pnpm@${LOCAL_PNPM_VERSION} --store-dir ${quoteShellArgFor(join(options.root, 'pnpm-store'), platform)}`;
   const npm = options.npm?.trim();
   const npmCommand =

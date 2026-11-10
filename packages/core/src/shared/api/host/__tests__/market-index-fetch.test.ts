@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { MarketSourceConfig } from '@dsh-workbench/shared/contract/protocol/market-index';
+import { parseSourceConfig } from '@dsh-workbench/shared/host';
 import type { GitRunner } from '../git-process';
 import { createMarketIndexReader } from '../market-index-fetch';
 import { createMarketSourcesStore } from '../market-sources-store';
@@ -154,6 +155,45 @@ describe('createMarketIndexReader', () => {
       ),
     ).toBe(true);
     expect(fake.calls.every((one) => one.args[0] === 'clone' || one.cwd !== undefined)).toBe(true);
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it('★ 配置里用反斜杠写的索引目录（win32 粘过来的），走 git 时是 `/`', async () => {
+    const root = tempRoot();
+    const commit = 'a'.repeat(40);
+    const parsed = parseSourceConfig({
+      id: 'team',
+      label: '团队',
+      kind: 'git',
+      url: 'https://git.company.com/wb/market.git',
+      ref: 'main',
+      path: 'docs\\market',
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const entry = {
+      name: '@scope/module-x',
+      metadata: { labels: ['workbench'] },
+      versions: [{ version: '0.1.0', source: { type: 'npm' }, publishTimestamp: 1_760_000_000 }],
+    };
+    const fake = fakeGit((args) => {
+      if (args[0] === 'clone') return { exitCode: 0 };
+      if (args[0] === 'ls-tree') {
+        return { exitCode: 0, stdout: `100644 blob ${'c'.repeat(40)}\tdocs/market/plain.json\n` };
+      }
+      if (args[0] === 'rev-parse') return { exitCode: 0, stdout: `${commit}\n` };
+      if (args[0] === 'fetch') return { exitCode: 0 };
+      return { exitCode: 0, stdout: JSON.stringify(entry) };
+    });
+    const reader = createMarketIndexReader({ root, runGit: fake.runGit, now: () => 1000 });
+    const outcome = await reader.read(parsed.source);
+    expect(outcome.ok).toBe(true);
+    const listed = fake.calls.find((one) => one.args[0] === 'ls-tree');
+    expect(listed?.args).toContain('docs/market');
+    expect(listed?.args.some((one) => one.includes('\\'))).toBe(false);
+    expect(
+      fake.calls.some((one) => one.args[0] === 'show' && one.args[1] === `${commit}:docs/market/plain.json`),
+    ).toBe(true);
     rmSync(root, { recursive: true, force: true });
   });
 

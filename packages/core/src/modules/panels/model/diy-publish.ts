@@ -17,7 +17,7 @@ import {
 } from '@dsh-workbench/shared/host';
 import type { PublishPreview } from '@dsh-workbench/shared/contract/protocol/market-index';
 import type { DiyModule } from '@/shared/api/host/diy-modules';
-import { toolchainBinOf } from '@/shared/api/host/diy-components';
+import { toolchainArgvOf, toolchainBinOf } from '@/shared/api/host/diy-components';
 import { jsonOf } from './diy-browser';
 import {
   adoptTarballFile,
@@ -295,7 +295,7 @@ export function registerPublishTool(
       if (!verify && target !== 'local' && author === '' && (deps.previewOf(found.unit)?.author ?? '') === '') {
         author = (await deps.inferredAuthorOf(found.unit)) ?? '';
       }
-      const argv = [bin, 'release', '--cwd', found.dir, '--json'];
+      const argv = [...toolchainArgvOf(bin), 'release', '--cwd', found.dir, '--json'];
       if (verify) argv.push('--verify');
       else argv.push('--yes');
       if (resume) argv.push('--resume');

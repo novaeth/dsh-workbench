@@ -1,9 +1,12 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import type { DshAgentPresetRow, DshHostContext } from '@dsh-workbench/shared';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
-import { createSeam } from '@dsh-workbench/shared/host';
+import { createSeam, quoteShellArgFor } from '@dsh-workbench/shared/host';
 import { WAKE_BROWSER_ROUTE } from '@dsh-workbench/shared/contract/protocol/preflight-wake';
-import { registerPreflight } from '../index.js';
+import { localPnpmBin, localPnpmCommand, provisionWorkbenchPnpm, registerPreflight } from '../index.js';
 import type { DesktopBrowser } from '../index.js';
 import { ALL_OK } from './preflight-fixtures';
 
@@ -125,5 +128,34 @@ describe('registerPreflight（把启动体检接上 preflight 路由）', () => 
     expect(answer.canWakeBrowser).toBeUndefined();
     expect(fake.commands().some((line) => /^(pgrep|tasklist)/.test(line))).toBe(false);
     expect(routes[WAKE_BROWSER_ROUTE]).toBeUndefined();
+  });
+});
+
+describe('provisionWorkbenchPnpm', () => {
+  it('★ 装成本地 pnpm 后 DSH_WB_PNPM 整段带引号（工作台根带空格也不拆词）', async () => {
+    const box = mkdtempSync(join(tmpdir(), 'wb-route-'));
+    const root = join(box, 'work bench');
+    const bin = localPnpmBin(root);
+    mkdirSync(bin, { recursive: true });
+    writeFileSync(join(bin, process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'), '', 'utf8');
+    vi.stubEnv('PATH', process.env.PATH ?? '');
+    vi.stubEnv('DSH_WB_PNPM', '');
+
+    try {
+      const result = await provisionWorkbenchPnpm({
+        root,
+        seam: seamFor(createFakeShell([]).shell),
+        run: async () => ({ ok: true, detail: '' }),
+      });
+
+      const command = quoteShellArgFor(localPnpmCommand(root), process.platform);
+      expect(result.ok).toBe(true);
+      expect(process.env.DSH_WB_PNPM).toBe(command);
+      expect(command.startsWith("'")).toBe(true);
+      expect(command).toContain(root);
+    } finally {
+      rmSync(box, { recursive: true, force: true });
+      vi.unstubAllEnvs();
+    }
   });
 });

@@ -106,7 +106,7 @@ describe('启动体检把 DIY 那一行接进来', () => {
     ]);
     expect(snapshot.diyGap?.rows).toEqual(['tool-schedule']);
     expect(snapshot.diyGap?.command).toBe('npm i -g @deepseek-ai/dsh@latest');
-    expect(fake.calls.map((call) => call.command)).toEqual(['opencli --version', 'opencli doctor']);
+    expect(fake.calls.map((call) => call.command)).toEqual(["'opencli' --version", "'opencli' doctor"]);
   });
 
   it('挂得起来 → 步骤行 ok、不带 gap（门照常放行）', async () => {

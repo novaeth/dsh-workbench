@@ -19,7 +19,7 @@ export const checks = [
         execFileSync(process.execPath, [BIN, 'design', 'render', '--cwd', probe], { stdio: 'pipe', env });
         execFileSync(process.execPath, [BIN, 'design', 'accept', '--cwd', probe], { stdio: 'pipe', env });
         linkToolchain(ctx.toolchain, join(probe, 'node_modules'));
-        symlinkSync(join(PACKAGES_DIR, 'shared'), join(probe, 'node_modules', '@dsh-workbench', 'shared'), 'dir');
+        symlinkSync(join(PACKAGES_DIR, 'shared'), join(probe, 'node_modules', '@dsh-workbench', 'shared'), 'junction');
         execFileSync(process.execPath, [BIN, 'publish', '--cwd', probe], { stdio: 'pipe', env });
 
         const manifest = JSON.parse(readFileSync(join(probe, 'package.json'), 'utf8'));

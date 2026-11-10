@@ -12,9 +12,9 @@ import { delimiter, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DshHostContext } from '@dsh-workbench/shared';
-import { createSeam } from '@dsh-workbench/shared/host';
+import { createSeam, quoteShellArgFor } from '@dsh-workbench/shared/host';
 import { createFakeProcesses, createFakeShell } from '@dsh-workbench/shared/testing';
-import { isInstalledCopy, opencliWrapperScript, packageRootOf, prependPath, runDetached, runtimeSeedPaths, runtimeSeedRootOf, seedRuntimeFiles, workshopSeedPlan } from '../index.js';
+import { isInstalledCopy, localPnpmBin, localPnpmCommand, opencliWrapperScript, packageRootOf, prependPath, runDetached, runtimeSeedPaths, runtimeSeedRootOf, seedRuntimeFiles, seedWorkbenchToolchain, workshopSeedPlan } from '../index.js';
 
 
 const describePosix = process.platform === 'win32' ? describe.skip : describe;
@@ -319,5 +319,28 @@ describePosix('seedRuntimeFiles', () => {
 
     expect(seedRuntimeFiles({ root: blocked, home: join(root, '.dsh'), packageRoot: pkg, log })).toEqual([]);
     expect(log).toHaveBeenCalledWith(expect.stringContaining('自举没做完'));
+  });
+});
+
+describePosix('DSH_WB_PNPM 是命令前缀，路径不许被 shell 拆词', () => {
+  it('★ Desktop 里装好的本地 pnpm 路径整段带引号（工作台根带空格也不拆词）', async () => {
+    const root = join(tempRoot(), 'work bench');
+    vi.stubEnv('PATH', process.env.PATH ?? '');
+    vi.stubEnv('DSH_WB_PNPM', '');
+    const bin = localPnpmBin(root);
+    mkdirSync(bin, { recursive: true });
+    writeFileSync(join(bin, 'pnpm'), '', 'utf8');
+    Object.defineProperty(process.versions, 'electron', { value: '44.7.0', configurable: true, writable: true });
+    try {
+      await seedWorkbenchToolchain(root, () => undefined, undefined, 'linux');
+    } finally {
+      delete (process.versions as { electron?: string }).electron;
+    }
+
+    const command = quoteShellArgFor(localPnpmCommand(root, 'linux'), 'linux');
+    expect(process.env.DSH_WB_PNPM).toBe(command);
+    expect(command.startsWith("'")).toBe(true);
+    expect(command.endsWith("'")).toBe(true);
+    expect(command).toContain(root);
   });
 });

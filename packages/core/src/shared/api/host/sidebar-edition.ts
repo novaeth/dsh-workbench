@@ -11,16 +11,20 @@ export interface SidebarEditionDeps {
 }
 
 const UI_SIDEBAR = 'ui-sidebar';
-const BLOCK_START = /^- id:[ \t]*"?ui-sidebar"?[ \t]*(?:#.*)?$/;
+const BLOCK_START = /^- id:[ \t]*"?ui-sidebar"?[ \t]*(?:#.*)?\r?$/;
 const TOP_LEVEL = /^- /;
-const DISABLED_LINE = /^[ \t]+disabled:[ \t]*true[ \t]*$/;
+const DISABLED_LINE = /^[ \t]+disabled:[ \t]*true[ \t]*(?:#.*)?\r?$/;
+
+function lf(text: string): string {
+  return text.replace(/\r\n/g, '\n');
+}
 
 function patchPathOf(deps: SidebarEditionDeps): string | null {
   return deps.profileDir === null ? null : join(deps.profileDir, 'cordis.patch.yml');
 }
 
 export function editionOfPatch(text: string): SidebarEdition {
-  const block = patchBlocks(text).find((one) => !one.insert && one.id === UI_SIDEBAR);
+  const block = patchBlocks(lf(text)).find((one) => !one.insert && one.id === UI_SIDEBAR);
   if (block === undefined) return 'official';
   return block.body.split('\n').some((line) => DISABLED_LINE.test(line)) ? 'custom' : 'official';
 }
@@ -68,18 +72,19 @@ function withoutDisabled(lines: string[], span: { from: number; to: number }): s
 }
 
 export function withEdition(text: string, edition: SidebarEdition): string {
-  if (editionOfPatch(text) === edition) return text;
-  const lines = text.split('\n');
+  const source = lf(text);
+  if (editionOfPatch(source) === edition) return source;
+  const lines = source.split('\n');
   if (edition === 'custom') {
     const span = spanOf(lines);
     if (span === null) {
-      const base = withoutPlaceholder(text);
+      const base = withoutPlaceholder(source);
       return `${base === '' ? '' : `${base}\n\n`}- id: ${UI_SIDEBAR}\n  disabled: true\n`;
     }
     return `${withDisabled(lines, span).join('\n').replace(/\s+$/, '')}\n`;
   }
   const span = spanOf(lines);
-  if (span === null) return text;
+  if (span === null) return source;
   return `${withoutDisabled(lines, span).join('\n').replace(/\s+$/, '')}\n`;
 }
 
@@ -87,7 +92,7 @@ function readText(deps: SidebarEditionDeps): { readonly path: string; readonly t
   const path = patchPathOf(deps);
   if (path === null) return { error: '拿不到当前 profile 目录' };
   try {
-    return { path, text: readFileSync(path, 'utf8') };
+    return { path, text: lf(readFileSync(path, 'utf8')) };
   } catch (error) {
     return { error: error instanceof Error ? error.message : String(error) };
   }
@@ -122,7 +127,9 @@ export async function sidebarEditionApply(deps: SidebarEditionDeps, payload: unk
       return { ok: false, text: error instanceof Error ? error.message : String(error) };
     }
   }
-  const confirmed = editionOfPatch(readFileSync(read.path, 'utf8'));
+  const after = readText(deps);
+  if ('error' in after) return { ok: false, text: after.error };
+  const confirmed = editionOfPatch(after.text);
   if (confirmed !== edition) return { ok: false, text: '写进去之后读回来不是目标档位，先别刷新' };
   if (next !== read.text && deps.reconcile !== undefined) {
     try {

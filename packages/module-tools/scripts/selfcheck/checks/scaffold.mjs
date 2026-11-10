@@ -28,13 +28,13 @@ export const checks = [
           }
           linkToolchain(ctx.toolchain, scaffoldModules);
 
-          symlinkSync(join(PACKAGES_DIR, 'shared'), join(scaffoldModules, '@dsh-workbench', 'shared'), 'dir');
+          symlinkSync(join(PACKAGES_DIR, 'shared'), join(scaffoldModules, '@dsh-workbench', 'shared'), 'junction');
 
           mkdirSync(join(scaffoldModules, '@deepseek-ai'), { recursive: true });
           symlinkSync(
             join(PACKAGES_DIR, 'shared', 'node_modules', '@deepseek-ai', 'dsh-client-ui-primitives'),
             join(scaffoldModules, '@deepseek-ai', 'dsh-client-ui-primitives'),
-            'dir',
+            'junction',
           );
 
           execFileSync(process.execPath, [BIN, 'build', '--cwd', scaffold], { stdio: 'pipe', env });

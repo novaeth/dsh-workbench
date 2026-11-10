@@ -1,8 +1,10 @@
-import { existsSync, mkdirSync, mkdtempSync, realpathSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, delimiter } from 'node:path';
+import { dirname, join, delimiter } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ensureLibsBinOnPath, ensureLibsOpencliPeer } from '../links.js';
+
+const LINK_TYPE = 'junction';
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -27,6 +29,32 @@ describe('ensureLibsOpencliPeer', () => {
 
     expect(ensureLibsOpencliPeer()).toBe(false);
     expect(existsSync(join(root, 'opencli/libs/node_modules/@jackwener/opencli'))).toBe(false);
+  });
+
+  it('★ 断掉的链接（旧安装留下的）→ 重指到现在的运行时那份', () => {
+    const root = mkdtempSync(join(tmpdir(), 'wb-peer-'));
+    vi.stubEnv('DSH_WORKBENCH_HOME', root);
+    const link = join(root, 'opencli/libs/node_modules/@jackwener/opencli');
+    mkdirSync(dirname(link), { recursive: true });
+    mkdirSync(join(root, 'opencli/toolchain/node_modules/@jackwener/opencli'), { recursive: true });
+    symlinkSync(join(root, 'gone-opencli'), link, LINK_TYPE);
+
+    expect(ensureLibsOpencliPeer()).toBe(true);
+    expect(realpathSync(link).replaceAll('\\', '/')).toContain('toolchain/node_modules/@jackwener/opencli');
+  });
+
+  it('★ 指向别处的链接 → 改指到运行时那份', () => {
+    const root = mkdtempSync(join(tmpdir(), 'wb-peer-'));
+    vi.stubEnv('DSH_WORKBENCH_HOME', root);
+    const link = join(root, 'opencli/libs/node_modules/@jackwener/opencli');
+    mkdirSync(dirname(link), { recursive: true });
+    mkdirSync(join(root, 'opencli/toolchain/node_modules/@jackwener/opencli'), { recursive: true });
+    const other = join(root, 'other-opencli');
+    mkdirSync(other, { recursive: true });
+    symlinkSync(other, link, LINK_TYPE);
+
+    expect(ensureLibsOpencliPeer()).toBe(true);
+    expect(realpathSync(link).replaceAll('\\', '/')).toContain('toolchain/node_modules/@jackwener/opencli');
   });
 });
 

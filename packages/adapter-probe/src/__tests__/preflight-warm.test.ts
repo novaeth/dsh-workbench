@@ -79,7 +79,7 @@ describe('启动预热站点登录态（ADR-0024）', () => {
 
     expect(snapshot.phase).toBe('ready');
     expect(snapshot.steps[2]?.status).toBe('warn');
-    expect(fake.commands()).toEqual(['opencli --version', 'opencli doctor']);
+    expect(fake.commands()).toEqual(["'opencli' --version", "'opencli' doctor"]);
   });
 
   it('★ doctor 说 daemon 没起来、可预热那条命令自己把通道跑通了 → 结论留到自愈之后再给：中途不闪「没连上」，复检后桥接翻成 ok', async () => {
@@ -110,10 +110,10 @@ describe('启动预热站点登录态（ADR-0024）', () => {
     expect(snapshot.bridgeIssues).toBeUndefined();
     expect(snapshot.steps[1]?.command).toBeUndefined();
     expect(fake.commands()).toEqual([
-      'opencli --version',
-      'opencli doctor',
+      "'opencli' --version",
+      "'opencli' doctor",
       "'opencli' 'inventory' 'enterprises' --site-session persistent -f json",
-      'opencli doctor',
+      "'opencli' doctor",
     ]);
   });
 
@@ -137,10 +137,10 @@ describe('启动预热站点登录态（ADR-0024）', () => {
     expect(snapshot.steps[1]?.command).toContain('daemon restart');
     expect(snapshot.steps[1]?.detail).toContain('Stale daemon detected');
     expect(fake.commands()).toEqual([
-      'opencli --version',
-      'opencli doctor',
+      "'opencli' --version",
+      "'opencli' doctor",
       "'opencli' 'inventory' 'enterprises' --site-session persistent -f json",
-      'opencli doctor',
+      "'opencli' doctor",
     ]);
   });
 

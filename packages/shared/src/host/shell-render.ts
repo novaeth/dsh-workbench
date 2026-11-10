@@ -36,7 +36,10 @@ export function powershellFileOf(options: PowershellFileOptions = {}): string {
   if (platform !== 'win32') return 'pwsh';
   const pathValue = options.pathValue ?? process.env['PATH'] ?? '';
   const exists = options.exists ?? existsSync;
-  const dirs = pathValue.split(win32.delimiter).filter((dir) => dir !== '');
+  const dirs = pathValue
+    .split(win32.delimiter)
+    .map((dir) => dir.replace(/^"(.*)"$/u, '$1'))
+    .filter((dir) => dir !== '');
   for (const [exe, file] of POWERSHELL_CANDIDATES) {
     if (dirs.some((dir) => exists(win32.join(dir, exe)))) return file;
   }

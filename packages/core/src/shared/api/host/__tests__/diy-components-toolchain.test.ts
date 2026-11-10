@@ -3,8 +3,9 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
+import { quoteShellArg } from '@dsh-workbench/shared/host';
 import { describe, expect, it } from 'vitest';
-import { filesOf, findFileOf, installedVersionOf, queryCommandOf, renderNameText, runSurfaceQuery, toolchainBinAmong, toolchainBinOf } from '../diy-components';
+import { filesOf, findFileOf, installedVersionOf, queryCommandOf, renderNameText, runSurfaceQuery, toolchainArgvOf, toolchainBinAmong, toolchainBinOf } from '../diy-components';
 import { fakeSeamOf } from './seam-fake';
 
 const PACKAGES_DIR = join(import.meta.dirname, '..', '..', '..', '..', '..', '..');
@@ -161,6 +162,28 @@ describe('workbench_diy_components · 工具链', () => {
 
   it('路径里有空格也要引起来（工坊可能住在「我的 文档」这种地方）', () => {
     expect(queryCommandOf('/w/my work/dsh-wb-module', 'kit')).toBe("'/w/my work/dsh-wb-module' check --only kit --json");
+  });
+
+  it('★ 回退到包里的 .mjs 时用 node 起（win32 上 .mjs 不是可执行扩展名）', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'dsh-wb-mjs-'));
+    try {
+      const script = join(dir, 'node_modules', '@dsh-workbench', 'module-tools', 'bin');
+      mkdirSync(script, { recursive: true });
+      const file = join(script, 'dsh-wb-module.mjs');
+      writeFileSync(file, '');
+      expect(toolchainBinOf(dir)).toBe(file);
+
+      const line = queryCommandOf(file, 'kit');
+
+      expect(toolchainArgvOf(file)).toEqual([process.execPath, file]);
+      expect(line).toBe(`${quoteShellArg(process.execPath)} '${file}' check --only kit --json`);
+      expect(line.startsWith(quoteShellArg(process.execPath))).toBe(true);
+      expect(toolchainArgvOf(join(dir, 'node_modules', '.bin', 'dsh-wb-module'))).toEqual([
+        join(dir, 'node_modules', '.bin', 'dsh-wb-module'),
+      ]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('★★ 根上没有工具链就往模块包里找（modules-repo 那种「工具链只在各模块包 node_modules」的布局）', () => {

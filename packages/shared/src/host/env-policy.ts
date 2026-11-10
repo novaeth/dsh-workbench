@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { delimiter, join } from 'node:path';
+import { delimiter, join, win32 } from 'node:path';
 import { dshHome } from './data-root.js';
 import type { ShellKind } from './shell-text.js';
 
@@ -71,6 +71,16 @@ function existingPointer(realHome: string, name: string): string | undefined {
   return existsSync(file) ? file : undefined;
 }
 
+function homeEnvOf(home: string): Record<string, string> {
+  if (!/^[A-Za-z]:[\\/]/.test(home)) return { USERPROFILE: home };
+  const root = win32.parse(home).root;
+  return {
+    USERPROFILE: home,
+    HOMEDRIVE: root.replace(/[\\/]+$/, ''),
+    HOMEPATH: `\\${home.slice(root.length)}`,
+  };
+}
+
 export interface ProductEnvInput {
   readonly runtimeRoot: string;
   readonly home?: string | undefined;
@@ -85,8 +95,10 @@ export interface ProductEnvInput {
 export function productEnvOf(input: ProductEnvInput): Record<string, string> {
   const runtimeRoot = input.runtimeRoot;
   const realHome = input.realHome ?? homedir();
+  const home = input.home ?? join(runtimeRoot, 'home');
   const env: Record<string, string> = {
-    HOME: input.home ?? join(runtimeRoot, 'home'),
+    ...homeEnvOf(home),
+    HOME: home,
     DSH_HOME: dshHome(),
     DSH_WORKBENCH_HOME: runtimeRoot,
     npm_config_cache: join(runtimeRoot, 'npm-cache'),
@@ -146,7 +158,7 @@ export function bootstrapEnvOf(input: BootstrapEnvInput): Record<string, string>
   if (input.path !== undefined) env['PATH'] = input.path;
   const home = join(input.root, 'home');
   env['HOME'] = home;
-  if (input.shellKind === 'pwsh') env['USERPROFILE'] = home;
+  if (input.shellKind === 'pwsh') Object.assign(env, homeEnvOf(home));
   const userConfig = existingPointer(input.realHome, '.npmrc');
   if (userConfig !== undefined) env['NPM_CONFIG_USERCONFIG'] = userConfig;
   const cache = join(input.root, 'npm-cache');

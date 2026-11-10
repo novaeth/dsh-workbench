@@ -1,8 +1,7 @@
-import { execFileSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { pkg, read } from '../lib.mjs';
+import { pkg, posixProbeOf, read } from '../lib.mjs';
 
 const LAUNCHER_SPEC_TITLE =
   '★ 启动器"装哪一份"：仓库副本 link 本目录，装出来的那份按源上版本装（哪怕它正好落在某个 git 仓库里）';
@@ -35,16 +34,7 @@ export const checks = [
   {
     title: LAUNCHER_SPEC_TITLE,
     run(_ctx, report) {
-
-      let probe;
-      try {
-        probe = execFileSync('bash', [pkg('scripts/check-launcher-spec.sh')], {
-          encoding: 'utf8',
-          stdio: ['ignore', 'pipe', 'pipe'],
-        }).trim();
-      } catch (error) {
-        probe = `${error.stdout ?? ''}${error.stderr ?? ''}`.trim();
-      }
+      const probe = posixProbeOf(pkg('scripts/check-launcher-spec.sh'));
       const passed = probe.endsWith('ALL OK');
       report(LAUNCHER_SPEC_TITLE, passed, passed ? '四格都按契约 ✅' : `探针输出：${probe}`);
     },

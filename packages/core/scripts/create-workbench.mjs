@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 import prompts from 'prompts';
 
 const PKG_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
+const IS_WIN = process.platform === 'win32';
+const LAUNCHER = join(PKG_ROOT, 'bin', IS_WIN ? 'dsh-workbench.cmd' : 'dsh-workbench');
 const HOME = process.env.DSH_HOME?.trim() || join(homedir(), '.dsh');
 const PROFILES_DIR = join(HOME, 'profiles');
 const PROFILE_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
@@ -55,12 +57,19 @@ function nameProblem(value, source, profiles) {
   return null;
 }
 
+function launcher(args) {
+  return IS_WIN ? [process.env.ComSpec ?? 'cmd.exe', ['/d', '/c', LAUNCHER, ...args]] : [LAUNCHER, args];
+}
+
 function runSetup(args) {
-  const child = execaSync('bash', [join(PKG_ROOT, 'bin', 'dsh-workbench'), ...args], {
+  const child = execaSync(...launcher(args), {
     stdio: 'inherit',
     reject: false,
   });
-  if (child.failed) fail(child.shortMessage ?? `bash 起不来（退出码 ${child.exitCode ?? '未知'}）`);
+  if (child.failed) {
+    if (!IS_WIN) fail(child.shortMessage ?? `启动器起不来（退出码 ${child.exitCode ?? '未知'}）`);
+    process.exit(child.exitCode ?? 1);
+  }
   process.exit(child.exitCode ?? 1);
 }
 

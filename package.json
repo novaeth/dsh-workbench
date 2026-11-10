@@ -31,7 +31,7 @@
     "dev:docs": "pnpm --filter @dsh-workbench/docs run dev",
     "build:docs": "pnpm --filter @dsh-workbench/docs run build",
     "deploy:docs": "node scripts/deploy-docs.mjs",
-    "verify": "./scripts/verify.sh",
+    "verify": "node scripts/verify.mjs",
     "smoke:platform": "node scripts/smoke/platform-shell.mjs",
     "smoke:install-plan": "node scripts/smoke/install-plan.mjs",
     "check:bundles": "node packages/module-tools/bin/dsh-wb-module.mjs check --only bundles",

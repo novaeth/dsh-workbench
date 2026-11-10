@@ -9,7 +9,7 @@ import {
   npmSourceOf,
   parseJsonLoose,
   productWrite,
-  quoteShellArg,
+  quoteShellArgFor,
   type Seam,
   type ExtensionNeed,
   type LibNeed,
@@ -40,9 +40,9 @@ export function parsePluginList(stdout: string): unknown[] | undefined {
   return /no plugins? installed/i.test(stdout) ? [] : undefined;
 }
 
-async function probeBinary(seam: Seam, name: string): Promise<boolean> {
-  const line =
-    process.platform === 'win32' ? `where ${quoteShellArg(name)}` : `command -v ${quoteShellArg(name)}`;
+async function probeBinary(seam: Seam, name: string, platform: NodeJS.Platform): Promise<boolean> {
+  const probe = quoteShellArgFor(name, platform);
+  const line = platform === 'win32' ? `where.exe ${probe}` : `command -v ${probe}`;
   const result = await seam
     .run({ command: line, intent: noWrite(), retry: 'safe', timeoutMs: BINARY_PROBE_TIMEOUT_MS, bestEffort: true })
     .catch(() => undefined);
@@ -58,11 +58,12 @@ async function runtimeList(options: {
   seam: Seam;
   command: string;
   needsPlugins: boolean;
+  platform: NodeJS.Platform;
 }): Promise<RuntimeProbe> {
   if (!options.needsPlugins) return {};
   const result = await options.seam
     .run({
-      command: `${options.command} plugin list -f json`,
+      command: `${quoteShellArgFor(options.command, options.platform)} plugin list -f json`,
       intent: productWrite(),
       retry: 'safe',
       timeoutMs: OPENCLI_TIMEOUT_MS,
@@ -129,6 +130,13 @@ function cacheKeyOf(commandKey: string, units: readonly NeedProbeInput[], unit: 
   return `${commandKey}:${scope}:${unit}`;
 }
 
+function commandKeyOf(
+  runtimeCommands: Readonly<Record<string, string>>,
+  platform: NodeJS.Platform,
+): string {
+  return `${platform}:${Object.values(runtimeCommands).sort().join('|')}`;
+}
+
 function runtimeCommandOf(
   need: ExtensionNeed,
   runtimeCommands: Readonly<Record<string, string>>,
@@ -143,9 +151,11 @@ export async function probeUnits(options: {
   runtimeCommands: Readonly<Record<string, string>>;
   units: readonly NeedProbeInput[];
   force?: boolean;
+  platform?: NodeJS.Platform | undefined;
 }): Promise<UnitCapability[]> {
   const { seam, runtimeCommands, units, force = false } = options;
-  const commandKey = Object.values(runtimeCommands).sort().join('|');
+  const platform = options.platform ?? process.platform;
+  const commandKey = commandKeyOf(runtimeCommands, platform);
 
   const hits = units.map((unit) => unitCache.get(cacheKeyOf(commandKey, units, unit.unit)));
   if (!force && hits.every((hit) => hit !== undefined)) {
@@ -158,7 +168,7 @@ export async function probeUnits(options: {
     if (shared !== undefined) return shared;
   }
 
-  const task = loadCapabilities({ seam, runtimeCommands, units, force });
+  const task = loadCapabilities({ seam, runtimeCommands, units, force, platform });
   pendingProbes.set(key, task);
   try {
     return await task;
@@ -172,8 +182,9 @@ async function loadCapabilities(options: {
   runtimeCommands: Readonly<Record<string, string>>;
   units: readonly NeedProbeInput[];
   force: boolean;
+  platform: NodeJS.Platform;
 }): Promise<UnitCapability[]> {
-  const { seam, runtimeCommands, units, force } = options;
+  const { seam, runtimeCommands, units, force, platform } = options;
   const index = buildSupplyIndex(units.map((unit) => ({ id: unit.unit, needs: unit.needs })), {
     env: process.env,
     packagePrefix: 'opencli-plugin-',
@@ -191,7 +202,7 @@ async function loadCapabilities(options: {
   await Promise.all(
     binNames.map(async (name) => {
       const known = runtimeNames.some((command) => commandNamesMatch(name, command));
-      binaries.set(name, known ? true : await probeBinary(seam, name));
+      binaries.set(name, known ? true : await probeBinary(seam, name, platform));
     }),
   );
 
@@ -210,7 +221,7 @@ async function loadCapabilities(options: {
       const needsPlugins = extensionNeeds.some(
         (need) => need.runtime === runtime && conflictOf(index, need) === undefined,
       );
-      lists.set(runtime, await runtimeList({ seam, command, needsPlugins }));
+      lists.set(runtime, await runtimeList({ seam, command, needsPlugins, platform }));
     }),
   );
 
@@ -275,7 +286,7 @@ async function loadCapabilities(options: {
 
   return units.map((unit) => {
     const capability = aggregate(unit.unit, unit.needs, statesOfUnit(unit));
-    unitCache.set(cacheKeyOf(Object.values(runtimeCommands).sort().join('|'), units, unit.unit), capability);
+    unitCache.set(cacheKeyOf(commandKeyOf(runtimeCommands, platform), units, unit.unit), capability);
     return capability;
   });
 }
@@ -286,6 +297,7 @@ export async function probeUnitCommands(options: {
   unit: NeedProbeInput;
   force?: boolean;
   catalog?: readonly NeedProbeInput[];
+  platform?: NodeJS.Platform | undefined;
 }): Promise<UnitCapability> {
   const units = options.catalog === undefined ? [options.unit] : options.catalog;
   const all = await probeUnits({
@@ -293,6 +305,7 @@ export async function probeUnitCommands(options: {
     runtimeCommands: options.runtimeCommands ?? {},
     units,
     ...(options.force === undefined ? {} : { force: options.force }),
+    ...(options.platform === undefined ? {} : { platform: options.platform }),
   });
   const found = all.find((item) => item.unit === options.unit.unit);
   return (

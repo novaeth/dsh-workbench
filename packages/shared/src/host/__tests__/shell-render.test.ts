@@ -91,6 +91,20 @@ describe('powershellFileOf', () => {
     ).toBe('pwsh');
   });
 
+  it('★ win32：PATH 段被引号包着（安装器常这么写）时仍找得到 pwsh.exe', () => {
+    const seen: string[] = [];
+    const found = powershellFileOf({
+      platform: 'win32',
+      pathValue: '"C:\\Tools";C:\\Windows\\System32\\WindowsPowerShell\\v1.0',
+      exists: (file) => {
+        seen.push(file);
+        return file === 'C:\\Tools\\pwsh.exe';
+      },
+    });
+    expect(found).toBe('pwsh');
+    expect(seen).toContain('C:\\Tools\\pwsh.exe');
+  });
+
   it('win32：没有 pwsh.exe 但有 powershell.exe 时退回 powershell.exe', () => {
     expect(
       powershellFileOf({ platform: 'win32', pathValue: 'C:\\Windows\\System32', exists: existsNamed('powershell.exe') }),

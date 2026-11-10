@@ -34,6 +34,11 @@ npx @dsh-workbench/core
 `setup` 可以重复跑，用来补环境或升级。另外两种装法（装进 `dsh web`、装进 Desktop）见
 <PagodaDocLinkToView view="guide/install">三种装法</PagodaDocLinkToView>。
 
+:::warning Windows 上别走这条
+独立实例的启动器还是 bash 脚本，`create` 与 `setup` 在 Windows 上会报找不到 `bash`。
+用 `dsh web` 的插件页或 Desktop 的插件页装，效果一样。
+:::
+
 :::tip 还没完：第一次打开要装一次浏览器扩展
 工作台自己会装 opencli 的运行时，但**浏览器里的 OpenCLI 扩展要你装一次**，面板才能读到数据。
 步骤在下一节；不装也能进工作台，只是要靠登录状态的面板会空着。

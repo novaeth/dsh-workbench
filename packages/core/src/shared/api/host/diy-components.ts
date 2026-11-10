@@ -53,8 +53,13 @@ export function toolchainBinAmong(root: string, dirs: readonly string[]): string
   return null;
 }
 
+export function toolchainArgvOf(bin: string): readonly string[] {
+  return bin.endsWith('.mjs') ? [process.execPath, bin] : [bin];
+}
+
 export function queryCommandOf(bin: string, only: 'kit' | 'primitives'): string {
-  return `${quoteShellArg(bin)} check --only ${only} --json`;
+  const head = toolchainArgvOf(bin).map((one) => quoteShellArg(one)).join(' ');
+  return `${head} check --only ${only} --json`;
 }
 
 export async function runSurfaceQuery(

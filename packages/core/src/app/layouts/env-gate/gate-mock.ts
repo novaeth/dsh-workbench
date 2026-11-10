@@ -80,8 +80,8 @@ export const GATE_MOCKS: readonly GateMock[] = [
     '第一步在跑（转圈 + 它正在执行的命令），第二步还没轮到（短横）。',
     {
       phase: 'checking',
-      steps: [{ id: 'cli', status: 'running', action: '检查 opencli 版本', log: ['> opencli --version', '1.8.8'] }, BRIDGE_PENDING],
-      log: ['> opencli --version', '1.8.8'],
+      steps: [{ id: 'cli', status: 'running', action: '检查 opencli 版本', log: ["> 'opencli' --version", '1.8.8'] }, BRIDGE_PENDING],
+      log: ["> 'opencli' --version", '1.8.8'],
     },
     { hint: 'checking', command: false },
   ),
@@ -118,7 +118,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     {
       phase: 'ready',
       steps: [
-        { id: 'cli', status: 'ok', detail: '1.8.8', log: ['> opencli --version', '1.8.8'] },
+        { id: 'cli', status: 'ok', detail: '1.8.8', log: ["> 'opencli' --version", '1.8.8'] },
         { id: 'bridge', status: 'ok', detail: 'Everything looks good!', log: ['> opencli doctor', 'Everything looks good!'] },
       ],
     },
@@ -131,7 +131,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     {
       phase: 'ready',
       steps: [
-        { id: 'cli', status: 'ok', detail: '1.8.8', log: ['> opencli --version', '1.8.8'] },
+        { id: 'cli', status: 'ok', detail: '1.8.8', log: ["> 'opencli' --version", '1.8.8'] },
         { id: 'bridge', status: 'warn', detail: EXTENSION_REPORT },
       ],
       bridgeIssues: ['extension'],
@@ -146,7 +146,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     {
       phase: 'ready',
       steps: [
-        { id: 'cli', status: 'ok', detail: '1.8.8', log: ['> opencli --version', '1.8.8'] },
+        { id: 'cli', status: 'ok', detail: '1.8.8', log: ["> 'opencli' --version", '1.8.8'] },
         { id: 'bridge', status: 'warn', detail: DAEMON_REPORT, command: 'opencli daemon restart' },
       ],
       bridgeIssues: ['daemon', 'extension'],
@@ -160,7 +160,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     {
       phase: 'ready',
       steps: [
-        { id: 'cli', status: 'ok', detail: '1.8.8', log: ['> opencli --version', '1.8.8'] },
+        { id: 'cli', status: 'ok', detail: '1.8.8', log: ["> 'opencli' --version", '1.8.8'] },
         { id: 'bridge', status: 'warn', detail: PROFILE_REPORT, command: 'opencli profile list' },
       ],
       bridgeIssues: ['profile'],
@@ -174,7 +174,7 @@ export const GATE_MOCKS: readonly GateMock[] = [
     {
       phase: 'ready',
       steps: [
-        { id: 'cli', status: 'ok', detail: '1.8.8', log: ['> opencli --version', '1.8.8'] },
+        { id: 'cli', status: 'ok', detail: '1.8.8', log: ["> 'opencli' --version", '1.8.8'] },
         { id: 'bridge', status: 'ok', detail: 'Everything looks good!', log: ['> opencli doctor', 'Everything looks good!'] },
         {
           id: 'diy',

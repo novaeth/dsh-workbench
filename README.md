@@ -127,6 +127,9 @@ npx --yes @dsh-workbench/core@latest setup
 npx @dsh-workbench/core
 ```
 
+> **Windows 上走插件页**：独立实例那条路的启动器还是 bash 脚本，`npx @dsh-workbench/core create`
+> 与 `setup` 在 Windows 上会报找不到 `bash`。用 `dsh web` 的插件页或 Desktop 的插件页装，效果一样。
+
 打开 <http://localhost:3081>。原来的 `dsh web` 继续用 `:3080`；会话、项目和附件是同一份，
 设置与插件各一份。
 

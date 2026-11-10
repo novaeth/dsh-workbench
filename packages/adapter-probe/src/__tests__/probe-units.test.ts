@@ -401,3 +401,73 @@ describe('parsePluginList', () => {
     expect(parsePluginList('error: something')).toBeUndefined();
   });
 });
+
+describe('跨平台的命令形态', () => {
+  it('★ win32 的 bin 探测走 where.exe（PowerShell 里 where 是 Where-Object 的别名）', async () => {
+    const fake = createFakeShell((call) =>
+      call.command.startsWith('where.exe ') ? { exitCode: 0, stdout: 'C:\\tools\\gh.exe\n' } : { exitCode: 1 },
+    );
+
+    const found = await probeUnits({
+      seam: seamFor(fake.shell),
+      runtimeCommands: RUNTIMES,
+      units: [{ unit: 'u', needs: [binNeedOf('gh')] }],
+      force: true,
+      platform: 'win32',
+    });
+
+    expect(fake.commands()).toEqual(["where.exe 'gh'"]);
+    expect(found[0]?.status).toBe('ok');
+  });
+
+  it('★ POSIX 的 bin 探测照旧 command -v', async () => {
+    const fake = createFakeShell((call) =>
+      call.command.startsWith('command -v ') ? { exitCode: 0, stdout: '/usr/bin/gh\n' } : { exitCode: 1 },
+    );
+
+    const found = await probeUnits({
+      seam: seamFor(fake.shell),
+      runtimeCommands: RUNTIMES,
+      units: [{ unit: 'u', needs: [binNeedOf('gh')] }],
+      force: true,
+      platform: 'linux',
+    });
+
+    expect(fake.commands()).toEqual(["command -v 'gh'"]);
+    expect(found[0]?.status).toBe('ok');
+  });
+
+  it('★ 隔离 opencli 的路径带空格 → plugin list 里整段带引号', async () => {
+    const command = 'C:\\Users\\John Smith\\.dsh\\workbench\\opencli\\bin\\opencli.cmd';
+    const fake = createFakeShell((call) =>
+      call.command === `'${command}' plugin list -f json` ? { exitCode: 0, ...listOf(['issues']) } : { exitCode: 1 },
+    );
+
+    const found = await probeUnits({
+      seam: seamFor(fake.shell),
+      runtimeCommands: { 'fake-runtime': command },
+      units: [{ unit: 'u', needs: [extensionNeedOf('demo', { commands: ['issues'] })] }],
+      force: true,
+      platform: 'win32',
+    });
+
+    expect(fake.commands()[0]).toBe(`'${command}' plugin list -f json`);
+    expect(found[0]?.status).toBe('ok');
+  });
+
+  it('★ 探测缓存按平台分开：先 win32 后 linux 不串味', async () => {
+    const commands: string[] = [];
+    const fake = createFakeShell((call) => {
+      commands.push(call.command);
+      return call.command.startsWith('where.exe ') || call.command.startsWith('command -v ')
+        ? { exitCode: 0, stdout: 'x\n' }
+        : {};
+    });
+    const units = [{ unit: 'u', needs: [binNeedOf('gh')] }];
+
+    await probeUnits({ seam: seamFor(fake.shell), runtimeCommands: RUNTIMES, units, platform: 'win32' });
+    await probeUnits({ seam: seamFor(fake.shell), runtimeCommands: RUNTIMES, units, platform: 'linux' });
+
+    expect(commands).toEqual(["where.exe 'gh'", "command -v 'gh'"]);
+  });
+});

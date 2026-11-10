@@ -75,7 +75,7 @@ export const checks = [
         symlinkSync(
           join(PKG, '..', fixtureName),
           join(scope, fixtureName),
-          process.platform === 'win32' ? 'junction' : 'dir',
+          'junction',
         );
         const fakeCtx = {
           effect: (fn) => { fn(); return () => {}; },

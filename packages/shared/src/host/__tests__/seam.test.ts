@@ -1,9 +1,11 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { afterAll, describe, expect, it } from 'vitest';
 import { SeamError } from '../seam/intent.js';
-import { pathsPolicy } from '../seam/policy.js';
+import type { ProcessChild, ProcessHost, ProcessSpawnOptions } from '../seam/exec.js';
+import { insideOf, pathsPolicy } from '../seam/policy.js';
 import { createSeam } from '../seam/run.js';
 import { createUnitSeam, unitDataRoot } from '../seam/unit-seam.js';
 import { createFakeProcesses, createFakeShell, createFakeLogger } from '../../testing/host-fakes.js';
@@ -19,6 +21,56 @@ afterAll(() => {
 
 function policyOf(call: { sandboxPolicy?: unknown } | undefined): unknown {
   return call?.sandboxPolicy;
+}
+
+function exitEventOf(signal: string | undefined): { code: number | null; signal: string | null } {
+  return { code: null, signal: signal ?? 'SIGTERM' };
+}
+
+function treeKillProbe(): {
+  readonly host: ProcessHost;
+  readonly spawned: ProcessSpawnOptions[];
+  readonly kills: string[];
+} {
+  const spawned: ProcessSpawnOptions[] = [];
+  const kills: string[] = [];
+  const host: ProcessHost = {
+    spawn(options) {
+      spawned.push(options);
+      const exitListeners: Array<(event: { code: number | null; signal: string | null }) => void> = [];
+      const settle = (signal: string | undefined): void => {
+        const event = exitEventOf(signal);
+        queueMicrotask(() => {
+          for (const listener of exitListeners) listener(event);
+        });
+      };
+      const child: ProcessChild = {
+        pid: 9100 + spawned.length,
+        stdin: { write: () => {} },
+        stdout: null,
+        stderr: null,
+        onExit(listener) {
+          exitListeners.push(listener);
+          return () => {
+            const at = exitListeners.indexOf(listener);
+            if (at >= 0) exitListeners.splice(at, 1);
+          };
+        },
+        onError: () => () => {},
+        unref: () => {},
+        kill(signal) {
+          kills.push(`direct:${signal ?? 'SIGTERM'}`);
+          settle(signal);
+        },
+        killTree(signal) {
+          kills.push(`tree:${signal ?? 'SIGTERM'}`);
+          settle(signal);
+        },
+      };
+      return child;
+    },
+  };
+  return { host, spawned, kills };
 }
 
 describe('createSeam', () => {
@@ -313,6 +365,108 @@ describe('宿主域：run / spawn / open', () => {
   });
 });
 
+describe('host 域整棵树终止与 signal', () => {
+  it('★ host 域超时走整棵树终止：声明 killTree 并只用它，不再只杀直接子进程', async () => {
+    const probe = treeKillProbe();
+    const seam = createSeam({
+      shell: createFakeShell([]).shell,
+      runtimeRoot: ROOT,
+      allowHost: true,
+      processes: probe.host,
+    });
+    const outcome = await seam.run({ command: 'pnpm install', shellKind: 'posix', intent: { kind: 'host' }, timeoutMs: 10 });
+    expect(outcome.timedOut).toBe(true);
+    expect(probe.spawned[0]?.killTree).toBe(true);
+    expect(probe.kills).toEqual(['tree:SIGKILL']);
+  });
+
+  it('★ host 域：已经 abort 的请求不起进程，直接给 aborted', async () => {
+    const probe = treeKillProbe();
+    const seam = createSeam({
+      shell: createFakeShell([]).shell,
+      runtimeRoot: ROOT,
+      allowHost: true,
+      processes: probe.host,
+    });
+    const control = new AbortController();
+    control.abort();
+    const outcome = await seam.run({
+      command: 'pnpm install',
+      shellKind: 'posix',
+      intent: { kind: 'host' },
+      signal: control.signal,
+    });
+    expect(outcome.aborted).toBe(true);
+    expect(outcome.exitCode).toBeNull();
+    expect(outcome.timedOut).toBe(false);
+    expect(probe.spawned).toHaveLength(0);
+    expect(probe.kills).toEqual([]);
+  });
+
+  it('★ host 域运行中 abort：同一套树终止 + aborted=true', async () => {
+    const probe = treeKillProbe();
+    const seam = createSeam({
+      shell: createFakeShell([]).shell,
+      runtimeRoot: ROOT,
+      allowHost: true,
+      processes: probe.host,
+    });
+    const control = new AbortController();
+    const running = seam.run({
+      command: 'pnpm install',
+      shellKind: 'posix',
+      intent: { kind: 'host' },
+      signal: control.signal,
+    });
+    expect(probe.spawned).toHaveLength(1);
+    control.abort();
+    const outcome = await running;
+    expect(outcome.aborted).toBe(true);
+    expect(probe.kills).toEqual(['tree:SIGKILL']);
+  });
+
+  it('★ spawn / open 的 kill 也走整棵树', async () => {
+    const probe = treeKillProbe();
+    const seam = createSeam({
+      shell: createFakeShell([]).shell,
+      runtimeRoot: ROOT,
+      allowHost: true,
+      processes: probe.host,
+    });
+    const spawned = seam.spawn({
+      target: { argv: ['node', 'seed.mjs'] },
+      intent: { kind: 'host' },
+      lifetime: 'host',
+      logFile: join(SCRATCH, 'tree-spawn.log'),
+    });
+    spawned.kill();
+    expect(probe.kills).toEqual(['tree:SIGTERM']);
+    const opened = seam.open({ target: { argv: ['node', 'mcp.mjs'] }, intent: { kind: 'host' } });
+    opened.kill('SIGKILL');
+    expect(probe.kills).toEqual(['tree:SIGTERM', 'tree:SIGKILL']);
+  });
+});
+
+describe.skipIf(process.platform === 'win32')('host 域整棵树终止（真 fork）', () => {
+  it('★ 超时返回后孙进程的心跳不再涨', async () => {
+    const beat = join(SCRATCH, 'seam-tree-beat.txt');
+    writeFileSync(beat, '');
+    const js = `const fs=require('fs');fs.appendFileSync(${JSON.stringify(beat)},'x');setInterval(()=>fs.appendFileSync(${JSON.stringify(beat)},'x'),60);setTimeout(()=>process.exit(0),20000);`;
+    const seam = createSeam({ shell: createFakeShell([]).shell, runtimeRoot: ROOT, allowHost: true });
+    const outcome = await seam.run({
+      command: `${process.execPath} -e ${JSON.stringify(js)} ; exit 0`,
+      shellKind: 'posix',
+      intent: { kind: 'host' },
+      timeoutMs: 700,
+    });
+    expect(outcome.timedOut).toBe(true);
+    const at = statSync(beat).size;
+    expect(at).toBeGreaterThan(0);
+    await delay(600);
+    expect(statSync(beat).size).toBe(at);
+  }, 20_000);
+});
+
 describe('pwsh 命令行', () => {
   it('host 域：命令行以引号开头时补 & 调用符', async () => {
     const fake = createFakeProcesses([{}]);
@@ -350,5 +504,33 @@ describe('pwsh 命令行', () => {
     const seam = createSeam({ shell: fake.shell, runtimeRoot: ROOT });
     await seam.run({ command: 'pnpm install', shellKind: 'pwsh', intent: { kind: 'none' } });
     expect(fake.calls[0]?.command).toContain("'-Command' 'pnpm install'");
+  });
+});
+
+describe('写域判定：符号链接与大小写', () => {
+  const base = mkdtempSync(join(tmpdir(), 'dsh-wb-policy-'));
+  const real = join(base, 'real');
+  const link = join(base, 'link');
+  mkdirSync(join(real, 'inner'), { recursive: true });
+  symlinkSync(real, link, 'junction');
+  afterAll(() => {
+    rmSync(base, { recursive: true, force: true });
+  });
+
+  it('★ 经过符号链接的路径仍判在写域内（/tmp 与 /private/tmp 这类别名）', () => {
+    expect(insideOf(real, join(link, 'inner'))).toBe(true);
+    expect(insideOf(link, join(real, 'inner'))).toBe(true);
+    expect(insideOf(real, join(real, '还没建的文件.png'))).toBe(true);
+  });
+
+  it.skipIf(process.platform === 'linux')('★ 大小写不同的同一个目录判在写域内（macOS / Windows 默认不区分）', () => {
+    expect(insideOf(real.toUpperCase(), join(real, 'inner'))).toBe(true);
+    const policy = pathsPolicy('workspace-write', [join(real, 'a.png'), join(real.toUpperCase(), 'b.png')]);
+    expect(policy.workspaceRoot).toBe(resolve(real));
+  });
+
+  it('域外照旧不算写域内', () => {
+    expect(insideOf(real, join(base, 'other.png'))).toBe(false);
+    expect(insideOf(link, join(base, 'other.png'))).toBe(false);
   });
 });

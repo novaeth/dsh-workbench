@@ -1,6 +1,6 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { execa } from 'execa';
 
 const temp = process.env.RUNNER_TEMP ?? tmpdir();
@@ -94,7 +94,7 @@ if (!existsSync(join(extensionDir, 'manifest.json'))) throw new Error(`扩展包
 const extension = JSON.parse(readFileSync(join(extensionDir, 'manifest.json'), 'utf8'));
 log(`extension version: ${String(extension.version)} · dir: ${extensionDir}`);
 
-const home = process.env.USERPROFILE ?? process.env.HOME ?? '';
+const home = homedir();
 const opencliBin =
   process.platform === 'win32'
     ? join(home, '.dsh', 'workbench', 'opencli', 'bin', 'opencli.cmd')

@@ -14,6 +14,8 @@ afterAll(() => {
   rmSync(SCRATCH, { recursive: true, force: true });
 });
 
+const TARGET = join(SCRATCH, 'p');
+
 const SUPPLY = {
   modules: { isolatedRoot: () => ROOT, isolatedHome: () => `${ROOT}-home` },
 } as unknown as SupplyPort;
@@ -35,12 +37,12 @@ describe('createInstallRunner', () => {
 
   it('★ 没有执行缝就直说：装 / 卸做不了（不是静默成功）', async () => {
     const runner = createInstallRunner({ supply: SUPPLY });
-    await expect(runner.run('pnpm add --dir /p x')).rejects.toThrow(/没有执行缝/);
+    await expect(runner.run(`pnpm add --dir ${TARGET} x`)).rejects.toThrow(/没有执行缝/);
   });
 
   it('★ 非零退出转成安装诊断：退出码与输出都带出来', async () => {
     const { runner } = runnerWith([{ exitCode: 3, stderr: 'EACCES: permission denied' }]);
-    const failure = await runner.run('pnpm add --dir /p x').then(
+    const failure = await runner.run(`pnpm add --dir ${TARGET} x`).then(
       () => undefined,
       (error: unknown) => error as Error,
     );
@@ -62,15 +64,15 @@ describe('createInstallRunner', () => {
     const dir = join(SCRATCH, 'created', 'nested');
     await runner.runAll([
       { kind: 'mkdir', path: dir },
-      { kind: 'run', line: 'pnpm add --dir /p x' },
+      { kind: 'run', line: `pnpm add --dir ${TARGET} x` },
     ]);
-    expect(fake.commands()).toEqual(['pnpm add --dir /p x']);
+    expect(fake.commands()).toEqual([`pnpm add --dir ${TARGET} x`]);
     expect(existsSync(dir)).toBe(true);
   });
 
   it('★ 执行缝自己抛的错不被 optional 吞掉（沙箱拒绝要冒出去）', async () => {
     const { runner } = runnerWith([{ failWith: new Error('sandbox-denied') }]);
-    await expect(runner.runAll([{ kind: 'run', line: 'pnpm add --dir /p x', optional: true }])).rejects.toThrow(
+    await expect(runner.runAll([{ kind: 'run', line: `pnpm add --dir ${TARGET} x`, optional: true }])).rejects.toThrow(
       'sandbox-denied',
     );
   });

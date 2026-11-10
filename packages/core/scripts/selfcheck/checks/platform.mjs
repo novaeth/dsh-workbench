@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { REPO, read, sourceIndex, walk } from '../lib.mjs';
 
 const SOURCE_EXT = /\.(?:ts|tsx|mjs|cjs|js)$/;
+const SHELL_EXT = /\.sh$/;
 const TEST_FILE = /\.test\.[cm]?[jt]sx?$/;
 const HOME_NEEDLE = ['process', 'env', 'HOME'].join('.');
 const HOME_ALLOWED = new Set();
@@ -14,7 +15,12 @@ const ENV_PREFIX_ALLOWED = new Map([
 ]);
 
 const SHELL_INVOCATION_OWN = 'packages/shared/src/host/shell-render.ts';
+const LINK_TYPE_OWN = 'packages/core/scripts/selfcheck/checks/platform.mjs';
+const PATH_SPLIT_OWN = 'packages/core/scripts/selfcheck/checks/platform.mjs';
+const SHELL_PROBE_OWN = 'packages/core/scripts/selfcheck/lib.mjs';
 const SHELL_INVOCATION_PATTERNS = [/-NoProfile/, /-NonInteractive/, /'bash', args: \['-c'/];
+const BARE_SHELL =
+  /\b(?:execa|execaSync|execFileSync|execFile|execSync|exec|spawnSync|spawn)\s*\(\s*['"](?:\/usr\/bin\/env\s+|\/bin\/|\/usr\/bin\/)?(?:bash|sh|zsh)['"]/;
 
 const PLAN_SCAN_DIRS = ['packages/adapter-supply/src', 'packages/adapter-runtime/src/data'];
 const PLAN_FORBIDDEN = [/rm -rf/, /mkdir -p/, /ln -s/, /cp -R/, /\|\| true/];
@@ -22,18 +28,22 @@ const PLAN_ENV_PREFIX = /[A-Z][A-Z0-9_]*=\$\{/;
 const PLAN_ENV_FIELD = /(?:^|[\s{(,])env\s*:/;
 const PLAN_POSIX_ALLOWED = new Map();
 
+function collectSource(out, file) {
+  if (TEST_FILE.test(file)) return;
+  const source = read(file);
+  if (!SOURCE_EXT.test(file) && !SHELL_EXT.test(file) && !source.startsWith('#!')) return;
+  out.push({ rel: file.slice(REPO.length + 1).replaceAll('\\', '/'), source });
+}
+
 function packageSources() {
   const out = [];
   const packagesRoot = join(REPO, 'packages');
   for (const name of readdirSync(packagesRoot)) {
     for (const sub of ['src', 'scripts', 'bin']) {
-      for (const file of walk(join(packagesRoot, name, sub))) {
-        if (!SOURCE_EXT.test(file)) continue;
-        if (TEST_FILE.test(file)) continue;
-        out.push({ rel: file.slice(REPO.length + 1).replaceAll('\\', '/'), source: read(file) });
-      }
+      for (const file of walk(join(packagesRoot, name, sub))) collectSource(out, file);
     }
   }
+  for (const file of walk(join(REPO, 'scripts'))) collectSource(out, file);
   return out;
 }
 
@@ -63,6 +73,88 @@ function isAdapter(name) {
 
 function isTest(name) {
   return name.includes('/__tests__/') || /\.test\.[cm]?[jt]sx?$/.test(name);
+}
+
+function symlinkCalls(source) {
+  const marker = /symlinkSync\s*(?:['"]\s*\]\s*)?\??\.?\s*\(|\.symlink\s*\(/gu;
+  const out = [];
+  let found = marker.exec(source);
+  while (found !== null) {
+    const at = found.index;
+    let depth = 1;
+    let index = at + found[0].length;
+    let quote = '';
+    let segment = '';
+    const args = [];
+    while (index < source.length && depth > 0) {
+      const char = source[index];
+      if (quote !== '') {
+        if (char === '\\') {
+          segment += char + (source[index + 1] ?? '');
+          index += 2;
+          continue;
+        }
+        if (char === quote) quote = '';
+        segment += char;
+      } else if (char === '"' || char === "'" || char === '`') {
+        quote = char;
+        segment += char;
+      } else if (char === '(' || char === '[' || char === '{') {
+        depth += 1;
+        segment += char;
+      } else if (char === ')' || char === ']' || char === '}') {
+        depth -= 1;
+        if (depth > 0) segment += char;
+      } else if (char === ',' && depth === 1) {
+        args.push(segment);
+        segment = '';
+      } else {
+        segment += char;
+      }
+      index += 1;
+    }
+    args.push(segment);
+    const argTexts = args.map((one) => one.trim()).filter((one) => one !== '');
+    out.push({
+      line: source.slice(0, at).split('\n').length,
+      args: argTexts.length,
+      argTexts,
+    });
+    found = marker.exec(source);
+  }
+  return out;
+}
+
+function lineAt(source, index) {
+  return source.slice(0, index).split('\n').length;
+}
+
+function pathRefs(source) {
+  const out = [];
+  const spans = [];
+  for (const match of source.matchAll(/process\.env\s*(?:\.\s*([A-Za-z_$][\w$]*)|\[\s*['"]([^'"]*)['"]\s*\])/gu)) {
+    const key = (match[1] ?? match[2] ?? '').toLowerCase();
+    if (key !== 'path') continue;
+    spans.push([match.index, match.index + match[0].length]);
+    out.push({ line: lineAt(source, match.index), end: match.index + match[0].length });
+  }
+  for (const match of source.matchAll(/\bPATH\b/gu)) {
+    if (spans.some(([from, to]) => match.index >= from && match.index < to)) continue;
+    out.push({ line: lineAt(source, match.index), end: match.index + match[0].length });
+  }
+  return out;
+}
+
+function pathSplitProblems(source) {
+  const out = [];
+  for (const ref of pathRefs(source)) {
+    const match = /^[\s\S]{0,120}?\.split\s*\(\s*([^)]*)\)/u.exec(source.slice(ref.end));
+    if (match === null) continue;
+    const arg = match[1].trim();
+    if (/^(?:[\w$]+\.)?delimiter$/u.test(arg)) continue;
+    out.push({ line: ref.line, arg });
+  }
+  return out;
 }
 
 export const checks = [
@@ -214,6 +306,110 @@ export const checks = [
         hits.length === 0
           ? `计划步骤是 PluginPlanStep[]（run 的 env 字段带环境变量），扫 ${scanned} 个文件零命中`
           : `改成 PluginPlanStep[]：${hits.join(' · ')}`,
+      );
+    },
+  },
+  {
+    title: '★ 建链接必须显式给类型（Windows 上目录链接只能是 junction，不给类型建不起来）',
+    run(_ctx, report) {
+      const hits = [];
+      for (const { rel, source } of packageSources()) {
+        if (rel === LINK_TYPE_OWN) continue;
+        if (/import\s*\{[^}]*\bsymlinkSync\s+as\s+[\w$]/u.test(source)) {
+          hits.push(`${rel} symlinkSync 被别名导入：判据看不见调用点`);
+        }
+        if (/const\s*\{[^}]*\bsymlinkSync\s*:\s*[\w$]/u.test(source)) {
+          hits.push(`${rel} symlinkSync 被解构改名：判据看不见调用点`);
+        }
+        if (/(?:fs|fsp|fsPromises)\s*\.\s*symlinkSync\b(?!\s*\()/u.test(source)) {
+          hits.push(`${rel} symlinkSync 被存成变量：判据看不见调用点`);
+        }
+        if (/(?:exec\w*|spawn\w*|execa)\s*\(\s*['"]ln['"]|\bmklink\s+\/[Jj]/u.test(source)) {
+          hits.push(`${rel} 改用外部命令建链接（ln / mklink）：判据看不见链接类型，Windows 上也没有 ln`);
+        }
+        for (const call of symlinkCalls(source)) {
+          if (call.args < 3) {
+            hits.push(`${rel}:${call.line} 建链接少了 type —— 目录链接要 'junction'（或直接走 fs-write 的 linkDir）`);
+            continue;
+          }
+          const third = call.argTexts[2] ?? '';
+          if (!/^['"]junction['"]$/u.test(third) && !/^dirLinkTypeOf\s*\(/u.test(third)) {
+            hits.push(`${rel}:${call.line} 链接类型只许字面量 'junction' 或 dirLinkTypeOf(...) —— 平台分支只许住在 dirLinkTypeOf`);
+          }
+        }
+      }
+      const negative = [
+        symlinkCalls('symlinkSync(target, link)')[0]?.args === 2,
+        symlinkCalls("symlinkSync(a, join(b, c), 'junction')")[0]?.args === 3,
+        symlinkCalls("symlinkSync(\n  a,\n  b,\n  'junction',\n)")[0]?.args === 3,
+        !/^['"]junction['"]$/u.test(symlinkCalls("symlinkSync(a, b, 'dir')")[0]?.argTexts[2] ?? ''),
+        symlinkCalls("fs['symlinkSync'](a, at)")[0]?.args === 2,
+        symlinkCalls('fs.symlinkSync?.(a, at)')[0]?.args === 2,
+        symlinkCalls('await fs.promises.symlink(a, at)')[0]?.args === 2,
+        /const\s*\{[^}]*\bsymlinkSync\s*:\s*[\w$]/u.test('const { symlinkSync: link } = fs;'),
+        /import\s*\{[^}]*\bsymlinkSync\s+as\s+[\w$]/u.test("import { symlinkSync as link } from 'node:fs';"),
+        /(?:fs|fsp|fsPromises)\s*\.\s*symlinkSync\b(?!\s*\()/u.test('const link = fs.symlinkSync;'),
+        /(?:exec\w*|spawn\w*|execa)\s*\(\s*['"]ln['"]|\bmklink\s+\/[Jj]/u.test("execFileSync('ln', ['-s', a, at]);"),
+        /(?:exec\w*|spawn\w*|execa)\s*\(\s*['"]ln['"]|\bmklink\s+\/[Jj]/u.test("execFileSync('cmd', ['/c', 'mklink', '/J', at, a]);") === false,
+      ].every((one) => one === true);
+      report(
+        '★ 建链接必须显式给类型（Windows 上目录链接只能是 junction，不给类型建不起来）',
+        hits.length === 0 && negative,
+        hits.length === 0
+          ? negative
+            ? '都传了中立的 junction（或走 linkDir），链接类型的平台分支只有 dirLinkTypeOf 一处（判据负例也过）'
+            : '判据自己的负例没过：参数计数或取值不可信'
+          : hits.join(' · '),
+      );
+    },
+  },
+  {
+    title: '★ PATH 只许按 node:path 的 delimiter 切（Windows 上分隔符是分号）',
+    run(_ctx, report) {
+      const hits = [];
+      for (const { rel, source } of packageSources()) {
+        if (rel === PATH_SPLIT_OWN) continue;
+        for (const problem of pathSplitProblems(source)) {
+          hits.push(`${rel}:${problem.line} PATH 不是按 node:path 的 delimiter 切（split 的实参是 ${problem.arg}）`);
+        }
+      }
+      const negative = [
+        pathSplitProblems("const parts = (env.PATH ?? '').split(':');").length === 1,
+        pathSplitProblems("const parts = (process.env.PATH ?? '').split(delimiter);").length === 0,
+        pathSplitProblems("const parts = (process.env.PATH ?? '')\n  .split(':');").length === 1,
+        pathSplitProblems("const parts = (process.env['Path'] ?? '').split(';');").length === 1,
+        pathSplitProblems("const parts = process.env.PATHEXT.split(';');").length === 0,
+      ].every((one) => one === true);
+      report(
+        '★ PATH 只许按 node:path 的 delimiter 切（Windows 上分隔符是分号）',
+        hits.length === 0 && negative,
+        hits.length === 0
+          ? negative
+            ? 'PATH 都按 node:path 的 delimiter 切（判据负例也过）'
+            : '判据自己的负例没过：匹配不可信'
+          : hits.join(' · '),
+      );
+    },
+  },
+  {
+    title: '★ 起 POSIX 探针只有一处（脚本与 bin 里写死 bash / sh，换台没装 shell 的机器整条判据就崩）',
+    run(_ctx, report) {
+      const hits = [];
+      for (const { rel, source } of packageSources()) {
+        if (rel === SHELL_PROBE_OWN) continue;
+        for (const [index, line] of source.split('\n').entries()) {
+          if (BARE_SHELL.test(line)) hits.push(`${rel}:${index + 1} ${line.trim()}`);
+        }
+      }
+      const negative = BARE_SHELL.test(['execFileSync(', "'ba", "sh'", ', [script])'].join(''));
+      report(
+        '★ 起 POSIX 探针只有一处（脚本与 bin 里写死 bash / sh，换台没装 shell 的机器整条判据就崩）',
+        hits.length === 0 && negative,
+        hits.length === 0
+          ? negative
+            ? `只有 ${SHELL_PROBE_OWN} 起 POSIX 探针（判据负例也过）`
+            : '判据自己的负例没过：匹配不可信'
+          : hits.join(' · '),
       );
     },
   },

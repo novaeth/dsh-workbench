@@ -1,8 +1,7 @@
-import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 
-import { PKG, pkg, read } from '../lib.mjs';
+import { PKG, pkg, posixLineProbeOf, posixProbeOf, read } from '../lib.mjs';
 
 const SKILL_CHAR_BUDGET = 8192;
 const skillsDir = pkg('skills');
@@ -18,13 +17,7 @@ export const checks = [
     title: '★ 工坊骨架与入口只由一处写（seed-workshop.sh 幂等；启动器只保 hmr 目录）',
     run(_ctx, report) {
       const seed = pkg('scripts/seed-workshop.sh');
-      let probe;
-      try {
-        probe = execFileSync(
-          'bash',
-          [
-            '-c',
-            `set -e
+      const probe = posixLineProbeOf(`set -e
 fresh="$(mktemp -d)"
 trap 'rm -rf "$fresh"' EXIT
 mkdir -p "$fresh/workbench/diy/node_modules"
@@ -33,13 +26,7 @@ DSH_HOME="$fresh" bash "${seed}" >/dev/null
 test -f "$fresh/workbench/diy/package.json"
 test -f "$fresh/workbench/diy/pnpm-workspace.yaml"
 test -x "$fresh/workbench/bin/dsh-wb-module"
-echo ok`,
-          ],
-          { encoding: 'utf8' },
-        ).trim();
-      } catch (error) {
-        probe = `${error.stdout ?? ''}${error.stderr ?? ''}`.trim();
-      }
+echo ok`);
       const launcher = read(pkg('bin/dsh-workbench'));
       const runtimePort = join(PKG, '../adapters-default/src/runtime-port.ts');
       const seededByHost = existsSync(runtimePort) && read(runtimePort).includes('runDetached(plan.entry');
@@ -60,16 +47,7 @@ echo ok`,
     title:
       '★ 工坊代际自愈：基准显式输入（启动器不降级 / 目标取基准 / 没基准不动）+ 三条锁判据 + 六格指引软链',
     run(_ctx, report) {
-
-      let probe;
-      try {
-        probe = execFileSync('bash', [pkg('scripts/check-workshop-generation.sh')], {
-          encoding: 'utf8',
-          stdio: ['ignore', 'pipe', 'pipe'],
-        }).trim();
-      } catch (error) {
-        probe = `${error.stdout ?? ''}${error.stderr ?? ''}`.trim();
-      }
+      const probe = posixProbeOf(pkg('scripts/check-workshop-generation.sh'));
       const passed = probe.endsWith('ALL OK');
       report(
         '★ 工坊代际自愈：基准显式输入（启动器不降级 / 目标取基准 / 没基准不动）+ 三条锁判据 + 六格指引软链',

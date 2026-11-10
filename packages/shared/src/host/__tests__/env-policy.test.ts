@@ -66,6 +66,28 @@ describe('受控 env 入口', () => {
     expect(env['DSH_WORKBENCH_HOME']).toBe(RUNTIME);
   });
 
+  it('★ product/unit：USERPROFILE 也钉在隔离 home（Windows 上 os.homedir() 读它）', () => {
+    const product = productEnvOf({ runtimeRoot: RUNTIME, realHome: REAL_HOME });
+    expect(product['USERPROFILE']).toBe(join(RUNTIME, 'home'));
+    const unitRoot = join(RUNTIME, 'units', 'demo');
+    const unit = unitEnvOf({ runtimeRoot: RUNTIME, unitRoot, realHome: REAL_HOME });
+    expect(unit['USERPROFILE']).toBe(join(unitRoot, 'home'));
+    const explicit = productEnvOf({ runtimeRoot: RUNTIME, home: '/custom/home', realHome: REAL_HOME });
+    expect(explicit['USERPROFILE']).toBe('/custom/home');
+    expect(explicit['HOME']).toBe('/custom/home');
+  });
+
+  it('★ win32 形态的隔离 home 一并给 HOMEDRIVE/HOMEPATH', () => {
+    const env = productEnvOf({ runtimeRoot: RUNTIME, home: 'C:\\rt\\home', realHome: REAL_HOME });
+    expect(env['USERPROFILE']).toBe('C:\\rt\\home');
+    expect(env['HOME']).toBe('C:\\rt\\home');
+    expect(env['HOMEDRIVE']).toBe('C:');
+    expect(env['HOMEPATH']).toBe('\\rt\\home');
+    const posix = productEnvOf({ runtimeRoot: RUNTIME, realHome: REAL_HOME });
+    expect(posix['HOMEDRIVE']).toBeUndefined();
+    expect(posix['HOMEPATH']).toBeUndefined();
+  });
+
   it('bootstrap：继承父环境、HOME/缓存钉住、PATH 可替换、pwsh 加 USERPROFILE', () => {
     const parent = { PATH: '/usr/bin', KEEP: 'yes' };
     const env = bootstrapEnvOf({

@@ -46,7 +46,7 @@ function blockOf(body: string, index: number): PatchBlock {
 }
 
 export function spannedBlocks(text: string): SpannedBlock[] {
-  const lines = text.split('\n');
+  const lines = text.split(/\r?\n/);
   const starts: number[] = [];
   lines.forEach((line, index) => {
     if (/^- /.test(line) || line === '-') starts.push(index);

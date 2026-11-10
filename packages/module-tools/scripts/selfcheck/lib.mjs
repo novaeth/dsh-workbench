@@ -34,12 +34,12 @@ export function linkToolchain(toolchain, modules) {
   const from = join(toolchain, 'node_modules');
   for (const entry of readdirSync(from, { withFileTypes: true })) {
     if (!entry.name.startsWith('@')) {
-      symlinkSync(join(from, entry.name), join(modules, entry.name));
+      symlinkSync(join(from, entry.name), join(modules, entry.name), 'junction');
       continue;
     }
     mkdirSync(join(modules, entry.name), { recursive: true });
     for (const inner of readdirSync(join(from, entry.name))) {
-      symlinkSync(join(from, entry.name, inner), join(modules, entry.name, inner));
+      symlinkSync(join(from, entry.name, inner), join(modules, entry.name, inner), 'junction');
     }
   }
   mkdirSync(join(modules, '@dsh-workbench'), { recursive: true });

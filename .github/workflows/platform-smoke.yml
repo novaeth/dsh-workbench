@@ -6,12 +6,20 @@ name: platform-smoke
     branches: [main]
     paths:
       - 'packages/**/src/**'
-      - 'scripts/smoke/**'
+      - 'packages/**/scripts/**'
+      - 'packages/**/bin/**'
+      - 'package.json'
+      - '.husky/**'
+      - 'scripts/**'
       - '.github/workflows/platform-smoke.yml'
   pull_request:
     paths:
       - 'packages/**/src/**'
-      - 'scripts/smoke/**'
+      - 'packages/**/scripts/**'
+      - 'packages/**/bin/**'
+      - 'package.json'
+      - '.husky/**'
+      - 'scripts/**'
       - '.github/workflows/platform-smoke.yml'
   schedule:
     - cron: '23 3 * * 1'
@@ -67,9 +75,15 @@ jobs:
       - name: Install plan smoke (真 shell 跑 run → remove → mkdir → copy → link → optional → env)
         shell: bash
         run: node scripts/smoke/install-plan.mjs
+      - name: Runtime heal smoke (升级现场：既有 store 记录 + 断链 → store 不合 → 清一次重装)
+        shell: bash
+        run: node scripts/smoke/runtime-heal.mjs
+      - name: 自更新与自愈的判据（win32 的 $ComSpec / taskkill 分支在各腿上真跑）
+        shell: bash
+        run: pnpm --filter @dsh-workbench/adapter-probe exec vitest run src/__tests__/self-update-windows.test.ts src/__tests__/isolated-install.test.ts
       - name: Renderer + seam tests
         shell: bash
-        run: pnpm --filter @dsh-workbench/shared exec vitest run src/host/__tests__/shell-render.test.ts src/host/__tests__/seam.test.ts
+        run: pnpm --filter @dsh-workbench/shared exec vitest run src/host/__tests__/shell-render.test.ts src/host/__tests__/seam.test.ts src/host/seam/__tests__/process.test.ts
       - name: Capture controller tests
         shell: bash
         run: pnpm --filter @dsh-workbench/core exec vitest run src/modules/panels/model/__tests__/diy-record-live.test.ts

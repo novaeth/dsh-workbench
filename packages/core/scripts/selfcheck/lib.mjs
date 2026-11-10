@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import ts from 'typescript';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -11,6 +12,25 @@ export const SRC = join(PKG, 'src');
 export const SHARED_SRC = join(PKG, '../shared/src');
 
 export const pkg = (rel) => join(PKG, rel);
+
+export function posixProbeOf(script) {
+  return bashProbeOf([script]);
+}
+
+export function posixLineProbeOf(line) {
+  return bashProbeOf(['-c', line]);
+}
+
+function bashProbeOf(args) {
+  try {
+    return execFileSync('bash', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  } catch (error) {
+    const detail = `${error.stdout ?? ''}${error.stderr ?? ''}`.trim();
+    if (detail !== '') return detail;
+    const hint = process.platform === 'win32' ? 'Windows 上装 Git for Windows 就有' : 'PATH 里没有 bash';
+    return `这台机器上起不来 bash（${hint}）：${error.code ?? error.message}`;
+  }
+}
 
 const textCache = new Map();
 

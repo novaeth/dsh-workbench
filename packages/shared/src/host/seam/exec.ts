@@ -67,6 +67,7 @@ export interface ProcessSpawnOptions {
   readonly stdio: 'ignore' | 'pipe' | 'log';
   readonly logFile?: string | undefined;
   readonly windowsHide: boolean;
+  readonly killTree?: boolean | undefined;
 }
 
 export interface ProcessExitEvent {
@@ -87,6 +88,7 @@ export interface ProcessChild {
   onError(listener: (error: Error) => void): () => void;
   unref(): void;
   kill(signal?: string): void;
+  killTree?(signal?: string): void;
 }
 
 export interface ProcessHost {

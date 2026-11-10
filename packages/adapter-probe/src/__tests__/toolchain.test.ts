@@ -433,3 +433,47 @@ describe('种子工具链：store 位置与既有 node_modules 对不上时清�
     expect(removed).toEqual([join(root, 'npm', 'node_modules')]);
   });
 });
+
+describe('平台注入要真的生效', () => {
+  const win = join(tempRoot(), "it's");
+  const existsPnpm = (path: string) => path === pnpmCjs;
+
+  it('★ provisionLocalNpm 把 platform 传下去：win32 用 pwsh 字面量，不是 POSIX 那套逃逸', async () => {
+    const commands: string[] = [];
+    const result = await provisionLocalNpm({
+      root: win,
+      platform: 'win32',
+      proc: desktopPnpm,
+      exists: existsPnpm,
+      installed: () => true,
+      run: async (command) => {
+        commands.push(command);
+        return { ok: true, detail: '' };
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(commands).toHaveLength(1);
+    expect(commands[0]).toBe(localNpmInstallCommand(win, desktopPnpm, existsPnpm, 'win32'));
+    expect(commands[0]).not.toBe(localNpmInstallCommand(win, desktopPnpm, existsPnpm, 'linux'));
+  });
+
+  it('★ provisionLocalPnpm 把 platform 传下去：win32 用 pwsh 字面量', async () => {
+    const commands: string[] = [];
+    const result = await provisionLocalPnpm({
+      root: win,
+      platform: 'win32',
+      proc: desktopPnpm,
+      exists: existsPnpm,
+      installed: () => true,
+      run: async (command) => {
+        commands.push(command);
+        return { ok: true, detail: '' };
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(commands).toHaveLength(1);
+    expect(commands[0]).toBe(localPnpmInstallCommand(win, desktopPnpm, existsPnpm, 'win32'));
+  });
+});

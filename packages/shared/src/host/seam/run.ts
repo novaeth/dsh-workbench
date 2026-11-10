@@ -7,6 +7,7 @@ import { shellKindOf } from '../shell-text.js';
 import { callOperatorOf, invocationOf, quotedArgvLine, quotedLineOf } from '../shell-render.js';
 import { runShell, type ShellResult } from '../shell.js';
 import { deniedPathOf, sandboxDeniedOf } from './denial.js';
+import { abortedResult, errorHookOf, killHookOf, killTreeOf } from './handles.js';
 import { seamProductEnv } from './env.js';
 import { definedEnvOf, hostEnvOf } from './host-env.js';
 import type {
@@ -191,6 +192,8 @@ export function createSeam(ports: SeamPorts): Seam {
   }
 
   async function runHost(request: SeamRequest, target: SeamTarget): Promise<ShellResult> {
+    const signal = request.signal;
+    if (signal?.aborted === true) return abortedResult();
     const invocation = targetInvocationOf(target, request.shellKind);
     const child = processes.spawn({
       file: invocation.file,
@@ -198,6 +201,7 @@ export function createSeam(ports: SeamPorts): Seam {
       env: hostEnvOf(request.env),
       ...(request.workdir === undefined ? {} : { cwd: request.workdir }),
       detached: false,
+      killTree: true,
       stdio: 'pipe',
       windowsHide: true,
     });
@@ -217,24 +221,45 @@ export function createSeam(ports: SeamPorts): Seam {
     child.stderr?.onData((chunk) => append('stderr', chunk));
     let timer: ReturnType<typeof setTimeout> | undefined;
     let timedOut = false;
+    let aborted = false;
+    let settled = false;
+    let stopping = false;
+    const stopTree = (): void => {
+      if (settled || stopping) return;
+      stopping = true;
+      killTreeOf(child, 'SIGKILL');
+    };
+    const onAbort = (): void => {
+      if (settled) return;
+      aborted = true;
+      stopTree();
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
     if (request.timeoutMs !== undefined) {
       timer = setTimeout(() => {
+        if (settled) return;
         timedOut = true;
-        child.kill('SIGKILL');
+        stopTree();
       }, request.timeoutMs);
     }
     const exit = await new Promise<SpawnExit>((resolve) => {
-      child.onExit((event) => resolve(event));
+      child.onExit((event) => {
+        settled = true;
+        resolve(event);
+      });
       child.onError((error) => {
+        settled = true;
         state.stderr = `${state.stderr}${String(error)}`;
         resolve({ code: null, signal: null });
       });
     });
+    settled = true;
     if (timer !== undefined) clearTimeout(timer);
+    signal?.removeEventListener('abort', onAbort);
     return {
       exitCode: exit.code,
       timedOut,
-      aborted: false,
+      aborted,
       stdout: state.stdout,
       stderr: state.stderr,
       truncated: state.truncated,
@@ -253,6 +278,7 @@ export function createSeam(ports: SeamPorts): Seam {
       env: hostEnvOf(request.env),
       ...(request.cwd === undefined ? {} : { cwd: request.cwd }),
       detached: true,
+      killTree: true,
       stdio: 'log',
       logFile,
       windowsHide: true,
@@ -296,15 +322,8 @@ export function createSeam(ports: SeamPorts): Seam {
         settled === undefined
           ? new Promise<SpawnExit>((resolve) => exitWaiters.push(resolve))
           : Promise.resolve(settled),
-      onError(listener) {
-        if (failure !== undefined) {
-          listener(failure);
-          return () => {};
-        }
-        errorListeners.add(listener);
-        return () => errorListeners.delete(listener);
-      },
-      kill: (signal) => child.kill(signal ?? 'SIGTERM'),
+      onError: errorHookOf(() => failure, errorListeners),
+      kill: killHookOf(child),
     };
   }
 
@@ -316,6 +335,7 @@ export function createSeam(ports: SeamPorts): Seam {
       env: hostEnvOf(request.env),
       ...(request.cwd === undefined ? {} : { cwd: request.cwd }),
       detached: false,
+      killTree: true,
       stdio: 'pipe',
       windowsHide: true,
     });
@@ -369,15 +389,8 @@ export function createSeam(ports: SeamPorts): Seam {
         exitListeners.add(listener);
         return () => exitListeners.delete(listener);
       },
-      onError(listener) {
-        if (failure !== undefined) {
-          listener(failure);
-          return () => {};
-        }
-        errorListeners.add(listener);
-        return () => errorListeners.delete(listener);
-      },
-      kill: (signal) => child.kill(signal ?? 'SIGTERM'),
+      onError: errorHookOf(() => failure, errorListeners),
+      kill: killHookOf(child),
     };
   }
 

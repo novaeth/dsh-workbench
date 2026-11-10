@@ -58,7 +58,7 @@ function explainProblem(problem: DiscoverProblem, profilePath: string | undefine
   if (problem.kind !== 'sandbox' || profilePath === undefined || profilePath === '') return problem;
   return {
     ...problem,
-    detail: `被系统拦住了：工作台按 $DSH_HOME 声明的可写根没盖住它的缓存目录，这条命令被沙箱挡下了。\n这是工作台自己的问题，不用改 profile —— 把这一屏和 $DSH_HOME 报给工作台维护者，或先在工作台外面手动加这个源（${profilePath}）。`,
+    detail: `被系统拦住了：工作台按 DSH_HOME 声明的可写根没盖住它的缓存目录，这条命令被沙箱挡下了。\n这是工作台自己的问题，不用改 profile —— 把这一屏和 DSH_HOME 报给工作台维护者，或先在工作台外面手动加这个源（${profilePath}）。`,
   };
 }
 

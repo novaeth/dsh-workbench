@@ -4,7 +4,7 @@ import { join, win32 } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { createSeam } from '@dsh-workbench/shared/host';
-import { createDesktopBrowser } from '../index.js';
+import { bridgeFixCommand, createDesktopBrowser } from '../index.js';
 
 function seamFor(shell: Parameters<typeof createSeam>[0]['shell']) {
   return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });
@@ -31,7 +31,7 @@ function wire(script: Script) {
   let statusIndex = 0;
   let openIndex = 0;
   const fake = createFakeShell((call) => {
-    if (call.command === 'opencli daemon status') {
+    if (call.command === "'opencli' daemon status") {
       const stdout = script.status?.[statusIndex] ?? '';
       statusIndex += 1;
       return { stdout };
@@ -153,7 +153,7 @@ describe('Desktop 浏览器唤醒', () => {
     const exe = win32.join('C:\\Program Files', 'Google', 'Chrome', 'Application', 'chrome.exe');
     let statusIndex = 0;
     const fake = createFakeShell((call) => {
-      if (call.command === 'opencli daemon status') {
+      if (call.command === "'opencli' daemon status") {
         const stdout = [disconnected(), CONNECTED][statusIndex] ?? CONNECTED;
         statusIndex += 1;
         return { exitCode: 0, stdout };
@@ -205,5 +205,78 @@ describe('observe（通道好时记住承载扩展的浏览器）', () => {
     const many = wire({ running: ['Microsoft Edge', 'Google Chrome'] });
     await many.desktop.observe();
     expect(JSON.parse(readFileSync(many.stateFile, 'utf8'))).toEqual({ browser: 'chrome' });
+  });
+});
+
+describe('命令 token 按平台引号包住', () => {
+  it('★ bridgeFixCommand 把整段路径包成一个 token（带空格也不散架）', () => {
+    expect(bridgeFixCommand('C:\\Users\\John Smith\\opencli.cmd', ['daemon'], 'win32')).toBe(
+      "'C:\\Users\\John Smith\\opencli.cmd' daemon restart",
+    );
+    expect(bridgeFixCommand('opencli', ['profile'], 'linux')).toBe("'opencli' profile list");
+    expect(bridgeFixCommand('opencli', ['stale'], 'darwin')).toBe("'opencli' profile list");
+    expect(bridgeFixCommand('opencli', ['extension'])).toBeUndefined();
+  });
+
+  it('★ win32 上带空格的隔离路径 → daemon status 里整段带引号', async () => {
+    const command = 'C:\\Users\\John Smith\\.dsh\\workbench\\opencli\\bin\\opencli.cmd';
+    const fake = createFakeShell((call) =>
+      call.command === `'${command}' daemon status` ? { exitCode: 0, stdout: CONNECTED } : {},
+    );
+    const desktop = createDesktopBrowser({
+      seam: seamFor(fake.shell),
+      command,
+      stateFile: join(tmpdir(), 'wb-wake-space', 'browser.json'),
+      platform: 'win32',
+      exists: () => false,
+      waitMs: 0,
+      pollMs: 0,
+    });
+
+    expect(await desktop.wake()).toEqual({ status: 'connected' });
+    expect(fake.commands()[0]).toBe(`'${command}' daemon status`);
+  });
+});
+
+describe('Linux 启动浏览器', () => {
+  const linuxDesktop = (fake: ReturnType<typeof createFakeShell>) =>
+    createDesktopBrowser({
+      seam: seamFor(fake.shell),
+      command: 'opencli',
+      stateFile: join(tmpdir(), 'wb-wake-linux', 'browser.json'),
+      platform: 'linux',
+      exists: (path) => path === '/usr/bin/google-chrome',
+      waitMs: 0,
+      shortWaitMs: 0,
+      pollMs: 0,
+    });
+
+  it('★ 这台机器没有 setsid → 如实报 launch-failed（不再谎报 not-connected）', async () => {
+    const fake = createFakeShell((call) => {
+      if (call.command === "'opencli' daemon status") return { exitCode: 0, stdout: disconnected() };
+      if (call.command.startsWith('pgrep -lx')) return { exitCode: 1, stdout: '' };
+      if (call.command === "command -v 'setsid'") return { exitCode: 127, stdout: '' };
+      return {};
+    });
+
+    expect(await linuxDesktop(fake).wake()).toEqual({ status: 'launch-failed', browser: 'chrome' });
+    expect(fake.commands().some((line) => line.startsWith('setsid '))).toBe(false);
+  });
+
+  it('★ 有 setsid → 照旧 setsid 起它', async () => {
+    const fake = createFakeShell((call) => {
+      if (call.command === "'opencli' daemon status") {
+        return { exitCode: 0, stdout: disconnected() };
+      }
+      if (call.command.startsWith('pgrep -lx')) return { exitCode: 1, stdout: '' };
+      if (call.command === "command -v 'setsid'") return { exitCode: 0, stdout: '/usr/bin/setsid\n' };
+      if (call.command.startsWith('setsid ')) return { exitCode: 0 };
+      return {};
+    });
+
+    expect(await linuxDesktop(fake).wake()).toEqual({ status: 'not-connected', browser: 'chrome' });
+    expect(fake.commands()).toContain(
+      "setsid '/usr/bin/google-chrome' --no-startup-window >/dev/null 2>&1 < /dev/null &",
+    );
   });
 });

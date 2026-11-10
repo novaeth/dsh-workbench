@@ -2,6 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { workbenchRoot } from '@dsh-workbench/shared/host';
 import {
   renderStatus,
   statusOf,
@@ -325,5 +326,53 @@ describe('syncNotice 的实装判据（照 T1 entry 那三条：三个包都在�
 
   it('工坊没装完 / 没装 → 不出声（那是 skeleton 的活）', () => {
     expect(syncNotice({ ...base, toolchain: undefined })).toBeUndefined();
+  });
+});
+
+describe('★ 修法文案：任何 shell 都照做得了（win32 的 PowerShell 也在内）', () => {
+  function fixLine(text: string): string {
+    return text.split('\n').find((one) => one.includes('pnpm install')) ?? '';
+  }
+
+  it('failed：给的是这台机器上工坊目录的真路径，命令只有 pnpm install 一条', () => {
+    const { dir } = workshop({
+      sync: { state: 'failed', version: '0.3.0', at: '2026-10-18T00:00:00Z', reason: '没有 pnpm，装不动' },
+      installed: '0.2.0',
+    });
+
+    const line = fixLine(textOf(dir, '0.3.0'));
+
+    expect(line).toContain('pnpm install');
+    expect(line).toContain(join(workbenchRoot(), 'diy'));
+    expect(line).not.toContain('$DSH_HOME');
+    expect(line).not.toContain('&&');
+    expect(line).not.toMatch(/\bcd\b/);
+  });
+
+  it('syncing 停住了：同一句修法，同样不带 shell 变量与 &&', () => {
+    const { dir } = workshop({
+      sync: { state: 'syncing', version: '0.3.0', at: '2020-01-01T00:00:00Z' },
+      installed: '0.2.0',
+    });
+
+    const line = fixLine(textOf(dir, '0.3.0'));
+
+    expect(line).toContain('pnpm install');
+    expect(line).toContain(join(workbenchRoot(), 'diy'));
+    expect(line).not.toContain('$DSH_HOME');
+    expect(line).not.toContain('&&');
+  });
+
+  it('对齐那条：给 seed.log 的真路径，不摆 $DSH_HOME', () => {
+    const { dir } = workshop({
+      sync: { state: 'ok', version: '0.3.0', at: '2026-10-18T00:00:00Z' },
+      installed: '0.2.0',
+    });
+
+    const text = textOf(dir, '0.3.1');
+
+    expect(text).toContain(join(workbenchRoot(), 'seed.log'));
+    expect(text).not.toContain('$DSH_HOME');
+    expect(text).not.toContain('$');
   });
 });

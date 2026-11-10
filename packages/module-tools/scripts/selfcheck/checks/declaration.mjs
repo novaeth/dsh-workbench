@@ -41,7 +41,7 @@ export const checks = [
         cpSync(BIN, join(toolDir, 'bin', 'dsh-wb-module.mjs'));
         cpSync(join(PKG_ROOT, 'src'), join(toolDir, 'src'), { recursive: true });
 
-        symlinkSync(join(PKG_ROOT, 'node_modules'), join(toolDir, 'node_modules'), 'dir');
+        symlinkSync(join(PKG_ROOT, 'node_modules'), join(toolDir, 'node_modules'), 'junction');
         mkdirSync(join(probe, 'src'), { recursive: true });
         writeFileSync(
           join(probe, 'package.json'),
@@ -75,7 +75,7 @@ export const checks = [
         mkdirSync(join(fake, 'node_modules', '@dsh-workbench', 'core', 'dist'), { recursive: true });
         writeFileSync(coreBoard, '.wb-iconButton:hover { color: var(--dsw-alias-label-primary); }\n');
         mkdirSync(join(fake, 'node_modules', '@dsh-workbench'), { recursive: true });
-        symlinkSync(join(PACKAGES_DIR, 'shared'), sharedLink, 'dir');
+        symlinkSync(join(PACKAGES_DIR, 'shared'), sharedLink, 'junction');
 
         const shipped = run();
         if (shipped.failed) {

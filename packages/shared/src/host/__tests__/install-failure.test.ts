@@ -5,6 +5,7 @@ import {
   installTargets,
   installVerbAt,
   installWriteProblem,
+  writeStateOf,
 } from '../install-failure.js';
 
 const CURRENT = { uid: 502, gid: 20 };
@@ -126,5 +127,19 @@ describe('installWriteProblem（装之前先看一眼，省得白跑）', () => 
     expect(installVerbAt("C:\\node\\node.exe C:\\tools\\pnpm.cmd install --dir C:\\x")).toBe(2);
     expect(installVerbAt("'/usr/local/bin/pnpm' remove --dir '/x' foo")).toBeUndefined();
     expect(installVerbAt("echo 'warehouse'")).toBeUndefined();
+  });
+});
+
+describe('writeStateOf（可写判定按 errno 归一）', () => {
+  const throwsCode =
+    (code: string) =>
+    (): void => {
+      throw Object.assign(new Error(code), { code });
+    };
+
+  it('★ EACCES 与 EPERM 都算被拒（Windows 上访问被拒常报 EPERM）', () => {
+    expect(writeStateOf('/x', throwsCode('EACCES'))).toBe('denied');
+    expect(writeStateOf('/x', throwsCode('EPERM'))).toBe('denied');
+    expect(writeStateOf('/x', throwsCode('ENOENT'))).toBe('unknown');
   });
 });

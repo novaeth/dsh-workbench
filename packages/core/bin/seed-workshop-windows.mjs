@@ -92,7 +92,7 @@ function ensureSkills() {
   }
   mkdirSync(dirname(link), { recursive: true });
   try {
-    symlinkSync(resolve(source), link, process.platform === 'win32' ? 'junction' : 'dir');
+    symlinkSync(resolve(source), link, 'junction');
     say(`工坊指引已链上：${link}`);
   } catch (error) {
     say(`DIY 指引没挂上（${String(error)}）—— 不影响启动。`);

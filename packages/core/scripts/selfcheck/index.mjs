@@ -56,8 +56,16 @@ const ctx = {};
 for (const module of MODULES) {
   for (const check of module.checks ?? []) {
     if (only !== undefined && !only.test(check.title)) continue;
-    const out = check.run(ctx, report);
-    if (out !== undefined && typeof out.then === 'function') await out;
+    try {
+      const out = check.run(ctx, report);
+      if (out !== undefined && typeof out.then === 'function') await out;
+    } catch (error) {
+      report(
+        check.title,
+        false,
+        `这条判据自己抛了（别的判据继续跑）：${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 }
 

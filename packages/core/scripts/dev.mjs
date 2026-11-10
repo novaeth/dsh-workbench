@@ -9,7 +9,12 @@ import { build } from 'vite';
 const PKG = '@dsh-workbench/core';
 
 const pkgRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const bin = path.join(pkgRoot, 'bin', 'dsh-workbench');
+const IS_WIN = process.platform === 'win32';
+const bin = path.join(pkgRoot, 'bin', IS_WIN ? 'dsh-workbench.cmd' : 'dsh-workbench');
+
+function launcher(args) {
+  return IS_WIN ? [process.env.ComSpec ?? 'cmd.exe', ['/d', '/c', bin, ...args]] : [bin, args];
+}
 
 const desktop = process.argv.includes('--desktop');
 
@@ -69,10 +74,12 @@ async function ensureProfile() {
 
   console.log(`dev：先跑一次 setup —— ${why.join('；')}`);
   console.log(`     （${path.relative(pkgRoot, bin)} setup，幂等，可重复跑）`);
-  const setup = execa('bash', [bin, 'setup'], { cwd: pkgRoot, stdio: 'inherit', reject: false });
+  const setup = execa(...launcher(['setup']), { cwd: pkgRoot, stdio: 'inherit', reject: false });
   const code = await exitCodeOf(setup);
   if (code !== 0) {
-    console.error(`dev：setup 失败（退出码 ${code}）——先手动跑一次看它怎么说：${bin} setup`);
+    if (!IS_WIN) {
+      console.error(`dev：setup 失败（退出码 ${code}）——先手动跑一次看它怎么说：${bin} setup`);
+    }
     process.exit(code);
   }
 }
@@ -216,7 +223,7 @@ if (desktop) {
   console.log('     浏览器里那个页面不用刷新，客户端改动会自己换。');
 } else {
   console.log(`dev：起工作台 :${port} …`);
-  app = execa(bin, [], { cwd: pkgRoot, stdio: 'inherit', env: process.env, reject: false });
+  app = execa(...launcher([]), { cwd: pkgRoot, stdio: 'inherit', env: process.env, reject: false });
   void app.then((result) => {
     if (closing) return;
     console.log(`dev：工作台退出了（${result.exitCode ?? result.signal ?? 1}）——关掉监听。`);

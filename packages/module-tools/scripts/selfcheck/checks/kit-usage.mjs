@@ -178,7 +178,7 @@ export const checks = [
         mkdirSync(join(probe, 'src'), { recursive: true });
         mkdirSync(join(probe, 'node_modules', '@dsh-workbench'), { recursive: true });
 
-        symlinkSync(join(PACKAGES_DIR, 'shared'), join(probe, 'node_modules', '@dsh-workbench', 'shared'), 'dir');
+        symlinkSync(join(PACKAGES_DIR, 'shared'), join(probe, 'node_modules', '@dsh-workbench', 'shared'), 'junction');
         writeFileSync(
           join(probe, 'package.json'),
           JSON.stringify(

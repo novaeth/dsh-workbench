@@ -56,7 +56,7 @@ if (packageName !== undefined && !has('--dry')) {
   mkdirSync(scopeDir, { recursive: true });
   const link = join(scopeDir, packageName);
   if (existsSync(link)) unlinkSync(link);
-  symlinkSync(source, link, 'dir');
+  symlinkSync(source, link, 'junction');
   console.log(`已把 ${spec} 链进 profile：${link}`);
 }
 

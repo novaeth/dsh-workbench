@@ -1,0 +1,44 @@
+name: gate
+
+"on":
+  workflow_dispatch:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '37 3 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: full gate / ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            label: linux
+          - os: macos-latest
+            label: mac
+    env:
+      HUSKY: 0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install (immutable)
+        run: pnpm install --frozen-lockfile
+      - name: Full gate (整条链，与本地 `pnpm run check` 同一条)
+        run: pnpm -w run check

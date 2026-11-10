@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -131,5 +131,78 @@ describe('Windows 自更新（Node，不依赖 bash）', () => {
     expect(JSON.parse(readFileSync(installed, 'utf8')).version).toBe('0.2.7');
     expect(JSON.parse(readFileSync(paths.marker, 'utf8')).state).toBe('ok');
     expect(readFileSync(paths.log, 'utf8')).not.toMatch(/remove/);
+  });
+});
+
+const describePosix = process.platform === 'win32' ? describe.skip : describe;
+
+describe('win32 子脚本的 cmd 分支', () => {
+  it('★ 静态：win32 版走 $ComSpec + /d /s /c + 逐段双引号，不再把 .cmd 直接交给 spawnSync', () => {
+    const paths = pathsOf('/tmp/dsh-home', 'win32');
+    const script = selfUpdateNodeScript(request({ dshHome: '/tmp/dsh-home' }), paths, undefined, 'win32');
+
+    expect(script).toContain('const WINDOWS = true;');
+    expect(script).toContain("process.env.ComSpec || 'cmd.exe'");
+    expect(script).toContain("['/d', '/s', '/c',");
+    expect(script).toContain('windowsVerbatimArguments: true');
+    expect(script).not.toContain('spawnSync(CLI.file, [...CLI.args');
+  });
+
+  it('★ 静态：非 win32 版还走原来的 spawnSync(CLI.file, args)', () => {
+    const paths = pathsOf('/tmp/dsh-home', 'linux');
+    const script = selfUpdateNodeScript(request({ dshHome: '/tmp/dsh-home' }), paths, undefined, 'linux');
+
+    expect(script).toContain('const WINDOWS = false;');
+    expect(script).toContain('if (!WINDOWS) return spawnSync(CLI.file, args');
+  });
+});
+
+describePosix('win32 分支真跑一次（假 ComSpec）', () => {
+  it('★ 起的是 $ComSpec /d /s /c，带空格的 .cmd 整段是一个 token；装成了写 ok', () => {
+    const root = home();
+    const profile = 'workbench';
+    const pkg = '@dsh-workbench/core';
+    const installed = join(root, 'profiles', profile, 'node_modules', '@dsh-workbench', 'core', 'package.json');
+    mkdirSync(dirname(installed), { recursive: true });
+    writeFileSync(installed, JSON.stringify({ version: '0.2.6' }), 'utf8');
+
+    const cliFile = join(root, 'dsh shim.cmd');
+    writeFileSync(cliFile, '@echo off\r\n', 'utf8');
+    const argvFile = join(root, 'comspec-argv.txt');
+    const comspec = join(root, 'fake-comspec.sh');
+    writeFileSync(
+      comspec,
+      ['#!/bin/sh', `printf '%s\\n' "$@" > "${argvFile}"`, `printf '{"version":"0.2.7"}' > "${installed}"`, ''].join(
+        '\n',
+      ),
+      'utf8',
+    );
+    chmodSync(comspec, 0o755);
+
+    const paths = pathsOf(root, 'win32');
+    mkdirSync(paths.dir, { recursive: true });
+    writeFileSync(
+      paths.script,
+      selfUpdateNodeScript(
+        request({ dshHome: root, profile, pkg, from: '0.2.6', to: '0.2.7' }),
+        paths,
+        { file: cliFile, args: [], env: {} },
+        'win32',
+      ),
+      'utf8',
+    );
+
+    const run = spawnSync(process.execPath, [paths.script], {
+      encoding: 'utf8',
+      env: { ...process.env, DSH_HOME: root, ComSpec: comspec },
+    });
+
+    expect(run.status, run.stderr).toBe(0);
+    const argv = readFileSync(argvFile, 'utf8').split('\n').filter((one) => one !== '');
+    expect(argv.slice(0, 3)).toEqual(['/d', '/s', '/c']);
+    const inner = `"${cliFile}" "plugin" "--profile" "${profile}" "add" "${pkg}@0.2.7"`;
+    expect(argv[3]).toBe(`"${inner}"`);
+    expect(JSON.parse(readFileSync(paths.marker, 'utf8')).state).toBe('ok');
+    expect(readFileSync(paths.log, 'utf8')).toContain('换好了');
   });
 });

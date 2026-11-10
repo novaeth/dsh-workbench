@@ -75,12 +75,13 @@ export function nearestDir(path: string): string | undefined {
 
 export type WriteState = 'ok' | 'denied' | 'unknown';
 
-export function writeStateOf(dir: string): WriteState {
+export function writeStateOf(dir: string, access: (dir: string, mode: number) => void = accessSync): WriteState {
   try {
-    accessSync(dir, constants.W_OK);
+    access(dir, constants.W_OK);
     return 'ok';
   } catch (error) {
-    return (error as { code?: string }).code === 'EACCES' ? 'denied' : 'unknown';
+    const code = (error as { code?: string }).code;
+    return code === 'EACCES' || code === 'EPERM' ? 'denied' : 'unknown';
   }
 }
 

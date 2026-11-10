@@ -17,6 +17,11 @@
 
 与 `dsh web` 并存：它在 `:3081`，web 在 `:3080`。
 
+:::warning Windows 上别走这条
+独立实例的启动器还是 bash 脚本，`create` 与 `setup` 在 Windows 上会报找不到 `bash`。
+用 `dsh web` 的插件页或 Desktop 的插件页装，效果一样。
+:::
+
 ```bash
 npx @dsh-workbench/core create
 ```

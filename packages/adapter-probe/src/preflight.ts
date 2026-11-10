@@ -1,6 +1,7 @@
 import type { RuntimeCapabilities } from '@dsh-workbench/shared';
 import { PREFLIGHT_DOCTOR_TIMEOUT_MS, PREFLIGHT_FRESH_MS, PREFLIGHT_INSTALL_TIMEOUT_MS, PREFLIGHT_VERSION_TIMEOUT_MS, WARM_TIMEOUT_MS, now } from '@dsh-workbench/shared/host';
 import { tailLines } from '@dsh-workbench/shared/host';
+import { quoteShellArgFor } from '@dsh-workbench/shared/host';
 import { opencliCommandLine } from '@dsh-workbench/adapter-runtime';
 import { productWrite, type Seam } from '@dsh-workbench/shared/host';
 import { DIY_UPGRADE_COMMAND } from './diy-preset-health.js';
@@ -101,8 +102,11 @@ export function createPreflight(options: {
   capabilities?: RuntimeCapabilities | undefined;
   runtimeCheck?: (() => Promise<{ ok: boolean; detail: string }>) | undefined;
   runtimeLabel?: string | undefined;
+  platform?: NodeJS.Platform | undefined;
 }): Preflight {
   const { seam, command = 'opencli', logger } = options;
+  const platform = options.platform ?? process.platform;
+  const commandToken = quoteShellArgFor(command, platform);
   const capabilities = options.capabilities ?? { console: true, pluginMarket: true, browserBridge: true };
   const withConsole = capabilities.console;
   const withBridge = capabilities.browserBridge;
@@ -198,7 +202,7 @@ export function createPreflight(options: {
   }
 
   async function probeVersion(): Promise<{ ok: boolean; missing: boolean; detail: string; stalled: boolean }> {
-    const result = await exec('cli', `${command} --version`, PREFLIGHT_VERSION_TIMEOUT_MS);
+    const result = await exec('cli', `${commandToken} --version`, PREFLIGHT_VERSION_TIMEOUT_MS);
     if (result.kind === 'ok') {
       return { ok: true, missing: false, detail: result.stdout.trim().split('\n')[0] ?? '', stalled: false };
     }
@@ -211,14 +215,14 @@ export function createPreflight(options: {
   }
 
   async function probeBridge(): Promise<BridgeVerdict> {
-    const result = await exec('bridge', `${command} doctor`, PREFLIGHT_DOCTOR_TIMEOUT_MS);
+    const result = await exec('bridge', `${commandToken} doctor`, PREFLIGHT_DOCTOR_TIMEOUT_MS);
     if (result.kind === 'stalled') {
       return { ok: false, detail: result.detail, issues: ['unknown'], stalled: true };
     }
     if (result.kind !== 'ok') return { ok: false, detail: result.detail, issues: ['unknown'] };
     const report = readBridgeReport(result.stdout);
     if (report.ok) return report;
-    return { ...report, command: bridgeFixCommand(command, report.issues) };
+    return { ...report, command: bridgeFixCommand(command, report.issues, platform) };
   }
 
   async function installOpencli(): Promise<{ ok: boolean; detail: string }> {
@@ -246,7 +250,7 @@ export function createPreflight(options: {
       action: '预热浏览器站点',
     });
     const results = await Promise.all(
-      reads.map((read) => exec('warm', opencliCommandLine(command, read), WARM_TIMEOUT_MS)),
+      reads.map((read) => exec('warm', opencliCommandLine(command, read, 'persistent', platform), WARM_TIMEOUT_MS)),
     );
     const failed = reads.filter((_, index) => results[index]?.kind !== 'ok');
     patchStep('warm', {

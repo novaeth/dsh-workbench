@@ -1,4 +1,5 @@
-import { dirname, isAbsolute, parse, resolve, sep } from 'node:path';
+import { existsSync, realpathSync } from 'node:fs';
+import { basename, dirname, isAbsolute, join, parse, resolve, sep } from 'node:path';
 import type { DenialScope, SeamMode, SeamPolicy, WriteIntent } from './intent.js';
 import { SeamError } from './intent.js';
 
@@ -17,9 +18,24 @@ export function narrowerMode(left: SeamMode, right: SeamMode): SeamMode {
   return rank(left) <= rank(right) ? left : right;
 }
 
+function realOf(path: string): string {
+  const resolved = resolve(path);
+  if (existsSync(resolved)) {
+    try {
+      return realpathSync.native(resolved);
+    } catch {
+      return resolved;
+    }
+  }
+  const parent = dirname(resolved);
+  if (parent === resolved) return resolved;
+  const realParent = realOf(parent);
+  return realParent === parent ? resolved : join(realParent, basename(resolved));
+}
+
 export function insideOf(root: string, path: string): boolean {
-  const confined = resolve(root);
-  const target = resolve(path);
+  const confined = realOf(root);
+  const target = realOf(path);
   if (target === confined) return true;
   return target.startsWith(confined.endsWith(sep) ? confined : `${confined}${sep}`);
 }

@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, win32 } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { noWrite, now, quoteShellArg, type Seam, writeJsonFile } from '@dsh-workbench/shared/host';
+import { noWrite, now, quoteShellArgFor, type Seam, writeJsonFile } from '@dsh-workbench/shared/host';
 import type { DesktopBrowserId, WakeBrowserReply } from '@dsh-workbench/shared/contract/protocol/preflight-wake';
 
 const BROWSER_IDS = ['chrome', 'edge', 'brave', 'chromium', 'vivaldi'] as const;
@@ -76,7 +76,7 @@ export function createDesktopBrowser(options: {
   seam: Seam;
   command: string;
   stateFile: string;
-  platform?: string;
+  platform?: NodeJS.Platform;
   home?: string;
   env?: NodeJS.ProcessEnv;
   logger?: { warn?(message: string): void } | undefined;
@@ -159,7 +159,7 @@ export function createDesktopBrowser(options: {
   async function running(): Promise<DesktopBrowserId[]> {
     if (platform === 'darwin' || platform === 'linux') {
       const names = BROWSERS.map((spec) =>
-        quoteShellArg(platform === 'darwin' ? spec.macProcess : spec.linuxProcess),
+        quoteShellArgFor(platform === 'darwin' ? spec.macProcess : spec.linuxProcess, platform),
       );
       const result = await run(`pgrep -lx ${names.join(' ')}`, STATUS_TIMEOUT_MS);
       const found: DesktopBrowserId[] = [];
@@ -192,7 +192,7 @@ export function createDesktopBrowser(options: {
   }
 
   async function daemonStatus(): Promise<'connected' | 'disconnected' | 'down' | 'unknown'> {
-    const result = await run(`${command} daemon status`, STATUS_TIMEOUT_MS);
+    const result = await run(`${quoteShellArgFor(command, platform)} daemon status`, STATUS_TIMEOUT_MS);
     if (!result.ok) return 'unknown';
     if (/^Daemon: not running/m.test(result.stdout)) return 'down';
     if (/^Extension: connected/m.test(result.stdout)) return 'connected';
@@ -227,11 +227,12 @@ export function createDesktopBrowser(options: {
 
   async function launch(id: DesktopBrowserId): Promise<boolean> {
     if (platform === 'darwin') {
-      const result = await run(`open -g -j -a ${quoteShellArg(appPath(id))}`, LAUNCH_TIMEOUT_MS);
+      const result = await run(`open -g -j -a ${quoteShellArgFor(appPath(id), platform)}`, LAUNCH_TIMEOUT_MS);
       return result.ok;
     }
     if (platform === 'linux') {
-      const binary = quoteShellArg(specOf(id).linuxBinary);
+      const binary = quoteShellArgFor(specOf(id).linuxBinary, platform);
+      if (!(await run(`command -v ${quoteShellArgFor('setsid', platform)}`, SHORT_WAIT_MS)).ok) return false;
       const result = await run(
         `setsid ${binary} --no-startup-window >/dev/null 2>&1 < /dev/null &`,
         LAUNCH_TIMEOUT_MS,
@@ -241,7 +242,7 @@ export function createDesktopBrowser(options: {
     if (platform === 'win32') {
       const exe = winExecutable(id);
       if (exe === undefined) return false;
-      const result = await run(`cmd /d /s /c start "" ${quoteShellArg(exe)}`, LAUNCH_TIMEOUT_MS);
+      const result = await run(`cmd /d /s /c start "" ${quoteShellArgFor(exe, platform)}`, LAUNCH_TIMEOUT_MS);
       return result.ok;
     }
     return false;
@@ -286,8 +287,13 @@ export function createDesktopBrowser(options: {
   return { observe, wake };
 }
 
-export function bridgeFixCommand(command: string, issues: readonly string[]): string | undefined {
-  if (issues.includes('profile') || issues.includes('stale')) return `${command} profile list`;
-  if (issues.includes('daemon')) return `${command} daemon restart`;
+export function bridgeFixCommand(
+  command: string,
+  issues: readonly string[],
+  platform: NodeJS.Platform = process.platform,
+): string | undefined {
+  const token = quoteShellArgFor(command, platform);
+  if (issues.includes('profile') || issues.includes('stale')) return `${token} profile list`;
+  if (issues.includes('daemon')) return `${token} daemon restart`;
   return undefined;
 }

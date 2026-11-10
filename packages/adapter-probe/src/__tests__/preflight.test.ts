@@ -18,7 +18,7 @@ describe('createPreflight', () => {
     expect(snapshot.phase).toBe('ready');
     expect(snapshot.steps.map((item) => `${item.id}=${item.status}`)).toEqual(['cli=ok', 'bridge=ok']);
     expect(snapshot.steps[0]?.detail).toBe('1.8.8');
-    expect(fake.calls.map((call) => call.command)).toEqual(['opencli --version', 'opencli doctor']);
+    expect(fake.calls.map((call) => call.command)).toEqual(["'opencli' --version", "'opencli' doctor"]);
   });
 
   it('缺 opencli → 自动安装 → 重探 → 放行；安装期间界面能拿到"正在执行的动作"', async () => {
@@ -43,9 +43,9 @@ describe('createPreflight', () => {
     expect(snapshot.phase).toBe('ready');
     expect(snapshot.steps[0]?.status).toBe('ok');
     expect(fake.calls.map((call) => call.command)).toEqual([
-      'opencli --version',
-      'opencli --version',
-      'opencli doctor',
+      "'opencli' --version",
+      "'opencli' --version",
+      "'opencli' doctor",
     ]);
   });
 
@@ -118,7 +118,7 @@ describe('createPreflight', () => {
     expect(snapshot.phase).toBe('ready');
     expect(snapshot.steps[1]?.status).toBe('warn');
     expect(snapshot.bridgeIssues).toEqual(['daemon', 'extension']);
-    expect(snapshot.steps[1]?.command).toBe('opencli daemon restart');
+    expect(snapshot.steps[1]?.command).toBe("'opencli' daemon restart");
     expect(snapshot.steps[1]?.detail).toContain('chrome://extensions');
   });
 
@@ -153,7 +153,7 @@ describe('createPreflight', () => {
 
     expect(snapshot.steps[1]?.status).toBe('warn');
     expect(snapshot.bridgeIssues).toEqual(['profile']);
-    expect(snapshot.steps[1]?.command).toBe('opencli profile list');
+    expect(snapshot.steps[1]?.command).toBe("'opencli' profile list");
   });
 
   it('★ 扩展有更新可用（通道仍通）不算坏：不谎报成 warn', async () => {
@@ -194,7 +194,7 @@ describe('createPreflight', () => {
     const second = preflight.run();
     await Promise.all([first, second]);
 
-    expect(fake.calls.map((call) => call.command)).toEqual(['opencli --version', 'opencli doctor']);
+    expect(fake.calls.map((call) => call.command)).toEqual(["'opencli' --version", "'opencli' doctor"]);
     expect(preflight.snapshot().phase).toBe('ready');
   });
 
@@ -204,7 +204,7 @@ describe('createPreflight', () => {
     const done = await preflight.run();
     const again = await preflight.run();
 
-    expect(fake.calls.map((call) => call.command)).toEqual(['opencli --version', 'opencli doctor']);
+    expect(fake.calls.map((call) => call.command)).toEqual(["'opencli' --version", "'opencli' doctor"]);
     expect(again).toEqual(done);
   });
 
@@ -308,8 +308,8 @@ describe('createPreflight', () => {
     await Promise.all([first, second]);
 
     expect(fake.calls.map((call) => call.command)).toEqual([
-      'opencli --version',
-      'opencli doctor',
+      "'opencli' --version",
+      "'opencli' doctor",
     ]);
     expect(preflight.snapshot().phase).toBe('ready');
   });
@@ -321,8 +321,8 @@ describe('createPreflight', () => {
 
     const commands = fake.calls.map((call) => call.command);
     expect(commands).toEqual([
-      'opencli --version',
-      'opencli doctor',
+      "'opencli' --version",
+      "'opencli' doctor",
     ]);
     expect(preflight.snapshot().phase).toBe('ready');
     expect(preflight.snapshot().steps.every((item) => item.status === 'ok')).toBe(true);
@@ -349,7 +349,7 @@ describe('Desktop：浏览器没开时，等用户点「打开浏览器」再开
     const snapshot = await preflight.run();
 
     expect(wake).not.toHaveBeenCalled();
-    expect(fake.commands()).toEqual(['opencli --version', 'opencli doctor']);
+    expect(fake.commands()).toEqual(["'opencli' --version", "'opencli' doctor"]);
     expect(snapshot.steps[1]?.status).toBe('warn');
     expect(snapshot.steps[1]?.command).toBeUndefined();
     expect(snapshot.bridgeIssues).toEqual(['extension']);
@@ -438,7 +438,7 @@ describe('宿主不交回命令结果（沙箱 / 子进程起不来）', () => {
   it('★ 版本命令没返回 → 40 秒内停住走 host 那档，后面的 doctor 一条都不发', async () => {
     vi.useFakeTimers();
     try {
-      const fake = scriptedShell((command) => command === 'opencli --version');
+      const fake = scriptedShell((command) => command === "'opencli' --version");
       const preflight = createPreflight({ seam: seamFor(fake.shell), probeToolchain: async () => TOOLCHAIN_OK });
       const pending = preflight.run();
       await vi.advanceTimersByTimeAsync(40_000);
@@ -447,7 +447,7 @@ describe('宿主不交回命令结果（沙箱 / 子进程起不来）', () => {
       expect(snapshot.phase).toBe('failed');
       expect(snapshot.guidance).toBe('host');
       expect(snapshot.failure).toBe('host');
-      expect(fake.calls).toEqual(['opencli --version']);
+      expect(fake.calls).toEqual(["'opencli' --version"]);
       expect(snapshot.steps.find((step) => step.id === 'cli')?.status).toBe('failed');
     } finally {
       vi.useRealTimers();
@@ -457,7 +457,7 @@ describe('宿主不交回命令结果（沙箱 / 子进程起不来）', () => {
   it('★ 版本通了、doctor 没返回 → 也停住走 host 那档，不再白等第二遍', async () => {
     vi.useFakeTimers();
     try {
-      const fake = scriptedShell((command) => command === 'opencli doctor');
+      const fake = scriptedShell((command) => command === "'opencli' doctor");
       const preflight = createPreflight({ seam: seamFor(fake.shell), probeToolchain: async () => TOOLCHAIN_OK });
       const pending = preflight.run();
       await vi.advanceTimersByTimeAsync(130_000);
@@ -465,7 +465,7 @@ describe('宿主不交回命令结果（沙箱 / 子进程起不来）', () => {
 
       expect(snapshot.phase).toBe('failed');
       expect(snapshot.guidance).toBe('host');
-      expect(fake.calls).toEqual(['opencli --version', 'opencli doctor']);
+      expect(fake.calls).toEqual(["'opencli' --version", "'opencli' doctor"]);
       expect(snapshot.steps.find((step) => step.id === 'bridge')?.status).toBe('failed');
     } finally {
       vi.useRealTimers();
@@ -475,7 +475,7 @@ describe('宿主不交回命令结果（沙箱 / 子进程起不来）', () => {
   it('★ 重试要重新探：上一次卡住不把这一次也判死', async () => {
     vi.useFakeTimers();
     try {
-      const fake = scriptedShell((command, seen) => command === 'opencli --version' && seen === 1);
+      const fake = scriptedShell((command, seen) => command === "'opencli' --version" && seen === 1);
       const preflight = createPreflight({ seam: seamFor(fake.shell), probeToolchain: async () => TOOLCHAIN_OK });
 
       const first = preflight.run();
@@ -487,9 +487,42 @@ describe('宿主不交回命令结果（沙箱 / 子进程起不来）', () => {
       const snapshot = await second;
 
       expect(snapshot.phase).toBe('ready');
-      expect(fake.calls.filter((call) => call === 'opencli doctor')).toHaveLength(1);
+      expect(fake.calls.filter((call) => call === "'opencli' doctor")).toHaveLength(1);
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('隔离 opencli 的绝对路径不许被 shell 拆词', () => {
+  it('★ win32 上路径带空格（C:\\Users\\John Smith\\…）→ 命令里是整段带引号的 token', async () => {
+    const command = 'C:\\Users\\John Smith\\.dsh\\workbench\\opencli\\bin\\opencli.cmd';
+    const fake = createFakeShell([{ stdout: '1.8.8\n' }, { stdout: GOOD_BRIDGE_REPORT }]);
+    const preflight = createPreflight({
+      seam: seamFor(fake.shell),
+      command,
+      platform: 'win32',
+      warmReads: () => [['issues']],
+    });
+
+    const snapshot = await preflight.run();
+
+    expect(snapshot.phase).toBe('ready');
+    expect(fake.calls.map((call) => call.command)).toEqual([
+      `'${command}' --version`,
+      `'${command}' doctor`,
+      `'${command}' 'issues' --site-session persistent -f json`,
+    ]);
+  });
+
+  it('★ 路径带单引号时按 pwsh 的字面量逃逸（两个单引号），不留 POSIX 那套反斜杠', async () => {
+    const command = "C:\\Users\\O'Brien\\opencli.cmd";
+    const fake = createFakeShell([{ stdout: '1.8.8\n' }, { stdout: GOOD_BRIDGE_REPORT }]);
+    const preflight = createPreflight({ seam: seamFor(fake.shell), command, platform: 'win32' });
+
+    await preflight.run();
+
+    expect(fake.calls[0]?.command).toBe(`'C:\\Users\\O''Brien\\opencli.cmd' --version`);
+    expect(fake.calls[0]?.command).not.toContain(`'\\''`);
   });
 });

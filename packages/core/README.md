@@ -12,11 +12,15 @@
 
 | 装法 | 命令 | 得到什么 |
 |---|---|---|
-| 独立实例（推荐） | `npx @dsh-workbench/core create` | 自己的 profile、`:3081`、独立进程；会话 / 项目 / 附件跟 web 共用 |
+| 独立实例（推荐，macOS / Linux） | `npx @dsh-workbench/core create` | 自己的 profile、`:3081`、独立进程；会话 / 项目 / 附件跟 web 共用 |
 | 装进现有 `dsh web` | 侧栏 Plugins → Add plugin → `@dsh-workbench/core` → Install → Enable now → 刷新 | 当前实例多一列面板，会话不变 |
 | 装进 Desktop | 同上，装完重开窗口 | Desktop 里多一列面板 |
 
-独立实例分两步：先建 profile，再起工作台。
+> **Windows 上走第二、三行**：独立实例那条路的启动器还是 bash 脚本，
+> `npx @dsh-workbench/core create` 与 `setup` 在 Windows 上会报找不到 `bash`。
+> `dsh web` 的插件页或 Desktop 的插件页装出来的效果一样。
+
+独立实例分两步（macOS / Linux）：先建 profile，再起工作台。
 
 ```bash
 npx @dsh-workbench/core create                    # 交互式：问来源、名字、复制什么

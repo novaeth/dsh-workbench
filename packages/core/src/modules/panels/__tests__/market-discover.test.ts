@@ -255,7 +255,8 @@ describe('发现域 · 沙箱拦住时给得出怎么修', () => {
 
     expect(payload.state).toBe('unreadable');
     expect(payload.problem?.kind).toBe('sandbox');
-    expect(payload.problem?.detail).toContain('$DSH_HOME');
+    expect(payload.problem?.detail).toContain('DSH_HOME');
+    expect(payload.problem?.detail).not.toContain('$');
     expect(payload.problem?.detail).toContain(join('/home/u', '.dsh', 'profiles', 'desktop'));
     expect(payload.problem?.detail).toContain('不用改 profile');
   });

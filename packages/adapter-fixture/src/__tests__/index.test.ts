@@ -16,7 +16,7 @@ function profileWithFixture(): string {
   writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'fixture-profile', private: true, type: 'module' }));
   const scope = join(dir, 'node_modules', '@dsh-workbench');
   mkdirSync(scope, { recursive: true });
-  symlinkSync(packageRoot, join(scope, 'adapter-fixture'), process.platform === 'win32' ? 'junction' : 'dir');
+  symlinkSync(packageRoot, join(scope, 'adapter-fixture'), 'junction');
   return dir;
 }
 

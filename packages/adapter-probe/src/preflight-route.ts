@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import type { DshHostContext, RuntimeCapabilities } from '@dsh-workbench/shared';
 import type { RouteTable } from '@dsh-workbench/shared/host';
-import { PREFLIGHT_INSTALL_TIMEOUT_MS, preflightHandler, removePath, type Seam, workbenchRoot } from '@dsh-workbench/shared/host';
+import { PREFLIGHT_INSTALL_TIMEOUT_MS, preflightHandler, quoteShellArgFor, removePath, type Seam, workbenchRoot } from '@dsh-workbench/shared/host';
 import { toolchainDir, toolchainOpencliDir } from '@dsh-workbench/adapter-runtime';
 import { WAKE_BROWSER_ROUTE } from '@dsh-workbench/shared/contract/protocol/preflight-wake';
 import { runBootstrapCommand } from './bootstrap-run.js';
@@ -15,7 +15,7 @@ import { probeDesktopToolchain } from './toolchain-probe.js';
 import { createDesktopBrowser, type DesktopBrowser } from './browser-wake.js';
 import { profileDirOf } from '@dsh-workbench/adapter-supply';
 import { prependPath, runtimeSeedRootOf } from './runtime-seed.js';
-import { localPnpmCommand, provisionLocalPnpm } from './toolchain.js';
+import { localPnpmCommand, provisionLocalPnpm, type LocalPnpmProvision } from './toolchain.js';
 
 function desktopBrowserOf(input: {
   ctx: DshHostContext;
@@ -31,6 +31,30 @@ function desktopBrowserOf(input: {
     stateFile: join(workbenchRoot(), 'browser.json'),
     ...(input.ctx.logger === undefined ? {} : { logger: input.ctx.logger }),
   });
+}
+
+export async function provisionWorkbenchPnpm(input: {
+  readonly root: string;
+  readonly seam: Seam;
+  readonly run?: ((command: string) => Promise<{ ok: boolean; detail: string }>) | undefined;
+}): Promise<LocalPnpmProvision> {
+  const result = await provisionLocalPnpm({
+    root: input.root,
+    pnpm: process.env.DSH_WB_PNPM?.trim() || 'pnpm',
+    npm: 'npm',
+    run:
+      input.run ??
+      ((command) =>
+        runBootstrapCommand(command, {
+          timeoutMs: PREFLIGHT_INSTALL_TIMEOUT_MS,
+          seam: input.seam,
+        })),
+  });
+  if (result.ok && result.binDir !== undefined) {
+    prependPath(result.binDir);
+    process.env.DSH_WB_PNPM = quoteShellArgFor(localPnpmCommand(input.root), process.platform);
+  }
+  return result;
 }
 
 export function registerPreflight(input: {
@@ -89,21 +113,7 @@ export function registerPreflight(input: {
     provisionPnpm: async () => {
       const root = runtimeSeedRootOf(input.ctx);
       if (root === null) return { ok: false, detail: '找不到工作台根' };
-      const result = await provisionLocalPnpm({
-        root,
-        pnpm: process.env.DSH_WB_PNPM?.trim() || 'pnpm',
-        npm: 'npm',
-        run: (command) =>
-          runBootstrapCommand(command, {
-            timeoutMs: PREFLIGHT_INSTALL_TIMEOUT_MS,
-            seam: input.seam,
-          }),
-      });
-      if (result.ok && result.binDir !== undefined) {
-        prependPath(result.binDir);
-        process.env.DSH_WB_PNPM = localPnpmCommand(root);
-      }
-      return result;
+      return provisionWorkbenchPnpm({ root, seam: input.seam });
     },
     ...(desktopBrowser === undefined ? {} : { desktopBrowser }),
   });
