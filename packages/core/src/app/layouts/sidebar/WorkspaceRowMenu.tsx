@@ -96,11 +96,12 @@ export function WorkspaceRowMenu({ target, t, onClose, onAlias, onDelete, onReve
         onReveal(workspace.path);
       }}
       items={items}
-      anchor={<span />}
+      anchor={null}
       portal
       autoFocus
       align={target?.align ?? 'end'}
       getAnchorRect={getAnchorRect}
+      className={styles.anchor}
       listClassName={styles.list}
     />
   );

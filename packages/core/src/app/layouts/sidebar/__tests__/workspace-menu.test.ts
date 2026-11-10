@@ -66,6 +66,14 @@ describe('工作区行的三点菜单：悬停换图标、点开是菜单', () =
     expect(read('WorkspaceRowMenu.module.css')).toContain('.list {');
     expect(MENU).toContain('listClassName={styles.list}');
   });
+
+  it('★ Menu 自己那个空 span 不占一行：primitives 的 .root 是 inline-flex，留在流里就多出一条行盒（行距看着变大）', () => {
+    const css = read('WorkspaceRowMenu.module.css');
+
+    expect(MENU).toContain('className={styles.anchor}');
+    expect(css).toContain('.anchor.anchor {');
+    expect(css).toContain('display: none');
+  });
 });
 
 describe('右键工作区那一项：跟 dsh 官方同一套（指针位置开菜单，键盘也认）', () => {
