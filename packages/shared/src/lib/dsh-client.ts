@@ -190,12 +190,13 @@ export interface DshWorkspaceWritten {
 }
 
 /**
- * dsh 的工作区服务：list 是可订阅快照，create 与 rename 是写口。
+ * dsh 的工作区服务：list 是可订阅快照，create / rename / delete 是写口；三个写口失败都抛错。
  */
 export interface DshWorkspaces {
   readonly list: DshObservable<WorkspaceSnapshot>;
   create(request: { path: string }): Promise<DshWorkspaceWritten | undefined>;
   rename(workspaceId: string, title: string): Promise<DshWorkspaceWritten>;
+  delete(workspaceId: string): Promise<void>;
 }
 
 /**
@@ -298,6 +299,7 @@ export interface DshMenuPoint {
 /**
  * dsh 的共享上下文菜单服务：active 是在场目标（关着时 null），open 与 close 开合那一个弹层。
  * 会话行的「更多」走它 —— 菜单项由 dsh 按目标族现算，外壳只给目标与位置。
+ * notify 是在覆盖层说一句结果（工作台用它报"打开位置"没成）。
  */
 export interface DshContextMenus {
   readonly active: DshObservable<DshContextMenuTarget | null>;
@@ -309,6 +311,7 @@ export interface DshContextMenus {
     point: DshMenuPoint,
   ): void;
   close(): void;
+  notify(text: string, success: boolean): void;
 }
 
 /**
@@ -346,14 +349,27 @@ export interface DshSidebarRight {
 }
 
 /**
- * remote.sessions 写口：在宿主侧建会话并回会话 id。
+ * dsh 远端调用的返回：`ok` 为真才有 `value`，失败原因留给宿主日志；外壳只看 `ok`。
+ */
+export interface DshRemoteOutcome<T> {
+  readonly ok: boolean;
+  readonly value?: T;
+}
+
+/**
+ * dsh 的会话写口（`remote.session`）：建会话，以及把宿主上的路径交给桌面打开。
+ * `openWorkspacePath` 传 `action: 'reveal'` 是"在文件管理器里显示"（macOS 是 Finder）。
  */
 export interface DshSessionsRemote {
   create(request: {
     readonly workspaceId?: string;
     readonly cwd?: string;
     readonly agentPreset?: string;
-  }): Promise<{ readonly sessionId: string }>;
+  }): Promise<DshRemoteOutcome<{ readonly sessionId: string }>>;
+  openWorkspacePath(
+    request: { readonly path: string; readonly action?: 'reveal' },
+    signal?: AbortSignal,
+  ): Promise<DshRemoteOutcome<{ readonly opened: true }>>;
 }
 
 /**
@@ -368,7 +384,7 @@ export interface DshAgentPresetsRemote {
  * dsh 客户端的远端写口集合；会话与模式两家。
  */
 export interface DshClientRemote {
-  readonly sessions: DshSessionsRemote;
+  readonly session: DshSessionsRemote;
   readonly agentPresets?: DshAgentPresetsRemote;
 }
 

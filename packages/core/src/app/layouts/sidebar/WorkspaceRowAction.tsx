@@ -2,27 +2,29 @@ import { createElement as h } from 'react';
 import type { Translate, WorkspaceView } from '@dsh-workbench/shared';
 import styles from './ProjectSwitcher.module.css';
 
-import { Button, IconEditOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives';
+import { Button, IconEllipsisOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives';
 import { displayNameOf } from './workspace-name';
+import type { WorkspaceMenuOpen } from './WorkspaceRowMenu';
 
 export interface WorkspaceRowActionProps {
   readonly workspace: WorkspaceView;
   readonly t: Translate;
-  readonly onEdit: () => void;
+  readonly onMenu: (open: WorkspaceMenuOpen) => void;
 }
 
-export function WorkspaceRowAction({ workspace, t, onEdit }: WorkspaceRowActionProps) {
+export function WorkspaceRowAction({ workspace, t, onMenu }: WorkspaceRowActionProps) {
   return (
     <Button
       type="button"
       variant="ghost"
       size="sm"
       className={styles.rowAction}
-      icon={<IconEditOutlineRegular size={14} />}
-      aria-label={t('project.rename.row', { name: displayNameOf(workspace).dir })}
+      icon={<IconEllipsisOutlineRegular size={14} />}
+      aria-label={t('project.menu.row', { name: displayNameOf(workspace).dir })}
+      aria-haspopup="menu"
       onClick={(event) => {
         event.stopPropagation();
-        onEdit();
+        onMenu({ anchor: event.currentTarget.getBoundingClientRect(), align: 'end' });
       }}
     />
   );

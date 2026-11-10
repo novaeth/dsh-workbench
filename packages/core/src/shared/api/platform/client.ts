@@ -24,10 +24,11 @@ function defaultPlatform(): string {
 export function clientSurface(input: ClientSurfaceInput = {}): ClientSurface {
   const win = input.win ?? defaultWindow();
   const shell = win?.dshDesktop === undefined ? 'browser' : 'electron';
+  const hostOs = clientHostOs(input.platform ?? defaultPlatform());
   return {
     deployment: shell === 'electron' ? 'desktop' : 'web',
     shell,
-    hostOs: clientHostOs(input.platform ?? defaultPlatform()),
-    capabilities: { debugFooter: shell !== 'electron' },
+    hostOs,
+    capabilities: { debugFooter: shell !== 'electron', macFileManager: hostOs === 'darwin' },
   };
 }

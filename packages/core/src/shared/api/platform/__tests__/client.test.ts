@@ -8,6 +8,7 @@ describe('客户端平台面', () => {
     expect(surface.shell).toBe('browser');
     expect(surface.hostOs).toBe('darwin');
     expect(surface.capabilities.debugFooter).toBe(true);
+    expect(surface.capabilities.macFileManager).toBe(true);
   });
 
   it('★ 有 dshDesktop 就是 Electron，调试 footer 关闭', () => {
@@ -19,9 +20,12 @@ describe('客户端平台面', () => {
     expect(surface.shell).toBe('electron');
     expect(surface.hostOs).toBe('win32');
     expect(surface.capabilities.debugFooter).toBe(false);
+    expect(surface.capabilities.macFileManager).toBe(false);
   });
 
   it('未知平台不假装成 linux', () => {
-    expect(clientSurface({ win: {}, platform: 'freebsd' }).hostOs).toBe('other');
+    const surface = clientSurface({ win: {}, platform: 'freebsd' });
+    expect(surface.hostOs).toBe('other');
+    expect(surface.capabilities.macFileManager).toBe(false);
   });
 });

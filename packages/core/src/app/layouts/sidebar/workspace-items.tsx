@@ -6,6 +6,7 @@ import { IconFolderOpenRegular } from '@deepseek-ai/dsh-client-ui-primitives';
 import type { WorkspaceSectionPlan } from './workspace-groups';
 import { WorkspaceRowAction } from './WorkspaceRowAction';
 import { WorkspaceRowLabel } from './WorkspaceRowLabel';
+import type { WorkspaceMenuOpen } from './WorkspaceRowMenu';
 import { WorkspaceAttentionDot } from './WorkspaceAttentionDot';
 
 export interface WorkspaceItemsOptions {
@@ -15,13 +16,14 @@ export interface WorkspaceItemsOptions {
   readonly t: Translate;
   readonly attention: ReadonlyMap<string, WorkspaceAttention>;
   readonly onHover: (workspaceId: string | null) => void;
-  readonly onEdit: (workspace: WorkspaceView) => void;
+  readonly onMenu: (workspace: WorkspaceView, open: WorkspaceMenuOpen) => void;
 }
 
 export function workspaceOptions(options: WorkspaceItemsOptions): SelectFieldOption[] {
-  const { sections, currentId, hoverId, t, attention, onHover, onEdit } = options;
+  const { sections, currentId, hoverId, t, attention, onHover, onMenu } = options;
   const rowOf = (workspace: WorkspaceView, group: string | undefined): SelectFieldOption => {
     const own = attention.get(workspace.workspaceId) ?? null;
+    const openMenu = (open: WorkspaceMenuOpen): void => onMenu(workspace, open);
     return {
       value: workspace.workspaceId,
       group,
@@ -31,9 +33,10 @@ export function workspaceOptions(options: WorkspaceItemsOptions): SelectFieldOpt
           workspace={workspace}
           current={workspace.workspaceId === currentId}
           onHover={(hovering) => onHover(hovering ? workspace.workspaceId : null)}
+          onMenu={openMenu}
           action={
             hoverId === workspace.workspaceId ? (
-              <WorkspaceRowAction workspace={workspace} t={t} onEdit={() => onEdit(workspace)} />
+              <WorkspaceRowAction workspace={workspace} t={t} onMenu={openMenu} />
             ) : undefined
           }
         />

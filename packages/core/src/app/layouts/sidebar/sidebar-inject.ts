@@ -6,6 +6,7 @@ import type {
   DshObservable,
   PanelEntry,
 } from '@dsh-workbench/shared';
+import { LOCALE_NS } from '@dsh-workbench/shared';
 
 const NO_MENU_TARGET: DshObservable<DshContextMenuTarget | null> = {
   getSnapshot: () => null,
@@ -23,8 +24,12 @@ export function readPanels(ctx: DshClientContext): PanelEntry[] {
     .sort((a, b) => a.order - b.order);
 }
 
+function contextMenusOf(ctx: DshClientContext): DshContextMenus | undefined {
+  return ctx.get<DshContextMenus>('contextMenus');
+}
+
 export function sessionMenuSeat(ctx: DshClientContext) {
-  const menus = (): DshContextMenus | undefined => ctx.get<DshContextMenus>('contextMenus');
+  const menus = (): DshContextMenus | undefined => contextMenusOf(ctx);
   return {
     openSessionMenu: (sessionId: string, displayTitle: string, point: DshMenuPoint): void => {
       const live = menus();
@@ -34,5 +39,38 @@ export function sessionMenuSeat(ctx: DshClientContext) {
       else live.open({ kind: 'session', value: { sessionId, displayTitle } }, point);
     },
     hooks: { sessionMenuTarget: menus()?.active ?? NO_MENU_TARGET },
+  };
+}
+
+export function workspaceWrites(ctx: DshClientContext) {
+  const t = ctx.locale.bind(LOCALE_NS);
+  return {
+    renameWorkspace: async (workspaceId: string, title: string) => {
+      try {
+        await ctx.workspaces.rename(workspaceId, title);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    deleteWorkspace: async (workspaceId: string) => {
+      try {
+        await ctx.workspaces.delete(workspaceId);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    revealWorkspace: (path: string) => {
+      const failed = (): void => {
+        contextMenusOf(ctx)?.notify(t('project.reveal.failed'), false);
+      };
+      void ctx.remote.session
+        .openWorkspacePath({ path, action: 'reveal' })
+        .then((outcome) => {
+          if (!outcome.ok) failed();
+        })
+        .catch(failed);
+    },
   };
 }

@@ -1,6 +1,6 @@
 import { Fragment, createElement as h, useState } from 'react';
 import type { Translate, WorkspaceView } from '@dsh-workbench/shared';
-import styles from './WorkspaceRenameDialog.module.css';
+import styles from './WorkspaceAliasDialog.module.css';
 import { Note, TextField } from '@dsh-workbench/shared';
 import { Button, Modal } from '@deepseek-ai/dsh-client-ui-primitives';
 import {
@@ -10,31 +10,28 @@ import {
   WORKSPACE_NAME_INPUT_MAX,
   WORKSPACE_NAME_MAX,
 } from './workspace-name';
+import { useWorkspaceWrite } from './use-workspace-write';
 
-export interface WorkspaceRenameDialogProps {
+export interface WorkspaceAliasDialogProps {
   readonly workspace: WorkspaceView;
   readonly t: Translate;
   readonly onClose: () => void;
   readonly onSubmit: (title: string) => Promise<boolean>;
 }
 
-export function WorkspaceRenameDialog({ workspace, t, onClose, onSubmit }: WorkspaceRenameDialogProps) {
+export function WorkspaceAliasDialog({ workspace, t, onClose, onSubmit }: WorkspaceAliasDialogProps) {
   const [draft, setDraft] = useState(() => displayNameOf(workspace).name);
-  const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const { busy, failed, submit } = useWorkspaceWrite(
+    () => onSubmit(titleFor(workspace, draft)),
+    onClose,
+  );
 
   const dir = displayNameOf(workspace).dir;
   const tooLong = nameTooLong(draft);
 
   const save = (): void => {
-    if (busy || tooLong) return;
-    setBusy(true);
-    setFailed(false);
-    void onSubmit(titleFor(workspace, draft)).then((ok) => {
-      setBusy(false);
-      if (ok) onClose();
-      else setFailed(true);
-    });
+    if (tooLong) return;
+    submit();
   };
 
   return (
@@ -43,14 +40,14 @@ export function WorkspaceRenameDialog({ workspace, t, onClose, onSubmit }: Works
       onClose={() => {
         if (!busy) onClose();
       }}
-      title={t('project.rename.title', { name: dir })}
-      description={t('project.rename.description')}
-      closeLabel={t('project.rename.cancel')}
+      title={t('project.alias.title', { name: dir })}
+      description={t('project.alias.description')}
+      closeLabel={t('project.alias.cancel')}
       className={styles.dialog}
       footer={
         <>
           <Button type="button" variant="outline" size="md" disabled={busy} onClick={onClose}>
-            {t('project.rename.cancel')}
+            {t('project.alias.cancel')}
           </Button>
           <Button
             type="button"
@@ -60,7 +57,7 @@ export function WorkspaceRenameDialog({ workspace, t, onClose, onSubmit }: Works
             aria-busy={busy}
             onClick={save}
           >
-            {t(busy ? 'project.rename.saving' : 'project.rename.save')}
+            {t(busy ? 'project.alias.saving' : 'project.alias.save')}
           </Button>
         </>
       }
@@ -71,9 +68,9 @@ export function WorkspaceRenameDialog({ workspace, t, onClose, onSubmit }: Works
           data-modal-autofocus=""
           id="wb-workspace-name"
           name="wb-workspace-name"
-          aria-label={t('project.rename.field')}
+          aria-label={t('project.alias.field')}
           aria-invalid={tooLong ? 'true' : undefined}
-          placeholder={t('project.rename.placeholder')}
+          placeholder={t('project.alias.placeholder')}
           maxLength={WORKSPACE_NAME_INPUT_MAX}
           value={draft}
           onChange={(event) => setDraft(event.currentTarget.value)}
@@ -84,12 +81,12 @@ export function WorkspaceRenameDialog({ workspace, t, onClose, onSubmit }: Works
           }}
         />
         <div className={styles.meta}>
-          <Note as="span">{t('project.rename.hint')}</Note>
+          <Note as="span">{t('project.alias.hint')}</Note>
           <Note as="span" tone={tooLong ? 'problem' : 'muted'}>
             {`${draft.trim().length}/${WORKSPACE_NAME_MAX}`}
           </Note>
         </div>
-        {failed ? <Note tone="problem">{t('project.rename.failed')}</Note> : null}
+        {failed ? <Note tone="problem">{t('project.alias.failed')}</Note> : null}
       </div>
     </Modal>
   );

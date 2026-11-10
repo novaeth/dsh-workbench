@@ -1,0 +1,3 @@
+.dialog {
+  width: min(var(--wb-len-420), 100%);
+}

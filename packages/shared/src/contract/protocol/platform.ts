@@ -37,6 +37,7 @@ export interface HostSurface {
 
 export interface ClientCapabilities {
   readonly debugFooter: boolean;
+  readonly macFileManager: boolean;
 }
 
 export interface ClientSurface {

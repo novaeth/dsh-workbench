@@ -19,6 +19,7 @@ import { openNewSession, openPickedProject } from './session-pick';
 import { SidebarHeader } from './SidebarHeader';
 import { WorkspaceSection } from './WorkspaceSection';
 import { useSidebarAttention, useLongTaskPresence } from './use-attention';
+import { usePanelEntries } from './use-panel-entries';
 import { cx } from '@dsh-workbench/shared';
 
 import { PanelList } from './PanelNav';
@@ -30,6 +31,8 @@ export interface SidebarActions {
   hasPanelActions: () => boolean;
   subscribePanels: (callback: () => void) => () => void;
   renameWorkspace: (workspaceId: string, title: string) => Promise<boolean>;
+  deleteWorkspace: (workspaceId: string) => Promise<boolean>;
+  revealWorkspace: (path: string) => void;
   openWorkspace: (workspaceId: string) => void;
   createWorkspace: (path: string) => Promise<{ workspaceId?: string } | undefined>;
   pickDirectory: () => Promise<string | null>;
@@ -92,19 +95,9 @@ export function Sidebar(props: SidebarProps) {
   const board = useBoardWorkspace({ items, archivedSessionIds: archived, pinnedSessionIds: pinnedIds }, sessions);
 
   const [storedId, setStoredId] = useState(() => selectedProjectId());
-  const [panelEntries, setPanelEntries] = useState<PanelEntry[]>(() => props.listPanels());
-  const [hasPanelActions, setHasPanelActions] = useState(() => props.hasPanelActions());
+  const [panelEntries, hasPanelActions] = usePanelEntries(props);
   const [creating, setCreating] = useState(false);
   const [createFailed, setCreateFailed] = useState(false);
-
-  useEffect(
-    () =>
-      props.subscribePanels(() => {
-        setPanelEntries(props.listPanels());
-        setHasPanelActions(props.hasPanelActions());
-      }),
-    [props],
-  );
 
   useEffect(() => subscribeProject(() => setStoredId(selectedProjectId())), []);
 
@@ -169,7 +162,9 @@ export function Sidebar(props: SidebarProps) {
           attention={attention}
           onPick={pickProject}
           onAdd={addProject}
-          onRename={props.renameWorkspace}
+          onAlias={props.renameWorkspace}
+          onDelete={props.deleteWorkspace}
+          onReveal={props.revealWorkspace}
           t={t}
         />
         {creating ? (
@@ -188,7 +183,9 @@ export function Sidebar(props: SidebarProps) {
           compact
           onPick={pickProject}
           onAdd={addProject}
-          onRename={props.renameWorkspace}
+          onAlias={props.renameWorkspace}
+          onDelete={props.deleteWorkspace}
+          onReveal={props.revealWorkspace}
           t={t}
         />
       )}

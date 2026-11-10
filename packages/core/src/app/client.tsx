@@ -2,7 +2,7 @@ import '@/shared/dev-surface/install';
 import { createElement } from 'react';
 import type { DshClientContext, PanelStep } from '@dsh-workbench/shared';
 import { LOCALE_NS, UNITS_SERVICE } from '@dsh-workbench/shared';
-import { readPanels, sessionMenuSeat } from '@/app/layouts/sidebar/sidebar-inject';
+import { readPanels, sessionMenuSeat, workspaceWrites } from '@/app/layouts/sidebar/sidebar-inject';
 import { MARKET_PANEL_ID, registerMarketPanel } from '@/app/layouts/market/panel';
 import { registerDebugFooter } from '@/app/layouts/sidebar/debug-footer';
 import { clientSurface } from '@/shared/api/platform/client';
@@ -331,14 +331,7 @@ function mount(ctx: DshClientContext): void {
                 offActions();
               };
             },
-            renameWorkspace: async (workspaceId: string, title: string) => {
-              try {
-                await ctx.workspaces.rename(workspaceId, title);
-                return true;
-              } catch {
-                return false;
-              }
-            },
+            ...workspaceWrites(ctx),
             openWorkspace: (workspaceId: string) => {
               void ctx.uiWorkspace.openWorkspace(workspaceId);
             },

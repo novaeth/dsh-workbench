@@ -3,14 +3,14 @@ import type { ReactNode, SelectFieldOption, Translate, WorkspaceView } from '@ds
 import { attentionListRank, type Attention } from '@/modules/sessions';
 import styles from './ProjectSwitcher.module.css';
 import { SelectField, cx } from '@dsh-workbench/shared';
-import {
-  IconFolderCloseRegular,
-  IconPlusOutlineRegular,
-} from '@deepseek-ai/dsh-client-ui-primitives';
+import { IconFolderCloseRegular, IconPlusOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives';
 import { Tip } from '@/shared/components/Tip';
 import { WorkspaceAttentionDot } from './WorkspaceAttentionDot';
 import { WorkspaceAttentionTag } from './WorkspaceAttentionTag';
-import { WorkspaceRenameDialog } from './WorkspaceRenameDialog';
+import { WorkspaceAliasDialog } from './WorkspaceAliasDialog';
+import { WorkspaceDeleteDialog } from './WorkspaceDeleteDialog';
+import { WorkspaceRowMenu } from './WorkspaceRowMenu';
+import type { WorkspaceMenuTarget } from './WorkspaceRowMenu';
 import { displayNameOf, matchWorkspaces } from './workspace-name';
 import { workspaceSections } from './workspace-groups';
 import { workspaceOptions } from './workspace-items';
@@ -22,14 +22,29 @@ export interface ProjectSwitcherProps {
   compact?: boolean;
   onPick: (workspaceId: string) => void;
   onAdd: () => void;
-  onRename: (workspaceId: string, title: string) => Promise<boolean>;
+  onAlias: (workspaceId: string, title: string) => Promise<boolean>;
+  onDelete: (workspaceId: string) => Promise<boolean>;
+  onReveal: (path: string) => void;
   t: Translate;
 }
 
-export function ProjectSwitcher({ items, current, attention, compact = false, onPick, onAdd, onRename, t }: ProjectSwitcherProps) {
+export function ProjectSwitcher({
+  items,
+  current,
+  attention,
+  compact = false,
+  onPick,
+  onAdd,
+  onAlias,
+  onDelete,
+  onReveal,
+  t,
+}: ProjectSwitcherProps) {
   const [open, setOpen] = useState(false);
   const [hoverId, setHoverId] = useState<string | null>(null);
+  const [menu, setMenu] = useState<WorkspaceMenuTarget | null>(null);
   const [naming, setNaming] = useState<WorkspaceView | null>(null);
+  const [deleting, setDeleting] = useState<WorkspaceView | null>(null);
 
   const currentId = current?.workspaceId ?? '';
   const byId = useMemo(() => new Map(items.map((workspace) => [workspace.workspaceId, workspace])), [items]);
@@ -60,9 +75,9 @@ export function ProjectSwitcher({ items, current, attention, compact = false, on
         t,
         attention: attention.byWorkspace,
         onHover: setHoverId,
-        onEdit: (workspace) => {
+        onMenu: (workspace, open) => {
           setOpen(false);
-          setNaming(workspace);
+          setMenu({ workspace, anchor: open.anchor, align: open.align });
         },
       }),
     [sections, currentId, hoverId, t, attention.byWorkspace],
@@ -127,13 +142,30 @@ export function ProjectSwitcher({ items, current, attention, compact = false, on
         footer={{ label: t('project.add'), icon: <IconPlusOutlineRegular size={14} /> }}
         onFooter={onAdd}
       />
+      <WorkspaceRowMenu
+        target={menu}
+        t={t}
+        onClose={() => setMenu(null)}
+        onAlias={(workspace) => setNaming(workspace)}
+        onDelete={(workspace) => setDeleting(workspace)}
+        onReveal={onReveal}
+      />
       {naming === null ? null : (
-        <WorkspaceRenameDialog
+        <WorkspaceAliasDialog
           key={naming.workspaceId}
           workspace={naming}
           t={t}
           onClose={() => setNaming(null)}
-          onSubmit={(title) => onRename(naming.workspaceId, title)}
+          onSubmit={(title) => onAlias(naming.workspaceId, title)}
+        />
+      )}
+      {deleting === null ? null : (
+        <WorkspaceDeleteDialog
+          key={deleting.workspaceId}
+          workspace={deleting}
+          t={t}
+          onClose={() => setDeleting(null)}
+          onConfirm={() => onDelete(deleting.workspaceId)}
         />
       )}
     </div>

@@ -44,12 +44,14 @@ describe('每一次异步操作都要自己显形（ADR-0039）', () => {
     }
   });
 
-  it('★ 失败落在原地：新建工作区给红字、重命名给 failed，不许只 console', () => {
+  it('★ 失败落在原地：新建工作区给红字、设置别名与删除工作区给 failed，不许只 console', () => {
     const sidebar = read('sidebar/Sidebar.tsx');
 
     expect(sidebar).toContain('wb-workspaceError');
     expect(sidebar).toContain("t('project.add.failed')");
-    expect(read('sidebar/WorkspaceRenameDialog.tsx')).toContain('setFailed(true)');
+    expect(read('sidebar/use-workspace-write.ts')).toContain('setFailed(true)');
+    expect(read('sidebar/WorkspaceAliasDialog.tsx')).toContain("t('project.alias.failed')");
+    expect(read('sidebar/WorkspaceDeleteDialog.tsx')).toContain("t('project.delete.failed')");
   });
 
   it('★ 新补的两句反馈文案两语言都在，且不说内部词', () => {
