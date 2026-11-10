@@ -137,6 +137,16 @@ describe('两屏的分工：市场管机器级默认、面板管本工作区', (
     expect(row).not.toContain('marketIconAction');
   });
 
+  it('★ 共用依赖行跟模块行同一套：黄点 + 黄「更新」钮，字还是那颗灰字（用户口径 2026-11-10）', () => {
+    const shared = read('SharedSection.tsx');
+    const section = read('market-section.tsx');
+
+    expect(section).toMatch(/<StateDot state=\{MARKET_DOT\[row\.state\]\} size=\{9\} \/>/);
+    expect(shared).toMatch(/<StateDot state=\{SHARED_DOT\[row\.state\]\} size=\{9\} \/>/);
+    expect(shared).toMatch(/UPDATE_ACTIONS\.includes\(action\) \? styles\.marketUpdateAction : undefined/);
+    expect(shared).toMatch(/<span className=\{styles\.marketStateText\}>\{stateText\}<\/span>/);
+  });
+
   it('★ 插件行吃的是同一套：机器板与改动数喂给插件行，写入还是那一行的 id + scope: machine', () => {
     const view = read('MarketView.tsx');
     const section = read('market-section.tsx');

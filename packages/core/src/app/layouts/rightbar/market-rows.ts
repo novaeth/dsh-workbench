@@ -25,7 +25,7 @@ export type {
   ModuleUpdate,
 } from './market-row-types';
 export type { SharedRow, SharedState } from './market-shared-rows';
-export { SHARED_STATE_KEY, sharedActions, sharedRows } from './market-shared-rows';
+export { SHARED_DOT, SHARED_STATE_KEY, sharedActions, sharedRows } from './market-shared-rows';
 export const MARKET_STATE_KEY: Readonly<Record<MarketState, string>> = {
   checking: 'panels.market.checking',
   installed: 'panels.market.installed',

@@ -20,6 +20,17 @@ export const SHARED_STATE_KEY: Readonly<Record<SharedState, string>> = {
   unchecked: 'panels.market.unchecked',
 };
 
+export const SHARED_DOT: Readonly<
+  Record<SharedState, 'ongoing' | 'done' | 'warning' | 'idle' | 'error'>
+> = {
+  checking: 'ongoing',
+  installed: 'done',
+  outdated: 'warning',
+  unsatisfied: 'warning',
+  missing: 'idle',
+  unchecked: 'idle',
+};
+
 export interface SharedRow {
   readonly id: string;
   readonly kind: 'extension' | 'lib';

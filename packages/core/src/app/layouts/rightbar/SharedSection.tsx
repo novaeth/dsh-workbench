@@ -1,14 +1,14 @@
 import { createElement as h } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
-import { Button } from '@deepseek-ai/dsh-client-ui-primitives';
+import { Button, StateDot } from '@deepseek-ai/dsh-client-ui-primitives';
 import { Spinner } from '@dsh-workbench/shared';
-import { SHARED_STATE_KEY, sharedActions, type SharedRow } from './market-rows';
+import { SHARED_DOT, SHARED_STATE_KEY, sharedActions, type SharedRow } from './market-rows';
 import type { MarketFailure } from './market-row-types';
 import { FailureCard } from './FailureCard';
 import { failureCardOf } from './failure-card-text';
 import { marketSectionIcon } from './market-section-icon';
 import { packageIcon, sharedRowKind } from './market-row-icon';
-import { ACTION_LABEL_KEY, PROGRESS_KEY, type Pending } from './market-view-text';
+import { ACTION_LABEL_KEY, PROGRESS_KEY, UPDATE_ACTIONS, type Pending } from './market-view-text';
 import styles from '../market/MarketPage.module.css';
 import type { MarketRowAction } from './market-rows';
 
@@ -58,7 +58,11 @@ function SharedLine({
       <div className={styles.marketMain}>
         {name}
         <span className={styles.marketStatus}>
-          {row.state === 'checking' ? <Spinner size={14} /> : null}
+          {row.state === 'checking' ? (
+            <Spinner size={14} />
+          ) : (
+            <StateDot state={SHARED_DOT[row.state]} size={9} />
+          )}
           <span className={styles.marketStateText}>{stateText}</span>
           <span className={styles.marketSep} aria-hidden="true">·</span>
           <span className={styles.marketReason}>
@@ -83,6 +87,9 @@ function SharedLine({
                 type="button"
                 size="sm"
                 variant="outline"
+                className={
+                  UPDATE_ACTIONS.includes(action) ? styles.marketUpdateAction : undefined
+                }
                 disabled={locked}
                 onClick={() => onAct(action)}
               >

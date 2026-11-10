@@ -3,7 +3,7 @@ import type { UnitManifest } from '@dsh-workbench/shared';
 import { unitTitleKey } from '@dsh-workbench/shared';
 import type { CapabilityMap } from '@/shared/hooks/use-capabilities';
 import { extensionNeedOf, libNeedOf, manifestOf } from '@dsh-workbench/shared/testing';
-import { marketRows, sharedActions, sharedRows } from '../market-rows';
+import { MARKET_DOT, marketRows, sharedActions, sharedRows, SHARED_DOT } from '../market-rows';
 
 const NPM = { kind: 'npm' as const, registryEnv: 'X', registryDefault: 'https://r.invalid/' };
 
@@ -210,6 +210,23 @@ describe('sharedRows：处境与动作（点一行只有一行变）', () => {
 
     expect(row?.state).toBe('checking');
     expect(sharedActions(row as never)).toEqual([]);
+  });
+});
+
+describe('共用依赖那颗点：跟模块行同一口径', () => {
+  it('★ 有新版 / 版本不对 → 黄点（跟同一行那颗黄「更新」钮一个信号），没装 / 状态未知 → 灰点', () => {
+    expect(SHARED_DOT.outdated).toBe('warning');
+    expect(SHARED_DOT.unsatisfied).toBe('warning');
+    expect(SHARED_DOT.installed).toBe('done');
+    expect(SHARED_DOT.missing).toBe('idle');
+    expect(SHARED_DOT.unchecked).toBe('idle');
+    expect(SHARED_DOT.checking).toBe('ongoing');
+  });
+
+  it('★ 两边不会各说各话：同名的处境取同一颗点', () => {
+    for (const state of ['installed', 'outdated', 'missing', 'unchecked'] as const) {
+      expect(SHARED_DOT[state], state).toBe(MARKET_DOT[state]);
+    }
   });
 });
 
