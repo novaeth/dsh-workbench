@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 
 /**
  * 左栏一行的来源：dsh workspaces.list 快照里的一项，两个时间戳都是毫秒。
@@ -278,6 +278,61 @@ export interface DshObservable<T> {
   getSnapshot(): T;
   subscribe(listener: () => void): () => void;
 }
+
+/**
+ * dsh 共享上下文菜单捕获的一个目标：kind 定族，value 是那一族认得的值；会话族只认 sessionId。
+ */
+export interface DshContextMenuTarget {
+  readonly kind: string;
+  readonly value: { readonly sessionId?: string };
+}
+
+/**
+ * 共享上下文菜单的开合位置：视口 CSS 像素，原点在左上。
+ */
+export interface DshMenuPoint {
+  readonly x: number;
+  readonly y: number;
+}
+
+/**
+ * dsh 的共享上下文菜单服务：active 是在场目标（关着时 null），open 与 close 开合那一个弹层。
+ * 会话行的「更多」走它 —— 菜单项由 dsh 按目标族现算，外壳只给目标与位置。
+ */
+export interface DshContextMenus {
+  readonly active: DshObservable<DshContextMenuTarget | null>;
+  open(
+    target: {
+      readonly kind: 'session';
+      readonly value: { readonly sessionId: string; readonly displayTitle: string };
+    },
+    point: DshMenuPoint,
+  ): void;
+  close(): void;
+}
+
+/**
+ * 手势铺在元素上的那几位：dsh 给回来的 onContextMenu / onKeyDown / tabIndex。
+ */
+export type DshContextMenuTriggerProps = Pick<
+  HTMLAttributes<HTMLElement>,
+  'onContextMenu' | 'onKeyDown' | 'tabIndex'
+>;
+
+/**
+ * 右键与键盘唤出共享菜单的绑定：绑到一个显式对象上，回一份要铺在元素上的处理与焦点位。
+ */
+export interface DshContextMenuBindings {
+  getTriggerProps(
+    target: DshContextMenuTarget | undefined,
+    handlers?: DshContextMenuTriggerProps,
+  ): DshContextMenuTriggerProps;
+}
+
+/**
+ * dsh 的全局标准道具 useContextMenu：每个槽位作用域都有，外壳拿它给会话行这类对象绑右键。
+ */
+export type DshUseContextMenu = () => DshContextMenuBindings;
 
 /**
  * dsh 的右栏服务：mounted 是在场与否的可订阅值，展开与开资源另走方法。

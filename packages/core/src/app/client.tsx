@@ -1,8 +1,8 @@
 import '@/shared/dev-surface/install';
 import { createElement } from 'react';
-import type { DshClientContext, PanelEntry } from '@dsh-workbench/shared';
-import type { PanelStep } from '@dsh-workbench/shared';
+import type { DshClientContext, PanelStep } from '@dsh-workbench/shared';
 import { LOCALE_NS, UNITS_SERVICE } from '@dsh-workbench/shared';
+import { readPanels, sessionMenuSeat } from '@/app/layouts/sidebar/sidebar-inject';
 import { MARKET_PANEL_ID, registerMarketPanel } from '@/app/layouts/market/panel';
 import { registerDebugFooter } from '@/app/layouts/sidebar/debug-footer';
 import { clientSurface } from '@/shared/api/platform/client';
@@ -133,17 +133,6 @@ type RightbarObservable = {
   getSnapshot(): RightbarState;
   subscribe(listener: () => void): () => void;
 };
-
-function readPanels(ctx: DshClientContext): PanelEntry[] {
-  return ctx.slots
-    .entriesOfSlot('sidebar.panellist')
-    .map(({ options }) => ({
-      id: options.id ?? options.name,
-      order: options.order ?? 0,
-      label: options.label ?? options.id ?? options.name,
-    }))
-    .sort((a, b) => a.order - b.order);
-}
 
 export const inject = ['slots', 'locale', 'layout', 'uiWorkspace', 'workspaces', 'shortcuts', 'remote'];
 
@@ -331,6 +320,7 @@ function mount(ctx: DshClientContext): void {
           locale: LOCALE_NS,
           children: sidebarChildren(),
           inject: () => ({
+            ...sessionMenuSeat(ctx),
             listPanels: () => readPanels(ctx),
             hasPanelActions: () => ctx.slots.entriesOfSlot('sidebar.panellist.actions').length > 0,
             subscribePanels: (callback: () => void) => {

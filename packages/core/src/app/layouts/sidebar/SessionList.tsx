@@ -1,6 +1,9 @@
 import { Fragment, createElement as h, useEffect, useMemo, useRef, useState } from 'react';
 import { Tip } from '@/shared/components/Tip';
 import type {
+  DshContextMenuTarget,
+  DshMenuPoint,
+  DshUseContextMenu,
   RenderSlot,
   SessionStatusSnapshot,
   SessionsSnapshot,
@@ -12,7 +15,7 @@ import { currentSessionId, orderSessionRows, scrollEdgesOf, sessionNode, session
 
 import { cx, relativeTimeAgo, relativeTimeCompact } from '@dsh-workbench/shared';
 
-import { HoverCard, IconEllipsisOutlineRegular, IconPinFillRegular, Menu, StateDot } from '@deepseek-ai/dsh-client-ui-primitives';
+import { HoverCard, IconEllipsisOutlineRegular, IconPinFillRegular, StateDot } from '@deepseek-ai/dsh-client-ui-primitives';
 
 const MIN_TITLE_REVEAL_PX = 8;
 const TITLE_MARQUEE_PX_PER_MS = 0.03;
@@ -132,16 +135,25 @@ function SessionRow({
   node,
   active,
   onOpen,
+  openSessionMenu,
+  useContextMenu,
+  useSessionMenuTarget,
   renderSlot,
   t,
 }: {
   node: SessionNode;
   active: boolean;
   onOpen: (sessionId: string) => void;
+  openSessionMenu: (sessionId: string, displayTitle: string, point: DshMenuPoint) => void;
+  useContextMenu: DshUseContextMenu;
+  useSessionMenuTarget: SnapshotSelectorHook<DshContextMenuTarget | null>;
   renderSlot: RenderSlot;
   t: Translate;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const menuTrigger = useContextMenu();
+  const menuOpen = useSessionMenuTarget(
+    (target) => target?.kind === 'session' && target.value.sessionId === node.id,
+  );
   const statuses = sessionStatuses(node, t);
   const label = node.blank ? t('session.new') : node.title;
   const titleRef = useRef<HTMLSpanElement>(null);
@@ -149,6 +161,7 @@ function SessionRow({
   const trailing = statuses[0]?.trailingLabel;
 
   const owner = { sessionId: node.id, displayTitle: node.title };
+  const menuTarget = { kind: 'session', value: owner };
 
   return (
     <HoverCard
@@ -157,9 +170,20 @@ function SessionRow({
           className={cx('wb-sessionRow', active && 'wb-selected', menuOpen && 'wb-menuOpen')}
           role="treeitem"
           aria-selected={active}
+          tabIndex={0}
           onClick={() => onOpen(node.id)}
+          {...menuTrigger.getTriggerProps(node.blank ? undefined : menuTarget, {
+            onKeyDown: (event) => {
+              if (event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' ')) return;
+              if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+              event.preventDefault();
+              onOpen(node.id);
+            },
+          })}
           onPointerEnter={marquee.enter}
-          onPointerLeave={marquee.leave}
+          onPointerLeave={() => {
+            if (!menuOpen) marquee.leave();
+          }}
         >
           <span className="wb-sessionLeading">
             <SessionLeading node={node} statuses={statuses} renderSlot={renderSlot} />
@@ -190,28 +214,23 @@ function SessionRow({
 
           {node.blank ? null : (
             <span className="wb-rowActions" onClick={(event) => event.stopPropagation()}>
-              <Menu
-                open={menuOpen}
-                portal
-                closeOnPointerLeave
-                anchor={
-                  <button
-                    type="button"
-                    className="wb-iconButton"
-                    aria-haspopup="menu"
-                    aria-expanded={menuOpen}
-                    aria-label={t('session.actions', { name: label })}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setMenuOpen((value) => !value);
-                    }}
-                  >
-                    <IconEllipsisOutlineRegular size={16} />
-                  </button>
-                }
-                onClose={() => setMenuOpen(false)}
+              <button
+                type="button"
+                className="wb-iconButton"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                aria-label={t('session.actions', { name: label })}
+                data-context-menu-trigger=""
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  event.currentTarget.focus({ preventScroll: true });
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  openSessionMenu(node.id, node.title, { x: rect.left, y: rect.bottom });
+                }}
               >
-              </Menu>
+                <IconEllipsisOutlineRegular size={16} />
+              </button>
               {renderSlot('sidebar.workspaces.session.row.action', owner)}
             </span>
           )}
@@ -262,7 +281,10 @@ export interface SessionListProps {
   longTasks: LongTaskPresence;
   useSessions: SnapshotSelectorHook<SessionsSnapshot>;
   useSessionStatus: SnapshotSelectorHook<SessionStatusSnapshot>;
+  useSessionMenuTarget: SnapshotSelectorHook<DshContextMenuTarget | null>;
+  useContextMenu: DshUseContextMenu;
   onOpen: (sessionId: string) => void;
+  openSessionMenu: (sessionId: string, displayTitle: string, point: DshMenuPoint) => void;
   renderSlot: RenderSlot;
   t: Translate;
 }
@@ -275,7 +297,10 @@ export function SessionList({
   longTasks,
   useSessions,
   useSessionStatus,
+  useSessionMenuTarget,
+  useContextMenu,
   onOpen,
+  openSessionMenu,
   renderSlot,
   t,
 }: SessionListProps) {
@@ -310,6 +335,9 @@ export function SessionList({
           node={sessionNode(row, statusById, list, pinned, archivedSet, longTasks.bySession, longTasks.waitingBySession)}
           active={row.id === currentId}
           onOpen={onOpen}
+          openSessionMenu={openSessionMenu}
+          useContextMenu={useContextMenu}
+          useSessionMenuTarget={useSessionMenuTarget}
           renderSlot={renderSlot}
           t={t}
         />

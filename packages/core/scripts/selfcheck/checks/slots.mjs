@@ -165,6 +165,54 @@ export const checks = [
     },
   },
   {
+    title: '★ 自定义左栏的会话「更多」开的是 dsh 的共享上下文菜单（自己开 Menu 就是空菜单）',
+    run(_ctx, report) {
+      const clientEntry = read(pkg('src/app/client.tsx'));
+      const seats = read(pkg('src/app/layouts/sidebar/sidebar-inject.ts'));
+      const sessionList = read(pkg('src/app/layouts/sidebar/SessionList.tsx'));
+      const rides = clientEntry.includes('...sessionMenuSeat(ctx)') &&
+        seats.includes("ctx.get<DshContextMenus>('contextMenus')") &&
+        seats.includes('hooks: {');
+      const opens = sessionList.includes('openSessionMenu(node.id, node.title, {');
+      const ownMenu = /<Menu\b/.test(sessionList);
+      const why = ownMenu
+        ? '自定义左栏又自己开了 Menu —— 0.2.2 起会话菜单项不在槽里，点开只会是空菜单'
+        : !rides
+          ? '左栏 inject 没接 contextMenus（sessionMenuSeat）'
+          : !opens
+            ? 'SessionList 的 ⋯ 没走 openSessionMenu'
+            : '⋯ → contextMenus.open(kind: session)';
+      report(
+        '★ 自定义左栏的会话「更多」开的是 dsh 的共享上下文菜单（自己开 Menu 就是空菜单）',
+        rides && opens && !ownMenu,
+        why,
+      );
+    },
+  },
+  {
+    title: '★ 会话行的右键 / Shift+F10 走同一把共享菜单（行上铺 dsh 标准道具 useContextMenu 的 getTriggerProps）',
+    run(_ctx, report) {
+      const sessionList = read(pkg('src/app/layouts/sidebar/SessionList.tsx'));
+      const sidebar = read(pkg('src/app/layouts/sidebar/Sidebar.tsx'));
+      const bound = sessionList.includes('...menuTrigger.getTriggerProps(') &&
+        sessionList.includes('const menuTrigger = useContextMenu()');
+      const threaded = sidebar.includes('useContextMenu: DshUseContextMenu');
+      const inert = /\bonContextMenu=/.test(sessionList);
+      const why = inert
+        ? '行上自己写了 onContextMenu —— 右键那一条该归 dsh 的手势绑定'
+        : !threaded
+          ? 'SidebarProps 没声明 useContextMenu（标准道具传不下去）'
+          : !bound
+            ? '行没铺 getTriggerProps'
+            : '行 → getTriggerProps(kind: session)';
+      report(
+        '★ 会话行的右键 / Shift+F10 走同一把共享菜单（行上铺 dsh 标准道具 useContextMenu 的 getTriggerProps）',
+        bound && threaded && !inert,
+        why,
+      );
+    },
+  },
+  {
     title: '★ 自定义左栏不碰 dsh 自己声明的 session 菜单槽（0.2.2 起 ui-workspace 的 context menu adapter owns it：既不声明，也不 renderSlot）',
     run(_ctx, report) {
       const clientEntry = read(pkg('src/app/client.tsx'));
@@ -361,7 +409,7 @@ export const checks = [
     },
   },
   {
-    title: '左栏 inject 提供十一个能力',
+    title: '左栏 inject 提供十二个能力',
     run(ctx, report) {
       const { sidebar } = ctx;
 
@@ -380,9 +428,10 @@ export const checks = [
         'toggleSidebar',
         'selectPanel',
         'renameWorkspace',
+        'openSessionMenu',
       ];
       report(
-        '左栏 inject 提供十一个能力',
+        '左栏 inject 提供十二个能力',
         SIDEBAR_CAPS.every((name) => typeof injected?.[name] === 'function'),
         SIDEBAR_CAPS.filter((name) => typeof injected?.[name] !== 'function').join('、') ||
           SIDEBAR_CAPS.join(','),

@@ -100,6 +100,31 @@ describe('会话行与 dsh 0.2.x 的官方行（ui-workspace / Rows）逐条对�
   });
 });
 
+describe('会话行的「更多」：交给 dsh 的共享上下文菜单，自己不再开 Menu', () => {
+  it('★ ⋯ 只报目标与位置（按钮底边），菜单项由 dsh 按会话目标现算', () => {
+    expect(VIEW).not.toContain('<Menu');
+    expect(VIEW).toContain('openSessionMenu(node.id, node.title, {');
+    expect(VIEW).toContain('event.currentTarget.getBoundingClientRect()');
+    expect(VIEW).toContain('onPointerDown={(event) => event.stopPropagation()}');
+    expect(VIEW).toContain('data-context-menu-trigger=""');
+  });
+
+  it('★ 开合态取自 dsh 的在场目标（useSessionMenuTarget），行仍挂 wb-menuOpen', () => {
+    expect(VIEW).toContain('useSessionMenuTarget(');
+    expect(VIEW).toContain("target?.kind === 'session' && target.value.sessionId === node.id");
+    expect(VIEW).toContain("menuOpen && 'wb-menuOpen'");
+    expect(VIEW).toContain('aria-expanded={menuOpen}');
+    expect(VIEW).toContain('disabled={menuOpen}');
+  });
+
+  it('★ 行级手势也跟官方一样铺 getTriggerProps：右键 / Shift+F10 开同一把菜单，Enter/Space 开会话', () => {
+    expect(VIEW).toContain('const menuTrigger = useContextMenu()');
+    expect(VIEW).toContain('...menuTrigger.getTriggerProps(node.blank ? undefined : menuTarget, {');
+    expect(VIEW).toContain("event.key !== 'Enter' && event.key !== ' '");
+    expect(VIEW).toContain('tabIndex={0}');
+  });
+});
+
 describe('滚动区两端的淡出：跟 dsh 的 TurnNavigator 同一套 24px mask', () => {
   it('★ 两端状态由滚动量算（scrollEdgesOf），挂在**滚动容器自己**的类上', () => {
     expect(VIEW).toContain('scrollEdgesOf');

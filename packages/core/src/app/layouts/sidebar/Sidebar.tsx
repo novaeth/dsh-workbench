@@ -1,6 +1,9 @@
 import { Fragment, createElement as h, useEffect, useState } from 'react';
 import { Spinner } from '@dsh-workbench/shared';
 import type {
+  DshContextMenuTarget,
+  DshMenuPoint,
+  DshUseContextMenu,
   PanelEntry,
   PanelInfo,
   RenderSlot,
@@ -34,6 +37,7 @@ export interface SidebarActions {
   startSession: (workspaceId: string) => void;
   toggleSidebar: () => void;
   selectPanel: (panelId: string | null) => void;
+  openSessionMenu: (sessionId: string, displayTitle: string, point: DshMenuPoint) => void;
 }
 
 export type SidebarProps = SidebarActions & {
@@ -44,6 +48,8 @@ export type SidebarProps = SidebarActions & {
   usePanelInfo: SnapshotSelectorHook<PanelInfo>;
   useSessions: SnapshotSelectorHook<SessionsSnapshot>;
   useSessionStatus: SnapshotSelectorHook<SessionStatusSnapshot>;
+  useSessionMenuTarget: SnapshotSelectorHook<DshContextMenuTarget | null>;
+  useContextMenu: DshUseContextMenu;
 };
 
 function addWorkspace(input: {
@@ -205,6 +211,9 @@ export function Sidebar(props: SidebarProps) {
             useSessions={props.useSessions}
             useSessionStatus={props.useSessionStatus}
             onOpen={props.openSession}
+            openSessionMenu={props.openSessionMenu}
+            useContextMenu={props.useContextMenu}
+            useSessionMenuTarget={props.useSessionMenuTarget}
             renderSlot={renderSlot}
             t={t}
           />
