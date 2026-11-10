@@ -47,7 +47,7 @@ export function verdictOf(change: BundleChange): string {
   }
   if (change.application === 'overridden') return '被更高层的声明盖住了，这次没生效';
   if (change.application === 'cancelled') return '安装被取消，没有生效';
-  const tail = (change.packageResult?.output ?? '').trim().split('\n').slice(-3).join(' | ');
+  const tail = (change.packageResult?.output ?? change.errorDetail ?? '').trim().split('\n').slice(-3).join(' | ');
   return `没装上（${change.errorCode ?? 'failed'}）${tail === '' ? '' : `：${tail}`}`;
 }
 

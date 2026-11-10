@@ -8,9 +8,11 @@ import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { fakeSeamOf } from './seam-fake';
 import type { DshShell } from '@dsh-workbench/shared';
 import type { BundleChange, BundleInstallRequest } from '@/kernel/contract/bundle-install';
-import type { BundleManager, Seam, SupplyPort } from '@dsh-workbench/shared/host';
-import { refusalReason, planStepText } from '@dsh-workbench/shared/host';
+import type { BundleManager, ProvisionProblem, Seam, SupplyPort } from '@dsh-workbench/shared/host';
+import { diagnoseInstallFailure, planStepText, refusalReason } from '@dsh-workbench/shared/host';
 import { createMarketService } from '../model/market';
+import { sourceProblemText } from '../model/market-dependency';
+import { installError } from '../model/market-install-error';
 import { bundleNameOf, installRouted, type BundleInstallDeps } from '../model/market-route';
 import type { BundleInstallOutcome } from '../model/market-types';
 import { createPluginLedger, type PluginLedger } from '../model/plugin-ledger';
@@ -277,6 +279,126 @@ describe('添加一个 spec：按内容判它是什么，再决定走哪条路',
 
     for (const word of banned) expect(text, word).not.toContain(word);
     expect(text).toContain('运行时');
+  });
+});
+
+describe('插件那条路失败：回结构化失败（不抛），诊断信息一条不丢', () => {
+  const COMMAND = "'opencli' plugin install '/tmp/wb-route-plugin'";
+  const OUTPUT = [
+    'npm ERR! code EACCES',
+    'npm ERR! syscall mkdir',
+    'npm ERR! path /tmp/wb-route-plugins',
+    'npm ERR! errno -13',
+    'npm ERR! line-5',
+    'npm ERR! line-6',
+    'npm ERR! line-7',
+    'npm ERR! line-8',
+    'npm ERR! line-9',
+    'npm ERR! line-10',
+  ].join('\n');
+
+  function planSupplyOf(plan: { readonly ok: false; readonly problem: ProvisionProblem; readonly env?: string }): SupplyPort {
+    return {
+      env: { isolatedRoot: () => '/tmp/wb-route-runtime', isolatedHome: () => '/tmp/wb-route-home' },
+      packageRouteOf: async () => ({ kind: 'runtime-plugin', pkg: '@t/plugin-a', pluginName: 'plugina' }),
+      pluginInstallPlan: () => plan,
+      modules: { isolatedRoot: () => '/tmp/wb-route-runtime', isolatedHome: () => '/tmp/wb-route-home' },
+    } as unknown as SupplyPort;
+  }
+
+  it('★ runAll 抛（真的 installError）→ application failed / operation-error，message、完整 output、失败那步的命令行都在 errorDetail 里', async () => {
+    const at = pluginFixture();
+    const failure = installError(diagnoseInstallFailure({ command: COMMAND, exitCode: 1, output: OUTPUT }));
+    const { deps, install, commands } = rig({
+      spec: at,
+      supply: pluginSupply(() => ({ kind: 'runtime-plugin', pkg: '@t/plugin-a', pluginName: 'plugina' })),
+    });
+
+    const outcome = await installRouted({
+      ...deps,
+      runAll: async () => {
+        throw failure;
+      },
+    });
+
+    expect(install).not.toHaveBeenCalled();
+    expect(commands).toEqual([]);
+    expect(outcome.change).toMatchObject({
+      application: 'failed',
+      stage: 'install',
+      changed: false,
+      target: '@t/plugin-a',
+      errorCode: 'operation-error',
+    });
+    const detail = outcome.change.errorDetail ?? '';
+    expect(detail).toContain('没有写入权限（退出码 1）');
+    expect(detail).toContain('npm ERR! line-10');
+    expect(detail).toContain(COMMAND);
+    expect(detail).toContain('npm ERR! code EACCES');
+    expect(outcome.plugin).toBeUndefined();
+  });
+
+  it('★ 失败时台账回滚、不走 settle（不记来源、不探供给）', async () => {
+    const at = pluginFixture();
+    const ledger = ledgerAt(dirOf('store'));
+    const seen: (string | undefined)[] = [];
+    const calls: string[] = [];
+    const { deps } = rig({
+      spec: at,
+      ledger,
+      supply: pluginSupply(() => ({ kind: 'runtime-plugin', pkg: '@t/plugin-a', pluginName: 'plugina' })),
+    });
+
+    const outcome = await installRouted({
+      ...deps,
+      runAll: async () => {
+        seen.push(ledger.read('@t/plugin-a')?.package);
+        throw new Error('盘写不进去');
+      },
+      rememberSource: async () => {
+        calls.push('rememberSource');
+      },
+      supplyAfter: async () => {
+        calls.push('supplyAfter');
+        return { state: 'no-needs' };
+      },
+    });
+
+    expect(seen).toEqual(['@t/plugin-a']);
+    expect(ledger.read('@t/plugin-a')).toBeUndefined();
+    expect(ledger.list()).toEqual([]);
+    expect(calls).toEqual([]);
+    expect(outcome.change).toMatchObject({
+      application: 'failed',
+      errorCode: 'operation-error',
+      errorDetail: '盘写不进去',
+    });
+  });
+
+  it('★ 计划不成（env-missing / malformed / not-declared）→ 同样结构化失败，errorDetail 是 sourceProblemText 原文', async () => {
+    const cases: readonly (readonly [ProvisionProblem, string | undefined])[] = [
+      ['env-missing', 'DSH_WB_PLUGIN_SRC'],
+      ['malformed', undefined],
+      ['not-declared', undefined],
+    ];
+    for (const [problem, env] of cases) {
+      const at = pluginFixture();
+      const { deps, install, commands } = rig({ spec: at, supply: planSupplyOf({ ok: false, problem, ...(env === undefined ? {} : { env }) }) });
+
+      const outcome = await installRouted(deps);
+
+      expect(install, problem).not.toHaveBeenCalled();
+      expect(commands, problem).toEqual([]);
+      expect(outcome.change, problem).toMatchObject({
+        application: 'failed',
+        stage: 'install',
+        changed: false,
+        target: '@t/plugin-a',
+        errorCode: 'operation-error',
+        errorDetail: sourceProblemText(problem, env),
+      });
+      expect(outcome.plugin, problem).toBeUndefined();
+    }
   });
 });
 

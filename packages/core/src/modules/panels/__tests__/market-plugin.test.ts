@@ -121,7 +121,7 @@ describe('装 opencli 插件：先写台账意图，再让 npm / opencli 落盘'
     expect(ledger.read(PKG)).toMatchObject({ package: PKG, local: true });
   });
 
-  it('★ 装失败 → 意图回滚（那一笔去掉，文件也不留），错误照旧抛出去', async () => {
+  it('★ 装失败 → 意图回滚（那一笔去掉，文件也不留），失败回结构化结果不抛', async () => {
     const at = pluginFixture();
     const { deps, ledger, seen } = rig({
       spec: at,
@@ -131,8 +131,16 @@ describe('装 opencli 插件：先写台账意图，再让 npm / opencli 落盘'
       },
     });
 
-    await expect(installRouted(deps)).rejects.toThrow('盘写不进去');
+    const outcome = await installRouted(deps);
 
+    expect(outcome.change).toMatchObject({
+      application: 'failed',
+      stage: 'install',
+      changed: false,
+      target: PKG,
+      errorCode: 'operation-error',
+    });
+    expect(outcome.change.errorDetail).toContain('盘写不进去');
     expect(seen).toEqual([PKG]);
     expect(ledger.read(PKG)).toBeUndefined();
     expect(ledger.list()).toEqual([]);

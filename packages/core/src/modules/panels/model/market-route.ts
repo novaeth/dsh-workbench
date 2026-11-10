@@ -2,7 +2,7 @@ import type { PluginPlanStep, Seam } from '@dsh-workbench/shared/host';
 import type { BundleChange, BundleInstalledPlugin } from '@/kernel/contract/bundle-install';
 import type { BundleManager } from '@dsh-workbench/shared/host';
 import type { InstalledModule } from '@dsh-workbench/shared/host';
-import { refusalReason, splitNpmSpec } from '@dsh-workbench/shared/host';
+import { refusalReason, splitNpmSpec, WorkbenchDataError } from '@dsh-workbench/shared/host';
 import { requireSupply, localDirOf, type SupplyPort } from '@dsh-workbench/shared/host';
 import { sourceProblemText } from './market-dependency';
 import { pluginNameOf, type PluginFiles } from './plugin-name';
@@ -67,6 +67,36 @@ function outcomeOf(
     supply: { state: 'no-needs' },
     ...(plugin === undefined ? {} : { plugin }),
   };
+}
+
+function failureCommandOf(failure: unknown): string | undefined {
+  if (typeof failure !== 'object' || failure === null) return undefined;
+  const command = (failure as { readonly command?: unknown }).command;
+  return typeof command === 'string' && command !== '' ? command : undefined;
+}
+
+function failureDetailOf(error: unknown): string {
+  const lines: string[] = [];
+  const message = error instanceof Error ? error.message : '';
+  if (message !== '') lines.push(message);
+  if (error instanceof WorkbenchDataError) {
+    const command = failureCommandOf(error.failure);
+    if (command !== undefined) lines.push(command);
+    if (error.detail !== undefined && error.detail !== '') lines.push(error.detail);
+  }
+  if (lines.length === 0) lines.push(String(error));
+  return lines.join('\n');
+}
+
+function routedFailure(deps: BundleInstallDeps, pkg: string, errorDetail: string): BundleInstallOutcome {
+  return outcomeOf(deps, pkg, {
+    application: 'failed',
+    stage: 'install',
+    changed: false,
+    target: pkg,
+    errorCode: 'operation-error',
+    errorDetail,
+  });
 }
 
 export async function installDshBundle(
@@ -166,7 +196,7 @@ export async function installRouted(deps: BundleInstallDeps): Promise<BundleInst
     ...(registry === undefined ? {} : { registry }),
     ...(route.pluginName === undefined ? {} : { pluginName: route.pluginName }),
   });
-  if (!plan.ok) throw new Error(sourceProblemText(plan.problem, plan.env));
+  if (!plan.ok) return routedFailure(deps, pkg, sourceProblemText(plan.problem, plan.env));
   deps.ledger?.intend({
     package: pkg,
     ...(registry === undefined ? {} : { registry }),
@@ -176,7 +206,7 @@ export async function installRouted(deps: BundleInstallDeps): Promise<BundleInst
     await deps.runAll(plan.steps);
   } catch (error) {
     deps.ledger?.drop(pkg);
-    throw error;
+    return routedFailure(deps, pkg, failureDetailOf(error));
   }
   deps.ledger?.complete(pkg, installedPluginName(spec, pkg, deps.ledger.pluginFiles));
   deps.logger?.info?.(`[dsh-workbench] 把 ${pkg} 装进了运行时的插件区`);

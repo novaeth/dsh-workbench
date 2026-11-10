@@ -296,6 +296,30 @@ describe('workbench_modules · install-bundle（按 spec 装模块包）', () =>
     expect(String(payload.text)).toContain('不是工作台模块');
   });
 
+  it('★ 装失败（结构化失败）→ 交给 agent 的是诊断原文，不是丢一个裸码', async () => {
+    const h = harness({
+      manifests: [],
+      bundles: fakeBundles({
+        install: async () => ({
+          application: 'failed',
+          stage: 'install',
+          changed: false,
+          target: '@a/b',
+          errorCode: 'operation-error',
+          errorDetail: "没有写入权限（退出码 1）：\nERR_PNPM_FETCH_401\nCOMMAND",
+        }),
+      }),
+      installed: () => ({ kind: 'unknown', pkg: '@a/b' }),
+    });
+
+    const payload = await call(h, MODULES_INSTALL_BUNDLE_TOOL, { spec: '@a/b' });
+    const text = String(payload.text);
+
+    expect(text).toContain('没成功');
+    expect(text).toContain('没有写入权限');
+    expect(text).not.toContain('operation-error');
+  });
+
   it('registry 传下去（不填就不传，让管理器用自己配的源）', async () => {
     const seen: unknown[] = [];
     const h = harness({

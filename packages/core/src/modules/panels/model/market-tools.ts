@@ -102,9 +102,11 @@ function failureText(change: BundleChange): string {
     return '它已经在这份 profile 里，而这次没能把它卸下来（这一版 dsh 不肯就地覆盖装，得先卸再装）';
   }
   const surface = hostSurface();
-  return REMOVE_BLOCKED.has(code)
-    ? `旧版卸不掉（dsh 不肯就地覆盖正在用的模块），自动从外部换也没成 —— 让用户从终端跑 dsh plugin --profile <名字> add <包>@<版本>，跑完${surface.restartHint}`
-    : code;
+  if (REMOVE_BLOCKED.has(code)) {
+    return `旧版卸不掉（dsh 不肯就地覆盖正在用的模块），自动从外部换也没成 —— 让用户从终端跑 dsh plugin --profile <名字> add <包>@<版本>，跑完${surface.restartHint}`;
+  }
+  const detail = (change.errorDetail ?? '').trim();
+  return code === 'operation-error' && detail !== '' ? detail : code;
 }
 
 function describeInstall(
