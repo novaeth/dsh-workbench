@@ -185,7 +185,7 @@ export const checks = [
             2,
           ),
         );
-        writeFileSync(css, '.hero {\n  font-size: 28px;\n}\n\n.note {\n  font-size: 13px;\n}\n');
+        writeFileSync(css, '.hero {\n  font-size: 28px;\n}\n\n.note {\n  font-size: 18px;\n}\n');
         let out;
         try {
           out = String(
@@ -215,8 +215,8 @@ export const checks = [
         if (!out.includes('font-size: 28px') || !out.includes('28 不在刻度上')) {
           problems.push(`note 没把 28px 与刻度对不上这件事说出来：${tail(out)}`);
         }
-        if (!out.includes('src/Panel.module.css:6') || !out.includes('13 在刻度上')) {
-          problems.push(`刻度上的那处（13px）没归到"刻度上"那一档：${tail(out)}`);
+        if (!out.includes('src/Panel.module.css:6') || !out.includes('18 在刻度上')) {
+          problems.push(`刻度上的那处（18px）没归到"刻度上"那一档：${tail(out)}`);
         }
         report(
           '字号口径：刻度外字面值 → 仍是绿，note 点名文件:行与那一句声明；刻度上的那处归另一档',

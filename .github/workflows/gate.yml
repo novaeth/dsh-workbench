@@ -51,3 +51,6 @@ jobs:
             exit 1
           fi
           tail -n 3 gate.log
+      - name: 判据要在全新机器上也绿（dsh 现场指到空目录再跑一遍 selfcheck）
+        shell: bash
+        run: DSH_HOME="$(mktemp -d)" pnpm -w run selfcheck
