@@ -1,6 +1,7 @@
 import type { DshHostContext, DshWorkspaceRegistry, UnitManifest } from '@dsh-workbench/shared';
 import { provideWorkbenchSeam } from '@/shared/api/host/workbench-seam';
 import { holdHostLock } from '@/shared/api/host/host-lock';
+import { resumeQueuedSelfUpdate } from '@/shared/api/host/self-update-resume';
 import { provideGitProcessSeam } from '@/shared/api/host/git-process';
 import { shippedAdapterSet } from '@/shared/api/host/shipped-adapter-set';
 import { createHostRoutes } from '@/shared/api/host/host-routes';
@@ -92,6 +93,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   const runtimeProfile = adapters.runtime.profile?.(ctx) ?? null;
   const runtimeCheck = adapters.runtime.check;
   const profileDir = adapters.profile.dirOf(ctx);
+  resumeQueuedSelfUpdate(ctx, { supply: adapters.modules, home: dshHome(), profileDir });
   const surface = hostSurface({ profile: profileDir ?? undefined });
   routes.health = async (search) => ({
     ...((await baseHealth?.(search)) as Record<string, unknown>),

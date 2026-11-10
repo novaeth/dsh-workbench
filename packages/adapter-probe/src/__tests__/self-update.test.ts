@@ -11,6 +11,7 @@ import { createFakeProcesses, createFakeShell } from '@dsh-workbench/shared/test
 import {
   desktopPnpmEntry,
   desktopSelfUpdateCli,
+  selfUpdateBusy,
   planSelfUpdate,
   readSelfUpdateView,
   runningVersionOf,
@@ -754,6 +755,18 @@ describePosix('换包时机：宿主还在就排队，不在才换，装好了�
     expect(existsSync(join(root, 'launched.txt'))).toBe(false);
   });
 
+  maybe('★ 锁在但写锁那个进程早死了（宿主被硬杀）→ 当陈锁，不再白等', () => {
+    const root = fresh('stale-lock');
+    mkdirSync(join(root, 'workbench'), { recursive: true });
+    const dead = spawnSync(process.execPath, ['-e', '']).pid ?? 0;
+    writeFileSync(lockOf(root), JSON.stringify({ pid: dead, at: new Date().toISOString() }));
+
+    expect(runScript(root, undefined, { waitMs: 0, holdMs: 0 }, launchInto(root))).toBe(0);
+    expect(markerOf(root)).toMatchObject({ state: 'ok', version: '0.2.7' });
+    expect(onDisk(root)).toBe('0.2.7');
+    expect(logOf(root)).not.toContain('宿主还没退');
+  });
+
   maybe('★ 锁不在、宿主也没在跑 → 照常换，marker=ok，并把 Desktop 拉回来', () => {
     const root = fresh('relaunch');
 
@@ -818,5 +831,49 @@ describePosix('换包时机：宿主还在就排队，不在才换，装好了�
     expect(runScript(root, undefined, { waitMs: 0, holdMs: 0 })).toBe(0);
     expect(markerOf(root)).toMatchObject({ state: 'ok', version: '0.2.7' });
     expect(onDisk(root)).toBe('0.2.7');
+  });
+});
+
+describe('谁算「已经有一次在跑」—— 一个地方说了算，防的就是两个 pnpm 叠在一起', () => {
+  const dead = (): number => spawnSync(process.execPath, ['-e', '']).pid ?? 0;
+
+  it('★ 正在换（running，还没超时）→ 忙；换了很久没动静 → 不忙（放行）', () => {
+    const file = join(mkdtempSync(join(tmpdir(), 'wb-busy-')), 'self-update.json');
+    const now = new Date('2026-11-10T08:00:00.000Z');
+
+    writeFileSync(file, JSON.stringify({ state: 'running', at: '2026-11-10T07:59:00.000Z' }));
+    expect(selfUpdateBusy(file, now)).toBe(true);
+
+    writeFileSync(file, JSON.stringify({ state: 'running', at: '2026-11-10T06:00:00.000Z' }));
+    expect(selfUpdateBusy(file, now)).toBe(false);
+
+    rmSync(dirname(file), { recursive: true, force: true });
+  });
+
+  it('★ 排着队且脚本还活着 → 忙 —— 宿主重启时续跑那条路不许起第二个', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'wb-busy-'));
+    const file = join(dir, 'self-update.json');
+
+    writeFileSync(file, JSON.stringify({ state: 'queued', pid: process.pid }));
+    expect(selfUpdateBusy(file)).toBe(true);
+
+    writeFileSync(file, JSON.stringify({ state: 'queued', pid: dead() }));
+    expect(selfUpdateBusy(file)).toBe(false);
+
+    writeFileSync(file, JSON.stringify({ state: 'queued' }));
+    expect(selfUpdateBusy(file)).toBe(false);
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('★ 读不出来（没文件 / 不是 JSON）→ 一律不忙，别把用户堵死', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'wb-busy-'));
+    const file = join(dir, 'self-update.json');
+
+    expect(selfUpdateBusy(file)).toBe(false);
+    writeFileSync(file, 'not json');
+    expect(selfUpdateBusy(file)).toBe(false);
+
+    rmSync(dir, { recursive: true, force: true });
   });
 });

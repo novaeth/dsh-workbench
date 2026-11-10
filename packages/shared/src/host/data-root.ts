@@ -17,6 +17,10 @@ export function workbenchHostLock(): string {
   return join(workbenchRoot(), 'host.lock');
 }
 
+export function workbenchSelfUpdateMarker(): string {
+  return join(workbenchRoot(), 'self-update.json');
+}
+
 export function workspacesRoot(): string {
   return join(workbenchRoot(), 'workspaces');
 }

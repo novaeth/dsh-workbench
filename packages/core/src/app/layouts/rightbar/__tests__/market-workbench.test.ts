@@ -201,7 +201,7 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
 
     const queued = workbenchRow(
       { pkg: CORE, installed: '0.1.18', latest: '0.1.19' },
-      { state: 'queued', at: AT },
+      { state: 'queued', at: new Date().toISOString() },
       undefined,
     );
 
@@ -294,9 +294,10 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
 
   it('★ 还排着队 / 正在换的时候：那一行不给第二次点击的机会', () => {
     const version = { pkg: CORE, installed: '0.1.18', latest: '0.1.19' };
-    const queued = workbenchRow(version, { state: 'queued', at: AT }, undefined);
+    const queued = workbenchRow(version, { state: 'queued', at: new Date().toISOString() }, undefined);
     const running = workbenchRow(version, { state: 'running', at: new Date().toISOString() }, undefined);
     const stale = workbenchRow(version, { state: 'running', at: '2020-01-01T00:00:00.000Z' }, undefined);
+    const expired = workbenchRow(version, { state: 'queued', at: AT }, undefined);
 
     expect(queued?.canUpdate).toBe(false);
     expect(marketActions(queued as MarketRow)).toEqual([]);
@@ -304,6 +305,8 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
     expect(marketActions(running as MarketRow)).toEqual([]);
     expect(stale?.canUpdate).toBe(true);
     expect(marketActions(stale as MarketRow)).toEqual(['update-workbench']);
+    expect(expired?.canUpdate).toBe(true);
+    expect(marketActions(expired as MarketRow)).toEqual(['update-workbench']);
   });
 });
 

@@ -326,10 +326,12 @@ describe('工作台自更新：四档结果落在那一行，下次打开只说�
     expect(selfUpdateReasonHint({ kind: 'ok' })).toBeUndefined();
   });
 
-  it('★ 还排着队 / 正在换（还没到超时）→ 不给第二次点击的机会；换了很久没动静 → 放行', () => {
+  it('★ 排队 / 正在换（还没到超时）→ 不给第二次点击；超时或脚本早没了 → 放行', () => {
     const fresh = new Date().toISOString();
 
     expect(selfUpdateSwapping({ state: 'queued', at: fresh })).toBe(true);
+    expect(selfUpdateSwapping({ state: 'queued' })).toBe(true);
+    expect(selfUpdateSwapping({ state: 'queued', at: '2020-01-01T00:00:00.000Z' })).toBe(false);
     expect(selfUpdateSwapping({ state: 'running', at: fresh })).toBe(true);
     expect(selfUpdateSwapping({ state: 'running' })).toBe(true);
     expect(selfUpdateSwapping({ state: 'running', at: '2020-01-01T00:00:00.000Z' })).toBe(false);

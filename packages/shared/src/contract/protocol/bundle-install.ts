@@ -83,6 +83,8 @@ export type SelfUpdateState = (typeof SELF_UPDATE_STATES)[number];
 
 export const SELF_UPDATE_RUNNING_TTL_MS = 600_000;
 
+export const SELF_UPDATE_QUEUED_TTL_MS = 43_200_000;
+
 export const SELF_UPDATE_REASONS = ['occupied', 'incomplete', 'rollback-failed'] as const;
 
 export type SelfUpdateReason = (typeof SELF_UPDATE_REASONS)[number];

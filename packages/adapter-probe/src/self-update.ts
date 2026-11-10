@@ -38,6 +38,16 @@ export * from './self-update-view.js';
 
 export { SELF_UPDATE_RUNNING_TTL_MS } from '@dsh-workbench/shared/contract/protocol/bundle-install';
 
+function pidAlive(pid: unknown): boolean {
+  if (typeof pid !== 'number' || !Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function selfUpdateBusy(marker: string, at: Date = new Date(clockNow())): boolean {
   let raw: unknown;
   try {
@@ -47,6 +57,7 @@ export function selfUpdateBusy(marker: string, at: Date = new Date(clockNow())):
   }
   if (typeof raw !== 'object' || raw === null) return false;
   const record = raw as Readonly<Record<string, unknown>>;
+  if (record.state === 'queued') return pidAlive(record.pid);
   if (record.state !== 'running') return false;
   const started = typeof record.at === 'string' ? Date.parse(record.at) : Number.NaN;
   if (!Number.isFinite(started)) return true;
@@ -135,11 +146,17 @@ version_of() {
 }
 on_disk() { version_of "$PKG"; }
 write_marker() {
-  printf '{"pkg":"%s","profile":"%s","from":"%s","to":"%s","state":"%s","version":"%s","reason":"%s","at":"%s"}\\n' \\
-    "$PKG" "$PROFILE" "$FROM" "$TO" "$1" "$2" "$3" "$(date -u '+%FT%TZ')" >"$MARKER"
+  printf '{"pkg":"%s","profile":"%s","from":"%s","to":"%s","state":"%s","version":"%s","reason":"%s","pid":%s,"at":"%s"}\\n' \\
+    "$PKG" "$PROFILE" "$FROM" "$TO" "$1" "$2" "$3" "$$" "$(date -u '+%FT%TZ')" >"$MARKER"
 }
 host_alive() {
-  [ -f "$LOCK" ] && return 0
+  if [ -f "$LOCK" ]; then
+    LOCK_PID=$(sed -n 's/.*"pid":\\([0-9][0-9]*\\).*/\\1/p' "$LOCK" 2>/dev/null | head -n 1)
+    if [ -z "$LOCK_PID" ]; then
+      return 0
+    fi
+    kill -0 "$LOCK_PID" 2>/dev/null && return 0
+  fi
   if [ "$HOST_PID" -gt 0 ]; then
     kill -0 "$HOST_PID" 2>/dev/null && return 0
   fi

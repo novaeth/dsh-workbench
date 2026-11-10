@@ -1,5 +1,8 @@
 import dayjs from 'dayjs';
-import { SELF_UPDATE_RUNNING_TTL_MS } from '@dsh-workbench/shared/contract/protocol/bundle-install';
+import {
+  SELF_UPDATE_QUEUED_TTL_MS,
+  SELF_UPDATE_RUNNING_TTL_MS,
+} from '@dsh-workbench/shared/contract/protocol/bundle-install';
 import type { WorkbenchSelfUpdate } from '@/kernel/contract/bundle-install';
 import type { MarketHintKey, MarketNote, MarketRowAction, ModuleUpdate } from './market-row-types';
 import type { SharedState } from './market-shared-rows';
@@ -216,13 +219,16 @@ export function selfUpdateReasonHint(mark: SelfUpdateMark): MarketHintKey | unde
 
 export const WORKBENCH_SWAP_RUNNING_MS = SELF_UPDATE_RUNNING_TTL_MS;
 
+export const WORKBENCH_QUEUE_WAIT_MS = SELF_UPDATE_QUEUED_TTL_MS;
+
 export function selfUpdateSwapping(update: WorkbenchSelfUpdate | null | undefined): boolean {
   if (update === undefined || update === null) return false;
-  if (update.state === 'queued') return true;
-  if (update.state !== 'running') return false;
+  if (update.state !== 'queued' && update.state !== 'running') return false;
+  if (update.state === 'queued' && update.at === undefined) return true;
   if (update.at === undefined) return true;
   const at = dayjs(update.at).valueOf();
-  return !Number.isFinite(at) || Date.now() - at < WORKBENCH_SWAP_RUNNING_MS;
+  const window = update.state === 'queued' ? WORKBENCH_QUEUE_WAIT_MS : WORKBENCH_SWAP_RUNNING_MS;
+  return !Number.isFinite(at) || Date.now() - at < window;
 }
 
 export function holdWindowMs(until: string | undefined): number {

@@ -1,6 +1,7 @@
-import { RELEASE_PACKAGES, workbenchHostLock, workbenchRoot } from '@dsh-workbench/shared/host';
+import { RELEASE_PACKAGES, workbenchHostLock, workbenchRoot, workbenchSelfUpdateMarker } from '@dsh-workbench/shared/host';
 import type { SelfUpdatePaths, SelfUpdateRequest, SelfUpdateStart } from '@dsh-workbench/shared/host';
 import { join } from 'node:path';
+import { SELF_UPDATE_QUEUED_TTL_MS } from '@dsh-workbench/shared/contract/protocol/bundle-install';
 import type { SeedCommand } from './runtime-seed.js';
 import { type SelfUpdateCli, cliCommand, desktopPnpmEntry, isPathDsh, selfUpdateCliFor } from './self-update-cli.js';
 import type { SelfUpdateReason, SelfUpdateState } from '@dsh-workbench/shared/contract/protocol/bundle-install';
@@ -13,7 +14,7 @@ export const SELF_UPDATE_PACKAGES = RELEASE_PACKAGES.filter((name) => name !== W
 
 const DEFAULT_ATTEMPTS = 3;
 const DEFAULT_RETRY_MS = 3000;
-const DEFAULT_WAIT_MS = 600_000;
+const DEFAULT_WAIT_MS = SELF_UPDATE_QUEUED_TTL_MS;
 const DEFAULT_HOLD_MS = 5000;
 
 export const CORE_ARTIFACTS = ['client.js', 'dist/client/index.js', 'dist/host/index.js'] as const;
@@ -21,6 +22,7 @@ export const CORE_ARTIFACTS = ['client.js', 'dist/client/index.js', 'dist/host/i
 export type { SelfUpdatePaths, SelfUpdateRequest, SelfUpdateStart };
 
 export interface SelfUpdateMarker extends SelfUpdateRequest {
+  readonly pid?: number | undefined;
   readonly state: SelfUpdateState;
   readonly version: string;
   readonly reason?: SelfUpdateReason | undefined;
@@ -99,7 +101,7 @@ export function selfUpdatePaths(_dshHome: string, platform: NodeJS.Platform = pr
   return {
     dir,
     script: join(dir, platform === 'win32' ? 'self-update.mjs' : 'self-update.sh'),
-    marker: join(dir, 'self-update.json'),
+    marker: workbenchSelfUpdateMarker(),
     log: join(dir, 'self-update.log'),
     backup: join(dir, 'backup'),
     hostLock: workbenchHostLock(),

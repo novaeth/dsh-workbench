@@ -388,7 +388,7 @@ describe('Windows 自更新的闭环：装坏了必须能自己还原（不联�
     treeOf(root, '0.2.6');
     const paths = pathsOf(root, 'win32');
     mkdirSync(paths.dir, { recursive: true });
-    writeFileSync(paths.hostLock, JSON.stringify({ pid: 1, at: new Date().toISOString() }), 'utf8');
+    writeFileSync(paths.hostLock, JSON.stringify({ pid: process.pid, at: new Date().toISOString() }), 'utf8');
     writeFileSync(
       paths.script,
       selfUpdateNodeScript(
@@ -517,5 +517,45 @@ describe('Windows 自更新的闭环：装坏了必须能自己还原（不联�
     expect(JSON.parse(readFileSync(paths.marker, 'utf8'))).toMatchObject({ state: 'ok', version: '0.2.7' });
     expect(versionOnDisk(root)).toBe('0.2.7');
     expect(readFileSync(paths.log, 'utf8')).toContain('预取没成');
+  });
+
+  it('★ 锁在但写锁那个进程早死了（宿主被硬杀）→ 当陈锁，照样换', () => {
+    const root = home();
+    const cliFile = join(root, 'fake-cli.mjs');
+    writeFileSync(cliFile, FAKE_CLI, 'utf8');
+    writeFileSync(join(root, 'break'), '', 'utf8');
+    treeOf(root, '0.2.6');
+    const paths = pathsOf(root, 'win32');
+    mkdirSync(paths.dir, { recursive: true });
+    const dead = spawnSync(process.execPath, ['-e', '']).pid ?? 0;
+    writeFileSync(paths.hostLock, JSON.stringify({ pid: dead, at: new Date().toISOString() }), 'utf8');
+    writeFileSync(
+      paths.script,
+      selfUpdateNodeScript(
+        request({ dshHome: root, profile, pkg: CORE, attempts: 1, retryMs: 0, waitMs: 0, holdMs: 0 }),
+        paths,
+        { file: process.execPath, args: [cliFile], env: {} },
+        process.platform,
+        { file: process.execPath, args: ['-e', ''], env: {} },
+      ),
+      'utf8',
+    );
+
+    const run = spawnSync(process.execPath, [paths.script], {
+      encoding: 'utf8',
+      env: { ...process.env, DSH_HOME: root },
+    });
+
+    expect(run.status, run.stderr).toBe(0);
+    expect(JSON.parse(readFileSync(paths.marker, 'utf8'))).toMatchObject({ state: 'ok', version: '0.2.7' });
+    expect(versionOnDisk(root)).toBe('0.2.7');
+  });
+
+  it('★ marker 里带上脚本自己的 pid —— 宿主重启时才判得出"还排着队"是不是真有人在等', () => {
+    const { root, status, marker } = runClosedLoop('');
+
+    expect(status).toBe(0);
+    expect(marker).toMatchObject({ state: 'ok' });
+    expect(typeof JSON.parse(readFileSync(join(root, 'workbench', 'self-update.json'), 'utf8')).pid).toBe('number');
   });
 });
