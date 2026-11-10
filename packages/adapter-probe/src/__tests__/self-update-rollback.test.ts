@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -61,7 +61,7 @@ describe('切回上一版：不联网、不重装，只把链翻回去', () => {
     expect(result).toEqual({ ok: true, version: OLD });
     const link = join(profileDir, 'node_modules', CORE);
     expect(existsSync(link)).toBe(true);
-    expect(readlinkSync(link)).toContain(join('versions', OLD));
+    expect(realpathSync(link)).toBe(realpathSync(join(paths.versionsDir, OLD, 'node_modules', CORE)));
     expect(JSON.parse(readFileSync(join(profileDir, 'package.json'), 'utf8')).dependencies[CORE]).toContain(
       join('versions', OLD),
     );

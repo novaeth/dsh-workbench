@@ -80,16 +80,24 @@ jobs:
         run: node scripts/smoke/runtime-heal.mjs
       - name: 自更新与自愈的判据（win32 的 $ComSpec / taskkill 分支在各腿上真跑）
         shell: bash
-        run: >-
-          pnpm --filter @dsh-workbench/adapter-probe exec vitest run
-          src/__tests__/self-update.test.ts
-          src/__tests__/self-update-steps.test.ts
-          src/__tests__/self-update-rollback.test.ts
-          src/__tests__/self-update-boot.test.ts
-          src/__tests__/version-dir.test.ts
-          src/__tests__/version-switch.test.ts
-          src/__tests__/version-migrate.test.ts
-          src/__tests__/isolated-install.test.ts
+        run: |
+          set -o pipefail
+          if ! pnpm --filter @dsh-workbench/adapter-probe exec vitest run \
+            src/__tests__/self-update.test.ts \
+            src/__tests__/self-update-steps.test.ts \
+            src/__tests__/self-update-rollback.test.ts \
+            src/__tests__/self-update-boot.test.ts \
+            src/__tests__/version-dir.test.ts \
+            src/__tests__/version-switch.test.ts \
+            src/__tests__/version-migrate.test.ts \
+            src/__tests__/isolated-install.test.ts > vitest.log 2>&1; then
+            tail -n 40 vitest.log
+            body=$(grep -aE 'FAIL |× |→ ' vitest.log | head -n 25 || tail -n 12 vitest.log)
+            body=$(printf '%s\n' "$body" | sed -e 's/%/%25/g' -e 's/\r$//' | awk 'NF { printf "%s%%0A", $0 }')
+            echo "::error title=self-update criteria failed::${body:0:1800}"
+            exit 1
+          fi
+          tail -n 5 vitest.log
       - name: 换版本不就地覆盖（四条腿真跑：真目录→链接 · 旧目录不动 · 坏版本不回退错 · 回退不重装）
         shell: bash
         run: node scripts/smoke/self-update-links.mjs
