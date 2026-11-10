@@ -66,10 +66,11 @@ let state: ModuleVersionsState = NOT_READ;
 const listeners = new Set<() => void>();
 const inFlight = new Map<string, { readonly epoch: number; readonly promise: Promise<void> }>();
 const seq: Record<VersionsPart, number> = { modules: 0, plugins: 0 };
+const checkSeq: Record<VersionsPart, number> = { modules: 0, plugins: 0 };
 const newestForceSeq: Record<VersionsPart, number> = { modules: -1, plugins: -1 };
 const newestDataSeq: Record<VersionsPart, number> = { modules: -1, plugins: -1 };
 let epoch = 0;
-let allSeq = 0;
+let checkAllSeq = 0;
 
 export function bumpModuleVersionsEpoch(): void {
   epoch += 1;
@@ -81,11 +82,13 @@ export function moduleVersionsValue(): ModuleVersionsState {
 
 export function resetModuleVersions(): void {
   state = NOT_READ;
-  allSeq = 0;
+  checkAllSeq = 0;
   listeners.clear();
   inFlight.clear();
   seq.modules = 0;
   seq.plugins = 0;
+  checkSeq.modules = 0;
+  checkSeq.plugins = 0;
   newestForceSeq.modules = -1;
   newestForceSeq.plugins = -1;
   newestDataSeq.modules = -1;
@@ -208,6 +211,10 @@ function landed(seat: VersionsCheck, ticket: number, latest: number, ok: boolean
   };
 }
 
+function released(seat: VersionsCheck, ticket: number, latest: number): VersionsCheck {
+  return ticket === latest && seat.checking ? { ...seat, checking: false } : seat;
+}
+
 type ModulesResponse = readonly [ApiResponse<ModuleVersionsPayload>, ApiResponse<MarketInstalledPayload>];
 
 function readModulesOnce(force: boolean, check: boolean): Promise<ModulesResponse | null> {
@@ -240,22 +247,48 @@ function runRead(run: ReadRun): Promise<void> {
   const running = inFlight.get(key);
   if (!run.fresh && running !== undefined && running.epoch === at) return running.promise;
   const check = run.kind === 'check';
-  const allTicket = run.scope === 'all' ? (allSeq += 1) : allSeq;
+  const checkAllTicket = check && run.scope === 'all' ? (checkAllSeq += 1) : checkAllSeq;
   const tickets = new Map<VersionsPart, number>();
+  const checkTickets = new Map<VersionsPart, number>();
   for (const part of partsOf(run.scope)) {
     const ticket = (seq[part] += 1);
     tickets.set(part, ticket);
+    if (check) {
+      checkSeq[part] += 1;
+      checkTickets.set(part, checkSeq[part]);
+    }
     if (run.force) newestForceSeq[part] = ticket;
     if (!check) newestDataSeq[part] = ticket;
   }
   if (check) publish(checking(run.scope));
   const modulesTicket = tickets.get('modules');
   const pluginsTicket = tickets.get('plugins');
+  const modulesCheckTicket = checkTickets.get('modules') ?? 0;
+  const pluginsCheckTicket = checkTickets.get('plugins') ?? 0;
   const modulesRead =
     modulesTicket === undefined
       ? null
       : readModulesOnce(run.force, check).then((response) => {
-          if (at !== epoch || response === null || superseded(run, 'modules', modulesTicket)) return;
+          if (at !== epoch || superseded(run, 'modules', modulesTicket)) {
+            const seat = released(state.modulesCheck, modulesCheckTicket, checkSeq.modules);
+            if (check && seat !== state.modulesCheck) publish({ ...state, modulesCheck: seat });
+            return;
+          }
+          if (response === null) {
+            if (check) {
+              publish({
+                ...state,
+                modulesCheck: landed(
+                  state.modulesCheck,
+                  modulesCheckTicket,
+                  checkSeq.modules,
+                  false,
+                  Date.now(),
+                ),
+              });
+            }
+            return;
+          }
           const [modules, market] = response;
           const payload = modules.ok === true ? modules : null;
           const listed =
@@ -278,8 +311,8 @@ function runRead(run: ReadRun): Promise<void> {
               ? {
                   modulesCheck: landed(
                     state.modulesCheck,
-                    modulesTicket,
-                    seq.modules,
+                    modulesCheckTicket,
+                    checkSeq.modules,
                     payload !== null,
                     Date.now(),
                   ),
@@ -291,7 +324,26 @@ function runRead(run: ReadRun): Promise<void> {
     pluginsTicket === undefined
       ? null
       : readPluginsOnce(run.force, check).then((response) => {
-          if (at !== epoch || response === null || superseded(run, 'plugins', pluginsTicket)) return;
+          if (at !== epoch || superseded(run, 'plugins', pluginsTicket)) {
+            const seat = released(state.pluginsCheck, pluginsCheckTicket, checkSeq.plugins);
+            if (check && seat !== state.pluginsCheck) publish({ ...state, pluginsCheck: seat });
+            return;
+          }
+          if (response === null) {
+            if (check) {
+              publish({
+                ...state,
+                pluginsCheck: landed(
+                  state.pluginsCheck,
+                  pluginsCheckTicket,
+                  checkSeq.plugins,
+                  false,
+                  Date.now(),
+                ),
+              });
+            }
+            return;
+          }
           const ok = response.ok === true;
           publish({
             ...state,
@@ -301,13 +353,21 @@ function runRead(run: ReadRun): Promise<void> {
                 : withPreviousPluginLatest(response.plugins, state.plugins ?? [])
               : state.plugins,
             ...(check
-              ? { pluginsCheck: landed(state.pluginsCheck, pluginsTicket, seq.plugins, ok, Date.now()) }
+              ? {
+                  pluginsCheck: landed(
+                    state.pluginsCheck,
+                    pluginsCheckTicket,
+                    checkSeq.plugins,
+                    ok,
+                    Date.now(),
+                  ),
+                }
               : {}),
           });
         });
   const promise = Promise.all([modulesRead, pluginsRead])
     .then(() => {
-      if (at !== epoch || !check || run.scope !== 'all' || allTicket !== allSeq) return;
+      if (!check || run.scope !== 'all' || checkAllTicket !== checkAllSeq) return;
       if (!state.allChecking) return;
       publish({ ...state, allChecking: false });
     })

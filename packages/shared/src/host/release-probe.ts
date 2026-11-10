@@ -4,7 +4,12 @@ import { productWrite } from './seam/intent.js';
 import type { PluginRelease } from '../contract/unit.js';
 
 import { RELEASE_PACKAGES } from './release-packages.generated.js';
-import { VERSION_CHECK_TIMEOUT_MS, VERSION_CHECK_TTL_MS } from '../config/constants.js';
+import {
+  LEDGER_READ_TIMEOUT_MS,
+  VERSION_CHECK_FAILURE_TTL_MS,
+  VERSION_CHECK_TIMEOUT_MS,
+  VERSION_CHECK_TTL_MS,
+} from '../config/constants.js';
 import { compareVersions, isValidVersion } from './version.js';
 import { parseJsonLoose } from '../lib/text.js';
 import { quoteShellArg } from './shell-text.js';
@@ -46,6 +51,10 @@ function parseNewestVersion(stdout: string, includePrerelease: boolean): string 
 interface CacheEntry {
   readonly at: number;
   readonly value: string | undefined;
+}
+
+function versionCacheTtl(value: string | undefined): number {
+  return value === undefined ? VERSION_CHECK_FAILURE_TTL_MS : VERSION_CHECK_TTL_MS;
 }
 
 
@@ -111,8 +120,7 @@ async function latestVersionOf(latestCache: Map<string, CacheEntry>, options: {
   const { seam, name, registry, force = false, includePrerelease = false, cacheDir } = options;
   const key = `${registry}|${name}|${includePrerelease ? 'pre' : 'stable'}`;
   const hit = latestCache.get(key);
-  if (!force && hit !== undefined && now() - hit.at < VERSION_CHECK_TTL_MS)
-    return hit.value;
+  if (!force && hit !== undefined && now() - hit.at < versionCacheTtl(hit.value)) return hit.value;
 
   const command = includePrerelease
     ? `npm view ${quoteShellArg(name)} versions --json --registry ${quoteShellArg(registry)}${cacheFlag(cacheDir)}`
@@ -150,7 +158,7 @@ async function versionExists(
   const { seam, name, version, registry, force = false, cacheDir } = options;
   const key = `${registry}|${name}@${version}`;
   const hit = existsCache.get(key);
-  if (!force && hit !== undefined && (hit.value || now() - hit.at < VERSION_CHECK_TTL_MS))
+  if (!force && hit !== undefined && (hit.value || now() - hit.at < VERSION_CHECK_FAILURE_TTL_MS))
     return hit.value;
 
   const result = await seam
@@ -208,7 +216,7 @@ async function probeOf(
       command: `npm ls --prefix ${quoteShellArg(prefix ?? '')} ${quoteShellArg(pkg)} --json --depth=0${cacheFlag(cacheDir)}`,
       intent: productWrite(),
       retry: 'safe',
-      timeoutMs: VERSION_CHECK_TIMEOUT_MS,
+      timeoutMs: LEDGER_READ_TIMEOUT_MS,
       bestEffort: true,
     })
     .catch(() => undefined);

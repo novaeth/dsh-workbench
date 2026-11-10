@@ -94,11 +94,17 @@ export const PREFLIGHT_DOCTOR_TIMEOUT_MS = 30_000;
 /** 启动体检里装 opencli / provision 本地 pnpm 的超时（毫秒）：冷装走网络，2 分钟；模块装卸仍按 `INSTALL_TIMEOUT_MS`。 */
 export const PREFLIGHT_INSTALL_TIMEOUT_MS = 120_000;
 
-/** 查 registry 版本那一次请求的超时（毫秒）。 */
-export const VERSION_CHECK_TIMEOUT_MS = 10_000;
+/** 查 registry 版本那一次请求的超时（毫秒）：慢私有源单次十几到几十秒是常态，按公网定的 10 秒会把答案砍在到达前。 */
+export const VERSION_CHECK_TIMEOUT_MS = 45_000;
+
+/** 读本地账本那条命令（`npm ls`）的超时（毫秒）：不联网，按 10 秒收。 */
+export const LEDGER_READ_TIMEOUT_MS = 10_000;
 
 /** 版本查询结果的缓存有效期（毫秒）：期内不发第二次请求。 */
 export const VERSION_CHECK_TTL_MS = 600_000;
+
+/** 「没查到」的缓存有效期（毫秒）：比成功那档短得多，一次超时不许把后面十分钟都锁成查不到。 */
+export const VERSION_CHECK_FAILURE_TTL_MS = 60_000;
 
 /** 单元探测结果的缓存有效期（毫秒）。 */
 export const PROBE_TTL_MS = 30_000;

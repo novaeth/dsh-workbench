@@ -139,6 +139,77 @@ describe('★ 检查更新的转圈要罩到读数落地', () => {
 
     expect(moduleVersionsValue().allChecking).toBe(false);
   });
+
+  it('★ 结果被丢掉（写完之后 epoch 变了）也得把那颗 ⟳ 放下来，不许自锁', async () => {
+    const read = deferred<ApiResponse<ModuleVersionsPayload>>();
+    vi.mocked(readModuleVersions).mockReturnValueOnce(read.promise);
+
+    const run = runModuleVersionsRead(true, true);
+    expect(moduleVersionsValue().modulesCheck.checking).toBe(true);
+
+    bumpModuleVersionsEpoch();
+    read.resolve(versions('0.1.0'));
+    await run;
+
+    expect(moduleVersionsValue().modulesCheck.checking).toBe(false);
+    expect(moduleVersionsValue().pluginsCheck.checking).toBe(false);
+    expect(moduleVersionsValue().allChecking).toBe(false);
+    expect(moduleVersionsValue().modulesCheck.failed).toBe(false);
+  });
+
+  it('★ 写完之后紧跟的那趟已安装读（它不点灯、却会推计数器）也不许把灯锁住', async () => {
+    const check = deferred<ApiResponse<ModuleVersionsPayload>>();
+    vi.mocked(readModuleVersions).mockReturnValueOnce(check.promise);
+
+    const before = runModuleVersionsRead(true, true);
+    expect(moduleVersionsValue().modulesCheck.checking).toBe(true);
+
+    bumpModuleVersionsEpoch();
+    vi.mocked(readModuleVersions).mockResolvedValueOnce(versions('0.1.0'));
+    const after = runInstalledRead();
+
+    check.resolve(versions('0.1.1'));
+    await before;
+    await after;
+
+    expect(moduleVersionsValue().modulesCheck.checking).toBe(false);
+    expect(moduleVersionsValue().pluginsCheck.checking).toBe(false);
+    expect(moduleVersionsValue().allChecking).toBe(false);
+  });
+
+  it('★ 被后来的检查盖掉的那一次落地，不许熄灭后来那盏灯', async () => {
+    const oldRead = deferred<ApiResponse<ModuleVersionsPayload>>();
+    const newRead = deferred<ApiResponse<ModuleVersionsPayload>>();
+    vi.mocked(readModuleVersions)
+      .mockReturnValueOnce(oldRead.promise)
+      .mockReturnValueOnce(newRead.promise);
+
+    const before = runModuleVersionsRead(false);
+    const after = runModuleVersionsRead(true, true);
+
+    oldRead.resolve(versions('0.1.0'));
+    await before;
+    expect(moduleVersionsValue().modulesCheck.checking).toBe(true);
+
+    newRead.resolve(versions('0.1.1'));
+    await after;
+    expect(moduleVersionsValue().modulesCheck.checking).toBe(false);
+  });
+
+  it('★ 取数整个抛了也得放下那颗 ⟳，并记成「没查到」', async () => {
+    vi.mocked(readModuleVersions).mockResolvedValueOnce(versions('0.1.1'));
+    await runModuleVersionsRead(true, true);
+    const at = moduleVersionsValue().modulesCheck.checkedAt;
+    expect(at).not.toBeNull();
+
+    vi.mocked(readModuleVersions).mockRejectedValueOnce(new Error('offline'));
+    await runModuleVersionsRead(true, true);
+
+    expect(moduleVersionsValue().modulesCheck.checking).toBe(false);
+    expect(moduleVersionsValue().modulesCheck.failed).toBe(true);
+    expect(moduleVersionsValue().modulesCheck.checkedAt).toBe(at);
+    expect(moduleVersionsValue().allChecking).toBe(false);
+  });
 });
 
 describe('最近检查：只有读成功才记时间', () => {
