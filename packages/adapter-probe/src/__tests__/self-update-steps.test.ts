@@ -8,8 +8,9 @@ import type { SelfUpdateRequest } from '@dsh-workbench/shared/host';
 import type { SelfUpdatePaths } from '@dsh-workbench/shared/host';
 import { selfUpdateStepsOf } from '../self-update-steps.js';
 import { runSelfUpdateSteps } from '../self-update-run.js';
-import { versionDirOf } from '../version-dir.js';
+import { flipProfileLinks, versionDirOf, versionLinksOf } from '../version-dir.js';
 import { isManagedLinkSpec, type VersionLink } from '../version-dir.js';
+import { SELF_UPDATE_PACKAGES } from '../self-update-plan.js';
 
 const ROOT = mkdtempSync(join(tmpdir(), 'dsh-wb-self-update-steps-'));
 const FROM = '1.2.3-beta.2';
@@ -467,5 +468,99 @@ describe('换上这一版时目录还被占着（真目录那一次）：等它�
     expect(attempts).toBe(1);
     expect(result.state).toBe('failed');
     expect(result.detail).toContain('翻链没成');
+  });
+});
+
+describe('一次性迁移：旧版只压在 profile 的真目录里', () => {
+  const AT = '2026-11-10T12:00:00.000Z';
+  const FRESH = '2026-11-10T12:01:00.000Z';
+
+  const bootOf = (plan: ReturnType<typeof planOf>) =>
+    (
+      plan.steps.find((item) => item.kind === 'expect-boot') as {
+        boot: { readonly file: string; readonly upFile: string };
+      }
+    ).boot;
+
+  const writeRecord = (file: string, version: string, at: string): void => {
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, `${JSON.stringify({ version, at })}\n`, 'utf8');
+  };
+
+  const versionAt = (profileDir: string, pkg: string): string =>
+    JSON.parse(readFileSync(join(profileDir, 'node_modules', pkg, 'package.json'), 'utf8')).version as string;
+
+  const realInstall = (profileDir: string, version: string): void => {
+    for (const pkg of SELF_UPDATE_PACKAGES) {
+      const dir = join(profileDir, 'node_modules', pkg);
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: pkg, version }), 'utf8');
+    }
+  };
+
+  it('★ 真目录现场：新版半露面过宽限 → 翻回上一版，profile 里读得到旧版', async () => {
+    const { request, paths } = caseDirs();
+    const profileDir = join(request.dshHome, 'profiles', request.profile);
+    realInstall(profileDir, FROM);
+    const plan = planOf(request, paths, { at: AT, bootGraceMs: 0 });
+    const boot = bootOf(plan);
+    const processes = installing(plan.packages, paths.versionsDir, TO);
+    writeRecord(boot.file, TO, FRESH);
+
+    const result = await runSelfUpdateSteps(plan, { processes: processes.host, now: () => FRESH });
+
+    expect(result.state).toBe('rolled-back');
+    expect(lstatSync(join(plan.profileDir, 'node_modules', CORE)).isSymbolicLink()).toBe(true);
+    expect(versionAt(plan.profileDir, CORE)).toBe(FROM);
+  });
+
+  it('★ 真目录现场：新版确认了 → 旧版留在版本目录里，profile 指到新版', async () => {
+    const { request, paths } = caseDirs();
+    const profileDir = join(request.dshHome, 'profiles', request.profile);
+    realInstall(profileDir, FROM);
+    const plan = planOf(request, paths, { at: AT });
+    const boot = bootOf(plan);
+    const processes = installing(plan.packages, paths.versionsDir, TO);
+    writeRecord(boot.file, TO, FRESH);
+    writeRecord(boot.upFile, TO, FRESH);
+
+    const result = await runSelfUpdateSteps(plan, { processes: processes.host, now: () => FRESH });
+
+    expect(result.state).toBe('ok');
+    const kept = join(paths.versionsDir, FROM, 'node_modules', CORE, 'package.json');
+    expect(JSON.parse(readFileSync(kept, 'utf8')).version).toBe(FROM);
+    expect(versionAt(plan.profileDir, CORE)).toBe(TO);
+  });
+
+  it('★ 上一版没在盘上 → 不翻成悬空链接，落回退失败并给救法', async () => {
+    const { request, paths } = caseDirs();
+    const profileDir = join(request.dshHome, 'profiles', request.profile);
+    for (const pkg of SELF_UPDATE_PACKAGES) {
+      const dir = join(paths.versionsDir, FROM, 'node_modules', pkg);
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: pkg, version: FROM }), 'utf8');
+    }
+    flipProfileLinks(versionLinksOf({ profileDir, versionDir: join(paths.versionsDir, FROM) }));
+    const plan = planOf(request, paths, { at: AT, bootGraceMs: 0 });
+    const boot = bootOf(plan);
+    const processes = installing(plan.packages, paths.versionsDir, TO);
+    writeRecord(boot.file, TO, FRESH);
+    rmSync(join(paths.versionsDir, FROM), { recursive: true, force: true });
+
+    const lines: string[] = [];
+    const result = await runSelfUpdateSteps(plan, {
+      processes: processes.host,
+      now: () => FRESH,
+      log: (line) => lines.push(line),
+    });
+
+    expect(result.state).toBe('failed');
+    expect(result.detail).toContain('上一版');
+    expect(lines.join('\n')).toContain(`救法：${plan.rescue}`);
+    expect(versionAt(plan.profileDir, CORE)).toBe(TO);
+    expect(JSON.parse(readFileSync(plan.markerPath, 'utf8'))).toMatchObject({
+      state: 'failed',
+      reason: 'rollback-failed',
+    });
   });
 });

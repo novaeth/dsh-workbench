@@ -7,7 +7,7 @@ export interface MigrationReport {
   readonly entries: readonly string[];
 }
 
-function isRealDir(path: string): boolean {
+export function isRealDir(path: string): boolean {
   try {
     const info = lstatSync(path);
     return info.isSymbolicLink() ? false : info.isDirectory();

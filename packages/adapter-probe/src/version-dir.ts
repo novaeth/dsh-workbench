@@ -1,8 +1,9 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { cpSync, existsSync, lstatSync, readFileSync, readlinkSync, renameSync } from 'node:fs';
+import { dirname, join, relative, sep } from 'node:path';
 import { ensureDir, isManagedLinkSpec, linkDir, removePath, writeJsonFile, writeTextFile } from '@dsh-workbench/shared/host';
 import { installWithRetry, type InstallAttempt, type InstallRetryResult } from './install-retry.js';
 import { CORE_ARTIFACTS, SELF_UPDATE_PACKAGES } from './self-update-plan.js';
+import { isRealDir } from './version-migrate.js';
 
 export { isManagedLinkSpec };
 
@@ -114,15 +115,77 @@ export function versionLinksOf(input: {
   readonly packages?: readonly string[] | undefined;
 }): readonly VersionLink[] {
   const packages = input.packages ?? SELF_UPDATE_PACKAGES;
-  return packages.map((pkg) => {
-    const target = join(input.versionDir, 'node_modules', pkg);
-    return {
+  return packages.map((pkg) => profileLinkOf(input.profileDir, pkg, join(input.versionDir, 'node_modules', pkg)));
+}
+
+export function profileLinkOf(profileDir: string, pkg: string, target: string): VersionLink {
+  return {
+    pkg,
+    target,
+    link: join(profileDir, 'node_modules', pkg),
+    spec: `${LINK_PREFIX}${relative(profileDir, target).split(sep).join('/')}`,
+  };
+}
+
+export function previousVersionLinksOf(input: {
+  readonly profileDir: string;
+  readonly versionsDir: string;
+  readonly version: string;
+  readonly packages?: readonly string[] | undefined;
+}): readonly VersionLink[] {
+  const packages = input.packages ?? SELF_UPDATE_PACKAGES;
+  const kept = versionDirOf(input.versionsDir, input.version);
+  return packages.map((pkg) =>
+    profileLinkOf(
+      input.profileDir,
       pkg,
-      target,
-      link: join(input.profileDir, 'node_modules', pkg),
-      spec: `${LINK_PREFIX}${relative(input.profileDir, target).split(sep).join('/')}`,
-    };
-  });
+      linkTargetOf(join(input.profileDir, 'node_modules', pkg)) ?? join(kept, 'node_modules', pkg),
+    ),
+  );
+}
+
+export function carryPreviousVersion(input: {
+  readonly profileDir: string;
+  readonly versionsDir: string;
+  readonly version: string;
+  readonly packages?: readonly string[] | undefined;
+}): readonly string[] {
+  const packages = input.packages ?? SELF_UPDATE_PACKAGES;
+  const kept = versionDirOf(input.versionsDir, input.version);
+  const moved: string[] = [];
+  for (const pkg of packages) {
+    const source = join(input.profileDir, 'node_modules', pkg);
+    if (!isRealDir(source)) continue;
+    const target = join(kept, 'node_modules', pkg);
+    if (existsSync(target)) continue;
+    ensureDir(dirname(target));
+    moveDir(source, target);
+    moved.push(pkg);
+  }
+  if (moved.length > 0) {
+    writeVersionProject(
+      versionProjectFiles({ profileDir: input.profileDir, versionsDir: input.versionsDir, version: input.version, packages }),
+    );
+  }
+  return moved;
+}
+
+function linkTargetOf(link: string): string | undefined {
+  try {
+    return lstatSync(link).isSymbolicLink() ? readlinkSync(link) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function moveDir(source: string, target: string): void {
+  try {
+    renameSync(source, target);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'EXDEV') throw error;
+    cpSync(source, target, { recursive: true });
+    removePath(source);
+  }
 }
 
 export function flipProfileLinks(links: readonly VersionLink[]): void {

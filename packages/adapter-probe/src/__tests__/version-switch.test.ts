@@ -3,9 +3,11 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
+  carryPreviousVersion,
   flipProfileLinks,
   installVersionDir,
   isManagedLinkSpec,
+  previousVersionLinksOf,
   versionLinksOf,
   versionProjectFiles,
   versionSelfCheck,
@@ -229,5 +231,47 @@ describe('翻链：只换指针，不碰旧版本目录', () => {
     expect(isManagedLinkSpec('link:../../../../项目/个人项目/dsh-workbench/packages/core', versionsDir, profileDir)).toBe(false);
     expect(isManagedLinkSpec(`link:${['..', 'elsewhere', 'core'].join('/')}`, versionsDir, profileDir)).toBe(false);
     expect(isManagedLinkSpec(V2, versionsDir, profileDir)).toBe(false);
+  });
+});
+
+describe('迁移现场：真目录先搬进版本目录，回退才翻得回去', () => {
+  const V0 = '1.2.3-beta.1';
+
+  it('真目录搬进版本目录；已经是链接的那条不动', () => {
+    const profileDir = fakeProfile();
+    const versionsDir = join(caseDir(), 'versions');
+    const older = join(versionsDir, V0, 'node_modules', PACKAGES[1] as string);
+    mkdirSync(older, { recursive: true });
+    writeFileSync(join(older, 'package.json'), JSON.stringify({ name: PACKAGES[1], version: V0 }), 'utf8');
+    writePackage(profileDir, PACKAGES[0] as string, V1);
+    flipProfileLinks(versionLinksOf({ profileDir, versionDir: join(versionsDir, V0), packages: [PACKAGES[1] as string] }));
+
+    const moved = carryPreviousVersion({ profileDir, versionsDir, version: V0, packages: PACKAGES });
+
+    expect(moved).toEqual([PACKAGES[0]]);
+    const kept = join(versionsDir, V0, 'node_modules', PACKAGES[0] as string, 'package.json');
+    expect(JSON.parse(readFileSync(kept, 'utf8')).version).toBe(V1);
+    expect(existsSync(join(profileDir, 'node_modules', PACKAGES[0] as string))).toBe(false);
+    expect(lstatSync(join(profileDir, 'node_modules', PACKAGES[1] as string)).isSymbolicLink()).toBe(true);
+    expect(existsSync(join(versionsDir, V0, 'package.json'))).toBe(true);
+  });
+
+  it('回退那七条按现场算：真目录落进版本目录，已有的链接回自己那条', () => {
+    const profileDir = fakeProfile();
+    const versionsDir = join(caseDir(), 'versions');
+    const older = join(versionsDir, V0, 'node_modules', PACKAGES[1] as string);
+    mkdirSync(older, { recursive: true });
+    writeFileSync(join(older, 'package.json'), JSON.stringify({ name: PACKAGES[1], version: V0 }), 'utf8');
+    writePackage(profileDir, PACKAGES[0] as string, V1);
+    flipProfileLinks(versionLinksOf({ profileDir, versionDir: join(versionsDir, V0), packages: [PACKAGES[1] as string] }));
+    carryPreviousVersion({ profileDir, versionsDir, version: V0, packages: PACKAGES });
+
+    const links = previousVersionLinksOf({ profileDir, versionsDir, version: V0, packages: PACKAGES });
+
+    expect(links.map((link) => link.target)).toEqual([
+      join(versionsDir, V0, 'node_modules', PACKAGES[0] as string),
+      join(versionsDir, V0, 'node_modules', PACKAGES[1] as string),
+    ]);
+    for (const link of links) expect(existsSync(link.target)).toBe(true);
   });
 });

@@ -1,13 +1,20 @@
+import { existsSync } from 'node:fs';
 import { ensureProfileBundle, tailLines, writeJsonFile, type ProcessHost } from '@dsh-workbench/shared/host';
 import type {
   SelfUpdateExpectBootStep,
-  SelfUpdateSwitchStep,
   SelfUpdateInstallStep,
   SelfUpdateStep,
   SelfUpdateSteps,
 } from './self-update-steps.js';
 import { bootRollsBack, bootVerdict, readBootRecord } from './self-update-boot.js';
-import { flipProfileLinks, versionSelfCheck, writeProfileLinks, writeVersionProject, type VersionLink } from './version-dir.js';
+import {
+  carryPreviousVersion,
+  flipProfileLinks,
+  versionSelfCheck,
+  writeProfileLinks,
+  writeVersionProject,
+  type VersionLink,
+} from './version-dir.js';
 
 export interface SelfUpdateRunDeps {
   readonly processes: ProcessHost;
@@ -65,6 +72,7 @@ export async function runSelfUpdateSteps(
     ran.push(step.kind);
     log(outcome.detail);
     if (outcome.state === 'pending') return { ok: true, state: 'pending', detail: outcome.detail, ran };
+    if (outcome.state === 'failed') return { ok: false, state: 'failed', detail: outcome.detail, ran };
     if (outcome.state === 'rolled-back') {
       return { ok: true, state: 'rolled-back', detail: outcome.detail, ran };
     }
@@ -119,7 +127,15 @@ async function applyStep(
       : { ok: false, detail: '装完自检没过：版本目录里的包或客户端产物不全' };
   }
   if (step.kind === 'switch') {
-    const flipped = await flipWithPatience(step, deps, now);
+    const flip = deps.flip ?? flipProfileLinks;
+    const flipped = await waitOutInUse(
+      () => {
+        if (step.carry !== undefined) carryPreviousVersion({ profileDir: step.profileDir, ...step.carry });
+        flip(step.links);
+      },
+      deps,
+      now,
+    );
     if (!flipped.ok) return { ok: false, detail: flipped.detail };
     writeProfileLinks({ profileDir: step.profileDir, links: step.links });
     return {
@@ -216,6 +232,18 @@ function rollBack(
   verdict: 'wrong-version' | 'half-down',
   now: () => string,
 ): StepOutcome {
+  const missing = boot.rollback.links.filter((link) => !existsSync(link.target));
+  if (missing.length > 0) {
+    const detail = `上一版不在本机了（${missing.map((link) => link.pkg).join('、')} 没在盘上），翻回去会是死链，所以没翻；救法：${plan.rescue}`;
+    writeJsonFile(plan.markerPath, {
+      ...plan.marker,
+      state: 'failed',
+      version: boot.target,
+      reason: 'rollback-failed',
+      at: now(),
+    });
+    return { ok: true, state: 'failed', detail };
+  }
   flipProfileLinks(boot.rollback.links);
   writeProfileLinks({ profileDir: boot.rollback.profileDir, links: boot.rollback.links });
   writeJsonFile(plan.markerPath, {
@@ -246,18 +274,17 @@ function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-async function flipWithPatience(
-  step: SelfUpdateSwitchStep,
+async function waitOutInUse(
+  run: () => void,
   deps: SelfUpdateRunDeps,
   now: () => string,
 ): Promise<{ readonly ok: true; readonly waited: boolean } | { readonly ok: false; readonly detail: string }> {
-  const flip = deps.flip ?? flipProfileLinks;
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   const deadline = Date.parse(now()) + (deps.inUseWaitMs ?? SELF_UPDATE_INUSE_WAIT_MS);
   let waited = false;
   for (;;) {
     try {
-      flip(step.links);
+      run();
       return { ok: true, waited };
     } catch (error) {
       if (!inUse(error)) return { ok: false, detail: `翻链没成：${messageOf(error)}` };

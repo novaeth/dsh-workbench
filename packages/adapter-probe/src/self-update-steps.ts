@@ -12,6 +12,7 @@ import {
 } from './self-update-plan.js';
 import { migrationReportOf } from './version-migrate.js';
 import {
+  previousVersionLinksOf,
   versionDirOf,
   versionLinksOf,
   versionProjectFiles,
@@ -39,10 +40,17 @@ export interface SelfUpdateVerifyStep {
   readonly packages: readonly string[];
 }
 
+export interface SelfUpdateCarry {
+  readonly versionsDir: string;
+  readonly version: string;
+  readonly packages: readonly string[];
+}
+
 export interface SelfUpdateSwitchStep {
   readonly kind: 'switch';
   readonly profileDir: string;
   readonly links: readonly VersionLink[];
+  readonly carry?: SelfUpdateCarry | undefined;
 }
 
 export interface SelfUpdateBundlesStep {
@@ -118,9 +126,10 @@ export function selfUpdateStepsOf(
   const versionDir = versionDirOf(paths.versionsDir, version);
   const proc = options.proc ?? process;
   const exists = options.exists ?? existsSync;
+  const migration = migrationReportOf({ profileDir, packages }).needed;
   return {
     profileDir,
-    migration: migrationReportOf({ profileDir, packages }).needed,
+    migration,
     versionsDir: paths.versionsDir,
     versionDir,
     version,
@@ -139,7 +148,20 @@ export function selfUpdateStepsOf(
       { kind: 'version', project: versionProjectFiles({ profileDir, versionsDir: paths.versionsDir, version, packages }) },
       installStep(versionDir, options),
       { kind: 'verify', versionDir, version, packages },
-      { kind: 'switch', profileDir, links: versionLinksOf({ profileDir, versionDir, packages }) },
+      {
+        kind: 'switch',
+        profileDir,
+        links: versionLinksOf({ profileDir, versionDir, packages }),
+        ...(migration
+          ? {
+              carry: {
+                versionsDir: paths.versionsDir,
+                version: request.from,
+                packages,
+              },
+            }
+          : {}),
+      },
       { kind: 'bundles', profileDir, bundle: request.pkg },
       { kind: 'marker', state: 'pending-restart', version },
       {
@@ -153,7 +175,12 @@ export function selfUpdateStepsOf(
           pollMs: options.bootPollMs ?? SELF_UPDATE_BOOT_POLL_MS,
           rollback: {
             profileDir,
-            links: versionLinksOf({ profileDir, versionDir: versionDirOf(paths.versionsDir, request.from), packages }),
+            links: previousVersionLinksOf({
+              profileDir,
+              versionsDir: paths.versionsDir,
+              version: request.from,
+              packages,
+            }),
           },
         },
       },
