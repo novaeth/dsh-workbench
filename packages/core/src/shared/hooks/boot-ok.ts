@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { apiPost } from '@dsh-workbench/shared';
 import { BOOT_OK_ROUTE } from '@/kernel/contract/boot-ok';
 
@@ -10,10 +9,4 @@ export function reportBootOk(
   if (reported) return;
   reported = true;
   void post(BOOT_OK_ROUTE, {}).catch(() => undefined);
-}
-
-export function useBootOk(): void {
-  useEffect(() => {
-    reportBootOk();
-  }, []);
 }

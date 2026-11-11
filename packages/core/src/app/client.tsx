@@ -36,6 +36,7 @@ import { Rightbar } from '@/app/layouts/rightbar/Rightbar';
 import { installContextChips } from '@/shared/api/context-chips';
 import { installWorkbenchStyles } from '@/app/layouts/workbench-styles';
 import { setRuntimeTextResolver } from '@/shared/hooks/locale-text';
+import { reportBootOk } from '@/shared/hooks/boot-ok';
 import { currentSessionId, workspaceOfSession } from '@/modules/sessions';
 import type { DshSidebarRight } from '@dsh-workbench/shared';
 import { createRightbarStore, type RightbarColumn, type RightbarState } from '@/app/layouts/rightbar/store';
@@ -151,6 +152,7 @@ export function apply(ctx: DshClientContext): void {
     console.error('[dsh-workbench] apply failed', error);
     throw error;
   }
+  reportBootOk();
 }
 
 function mount(ctx: DshClientContext): void {
