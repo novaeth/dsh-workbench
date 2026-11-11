@@ -1,0 +1,58 @@
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Add module
+Installed
+Discover
+Workbench1.2.3-beta.3local
+Installed modules
+1
+Sample module1.1.14-beta.2
+installed
+Uninstall
+After installing, enable it in the panel page of that project.
+Workbench panel
+Sample module
+
+hello, workbench
+
+This card comes from a standalone workbench module.
+
+Add module
+
+Enter a module or opencli plugin package name, Git repository URL, or local directory path.
+
+Module install failed
+
+opencli-plugin-hello
+
+Didn't work: Something went wrong during install — see the install details
+
+Install details
+
+被系统拦住了（退出码 1）：Error: npm install failed in C:\Users\runneradmin\.dsh\workbench\opencli\plugins-npm\node_modules\opencli-plugin-hello: spawnSync C:\Windows\system32\cmd.exe EPERM
+(node:7452) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+$env:NPM_CONFIG_REGISTRY='https://registry.npmjs.org/'; & 'C:\Users\runneradmin\.dsh\workbench\opencli\bin\opencli.cmd' plugin install 'C:\Users\runneradmin\.dsh\workbench\opencli\plugins-npm\node_modules\opencli-plugin-hello'
+Error: npm install failed in C:\Users\runneradmin\.dsh\workbench\opencli\plugins-npm\node_modules\opencli-plugin-hello: spawnSync C:\Windows\system32\cmd.exe EPERM
+(node:7452) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+
+Change source
+Close
+Retry
