@@ -1,8 +1,9 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execaSync } from 'execa';
+import { plantPreviousVersion } from './self-update-rollback-fixture.mjs';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const CORE = '@dsh-workbench/core';
@@ -65,11 +66,6 @@ function distModule(...parts) {
   return import(pathToFileURL(file).href);
 }
 
-function installCommandOf(step) {
-  if (step === undefined) fail('selfUpdateStepsOf 里没有 install 这一步');
-  return { file: step.file, args: [...step.args], env: { ...step.env }, cwd: step.cwd };
-}
-
 async function main() {
   const askedHome = process.argv[2]?.trim() ?? '';
   const dshHome = askedHome === '' ? join(homedir(), '.dsh') : askedHome;
@@ -87,55 +83,22 @@ async function main() {
   if (!existsSync(join(profileDir, 'package.json'))) fail(`没有这个 profile：${profileDir}`);
 
   const versions = await distModule('adapter-probe', 'dist', 'version-dir.js');
-  const steps = await distModule('adapter-probe', 'dist', 'self-update-steps.js');
   const plan = await distModule('adapter-probe', 'dist', 'self-update-plan.js');
   const bundles = await distModule('shared', 'dist', 'host', 'profile-bundles.js');
   const files = await distModule('shared', 'dist', 'host', 'fs-write.js');
 
   const paths = plan.selfUpdatePaths();
   const packages = plan.SELF_UPDATE_PACKAGES;
-  const project = versions.versionProjectFiles({ profileDir, versionsDir: paths.versionsDir, version: from, packages });
-  const versionDir = project.dir;
+  const versionDir = join(paths.versionsDir, from);
+  rmSync(versionDir, { recursive: true, force: true });
 
-  if (versions.versionSelfCheck({ versionDir, version: from, packages })) {
-    out(`版本目录已经装好，跳过安装：${versionDir}`);
-  } else {
-    const built = steps.selfUpdateStepsOf({ dshHome, profile, pkg: CORE, from, to: from, pinned: false }, paths);
-    const command = installCommandOf(built.steps.find((step) => step.kind === 'install'));
-    out(`真装 ${from} → ${versionDir}`);
-    const result = await versions.installVersionDir({
-      project,
-      version: from,
-      command: 'install',
-      deps: {
-        run: async (_command) => {
-          try {
-            const run = execaSync(command.file, command.args, {
-              cwd: command.cwd,
-              env: { ...process.env, ...command.env },
-              reject: false,
-              all: true,
-            });
-            return { ok: run.exitCode === 0, detail: run.all ?? `${run.stdout ?? ''}${run.stderr ?? ''}` };
-          } catch (error) {
-            return { ok: false, detail: String(error) };
-          }
-        },
-        log: (message) => out(message),
-      },
-      packages,
-    });
-    if (!result.ok) {
-      const tail = result.detail.trimEnd().split('\n').slice(-40).join('\n');
-      fail(`装 ${from} 没成：\n${tail}`);
-    }
-    out(result.detail);
-  }
-  if (!versions.versionSelfCheck({ versionDir, version: from, packages })) {
-    fail(`版本目录自检没过（包或客户端产物不全）：${versionDir}`);
+  const planted = plantPreviousVersion({ home: dshHome, profile, version: from });
+  out(`铺好「上一版」：${planted.versionDir}（从已装的 ${planted.current} 复制、版本号改成 ${from}；${String(planted.packages)} 个包）`);
+  if (!versions.versionSelfCheck({ versionDir: planted.versionDir, version: from, packages })) {
+    fail(`版本目录自检没过（包或客户端产物不全）：${planted.versionDir}`);
   }
 
-  const links = versions.versionLinksOf({ profileDir, versionDir, packages });
+  const links = versions.versionLinksOf({ profileDir, versionDir: planted.versionDir, packages });
   versions.flipProfileLinks(links);
   versions.writeProfileLinks({ profileDir, links });
   const bundleCheck = bundles.ensureProfileBundle(profileDir, CORE);
@@ -160,7 +123,7 @@ async function main() {
 
   out(`profile=${profile}`);
   out(`version=${from}`);
-  out(`versionDir=${versionDir}`);
+  out(`versionDir=${planted.versionDir}`);
   out(`links=${String(links.length)}`);
   out(`settings=${settingsFile}`);
   out(`marker=${paths.marker}`);
