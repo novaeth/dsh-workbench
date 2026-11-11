@@ -11,6 +11,7 @@ const ROOT = path.join(DSH_HOME, 'workbench', 'opencli');
 const at = (...parts: string[]): string => path.join(ROOT, ...parts);
 const REGISTRY = "https://npm.example.com/team/repo";
 const ENV = "DSH_WB_TEST_REGISTRY";
+const PREFIX = at('plugins-npm');
 const PEER_DIR = at('plugins-npm', 'node_modules', '@jackwener', 'opencli');
 const PEER_PARENT = at('plugins-npm', 'node_modules', '@jackwener');
 const PEER_TARGET = at('toolchain', 'node_modules', '@jackwener', 'opencli');
@@ -55,7 +56,7 @@ function npmAt(dshHome: string): string {
     { plugin: 'demo' },
   );
   if (!resolved.ok) throw new Error('应该解析得出');
-  return runLineOf(resolved.steps[0]);
+  return runLineOf(resolved.steps[1]);
 }
 
 function npm(
@@ -159,13 +160,14 @@ describe("resolvePluginSource：git / local（一条 `plugin install`）", () =>
 });
 
 describe("resolvePluginSource：npm（装进工作台自己的隔离运行时）", () => {
-  it("★ 首次安装：一条命令 + 三条文件操作 + 兜底 + 收尾，**第一步不是 `-g`**", () => {
+  it("★ 首次安装：先立 prefix 目录 + 一条命令 + 三条文件操作 + 兜底 + 收尾，**第一步不是 `-g`**", () => {
     const resolved = npm();
 
     expect(resolved.ok).toBe(true);
     if (!resolved.ok) return;
 
     expect(resolved.steps.map((step) => step.kind)).toEqual([
+      'mkdir',
       'run',
       'remove',
       'mkdir',
@@ -173,29 +175,44 @@ describe("resolvePluginSource：npm（装进工作台自己的隔离运行时）
       'run',
       'run',
     ]);
-    expect(resolved.steps[0]).toEqual({
+    expect(resolved.steps[0]).toEqual({ kind: 'mkdir', path: PREFIX });
+    expect(resolved.steps[1]).toEqual({
       kind: 'run',
       line:
-        `pnpm add --dir '${at('plugins-npm')}' 'opencli-plugin-demo@latest' ` +
+        `pnpm add --dir '${PREFIX}' 'opencli-plugin-demo@latest' ` +
         `--registry '${REGISTRY}' --store-dir '${at('pnpm-store')}' --config.cache-dir='${at('pnpm-cache')}' --config.state-dir='${at('pnpm-state')}' --allow-build='opencli-plugin-demo'`,
     });
-    expect(resolved.steps[1]).toEqual({ kind: 'remove', path: PEER_DIR });
-    expect(resolved.steps[2]).toEqual({ kind: 'mkdir', path: PEER_PARENT });
-    expect(resolved.steps[3]).toEqual({
+    expect(resolved.steps[2]).toEqual({ kind: 'remove', path: PEER_DIR });
+    expect(resolved.steps[3]).toEqual({ kind: 'mkdir', path: PEER_PARENT });
+    expect(resolved.steps[4]).toEqual({
       kind: 'link',
       target: PEER_TARGET,
       path: PEER_DIR,
     });
-    expect(resolved.steps[4]).toEqual({
+    expect(resolved.steps[5]).toEqual({
       kind: 'run',
       line: "'opencli' plugin uninstall 'demo'",
       optional: true,
     });
-    expect(resolved.steps[5]).toEqual({
+    expect(resolved.steps[6]).toEqual({
       kind: 'run',
       line: `'opencli' plugin install '${INSTALLED_DIR}'`,
       env: { NPM_CONFIG_REGISTRY: REGISTRY },
     });
+  });
+
+  it("★ 干净机器：`pnpm add --dir` 之前必须先建 prefix，且 store 目录不在 prefix 之下（pnpm 自建）", () => {
+    const resolved = npm();
+
+    if (!resolved.ok) throw new Error("应该解析得出");
+    const kinds = resolved.steps.map((step) => step.kind);
+
+    expect(kinds[0]).toBe('mkdir');
+    expect(resolved.steps[0]).toEqual({ kind: 'mkdir', path: PREFIX });
+    expect(kinds.indexOf('mkdir')).toBeLessThan(kinds.indexOf('run'));
+    expect(runLineOf(resolved.steps[1])).toContain(`--dir '${PREFIX}'`);
+    expect(runLineOf(resolved.steps[1])).toContain(`--store-dir '${at('pnpm-store')}'`);
+    expect(at('pnpm-store').startsWith(`${PREFIX}${path.sep}`)).toBe(false);
   });
 
   it("★ peer 链接必须「先删再链」（那份副本会让结构化错误降级成 UNKNOWN，界面就没有「去登录」）", () => {
@@ -250,7 +267,8 @@ describe("resolvePluginSource：npm（装进工作台自己的隔离运行时）
     if (!resolved.ok) throw new Error("应该解析得出");
     expect(resolved.line).toBe(
       [
-        `pnpm add --dir '${at('plugins-npm')}' 'opencli-plugin-demo@latest' ` +
+        `mkdir -p '${PREFIX}'`,
+        `pnpm add --dir '${PREFIX}' 'opencli-plugin-demo@latest' ` +
           `--registry '${REGISTRY}' --store-dir '${at('pnpm-store')}' --config.cache-dir='${at('pnpm-cache')}' --config.state-dir='${at('pnpm-state')}' --allow-build='opencli-plugin-demo'`,
         `rm -rf '${PEER_DIR}'`,
         `mkdir -p '${PEER_PARENT}'`,
@@ -265,7 +283,7 @@ describe("resolvePluginSource：npm（装进工作台自己的隔离运行时）
     const resolved = npm({ version: "1.0.40" });
 
     if (!resolved.ok) throw new Error("应该解析得出");
-    expect(runLineOf(resolved.steps[0])).toContain(
+    expect(runLineOf(resolved.steps[1])).toContain(
       "'opencli-plugin-demo@1.0.40'",
     );
   });
@@ -275,12 +293,14 @@ describe("resolvePluginSource：npm（装进工作台自己的隔离运行时）
 
     if (!resolved.ok) throw new Error("应该解析得出");
     expect(resolved.steps.map((step) => step.kind)).toEqual([
+      'mkdir',
       'run',
       'remove',
       'mkdir',
       'link',
     ]);
-    expect(runLineOf(resolved.steps[0])).toContain(
+    expect(resolved.steps[0]).toEqual({ kind: 'mkdir', path: PREFIX });
+    expect(runLineOf(resolved.steps[1])).toContain(
       "'opencli-plugin-demo@1.0.40'",
     );
     expect(resolved.line).not.toContain("plugin install");
@@ -375,7 +395,8 @@ describe("resolvePluginSource：npm（装进工作台自己的隔离运行时）
     const resolved = npm({ plugin: "" });
 
     if (!resolved.ok) throw new Error("应该解析得出");
-    expect(resolved.steps).toHaveLength(5);
+    expect(resolved.steps).toHaveLength(6);
+    expect(resolved.steps[0]).toEqual({ kind: 'mkdir', path: PREFIX });
     expect(resolved.line).not.toContain("plugin uninstall");
   });
 });

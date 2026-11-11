@@ -32,12 +32,23 @@ function packedFileFrom(stdout: string, root: string): string | undefined {
   }
 }
 
+function scratchDirOf(scratchRoot: string | undefined): string | undefined {
+  const base = scratchRoot ?? os.tmpdir();
+  try {
+    if (scratchRoot !== undefined) fs.mkdirSync(base, { recursive: true });
+    return fs.mkdtempSync(path.join(base, 'wb-package-'));
+  } catch {
+    return undefined;
+  }
+}
+
 export async function withPackageDir<T>(
   options: {
     readonly seam?: Seam | undefined;
     readonly spec: string;
     readonly registry?: string | undefined;
     readonly cacheDir?: string | undefined;
+    readonly scratchRoot?: string | undefined;
   },
   visit: (dir: string) => T,
 ): Promise<T | undefined> {
@@ -47,12 +58,8 @@ export async function withPackageDir<T>(
   const seam = options.seam;
   if (seam === undefined) return undefined;
 
-  let root: string;
-  try {
-    root = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-package-'));
-  } catch {
-    return undefined;
-  }
+  const root = scratchDirOf(options.scratchRoot);
+  if (root === undefined) return undefined;
   try {
     const at = options.registry === undefined ? '' : ` --registry ${quoteShellArg(options.registry)}`;
     const packed = await seam

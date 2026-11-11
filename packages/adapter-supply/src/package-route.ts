@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import type { ResolvedPluginSource, SupplySource } from '@dsh-workbench/shared';
 import type { PackageRoute, Seam } from '@dsh-workbench/shared/host';
 import { createPackageRouter, localDirOf, splitNpmSpec } from '@dsh-workbench/shared/host';
@@ -10,6 +11,7 @@ export const PLUGIN_REGISTRY_ENV = 'DSH_WB_OPENCLI_PLUGIN_REGISTRY';
 
 const router = createPackageRouter({
   manifestFile: OPENCLI_MANIFEST_FILE,
+  scratchRoot: (seam) => (seam.runtimeRoot === undefined ? undefined : join(seam.runtimeRoot, 'tmp')),
   dshLookup: (options) => registryDshOf(options),
 });
 

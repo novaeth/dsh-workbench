@@ -61,6 +61,7 @@ function npmSource(
   const peer = vendorPeerLink();
 
   const steps: PluginPlanStep[] = [
+    { kind: 'mkdir', path: prefix },
     {
       kind: 'run',
       line: [

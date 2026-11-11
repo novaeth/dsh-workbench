@@ -54,6 +54,7 @@ export interface SeamOutcome extends ShellResult {
 }
 
 export interface Seam {
+  readonly runtimeRoot?: string | undefined;
   run(request: SeamRequest): Promise<SeamOutcome>;
   spawn(request: SpawnRequest): SpawnHandle;
   open(request: OpenRequest): ChannelHandle;
@@ -395,6 +396,7 @@ export function createSeam(ports: SeamPorts): Seam {
   }
 
   return {
+    runtimeRoot,
     async run(request: SeamRequest): Promise<SeamOutcome> {
       const target = targetOf(request);
       if (request.intent.kind === 'host') {

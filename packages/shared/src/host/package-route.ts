@@ -36,10 +36,17 @@ interface RouteOptions {
   readonly force?: boolean;
 }
 
+export type ScratchRootSource = string | ((seam: Seam) => string | undefined);
+
 export interface PackageRouterOptions {
   readonly manifestFile: string;
   readonly cacheDir?: string | undefined;
+  readonly scratchRoot?: ScratchRootSource | undefined;
   readonly dshLookup?: ((options: { seam: Seam; name: string; registry: string }) => Promise<{ readable: boolean; raw: unknown }>) | undefined;
+}
+
+function scratchRootOf(source: ScratchRootSource | undefined, seam: Seam): string | undefined {
+  return typeof source === 'function' ? source(seam) : source;
 }
 
 export function createPackageRouter(options: PackageRouterOptions): PackageRouter {
@@ -83,8 +90,15 @@ async function routeOf(
   if (found.readable && dshMarkersOf(found.raw)) {
     route = { kind: 'dsh-bundle' };
   } else {
+    const scratchRoot = scratchRootOf(options.scratchRoot, seam);
     const verdict = await withPackageDir(
-      { seam, spec: routeOptions.spec, registry, ...(options.cacheDir === undefined ? {} : { cacheDir: options.cacheDir }) },
+      {
+        seam,
+        spec: routeOptions.spec,
+        registry,
+        ...(options.cacheDir === undefined ? {} : { cacheDir: options.cacheDir }),
+        ...(scratchRoot === undefined ? {} : { scratchRoot }),
+      },
       (dir) => verdictOf(dir, options.manifestFile),
     );
     route = verdict === undefined ? undefined : routeOfVerdict(verdict, ref.name);
