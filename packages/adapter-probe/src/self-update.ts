@@ -4,6 +4,7 @@ import { now as clockNow, writeJsonFile, writeTextFile } from '@dsh-workbench/sh
 import type { Seam, SelfUpdatePaths, SelfUpdateRequest, SelfUpdateStart } from '@dsh-workbench/shared/host';
 import { SELF_UPDATE_RUNNING_TTL_MS } from '@dsh-workbench/shared/contract/protocol/bundle-install';
 import { hostSurface } from './platform.js';
+import { pidAlive } from './self-update-alive.js';
 import { runDetached, type SeedCommand } from './runtime-seed.js';
 import { type SelfUpdateProcess } from './self-update-cli.js';
 import { selfUpdateMarker, selfUpdatePaths, type SelfUpdateMarker } from './self-update-plan.js';
@@ -29,16 +30,6 @@ export interface SelfUpdatePlan {
 export interface SelfUpdatePlanOptions {
   readonly proc?: SelfUpdateProcess | undefined;
   readonly exists?: ((path: string) => boolean) | undefined;
-}
-
-function pidAlive(pid: unknown): boolean {
-  if (typeof pid !== 'number' || !Number.isInteger(pid) || pid <= 0) return false;
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export function selfUpdateBusy(marker: string, at: Date = new Date(clockNow())): boolean {

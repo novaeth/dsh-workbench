@@ -57,9 +57,7 @@ export interface MarketNote {
     | 'panels.market.workbenchBrokenNoFix'
     | 'panels.market.selfUpdateQueued'
     | 'panels.market.selfUpdatePendingRestart'
-    | 'panels.market.selfUpdateRestored'
-    | 'panels.market.selfUpdateFailed'
-    | 'panels.market.selfUpdateFailedNoFix';
+    | 'panels.market.selfUpdateRetry';
   readonly params: Readonly<Record<string, string>>;
   readonly tone?: 'plain' | 'alert';
 }
@@ -71,10 +69,7 @@ export type MarketHintKey =
   | 'panels.market.updateNeedsWorkbench'
   | 'panels.market.updateIncompatible'
   | 'panels.market.workbenchUpdateNeedsDsh'
-  | 'panels.market.selfUpdateReasonOccupied'
-  | 'panels.market.selfUpdateReasonIncomplete'
-  | 'panels.market.selfUpdateMigration'
-  | 'panels.market.selfUpdateReasonUnknown';
+  | 'panels.market.selfUpdateMigration';
 
 export interface ModuleUpdate {
   readonly installed: string;

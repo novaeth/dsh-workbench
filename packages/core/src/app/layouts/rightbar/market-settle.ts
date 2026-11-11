@@ -4,7 +4,7 @@ import {
   SELF_UPDATE_RUNNING_TTL_MS,
 } from '@dsh-workbench/shared/contract/protocol/bundle-install';
 import type { WorkbenchSelfUpdate } from '@/kernel/contract/bundle-install';
-import type { MarketHintKey, MarketNote, MarketRowAction, ModuleUpdate } from './market-row-types';
+import type { MarketNote, MarketRowAction, ModuleUpdate } from './market-row-types';
 import type { SharedState } from './market-shared-rows';
 
 export const MODULE_SETTLE_MS = 15000;
@@ -210,23 +210,7 @@ export function selfUpdateNote(mark: SelfUpdateMark): MarketNote | undefined {
   if (mark.kind === 'queued') {
     return { key: 'panels.market.selfUpdateQueued', params: {}, tone: 'plain' };
   }
-  const version = mark.version ?? '?';
-  if (mark.kind === 'restored') {
-    return { key: 'panels.market.selfUpdateRestored', params: { version }, tone: 'alert' };
-  }
-  return mark.fix === undefined
-    ? { key: 'panels.market.selfUpdateFailedNoFix', params: {}, tone: 'alert' }
-    : { key: 'panels.market.selfUpdateFailed', params: { fix: mark.fix }, tone: 'alert' };
-}
-
-const CAUSE_HINT: Readonly<Record<SelfUpdateCause, MarketHintKey>> = {
-  occupied: 'panels.market.selfUpdateReasonOccupied',
-  incomplete: 'panels.market.selfUpdateReasonIncomplete',
-};
-
-export function selfUpdateReasonHint(mark: SelfUpdateMark): MarketHintKey | undefined {
-  if (mark.kind !== 'failed' && mark.kind !== 'restored') return undefined;
-  return mark.cause === undefined ? 'panels.market.selfUpdateReasonUnknown' : CAUSE_HINT[mark.cause];
+  return { key: 'panels.market.selfUpdateRetry', params: {}, tone: 'alert' };
 }
 
 export const WORKBENCH_SWAP_RUNNING_MS = SELF_UPDATE_RUNNING_TTL_MS;

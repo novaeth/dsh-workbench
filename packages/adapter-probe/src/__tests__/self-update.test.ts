@@ -236,6 +236,19 @@ describe('自更新现场：界面要知道外面那个进程跑成什么样', (
     expect(readSelfUpdateView()?.migration).toBeUndefined();
   });
 
+  it('★ runner 崩了（running 但那个 pid 没了）→ 读出来就是 failed，界面别一直挂着「正在换」', () => {
+    const dshHome = home();
+    pathsOf(dshHome);
+    mkdirSync(join(dshHome, 'workbench'), { recursive: true });
+    const marker = join(dshHome, 'workbench', 'self-update.json');
+    writeFileSync(marker, JSON.stringify({ state: 'running', pid: 999_999_999, from: '1.2.3-beta.2' }));
+    expect(readSelfUpdateView()).toMatchObject({ state: 'failed', reason: 'incomplete' });
+    writeFileSync(marker, JSON.stringify({ state: 'running', pid: process.pid, from: '1.2.3-beta.2' }));
+    expect(readSelfUpdateView()).toMatchObject({ state: 'running' });
+    writeFileSync(marker, JSON.stringify({ state: 'running', from: '1.2.3-beta.2' }));
+    expect(readSelfUpdateView()).toMatchObject({ state: 'running' });
+  });
+
   it('★ 不认识的状态/原因不带出来；没跑过就是 undefined', () => {
     const dshHome = home();
     pathsOf(dshHome);

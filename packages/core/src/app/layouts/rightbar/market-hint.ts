@@ -38,9 +38,7 @@ const UNKNOWN_KEY = 'panels.market.unchecked';
 const UPDATES_KEY = 'panels.market.hasNew';
 
 const SELF_UPDATE_NOTES: ReadonlySet<string> = new Set<string>([
-  'panels.market.selfUpdateFailed',
-  'panels.market.selfUpdateFailedNoFix',
-  'panels.market.selfUpdateRestored',
+  'panels.market.selfUpdateRetry',
 ]);
 
 function isProblem(row: MarketRow): boolean {

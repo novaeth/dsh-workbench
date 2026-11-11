@@ -2,7 +2,6 @@ import type { WorkbenchSelfUpdate, WorkbenchVersion } from '@/kernel/contract/bu
 import {
   selfUpdateMark,
   selfUpdateNote,
-  selfUpdateReasonHint,
   selfUpdateSwapping,
   type SelfUpdateMark,
 } from './market-settle';
@@ -45,7 +44,6 @@ export function workbenchRow(
   if (version.installed === '') return undefined;
   const mark = selfUpdateMark({ update: selfUpdate, toldAt });
   const note = mark === undefined ? undefined : selfUpdateNote(mark);
-  const reason: MarketHintKey | undefined = mark === undefined ? undefined : selfUpdateReasonHint(mark);
   const local = version.local === true;
   const retry = !local && mark !== undefined && RESULT_KINDS.has(mark.kind);
   const swapping = selfUpdateSwapping(selfUpdate);
@@ -80,7 +78,6 @@ export function workbenchRow(
     ...(selfUpdate?.migration === true && selfUpdate.state === 'running'
       ? { hint: 'panels.market.selfUpdateMigration' as const }
       : {}),
-    ...(reason === undefined ? {} : { hint: reason }),
     ...(note === undefined ? {} : { note }),
     version: {
       installed: version.installed,
@@ -101,10 +98,9 @@ export function workbenchActionsOf(row: MarketRow): MarketRowAction[] {
   if (row.followUp !== undefined && row.state === 'pending-followup') {
     return row.followUp.hard ? ['migrate-workbench'] : ['migrate-workbench', 'dismiss-followup'];
   }
-  const ready = row.state === 'pending-restart' && row.restartDismissed !== true;
+  const ready = row.state === 'pending-restart' && row.restartDismissed !== true && row.canRestart === true;
   return [
-    ...(ready && row.canRestart === true ? (['restart-workbench'] as const) : []),
-    ...(ready ? (['later-restart'] as const) : []),
+    ...(ready ? (['restart-workbench', 'later-restart'] as const) : []),
     ...(row.canUpdate ? (['update-workbench'] as const) : []),
   ];
 }

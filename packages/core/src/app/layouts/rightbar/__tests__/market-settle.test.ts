@@ -10,7 +10,6 @@ import {
   readBackDone,
   selfUpdateMark,
   selfUpdateNote,
-  selfUpdateReasonHint,
   selfUpdateSwapping,
   settleLanded,
   selfUpdateStop,
@@ -268,7 +267,6 @@ describe('工作台自更新：四档结果落在那一行，下次打开只说�
       params: {},
       tone: 'plain',
     });
-    expect(selfUpdateReasonHint({ kind: 'pending-restart' })).toBeUndefined();
   });
 
   it('★ 还在跑 / 没读到 marker → 这一档不出现（不瞎报）', () => {
@@ -287,42 +285,25 @@ describe('工作台自更新：四档结果落在那一行，下次打开只说�
     expect(selfUpdateMark({ update: { state: 'queued', at }, toldAt: at })).toEqual({ kind: 'queued', at });
   });
 
-  it('★ 那一行上的话：ok 不给文案；其余三档各有文案，失败带日志原文', () => {
+  it('★ 那一行只说三件事：正在更新 / 就绪待重启 / 失败可再点一次（不再摆原因和救法）', () => {
     expect(selfUpdateNote({ kind: 'ok' })).toBeUndefined();
     expect(selfUpdateNote({ kind: 'queued', at })).toEqual({
       key: 'panels.market.selfUpdateQueued',
       params: {},
       tone: 'plain',
     });
-    expect(selfUpdateNote({ kind: 'restored', version: '0.3.9' })).toEqual({
-      key: 'panels.market.selfUpdateRestored',
-      params: { version: '0.3.9' },
-      tone: 'alert',
-    });
-    expect(selfUpdateNote({ kind: 'failed', version: '0.3.9', fix: 'dsh plugin add x' })).toEqual({
-      key: 'panels.market.selfUpdateFailed',
-      params: { fix: 'dsh plugin add x' },
-      tone: 'alert',
-    });
-    expect(selfUpdateNote({ kind: 'failed', version: '0.3.9' })).toEqual({
-      key: 'panels.market.selfUpdateFailedNoFix',
+    expect(selfUpdateNote({ kind: 'pending-restart', version: '0.3.9' })).toEqual({
+      key: 'panels.market.selfUpdatePendingRestart',
       params: {},
-      tone: 'alert',
+      tone: 'plain',
     });
-    expect(selfUpdateNote({ kind: 'restored' })).toMatchObject({ params: { version: '?' } });
-  });
-
-  it('★ 原因分类翻成一句人话；认不出就说认不出；排队与装好没有原因', () => {
-    expect(selfUpdateReasonHint({ kind: 'failed', cause: 'occupied' })).toBe(
-      'panels.market.selfUpdateReasonOccupied',
-    );
-    expect(selfUpdateReasonHint({ kind: 'failed', cause: 'incomplete' })).toBe(
-      'panels.market.selfUpdateReasonIncomplete',
-    );
-    expect(selfUpdateReasonHint({ kind: 'restored' })).toBe('panels.market.selfUpdateReasonUnknown');
-    expect(selfUpdateReasonHint({ kind: 'failed' })).toBe('panels.market.selfUpdateReasonUnknown');
-    expect(selfUpdateReasonHint({ kind: 'queued' })).toBeUndefined();
-    expect(selfUpdateReasonHint({ kind: 'ok' })).toBeUndefined();
+    for (const kind of ['failed', 'restored'] as const) {
+      expect(selfUpdateNote({ kind, version: '0.3.9', cause: 'occupied' })).toEqual({
+        key: 'panels.market.selfUpdateRetry',
+        params: {},
+        tone: 'alert',
+      });
+    }
   });
 
   it('★ 排队 / 正在换（还没到超时）→ 不给第二次点击；超时或脚本早没了 → 放行', () => {

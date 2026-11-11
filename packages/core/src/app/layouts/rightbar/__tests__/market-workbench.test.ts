@@ -76,7 +76,7 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
     expect(row?.hint).toBeUndefined();
     expect(MARKET_DOT['pending-restart']).toBe('warning');
     expect(MARKET_STATE_KEY['pending-restart']).toBe('panels.market.pendingRestart');
-    expect(marketActions(row as MarketRow)).toEqual(['later-restart']);
+    expect(marketActions(row as MarketRow)).toEqual([]);
     expect(
       marketActions({ ...(row as MarketRow), canRestart: true }),
     ).toEqual(['restart-workbench', 'later-restart']);
@@ -139,7 +139,7 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
 
     expect(row).toMatchObject({ state: 'pending-restart', followUp: { id: 'data-root-migration', kind: 'data-migration', hard: false } });
     expect(row?.hint).toBeUndefined();
-    expect(marketActions(row as MarketRow)).toEqual(['later-restart']);
+    expect(marketActions(row as MarketRow)).toEqual([]);
   });
 
   it('⑤ 有新版也有旧数据 → 先迁移 + 不再提醒，不摆更新', () => {
@@ -230,34 +230,30 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
     expect(row).toMatchObject({
       state: 'installed',
       canUpdate: true,
-      hint: 'panels.market.selfUpdateReasonOccupied',
-      note: {
-        key: 'panels.market.selfUpdateRestored',
-        params: { version: '0.1.18' },
-        tone: 'alert',
-      },
+      note: { key: 'panels.market.selfUpdateRetry', params: {}, tone: 'alert' },
     });
+    expect(row?.hint).toBeUndefined();
     expect(marketActions(row as MarketRow)).toEqual(['update-workbench']);
   });
 
-  it('★ 失败 → 原因 + 日志原文那条救法（可复制）+「再试一次」；没有原文就只说原因', () => {
-    const withFix = workbenchRow(
+  it('★ 失败 → 只说「更新失败，再点一次」，不给原因也不摆救法，按钮照样能再点', () => {
+    const withTail = workbenchRow(
       { pkg: CORE, installed: '0.1.18' },
       { state: 'failed', at: AT, version: '0.1.18', reason: 'incomplete', tail: '换版没成 / 救法：dsh plugin add x' },
       undefined,
     );
 
-    expect(withFix).toMatchObject({
+    expect(withTail).toMatchObject({
       canUpdate: true,
-      hint: 'panels.market.selfUpdateReasonIncomplete',
-      note: { key: 'panels.market.selfUpdateFailed', params: { fix: '救法：dsh plugin add x' }, tone: 'alert' },
+      note: { key: 'panels.market.selfUpdateRetry', params: {}, tone: 'alert' },
     });
-    expect(marketActions(withFix as MarketRow)).toEqual(['update-workbench']);
+    expect(withTail?.hint).toBeUndefined();
+    expect(marketActions(withTail as MarketRow)).toEqual(['update-workbench']);
 
     const bare = workbenchRow({ pkg: CORE, installed: '0.1.18' }, { state: 'failed', at: AT }, undefined);
 
-    expect(bare?.note).toEqual({ key: 'panels.market.selfUpdateFailedNoFix', params: {}, tone: 'alert' });
-    expect(bare?.hint).toBe('panels.market.selfUpdateReasonUnknown');
+    expect(bare?.note).toEqual({ key: 'panels.market.selfUpdateRetry', params: {}, tone: 'alert' });
+    expect(bare?.hint).toBeUndefined();
   });
 
   it('★ 同一条 marker 已经告知过 → 下次打开那一行只报版本，不再打扰', () => {
@@ -267,7 +263,7 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
     expect(again?.note).toBeUndefined();
     expect(again?.hint).toBeUndefined();
     expect(workbenchRow({ pkg: CORE, installed: '0.1.18' }, update, undefined)?.note?.key).toBe(
-      'panels.market.selfUpdateFailedNoFix',
+      'panels.market.selfUpdateRetry',
     );
   });
 
@@ -313,9 +309,7 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
     const keys = [
       'panels.market.selfUpdatePendingRestart',
       'panels.market.selfUpdateQueued',
-      'panels.market.selfUpdateRestored',
-      'panels.market.selfUpdateFailed',
-      'panels.market.selfUpdateFailedNoFix',
+      'panels.market.selfUpdateRetry',
       'panels.market.pendingRestart',
       'panels.market.restartNeeded',
     ];
@@ -457,12 +451,8 @@ describe('工作台那一行上的人话', () => {
   it('★ 自更新那几档的话两种语言都有：不混排、不出内部词', () => {
     const keys = [
       'panels.market.selfUpdateQueued',
-      'panels.market.selfUpdateFailed',
-      'panels.market.selfUpdateFailedNoFix',
-      'panels.market.selfUpdateRestored',
-      'panels.market.selfUpdateReasonOccupied',
-      'panels.market.selfUpdateReasonIncomplete',
-      'panels.market.selfUpdateReasonUnknown',
+      'panels.market.selfUpdatePendingRestart',
+      'panels.market.selfUpdateRetry',
     ] as const;
     const internal = ['profile', 'bundle', 'payload', 'schema', 'adapter', 'probe'];
     const han = (text: string): boolean => /[\u4e00-\u9fff]/.test(text);
@@ -474,8 +464,8 @@ describe('工作台那一行上的人话', () => {
         for (const word of internal) expect(sentence, `${language}:${key}:${word}`).not.toContain(word);
       }
     }
-    expect(dictionaries.zh['panels.market.selfUpdateQueued']).toContain('退出 Desktop');
-    expect(dictionaries.zh['panels.market.selfUpdateFailed']).toContain('{fix}');
+    expect(dictionaries.zh['panels.market.selfUpdateQueued']).toContain('Desktop');
+    expect(dictionaries.zh['panels.market.selfUpdateRetry']).toContain('再点一次');
   });
 });
 
@@ -494,12 +484,13 @@ describe('迁移现场那一次：行上要说清"这次得先退出"', () => {
     expect(row?.hint).toBeUndefined();
   });
 
-  it('★ 失败时说清失败的因由，而不是那句迁移提示（因由优先）', () => {
+  it('★ 失败时不叠原因，也不跟迁移提示抢位置：只留「再点一次」那句', () => {
     const row = workbenchRow(
       { pkg: CORE, installed: '0.1.18', latest: '0.1.19' },
       { state: 'failed', to: '0.1.19', migration: true, reason: 'incomplete', at: AT },
     );
 
-    expect(row?.hint).toBe('panels.market.selfUpdateReasonIncomplete');
+    expect(row?.hint).toBeUndefined();
+    expect(row?.note).toMatchObject({ key: 'panels.market.selfUpdateRetry' });
   });
 });
