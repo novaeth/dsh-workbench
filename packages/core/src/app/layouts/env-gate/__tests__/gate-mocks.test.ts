@@ -109,6 +109,7 @@ describe('GATE_MOCKS', () => {
     const simple = (key: string): string => key;
     expect(bridgeAdviceLines(['daemon', 'extension'], simple).map((one) => one.text)).toEqual([
       'env.bridge.unknown',
+      'env.bridge.extensionOffline',
     ]);
     expect(bridgeAdviceLines([], simple)).toHaveLength(1);
     const fixes = { daemon: { text: { zh: '起服务', en: 'start' } } };
@@ -173,6 +174,18 @@ describe('GATE_MOCKS', () => {
     }
   });
 
+  it('★ 有本地扩展目录时直接说路径：离线加载的三步就写在那一行里', () => {
+    const located = (key: string, params?: Record<string, string>): string =>
+      (zh as Record<string, string>)[key]?.replace('{dir}', params?.dir ?? '') ?? key;
+    const advice = bridgeAdvice('extension', located as never, undefined, '/opt/opencli-extension');
+    expect(advice.text).toContain('/opt/opencli-extension');
+    expect(advice.text).toContain('chrome://extensions');
+    expect(advice.link).toBeUndefined();
+    expect(
+      bridgeAdviceLines(['extension'], located as never, undefined, '/opt/opencli-extension').map((one) => one.text),
+    ).toEqual([advice.text]);
+  });
+
   it('★ 档案给了修法就用档案的（连不上的那一步，话和链接都跟着运行时走）', () => {
     const fixes = {
       extension: {
@@ -186,6 +199,9 @@ describe('GATE_MOCKS', () => {
     expect(extension.text).toBe('扩展没连上');
     expect(extension.link?.href).toBe('https://example.com/extension');
     expect(extension.link?.label).toBe('去装');
+    const lines = bridgeAdviceLines(['extension'], t, fixes).map((one) => one.text);
+    expect(lines[0]).toBe('扩展没连上');
+    expect(lines[1]).toBe(zh['env.bridge.extensionOffline']);
     for (const issue of ['daemon', 'profile', 'stale', 'unknown'] as const) {
       expect(bridgeAdvice(issue, t, fixes).link, issue).toBeUndefined();
     }

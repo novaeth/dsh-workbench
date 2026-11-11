@@ -628,6 +628,8 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'env.bridge.ok': 'Connected',
   'env.bridge.short': 'Not connected yet',
   'env.bridge.why': 'Panel data uses the login state in your browser. Without this connection, modules cannot fetch data. It does not block startup: fix it, or enter the workbench first.',
+  'env.bridge.extensionOffline': 'The extension is not connected. Without internet access, copy the browser extension folder from a colleague, open chrome://extensions, turn on Developer mode, click Load unpacked and pick that folder, then hit Retry here.',
+  'env.bridge.extensionLocal': 'The extension is not connected. A local copy is at {dir} — open chrome://extensions, turn on Developer mode, click Load unpacked and pick that folder, then hit Retry here.',
   'env.bridge.hold': 'The browser is not connected yet \u2014 fix it below and hit Retry, or enter the workbench first.',
   'env.bridge.unknown': 'Could not tell what went wrong. Expand the raw output and follow the steps in it.',
   'env.fix.title': 'How to fix it',

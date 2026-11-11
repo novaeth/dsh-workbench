@@ -62,8 +62,13 @@ export function bridgeAdvice(
   issue: PreflightBridgeIssue,
   t: Translate,
   fixes?: RuntimeProfile['bridge'],
+  extensionDir?: string | undefined,
 ): BridgeAdvice {
+  if (issue === 'extension' && extensionDir !== undefined) {
+    return { text: t('env.bridge.extensionLocal', { dir: extensionDir }) };
+  }
   const fix = fixes?.[issue];
+  if (issue === 'extension' && fix === undefined) return { text: t('env.bridge.extensionOffline') };
   if (fix !== undefined) {
     return {
       text: runtimeText(fix.text),
@@ -79,16 +84,21 @@ export function bridgeAdviceLines(
   issues: readonly PreflightBridgeIssue[],
   t: Translate,
   fixes?: RuntimeProfile['bridge'],
+  extensionDir?: string | undefined,
 ): readonly BridgeAdvice[] {
   const listed: readonly PreflightBridgeIssue[] = issues.length === 0 ? ['unknown'] : issues;
   const seen = new Set<string>();
   const out: BridgeAdvice[] = [];
   for (const issue of listed) {
-    const advice = bridgeAdvice(issue, t, fixes);
+    const advice = bridgeAdvice(issue, t, fixes, extensionDir);
     const key = `${advice.text}|${advice.link?.href ?? ''}`;
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(advice);
+  }
+  if (listed.includes('extension') && extensionDir === undefined && fixes?.extension !== undefined) {
+    const offline = t('env.bridge.extensionOffline');
+    if (!out.some((one) => one.text === offline)) out.push({ text: offline });
   }
   return out;
 }

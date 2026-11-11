@@ -28,37 +28,15 @@ export type PreflightStepId = 'toolchain' | 'runtime' | 'cli' | 'bridge' | 'diy'
 
 export type PreflightStepStatus = 'pending' | 'running' | 'ok' | 'warn' | 'failed';
 
-export interface PreflightStep {
-  readonly id: PreflightStepId;
-  readonly status: PreflightStepStatus;
-  readonly detail?: string;
-  readonly action?: string;
-  readonly command?: string;
-  readonly log?: readonly string[];
-}
-
+import type {
+  PreflightDiyGap,
+  PreflightSnapshot,
+  PreflightStep,
+} from '@dsh-workbench/shared/host';
 import { readBridgeReport, type PreflightBridgeIssue } from './bridge-report.js';
 export { BRIDGE_ISSUE_ORDER, readBridgeReport } from './bridge-report.js';
 export type { PreflightBridgeIssue } from './bridge-report.js';
-
-export interface PreflightDiyGap {
-  readonly rows: readonly string[];
-  readonly detail: string;
-  readonly command: string;
-}
-
-export interface PreflightSnapshot {
-  readonly phase: 'idle' | 'checking' | 'installing' | 'ready' | 'failed';
-  readonly steps: readonly PreflightStep[];
-  readonly at: number;
-  readonly error?: string;
-  readonly failure?: PreflightFailure;
-  readonly guidance?: PreflightGuidance;
-  readonly bridgeIssues?: readonly PreflightBridgeIssue[];
-  readonly diyGap?: PreflightDiyGap;
-  readonly canWakeBrowser?: boolean;
-  readonly log?: readonly string[];
-}
+export type { PreflightDiyGap, PreflightSnapshot, PreflightStep } from '@dsh-workbench/shared/host';
 
 export interface Preflight {
   run(options?: { hard?: boolean }): Promise<PreflightSnapshot>;
@@ -100,6 +78,7 @@ export function createPreflight(options: {
   provisionNpm?: (() => Promise<LocalNpmProvision>) | undefined;
   provisionPnpm?: (() => Promise<LocalPnpmProvision>) | undefined;
   desktopBrowser?: DesktopBrowser | undefined;
+  extensionDir?: string | undefined;
   capabilities?: RuntimeCapabilities | undefined;
   runtimeCheck?: (() => Promise<{ ok: boolean; detail: string }>) | undefined;
   runtimeLabel?: string | undefined;
@@ -147,6 +126,7 @@ export function createPreflight(options: {
     at: now(),
     log: [],
     ...(options.desktopBrowser === undefined ? {} : { canWakeBrowser: true }),
+    ...(options.extensionDir === undefined ? {} : { extensionDir: options.extensionDir }),
   };
   let running: Promise<PreflightSnapshot> | null = null;
   let shellStalled = false;

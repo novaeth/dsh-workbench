@@ -352,7 +352,12 @@ diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
     bridge.hidden = !bridgeBroken;
     if (bridgeBroken) {
       bridgeLines.replaceChildren(
-        ...bridgeAdviceLines(bridgeIssues, t, runtimeProfile?.bridge ?? runtimeProfileValue()?.bridge).map(
+        ...bridgeAdviceLines(
+          bridgeIssues,
+          t,
+          runtimeProfile?.bridge ?? runtimeProfileValue()?.bridge,
+          snapshot.extensionDir,
+        ).map(
           (advice) => {
             const item = el('li', styles.bridgeLine, advice.text);
             if (advice.link !== undefined) {

@@ -57,6 +57,15 @@ export async function provisionWorkbenchPnpm(input: {
   return result;
 }
 
+const EXTENSION_ENV = 'DSH_WB_OPENCLI_EXTENSION';
+
+function localExtensionDir(): string | undefined {
+  const asked = process.env[EXTENSION_ENV]?.trim();
+  if (asked !== undefined && asked !== '') return asked;
+  const fallback = join(toolchainDir(), '..', 'extension');
+  return existsSync(join(fallback, 'manifest.json')) ? fallback : undefined;
+}
+
 function describeToolchain(toolchain: string, pkgDir: string): string {
   if (!existsSync(toolchain)) return `${toolchain} 不存在`;
   const entries = (() => {
@@ -109,6 +118,7 @@ export function registerPreflight(input: {
     seam: input.seam,
     command,
     installCommand,
+    ...(localExtensionDir() === undefined ? {} : { extensionDir: localExtensionDir() }),
     installed: () => existsSync(join(toolchainOpencliDir(), 'package.json')),
     install: () =>
       installIsolatedRuntime(

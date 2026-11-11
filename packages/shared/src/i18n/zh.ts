@@ -624,6 +624,8 @@ export const zh = {
   'env.bridge.ok': '已连接',
   'env.bridge.short': '还没连上',
   'env.bridge.why': '面板的数据要用你浏览器里的登录状态。这个连接没通，模块就取不到数据；不拦路：修好它，或者先进入工作台。',
+  'env.bridge.extensionOffline': '扩展没连上。没有外网就从同事那儿拷一份浏览器扩展目录，Chrome 打开 chrome://extensions，右上角开「开发者模式」，点「加载已解压的扩展程序」选那个目录，装完回来点「重试」。',
+  'env.bridge.extensionLocal': '扩展没连上。本地已有扩展目录：{dir} —— Chrome 打开 chrome://extensions，右上角开「开发者模式」，点「加载已解压的扩展程序」选这个目录，装完回来点「重试」。',
   'env.bridge.hold': '浏览器还没连上 —— 按下面修好后点「重试」，也可以先进工作台。',
   'env.bridge.unknown': '没认出是哪种问题：展开原文，按里面的步骤处理。',
   'env.fix.title': '怎么解决',
