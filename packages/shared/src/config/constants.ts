@@ -40,6 +40,9 @@ export const OPENCLI_NPM_PACKAGE = "@jackwener/opencli";
 
 export const OPENCLI_CATALOG_ENV = "DSH_WB_OPENCLI_CATALOG";
 
+/** 想换源（内网镜像 / 离线）就设它，默认走官方源。 */
+export const OPENCLI_REGISTRY_ENV = "DSH_WB_OPENCLI_REGISTRY";
+
 /** 缺陷看板套件的 dsh 服务名（`workbenchIssues`）：套件照它登记自己那份服务。 */
 export const ISSUES_SERVICE = "workbenchIssues";
 

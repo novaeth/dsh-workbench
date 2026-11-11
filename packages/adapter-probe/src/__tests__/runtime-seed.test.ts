@@ -262,6 +262,7 @@ describePosix('seedRuntimeFiles', () => {
     expect(existsSync(paths.workshopPackages)).toBe(true);
     expect(readFileSync(paths.opencliBin, 'utf8')).toBe(opencliWrapperScript(pkg, join(root, '.dsh')));
     expect(existsSync(join(stale, 'pnpm-workspace.yaml'))).toBe(false);
+    expect(readFileSync(join(stale, '.npmrc'), 'utf8')).toBe('@jackwener:registry=https://registry.npmjs.org/\n');
     expect(JSON.parse(readFileSync(join(paths.opencliRoot, 'toolchain', 'package.json'), 'utf8'))).toEqual({
       name: 'dsh-workbench-toolchain',
       private: true,

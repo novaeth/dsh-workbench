@@ -1,5 +1,10 @@
 import { join } from 'node:path';
-import { OPENCLI_CATALOG_ENV, OPENCLI_PIN } from '@dsh-workbench/shared/host';
+import {
+  DEFAULT_NPM_REGISTRY,
+  OPENCLI_CATALOG_ENV,
+  OPENCLI_PIN,
+  OPENCLI_REGISTRY_ENV,
+} from '@dsh-workbench/shared/host';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
 import { isolatedRoot, libsPrefix, storeDirFor, toolchainOpencliDir } from '../foundation/paths.js';
 import { OPENCLI_NPM_PACKAGE } from '../foundation/paths.js';
@@ -22,6 +27,13 @@ export function toolchainManifestOf(): string {
     null,
     2,
   )}\n`;
+}
+
+export function toolchainNpmrcOf(): string {
+  const override = process.env[OPENCLI_REGISTRY_ENV]?.trim();
+  const asked = override === undefined || override === '' ? DEFAULT_NPM_REGISTRY : override;
+  const registry = asked.endsWith('/') ? asked : `${asked}/`;
+  return `${OPENCLI_NPM_PACKAGE.split('/')[0]}:registry=${registry}\n`;
 }
 
 export function cliCatalogPath(): string {

@@ -1,4 +1,4 @@
-import { toolchainManifestOf } from '@dsh-workbench/adapter-runtime';
+import { toolchainManifestOf, toolchainNpmrcOf } from '@dsh-workbench/adapter-runtime';
 import { createRequire } from 'node:module';
 
 import { mkdirSync, readFileSync, rmSync } from 'node:fs';
@@ -221,6 +221,11 @@ export function seedRuntimeFiles(options: RuntimeSeedOptions): readonly string[]
       done.push(manifest);
     }
     rmSync(join(paths.opencliRoot, 'toolchain', 'pnpm-workspace.yaml'), { force: true });
+    const npmrc = join(paths.opencliRoot, 'toolchain', '.npmrc');
+    if (readText(npmrc) !== toolchainNpmrcOf()) {
+      writeTextFile(npmrc, toolchainNpmrcOf());
+      done.push(npmrc);
+    }
     const wanted = opencliWrapperScript(options.packageRoot, options.home, platform);
     if (readText(paths.opencliBin) !== wanted) {
       rmSync(paths.opencliBin, { force: true });

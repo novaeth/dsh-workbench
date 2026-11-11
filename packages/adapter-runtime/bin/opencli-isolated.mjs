@@ -17,7 +17,7 @@ const preload = join(dirname(fileURLToPath(import.meta.url)), 'opencli-node-mode
 mkdirSync(isolatedHome, { recursive: true });
 if (!existsSync(main)) {
   process.stderr.write(`dsh-workbench: opencli 的隔离运行时还没装好（${join(root, 'toolchain')}）。\n`);
-  process.stderr.write('  打开工作台：启动体检会给出一条能直接照做的安装命令。\n');
+  process.stderr.write('  在工作台里打开「启动体检」，在 cli 那一步点重试，装好再回来重试这一下。\n');
   process.exit(127);
 }
 
