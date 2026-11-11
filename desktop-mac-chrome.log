@@ -1,0 +1,5 @@
+
+DevTools listening on ws://127.0.0.1:9333/devtools/browser/66a54187-057c-41f9-bfd1-218b9cecee49
+[5450:19233:1111/155256.840030:ERROR:chrome/browser/ui/webui/ntp/new_tab_ui.cc:54] Requested load of chrome://newtab/ for incorrect profile type.
+[5450:19233:1111/155402.328659:ERROR:chrome/browser/ui/views/user_education/impl/browser_user_education_interface_impl.cc:186] Attempting to show IPH IPH_ExtensionsZeroStatePromo before browser initialization complete; IPH will not be shown.
+[5450:19233:1111/155403.664846:ERROR:chrome/browser/ui/webui/ntp/new_tab_ui.cc:54] Requested load of chrome://newtab/ for incorrect profile type.

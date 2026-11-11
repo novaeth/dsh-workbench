@@ -1,0 +1,57 @@
+[0.2s] MILESTONE cdp-ready @ 0.2s
+[0.2s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.2s] pages: dsh-app://app/
+[0.2s] MILESTONE app-page @ 0.2s
+[0.2s] target: dsh-app://app/
+[0.3s] MILESTONE cdp-connected @ 0.3s
+[0.3s] health wait [] none :: HARNESS | Loading plugins…
+[0.3s] ready wait [] none :: HARNESS | Loading plugins…
+[2.3s] ready wait [] none :: HARNESS | Loading plugins…
+[4.3s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[4.3s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[7.3s] ready wait [checking] toolchain:running(node --version · npm --version · pnpm --version) cli:pending bridge:pending diy:pending :: Workspaces | No sessions yet | More | Into the Unknown | Preview | Choose a workspace to start | Workbench panel | Reading the panel setup… | Preparing the workbench |  | Getting the runtime ready… |  | Loading settings…
+[7.3s] 体检还在跑，先等它：toolchain:running · cli:pending · bridge:pending · diy:pending
+[9.4s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: llo, workbench |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[9.4s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[11.4s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[11.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[13.5s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[13.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[15.6s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[15.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[17.6s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[17.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[19.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: rd mode | Describe what you want to build, / commands, @ files or sessions | Workspace Write | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[19.6s] MILESTONE ready @ 19.6s
+[19.7s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Workbench module market"
+[22.7s] market-page:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[22.7s] MILESTONE market-open @ 22.7s
+[22.7s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-body.txt (578 bytes)
+[22.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[24.8s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[26.8s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[28.8s] STEP workbench row: found=true buttons=["Workbench","View details for Workbench","Update"]
+[28.8s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-row.json (4393 bytes)
+[30.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-before.json (872 bytes)
+[30.0s] STEP click ["更新","Update"]: "Update"
+[33.0s] MILESTONE self-update-clicked @ 33.0s
+[35.4s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-alive.txt (79 bytes)
+[35.4s] self-update wait: plugin-hello@1.0.0 | installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[37.5s] self-update wait: plugin-hello@1.0.0 | installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[39.5s] self-update wait: plugin-hello@1.0.0 | installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[41.5s] self-update wait: plugin-hello@1.0.0 | installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[43.5s] self-update wait: plugin-hello@1.0.0 | installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[43.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-ready.txt (651 bytes)
+[43.5s] MILESTONE self-update-ready @ 43.5s
+[73.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-row-after.json (4344 bytes)
+[73.5s] FAIL 就绪之后工作台那一行没有「稍后」钮（重启提示没落到行上？）
+[73.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-console-events.json (9563 bytes)
+[73.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-failed-body.txt (651 bytes)
+[73.7s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-failed.png (92187 bytes)
+[73.7s] FATAL Error: 就绪之后工作台那一行没有「稍后」钮（重启提示没落到行上？）（现场：desktop-mac-self-update-failed-body.txt / desktop-mac-self-update-failed-preflight.json）
+    at fail (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:269:9)
+    at async smokeSelfUpdate (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:1077:5)
+    at async main (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:1358:11)
+[73.7s] SMOKE_SUMMARY {"outcome":"failed","elapsed":"73.7s","milestones":{"cdp-ready":"0.2s","app-page":"0.2s","cdp-connected":"0.3s","ready":"19.6s","market-open":"22.7s","self-update-clicked":"33.0s","self-update-ready":"43.5s"},"reason":"就绪之后工作台那一行没有「稍后」钮（重启提示没落到行上？）（现场：desktop-mac-self-update-failed-body.txt / desktop-mac-self-update-failed-preflight.json）"}
+[73.7s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-fatal-body.txt (651 bytes)
+[73.8s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-fatal.png (92187 bytes)
