@@ -162,37 +162,32 @@ jobs:
               echo "::warning title=rollback instance（回退 E2E 试验中，不挡这条腿）::启动后没有页面"
             fi
           fi
-          # 自更新这条 E2E 还在试验中：它自己红只发警告，不挡这条腿既有的信号。
+          # 自更新这条 E2E 已经立住：三段都按硬判据走，红就挡这条腿。
           # 夹具要在 app 关着时把 profile 翻成"已迁移"的链接形态：先停掉回退链最后那个实例。
           stop_app
           sleep 2
-          if try_logged update-fixture node "$GITHUB_WORKSPACE/scripts/desktop-smoke/self-update-update-fixture.mjs" "$HOME/.dsh" desktop "$DESKTOP_SMOKE_UPDATE_FROM"; then
-            start_app 9227
-            if wait_page 9227; then
-              if try_logged update-probe node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9227 desktop-mac-self-update.png --self-update; then
-                ready="$DESKTOP_SMOKE_OUT/desktop-mac-self-update-ready.json"
-                to=''
-                if [ -f "$ready" ]; then
-                  to=$(node -e "try{const p=JSON.parse(require('node:fs').readFileSync(process.argv[1],'utf8'));process.stdout.write(typeof p.to==='string'?p.to:'')}catch{process.stdout.write('')}" "$ready")
-                fi
-                if [ -n "$to" ]; then
-                  export DESKTOP_SMOKE_EXPECT_RUNNING_VERSION="$to"
-                  stop_app
-                  sleep 2
-                  start_app 9228
-                  if wait_page 9228; then
-                    try_logged update-after-restart node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9228 desktop-mac-after-self-update.png --verify-only --expect-workbench || true
-                  else
-                    echo "::warning title=after-self-update instance（自更新 E2E 试验中，不挡这条腿）::重启后没有页面"
-                  fi
-                else
-                  echo "::warning title=self-update ready（自更新 E2E 试验中，不挡这条腿）::探针没写出 $ready，或里面没有 to"
-                fi
-              fi
-            else
-              echo "::warning title=self-update instance（自更新 E2E 试验中，不挡这条腿）::启动后没有页面"
-            fi
+          run_logged update-fixture node "$GITHUB_WORKSPACE/scripts/desktop-smoke/self-update-update-fixture.mjs" "$HOME/.dsh" desktop "$DESKTOP_SMOKE_UPDATE_FROM"
+          start_app 9227
+          if ! wait_page 9227; then
+            echo "::error title=update-probe::起 9227 后没有页面"
+            exit 1
           fi
+          run_logged update-probe node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9227 desktop-mac-self-update.png --self-update
+          ready="$DESKTOP_SMOKE_OUT/desktop-mac-self-update-ready.json"
+          to=$(node -e "try{const p=JSON.parse(require('node:fs').readFileSync(process.argv[1],'utf8'));process.stdout.write(typeof p.to==='string'?p.to:'')}catch{process.stdout.write('')}" "$ready" 2>/dev/null || true)
+          if [ -z "$to" ]; then
+            echo "::error title=update-probe::探针没写出 $ready，或里面没有 to"
+            exit 1
+          fi
+          export DESKTOP_SMOKE_EXPECT_RUNNING_VERSION="$to"
+          stop_app
+          sleep 2
+          start_app 9228
+          if ! wait_page 9228; then
+            echo "::error title=update-after-restart::起 9228 后没有页面"
+            exit 1
+          fi
+          run_logged update-after-restart node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9228 desktop-mac-after-self-update.png --verify-only --expect-workbench
       - name: Assert opencli installed
         shell: bash
         run: |

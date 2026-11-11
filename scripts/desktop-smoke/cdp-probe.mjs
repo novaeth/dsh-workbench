@@ -894,8 +894,25 @@ async function smokeRollback(cdp) {
     await fail(cdp, 'workbench row has no "back to previous version" button', await bodyOf(cdp));
   }
   mark('rollback-clicked');
-  const done = await waitForBody(cdp, /Switched back to|已经切回/u, MODULE_WAIT_MS, 'rollback-done');
+  const done = await waitForBody(
+    cdp,
+    /Switched back to|已经切回|Couldn't switch back|自己退出再打开|上一版已经不在本机/u,
+    MODULE_WAIT_MS,
+    'rollback-done',
+  );
   writeText(`${prefix}-rollback-done.txt`, done);
+  const refused = /Couldn't switch back|自己退出再打开|上一版已经不在本机/u.test(done);
+  if (refused) {
+    const before = await workbenchVersionOf(cdp, false);
+    writeText(`${prefix}-rollback-refused.json`, `${JSON.stringify(before, null, 2)}\n`);
+    const seen = before?.workbench ?? {};
+    const mark = before?.selfUpdate ?? {};
+    await fail(
+      cdp,
+      `切回被拒（no-marker / no-seam / no-profile 之一）：installed=${JSON.stringify(seen.installed)} latest=${JSON.stringify(seen.latest)} previous=${JSON.stringify(seen.previous)} local=${String(seen.local)} selfUpdate=${JSON.stringify(mark.state)}`,
+      done,
+    );
+  }
   result.rollback = /Switched back to|已经切回/u.test(done);
   result.alive = /Workbench panel|工作台面板/u.test(done);
   mark('rollback-done');

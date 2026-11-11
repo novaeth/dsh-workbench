@@ -129,8 +129,8 @@ GitHub Actions runs three workflows:
   turns `includePrerelease` on, so the registry's newer published beta shows up as an update; the probe
   clicks 「更新」 on the workbench row, asserts the interface stays up and the row says the new version
   is ready while the running version is still the old one, then a restarted instance asserts the
-  running version is the new one. Self-update and rollback legs report `::warning` instead of failing
-  the leg for now (they are the youngest assertions). A failing run publishes the page/log evidence to
+  running version is the new one. The self-update legs are hard-gated; the rollback leg still reports
+  `::warning` instead of failing the leg (it is the youngest assertion). A failing run publishes the page/log evidence to
   a `desktop-ui-log-*` branch; a green one only uploads the run artifacts.
 - `.github/workflows/platform-smoke.yml` (pull requests and pushes to `main` touching `packages/**/src/**`
   or `scripts/smoke/**`, a weekly cron, and manual dispatch; ubuntu, macOS, Windows Server 2022/2025):
