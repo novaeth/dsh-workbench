@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { bootRollsBack, bootVerdict, readBootRecord, writeBootRecord } from '../self-update-boot.js';
+import { SELF_UPDATE_BOOT_GRACE_MS, SELF_UPDATE_BOOT_WINDOW_MS } from '../self-update-steps.js';
 
 const SINCE = '2026-11-10T12:00:00.000Z';
 const LATER = '2026-11-10T12:05:00.000Z';
@@ -22,7 +23,7 @@ function verdictOf(input: {
     boot: input.boot,
     up: input.up,
     now: input.now ?? LATER,
-    graceMs: input.graceMs ?? 180_000,
+    graceMs: input.graceMs ?? SELF_UPDATE_BOOT_GRACE_MS,
   });
 }
 
@@ -43,11 +44,19 @@ describe('自动回退窗口：这一版到底起没起来', () => {
   });
 
   it('★ 新版起来了但工作台那半一直没露面 → 宽限期内等着，过了就是 half-down（回头）', () => {
-    expect(verdictOf({ boot: record('1.2.3-beta.3', LATER), now: LATER, graceMs: 180_000 })).toBe('waiting');
-    expect(verdictOf({ boot: record('1.2.3-beta.3', LATER), now: '2026-11-10T12:10:00.000Z', graceMs: 180_000 })).toBe(
-      'half-down',
-    );
+    expect(verdictOf({ boot: record('1.2.3-beta.3', LATER), now: LATER })).toBe('waiting');
+    expect(verdictOf({ boot: record('1.2.3-beta.3', LATER), now: '2026-11-10T12:16:00.000Z' })).toBe('half-down');
     expect(bootRollsBack('half-down')).toBe(true);
+  });
+
+  it('★ 宽限期是 10 分钟：重启后没马上看工作台那几分钟不算坏（免得把好版本翻回去）', () => {
+    const boot = record('1.2.3-beta.3', LATER);
+
+    expect(SELF_UPDATE_BOOT_GRACE_MS).toBe(600_000);
+    expect(SELF_UPDATE_BOOT_WINDOW_MS).toBeGreaterThan(SELF_UPDATE_BOOT_GRACE_MS);
+    expect(verdictOf({ boot, now: '2026-11-10T12:08:00.000Z' })).toBe('waiting');
+    expect(verdictOf({ boot, now: '2026-11-10T12:14:00.000Z' })).toBe('waiting');
+    expect(verdictOf({ boot, now: '2026-11-10T12:16:00.000Z' })).toBe('half-down');
   });
 
   it('★ 还没重启过（没有新记录）→ no-boot：不判失败、也不回头', () => {

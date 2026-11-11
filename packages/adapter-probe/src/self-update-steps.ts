@@ -111,8 +111,8 @@ export interface SelfUpdateStepsOptions {
   readonly bootPollMs?: number | undefined;
 }
 
-export const SELF_UPDATE_BOOT_WINDOW_MS = 600_000;
-export const SELF_UPDATE_BOOT_GRACE_MS = 180_000;
+export const SELF_UPDATE_BOOT_WINDOW_MS = 900_000;
+export const SELF_UPDATE_BOOT_GRACE_MS = 600_000;
 export const SELF_UPDATE_BOOT_POLL_MS = 3_000;
 
 export function selfUpdateStepsOf(
