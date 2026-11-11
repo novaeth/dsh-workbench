@@ -264,6 +264,8 @@ function printUsage() {
   pnpm run release                        交互式发布新版本
   pnpm run release:resume                 续跑上一次中断的发布
   pnpm run release:dry                    彩排：改版本号 + 构建 + publish --dry-run，不上传
+  pnpm run release:fast -- --target 1.2.3-beta.12 --yes
+                                          跳过门禁/测试与彩排，直接发（--skip-gate --skip-rehearsal）
 
   node scripts/release.mjs --target 0.2.0 --yes
 
@@ -279,6 +281,7 @@ pnpm publish，彩排与真发都不会再触发它们。
   --skip-build      跳过构建：发磁盘上现有产物（prepack 已关，不再兜底重建）
   --skip-rehearsal  跳过 dry-run 彩排（不推荐）
   --skip-gate       跳过门禁（真的跳过：发布不会再补跑；不推荐）
+                    项目里的 release:fast 就是「--skip-gate --skip-rehearsal」那条捷径
   --allow-dirty     允许工作区有未提交的改动
 `);
 }
