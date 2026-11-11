@@ -64,6 +64,7 @@ export default tseslint.config(
       '**/client.body.js',
       '**/*.d.ts',
       '**/test/golden/**',
+      '**/vendor/**',
       '.scratch/**',
       'private-docs/**',
       '.worktrees/**',

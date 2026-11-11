@@ -64,11 +64,19 @@ export function bridgeAdvice(
   fixes?: RuntimeProfile['bridge'],
   extensionDir?: string | undefined,
 ): BridgeAdvice {
-  if (issue === 'extension' && extensionDir !== undefined) {
-    return { text: t('env.bridge.extensionLocal', { dir: extensionDir }) };
-  }
   const fix = fixes?.[issue];
-  if (issue === 'extension' && fix === undefined) return { text: t('env.bridge.extensionOffline') };
+  if (issue === 'extension') {
+    const store = fix?.link;
+    return {
+      text:
+        extensionDir === undefined
+          ? t('env.bridge.extensionOffline')
+          : t('env.bridge.extensionLocal', { dir: extensionDir }),
+      ...(store === undefined
+        ? {}
+        : { link: { label: runtimeText(store.label), href: store.href } }),
+    };
+  }
   if (fix !== undefined) {
     return {
       text: runtimeText(fix.text),
@@ -95,10 +103,6 @@ export function bridgeAdviceLines(
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(advice);
-  }
-  if (listed.includes('extension') && extensionDir === undefined && fixes?.extension !== undefined) {
-    const offline = t('env.bridge.extensionOffline');
-    if (!out.some((one) => one.text === offline)) out.push({ text: offline });
   }
   return out;
 }

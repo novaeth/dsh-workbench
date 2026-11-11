@@ -130,7 +130,7 @@ function successPayloadOf(
             `市场索引：${asText(asRecord(payload['market'])['url'])}`,
           ].join('\n')
         : targetOfPayload === 'tarball'
-          ? [`安装包在 ${file}`, `本机装：${install}`, '文件可以从对话里带走，发给同事。'].join('\n')
+          ? [`安装包在 ${file}`, `本机装：${install}`, '这个安装包可以带走，在别处装。'].join('\n')
           : targetOfPayload === 'git'
             ? [
                 `已推到 ${asText(git['url'])}（tag ${asText(git['tag'])}）`,
@@ -147,7 +147,7 @@ function successPayloadOf(
                 ? '没发，留在本机。'
                 : [
                     `已发布 ${name}@${released} → ${registry}`,
-                    `同事安装：${install}`,
+                    `换台机器安装：${install}`,
                     '包内容已经从源上核过（dist/host.js / client.js / cordis.patch.yml 都在）。',
                   ].join('\n');
   const changelog = asRecord(payload['changelog']);

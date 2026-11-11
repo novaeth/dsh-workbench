@@ -196,12 +196,12 @@ describe('GATE_MOCKS', () => {
 
     const extension = bridgeAdvice('extension', t, fixes);
 
-    expect(extension.text).toBe('扩展没连上');
+    expect(extension.text).toBe(zh['env.bridge.extensionOffline']);
     expect(extension.link?.href).toBe('https://example.com/extension');
     expect(extension.link?.label).toBe('去装');
-    const lines = bridgeAdviceLines(['extension'], t, fixes).map((one) => one.text);
-    expect(lines[0]).toBe('扩展没连上');
-    expect(lines[1]).toBe(zh['env.bridge.extensionOffline']);
+    expect(bridgeAdviceLines(['extension'], t, fixes).map((one) => one.text)).toEqual([
+      zh['env.bridge.extensionOffline'],
+    ]);
     for (const issue of ['daemon', 'profile', 'stale', 'unknown'] as const) {
       expect(bridgeAdvice(issue, t, fixes).link, issue).toBeUndefined();
     }

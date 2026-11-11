@@ -48,7 +48,7 @@ function isAuditScope(entry) {
   return entry === 'client.js' || entry === 'dist' || entry.startsWith('dist/');
 }
 
-const NON_PRODUCT_DIRS = new Set(['bin', 'profile', 'preset', 'skills']);
+const NON_PRODUCT_DIRS = new Set(['bin', 'profile', 'preset', 'skills', 'vendor']);
 const NON_PRODUCT_EXT = /\.(md|yml|yaml|svg|sh|mjs|json|txt|html)$/;
 function isNonProductEntry(entry) {
   return NON_PRODUCT_DIRS.has(entry) || NON_PRODUCT_EXT.test(entry);

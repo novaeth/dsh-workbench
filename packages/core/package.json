@@ -32,6 +32,7 @@
     "icon.svg",
     "bin",
     "skills",
+    "vendor",
     "scripts/create-workbench.mjs",
     "scripts/clone-profile.mjs",
     "scripts/patch-blocks.mjs",

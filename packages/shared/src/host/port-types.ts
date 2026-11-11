@@ -167,6 +167,7 @@ export interface ProbePreflightInput {
   readonly runtimeCheck?: (() => Promise<RuntimeCheck>) | undefined;
   readonly runtimeLabel?: string | undefined;
   readonly warmReads: () => readonly (readonly string[])[];
+  readonly extensionDir?: string | undefined;
 }
 
 export interface ProbePort {

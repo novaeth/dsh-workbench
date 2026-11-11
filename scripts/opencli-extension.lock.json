@@ -1,0 +1,7 @@
+{
+  "package": "opencli-extension",
+  "version": "1.0.27",
+  "upstream": "https://github.com/jackwener/opencli/releases/download/v2.0.3/opencli-extension-v1.0.27.zip",
+  "license": "Apache-2.0",
+  "sha256": "8636d42a0fe44d7ba3b0603dbcd9581e8269ccbca950136d0dfc0ffc39a8a213"
+}

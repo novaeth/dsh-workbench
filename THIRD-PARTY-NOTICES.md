@@ -1,5 +1,34 @@
 # Third-party notices
 
+## Browser extension vendored from `jackwener/opencli`
+
+`packages/core/vendor/browser-extension/` is an unmodified copy of
+`opencli-extension-v1.0.27.zip` from
+<https://github.com/jackwener/opencli/releases/tag/v2.0.3>. It ships with the
+workbench so the extension can be loaded from disk when the Chrome Web Store
+and GitHub releases are unreachable. `scripts/opencli-extension.lock.json`
+records the upstream URL and the zip's SHA-256; refresh it with
+`node scripts/sync-opencli-extension.mjs`.
+
+It is licensed under the Apache License 2.0 (see
+`packages/core/vendor/browser-extension/LICENSE`).
+
+```text
+Copyright the opencli authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
+
 ## Skills vendored from `mattpocock/skills`
 
 The directories under `.agents/skills/` other than `wording/` are vendored

@@ -59,11 +59,16 @@ export async function provisionWorkbenchPnpm(input: {
 
 const EXTENSION_ENV = 'DSH_WB_OPENCLI_EXTENSION';
 
-function localExtensionDir(): string | undefined {
+function hasManifest(dir: string): boolean {
+  return existsSync(join(dir, 'manifest.json'));
+}
+
+function extensionDirOf(bundled: string | undefined): string | undefined {
   const asked = process.env[EXTENSION_ENV]?.trim();
   if (asked !== undefined && asked !== '') return asked;
-  const fallback = join(toolchainDir(), '..', 'extension');
-  return existsSync(join(fallback, 'manifest.json')) ? fallback : undefined;
+  const local = join(toolchainDir(), '..', 'extension');
+  if (hasManifest(local)) return local;
+  return bundled !== undefined && hasManifest(bundled) ? bundled : undefined;
 }
 
 function describeToolchain(toolchain: string, pkgDir: string): string {
@@ -96,6 +101,7 @@ export function registerPreflight(input: {
   runtimeLabel?: string | undefined;
   warmReads: () => readonly (readonly string[])[];
   desktopBrowser?: DesktopBrowser | undefined;
+  extensionDir?: string | undefined;
 }): void {
   const command =
     input.runtimeCommands['opencli'] ?? Object.values(input.runtimeCommands)[0] ?? 'opencli';
@@ -118,7 +124,7 @@ export function registerPreflight(input: {
     seam: input.seam,
     command,
     installCommand,
-    ...(localExtensionDir() === undefined ? {} : { extensionDir: localExtensionDir() }),
+    ...(extensionDirOf(input.extensionDir) === undefined ? {} : { extensionDir: extensionDirOf(input.extensionDir) }),
     installed: () => existsSync(join(toolchainOpencliDir(), 'package.json')),
     install: () =>
       installIsolatedRuntime(

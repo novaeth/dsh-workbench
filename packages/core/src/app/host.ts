@@ -4,7 +4,7 @@ import { holdHostLock } from '@/shared/api/host/host-lock';
 import { bootChores } from '@/shared/api/host/boot-chores';
 import { bootOkAction } from '@/shared/api/host/boot-ok';
 import { provideGitProcessSeam } from '@/shared/api/host/git-process';
-import { shippedAdapterSet } from '@/shared/api/host/shipped-adapter-set';
+import { browserExtensionDir, shippedAdapterSet } from '@/shared/api/host/shipped-adapter-set';
 import { createHostRoutes } from '@/shared/api/host/host-routes';
 import { assembleHostUnits } from '@/app/units/host';
 import { createPostChannels } from '@/shared/api/host/post-channels';
@@ -372,6 +372,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
       ctx,
       seam,
       runtimeCommands,
+      ...(browserExtensionDir() === undefined ? {} : { extensionDir: browserExtensionDir() }),
       runtimeCapabilities: capabilities,
       ...(runtimeCheck === undefined ? {} : { runtimeCheck: () => runtimeCheck(ctx) }),
       ...(runtimeProfile === null ? {} : { runtimeLabel: runtimeProfile.label }),
