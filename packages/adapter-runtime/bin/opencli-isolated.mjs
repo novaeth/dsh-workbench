@@ -4,6 +4,7 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { homedir, userInfo } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { productHomeEnv } from '@dsh-workbench/shared/host';
 
 const dshHome = process.env.DSH_HOME?.trim() || join(homedir(), '.dsh');
 const workbenchHome = process.env.DSH_WORKBENCH_HOME?.trim() || join(dshHome, 'workbench');
@@ -22,7 +23,7 @@ if (!existsSync(main)) {
 
 const env = {
   ...process.env,
-  HOME: isolatedHome,
+  ...productHomeEnv(isolatedHome),
 };
 for (const key of Object.keys(env)) {
   if (key.toLowerCase() === 'npm_config_cache') delete env[key];

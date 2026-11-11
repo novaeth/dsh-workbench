@@ -9,6 +9,7 @@ import {
   overlayEnvOf,
   pathWithBinsOf,
   productEnvOf,
+  productHomeEnv,
   promptlessGitEnvOf,
   promptlessProcessEnvOf,
   unitEnvOf,
@@ -86,6 +87,19 @@ describe('受控 env 入口', () => {
     const posix = productEnvOf({ runtimeRoot: RUNTIME, realHome: REAL_HOME });
     expect(posix['HOMEDRIVE']).toBeUndefined();
     expect(posix['HOMEPATH']).toBeUndefined();
+  });
+
+  it('★ productHomeEnv 就是要给 launcher 的那一层：HOME + 平台对应的那套', () => {
+    expect(productHomeEnv('/rt/home')).toEqual({ USERPROFILE: '/rt/home', HOME: '/rt/home' });
+    const windowsHome = 'C:\\Users\\runner\\.dsh\\workbench\\opencli\\home';
+    expect(productHomeEnv(windowsHome)).toEqual({
+      USERPROFILE: windowsHome,
+      HOMEDRIVE: 'C:',
+      HOMEPATH: '\\Users\\runner\\.dsh\\workbench\\opencli\\home',
+      HOME: windowsHome,
+    });
+    const product = productEnvOf({ runtimeRoot: RUNTIME, home: windowsHome, realHome: REAL_HOME });
+    for (const [key, value] of Object.entries(productHomeEnv(windowsHome))) expect(product[key]).toBe(value);
   });
 
   it('bootstrap：继承父环境、HOME/缓存钉住、PATH 可替换、pwsh 加 USERPROFILE', () => {

@@ -81,6 +81,16 @@ function homeEnvOf(home: string): Record<string, string> {
   };
 }
 
+/**
+ * 产品域隔离 home 的那层 env：`HOME`（POSIX 看它）+ `USERPROFILE`（Windows 的 node `os.homedir()` 看它），
+ * Windows 盘符路径再补 `HOMEDRIVE`/`HOMEPATH`。宿主与 launcher 都从这里取，别各写一套。
+ * @param home 隔离 home 的绝对路径。
+ * @returns 只含 home 相关的 env 层。
+ */
+export function productHomeEnv(home: string): Record<string, string> {
+  return { ...homeEnvOf(home), HOME: home };
+}
+
 export interface ProductEnvInput {
   readonly runtimeRoot: string;
   readonly home?: string | undefined;
@@ -97,8 +107,7 @@ export function productEnvOf(input: ProductEnvInput): Record<string, string> {
   const realHome = input.realHome ?? homedir();
   const home = input.home ?? join(runtimeRoot, 'home');
   const env: Record<string, string> = {
-    ...homeEnvOf(home),
-    HOME: home,
+    ...productHomeEnv(home),
     DSH_HOME: dshHome(),
     DSH_WORKBENCH_HOME: runtimeRoot,
     npm_config_cache: join(runtimeRoot, 'npm-cache'),
