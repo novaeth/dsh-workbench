@@ -192,7 +192,25 @@ diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
     if (root !== null) root.inert = previousInert;
   }
 
-  const deadline = createGateDeadline(GIVE_UP_MS, close);
+  let deadline = createGateDeadline(GIVE_UP_MS, close);
+
+  function extend(): void {
+    if (closed || held) return;
+    deadline.disarm();
+    deadline = createGateDeadline(GIVE_UP_MS, close);
+  }
+
+  let held = false;
+
+  function holdOpen(): void {
+    if (held) return;
+    held = true;
+    deadline.disarm();
+  }
+
+  overlay.addEventListener('pointerdown', extend, { passive: true });
+  overlay.addEventListener('keydown', extend, { passive: true });
+  overlay.addEventListener('wheel', extend, { passive: true });
 
   interface StepRow {
     readonly item: HTMLElement;
@@ -387,7 +405,10 @@ diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
       close();
       return;
     }
-    if (action === 'hold') return;
+    if (action === 'hold') {
+      holdOpen();
+      return;
+    }
     timer = setTimeout(() => void poll(), POLL_MS);
   }
 

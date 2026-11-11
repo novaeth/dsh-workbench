@@ -52,6 +52,18 @@ describe('门什么时候撤、什么时候停', () => {
     expect(gateActionOf(snapshotOf('ready'))).toBe('close');
   });
 
+  it('★ 停在原地那几帧不该被 5 分钟超时收掉：失败 / 桥接坏 / DIY 缺都算「等用户决定」', () => {
+    const stayed: string[] = [];
+    for (const [name, snapshot] of [
+      ['失败', snapshotOf('failed', { steps: [{ id: 'cli', status: 'failed' }] })],
+      ['桥接坏', EXTENSION_MISSING],
+      ['DIY 缺', snapshotOf('ready', { diyGap: { rows: [], detail: 'x', command: 'y' } })],
+    ] as const) {
+      if (gateActionOf(snapshot) === 'hold') stayed.push(name);
+    }
+    expect(stayed).toEqual(['失败', '桥接坏', 'DIY 缺']);
+  });
+
   it('★ 扩展没连上：那一帧带着「怎么解决」的材料，门停在它上面（不是就绪即撤）', () => {
     const bridge = EXTENSION_MISSING.steps.find((step) => step.id === 'bridge');
 
