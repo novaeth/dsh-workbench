@@ -1,0 +1,48 @@
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [] none :: HARNESS | Loading plugins…
+[4.1s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[4.1s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[8.6s] ready wait [checking] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: HARNESS | Loading plugins…
+[8.6s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[11.1s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: llo, workbench |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[11.1s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[13.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: | Preview | Standard mode | Describe what you want to build, / commands, @ files or sessions | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[13.1s] MILESTONE ready @ 13.1s
+[13.2s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Workbench module market"
+[16.2s] market-page:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[16.2s] MILESTONE market-open @ 16.2s
+[16.2s] MILESTONE add-plugin-market @ 16.2s
+[16.2s] STEP click ["添加模块","Add module"]: "Add module"
+[17.4s] add-plugin dialog wait: {"field":true,"buttons":["Close","Install guide and examples","Source\nnpm registry","Install"]}
+[17.4s] add-plugin spec field: ""
+[17.9s] add-plugin filled: "opencli-plugin-hello"
+[18.0s] STEP click ["安装","Install"]: "Install"
+[19.2s] MILESTONE plugin-check-clicked @ 19.2s
+[19.2s] plugin preview wait: ello, workbench |  | This card comes from a standalone workbench module. |  | Add module |  | Enter a module or opencli plugin package name, Git repository URL, or local directory path. |  | Checking…
+[21.2s] plugin preview wait: ello, workbench |  | This card comes from a standalone workbench module. |  | Add module |  | Enter a module or opencli plugin package name, Git repository URL, or local directory path. |  | Checking…
+[23.2s] plugin preview wait: ello, workbench |  | This card comes from a standalone workbench module. |  | Add module |  | Enter a module or opencli plugin package name, Git repository URL, or local directory path. |  | Checking…
+[25.2s] plugin preview wait: ello, workbench |  | This card comes from a standalone workbench module. |  | Add module |  | Enter a module or opencli plugin package name, Git repository URL, or local directory path. |  | Checking…
+[27.2s] plugin preview wait: llo |  | Plugin name: hello |  | https://registry.npmjs.org/ |  | This is an opencli plugin: it goes into the opencli plugin area and works as soon as it is installed — no restart. |  | Edit | Install
+[27.2s] MILESTONE plugin-preview @ 27.2s
+[27.2s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-add-plugin-add-plugin-preview-body.txt (799 bytes)
+[27.2s] STEP click ["安装","Install"]: "Install"
+[28.4s] MILESTONE plugin-install-clicked @ 28.4s
+[28.4s] plugin-installed:  comes from a standalone workbench module. |  | Add module |  | Enter a module or opencli plugin package name, Git repository URL, or local directory path. |  | Installing the module… | Cancel install
+[30.4s] plugin-installed:  comes from a standalone workbench module. |  | Add module |  | Enter a module or opencli plugin package name, Git repository URL, or local directory path. |  | Installing the module… | Cancel install
+[32.4s] plugin-installed:  comes from a standalone workbench module. |  | Add module |  | Enter a module or opencli plugin package name, Git repository URL, or local directory path. |  | Installing the module… | Cancel install
+[34.5s] plugin-installed:   | Add module |  | Enter a module or opencli plugin package name, Git repository URL, or local directory path. |  | Installed |  | opencli-plugin-hello |  | Installed: opencli plugin hello |  | Close
+[34.5s] MILESTONE plugin-installed @ 34.5s
+[34.5s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-add-plugin-add-plugin-body.txt (671 bytes)
+[34.5s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-add-plugin-add-plugin.json (95 bytes)
+[34.5s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-add-plugin-smoke.json (133 bytes)
+[34.5s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-add-plugin-final-body.txt (671 bytes)
+[34.5s] TITLE: DeepSeek Harness
+[40.5s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win11-add-plugin.png (56734 bytes)
+[40.5s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"40.5s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.1s","ready":"13.1s","market-open":"16.2s","add-plugin-market":"16.2s","plugin-check-clicked":"19.2s","plugin-preview":"27.2s","plugin-install-clicked":"28.4s","plugin-installed":"34.5s"},"spec":"opencli-plugin-hello","preview":true,"installed":true,"market":true}

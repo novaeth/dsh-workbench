@@ -1,0 +1,48 @@
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+New Session
+Default workspace
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Add module
+Installed
+Discover
+Workbench1.2.3-beta.8local
+Installed modules
+1
+Sample module1.1.14-beta.2
+installed
+Uninstall
+After installing, enable it in the panel page of that project.
+Workbench panel
+Sample module
+
+hello, workbench
+
+This card comes from a standalone workbench module.
+
+Add module
+
+Enter a module or opencli plugin package name, Git repository URL, or local directory path.
+
+opencli-plugin-hello
+
+Plugin name: hello
+
+https://registry.npmjs.org/
+
+This is an opencli plugin: it goes into the opencli plugin area and works as soon as it is installed — no restart.
+
+Edit
+Install
