@@ -8,6 +8,7 @@ const expectWorkbench = process.argv.includes('--expect-workbench');
 const installViaUi = process.argv.includes('--install-via-ui');
 const verifyOnly = process.argv.includes('--verify-only');
 const rollbackFlow = process.argv.includes('--self-update-rollback');
+const selfUpdateFlow = process.argv.includes('--self-update');
 const flagValue = (name) => {
   const inline = process.argv.find((one) => one.startsWith(`${name}=`));
   if (inline !== undefined) return inline.slice(name.length + 1);
@@ -25,6 +26,7 @@ const addPluginSpec = (
 const workbenchSpec = process.env.DESKTOP_WORKBENCH_SPEC ?? '@dsh-workbench/core';
 const marketSource = process.env.DESKTOP_SMOKE_MARKET ?? 'https://github.com/novaeth/dsh-workbench-market.git';
 const moduleName = process.env.DESKTOP_SMOKE_MODULE ?? '@dsh-workbench/module-hello';
+const expectedRunningVersion = (process.env.DESKTOP_SMOKE_EXPECT_RUNNING_VERSION ?? '').trim();
 const deadlineAt = Date.now() + Number(process.env.DESKTOP_SMOKE_DEADLINE_MS ?? 720_000);
 const outDir = process.env.DESKTOP_SMOKE_OUT ?? process.cwd();
 const outPath = (name) => join(outDir, name);
@@ -48,6 +50,13 @@ const addCloseTexts = ['关闭', 'Close'];
 const specLabels = ['包名', 'Package'];
 const pluginPreviewRe = /这是一份[^\n]*插件|插件名：|This is [^\n]*plugin|Plugin name:/u;
 const pluginInstalledRe = /装上了：|Installed:/u;
+const workbenchTitles = ['工作台', 'Workbench'];
+const workbenchUpdateTexts = ['更新', 'Update'];
+const workbenchLaterTexts = ['稍后', 'Later'];
+const workbenchRestartNowTexts = ['立即重启', 'Restart now'];
+const selfUpdateReadyRe = /新版本已就绪|new version is ready|restart to pick it up|restart required/iu;
+const selfUpdateFailedRe =
+  /工作台更新失败|工作台更新未成功|The workbench update failed|did not go through|rolled back|已回滚|已用本地备份还原/iu;
 
 const startedAt = Date.now();
 const elapsed = () => `${((Date.now() - startedAt) / 1000).toFixed(1)}s`;
@@ -273,10 +282,11 @@ function dialogScope() {
 }
 
 function clickExpression(texts, scope = 'document') {
-  const root = scope === 'dialog' ? dialogScope() : 'document';
+  const root = scope === 'dialog' ? dialogScope() : scope === 'document' ? 'document' : `(${scope})`;
   return `(() => {
   const wanted = ${JSON.stringify(texts)};
   const root = ${root};
+  if (root === null || root === undefined) return 'missing';
   const nodes = [...root.querySelectorAll('button, a, [role="button"], [role="tab"]')].filter((node) => node.disabled !== true && node.getAttribute('aria-disabled') !== 'true');
   const labelOf = (node) => (node.getAttribute('aria-label') ?? '').trim();
   const textOf = (node) => (node.innerText ?? '').trim();
@@ -903,6 +913,219 @@ async function unitsOf(cdp) {
   }
 }
 
+async function workbenchVersionOf(cdp, check = true) {
+  const result = await cdp.send('Runtime.evaluate', {
+    expression: `fetch('/workbench/api/module-versions${check ? '' : '?check=0'}').then((r) => r.json()).then((value) => JSON.stringify(value)).catch(() => '')`,
+    awaitPromise: true,
+    returnByValue: true,
+  });
+  const raw = result.result?.value ?? '';
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function workbenchRowScope() {
+  return `(() => {
+  const titles = ${JSON.stringify(workbenchTitles)};
+  const visible = (node) => node.getClientRects().length > 0;
+  const titled = (node) => {
+    const leaf = [...node.querySelectorAll('*')].some((child) => child.children.length === 0 && titles.includes((child.textContent ?? '').trim()));
+    return leaf || titles.some((title) => (node.innerText ?? '').trim().startsWith(title));
+  };
+  const rows = [...document.querySelectorAll('li')].filter(titled);
+  return rows.find(visible) ?? rows[0] ?? null;
+})()`;
+}
+
+async function workbenchRowOf(cdp) {
+  const result = await cdp.send('Runtime.evaluate', {
+    expression: `(() => {
+  const row = ${workbenchRowScope()};
+  if (row === null) return JSON.stringify({ found: false });
+  const buttons = [...row.querySelectorAll('button, a, [role="button"]')].map((node) => ({
+    text: (node.innerText ?? '').trim(),
+    label: (node.getAttribute('aria-label') ?? '').trim(),
+    disabled: node.disabled === true || node.getAttribute('aria-disabled') === 'true',
+  }));
+  return JSON.stringify({ found: true, text: (row.innerText ?? '').slice(0, 500), buttons, html: row.outerHTML.slice(0, 4000) });
+})()`,
+    returnByValue: true,
+  });
+  try {
+    return JSON.parse(result.result?.value ?? '{"found":false}');
+  } catch {
+    return { found: false };
+  }
+}
+
+function buttonTextsOf(row) {
+  const buttons = Array.isArray(row?.buttons) ? row.buttons : [];
+  return buttons.flatMap((one) => [one.text, one.label]).filter((one) => one !== '');
+}
+
+function updateButtonOf(row) {
+  const buttons = Array.isArray(row?.buttons) ? row.buttons : [];
+  return buttons.find((one) => workbenchUpdateTexts.includes(one.text) || workbenchUpdateTexts.includes(one.label));
+}
+
+async function smokeSelfUpdate(cdp) {
+  const result = { updated: false, ready: false, live: false, to: '' };
+  await openMarket(cdp);
+  writeText(`${prefix}-self-update-body.txt`, await bodyOf(cdp));
+  const rowUntil = Date.now() + remaining('等工作台那一行的「更新」钮', MODULE_WAIT_MS);
+  let row = await workbenchRowOf(cdp);
+  let updateButton = updateButtonOf(row);
+  while (updateButton === undefined && Date.now() < rowUntil) {
+    log(`self-update row wait: found=${String(row.found)} buttons=${JSON.stringify(buttonTextsOf(row))}`);
+    await sleep(POLL_MS);
+    row = await workbenchRowOf(cdp);
+    updateButton = updateButtonOf(row);
+  }
+  log(`STEP workbench row: found=${String(row.found)} buttons=${JSON.stringify(buttonTextsOf(row))}`);
+  writeText(`${prefix}-self-update-row.json`, `${JSON.stringify(row, null, 2)}\n`);
+  if (row.found !== true) {
+    await fail(cdp, '市场页上找不到工作台那一行（按标题「工作台」/「Workbench」定位）', await bodyOf(cdp));
+  }
+  if (updateButton === undefined) {
+    await fail(cdp, '工作台那一行没有「更新」钮（盘上/源上版本没读到？）', await bodyOf(cdp));
+  }
+  const before = await workbenchVersionOf(cdp);
+  writeText(`${prefix}-self-update-before.json`, `${JSON.stringify(before, null, 2)}\n`);
+  const beforeWorkbench = before?.workbench ?? null;
+  const markerFrom = typeof before?.selfUpdate?.from === 'string' ? before.selfUpdate.from : '';
+  const from = typeof beforeWorkbench?.installed === 'string' ? beforeWorkbench.installed : '';
+  const to = typeof beforeWorkbench?.latest === 'string' ? beforeWorkbench.latest : '';
+  if (
+    beforeWorkbench === null ||
+    beforeWorkbench.local === true ||
+    from === '' ||
+    to === '' ||
+    to === from ||
+    (markerFrom !== '' && markerFrom !== from)
+  ) {
+    await fail(
+      cdp,
+      `自更新之前版本接口不对：installed=${JSON.stringify(from)} latest=${JSON.stringify(to)} local=${String(beforeWorkbench?.local)} marker.from=${JSON.stringify(markerFrom)}`,
+      await bodyOf(cdp),
+    );
+  }
+  const clicked = await click(cdp, workbenchUpdateTexts, 3000, workbenchRowScope());
+  if (clicked === 'missing') {
+    await fail(cdp, '工作台那一行点不到「更新」钮（可能被 disabled）', await bodyOf(cdp));
+  }
+  mark('self-update-clicked');
+
+  const alive = await cdp.send('Runtime.evaluate', {
+    expression: `(async () => {
+      const body = document.body.innerText || '';
+      const titles = ${JSON.stringify(workbenchTitles)};
+      const status = await fetch('/workbench/api/module-versions?check=0').then((r) => r.status).catch(() => 0);
+      return JSON.stringify({
+        visibility: document.visibilityState,
+        row: titles.some((title) => body.includes(title)),
+        panel: /Workbench panel|工作台面板/u.test(body),
+        status,
+      });
+    })()`,
+    awaitPromise: true,
+    returnByValue: true,
+  });
+  let aliveState;
+  try {
+    aliveState = JSON.parse(alive.result?.value ?? '{}');
+  } catch {
+    aliveState = {};
+  }
+  writeText(`${prefix}-self-update-alive.txt`, `${JSON.stringify(aliveState, null, 2)}\n`);
+  result.live = aliveState.visibility === 'visible' && aliveState.row === true && aliveState.status === 200;
+  if (result.live !== true) {
+    await fail(
+      cdp,
+      `点了更新之后界面不对：visibility=${String(aliveState.visibility)} 市场行=${String(aliveState.row)} 版本接口=${String(aliveState.status)}`,
+      await bodyOf(cdp),
+    );
+  }
+
+  const readyUntil = Date.now() + remaining('等工作台自更新就绪', INSTALL_WAIT_MS);
+  let readyBody = '';
+  let body = '';
+  while (Date.now() < readyUntil) {
+    body = await bodyOf(cdp);
+    log(`self-update wait: ${tailBody(body, 220)}`);
+    if (selfUpdateFailedRe.test(body)) {
+      writeText(`${prefix}-self-update-failed-body.txt`, body);
+      await fail(cdp, '自更新报失败或回滚（界面出现失败/回滚文案）', body);
+    }
+    if (selfUpdateReadyRe.test(body)) {
+      readyBody = body;
+      break;
+    }
+    await sleep(POLL_MS);
+  }
+  if (readyBody === '') {
+    await fail(
+      cdp,
+      `自更新没在预算内就绪（等不到「新版本已就绪，重启后生效」）：${tailBody(body, 200)}`,
+      body,
+    );
+  }
+  writeText(`${prefix}-self-update-ready.txt`, readyBody);
+  mark('self-update-ready');
+
+  const laterUntil = Date.now() + 30_000;
+  let afterRow = await workbenchRowOf(cdp);
+  let texts = buttonTextsOf(afterRow);
+  while (!workbenchLaterTexts.some((text) => texts.includes(text)) && Date.now() < laterUntil) {
+    await sleep(500);
+    afterRow = await workbenchRowOf(cdp);
+    texts = buttonTextsOf(afterRow);
+  }
+  writeText(`${prefix}-self-update-row-after.json`, `${JSON.stringify(afterRow, null, 2)}\n`);
+  const restartNow = texts.find((one) => workbenchRestartNowTexts.includes(one));
+  const later = texts.find((one) => workbenchLaterTexts.includes(one));
+  if (restartNow !== undefined) {
+    await fail(
+      cdp,
+      `Desktop 上出现了「立即重启」钮（${JSON.stringify(restartNow)}）：Desktop 的 canRestart 应该是 false`,
+      await bodyOf(cdp),
+    );
+  }
+  if (later === undefined) {
+    await fail(cdp, '就绪之后工作台那一行没有「稍后」钮（重启提示没落到行上？）', await bodyOf(cdp));
+  }
+
+  const after = await workbenchVersionOf(cdp, false);
+  const afterWorkbench = after?.workbench ?? null;
+  const installedAfter = typeof afterWorkbench?.installed === 'string' ? afterWorkbench.installed : '';
+  const runningAfter = typeof afterWorkbench?.running === 'string' ? afterWorkbench.running : '';
+  writeText(
+    `${prefix}-self-update-ready.json`,
+    `${JSON.stringify({ from, to, installed: installedAfter, running: runningAfter, local: afterWorkbench?.local === true }, null, 2)}\n`,
+  );
+  if (installedAfter !== to) {
+    await fail(
+      cdp,
+      `盘上没换成新版：接口 installed=${JSON.stringify(installedAfter)}，期望 ${JSON.stringify(to)}`,
+      await bodyOf(cdp),
+    );
+  }
+  if (runningAfter !== from) {
+    await fail(
+      cdp,
+      `不重启时跑的应该还是旧版：接口 running=${JSON.stringify(runningAfter)}，期望 ${JSON.stringify(from)}`,
+      await bodyOf(cdp),
+    );
+  }
+  result.updated = true;
+  result.ready = true;
+  result.to = to;
+  mark('self-update-verified');
+  return result;
+}
+
 async function clientBundleReport(cdp) {
   const result = await cdp.send('Runtime.evaluate', {
     expression: `(async () => {
@@ -938,6 +1161,14 @@ async function pageInternals(cdp) {
     returnByValue: true,
   });
   return result.result?.value ?? '';
+}
+
+async function writeVerifyEvidence(cdp, body, units) {
+  writeText(`${prefix}-verify-body.txt`, body);
+  writeText(`${prefix}-units.json`, `${JSON.stringify(units, null, 2)}\n`);
+  writeText(`${prefix}-client-bundles.json`, await clientBundleReport(cdp));
+  writeText(`${prefix}-page-internals.json`, await pageInternals(cdp));
+  writeText(`${prefix}-console-events.json`, `${JSON.stringify(cdp.events(), null, 2)}\n`);
 }
 
 async function cardIds(cdp) {
@@ -1038,11 +1269,19 @@ async function verifyFeatures(cdp) {
     const target = ids.find((id) => id !== 'panels') ?? 'hello';
     log(`verify wait :: host units ${ids.join(',') || '（空）'} :: cards ${cards.join(',') || '（无）'} :: ${tailBody(body, 140)}`);
     if (cards.includes(`wb-card-${target}`) && /hello, workbench/u.test(body)) {
-      writeText(`${prefix}-verify-body.txt`, body);
-      writeText(`${prefix}-units.json`, `${JSON.stringify(units, null, 2)}\n`);
-      writeText(`${prefix}-client-bundles.json`, await clientBundleReport(cdp));
-      writeText(`${prefix}-page-internals.json`, await pageInternals(cdp));
-      writeText(`${prefix}-console-events.json`, `${JSON.stringify(cdp.events(), null, 2)}\n`);
+      await writeVerifyEvidence(cdp, body, units);
+      if (expectedRunningVersion !== '') {
+        const payload = await workbenchVersionOf(cdp, false);
+        const running = typeof payload?.workbench?.running === 'string' ? payload.workbench.running : '';
+        writeText(`${prefix}-verify-running.json`, `${JSON.stringify(payload, null, 2)}\n`);
+        if (running !== expectedRunningVersion) {
+          await fail(
+            cdp,
+            `重启后跑的工作台版本不对：接口 running=${JSON.stringify(running)}，期望 ${JSON.stringify(expectedRunningVersion)}`,
+            body,
+          );
+        }
+      }
       mark('module-card');
       return { card: true, units: ids };
     }
@@ -1075,12 +1314,8 @@ async function verifyFeatures(cdp) {
     }
     await sleep(POLL_MS);
   }
-  writeText(`${prefix}-verify-body.txt`, body);
   const units = await unitsOf(cdp);
-  writeText(`${prefix}-units.json`, `${JSON.stringify(units, null, 2)}\n`);
-  writeText(`${prefix}-client-bundles.json`, await clientBundleReport(cdp));
-  writeText(`${prefix}-page-internals.json`, await pageInternals(cdp));
-  writeText(`${prefix}-console-events.json`, `${JSON.stringify(cdp.events(), null, 2)}\n`);
+  await writeVerifyEvidence(cdp, body, units);
   await fail(
     cdp,
     `装上模块后面板里没有示例模块的卡片（host units: ${ids.join(',') || '空'}；cards: ${cards.join(',') || '无'}；reload 之后${reloadCard ? '有' : '仍然没'}卡片）`,
@@ -1139,15 +1374,20 @@ async function main() {
   const result =
     addPluginSpec !== ''
       ? await addPluginViaMarket(cdp, addPluginSpec)
-      : rollbackFlow
-        ? await smokeRollback(cdp)
-        : verifyOnly
-          ? await verifyFeatures(cdp)
-          : installViaUi
-            ? await smokeMarket(cdp)
-            : { skipped: true };
+      : selfUpdateFlow
+        ? await smokeSelfUpdate(cdp)
+        : rollbackFlow
+          ? await smokeRollback(cdp)
+          : verifyOnly
+            ? await verifyFeatures(cdp)
+            : installViaUi
+              ? await smokeMarket(cdp)
+              : { skipped: true };
   if (addPluginSpec !== '' && (result.preview !== true || result.installed !== true)) {
     await fail(cdp, '添加模块流程没走完（预览或结果屏没出现）', await bodyOf(cdp), snapshot);
+  }
+  if (selfUpdateFlow && (result.updated !== true || result.ready !== true || result.live !== true)) {
+    await fail(cdp, '工作台自更新流程没走完（界面/就绪/记账有一项不对）', await bodyOf(cdp), snapshot);
   }
   if (rollbackFlow && (result.rollback !== true || result.alive !== true)) {
     await fail(cdp, '切回上一版之后工作台没起来（或那句人话没出现）', await bodyOf(cdp), snapshot);

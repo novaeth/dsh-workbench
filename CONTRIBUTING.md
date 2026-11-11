@@ -123,8 +123,15 @@ GitHub Actions runs three workflows:
 - `.github/workflows/desktop-smoke.yml` (pushes to `main`, a weekly cron, and manual dispatch; macOS
   plus Windows Server 2022/2025 through `desktop-smoke-windows.yml`): installs the shipped Desktop
   build, installs the workbench from the plugin page, runs preflight, loads the opencli extension,
-  installs `module-hello` from the market, restarts once and asserts the card. A failing run publishes
-  the page/log evidence to a `desktop-ui-log-*` branch; a green one only uploads the run artifacts.
+  installs `module-hello` from the market, restarts once and asserts the card. It also drives the
+  workbench's own self-update the way a user meets it: a fixture installs the published
+  `@dsh-workbench/core@1.2.3-beta.4` into a version directory with the profile pointing at it (and
+  `includePrerelease` on), the probe clicks 「更新」 on the workbench row, asserts the interface stays
+  up and the row says the new version is ready while the running version is still the old one, then a
+  restarted instance asserts the running version is the new one. Self-update and rollback legs report
+  `::warning` instead of failing the leg for now (they are the youngest assertions). A failing run
+  publishes the page/log evidence to a `desktop-ui-log-*` branch; a green one only uploads the run
+  artifacts.
 - `.github/workflows/platform-smoke.yml` (pull requests and pushes to `main` touching `packages/**/src/**`
   or `scripts/smoke/**`, a weekly cron, and manual dispatch; ubuntu, macOS, Windows Server 2022/2025):
   runs `pnpm run smoke:platform` — argv quoting through the real shell, win32 quoting parsed by a real

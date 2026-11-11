@@ -24,6 +24,7 @@ jobs:
       DESKTOP_SMOKE_MARKET: https://github.com/novaeth/dsh-workbench-market.git
       DESKTOP_SMOKE_MODULE: '@dsh-workbench/module-hello'
       DESKTOP_SMOKE_PLUGIN: opencli-plugin-hello
+      DESKTOP_SMOKE_UPDATE_FROM: 1.2.3-beta.4
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -71,6 +72,10 @@ jobs:
           $err4 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app4.err.log'
           $out5 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app5.log'
           $err5 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app5.err.log'
+          $out6 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app6.log'
+          $err6 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app6.err.log'
+          $out7 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app7.log'
+          $err7 = Join-Path $env:RUNNER_TEMP 'desktop-${{ inputs.label }}-app7.err.log'
           "DESKTOP_SMOKE_APP_LOG=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "DESKTOP_SMOKE_APP_ERR=$err" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "DESKTOP_SMOKE_APP_LOG_2=$out2" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
@@ -161,6 +166,39 @@ jobs:
               }
             } else {
               Write-Host '::warning title=rollback instance (回退 E2E 试验中，不挡这条腿)::启动后没有页面'
+            }
+          }
+          $global:LASTEXITCODE = 0
+          # 自更新这条 E2E 还在试验中：它自己红只发警告，不挡这条腿既有的信号。
+          Stop-App
+          Start-Sleep -Seconds 3
+          if (Invoke-Warned 'update-fixture' { node scripts/desktop-smoke/self-update-update-fixture.mjs $appRoot 'desktop' $env:DESKTOP_SMOKE_UPDATE_FROM }) {
+            $app6 = Start-App 9227 $out6 $err6
+            "self-update desktop pid: $($app6.Id)"
+            if (Wait-Page 9227) {
+              if (Invoke-Warned 'update-probe' { node scripts/desktop-smoke/cdp-probe.mjs 9227 desktop-${{ inputs.label }}-self-update.png --self-update }) {
+                $ready = Join-Path $env:DESKTOP_SMOKE_OUT "desktop-${{ inputs.label }}-self-update-ready.json"
+                $to = ''
+                if (Test-Path -LiteralPath $ready) {
+                  $to = (node -e "try{const p=JSON.parse(require('node:fs').readFileSync(process.argv[1],'utf8'));process.stdout.write(typeof p.to==='string'?p.to:'')}catch{process.stdout.write('')}" $ready | Out-String).Trim()
+                }
+                if ($to -ne '') {
+                  $env:DESKTOP_SMOKE_EXPECT_RUNNING_VERSION = $to
+                  Stop-App
+                  Start-Sleep -Seconds 3
+                  $app7 = Start-App 9228 $out7 $err7
+                  "after-self-update desktop pid: $($app7.Id)"
+                  if (Wait-Page 9228) {
+                    Invoke-Warned 'update-after-restart' { node scripts/desktop-smoke/cdp-probe.mjs 9228 desktop-${{ inputs.label }}-after-self-update.png --verify-only --expect-workbench } | Out-Null
+                  } else {
+                    Write-Host '::warning title=after-self-update instance (自更新 E2E 试验中，不挡这条腿)::重启后没有页面'
+                  }
+                } else {
+                  Write-Host "::warning title=self-update ready (自更新 E2E 试验中，不挡这条腿)::探针没写出 $ready，或里面没有 to"
+                }
+              }
+            } else {
+              Write-Host '::warning title=self-update instance (自更新 E2E 试验中，不挡这条腿)::启动后没有页面'
             }
           }
           $global:LASTEXITCODE = 0

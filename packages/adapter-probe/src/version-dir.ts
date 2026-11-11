@@ -1,8 +1,10 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { join, relative, resolve, sep } from 'node:path';
-import { ensureDir, linkDir, removePath, writeJsonFile, writeTextFile } from '@dsh-workbench/shared/host';
+import { join, relative, sep } from 'node:path';
+import { ensureDir, isManagedLinkSpec, linkDir, removePath, writeJsonFile, writeTextFile } from '@dsh-workbench/shared/host';
 import { installWithRetry, type InstallAttempt, type InstallRetryResult } from './install-retry.js';
 import { CORE_ARTIFACTS, SELF_UPDATE_PACKAGES } from './self-update-plan.js';
+
+export { isManagedLinkSpec };
 
 const DEFAULT_WORKSPACE = 'packages:\n  - .\n\nnodeLinker: hoisted\nautoInstallPeers: false\n';
 const CORE = '@dsh-workbench/core';
@@ -138,13 +140,6 @@ export function writeProfileLinks(input: {
   const dependencies = { ...(manifest.dependencies ?? {}) };
   for (const link of input.links) dependencies[link.pkg] = link.spec;
   writeJsonFile(manifestPath, { ...manifest, dependencies });
-}
-
-export function isManagedLinkSpec(spec: string, versionsDir: string, baseDir: string): boolean {
-  if (!spec.startsWith(LINK_PREFIX)) return false;
-  const target = resolve(baseDir, spec.slice(LINK_PREFIX.length));
-  const root = resolve(versionsDir);
-  return target === root || target.startsWith(`${root}${sep}`);
 }
 
 function manifestOf(packages: readonly string[], version: string): Record<string, unknown> {

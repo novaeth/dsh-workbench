@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DshHostContext } from '@dsh-workbench/shared';
 import {
   createDeclarationLookup,
@@ -29,6 +29,7 @@ function profileWith(pkg: string, manifest: unknown): string {
 }
 
 afterEach(() => {
+  vi.unstubAllEnvs();
   for (const dir of dirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
 });
 
@@ -320,6 +321,49 @@ describe('读 profile 里某一份包（工作台自己那一行要的：版本 
     return root;
   }
 
+  function tempHome(): string {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'wb-selfpkg-home-'));
+    dirs.push(home);
+    return home;
+  }
+
+  function profileUnder(home: string, spec: string): string {
+    const root = path.join(home, 'profile');
+    const at = path.join(root, 'node_modules', '@dsh-workbench', 'core');
+    fs.mkdirSync(at, { recursive: true });
+    fs.writeFileSync(
+      path.join(root, 'package.json'),
+      JSON.stringify({
+        name: 'dsh-profile-workbench',
+        dsh: { profile: { bundles: ['@dsh-workbench/core'] } },
+        dependencies: { '@dsh-workbench/core': spec },
+      }),
+      'utf8',
+    );
+    fs.writeFileSync(
+      path.join(at, 'package.json'),
+      JSON.stringify({
+        name: '@dsh-workbench/core',
+        version: '1.2.3-beta.4',
+        dsh: { workbench: { unit: 'core' } },
+      }),
+      'utf8',
+    );
+    return root;
+  }
+
+  function localOf(spec: string): boolean | undefined {
+    const home = tempHome();
+    vi.stubEnv('DSH_WORKBENCH_HOME', path.join(home, 'workbench'));
+    return readProfilePackage(profileUnder(home, spec), '@dsh-workbench/core')?.local;
+  }
+
+  function moduleLocalOf(spec: string): boolean | undefined {
+    const home = tempHome();
+    vi.stubEnv('DSH_WORKBENCH_HOME', path.join(home, 'workbench'));
+    return profileModules(profileUnder(home, spec))[0]?.local;
+  }
+
   it('把版本、源与"是不是本仓那份"一次读出来（源优先自述里的 publishConfig）', () => {
     const root = profile('^0.1.18', '0.1.19', { publishConfig: { registry: 'https://r.example/' } });
 
@@ -345,6 +389,30 @@ describe('读 profile 里某一份包（工作台自己那一行要的：版本 
         local ? true : undefined,
       );
     }
+  });
+
+  it('★ 自更新写进 versions/<版本>/ 的 link: **不算**本仓那份：迁过去之后还得提示更新', () => {
+    const managed = 'link:../workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/core';
+
+    expect(isLocalDependencySpec(managed)).toBe(true);
+    expect(localOf(managed)).toBeUndefined();
+  });
+
+  it('★ versions 根以外的 link: 仍算本仓那份（checkout / 别处 / 形近根都不豁免）', () => {
+    for (const spec of [
+      'link:../../repo/packages/core',
+      'link:../elsewhere/core',
+      'link:../workbench/versions-old/core',
+    ]) {
+      expect(localOf(spec), spec).toBe(true);
+    }
+  });
+
+  it('★ 模块行同套豁免：versions 目录下的 link: 不算本仓那份', () => {
+    const managed = moduleLocalOf('link:../workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/core');
+
+    expect(managed).not.toBe(true);
+    expect(moduleLocalOf('link:../../repo/packages/core')).toBe(true);
   });
 
   it('★ 从打好的包装的（file:*.tgz）**不算**本仓那份：它是发布产物，能比源上、也该让人更新', () => {

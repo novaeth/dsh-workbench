@@ -4,6 +4,7 @@ import type { DshHostContext } from '../api/dsh.js';
 import { declarationProblemsOf, readDeclaration } from '../contract/unit-declaration.js';
 import { packageSourceOf } from './installed-sources.js';
 import { scopeOf } from './adapter-types.js';
+import { workbenchRoot } from './data-root.js';
 import { isPackageName } from './spec.js';
 import type { InstalledModule, ProfileModule, ProfilePackage } from './adapter-types.js';
 export interface UnitDeclarationSource {
@@ -62,7 +63,7 @@ export function profileModules(profileDir: string | null): readonly ProfileModul
         unit: read.unit,
         version: read.version,
         ...(read.registry === undefined ? {} : { registry: read.registry }),
-        local: isLocalDependencySpec(spec),
+        local: isLocalCopySpec(profileDir, spec),
         fromRegistry: isRegistryDependencySpec(spec),
       });
     }
@@ -236,6 +237,22 @@ export function isLocalDependencySpec(spec: string): boolean {
   );
 }
 
+const LINK_SPEC_PREFIX = 'link:';
+
+export function isManagedLinkSpec(spec: string, versionsDir: string, baseDir: string): boolean {
+  const trimmed = spec.trim();
+  if (!trimmed.startsWith(LINK_SPEC_PREFIX)) return false;
+  const target = path.resolve(baseDir, trimmed.slice(LINK_SPEC_PREFIX.length));
+  const root = path.resolve(versionsDir);
+  return target === root || target.startsWith(`${root}${path.sep}`);
+}
+
+function isLocalCopySpec(profileDir: string | null, spec: string): boolean {
+  const local = isLocalDependencySpec(spec);
+  if (!local || profileDir === null) return local;
+  return !isManagedLinkSpec(spec, path.join(workbenchRoot(), 'versions'), profileDir);
+}
+
 const NON_REGISTRY_SPEC = /^(?:git\+|git:|github:|gitlab:|bitbucket:|https?:|ssh:|workspace:)/i;
 
 export function isRegistryDependencySpec(spec: string): boolean {
@@ -259,7 +276,7 @@ export function readProfilePackage(profileDir: string | null, pkg: string): Prof
   if (version === '') return undefined;
   const registry = registryOf(profileDir, pkg, record);
   const dependencies = asRecord(profileManifestOf(profileDir)?.dependencies) ?? {};
-  const local = isLocalDependencySpec(asText(dependencies[pkg]));
+  const local = isLocalCopySpec(profileDir, asText(dependencies[pkg]));
   return {
     pkg,
     version,
