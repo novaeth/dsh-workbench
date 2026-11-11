@@ -142,7 +142,7 @@ type RightbarObservable = {
   subscribe(listener: () => void): () => void;
 };
 
-export const inject = ['slots', 'locale', 'layout', 'uiWorkspace', 'workspaces', 'shortcuts', 'remote'];
+export const inject = ['slots', 'locale', 'layout', 'uiWorkspace', 'workspaces', 'shortcuts', 'remote', 'inputTriggers'];
 
 export function apply(ctx: DshClientContext): void {
   try {
