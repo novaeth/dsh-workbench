@@ -1,0 +1,185 @@
+[
+  {
+    "method": "Runtime.consoleAPICalled",
+    "params": {
+      "type": "error",
+      "args": [
+        {
+          "type": "string",
+          "value": "[dsh-workbench] apply failed"
+        },
+        {
+          "type": "object",
+          "subtype": "error",
+          "className": "Error",
+          "description": "Error: cannot get property \"inputTriggers\" without inject\n    at installContextChips (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=1fa8809ab0b1:18496:29)\n    at mount (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=1fa8809ab0b1:23531:8)\n    at new apply (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=1fa8809ab0b1:23499:9)\n    at A2.execute (dsh-app://app/assets/index-BgUyXZcc.js:10:1540)\n    at dsh-app://app/assets/index-BgUyXZcc.js:10:2807\n    at R1 (dsh-app://app/assets/index-BgUyXZcc.js:7:75)\n    at A2._execute (dsh-app://app/assets/index-BgUyXZcc.js:10:2685)\n    at A2._reload (dsh-app://app/assets/index-BgUyXZcc.js:10:6173)",
+          "objectId": "-6189877609861188322.1.1",
+          "preview": {
+            "type": "object",
+            "subtype": "error",
+            "description": "Error: cannot get property \"inputTriggers\" without inject\n    at installContextChips (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=1fa8809ab0b1:18496:29)\n    at mount (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=1fa8809ab0b1:23531:8)\n    at new apply (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=1fa8809ab0b1:23499:9)\n    at A2.execute (dsh-app://app/assets/index-BgUyXZcc.js:10:1540)\n    at dsh-app://app/assets/index-BgUyXZcc.js:10:2807\n    at R1 (dsh-app://app/assets/index-BgUyXZcc.js:7:75)\n    at A2._execute (dsh-app://app/assets/index-BgUyXZcc.js:10:2685)\n    at A2._reload (dsh-app://app/assets/index-BgUyXZcc.js:10:6173)",
+            "overflow": false,
+            "properties": [
+              {
+                "name": "stack",
+                "type": "string",
+                "value": "Error: cannot get property \"inputTriggers\" without… (dsh-app://app/assets/index-BgUyXZcc.js:10:6173)"
+              },
+              {
+                "name": "message",
+                "type": "string",
+                "value": "cannot get property \"inputTriggers\" without inject"
+              }
+            ]
+          }
+        }
+      ],
+      "executionContextId": 1,
+      "timestamp": 1794368947029.5,
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "apply",
+            "scriptId": "26",
+            "url": "dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=1fa8809ab0b1",
+            "lineNumber": 23500,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 1539
+          },
+          {
+            "functionName": "",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2806
+          },
+          {
+            "functionName": "R1",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 6,
+            "columnNumber": 74
+          },
+          {
+            "functionName": "_execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2684
+          },
+          {
+            "functionName": "_reload",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 6172
+          }
+        ]
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: net::ERR_FAILED",
+        "timestamp": 1794369247353.032,
+        "url": "dsh-app://app/plugins/events",
+        "networkRequestId": "2204.39"
+      }
+    }
+  },
+  {
+    "method": "Runtime.consoleAPICalled",
+    "params": {
+      "type": "error",
+      "args": [
+        {
+          "type": "string",
+          "value": "[dsh-workbench] apply failed"
+        },
+        {
+          "type": "object",
+          "subtype": "error",
+          "className": "Error",
+          "description": "Error: cannot get property \"inputTriggers\" without inject\n    at installContextChips (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=1fa8809ab0b1:18496:29)\n    at mount (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=1fa8809ab0b1:23531:8)\n    at new apply (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=1fa8809ab0b1:23499:9)\n    at A2.execute (dsh-app://app/assets/index-BgUyXZcc.js:10:1540)\n    at dsh-app://app/assets/index-BgUyXZcc.js:10:2807\n    at R1 (dsh-app://app/assets/index-BgUyXZcc.js:7:75)\n    at A2._execute (dsh-app://app/assets/index-BgUyXZcc.js:10:2685)\n    at A2._reload (dsh-app://app/assets/index-BgUyXZcc.js:10:6173)\n    at async A2.await (dsh-app://app/assets/index-BgUyXZcc.js:10:7042)",
+          "objectId": "-6189877609861188322.1.2",
+          "preview": {
+            "type": "object",
+            "subtype": "error",
+            "description": "Error: cannot get property \"inputTriggers\" without inject\n    at installContextChips (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=1fa8809ab0b1:18496:29)\n    at mount (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=1fa8809ab0b1:23531:8)\n    at new apply (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=1fa8809ab0b1:23499:9)\n    at A2.execute (dsh-app://app/assets/index-BgUyXZcc.js:10:1540)\n    at dsh-app://app/assets/index-BgUyXZcc.js:10:2807\n    at R1 (dsh-app://app/assets/index-BgUyXZcc.js:7:75)\n    at A2._execute (dsh-app://app/assets/index-BgUyXZcc.js:10:2685)\n    at A2._reload (dsh-app://app/assets/index-BgUyXZcc.js:10:6173)\n    at async A2.await (dsh-app://app/assets/index-BgUyXZcc.js:10:7042)",
+            "overflow": false,
+            "properties": [
+              {
+                "name": "stack",
+                "type": "string",
+                "value": "Error: cannot get property \"inputTriggers\" without… (dsh-app://app/assets/index-BgUyXZcc.js:10:7042)"
+              },
+              {
+                "name": "message",
+                "type": "string",
+                "value": "cannot get property \"inputTriggers\" without inject"
+              }
+            ]
+          }
+        }
+      ],
+      "executionContextId": 1,
+      "timestamp": 1794369250365.452,
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "apply",
+            "scriptId": "26",
+            "url": "dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=1fa8809ab0b1",
+            "lineNumber": 23500,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 1539
+          },
+          {
+            "functionName": "",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2806
+          },
+          {
+            "functionName": "R1",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 6,
+            "columnNumber": 74
+          },
+          {
+            "functionName": "_execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2684
+          },
+          {
+            "functionName": "_reload",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 6172
+          }
+        ]
+      }
+    }
+  }
+]
