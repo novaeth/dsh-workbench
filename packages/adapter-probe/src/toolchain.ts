@@ -280,19 +280,16 @@ export function toolchainBinDir(root: string): string {
   return join(root, 'bin', 'desktop');
 }
 
-function desktopPnpmShim(proc: ToolchainProcess, exists: (path: string) => boolean, platform: NodeJS.Platform): string | undefined {
+export function desktopPnpmShim(proc: ToolchainProcess, exists: (path: string) => boolean, platform: NodeJS.Platform): string | undefined {
   const pnpm = desktopPnpmPath(proc, exists);
   if (pnpm === undefined) return undefined;
   const node = desktopNodeExecutable(proc, exists);
-  const runner = node === undefined ? undefined : quoteShellArgFor(node, platform);
   if (platform === 'win32') {
-    return runner === undefined
-      ? `@echo off\r\n"${proc.execPath}" "${pnpm}" %*\r\n`
-      : `@echo off\r\n${runner} "${pnpm}" %*\r\n`;
+    const runner = node === undefined ? proc.execPath : node;
+    return `@echo off\r\n"${runner}" "${pnpm}" %*\r\n`;
   }
-  return runner === undefined
-    ? `#!/bin/sh\nexec ${quoteShellArgFor(proc.execPath, platform)} ${quoteShellArgFor(pnpm, platform)} "$@"\n`
-    : `#!/bin/sh\nexec ${runner} ${quoteShellArgFor(pnpm, platform)} "$@"\n`;
+  const runner = node === undefined ? quoteShellArgFor(proc.execPath, platform) : quoteShellArgFor(node, platform);
+  return `#!/bin/sh\nexec ${runner} ${quoteShellArgFor(pnpm, platform)} "$@"\n`;
 }
 
 export function ensureToolchain(options: ToolchainOptions): ToolchainResult {

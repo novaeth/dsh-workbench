@@ -8,6 +8,7 @@ import { createFakeProcesses, createFakeShell } from '@dsh-workbench/shared/test
 
 import {
   desktopNodeShim,
+  desktopPnpmShim,
   ensureToolchain,
   localNpmBin,
   localNpmCache,
@@ -75,6 +76,16 @@ describe('ensureToolchain', () => {
   it('★ web 不写 shim，也不返回要前插的目录', () => {
     const root = tempRoot();
     expect(ensureToolchain({ root, proc: web, platform: 'darwin' })).toEqual({ files: [] });
+  });
+
+  it('★ Windows 的 pnpm 垫片必须是 .cmd 能吃下的双引号（单引号在 cmd 里不是引号）', () => {
+    const nodeExe = join(resources, 'runtime', 'primary-runtime', 'dependencies', 'node', 'bin', 'node.exe');
+    const exists = (path: string): boolean => path === pnpmCjs || path === nodeExe;
+    const shim = desktopPnpmShim(desktopPnpm, exists, 'win32') as string;
+
+    expect(shim.startsWith('@echo off\r\n')).toBe(true);
+    expect(shim).toContain(`"${nodeExe}" "${pnpmCjs}" %*`);
+    expect(shim).not.toContain("'");
   });
 
   it('★ Desktop 幂等写 node shim，并返回专属 bin 目录', () => {
