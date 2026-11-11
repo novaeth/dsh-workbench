@@ -1,0 +1,47 @@
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Add module
+Installed
+Discover
+Workbench1.2.3-beta.3local
+Installed modules
+1
+Sample module1.1.14-beta.2
+installed
+Uninstall
+After installing, enable it in the panel page of that project.
+Workbench panel
+Sample module
+
+hello, workbench
+
+This card comes from a standalone workbench module.
+
+Add module
+
+Enter a module or opencli plugin package name, Git repository URL, or local directory path.
+
+This package cannot be installed here: opencli-plugin-hello declares no dsh.bundle. This entry recognises workbench modules and opencli plugins by package name, and installs either; but a git URL or a tarball does not reveal what it is — if it is really one of those two, use its package name or a local folder instead.
+
+Install guide and examples
+Source
+npm registry
+
+Make sure you trust the source. Modules run on this machine with your permissions; an unknown module can damage the workbench or read and leak your data.
+
+Install
