@@ -58,7 +58,6 @@ export interface MarketNote {
     | 'panels.market.selfUpdateQueued'
     | 'panels.market.selfUpdatePendingRestart'
     | 'panels.market.selfUpdateRestored'
-    | 'panels.market.selfUpdateRolledBack'
     | 'panels.market.selfUpdateFailed'
     | 'panels.market.selfUpdateFailedNoFix';
   readonly params: Readonly<Record<string, string>>;
@@ -74,8 +73,6 @@ export type MarketHintKey =
   | 'panels.market.workbenchUpdateNeedsDsh'
   | 'panels.market.selfUpdateReasonOccupied'
   | 'panels.market.selfUpdateReasonIncomplete'
-  | 'panels.market.selfUpdateReasonRollbackFailed'
-  | 'panels.market.selfUpdateReasonBootFailed'
   | 'panels.market.selfUpdateMigration'
   | 'panels.market.selfUpdateReasonUnknown';
 

@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs';
 import { ensureProfileBundle, tailLines, writeJsonFile, type ProcessHost } from '@dsh-workbench/shared/host';
 import type {
   SelfUpdateExpectBootStep,
@@ -6,7 +5,7 @@ import type {
   SelfUpdateStep,
   SelfUpdateSteps,
 } from './self-update-steps.js';
-import { bootRollsBack, bootVerdict, readBootRecord } from './self-update-boot.js';
+import { bootVerdict, readBootRecord } from './self-update-boot.js';
 import {
   carryPreviousVersion,
   flipProfileLinks,
@@ -32,7 +31,7 @@ export const SELF_UPDATE_INUSE_POLL_MS = 2_000;
 
 export interface SelfUpdateRunResult {
   readonly ok: boolean;
-  readonly state: 'ok' | 'pending' | 'rolled-back' | 'failed';
+  readonly state: 'ok' | 'pending' | 'failed';
   readonly detail: string;
   readonly ran: readonly string[];
 }
@@ -73,9 +72,6 @@ export async function runSelfUpdateSteps(
     log(outcome.detail);
     if (outcome.state === 'pending') return { ok: true, state: 'pending', detail: outcome.detail, ran };
     if (outcome.state === 'failed') return { ok: false, state: 'failed', detail: outcome.detail, ran };
-    if (outcome.state === 'rolled-back') {
-      return { ok: true, state: 'rolled-back', detail: outcome.detail, ran };
-    }
   }
   return { ok: true, state: 'ok', detail: `${plan.version} 已就绪，重启后生效`, ran };
 }
@@ -212,55 +208,16 @@ async function expectBoot(
       boot: readBootRecord(boot.file),
       up: readBootRecord(boot.upFile),
       now: now(),
-      graceMs: boot.graceMs,
     });
     if (verdict === 'confirmed') {
       writeJsonFile(plan.markerPath, { ...plan.marker, state: 'ok', version: boot.target, at: now() });
       return { ok: true, detail: `${boot.target} 起来了，这一版确认可用` };
     }
-    if (bootRollsBack(verdict)) return rollBack(plan, boot, verdict, now);
     if (Date.parse(now()) >= deadline) {
       return { ok: true, detail: `还没重启过，${boot.target} 先留着（重启后生效）`, state: 'pending' };
     }
     await sleep(boot.pollMs);
   }
-}
-
-function rollBack(
-  plan: SelfUpdateSteps,
-  boot: SelfUpdateExpectBootStep['boot'],
-  verdict: 'wrong-version' | 'half-down',
-  now: () => string,
-): StepOutcome {
-  const missing = boot.rollback.links.filter((link) => !existsSync(link.target));
-  if (missing.length > 0) {
-    const detail = `上一版不在本机了（${missing.map((link) => link.pkg).join('、')} 没在盘上），翻回去会是死链，所以没翻；救法：${plan.rescue}`;
-    writeJsonFile(plan.markerPath, {
-      ...plan.marker,
-      state: 'failed',
-      version: boot.target,
-      reason: 'rollback-failed',
-      at: now(),
-    });
-    return { ok: true, state: 'failed', detail };
-  }
-  flipProfileLinks(boot.rollback.links);
-  writeProfileLinks({ profileDir: boot.rollback.profileDir, links: boot.rollback.links });
-  writeJsonFile(plan.markerPath, {
-    ...plan.marker,
-    state: 'rolled-back',
-    version: plan.marker.from,
-    reason: 'boot-failed',
-    at: now(),
-  });
-  return {
-    ok: true,
-    state: 'rolled-back',
-    detail:
-      verdict === 'wrong-version'
-        ? '重启起来的是旧版（新那半没换上），已经翻回上一版'
-        : '新版起来了但工作台那半一直没露面，已经翻回上一版',
-  };
 }
 
 const IN_USE_CODES = new Set(['EPERM', 'EBUSY', 'EACCES', 'ENOTEMPTY']);

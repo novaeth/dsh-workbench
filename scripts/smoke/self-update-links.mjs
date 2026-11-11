@@ -218,10 +218,10 @@ writeFileSync(
   `${JSON.stringify({ version: NEWER, at: new Date(Date.now() + 1000).toISOString(), pid: process.pid })}\n`,
 );
 await update(NEWER, BAD, { bootWindowMs: 30_000 });
-check('④ 起来了但不是新版 → 翻回上一版', linkedTo(NEWER), `现在指到 ${realpathSync(join(PROFILE_DIR, 'node_modules', CORE))}`);
-check('④ marker 落 rolled-back 且带因由', marker().state === 'rolled-back' && marker().reason === 'boot-failed', JSON.stringify(marker()));
-check('④ 回退不重装、不联网（一次安装都没起）', installCalls().length === 1, `装了 ${String(installCalls().length)} 次`);
-check('④ 回退之后这一版目录还在（下回还能再切）', existsSync(superseded));
+check('④ 起来了但不是新版 → 不自动回滚，链接留在装好的那一版', linkedTo(BAD), `现在指到 ${realpathSync(join(PROFILE_DIR, 'node_modules', CORE))}`);
+check('④ marker 留 pending-restart（等下一次确认，不自己翻回去）', marker().state === 'pending-restart', JSON.stringify(marker()));
+check('④ 不为回滚额外装一遍（就这一版的安装，没有第二次）', installCalls().length === 1, `装了 ${String(installCalls().length)} 次`);
+check('④ 那一版目录还在', existsSync(superseded));
 
 check(
   '⑤ 整段跑完没碰过真实数据根（这是踩过两次的那个坑）',

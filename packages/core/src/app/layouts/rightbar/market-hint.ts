@@ -41,7 +41,6 @@ const SELF_UPDATE_NOTES: ReadonlySet<string> = new Set<string>([
   'panels.market.selfUpdateFailed',
   'panels.market.selfUpdateFailedNoFix',
   'panels.market.selfUpdateRestored',
-  'panels.market.selfUpdateRolledBack',
 ]);
 
 function isProblem(row: MarketRow): boolean {

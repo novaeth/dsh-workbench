@@ -4,7 +4,7 @@ export type SelfUpdateBootRecord = BootRecord;
 
 export { readBootRecord, writeBootRecord } from '@dsh-workbench/shared/host';
 
-export type BootVerdict = 'confirmed' | 'wrong-version' | 'half-down' | 'waiting' | 'no-boot';
+export type BootVerdict = 'confirmed' | 'waiting' | 'no-boot';
 
 function millis(at: string): number {
   const value = Date.parse(at);
@@ -23,18 +23,10 @@ export function bootVerdict(input: {
   readonly boot: SelfUpdateBootRecord | undefined;
   readonly up: SelfUpdateBootRecord | undefined;
   readonly now: string;
-  readonly graceMs: number;
 }): BootVerdict {
   if (input.up !== undefined && input.up.version === input.target && fresh(input.up, input.since)) {
     return 'confirmed';
   }
   if (!fresh(input.boot, input.since)) return 'no-boot';
-  const boot = input.boot as SelfUpdateBootRecord;
-  if (boot.version !== input.target) return 'wrong-version';
-  const waited = millis(input.now) - millis(boot.at);
-  return Number.isFinite(waited) && waited >= input.graceMs ? 'half-down' : 'waiting';
-}
-
-export function bootRollsBack(verdict: BootVerdict): verdict is 'wrong-version' | 'half-down' {
-  return verdict === 'wrong-version' || verdict === 'half-down';
+  return 'waiting';
 }

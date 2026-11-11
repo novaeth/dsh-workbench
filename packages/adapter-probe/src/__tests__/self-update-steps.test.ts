@@ -8,7 +8,6 @@ import type { SelfUpdateRequest } from '@dsh-workbench/shared/host';
 import type { SelfUpdatePaths } from '@dsh-workbench/shared/host';
 import { selfUpdateStepsOf } from '../self-update-steps.js';
 import { runSelfUpdateSteps } from '../self-update-run.js';
-import { flipProfileLinks, versionDirOf, versionLinksOf } from '../version-dir.js';
 import { isManagedLinkSpec, type VersionLink } from '../version-dir.js';
 import { SELF_UPDATE_PACKAGES } from '../self-update-plan.js';
 
@@ -284,7 +283,7 @@ describe('清单不变量：dsh.profile.bundles 那一行更新前后都在', ()
   });
 });
 
-describe('自动回退窗口：新版起不来就翻回上一版', () => {
+describe('确认窗口：只认「这一版确认可用」，不再自动回滚', () => {
   const AT = '2026-11-10T12:00:00.000Z';
   const FRESH = '2026-11-10T12:01:00.000Z';
 
@@ -296,7 +295,6 @@ describe('自动回退窗口：新版起不来就翻回上一版', () => {
           readonly file: string;
           readonly upFile: string;
           readonly target: string;
-          readonly rollback: { readonly links: readonly { readonly link: string; readonly target: string }[] };
         };
       }
     ).boot;
@@ -325,7 +323,7 @@ describe('自动回退窗口：新版起不来就翻回上一版', () => {
     expect(linkedVersion(plan.profileDir)).toBe(TO);
   });
 
-  it('★ 重启起来的是旧版 → 翻回上一版、marker 落 rolled-back，且一个进程都不再起（判据 3、5）', async () => {
+  it('★ 重启起来的是旧版 → 不自动回滚：留 pending，链接仍指新版（自更新只报结果）', async () => {
     const { request, paths } = caseDirs();
     const plan = planOf(request, paths, { at: AT });
     const boot = bootOf(plan);
@@ -335,26 +333,15 @@ describe('自动回退窗口：新版起不来就翻回上一版', () => {
 
     const result = await runSelfUpdateSteps(plan, { processes: processes.host, now: () => FRESH });
 
-    expect(result.state).toBe('rolled-back');
-    expect(result.detail).toContain('旧版');
-    expect(JSON.parse(readFileSync(plan.markerPath, 'utf8'))).toMatchObject({
-      state: 'rolled-back',
-      version: FROM,
-      reason: 'boot-failed',
-    });
-    expect(linkedVersion(plan.profileDir)).toBe(FROM);
-    const previousDir = versionDirOf(paths.versionsDir, FROM);
-    expect(boot.rollback.links.length).toBeGreaterThan(0);
-    for (const one of boot.rollback.links) expect(one.target.startsWith(previousDir)).toBe(true);
+    expect(result.state).toBe('pending');
+    expect(JSON.parse(readFileSync(plan.markerPath, 'utf8'))).toMatchObject({ state: 'pending-restart', version: TO });
+    expect(linkedVersion(plan.profileDir)).toBe(TO);
     expect(processes.calls).toHaveLength(1);
-    expect(readFileSync(join(plan.profileDir, 'package.json'), 'utf8').replaceAll('\\', '/')).toContain(
-      `/versions/${FROM}/`,
-    );
   });
 
-  it('★ 新版起来了但工作台那半没露面（过了宽限）→ 也翻回去（判据 3）', async () => {
+  it('★ 新版起来但工作台那半一直没露面 → 也不翻回去', async () => {
     const { request, paths } = caseDirs();
-    const plan = planOf(request, paths, { at: AT, bootGraceMs: 0 });
+    const plan = planOf(request, paths, { at: AT });
     const boot = bootOf(plan);
     const processes = installing(plan.packages, paths.versionsDir, TO);
     materialize({ versionsDir: paths.versionsDir, version: FROM, packages: plan.packages });
@@ -362,9 +349,8 @@ describe('自动回退窗口：新版起不来就翻回上一版', () => {
 
     const result = await runSelfUpdateSteps(plan, { processes: processes.host, now: () => FRESH });
 
-    expect(result.state).toBe('rolled-back');
-    expect(result.detail).toContain('没露面');
-    expect(linkedVersion(plan.profileDir)).toBe(FROM);
+    expect(result.state).toBe('pending');
+    expect(linkedVersion(plan.profileDir)).toBe(TO);
   });
 
   it('★ 还没重启过（窗口内没有新记录）→ 不判失败、不回头，marker 留在 pending-restart', async () => {
@@ -498,22 +484,6 @@ describe('一次性迁移：旧版只压在 profile 的真目录里', () => {
     }
   };
 
-  it('★ 真目录现场：新版半露面过宽限 → 翻回上一版，profile 里读得到旧版', async () => {
-    const { request, paths } = caseDirs();
-    const profileDir = join(request.dshHome, 'profiles', request.profile);
-    realInstall(profileDir, FROM);
-    const plan = planOf(request, paths, { at: AT, bootGraceMs: 0 });
-    const boot = bootOf(plan);
-    const processes = installing(plan.packages, paths.versionsDir, TO);
-    writeRecord(boot.file, TO, FRESH);
-
-    const result = await runSelfUpdateSteps(plan, { processes: processes.host, now: () => FRESH });
-
-    expect(result.state).toBe('rolled-back');
-    expect(lstatSync(join(plan.profileDir, 'node_modules', CORE)).isSymbolicLink()).toBe(true);
-    expect(versionAt(plan.profileDir, CORE)).toBe(FROM);
-  });
-
   it('★ 真目录现场：新版确认了 → 旧版留在版本目录里，profile 指到新版', async () => {
     const { request, paths } = caseDirs();
     const profileDir = join(request.dshHome, 'profiles', request.profile);
@@ -530,37 +500,5 @@ describe('一次性迁移：旧版只压在 profile 的真目录里', () => {
     const kept = join(paths.versionsDir, FROM, 'node_modules', CORE, 'package.json');
     expect(JSON.parse(readFileSync(kept, 'utf8')).version).toBe(FROM);
     expect(versionAt(plan.profileDir, CORE)).toBe(TO);
-  });
-
-  it('★ 上一版没在盘上 → 不翻成悬空链接，落回退失败并给救法', async () => {
-    const { request, paths } = caseDirs();
-    const profileDir = join(request.dshHome, 'profiles', request.profile);
-    for (const pkg of SELF_UPDATE_PACKAGES) {
-      const dir = join(paths.versionsDir, FROM, 'node_modules', pkg);
-      mkdirSync(dir, { recursive: true });
-      writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: pkg, version: FROM }), 'utf8');
-    }
-    flipProfileLinks(versionLinksOf({ profileDir, versionDir: join(paths.versionsDir, FROM) }));
-    const plan = planOf(request, paths, { at: AT, bootGraceMs: 0 });
-    const boot = bootOf(plan);
-    const processes = installing(plan.packages, paths.versionsDir, TO);
-    writeRecord(boot.file, TO, FRESH);
-    rmSync(join(paths.versionsDir, FROM), { recursive: true, force: true });
-
-    const lines: string[] = [];
-    const result = await runSelfUpdateSteps(plan, {
-      processes: processes.host,
-      now: () => FRESH,
-      log: (line) => lines.push(line),
-    });
-
-    expect(result.state).toBe('failed');
-    expect(result.detail).toContain('上一版');
-    expect(lines.join('\n')).toContain(`救法：${plan.rescue}`);
-    expect(versionAt(plan.profileDir, CORE)).toBe(TO);
-    expect(JSON.parse(readFileSync(plan.markerPath, 'utf8'))).toMatchObject({
-      state: 'failed',
-      reason: 'rollback-failed',
-    });
   });
 });

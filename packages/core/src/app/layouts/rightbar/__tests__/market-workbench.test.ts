@@ -220,29 +220,24 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
     expect(queued?.hint).toBeUndefined();
   });
 
-  it('★ 没装成（本地还原 / 联网回滚）→ 说清还原到哪一版 + 原因，并留着「再试一次」', () => {
-    for (const state of ['restored', 'rolled-back'] as const) {
-      const row = workbenchRow(
-        { pkg: CORE, installed: '0.1.18' },
-        { state, at: AT, version: '0.1.18', reason: 'occupied' },
-        undefined,
-      );
+  it('★ 没装成（本地还原）→ 说清还原到哪一版 + 原因，并留着「再试一次」', () => {
+    const row = workbenchRow(
+      { pkg: CORE, installed: '0.1.18' },
+      { state: 'restored', at: AT, version: '0.1.18', reason: 'occupied' },
+      undefined,
+    );
 
-      expect(row).toMatchObject({
-        state: 'installed',
-        canUpdate: true,
-        hint: 'panels.market.selfUpdateReasonOccupied',
-        note: {
-          key:
-            state === 'restored'
-              ? 'panels.market.selfUpdateRestored'
-              : 'panels.market.selfUpdateRolledBack',
-          params: { version: '0.1.18' },
-          tone: 'alert',
-        },
-      });
-      expect(marketActions(row as MarketRow)).toEqual(['update-workbench']);
-    }
+    expect(row).toMatchObject({
+      state: 'installed',
+      canUpdate: true,
+      hint: 'panels.market.selfUpdateReasonOccupied',
+      note: {
+        key: 'panels.market.selfUpdateRestored',
+        params: { version: '0.1.18' },
+        tone: 'alert',
+      },
+    });
+    expect(marketActions(row as MarketRow)).toEqual(['update-workbench']);
   });
 
   it('★ 失败 → 原因 + 日志原文那条救法（可复制）+「再试一次」；没有原文就只说原因', () => {
@@ -319,7 +314,6 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
       'panels.market.selfUpdatePendingRestart',
       'panels.market.selfUpdateQueued',
       'panels.market.selfUpdateRestored',
-      'panels.market.selfUpdateRolledBack',
       'panels.market.selfUpdateFailed',
       'panels.market.selfUpdateFailedNoFix',
       'panels.market.pendingRestart',
@@ -460,16 +454,14 @@ describe('工作台那一行上的人话', () => {
     expect(dictionaries.zh['panels.market.workbenchBroken']).toContain('读不到工作台那一份（装坏了）');
   });
 
-  it('★ 自更新那四档的话两种语言都有：不混排、不出内部词', () => {
+  it('★ 自更新那几档的话两种语言都有：不混排、不出内部词', () => {
     const keys = [
       'panels.market.selfUpdateQueued',
       'panels.market.selfUpdateFailed',
       'panels.market.selfUpdateFailedNoFix',
       'panels.market.selfUpdateRestored',
-      'panels.market.selfUpdateRolledBack',
       'panels.market.selfUpdateReasonOccupied',
       'panels.market.selfUpdateReasonIncomplete',
-      'panels.market.selfUpdateReasonRollbackFailed',
       'panels.market.selfUpdateReasonUnknown',
     ] as const;
     const internal = ['profile', 'bundle', 'payload', 'schema', 'adapter', 'probe'];

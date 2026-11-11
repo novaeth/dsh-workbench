@@ -211,13 +211,6 @@ describe('工作台自更新：外面那个进程判死了就别再让用户等'
         update: { state: 'restored', to: '0.3.10', version: '0.3.9', at, reason: 'occupied' },
       }),
     ).toEqual({ kind: 'restored', at, cause: 'occupied', version: '0.3.9' });
-    expect(
-      selfUpdateStop({
-        until: '0.3.10',
-        since: dayjs(at).valueOf() - 1000,
-        update: { state: 'rolled-back', to: '0.3.10', version: '0.3.9', at },
-      }),
-    ).toEqual({ kind: 'rolled-back', at, version: '0.3.9' });
   });
 
   it('★ 还在跑 / 还排着队 / 目标不是这一版 / 现场比点下去还早 → 不算', () => {
@@ -244,7 +237,7 @@ describe('工作台自更新：四档结果落在那一行，下次打开只说�
   const at = '2026-10-23T01:00:00.000Z';
   const earlier = '2026-10-22T01:00:00.000Z';
 
-  it('★ 四档各成一档：ok 静默、queued 说排队、restored / rolled-back / failed 说没成', () => {
+  it('★ 各成一档：ok 静默、queued 说排队、restored / failed 说没成', () => {
     expect(selfUpdateMark({ update: { state: 'ok', at }, toldAt: undefined })).toEqual({ kind: 'ok', at });
     expect(selfUpdateMark({ update: { state: 'queued', at }, toldAt: undefined })).toEqual({
       kind: 'queued',
@@ -253,9 +246,6 @@ describe('工作台自更新：四档结果落在那一行，下次打开只说�
     expect(
       selfUpdateMark({ update: { state: 'restored', at, version: '0.3.9', reason: 'incomplete' }, toldAt: undefined }),
     ).toEqual({ kind: 'restored', at, cause: 'incomplete', version: '0.3.9' });
-    expect(
-      selfUpdateMark({ update: { state: 'rolled-back', at, version: '0.3.9' }, toldAt: undefined }),
-    ).toEqual({ kind: 'rolled-back', at, version: '0.3.9' });
     expect(
       selfUpdateMark({
         update: { state: 'failed', at, version: '0.3.9', tail: '换版没成 / 救法：dsh plugin add x' },
@@ -309,11 +299,6 @@ describe('工作台自更新：四档结果落在那一行，下次打开只说�
       params: { version: '0.3.9' },
       tone: 'alert',
     });
-    expect(selfUpdateNote({ kind: 'rolled-back', version: '0.3.9' })).toEqual({
-      key: 'panels.market.selfUpdateRolledBack',
-      params: { version: '0.3.9' },
-      tone: 'alert',
-    });
     expect(selfUpdateNote({ kind: 'failed', version: '0.3.9', fix: 'dsh plugin add x' })).toEqual({
       key: 'panels.market.selfUpdateFailed',
       params: { fix: 'dsh plugin add x' },
@@ -333,9 +318,6 @@ describe('工作台自更新：四档结果落在那一行，下次打开只说�
     );
     expect(selfUpdateReasonHint({ kind: 'failed', cause: 'incomplete' })).toBe(
       'panels.market.selfUpdateReasonIncomplete',
-    );
-    expect(selfUpdateReasonHint({ kind: 'rolled-back', cause: 'rollback-failed' })).toBe(
-      'panels.market.selfUpdateReasonRollbackFailed',
     );
     expect(selfUpdateReasonHint({ kind: 'restored' })).toBe('panels.market.selfUpdateReasonUnknown');
     expect(selfUpdateReasonHint({ kind: 'failed' })).toBe('panels.market.selfUpdateReasonUnknown');

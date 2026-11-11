@@ -12,7 +12,7 @@ export const WORKBENCH_ROW_ID = 'workbench:self';
 
 export const WORKBENCH_TITLE_KEY = 'panels.market.workbenchName';
 
-const RESULT_KINDS: ReadonlySet<SelfUpdateMark['kind']> = new Set(['restored', 'rolled-back', 'failed']);
+const RESULT_KINDS: ReadonlySet<SelfUpdateMark['kind']> = new Set(['restored', 'failed']);
 
 function brokenRow(version: WorkbenchVersion): MarketRow {
   const command = version.rescue ?? '';

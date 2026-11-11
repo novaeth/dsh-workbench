@@ -12,7 +12,6 @@ import {
 } from './self-update-plan.js';
 import { migrationReportOf } from './version-migrate.js';
 import {
-  previousVersionLinksOf,
   versionDirOf,
   versionLinksOf,
   versionProjectFiles,
@@ -66,9 +65,7 @@ export interface SelfUpdateExpectBootStep {
     readonly file: string;
     readonly upFile: string;
     readonly windowMs: number;
-    readonly graceMs: number;
     readonly pollMs: number;
-    readonly rollback: { readonly profileDir: string; readonly links: readonly VersionLink[] };
   };
 }
 
@@ -107,12 +104,10 @@ export interface SelfUpdateStepsOptions {
   readonly exists?: ((path: string) => boolean) | undefined;
   readonly at?: string | undefined;
   readonly bootWindowMs?: number | undefined;
-  readonly bootGraceMs?: number | undefined;
   readonly bootPollMs?: number | undefined;
 }
 
 export const SELF_UPDATE_BOOT_WINDOW_MS = 900_000;
-export const SELF_UPDATE_BOOT_GRACE_MS = 600_000;
 export const SELF_UPDATE_BOOT_POLL_MS = 3_000;
 
 export function selfUpdateStepsOf(
@@ -171,17 +166,7 @@ export function selfUpdateStepsOf(
           file: selfUpdateBootFile(paths.dir),
           upFile: selfUpdateUpFile(paths.dir),
           windowMs: options.bootWindowMs ?? SELF_UPDATE_BOOT_WINDOW_MS,
-          graceMs: options.bootGraceMs ?? SELF_UPDATE_BOOT_GRACE_MS,
           pollMs: options.bootPollMs ?? SELF_UPDATE_BOOT_POLL_MS,
-          rollback: {
-            profileDir,
-            links: previousVersionLinksOf({
-              profileDir,
-              versionsDir: paths.versionsDir,
-              version: request.from,
-              packages,
-            }),
-          },
         },
       },
     ],

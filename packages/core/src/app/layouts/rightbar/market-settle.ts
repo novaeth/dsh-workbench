@@ -112,7 +112,7 @@ export function settleLanded(input: {
 export type SelfUpdateCause = NonNullable<WorkbenchSelfUpdate['reason']>;
 
 export interface SelfUpdateStop {
-  readonly kind: 'failed' | 'restored' | 'rolled-back';
+  readonly kind: 'failed' | 'restored';
   readonly at?: string;
   readonly cause?: SelfUpdateCause;
   readonly fix?: string;
@@ -138,7 +138,7 @@ export interface SelfUpdatePendingRestart {
 export type SelfUpdateMark = SelfUpdateStop | SelfUpdateQueued | SelfUpdateOk | SelfUpdatePendingRestart;
 
 function stopKindOf(state: WorkbenchSelfUpdate['state']): SelfUpdateStop['kind'] | undefined {
-  return state === 'failed' || state === 'restored' || state === 'rolled-back' ? state : undefined;
+  return state === 'failed' || state === 'restored' ? state : undefined;
 }
 
 function tailLine(tail: string | undefined): string | undefined {
@@ -214,9 +214,6 @@ export function selfUpdateNote(mark: SelfUpdateMark): MarketNote | undefined {
   if (mark.kind === 'restored') {
     return { key: 'panels.market.selfUpdateRestored', params: { version }, tone: 'alert' };
   }
-  if (mark.kind === 'rolled-back') {
-    return { key: 'panels.market.selfUpdateRolledBack', params: { version }, tone: 'alert' };
-  }
   return mark.fix === undefined
     ? { key: 'panels.market.selfUpdateFailedNoFix', params: {}, tone: 'alert' }
     : { key: 'panels.market.selfUpdateFailed', params: { fix: mark.fix }, tone: 'alert' };
@@ -225,12 +222,10 @@ export function selfUpdateNote(mark: SelfUpdateMark): MarketNote | undefined {
 const CAUSE_HINT: Readonly<Record<SelfUpdateCause, MarketHintKey>> = {
   occupied: 'panels.market.selfUpdateReasonOccupied',
   incomplete: 'panels.market.selfUpdateReasonIncomplete',
-  'rollback-failed': 'panels.market.selfUpdateReasonRollbackFailed',
-  'boot-failed': 'panels.market.selfUpdateReasonBootFailed',
 };
 
 export function selfUpdateReasonHint(mark: SelfUpdateMark): MarketHintKey | undefined {
-  if (mark.kind !== 'failed' && mark.kind !== 'restored' && mark.kind !== 'rolled-back') return undefined;
+  if (mark.kind !== 'failed' && mark.kind !== 'restored') return undefined;
   return mark.cause === undefined ? 'panels.market.selfUpdateReasonUnknown' : CAUSE_HINT[mark.cause];
 }
 
