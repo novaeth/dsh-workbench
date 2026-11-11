@@ -1,0 +1,43 @@
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+New Session
+Default workspace
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Add module
+Installed
+Discover
+Workbench1.2.3-beta.12
+restart required
+·
+The new version is ready — restart to pick it up.
+Installed modules
+1
+Sample module1.1.14-beta.2
+installed
+Uninstall
+Installed plugins
+1
+Last checked: just now
+>_
+helloopencli-plugin-hello@1.0.0
+installed
+Uninstall
+After installing, enable it in the panel page of that project.
+Workbench panel
+Sample module
+
+hello, workbench
+
+This card comes from a standalone workbench module.

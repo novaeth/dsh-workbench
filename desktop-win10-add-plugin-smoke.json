@@ -1,0 +1,8 @@
+{
+  "spec": "opencli-plugin-hello",
+  "preview": true,
+  "installed": true,
+  "market": true,
+  "phase": "ready",
+  "bridge": "ok"
+}
