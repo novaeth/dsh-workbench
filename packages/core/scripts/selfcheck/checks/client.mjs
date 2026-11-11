@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { makeFakeDom, PKG_URL } from '../lib.mjs';
 
 const SEED_WORDS = new Set([
@@ -107,6 +108,17 @@ export const checks = [
         ctx.officialRightbar.seatMounted = true;
         ctx.officialSeatOnScreen = true;
       };
+      const injectSource = readFileSync(new URL('../../../src/app/client.tsx', import.meta.url), 'utf8');
+      const injectMatch = /export const inject = \[([^\]]*)\]/u.exec(injectSource);
+      const injectedServices = new Set(
+        injectMatch === null
+          ? []
+          : injectMatch[1]
+              .split(',')
+              .map((one) => one.trim().replace(/^['"]|['"]$/gu, ''))
+              .filter((one) => one !== ''),
+      );
+      if (injectedServices.size === 0) throw new Error('client.tsx 里读不到 inject');
       ctx.clientCtx = {
         provide: (name, value) => {
           ctx.provided.set(name, value);
@@ -158,7 +170,10 @@ export const checks = [
           },
         },
 
-        get: (name) => (name === 'sidebarRight' ? ctx.officialRightbar : undefined),
+        get: (name) => {
+          if (!injectedServices.has(name)) throw new Error(`cannot get property "${name}" without inject`);
+          return name === 'sidebarRight' ? ctx.officialRightbar : undefined;
+        },
 
         remote: {
           sessions: { create: async () => ({ sessionId: 'session-diy-stub' }) },
@@ -178,16 +193,6 @@ export const checks = [
         },
       };
 
-      const injectedServices = new Set([
-        'slots',
-        'locale',
-        'layout',
-        'uiWorkspace',
-        'workspaces',
-        'shortcuts',
-        'remote',
-        'inputTriggers',
-      ]);
       const cordisApi = new Set([
         'provide',
         'effect',
