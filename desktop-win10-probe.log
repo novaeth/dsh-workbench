@@ -1,0 +1,87 @@
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.3s] MILESTONE cdp-connected @ 0.3s
+[0.3s] app-shell: HARNESS | Loading plugins…
+[2.3s] app-shell: HARNESS | Loading plugins…
+[4.3s] app-shell: HARNESS | Loading plugins…
+[6.6s] app-shell: Workspaces | Default workspace | New Session | More | Into the Unknown | Preview | Default workspace | Describe what you want to build, / commands, @ files or sessions | Workspace Write | Select model
+[6.8s] STEP click ["Plugins"]: "Plugins"
+[8.0s] plugins-page: New Session | Ctrl | + | N | Plugins | Automation tasks | More | Workspaces | Default workspace | New Session | More | Plugins | Install, enable, and configure plugins | Refresh | Add plugin
+[8.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-plugins-body.txt (162 bytes)
+[8.0s] STEP click ["Add plugin"]: "missing"
+[8.9s] add-plugin wait: {"ok":false,"dialog":false,"body":"ack to the agent. Review local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host."}
+[10.4s] STEP click ["Add plugin"]: "Add plugin"
+[11.2s] add-plugin wait: {"ok":true}
+[11.2s] FIELDS: [{"index":0,"tag":"INPUT","type":"text","placeholder":"Search session names","aria":null,"visible":true},{"index":1,"tag":"INPUT","type":"text","placeholder":"for example dsh-plugin-whale-pet","aria":"Package name or address","visible":true}]
+[11.8s] filled: "D:\\a\\dsh-workbench\\dsh-workbench\\packages\\core"
+[11.8s] STEP click ["Install"]: "Install"
+[13.0s] MILESTONE install-clicked @ 13.0s
+[15.0s] install wait: equire the gh CLI installed and signed in on the host. | Installed |  | @dsh-workbench/core |  | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 |  | Version 1.2.3-beta.6 |  | Show install details | Enable now
+[15.0s] MILESTONE installed @ 15.0s
+[15.1s] STEP click ["Enable now"]: "Enable now"
+[20.2s] health wait [checking] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: o the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[23.3s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win10-gate.png (12946 bytes)
+[23.3s] MILESTONE gate-seen @ 23.3s
+[23.3s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-gate-body.txt (1755 bytes)
+[23.3s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-gate-preflight.json (4022 bytes)
+[23.3s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[25.3s] health wait [installing] toolchain:ok cli:running(安装 opencli) bridge:pending diy:running :: o the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[25.3s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[27.3s] health wait [installing] toolchain:ok cli:running(安装 opencli) bridge:pending diy:running :: o the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[27.3s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[29.4s] health wait [installing] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: o the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[29.4s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[31.4s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[31.4s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[33.4s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[33.4s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[35.4s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[35.4s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[37.5s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[37.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[39.5s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[39.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[41.5s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: ke sure the browser is running and the extension is enabled; install it once from the store if needed (then hit Retry here). | Get the extension in the Chrome Web Store | Open browser | Retry | Enter the workbench anyway
+[41.5s] 模拟用户装扩展：起浏览器 D:\a\_temp\cft\chrome-win64\chrome.exe（--load-extension=D:\a\_temp\opencli-ext，日志 D:\a\dsh-workbench\dsh-workbench\desktop-win10-chrome.log）
+[41.5s] MILESTONE browser-launched @ 41.5s
+[44.6s] extension wait: connected :: [OK] Extension: connected (v1.0.27)
+[44.6s] chrome targets: browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://webui-toolbar.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/ | service_worker:chrome-extension://admccjkmockfdflocgggjfgdacdodkdf/background.js | service_worker:chrome-extension://glbjnfimcajjenihimblfaponejbkoph/background.js | service_worker:chrome-extension://eghmcigglheggjiadbmpddohagagpnca/dist/background.js
+[44.7s] STEP click ["Retry","重试"]: "Retry"
+[47.9s] health wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: o the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[47.9s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[49.9s] health wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[49.9s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[51.9s] health wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: /core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[52.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: /core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[52.0s] MILESTONE ready @ 52.0s
+[52.0s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Browse the module market"
+[55.0s] market-page: al | Installed modules | 0 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[55.0s] MILESTONE market-open @ 55.0s
+[55.0s] STEP click ["Discover"]: "Discover"
+[57.0s] STEP click ["Add index source","Manage index sources…"]: "Add index source"
+[58.6s] source field: ""
+[58.9s] STEP click ["Add"]: "Add"
+[61.9s] MILESTONE market-source-added @ 61.9s
+[63.9s] market-listing: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[63.9s] MILESTONE market-listed @ 63.9s
+[63.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-market-body.txt (597 bytes)
+[63.9s] STEP row install: "Install Sample module"
+[63.9s] confirm install: {"clicked":false,"labels":["Change address","Cancel","Checking…"]}
+[64.5s] confirm install: {"clicked":false,"labels":["Change address","Cancel","Checking…"]}
+[65.0s] confirm install: {"clicked":false,"labels":["Change address","Cancel","Checking…"]}
+[65.5s] confirm install: {"clicked":false,"labels":["Change address","Cancel","Checking…"]}
+[66.0s] confirm install: {"clicked":true}
+[66.0s] MILESTONE market-install-clicked @ 66.0s
+[66.0s] market-install: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[68.0s] market-install: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[70.1s] market-install: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[70.1s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-market-installed.txt (643 bytes)
+[70.1s] MILESTONE market-installed @ 70.1s
+[70.1s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-smoke.json (214 bytes)
+[70.1s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-final-body.txt (643 bytes)
+[70.1s] TITLE: DeepSeek Harness
+[70.4s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win10.png (59121 bytes)
+[70.4s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"70.4s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.3s","install-clicked":"13.0s","installed":"15.0s","gate-seen":"23.3s","browser-launched":"41.5s","ready":"52.0s","market-open":"55.0s","market-source-added":"61.9s","market-listed":"63.9s","market-install-clicked":"66.0s","market-installed":"70.1s"},"market":"https://github.com/novaeth/dsh-workbench-market.git","module":"@dsh-workbench/module-hello","listed":true,"installed":true,"restartHint":false}

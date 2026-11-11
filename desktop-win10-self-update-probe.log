@@ -1,0 +1,57 @@
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [] none :: HARNESS | Loading plugins…
+[6.0s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[6.0s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[12.9s] ready wait [checking] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: HARNESS | Loading plugins… | Preparing the workbench |  | Getting the runtime ready…
+[12.9s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[15.8s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: le module |  | hello, workbench |  | This card comes from a standalone workbench module. |  | Preparing the workbench | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode
+[15.8s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[17.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[19.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: | Preview | Standard mode | Describe what you want to build, / commands, @ files or sessions | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[19.9s] MILESTONE ready @ 19.9s
+[19.9s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Workbench module market"
+[22.9s] market-page:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[22.9s] MILESTONE market-open @ 22.9s
+[22.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-self-update-body.txt (583 bytes)
+[22.9s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[24.9s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[26.9s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[29.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[31.1s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[35.4s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[37.4s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[39.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[41.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[43.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[45.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[47.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[49.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[51.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[53.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[55.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[57.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[59.6s] STEP workbench row: found=true buttons=["Workbench","View details for Workbench","Update"]
+[59.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-self-update-row.json (4392 bytes)
+[60.2s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-self-update-before.json (871 bytes)
+[60.2s] STEP click ["更新","Update"]: "Update"
+[63.2s] MILESTONE self-update-clicked @ 63.2s
+[63.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-self-update-alive.txt (78 bytes)
+[63.7s] FAIL 点了更新之后界面不对：visibility=hidden 市场行=true 版本接口=200
+[63.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-console-events.json (9559 bytes)
+[63.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-failed-body.txt (628 bytes)
+[80.1s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-failed.png (60184 bytes)
+[80.1s] FATAL Error: 点了更新之后界面不对：visibility=hidden 市场行=true 版本接口=200（现场：desktop-win10-self-update-failed-body.txt / desktop-win10-self-update-failed-preflight.json）
+    at fail (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:267:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async smokeSelfUpdate (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:1045:5)
+    at async main (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:1378:11)
+[80.1s] SMOKE_SUMMARY {"outcome":"failed","elapsed":"80.1s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.1s","ready":"19.9s","market-open":"22.9s","self-update-clicked":"63.2s"},"reason":"点了更新之后界面不对：visibility=hidden 市场行=true 版本接口=200（现场：desktop-win10-self-update-failed-body.txt / desktop-win10-self-update-failed-preflight.json）"}
+[80.2s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-fatal-body.txt (628 bytes)
+[86.9s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-fatal.png (53535 bytes)
