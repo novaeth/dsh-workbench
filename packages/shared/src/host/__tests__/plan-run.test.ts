@@ -3,10 +3,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { PluginPlanStep } from '../../contract/plugin-source.js';
-import { PlanStepError, runPlan } from '../plan-run.js';
+import { hostCommandStep, PlanStepError, runPlan } from '../plan-run.js';
 import { createSeam } from '../seam/run.js';
 import { planLineOf, planStepText } from '../shell-render.js';
-import { createFakeShell } from '../../testing/host-fakes.js';
+import { createFakeProcesses, createFakeShell } from '../../testing/host-fakes.js';
 
 const ROOT = join(tmpdir(), 'dsh-wb-plan-root');
 const SCRATCH = mkdtempSync(join(tmpdir(), 'dsh-wb-plan-'));
@@ -158,6 +158,56 @@ describe('runPlan', () => {
         intent: { kind: 'product' },
       }),
     ).rejects.toThrow('sandbox-denied');
+  });
+
+  it('★ 带 host 标记的命令步走宿主通道（免沙箱），同一条计划里没标的照旧过沙箱', async () => {
+    const fake = createFakeShell([{}]);
+    const processes = createFakeProcesses([{}]);
+    const seam = createSeam({ shell: fake.shell, runtimeRoot: ROOT, allowHost: true, processes: processes.host });
+
+    await runPlan(
+      [
+        hostCommandStep({ kind: 'run', line: "'opencli' plugin install '/x'" }),
+        { kind: 'run', line: 'pnpm add --dir /p x' },
+      ],
+      { seam, intent: { kind: 'product' } },
+    );
+
+    expect(processes.calls).toHaveLength(1);
+    expect(processes.calls[0]?.args.join(' ')).toContain("'opencli' plugin install '/x'");
+    expect(fake.commands()).toEqual(['pnpm add --dir /p x']);
+  });
+
+  it('★ host 步照旧带产品域 env（HOME / npm 缓存钉在产品根），外加这一步自己的 env', async () => {
+    const fake = createFakeShell([{}]);
+    const processes = createFakeProcesses([{}]);
+    const seam = createSeam({ shell: fake.shell, runtimeRoot: ROOT, allowHost: true, processes: processes.host });
+
+    await runPlan(
+      [
+        hostCommandStep({
+          kind: 'run',
+          line: 'opencli plugin install /x',
+          env: { NPM_CONFIG_REGISTRY: 'https://r.example' },
+        }),
+      ],
+      { seam, intent: { kind: 'product' } },
+    );
+
+    expect(processes.calls[0]?.env?.['HOME']).toBe(join(ROOT, 'home'));
+    expect(processes.calls[0]?.env?.['NPM_CONFIG_REGISTRY']).toBe('https://r.example');
+  });
+
+  it('★ 缝没开宿主能力 → host 步被拒，不静默退回沙箱（fail closed）', async () => {
+    const { fake, seam } = seamWith([{}]);
+
+    await expect(
+      runPlan([hostCommandStep({ kind: 'run', line: 'opencli plugin install /x' })], {
+        seam,
+        intent: { kind: 'product' },
+      }),
+    ).rejects.toThrow('宿主域');
+    expect(fake.commands()).toEqual([]);
   });
 
   it('★ 每一步都过 check（界面与事实记的是计划文本）', async () => {

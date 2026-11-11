@@ -196,7 +196,7 @@ describe('插件的安装命令（复用 plugin-source 那两条既有分支）'
 
     expect(plan).toEqual({
       ok: true,
-      steps: [{ kind: 'run', line: "'opencli' plugin install '/opt/plugin'" }],
+      steps: [{ kind: 'run', line: "'opencli' plugin install '/opt/plugin'", host: true }],
       line: "'opencli' plugin install '/opt/plugin'",
     });
     expect(LOCAL_PLUGIN_ENV).toBe('DSH_WB_OPENCLI_PLUGIN_PATH');

@@ -5,7 +5,7 @@ import type {
   PluginSourceOptions,
   ResolvedPluginSource,
 } from '@dsh-workbench/shared';
-import { npmRegistryOf, planLineOf, quoteShellArg } from '@dsh-workbench/shared/host';
+import { hostCommandStep, npmRegistryOf, planLineOf, quoteShellArg } from '@dsh-workbench/shared/host';
 import {
   pnpmIsolationFlags,
   storeDirFor,
@@ -30,7 +30,7 @@ function envValue(
 
 function installOne(command: string, spec: string): ResolvedPluginSource {
   const line = `${quoteShellArg(command)} plugin install ${quoteShellArg(spec)}`;
-  return { ok: true, steps: [{ kind: 'run', line }], line };
+  return { ok: true, steps: [hostCommandStep({ kind: 'run', line })], line };
 }
 
 function pluginPackageOf(source: SupplySource, plugin: string): string {
@@ -81,17 +81,21 @@ function npmSource(
 
   if (mode === 'install') {
     if (plugin !== '') {
-      steps.push({
-        kind: 'run',
-        line: `${quoteShellArg(command)} plugin uninstall ${quoteShellArg(plugin)}`,
-        optional: true,
-      });
+      steps.push(
+        hostCommandStep({
+          kind: 'run',
+          line: `${quoteShellArg(command)} plugin uninstall ${quoteShellArg(plugin)}`,
+          optional: true,
+        }),
+      );
     }
-    steps.push({
-      kind: 'run',
-      line: `${quoteShellArg(command)} plugin install ${quoteShellArg(dirInPrefix)}`,
-      env: { NPM_CONFIG_REGISTRY: registry.value },
-    });
+    steps.push(
+      hostCommandStep({
+        kind: 'run',
+        line: `${quoteShellArg(command)} plugin install ${quoteShellArg(dirInPrefix)}`,
+        env: { NPM_CONFIG_REGISTRY: registry.value },
+      }),
+    );
   }
 
   return { ok: true, steps, line: planLineOf(steps) };

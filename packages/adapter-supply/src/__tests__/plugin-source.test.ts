@@ -88,7 +88,7 @@ describe("resolvePluginSource：git / local（一条 `plugin install`）", () =>
       resolvePluginSource({ kind: "git", url: "git@x:demo.git" }, {}),
     ).toEqual({
       ok: true,
-      steps: [{ kind: 'run', line: "'opencli' plugin install 'git@x:demo.git'" }],
+      steps: [{ kind: 'run', line: "'opencli' plugin install 'git@x:demo.git'", host: true }],
       line: "'opencli' plugin install 'git@x:demo.git'",
     });
   });
@@ -101,7 +101,7 @@ describe("resolvePluginSource：git / local（一条 `plugin install`）", () =>
       ),
     ).toEqual({
       ok: true,
-      steps: [{ kind: 'run', line: "'opencli' plugin install '/opt/plugin'" }],
+      steps: [{ kind: 'run', line: "'opencli' plugin install '/opt/plugin'", host: true }],
       line: "'opencli' plugin install '/opt/plugin'",
     });
   });
@@ -193,12 +193,35 @@ describe("resolvePluginSource：npm（装进工作台自己的隔离运行时）
       kind: 'run',
       line: "'opencli' plugin uninstall 'demo'",
       optional: true,
+      host: true,
     });
     expect(resolved.steps[6]).toEqual({
       kind: 'run',
       line: `'opencli' plugin install '${INSTALLED_DIR}'`,
       env: { NPM_CONFIG_REGISTRY: REGISTRY },
+      host: true,
     });
+  });
+
+  it("★ 只有 opencli 那两条命令步走宿主通道；`pnpm add --dir` 与文件操作照旧受沙箱保护", () => {
+    const resolved = npm();
+
+    if (!resolved.ok) throw new Error("应该解析得出");
+    const hosted = resolved.steps.flatMap((step, index) => ('host' in step && step.host === true ? [index] : []));
+
+    expect(hosted).toEqual([5, 6]);
+    const pnpm = resolved.steps[1];
+    expect(pnpm !== undefined && 'host' in pnpm).toBe(false);
+    const upgrade = npm({ mode: 'update' });
+    if (!upgrade.ok) throw new Error("应该解析得出");
+    expect(upgrade.steps.some((step) => 'host' in step && step.host === true)).toBe(false);
+  });
+
+  it("★ git / 本地目录那条 `plugin install` 也走宿主通道（opencli 自己还要在插件目录里跑 npm install）", () => {
+    const git = resolvePluginSource({ kind: "git", url: "git@x:demo.git" }, {});
+
+    if (!git.ok) throw new Error("应该解析得出");
+    expect(git.steps[0]).toMatchObject({ kind: 'run', host: true });
   });
 
   it("★ 干净机器：`pnpm add --dir` 之前必须先建 prefix，且 store 目录不在 prefix 之下（pnpm 自建）", () => {
@@ -236,6 +259,7 @@ describe("resolvePluginSource：npm（装进工作台自己的隔离运行时）
       kind: 'run',
       line: `'opencli' plugin install '${INSTALLED_DIR}'`,
       env: { NPM_CONFIG_REGISTRY: REGISTRY },
+      host: true,
     });
     expect(JSON.stringify(resolved.steps.filter((step) => step.kind === 'run'))).not.toContain('NPM_CONFIG_REGISTRY=');
     expect(resolved.line).toContain(`NPM_CONFIG_REGISTRY='${REGISTRY}'`);
