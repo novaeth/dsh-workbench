@@ -62,12 +62,14 @@ export function build(
   replies: Parameters<typeof createFakeShell>[0],
   install?: () => Promise<{ ok: boolean; detail: string }>,
   warmReads?: () => readonly (readonly string[])[],
+  installed?: () => boolean,
 ) {
   const fake = createFakeShell(replies);
   const preflight = createPreflight({
     seam: seamFor(fake.shell),
     ...(install === undefined ? {} : { install }),
     ...(warmReads === undefined ? {} : { warmReads }),
+    ...(installed === undefined ? {} : { installed }),
   });
   return { fake, preflight };
 }

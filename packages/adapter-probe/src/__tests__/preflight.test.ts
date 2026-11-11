@@ -240,6 +240,22 @@ describe('createPreflight', () => {
     expect(snapshot.failure).toBe('permission');
   });
 
+  it('★ 包已经在盘上时 --version 非零不算没装：不重装，把真实报错摆出来', async () => {
+    const install = vi.fn(async () => ({ ok: true, detail: '不该被调到' }));
+    const { preflight } = build(
+      [{ exitCode: 1, stderr: 'TypeError: cannot read properties of undefined' }],
+      install,
+      undefined,
+      () => true,
+    );
+
+    const snapshot = await preflight.run();
+
+    expect(install).not.toHaveBeenCalled();
+    expect(snapshot.phase).toBe('failed');
+    expect(snapshot.error).toContain('TypeError');
+  });
+
   it('装完还找不到 → guidance: path（别再让用户装一遍）', async () => {
     const { preflight } = build(
       [

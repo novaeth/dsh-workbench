@@ -11,6 +11,7 @@ export interface InstallRetryDeps {
   readonly drop: () => void;
   readonly log?: ((message: string) => void) | undefined;
   readonly mismatch?: ((attempt: InstallAttempt) => boolean) | undefined;
+  readonly describe?: (() => string) | undefined;
 }
 
 export interface InstallRetryResult {
@@ -51,7 +52,12 @@ export async function installWithRetry(
   const unresolved = first.ok && !deps.resolves();
   if (!storeMismatch && !unresolved) return { ok: first.ok, detail: first.detail, reinstalled: false };
 
-  const why = storeMismatch ? wording.mismatch : wording.unresolved;
+  const seen = deps.describe?.() ?? '';
+  const why = storeMismatch
+    ? wording.mismatch
+    : seen === ''
+      ? wording.unresolved
+      : `${wording.unresolved}（现场：${seen}）`;
   deps.log?.(`${wording.logPrefix ?? '[dsh-workbench] '}${wording.what} 安装重来一遍：${why}`);
   deps.drop();
 

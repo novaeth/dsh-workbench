@@ -93,6 +93,7 @@ export function createPreflight(options: {
   installCommand?: string;
   logger?: { warn?(message: string): void } | undefined;
   install?: (() => Promise<{ ok: boolean; detail: string }>) | undefined;
+  installed?: (() => boolean) | undefined;
   warmReads?: (() => readonly (readonly string[])[]) | undefined;
   probeDiy?: (() => Promise<DiyPresetVerdict | undefined>) | undefined;
   probeToolchain?: (() => Promise<ToolchainReport>) | undefined;
@@ -206,9 +207,10 @@ export function createPreflight(options: {
     if (result.kind === 'ok') {
       return { ok: true, missing: false, detail: result.stdout.trim().split('\n')[0] ?? '', stalled: false };
     }
+    const onDisk = options.installed?.() === true;
     return {
       ok: false,
-      missing: result.kind === 'nonzero',
+      missing: result.kind === 'nonzero' && !onDisk,
       detail: result.detail,
       stalled: result.kind === 'stalled',
     };

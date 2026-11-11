@@ -7,6 +7,7 @@ export interface IsolatedInstallDeps {
   readonly resolves: () => boolean;
   readonly drop: () => void;
   readonly log?: ((message: string) => void) | undefined;
+  readonly describe?: (() => string) | undefined;
 }
 
 export type IsolatedInstallResult = InstallRetryResult;

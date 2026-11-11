@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import type { DshHostContext, RuntimeCapabilities } from '@dsh-workbench/shared';
 import type { RouteTable } from '@dsh-workbench/shared/host';
@@ -57,6 +57,26 @@ export async function provisionWorkbenchPnpm(input: {
   return result;
 }
 
+function describeToolchain(toolchain: string, pkgDir: string): string {
+  if (!existsSync(toolchain)) return `${toolchain} 不存在`;
+  const entries = (() => {
+    try {
+      return readdirSync(toolchain).slice(0, 8).join('、');
+    } catch (error) {
+      return `读不到（${String(error)}）`;
+    }
+  })();
+  if (!existsSync(pkgDir)) return `${toolchain} 里有 ${entries === '' ? '空' : entries}，没有 @jackwener/opencli`;
+  const files = (() => {
+    try {
+      return readdirSync(pkgDir).slice(0, 8).join('、');
+    } catch {
+      return '';
+    }
+  })();
+  return `包目录在，内容：${files === '' ? '读不到' : files}`;
+}
+
 export function registerPreflight(input: {
   routes: RouteTable;
   ctx: DshHostContext;
@@ -89,6 +109,7 @@ export function registerPreflight(input: {
     seam: input.seam,
     command,
     installCommand,
+    installed: () => existsSync(join(toolchainOpencliDir(), 'package.json')),
     install: () =>
       installIsolatedRuntime(
         {
@@ -98,6 +119,7 @@ export function registerPreflight(input: {
               seam: input.seam,
             }),
           resolves: () => existsSync(join(toolchainOpencliDir(), 'package.json')),
+          describe: () => describeToolchain(toolchainDir(), toolchainOpencliDir()),
           drop: () => removePath(join(toolchainDir(), 'node_modules')),
           ...(installLog === undefined ? {} : { log: installLog }),
         },
