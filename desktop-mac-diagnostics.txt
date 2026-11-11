@@ -1,0 +1,1156 @@
+
+=== meta ===
+collected-at: 2026-11-11T00:03:00.356Z
+platform: darwin arm64 · node v24.22.2
+cwd: /Users/runner/work/dsh-workbench/dsh-workbench
+home: /Users/runner
+dsh-home: /Users/runner/.dsh
+workbench-home: /Users/runner/.dsh/workbench
+GITHUB_RUN_ID: 42927648294
+GITHUB_RUN_ATTEMPT: 1
+GITHUB_SHA: 1697b1db4e5f49d43b37129aa1f704923a61327e
+GITHUB_JOB: macos
+DESKTOP_SMOKE_STATUS: failure
+probe-log: /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-probe.log
+git: 1697b1d feat(desktop-smoke): 添加模块装 opencli 插件的 E2E，三条腿判红；修市场入口匹配
+git-status: ?? desktop-mac-add-plugin-add-plugin-body.txt
+?? desktop-mac-add-plugin-add-plugin-preview-body.txt
+?? desktop-mac-add-plugin-console-events.json
+?? desktop-mac-add-plugin-failed-body.txt
+?? desktop-mac-add-plugin-failed.png
+?? desktop-mac-add-plugin-fatal-body.txt
+?? desktop-mac-add-plugin-fatal.png
+?? desktop-mac-after-restart-client-bundles.json
+?? desktop-mac-after-restart-console-events.json
+?? desktop-mac-after-restart-final-body.txt
+?? desktop-mac-after-restart-page-internals.json
+?? desktop-mac-after-restart-smoke.json
+?? desktop-mac-after-restart-units.json
+?? desktop-mac-after-restart-verify-body.txt
+?? desktop-mac-after-restart.png
+?? desktop-mac-final-body.txt
+?? desktop-mac-gate-body.txt
+?? desktop-mac-gate-preflight.json
+?? desktop-mac-gate.png
+?? desktop-mac-market-body.txt
+?? desktop-mac-market-installed.txt
+?? desktop-mac-plugins-body.txt
+?? desktop-mac-smoke.json
+?? desktop-mac.png
+
+=== triage ===
+探针总结: [14.7s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"14.7s","milestones":{"cdp-ready":"0.0s","app-page":"0.0s","cdp-connected":"0.0s","ready":"10.1s","module-card":"14.7s"},"card":true,"units":["panels","hello"]}
+第一处错误: （没有）
+
+里程碑:
+[25.9s] MILESTONE browser-launched @ 25.9s
+[31.0s] MILESTONE ready @ 31.0s
+[34.0s] MILESTONE market-open @ 34.0s
+[40.9s] MILESTONE market-source-added @ 40.9s
+[42.9s] MILESTONE market-listed @ 42.9s
+[44.0s] MILESTONE market-install-clicked @ 44.0s
+[48.0s] MILESTONE market-installed @ 48.0s
+[0.0s] MILESTONE cdp-ready @ 0.0s
+[0.0s] MILESTONE app-page @ 0.0s
+[0.0s] MILESTONE cdp-connected @ 0.0s
+[10.1s] MILESTONE ready @ 10.1s
+[14.7s] MILESTONE module-card @ 14.7s
+
+现场文件:
+[17.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-gate-preflight.json (4982 bytes)
+[42.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-market-body.txt (592 bytes)
+[48.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-market-installed.txt (621 bytes)
+[48.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-smoke.json (214 bytes)
+[48.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-final-body.txt (621 bytes)
+[48.3s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac.png (86495 bytes)
+[14.6s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-verify-body.txt (415 bytes)
+[14.6s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-units.json (5854 bytes)
+[14.6s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-client-bundles.json (25 bytes)
+[14.6s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-page-internals.json (2098 bytes)
+[14.7s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-console-events.json (9164 bytes)
+[14.7s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-smoke.json (101 bytes)
+[14.7s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-final-body.txt (415 bytes)
+[14.7s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart.png (71583 bytes)
+
+体检失败快照:
+（没有）
+
+=== smoke results ===
+desktop-mac-smoke.json:
+{
+  "market": "https://github.com/novaeth/dsh-workbench-market.git",
+  "module": "@dsh-workbench/module-hello",
+  "listed": true,
+  "installed": true,
+  "restartHint": false,
+  "phase": "ready",
+  "bridge": "ok"
+}
+desktop-mac-after-restart-smoke.json:
+{
+  "card": true,
+  "units": [
+    "panels",
+    "hello"
+  ],
+  "phase": "ready",
+  "bridge": "ok"
+}
+
+=== checklist ===
+profile 里有 @dsh-workbench/core: 是（link:/Users/runner/work/dsh-workbench/dsh-workbench/packages/core）
+profile 里有 @dsh-workbench/module-hello: 是（github:novaeth/dsh-workbench-market#7135bc722ef4678d5636c84de29a7bf2af739263&path:/packages/module-hello）
+opencli 装上了: 是（/Users/runner/.dsh/workbench/opencli/toolchain/node_modules/@jackwener/opencli/package.json）
+市场索引列出模块: 是
+市场装上了模块: 是
+重启后看到了模块卡片: 是
+截图: desktop-mac-add-plugin-failed.png (135961) · desktop-mac-add-plugin-fatal.png (135961) · desktop-mac-after-restart.png (71583) · desktop-mac-gate.png (19834) · desktop-mac.png (86495)
+
+=== probe log ===
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-probe.log（9030 字节，末尾 70 行）
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.2s] pages: dsh-app://app/
+[0.2s] MILESTONE app-page @ 0.2s
+[0.2s] target: dsh-app://app/
+[0.9s] MILESTONE cdp-connected @ 0.9s
+[0.9s] app-shell: HARNESS | Loading plugins…
+[3.0s] app-shell: HARNESS | Loading plugins…
+[5.0s] app-shell: HARNESS | Loading plugins…
+[7.0s] app-shell: ault workspace | New Session | More | Into the Unknown | Preview | Default workspace | Standard mode | Describe what you want to build, / commands, @ files or sessions | Workspace Write | Select model
+[7.0s] STEP click ["Plugins"]: "Plugins"
+[8.3s] plugins-page: d reviews, inspect diffs, and send feedback to the agent. Review local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host.
+[8.3s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-plugins-body.txt (1373 bytes)
+[8.3s] STEP click ["Add plugin"]: "Add plugin"
+[9.1s] add-plugin wait: {"ok":true}
+[9.1s] FIELDS: [{"index":0,"tag":"INPUT","type":"text","placeholder":"Search session names","aria":null,"visible":true},{"index":1,"tag":"INPUT","type":"text","placeholder":"for example dsh-plugin-whale-pet","aria":"Package name or address","visible":true}]
+[9.6s] filled: "/Users/runner/work/dsh-workbench/dsh-workbench/packages/core"
+[9.6s] STEP click ["Install"]: "Install"
+[10.8s] MILESTONE install-clicked @ 10.8s
+[12.8s] install wait: orkbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Installed |  | @dsh-workbench/core |  | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 |  | Version 1.2.3-beta.3 |  | Show install details | Enable now
+[12.8s] MILESTONE installed @ 12.8s
+[12.8s] STEP click ["Enable now"]: "Enable now"
+[17.8s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[17.9s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-gate.png (19834 bytes)
+[17.9s] MILESTONE gate-seen @ 17.9s
+[17.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-gate-body.txt (1758 bytes)
+[17.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-gate-preflight.json (4982 bytes)
+[17.9s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[19.9s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[19.9s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[21.9s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[21.9s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[23.9s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[23.9s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[25.9s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: ke sure the browser is running and the extension is enabled; install it once from the store if needed (then hit Retry here). | Get the extension in the Chrome Web Store | Open browser | Retry | Enter the workbench anyway
+[25.9s] 模拟用户装扩展：起浏览器 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing（--load-extension=/Users/runner/work/_temp/opencli-ext，日志 /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-chrome.log）
+[25.9s] MILESTONE browser-launched @ 25.9s
+[27.8s] extension wait: connected :: [OK] Extension: connected (v1.0.27)
+[27.8s] chrome targets: browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://webui-toolbar.top-chrome/ | service_worker:chrome-extension://admccjkmockfdflocgggjfgdacdodkdf/background.js | service_worker:chrome-extension://glbjnfimcajjenihimblfaponejbkoph/background.js | service_worker:chrome-extension://kmogdbfhcachbdcbjajeghpiogegbbnh/dist/background.js
+[27.8s] STEP click ["Retry","重试"]: "Retry"
+[31.0s] health wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: /core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[31.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: /core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[31.0s] MILESTONE ready @ 31.0s
+[31.0s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Browse the module market"
+[34.0s] market-page: al | Installed modules | 0 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[34.0s] MILESTONE market-open @ 34.0s
+[34.0s] STEP click ["Discover"]: "Discover"
+[36.1s] STEP click ["Add index source","Manage index sources…"]: "Add index source"
+[37.6s] source field: ""
+[37.9s] STEP click ["Add"]: "Add"
+[40.9s] MILESTONE market-source-added @ 40.9s
+[42.9s] market-listing: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[42.9s] MILESTONE market-listed @ 42.9s
+[42.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-market-body.txt (592 bytes)
+[42.9s] STEP row install: "Install Sample module"
+[42.9s] confirm install: {"clicked":false,"labels":["Change address","Cancel","Checking…"]}
+[43.4s] confirm install: {"clicked":false,"labels":["Change address","Cancel","Checking…"]}
+[44.0s] confirm install: {"clicked":true}
+[44.0s] MILESTONE market-install-clicked @ 44.0s
+[44.0s] market-install: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[46.0s] market-install: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[48.0s] market-install:  · Nov 1, 2026 | Installed | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[48.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-market-installed.txt (621 bytes)
+[48.0s] MILESTONE market-installed @ 48.0s
+[48.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-smoke.json (214 bytes)
+[48.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-final-body.txt (621 bytes)
+[48.0s] TITLE: DeepSeek Harness
+[48.3s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac.png (86495 bytes)
+[48.3s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"48.3s","milestones":{"cdp-ready":"0.1s","app-page":"0.2s","cdp-connected":"0.9s","install-clicked":"10.8s","installed":"12.8s","gate-seen":"17.9s","browser-launched":"25.9s","ready":"31.0s","market-open":"34.0s","market-source-added":"40.9s","market-listed":"42.9s","market-install-clicked":"44.0s","market-installed":"48.0s"},"market":"https://github.com/novaeth/dsh-workbench-market.git","module":"@dsh-workbench/module-hello","listed":true,"installed":true,"restartHint":false}
+
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-probe.log（4170 字节，末尾 34 行）
+[0.0s] MILESTONE cdp-ready @ 0.0s
+[0.0s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.0s] pages: dsh-app://app/
+[0.0s] MILESTONE app-page @ 0.0s
+[0.0s] target: dsh-app://app/
+[0.0s] MILESTONE cdp-connected @ 0.0s
+[0.0s] health wait [] none :: HARNESS | Loading plugins…
+[0.0s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: o the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[2.1s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[4.1s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[4.1s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[6.1s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[6.1s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[8.1s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[8.1s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[10.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: s or sessions | Workspace Write | Select model | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[10.1s] MILESTONE ready @ 10.1s
+[10.1s] verify wait :: host units panels,hello :: cards （无） ::  the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[10.1s] STEP click ["选择模块","Choose modules"]: "Choose modules"
+[11.6s] STEP panel module hello [示例模块/Sample module/hello] dialogs=1 rows=["Sample module"] -> "clicked:hello"
+[14.6s] verify wait :: host units panels,hello :: cards wb-card-hello :: ample module | Restore the default everywhere | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[14.6s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-verify-body.txt (415 bytes)
+[14.6s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-units.json (5854 bytes)
+[14.6s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-client-bundles.json (25 bytes)
+[14.6s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-page-internals.json (2098 bytes)
+[14.7s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-console-events.json (9164 bytes)
+[14.7s] MILESTONE module-card @ 14.7s
+[14.7s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-smoke.json (101 bytes)
+[14.7s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-final-body.txt (415 bytes)
+[14.7s] TITLE: DeepSeek Harness
+[14.7s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart.png (71583 bytes)
+[14.7s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"14.7s","milestones":{"cdp-ready":"0.0s","app-page":"0.0s","cdp-connected":"0.0s","ready":"10.1s","module-card":"14.7s"},"card":true,"units":["panels","hello"]}
+
+
+=== app stdout/stderr ===
+DESKTOP_SMOKE_APP_LOG: /Users/runner/work/_temp/desktop-mac-app.log
+/Users/runner/work/_temp/desktop-mac-app.log（683 字节，末尾 11 行）
+Checking for update
+Generated new staging user ID: bedf55e6-178b-5790-b773-684401ae4107
+Update for version 0.2.2-rc.1 is not available (latest version: 0.2.2-rc.1, downgrade is disallowed).
+dsh web: http://127.0.0.1:49192/?token=Ma_h2x4D3Nj2VX_hjKP8lKNn_yQpCMIaldCBrzUjvck
+Checking for update
+Update for version 0.2.2-rc.1 is not available (latest version: 0.2.2-rc.1, downgrade is disallowed).
+dsh web: http://127.0.0.1:49280/?token=IUwOLQu48mEjk8iLkUg5EJRE-k0ukLXxLB7JpemioRY
+Checking for update
+Update for version 0.2.2-rc.1 is not available (latest version: 0.2.2-rc.1, downgrade is disallowed).
+dsh web: http://127.0.0.1:49324/?token=8CSaXQf8ZSmDDMNVZCW9fbyb8UQN4ACWI0vhz_O_61o
+
+DESKTOP_SMOKE_APP_ERR: /Users/runner/work/_temp/desktop-mac-app.err.log
+/Users/runner/work/_temp/desktop-mac-app.err.log（1255 字节，末尾 17 行）
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/03f36e1c-cf22-4cd7-9e78-afdcd6fb9ec7
+[2771:1111/000110.150679:ERROR:content/browser/gpu/gpu_process_host.cc:1035] GPU process exited unexpectedly: exit_code=15
+[2771:1111/000110.157710:ERROR:content/browser/network_service_instance_impl.cc:650] Network service crashed or was terminated, restarting service.
+Error: Desktop renderer exited: killed
+    at WebContents.<anonymous> (file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/lib/main.js:21147:107)
+    at WebContents.emit (node:events:526:24)
+
+DevTools listening on ws://127.0.0.1:9223/devtools/browser/a0493edd-415a-4523-8c8c-09371b8d8aeb
+[5577:1111/000202.572333:ERROR:content/browser/network_service_instance_impl.cc:650] Network service crashed or was terminated, restarting service.
+[5577:1111/000202.577173:ERROR:content/browser/gpu/gpu_process_host.cc:1035] GPU process exited unexpectedly: exit_code=15
+Error: Desktop renderer exited: killed
+    at WebContents.<anonymous> (file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/lib/main.js:21147:107)
+    at WebContents.emit (node:events:526:24)
+
+DevTools listening on ws://127.0.0.1:9226/devtools/browser/9c238f89-aeed-436a-8da5-c42aa045084e
+
+DESKTOP_SMOKE_APP_LOG_2: /Users/runner/work/_temp/desktop-mac-app2.log
+/Users/runner/work/_temp/desktop-mac-app2.log（不存在）
+DESKTOP_SMOKE_APP_ERR_2: /Users/runner/work/_temp/desktop-mac-app2.err.log
+/Users/runner/work/_temp/desktop-mac-app2.err.log（不存在）
+
+=== market artifacts ===
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-market-body.txt（605 字节，末尾 34 行）
+New Session
+⌘
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Installed
+Discover
+dsh-workbench-market
+Labels
+Sort: Default order
+All
+workbench
+Sample module
+workbench
+Smallest sample module: one extra card on the panel, for trying installs and uninstalls.
+1.1.14-beta.2 · Nov 1, 2026
+Install
+Workbench panel
+No modules on the panel yet
+You can also just tell the agent: “add a module to the panel”.
+Build a module
+Choose modules
+Browse the module market
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-market-installed.txt（634 字节，末尾 37 行）
+New Session
+⌘
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Installed
+Discover
+dsh-workbench-market
+Labels
+Sort: Default order
+All
+workbench
+
+Installed: Sample module
+
+Sample module
+workbench
+Smallest sample module: one extra card on the panel, for trying installs and uninstalls.
+1.1.14-beta.2 · Nov 1, 2026
+Installed
+Workbench panel
+No modules on the panel yet
+You can also just tell the agent: “add a module to the panel”.
+Build a module
+Choose modules
+Browse the module market
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-verify-body.txt（不存在）
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-verify-body.txt（425 字节，末尾 28 行）
+New Session
+⌘
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Into the Unknown
+Preview
+Standard mode
+Describe what you want to build, / commands, @ files or sessions
+Workspace Write
+Select model
+Workbench panel
+Panel setup
+⠿
+Sample module
+Restore the default everywhere
+Sample module
+
+hello, workbench
+
+This card comes from a standalone workbench module.
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-final-body.txt（634 字节，末尾 37 行）
+New Session
+⌘
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Installed
+Discover
+dsh-workbench-market
+Labels
+Sort: Default order
+All
+workbench
+
+Installed: Sample module
+
+Sample module
+workbench
+Smallest sample module: one extra card on the panel, for trying installs and uninstalls.
+1.1.14-beta.2 · Nov 1, 2026
+Installed
+Workbench panel
+No modules on the panel yet
+You can also just tell the agent: “add a module to the panel”.
+Build a module
+Choose modules
+Browse the module market
+
+=== desktop install tree ===
+resources: /Applications/DeepSeek Harness.app/Contents/Resources（在）
+  dir app.asar.unpacked/dsh/node_modules
+  dir app.asar.unpacked/dsh/node_modules/@deepseek-ai/node-addon-system-darwin-arm64
+  file app.asar.unpacked/dsh/node_modules/clone/.npmignore
+  dir app.asar.unpacked/dsh/node_modules/node-addon-require-builtin-darwin-arm64
+  dir app.asar.unpacked/dsh/node_modules/node-pty
+  dir runtime
+  dir runtime/primary-runtime
+  dir runtime/primary-runtime/dependencies/node
+  dir runtime/primary-runtime/dependencies/node/bin
+  dir runtime/primary-runtime/dependencies/node/node_modules
+  dir runtime/primary-runtime/dependencies/pnpm
+  dir runtime/primary-runtime/dependencies/pnpm/bin
+  dir runtime/primary-runtime/dependencies/pnpm/dist
+  dir runtime/primary-runtime/dependencies/python
+  dir runtime/primary-runtime/dependencies/python/bin
+  dir runtime/primary-runtime/dependencies/python/include
+  dir runtime/primary-runtime/dependencies/python/lib
+  dir runtime/primary-runtime/dependencies/python/share
+
+=== opencli doctor ===
+bin: /Users/runner/.dsh/workbench/opencli/bin/opencli（在）
+exit: 0
+opencli v1.8.8 doctor (node v24.22.2)
+
+[OK] Daemon: running on port 19825 (v1.8.8)
+[OK] Extension: connected (v1.0.27)
+
+Profiles:
+  • exmcxyc9: connected v1.0.27
+[OK] Connectivity: connected in 0.0s
+
+Everything looks good!
+
+
+=== runner os ===
+platform: darwin · release: 25.6.0 · version: Darwin Kernel Version 25.6.0: Mon Oct 12 00:39:04 PDT 2026; root:xnu-12377.161.15.701.48~2/RELEASE_ARM64_VMAPPLE
+OS env: （无）
+
+=== extension prep ===
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-prep.log（652 字节，末尾 8 行）
+cft: https://storage.googleapis.com/chrome-for-testing-public/157.0.8103.50/mac-arm64/chrome-mac-arm64.zip
+chrome: Google Chrome for Testing 157.0.8103.50
+opencli pin: 1.8.8
+latest release: v2.0.3
+extension: https://github.com/jackwener/opencli/releases/download/v2.0.3/opencli-extension-v1.0.27.zip
+extension version: 1.0.27 · dir: /Users/runner/work/_temp/opencli-ext
+env: DESKTOP_SMOKE_CHROME=/Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing · DESKTOP_SMOKE_EXTENSION=/Users/runner/work/_temp/opencli-ext · DESKTOP_SMOKE_OPENCLI=/Users/runner/.dsh/workbench/opencli/bin/opencli
+
+
+=== smoke browser ===
+chrome: /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing
+extension: /Users/runner/work/_temp/opencli-ext
+opencli bin: /Users/runner/.dsh/workbench/opencli/bin/opencli
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-chrome.log（97 字节，末尾 3 行）
+
+DevTools listening on ws://127.0.0.1:9333/devtools/browser/d5bb8cb5-8cc9-46da-8454-0a29e830828f
+
+
+=== units and client injection ===
+desktop-mac-units.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-units.json（不存在）
+desktop-mac-after-restart-units.json:
+{
+  "ok": true,
+  "manifests": [
+    {
+      "id": "panels",
+      "titleKey": "panels.title",
+      "card": null,
+      "tools": [
+        {
+          "name": "workbench_toolbox_list",
+          "writes": false
+        },
+        {
+          "name": "workbench_toolbox_open",
+          "writes": false,
+          "elevates": true
+        },
+        {
+          "name": "workbench_toolbox_close",
+          "writes": false
+        },
+        {
+          "name": "workbench_panels_list",
+          "writes": false
+        },
+        {
+          "name": "workbench_modules_list",
+          "writes": false
+        },
+        {
+          "name": "workbench_market_sources",
+          "writes": false
+        },
+        {
+          "name": "workbench_market_categories",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_status",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_panel",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_components",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_recon",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_spec",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_state",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_html",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_find",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_click",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_hover",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_type",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_fill",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_keys",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_scroll",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_wait",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_eval",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_screenshot",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_network",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_dialog",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_logs_watch",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_logs_read",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_logs_stop",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_record_read",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_record_detail",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_record_stop",
+          "writes": false
+        },
+        {
+          "name": "workbench_long_tasks_list",
+          "writes": false
+        },
+        {
+          "name": "workbench_panels_show",
+          "writes": true
+        },
+        {
+          "name": "workbench_panels_hide",
+          "writes": true
+        },
+        {
+          "name": "workbench_panels_move",
+          "writes": true
+        },
+        {
+          "name": "workbench_panels_reset",
+          "writes": true
+        },
+        {
+          "name": "workbench_panels_follow",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_install",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_update",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_uninstall",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_install_bundle",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_update_dependency",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_update_plugin",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_uninstall_plugin",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_update_workbench",
+          "writes": true
+        },
+        {
+          "name": "workbench_market_enable",
+          "writes": true
+        },
+        {
+          "name": "workbench_market_disable",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_install",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_publish",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_show",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_record_prepare",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_debug_start",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_debug_pause",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_debug_resume",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_debug_stop",
+          "writes": true
+        },
+        {
+          "name": "workbench_long_tasks_stop",
+          "writes": true
+        }
+      ],
+      "host": {
+        "inject": [],
+        "optional": [
+          "tools",
+          "workbenchSeam"
+        ]
+      }
+    },
+    {
+      "id": "hello",
+      "title": {
+        "zh": "示例模块",
+        "en": "Sample module"
+      },
+      "titleKey": "dsh-workbench.unit.hello.title",
+      "card": {
+        "order": 90
+      },
+      "tools": [],
+      "host": {
+        "inject": [],
+        "writes": []
+      }
+    }
+  ],
+  "installable": [
+    "hello"
+  ]
+}
+
+desktop-mac-client-bundles.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-client-bundles.json（不存在）
+desktop-mac-after-restart-client-bundles.json:
+{"names":[],"reports":[]}
+desktop-mac-page-internals.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-page-internals.json（不存在）
+desktop-mac-after-restart-page-internals.json:
+{"href":"dsh-app://app/","scripts":["inline:globalThis.__DSH_BOOT_READY__ = Promise.withResolvers()","dsh-app://app/assets/index-BgUyXZcc.js","inline:(()=>{\nconst pendingQueue=[]\nwindow.__ModuleLoader__={\n  mod","dsh-app://app/plugins/??@deepseek-ai/dsh-client-modules/client.js&rev=44d36e71c9de","inline:(() => {\n  const preference = \"system\"\n  const systemDark = ","inline:(() => {\n  const boot = () => {\n    const root = document.do"],"loader":"object","bootKeys":["rev","release","entries","batches"],"entries":["{\"id\":\"@deepseek-ai/dsh-api-gateway\",\"url\":\"plugins/??@deepseek-ai/dsh-api-gateway/client.js&rev=be5521bfeedf\",\"rev\":\"be","{\"id\":\"@deepseek-ai/dsh-client-ui-file-actions\",\"url\":\"plugins/??@deepseek-ai/dsh-client-ui-file-actions/client.js&rev=7","{\"id\":\"@deepseek-ai/dsh-client-ui-context-menu\",\"url\":\"plugins/??@deepseek-ai/dsh-client-ui-context-menu/client.js&rev=0","{\"id\":\"@deepseek-ai/dsh-client-ui-open-in-app\",\"url\":\"plugins/??@deepseek-ai/dsh-client-ui-open-in-app/client.js&rev=7c0","{\"id\":\"@deepseek-ai/dsh-api-job-controller\",\"url\":\"plugins/??@deepseek-ai/dsh-api-job-controller/client.js&rev=c08027db9","{\"id\":\"@deepseek-ai/dsh-api-terminal-controller\",\"url\":\"plugins/??@deepseek-ai/dsh-api-terminal-controller/client.js&rev","{\"id\":\"@deepseek-ai/dsh-api-workspace-files\",\"url\":\"plugins/??@deepseek-ai/dsh-api-workspace-files/client.js&rev=5e74ecf","{\"id\":\"@deepseek-ai/dsh-client-ui-settings-account\",\"url\":\"plugins/??@deepseek-ai/dsh-client-ui-settings-account/client.","{\"id\":\"@deepseek-ai/dsh-client-hmr\",\"url\":\"plugins/??@deepseek-ai/dsh-client-hmr/client.js&rev=65638956d110\",\"rev\":\"6563","{\"id\":\"@deepseek-ai/dsh-client-modules\",\"url\":\"plugins/??@deepseek-ai/dsh-client-modules/client.js&rev=795a12bda777\",\"re","{\"id\":\"@deepseek-ai/dsh-cordis-client-runner\",\"url\":\"plugins/??@deepseek-ai/dsh-cordis-client-runner/client.js&rev=1bc41","{\"id\":\"@deepseek-ai/dsh-client-ui-theme\",\"url\":\"plugins/??@deepseek-ai/dsh-client-ui-theme/client.js&rev=b91191f3f612\",\""]}
+desktop-mac-scripts.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-scripts.json（不存在）
+desktop-mac-after-restart-scripts.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-scripts.json（不存在）
+desktop-mac-console-events.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-console-events.json（不存在）
+desktop-mac-after-restart-console-events.json:
+[
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "timestamp": 1794355307554.05,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "5591.33"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "timestamp": 1794355307558.931,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "5591.34"
+      }
+    }
+  },
+  {
+    "method": "Runtime.consoleAPICalled",
+    "params": {
+      "type": "warning",
+      "args": [
+        {
+          "type": "string",
+          "value": "[dsh-workbench] hello 的卡片没挂上：宿主没有担保 unit「hello」的清单 —— 这个包要么没装进这份 profile，要么它的 dsh.workbench 没通过校验。卡片先不挂：清单只有一处真相"
+        }
+      ],
+      "executionContextId": 1,
+      "timestamp": 1794355308743.841,
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "warnRefusal",
+            "scriptId": "21",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=04f3f7694f3d",
+            "lineNumber": 22258,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "register",
+            "scriptId": "21",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=04f3f7694f3d",
+            "lineNumber": 22295,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "registerUnit",
+            "scriptId": "21",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=04f3f7694f3d",
+            "lineNumber": 38367,
+            "columnNumber": 38
+          },
+          {
+            "functionName": "",
+            "scriptId": "21",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=04f3f7694f3d",
+            "lineNumber": 38740,
+            "columnNumber": 29
+          },
+          {
+            "functionName": "",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2806
+          },
+          {
+            "functionName": "R1",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 6,
+            "columnNumber": 74
+          },
+          {
+            "functionName": "_execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2684
+          },
+          {
+            "functionName": "effect",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 4228
+          },
+          {
+            "functionName": "apply",
+            "scriptId": "21",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=04f3f7694f3d",
+            "lineNumber": 38740,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 1539
+          },
+          {
+            "functionName": "",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2806
+          },
+          {
+            "functionName": "R1",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 6,
+            "columnNumber": 74
+          },
+          {
+            "functionName": "_execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2684
+          },
+          {
+            "functionName": "_reload",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 6172
+          }
+        ]
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 405 (Method Not Allowed)",
+        "timestamp": 1794355308913.627,
+        "url": "dsh-app://app/workbench/api/workbench-boot-ok",
+        "networkRequestId": "5591.57"
+      }
+    }
+  }
+]
+
+
+=== dsh startup logs ===
+/Users/runner/.dsh/logs（不存在）
+
+=== desktop app logs ===
+/Users/runner/Library/Logs/DeepSeek Harness/crash-2026-11-11T00-01-10-162Z-renderer.log（2893 字节，末尾 26 行）
+time: 2026-11-11T00:01:10.162Z
+source: renderer
+phase: running
+app: @deepseek-ai/dsh-desktop 0.2.2-rc.1
+platform: darwin arm64
+electron: 44.7.0
+node: 24.21.0
+locale: en
+shell pid: 2771
+
+--- error ---
+Error: Desktop renderer exited: killed
+    at WebContents.<anonymous> (file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/lib/main.js:21147:107)
+    at WebContents.emit (node:events:526:24)
+
+--- renderer console (error level, oldest first) ---
+(no error-level renderer console output was captured)
+
+--- auxiliary diagnostics ---
+Operation history is best effort. Without its completion marker below, it is unavailable or incomplete.
+Recent operations are context only. Missing records do not establish that no changes occurred.
+
+--- recent plugin operations (context, not proof of cause) ---
+{"journal":{"dropped":0,"failed":0,"repairedSegments":0,"queuedBytes":0,"disabled":false},"bytesRead":1766,"filesRead":1,"truncated":false,"invalidRecords":0,"unavailableFiles":0,"cancelled":false,"outputRecordsOmitted":0,"records":[{"runId":"42e7e5ea-8886-4a91-9434-6f8915a65baf","operation":{"id":"f61caa14-103f-468e-acc3-7a35d61bfc2b","time":"2026-11-11T00:01:07.944Z","reason":"install","target":"@dsh-workbench/module-hello","stage":"enable","enabled":true,"version":"1.1.14-beta.2","phase":"settled","application":"applied","changed":true},"transportDropped":0},{"runId":"42e7e5ea-8886-4a91-9434-6f8915a65baf","operation":{"id":"f61caa14-103f-468e-acc3-7a35d61bfc2b","time":"2026-11-11T00:01:05.779Z","reason":"install","target":null,"stage":"install","enabled":true,"phase":"started"},"transportDropped":0},{"runId":"42e7e5ea-8886-4a91-9434-6f8915a65baf","operation":{"id":"3cf4e493-036d-4f68-89c3-f896f64aa492","time":"2026-11-11T00:00:34.864Z","reason":"bundle","target":"@dsh-workbench/core","stage":"enable","enabled":true,"version":"1.2.3-beta.3","phase":"settled","application":"applied","changed":true},"transportDropped":0},{"runId":"42e7e5ea-8886-4a91-9434-6f8915a65baf","operation":{"id":"3cf4e493-036d-4f68-89c3-f896f64aa492","time":"2026-11-11T00:00:34.319Z","reason":"bundle","target":"@dsh-workbench/core","stage":"enable","enabled":true,"version":"1.2.3-beta.3","phase":"started"},"transportDropped":0},{"runId":"42e7e5ea-8886-4a91-9434-6f8915a65baf","operation":{"id":"99e5314d-e697-4e59-9279-e71a75222de5","time":"2026-11-11T00:00:32.115Z","reason":"install","target":"@dsh-workbench/core","stage":"enable","enabled":false,"version":"1.2.3-beta.3","phase":"settled","application":"applied","changed":true},"transportDropped":0},{"runId":"42e7e5ea-8886-4a91-9434-6f8915a65baf","operation":{"id":"99e5314d-e697-4e59-9279-e71a75222de5","time":"2026-11-11T00:00:31.416Z","reason":"install","target":null,"stage":"install","enabled":false,"phase":"started"},"transportDropped":0}]}
+--- operation history collection complete; consult omission counters above ---
+
+/Users/runner/Library/Logs/DeepSeek Harness/crash-2026-11-11T00-02-02-596Z-renderer.log（2819 字节，末尾 26 行）
+time: 2026-11-11T00:02:02.596Z
+source: renderer
+phase: running
+app: @deepseek-ai/dsh-desktop 0.2.2-rc.1
+platform: darwin arm64
+electron: 44.7.0
+node: 24.21.0
+locale: en
+shell pid: 5577
+
+--- error ---
+Error: Desktop renderer exited: killed
+    at WebContents.<anonymous> (file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/lib/main.js:21147:107)
+    at WebContents.emit (node:events:526:24)
+
+--- renderer console (error level, oldest first) ---
+(no error-level renderer console output was captured)
+
+--- auxiliary diagnostics ---
+Operation history is best effort. Without its completion marker below, it is unavailable or incomplete.
+Recent operations are context only. Missing records do not establish that no changes occurred.
+
+--- recent plugin operations (context, not proof of cause) ---
+{"journal":null,"bytesRead":1766,"filesRead":1,"truncated":false,"invalidRecords":0,"unavailableFiles":0,"cancelled":false,"outputRecordsOmitted":0,"records":[{"runId":"42e7e5ea-8886-4a91-9434-6f8915a65baf","operation":{"id":"f61caa14-103f-468e-acc3-7a35d61bfc2b","time":"2026-11-11T00:01:07.944Z","reason":"install","target":"@dsh-workbench/module-hello","stage":"enable","enabled":true,"version":"1.1.14-beta.2","phase":"settled","application":"applied","changed":true},"transportDropped":0},{"runId":"42e7e5ea-8886-4a91-9434-6f8915a65baf","operation":{"id":"f61caa14-103f-468e-acc3-7a35d61bfc2b","time":"2026-11-11T00:01:05.779Z","reason":"install","target":null,"stage":"install","enabled":true,"phase":"started"},"transportDropped":0},{"runId":"42e7e5ea-8886-4a91-9434-6f8915a65baf","operation":{"id":"3cf4e493-036d-4f68-89c3-f896f64aa492","time":"2026-11-11T00:00:34.864Z","reason":"bundle","target":"@dsh-workbench/core","stage":"enable","enabled":true,"version":"1.2.3-beta.3","phase":"settled","application":"applied","changed":true},"transportDropped":0},{"runId":"42e7e5ea-8886-4a91-9434-6f8915a65baf","operation":{"id":"3cf4e493-036d-4f68-89c3-f896f64aa492","time":"2026-11-11T00:00:34.319Z","reason":"bundle","target":"@dsh-workbench/core","stage":"enable","enabled":true,"version":"1.2.3-beta.3","phase":"started"},"transportDropped":0},{"runId":"42e7e5ea-8886-4a91-9434-6f8915a65baf","operation":{"id":"99e5314d-e697-4e59-9279-e71a75222de5","time":"2026-11-11T00:00:32.115Z","reason":"install","target":"@dsh-workbench/core","stage":"enable","enabled":false,"version":"1.2.3-beta.3","phase":"settled","application":"applied","changed":true},"transportDropped":0},{"runId":"42e7e5ea-8886-4a91-9434-6f8915a65baf","operation":{"id":"99e5314d-e697-4e59-9279-e71a75222de5","time":"2026-11-11T00:00:31.416Z","reason":"install","target":null,"stage":"install","enabled":false,"phase":"started"},"transportDropped":0}]}
+--- operation history collection complete; consult omission counters above ---
+
+
+=== workbench home tree（/Users/runner/.dsh/workbench） ===
+[D] bin
+  [D] desktop
+    [F] node (127)
+  [F] dsh-wb-module (340)
+[D] diy
+  [D] .agents
+    [D] skills
+      [F] workbench-module-diy
+  [D] packages
+[F] host.lock (54)
+[D] market-index
+  [D] 29f96bb3c21eef32
+    [F] index.json (1077)
+    [F] meta.json (89)
+    [D] repo.git
+      [F] FETCH_HEAD (90)
+      [F] HEAD (21)
+      [F] config (188)
+      [F] description (73)
+      [D] hooks
+      [D] info
+      [D] objects
+      [F] packed-refs (103)
+      [D] refs
+      [F] shallow (41)
+  [F] sources.json (331)
+[D] npm-cache
+  [D] _cacache
+    [D] content-v2
+      [D] sha512
+    [D] index-v5
+      [D] 05
+      [D] 34
+    [D] tmp
+[D] npm-logs
+  [F] 2026-11-11T00_02_56_599Z-debug-0.log (1544)
+  [F] 2026-11-11T00_02_57_057Z-debug-0.log (1859)
+[D] opencli
+  [D] bin
+    [F] opencli (161)
+  [D] home
+    [D] .opencli
+      [D] clis
+      [D] node_modules
+      [F] package.json (76)
+      [F] update-check.json (72)
+  [D] libs
+    [D] node_modules
+      [D] @jackwener
+  [D] pnpm-cache
+    [F] lockfile-verified.jsonl (719)
+    [D] v12
+      [D] metadata
+      [D] metadata-full
+  [D] pnpm-store
+    [D] v11
+      [D] files
+      [F] index.db (606208)
+      [D] projects
+  [D] toolchain
+    [D] node_modules
+      [D] .bin
+      [F] .modules.yaml (1652)
+      [D] .pnpm
+      [F] .pnpm-workspace-state-v1.json (951)
+      [D] @jackwener
+    [F] package.json (118)
+    [F] pnpm-lock.yaml (4436)
+[F] seed.log (400)
+[F] self-update-boot.json (83)
+[D] workspaces
+  [D] _machine
+    [D] panels
+  [D] default-workspace-411265e0
+    [D] panels
+      [F] config.json (79)
+
+=== seed.log ===
+→ DIY 工坊入口：/Users/runner/.dsh/workbench/bin/dsh-wb-module
+→ 工坊指引已链上：/Users/runner/.dsh/workbench/diy/.agents/skills/workbench-module-diy → /Users/runner/work/dsh-workbench/dsh-workbench/packages/core/skills/workbench-module-diy
+→ DIY 工坊入口：/Users/runner/.dsh/workbench/bin/dsh-wb-module
+→ DIY 工坊入口：/Users/runner/.dsh/workbench/bin/dsh-wb-module
+
+
+=== diy/.sync.json ===
+/Users/runner/.dsh/workbench/diy/.sync.json（不存在）
+
+=== profile package.json ===
+{
+  "name": "dsh-profile-desktop",
+  "private": true,
+  "dependencies": {
+    "@dsh-workbench/core": "link:/Users/runner/work/dsh-workbench/dsh-workbench/packages/core",
+    "@dsh-workbench/module-hello": "github:novaeth/dsh-workbench-market#7135bc722ef4678d5636c84de29a7bf2af739263&path:/packages/module-hello"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "@dsh-workbench/core",
+        "@dsh-workbench/module-hello"
+      ]
+    }
+  }
+}
+
+
+=== profile cordis.patch.yml ===
+# Your patch layer for this dsh profile, applied after every bundle layer:
+# a top-level YAML array of loader patch entries (id-targeted config
+# overrides, disables, and insert lists; `!!js` expressions allowed).
+[]
+
+
+=== profile cordis.yml ===
+# dsh profile root — an empty entry list. The tree is composed as patches:
+# each bundle in package.json's dsh.profile.bundles, then cordis.patch.yml, then any
+# --patch overlays. Edit cordis.patch.yml, not this file.
+[]
+
+
+=== workbench browser.json ===
+/Users/runner/.dsh/workbench/browser.json（不存在）
+
+=== dsh home tree（/Users/runner/.dsh） ===
+[F] .anonymous-user-id (37)
+[F] .credentials.yaml (161)
+[D] profiles
+  [D] desktop
+    [F] .dsh-workbench-sources.json (165)
+    [D] .plugin-manager
+    [F] cordis.patch.yml (217)
+    [F] cordis.yml (223)
+    [D] node_modules
+    [F] package.json (522)
+    [F] pnpm-lock.yaml (1444)
+    [F] pnpm-workspace.yaml (61)
+[D] sessions
+  [D] --Users-runner-Documents-deepseek-harness-default-workspace--
+    [D] session-3b1d1357-e3d1-496f-81ba-3f22185aaff6
+[D] storages
+  [D] session_projcache
+    [D] sessions
+  [F] workspace.json (1020)
+[D] workbench
+  [D] bin
+    [D] desktop
+    [F] dsh-wb-module (340)
+  [D] diy
+    [D] .agents
+    [D] packages
+  [F] host.lock (54)
+  [D] market-index
+    [D] 29f96bb3c21eef32
+    [F] sources.json (331)
+  [D] npm-cache
+    [D] _cacache
+  [D] npm-logs
+    [F] 2026-11-11T00_02_56_599Z-debug-0.log (1544)
+    [F] 2026-11-11T00_02_57_057Z-debug-0.log (1859)
+  [D] opencli
+    [D] bin
+    [D] home
+    [D] libs
+    [D] pnpm-cache
+    [D] pnpm-store
+    [D] toolchain
+  [F] seed.log (400)
+  [F] self-update-boot.json (83)
+  [D] workspaces
+    [D] _machine
+    [D] default-workspace-411265e0
+
+=== processes ===
+ 3823     1   02:13 277824 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --load-extension=/Users/runner/work/_temp/opencli-ext --disable-extensions-except=/Users/runner/work/_temp/opencli-ext --remote-debugging-port=9333 --disable-features=DisableLoadExtensionCommandLineSwitch --no-sandbox --disable-gpu --disable-software-rasterizer --window-size=1280,900 --no-first-run --no-default-browser-check
+ 3831  3823   02:13  75440 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif) --type=gpu-process --gpu-recent-crash-count=0 --no-sandbox --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --start-stack-profiler --gpu-preferences=WAAAAAAAAACgAAACAAAAAAAAAAAAAGAAQAAAAAAAAAAAAAAAAAAAADgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAgAAAAAAAAAAgAAAAAAAAACAAAAAAAAAAIAAAAAAAAAAgAAAAAAAAA --use-gl=disabled --shared-files --metrics-shmem-handle=1752395122,r,10021725693633618977,16461275604610168128,262144 --field-trial-handle=1718379636,r,2812570623061055988,3707256962161368413,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,16786529867438828139,9421238062086096921,4 --trace-process-track-uuid=3190708988185955192
+ 3832  3823   02:13  69504 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif) --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=network --no-sandbox --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --start-stack-profiler --shared-files --metrics-shmem-handle=1752395122,r,8599922817767203640,7638228973335182408,524288 --field-trial-handle=1718379636,r,2812570623061055988,3707256962161368413,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,16786529867438828139,9421238062086096921,4 --trace-process-track-uuid=3190708989122997041
+ 3834  3823   02:13  39328 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif) --type=utility --utility-sub-type=storage.mojom.StorageService --lang=en-US --service-sandbox-type=service --no-sandbox --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --shared-files --metrics-shmem-handle=1752395122,r,5723505493450691536,4062337843126003827,524288 --field-trial-handle=1718379636,r,2812570623061055988,3707256962161368413,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,16786529867438828139,9421238062086096921,4 --trace-process-track-uuid=3190708990060038890
+ 3836  3823   02:12 175408 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif Renderer) --type=renderer --top-chrome-webui --gpu-client-id=6 --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --no-sandbox --remote-debugging-port=9333 --disable-gpu-compositing --lang=en-US --disallow-v8-feature-flag-overrides --num-raster-threads=2 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --enable-main-frame-before-activation --renderer-client-id=6 --gpu-channel-request-start-time-ticks=186624380 --launch-time-ticks=186625951 --shared-files --metrics-shmem-handle=1752395122,r,15011530705283721465,6611631451733040883,1572864 --field-trial-handle=1718379636,r,2812570623061055988,3707256962161368413,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,16786529867438828139,9421238062086096921,4 --trace-process-track-uuid=3190708991934122588
+ 3838  3823   02:12 123584 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif Renderer) --type=renderer --gpu-client-id=8 --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --no-sandbox --remote-debugging-port=9333 --disable-gpu-compositing --lang=en-US --num-raster-threads=2 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --enable-main-frame-before-activation --renderer-client-id=8 --gpu-channel-request-start-time-ticks=186745341 --launch-time-ticks=186745792 --shared-files --metrics-shmem-handle=1752395122,r,10948170875662481559,14420723051563189019,1572864 --field-trial-handle=1718379636,r,2812570623061055988,3707256962161368413,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,16786529867438828139,9421238062086096921,4 --trace-process-track-uuid=3190708993808206286
+ 3839  3823   02:12 192544 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif Renderer) --type=renderer --gpu-client-id=7 --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --ntp-process --no-sandbox --remote-debugging-port=9333 --disable-gpu-compositing --lang=en-US --num-raster-threads=2 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --enable-main-frame-before-activation --renderer-client-id=7 --gpu-channel-request-start-time-ticks=186747055 --launch-time-ticks=186747480 --shared-files --metrics-shmem-handle=1752395122,r,4944057632543621843,7203367018211020069,1572864 --field-trial-handle=1718379636,r,2812570623061055988,3707256962161368413,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,16786529867438828139,9421238062086096921,4 --trace-process-track-uuid=3190708992871164437
+ 3848  3823   02:12  88976 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif Renderer) --type=renderer --gpu-client-id=11 --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --extension-process --no-sandbox --remote-debugging-port=9333 --disable-gpu-compositing --lang=en-US --num-raster-threads=2 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --enable-main-frame-before-activation --renderer-client-id=11 --gpu-channel-request-start-time-ticks=187188891 --launch-time-ticks=187190953 --shared-files --metrics-shmem-handle=1752395122,r,4881187822523129961,15341999209993696725,1572864 --field-trial-handle=1718379636,r,2812570623061055988,3707256962161368413,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,16786529867438828139,9421238062086096921,4 --trace-process-track-uuid=3190708996619331833
+ 3851  3823   02:11  90176 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif Renderer) --type=renderer --gpu-client-id=12 --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --no-sandbox --remote-debugging-port=9333 --disable-gpu-compositing --lang=en-US --num-raster-threads=2 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --enable-main-frame-before-activation --renderer-client-id=12 --gpu-channel-request-start-time-ticks=187431803 --launch-time-ticks=187435336 --shared-files --metrics-shmem-handle=1752395122,r,5457550721686289262,4385449136049168019,1572864 --field-trial-handle=1718379636,r,2812570623061055988,3707256962161368413,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,16786529867438828139,9421238062086096921,4 --trace-process-track-uuid=3190708997556373682
+ 4014  3823   02:09  63344 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif Renderer) --type=renderer --gpu-client-id=13 --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --no-sandbox --remote-debugging-port=9333 --disable-gpu-compositing --lang=en-US --num-raster-threads=2 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --enable-main-frame-before-activation --renderer-client-id=13 --gpu-channel-request-start-time-ticks=189903011 --launch-time-ticks=189903903 --shared-files --metrics-shmem-handle=1752395122,r,10964641240928771848,3580172196752623112,1572864 --field-trial-handle=1718379636,r,2812570623061055988,3707256962161368413,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,16786529867438828139,9421238062086096921,4 --trace-process-track-uuid=3190708998493415531
+ 4015  3823   02:09  66160 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif Renderer) --type=renderer --gpu-client-id=14 --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --start-stack-profiler --no-sandbox --remote-debugging-port=9333 --disable-gpu-compositing --lang=en-US --num-raster-threads=2 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --enable-main-frame-before-activation --renderer-client-id=14 --gpu-channel-request-start-time-ticks=190057107 --launch-time-ticks=190057922 --shared-files --metrics-shmem-handle=1752395122,r,7256276478853905631,11263638797089098266,1572864 --field-trial-handle=1718379636,r,2812570623061055988,3707256962161368413,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,16786529867438828139,9421238062086096921,4 --trace-process-track-uuid=3190708999430457380
+ 7186     1   00:21 280464 /Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness --remote-debugging-port=9226
+ 7206  7186   00:21  90752 /Applications/DeepSeek Harness.app/Contents/Frameworks/DeepSeek Harness Helper.app/Contents/MacOS/DeepSeek Harness Helper --type=gpu-process --user-data-dir=/Users/runner/Library/Application Support/@deepseek-ai/dsh-desktop --gpu-preferences=WAAAAAAAAAAgAQAEAAAAAAAAAAAAAGAAQAAAAAAAAAADAAAAAAAAADgAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAKAAAAAAAAAAoAAAAAAAAAAgAAAAAAAAADAAAAAEAAAAAAAAAAAAAAAgAAAAAAAAACAAAAAAAAAA= --shared-files --field-trial-handle=1718379636,r,8642121353649132217,3406885939298694254,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,1634938564169058803,10158814154797434954,4 --trace-process-track-uuid=3190708988185955192 --seatbelt-client=32
+ 7207  7186   00:21  55200 /Applications/DeepSeek Harness.app/Contents/Frameworks/DeepSeek Harness Helper.app/Contents/MacOS/DeepSeek Harness Helper --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=network --user-data-dir=/Users/runner/Library/Application Support/@deepseek-ai/dsh-desktop --standard-schemes=dsh-app --secure-schemes=dsh-app --cors-schemes=dsh-app --fetch-schemes=dsh-app --streaming-schemes=dsh-app --code-cache-schemes=dsh-app --shared-files --field-trial-handle=1718379636,r,8642121353649132217,3406885939298694254,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,1634938564169058803,10158814154797434954,4 --trace-process-track-uuid=3190708989122997041 --seatbelt-client=34
+ 7221  7186   00:21 279168 /Applications/DeepSeek Harness.app/Contents/Frameworks/DeepSeek Harness Helper (Renderer).app/Contents/MacOS/DeepSeek Harness Helper (Renderer) --type=renderer --user-data-dir=/Users/runner/Library/Application Support/@deepseek-ai/dsh-desktop --standard-schemes=dsh-app --secure-schemes=dsh-app --cors-schemes=dsh-app --fetch-schemes=dsh-app --streaming-schemes=dsh-app --code-cache-schemes=dsh-app --app-path=/Applications/DeepSeek Harness.app/Contents/Resources/app.asar --enable-sandbox --remote-debugging-port=9226 --lang=en-US --num-raster-threads=2 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --enable-main-frame-before-activation --renderer-client-id=4 --launch-time-ticks=297938641 --shared-files --field-trial-handle=1718379636,r,8642121353649132217,3406885939298694254,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,1634938564169058803,10158814154797434954,4 --trace-process-track-uuid=3190708990060038890 --seatbelt-client=57
+ 7241  7186   00:21 368320 /Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness --expose-internals /Applications/DeepSeek Harness.app/Contents/Resources/app.asar/dsh/node_modules/@deepseek-ai/dsh-desktop-host/lib/index.js /Applications/DeepSeek Harness.app/Contents/Resources/app.asar/dsh /Users/runner/.dsh/profiles/desktop /Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime /Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.mjs /Applications/DeepSeek Harness.app/Contents/Resources/runtime/bin
+ 7321  7186   00:20 107808 /Applications/DeepSeek Harness.app/Contents/Frameworks/DeepSeek Harness Helper (Renderer).app/Contents/MacOS/DeepSeek Harness Helper (Renderer) --type=renderer --user-data-dir=/Users/runner/Library/Application Support/@deepseek-ai/dsh-desktop --standard-schemes=dsh-app --secure-schemes=dsh-app --cors-schemes=dsh-app --fetch-schemes=dsh-app --streaming-schemes=dsh-app --code-cache-schemes=dsh-app --app-path=/Applications/DeepSeek Harness.app/Contents/Resources/app.asar --enable-sandbox --remote-debugging-port=9226 --lang=en-US --num-raster-threads=2 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --enable-main-frame-before-activation --renderer-client-id=5 --launch-time-ticks=299295659 --shared-files --field-trial-handle=1718379636,r,8642121353649132217,3406885939298694254,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,1634938564169058803,10158814154797434954,4 --trace-process-track-uuid=3190708990997080739 --dsh-welcome-locale=en --seatbelt-client=69
+ 7645     1   00:18  65392 /Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node /Users/runner/.dsh/workbench/opencli/toolchain/node_modules/.pnpm/@jackwener+opencli@1.8.8/node_modules/@jackwener/opencli/dist/src/daemon.js

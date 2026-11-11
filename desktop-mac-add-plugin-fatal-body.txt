@@ -1,0 +1,55 @@
+New Session
+⌘
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Add module
+Installed
+Discover
+Workbench1.2.3-beta.3local
+Installed modules
+1
+Sample module1.1.14-beta.2
+installed
+Uninstall
+After installing, enable it in the panel page of that project.
+Workbench panel
+Sample module
+
+hello, workbench
+
+This card comes from a standalone workbench module.
+
+Add module
+
+Enter a module or opencli plugin package name, Git repository URL, or local directory path.
+
+Module install failed
+
+opencli-plugin-hello
+
+Didn't work: Something went wrong during install — see the install details
+
+Install details
+
+命令失败（退出码 1）：[ERROR] ENOENT: no such file or directory, lstat '/Users/runner/.dsh/workbench/opencli/plugins-npm'
+For help, run: pnpm help add
+'/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node' '/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs' add --dir '/Users/runner/.dsh/workbench/opencli/plugins-npm' 'opencli-plugin-hello@latest' --registry 'https://registry.npmjs.org/' --store-dir '/Users/runner/.dsh/workbench/opencli/pnpm-store' --config.cache-dir='/Users/runner/.dsh/workbench/opencli/pnpm-cache' --config.state-dir='/Users/runner/.dsh/workbench/opencli/pnpm-state' --allow-build='opencli-plugin-hello'
+[ERROR] ENOENT: no such file or directory, lstat '/Users/runner/.dsh/workbench/opencli/plugins-npm'
+For help, run: pnpm help add
+
+
+Change source
+Close
+Retry
