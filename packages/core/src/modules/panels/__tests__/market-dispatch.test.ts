@@ -109,7 +109,6 @@ const cases: Record<ProvisionAction, ProvisionRequest> = {
   'uninstall-plugin': { action: 'uninstall-plugin', name: '@a/plugin' },
   'update-workbench': { action: 'update-workbench', name: '@dsh-workbench/core' },
   'restart-workbench': { action: 'restart-workbench', name: '@dsh-workbench/core' },
-  'rollback-workbench': { action: 'rollback-workbench', name: '@dsh-workbench/core', version: '1.2.3-beta.2' },
   'migrate-workbench': { action: 'migrate-workbench', name: '@dsh-workbench/core' },
   'dismiss-followup': { action: 'dismiss-followup', id: 'data-root-migration' },
 };
@@ -194,9 +193,7 @@ describe('市场动作分发（HTTP 通道与 agent 工具共用同一套动作�
       else if (action === 'install-version') {
         expect(result).toMatchObject({ change: { stage: 'install' }, module: { kind: 'unknown' } });
       }
-      else if (action === 'rollback-workbench') {
-        expect(result).toEqual({ ok: true, action, rollback: { ok: false, refusal: 'no-seam' } });
-      } else if (action === 'restart-workbench') {
+      else if (action === 'restart-workbench') {
         expect(result).toMatchObject({ ok: true, action, restart: { started: false, refusal: 'no-seam' } });
       } else if (action === 'uninstall-plugin') {
         expect(result).toMatchObject({ ok: true, action, removed: false, kept: { kind: 'unnamed' } });

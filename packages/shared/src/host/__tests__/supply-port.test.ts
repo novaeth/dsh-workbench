@@ -25,14 +25,10 @@ describe('组合出给外壳的 supply 端口', () => {
         onError('restart-asked');
         return { started: true };
       },
-      rollbackSelfUpdate: (request: { readonly version: string }) => ({ ok: true, version: request.version }),
     };
     const port = supplyPortOf(ctxOf({ ...set, modules } as never));
 
     expect(port.restartWorkbench?.((message) => seen.push(message))).toEqual({ started: true });
-    expect(
-      port.rollbackSelfUpdate?.({ dshHome: '/tmp/home', profile: 'desktop', version: '1.2.3-beta.2' }, () => undefined),
-    ).toEqual({ ok: true, version: '1.2.3-beta.2' });
     expect(seen).toEqual(['restart-asked']);
   });
 

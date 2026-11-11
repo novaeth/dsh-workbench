@@ -16,7 +16,6 @@ export const PROVISION_ACTIONS = [
   'uninstall-plugin',
   'update-workbench',
   'restart-workbench',
-  'rollback-workbench',
   'migrate-workbench',
   'dismiss-followup',
 ] as const satisfies readonly ProvisionAction[];
@@ -42,7 +41,6 @@ export function provisionTargetOf(action: ProvisionAction): ProvisionTarget {
   if (action === 'remove-bundle') return 'name';
   if (action === 'update-plugin' || action === 'uninstall-plugin') return 'name';
   if (action === 'update-workbench' || action === 'restart-workbench' || action === 'migrate-workbench') return 'name';
-  if (action === 'rollback-workbench') return 'name';
   if (action === 'dismiss-followup') return 'id';
   if (action === 'cancel-install') return 'requestId';
   return 'unit';
@@ -88,7 +86,7 @@ function requestOf(action: ProvisionAction, value: string): ProvisionRequest {
   if (action === 'install-bundle' || action === 'install-version') return { action, spec: value };
   if (action === 'remove-bundle') return { action, name: value };
   if (action === 'update-plugin' || action === 'uninstall-plugin') return { action, name: value };
-  if (action === 'update-workbench' || action === 'migrate-workbench' || action === 'rollback-workbench') {
+  if (action === 'update-workbench' || action === 'migrate-workbench') {
     return { action, name: value };
   }
   if (action === 'dismiss-followup') return { action, id: value };
@@ -121,11 +119,6 @@ export function parseProvisionBody(body: unknown): ProvisionParsed {
   const value = raw[target];
   if (typeof value !== 'string' || value.trim() === '') {
     return { ok: false, code: TARGET_CODE[target], message: `缺少 ${target}` };
-  }
-  if (wanted === 'rollback-workbench') {
-    const version = typeof raw.version === 'string' ? raw.version.trim() : '';
-    if (version === '') return { ok: false, code: 'workbench/no-version', message: '缺少 version（要回到哪一版）' };
-    return { ok: true, request: { ...requestOf(wanted, value.trim()), version } };
   }
   if (wanted !== 'install-bundle' && wanted !== 'install-version') {
     return { ok: true, request: requestOf(wanted, value.trim()) };

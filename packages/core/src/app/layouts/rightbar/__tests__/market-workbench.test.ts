@@ -511,32 +511,3 @@ describe('迁移现场那一次：行上要说清"这次得先退出"', () => {
     expect(row?.hint).toBe('panels.market.selfUpdateReasonIncomplete');
   });
 });
-
-describe('「切回上一版」：更新落定之后才给，回不去就不给', () => {
-  const version = { pkg: CORE, installed: '0.1.19', running: '0.1.19' };
-
-  it('★ 上一次更新落了定（ok / pending-restart）且上一版跟现在不是同一版 → 给这颗钮', () => {
-    const row = workbenchRow(version, {
-      state: 'pending-restart',
-      from: '0.1.18',
-      to: '0.1.19',
-      version: '0.1.19',
-    });
-
-    expect(row).toMatchObject({ canRollback: true, rollbackVersion: '0.1.18' });
-    expect(marketActions(row as MarketRow)).toContain('rollback-workbench');
-  });
-
-  it('★ 还在装 / 失败 / 已经回退过 → 不给（免得点了一颗没用的钮）', () => {
-    for (const state of ['running', 'failed', 'rolled-back'] as const) {
-      const row = workbenchRow(version, { state, from: '0.1.18', to: '0.1.19', version: '0.1.19', at: AT });
-      expect(row?.canRollback).toBeUndefined();
-      expect(marketActions(row as MarketRow)).not.toContain('rollback-workbench');
-    }
-  });
-
-  it('★ 上一版跟现在同一版（没换过）→ 也不给', () => {
-    const row = workbenchRow(version, { state: 'ok', from: '0.1.19', to: '0.1.19', version: '0.1.19' });
-    expect(row?.canRollback).toBeUndefined();
-  });
-});

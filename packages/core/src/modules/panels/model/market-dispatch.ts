@@ -2,7 +2,6 @@ import type {
   ProvisionAction,
   ProvisionRequest,
   RestartWorkbenchStart,
-  SelfUpdateRollbackStart,
 } from '@dsh-workbench/shared/host';
 import type { BundleCancellation, BundleChange } from '@/kernel/contract/bundle-install';
 import type { InstalledModule } from '@dsh-workbench/shared/host';
@@ -55,11 +54,6 @@ export type ProvisionResult =
       readonly ok: true;
       readonly action: 'restart-workbench';
       readonly restart: RestartWorkbenchStart;
-    }
-  | {
-      readonly ok: true;
-      readonly action: 'rollback-workbench';
-      readonly rollback: SelfUpdateRollbackStart;
     }
   | {
       readonly ok: true;
@@ -137,13 +131,6 @@ export async function dispatchMarket(
   }
   if (request.action === 'restart-workbench') {
     return { ok: true, action: 'restart-workbench', restart: await market.restartWorkbench() };
-  }
-  if (request.action === 'rollback-workbench') {
-    return {
-      ok: true,
-      action: 'rollback-workbench',
-      rollback: await market.rollbackWorkbench(request.version ?? ''),
-    };
   }
   if (request.action === 'update-plugin') {
     await market.updatePlugin(request.name ?? '');

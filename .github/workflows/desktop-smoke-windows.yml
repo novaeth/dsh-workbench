@@ -25,7 +25,6 @@ jobs:
       DESKTOP_SMOKE_MODULE: '@dsh-workbench/module-hello'
       DESKTOP_SMOKE_PLUGIN: opencli-plugin-hello
       DESKTOP_SMOKE_UPDATE_FROM: 1.2.3-beta.4
-      DESKTOP_SMOKE_ROLLBACK_TO: 1.2.3-beta.2
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -146,29 +145,6 @@ jobs:
           "add-plugin desktop pid: $($app5.Id)"
           if (-not (Wait-Page 9226)) { throw 'add-plugin instance produced no page' }
           Invoke-Logged 'add-plugin-probe' { node scripts/desktop-smoke/cdp-probe.mjs 9226 desktop-${{ inputs.label }}-add-plugin.png --add-plugin $env:DESKTOP_SMOKE_PLUGIN }
-          $global:LASTEXITCODE = 0
-          # 回退这条 E2E 还在试验中：它自己红只发警告，不挡这条腿既有的信号。
-          # pwsh 会把最后一条原生命令的退出码留到步骤末尾，所以每处告警后都把它抹平。
-          $appRoot = Join-Path $env:USERPROFILE '.dsh'
-          if (Invoke-Warned 'rollback-fixture' { node scripts/desktop-smoke/self-update-rollback-fixture.mjs $appRoot 'desktop' $env:DESKTOP_SMOKE_ROLLBACK_TO }) {
-            Stop-App
-            Start-Sleep -Seconds 3
-            $app3 = Start-App 9224 $out3 $err3
-            if (Wait-Page 9224) {
-              if (Invoke-Warned 'probe-rollback' { node scripts/desktop-smoke/cdp-probe.mjs 9224 desktop-${{ inputs.label }}-rollback.png --self-update-rollback }) {
-                Stop-App
-                Start-Sleep -Seconds 3
-                $app4 = Start-App 9225 $out4 $err4
-                if (Wait-Page 9225) {
-                  Invoke-Warned 'probe-after-rollback' { node scripts/desktop-smoke/cdp-probe.mjs 9225 desktop-${{ inputs.label }}-after-rollback.png --verify-only --expect-workbench } | Out-Null
-                } else {
-                  Write-Host '::warning title=post-rollback instance (回退 E2E 试验中，不挡这条腿)::重启后没有页面'
-                }
-              }
-            } else {
-              Write-Host '::warning title=rollback instance (回退 E2E 试验中，不挡这条腿)::启动后没有页面'
-            }
-          }
           $global:LASTEXITCODE = 0
           # 自更新这条 E2E 已经立住：三段都按硬判据走，红就挡这条腿。
           Stop-App

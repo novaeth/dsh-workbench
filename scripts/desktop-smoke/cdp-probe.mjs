@@ -7,7 +7,6 @@ const shot = process.argv[3] ?? 'desktop-smoke.png';
 const expectWorkbench = process.argv.includes('--expect-workbench');
 const installViaUi = process.argv.includes('--install-via-ui');
 const verifyOnly = process.argv.includes('--verify-only');
-const rollbackFlow = process.argv.includes('--self-update-rollback');
 const selfUpdateFlow = process.argv.includes('--self-update');
 const flagValue = (name) => {
   const inline = process.argv.find((one) => one.startsWith(`${name}=`));
@@ -867,122 +866,6 @@ async function smokeMarket(cdp) {
   return result;
 }
 
-async function confirmRollback(cdp, budgetMs = 60_000) {
-  const until = Date.now() + remaining('等切回确认弹窗', budgetMs);
-  let last = '';
-  while (Date.now() < until) {
-    const answer = await cdp.send('Runtime.evaluate', {
-      expression: `(() => {
-        const dialog = document.querySelector('[role="dialog"], [aria-modal="true"]');
-        if (dialog === null) return JSON.stringify({ dialog: false, labels: [] });
-        const box = [...dialog.querySelectorAll('[role="checkbox"], input[type="checkbox"]')].find(
-          (node) => node.getAttribute('aria-checked') !== 'true' && node.checked !== true,
-        );
-        if (box !== undefined) {
-          box.click();
-          return JSON.stringify({ dialog: true, acked: true });
-        }
-        const buttons = [...dialog.querySelectorAll('button')];
-        const target = buttons.find((node) => ['切回', 'Switch back'].includes((node.innerText ?? '').trim()));
-        if (target !== undefined && target.disabled !== true) {
-          target.click();
-          return JSON.stringify({ dialog: true, confirmed: true });
-        }
-        return JSON.stringify({
-          dialog: true,
-          labels: buttons.map((node) => (node.innerText ?? '').trim()).filter((one) => one !== ''),
-        });
-      })()`,
-      returnByValue: true,
-    });
-    last = String(answer.result?.value ?? '');
-    log(`confirm rollback: ${last}`);
-    try {
-      const state = JSON.parse(last);
-      if (state.confirmed === true) return true;
-    } catch (error) {
-      log(`confirm rollback 读不出来：${String(error?.message ?? error)}`);
-    }
-    await sleep(500);
-  }
-  writeText(`${prefix}-rollback-confirm.txt`, last);
-  await fail(cdp, '切回确认弹窗没走完（勾选或确认按钮没找到）', await bodyOf(cdp));
-  return false;
-}
-
-async function smokeRollback(cdp) {
-  const result = { rollback: false, alive: false };
-  await openMarket(cdp);
-  await click(cdp, ['Installed', '已安装'], 1500);
-  const clicked = await cdp.send('Runtime.evaluate', {
-    expression: `(async () => {
-      const until = Date.now() + 30000;
-      for (;;) {
-        const button = [...document.querySelectorAll('button')].find((node) =>
-          /Back to previous version|切回上一版/u.test(node.textContent ?? ''));
-        if (button !== undefined) {
-          button.click();
-          return 'clicked';
-        }
-        if (Date.now() > until) return 'missing';
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    })()`,
-    awaitPromise: true,
-    returnByValue: true,
-  });
-  log(`STEP rollback: ${JSON.stringify(clicked.result?.value)}`);
-  if (clicked.result?.value !== 'clicked') {
-    writeText(`${prefix}-rollback-body.txt`, await bodyOf(cdp));
-    await fail(cdp, 'workbench row has no "back to previous version" button', await bodyOf(cdp));
-  }
-  mark('rollback-clicked');
-  await confirmRollback(cdp);
-  const rollbackTo = (process.env.DESKTOP_SMOKE_ROLLBACK_TO ?? '').trim();
-  const doneUntil = Date.now() + remaining('等切回完成', MODULE_WAIT_MS);
-  let done = '';
-  let seen = {};
-  let flipped = false;
-  let refusedBody = '';
-  while (Date.now() < doneUntil) {
-    done = await bodyOf(cdp);
-    if (/Couldn't switch back|自己退出再打开|上一版已经不在本机/u.test(done)) {
-      refusedBody = done;
-      break;
-    }
-    const after = await workbenchVersionOf(cdp, false);
-    seen = after?.workbench ?? {};
-    const installed = typeof seen.installed === 'string' ? seen.installed : '';
-    if (rollbackTo !== '' ? installed === rollbackTo : /Switched back to|已经切回/u.test(done)) {
-      flipped = true;
-      break;
-    }
-    log(`rollback wait: installed=${JSON.stringify(installed)} 期望=${JSON.stringify(rollbackTo)}`);
-    await sleep(POLL_MS);
-  }
-  writeText(`${prefix}-rollback-done.txt`, done);
-  if (refusedBody !== '') {
-    writeText(`${prefix}-rollback-refused.json`, `${JSON.stringify({ workbench: seen }, null, 2)}\n`);
-    await fail(
-      cdp,
-      `切回被拒（no-marker / no-seam / no-profile 之一）：installed=${JSON.stringify(seen.installed)} latest=${JSON.stringify(seen.latest)} local=${String(seen.local)}`,
-      refusedBody,
-    );
-  }
-  if (!flipped) {
-    await fail(
-      cdp,
-      `切回没生效：installed=${JSON.stringify(seen.installed)} 期望=${JSON.stringify(rollbackTo)}`,
-      done,
-    );
-  }
-  result.rollback = true;
-  mark('rollback-done');
-  await sleep(3000);
-  result.alive = /Workbench panel|工作台面板/u.test(await bodyOf(cdp));
-  return result;
-}
-
 async function unitsOf(cdp) {
   const result = await cdp.send('Runtime.evaluate', {
     expression: `fetch('/workbench/api/unit-manifests').then((r) => r.json()).then((value) => JSON.stringify(value)).catch(() => '')`,
@@ -1473,9 +1356,7 @@ async function main() {
       ? await addPluginViaMarket(cdp, addPluginSpec)
       : selfUpdateFlow
         ? await smokeSelfUpdate(cdp)
-        : rollbackFlow
-          ? await smokeRollback(cdp)
-          : verifyOnly
+        : verifyOnly
             ? await verifyFeatures(cdp)
             : installViaUi
               ? await smokeMarket(cdp)
@@ -1485,9 +1366,6 @@ async function main() {
   }
   if (selfUpdateFlow && (result.updated !== true || result.ready !== true || result.live !== true)) {
     await fail(cdp, '工作台自更新流程没走完（界面/就绪/记账有一项不对）', await bodyOf(cdp), snapshot);
-  }
-  if (rollbackFlow && (result.rollback !== true || result.alive !== true)) {
-    await fail(cdp, '切回上一版之后工作台没起来（或那句人话没出现）', await bodyOf(cdp), snapshot);
   }
   if (installViaUi && result.installed === false) {
     await fail(cdp, 'market module install did not finish', await bodyOf(cdp), snapshot);

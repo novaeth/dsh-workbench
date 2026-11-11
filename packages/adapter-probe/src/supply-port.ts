@@ -1,5 +1,4 @@
-import type { Seam, SelfUpdateRollbackRequest, SupplyPort } from '@dsh-workbench/shared/host';
-import { nowIso } from '@dsh-workbench/shared/host';
+import type { Seam, SupplyPort } from '@dsh-workbench/shared/host';
 import { cliCatalogPath, ensureLibsBinOnPath, ensureLibsOpencliPeer, isolatedHome, libInstallCommand, libUninstallCommand, vendorPluginsDir } from '@dsh-workbench/adapter-runtime';
 import { isolatedRoot } from '@dsh-workbench/adapter-runtime';
 
@@ -8,7 +7,6 @@ import { latestVersion, missingReleaseParts, probeRelease } from './release-port
 import { opencliInstallCommand } from './install.js';
 import { recoveryCommand, selfUpdateCliFor, startSelfUpdate, type SelfUpdateRequest } from './self-update.js';
 import { restartWorkbench } from './restart-workbench.js';
-import { rollbackSelfUpdate } from './self-update-rollback.js';
 import {
   declarationGaps,
   declarationRefusalOf,
@@ -72,7 +70,6 @@ export function createSupplyPort(options: ProbeSupplyOptions = {}): SupplyPort {
     startSelfUpdate: (request: SelfUpdateRequest, onError: (message: string) => void) =>
       startSelfUpdate(request, onError, seam),
     restartWorkbench: (onError: (message: string) => void) => restartWorkbench({ seam, onError }),
-    rollbackSelfUpdate: (request: SelfUpdateRollbackRequest) => rollbackSelfUpdate(request, nowIso()),
   };
   return { ...port, env: port, modules: port };
 }

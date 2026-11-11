@@ -14,7 +14,6 @@ export function supplyPortOf(ctx: DshHostContext): SupplyPort {
   const vendorPluginsDir = modules.vendorPluginsDir;
   const runtimeInstallCommand = modules.runtimeInstallCommand;
   const restartWorkbench = modules.restartWorkbench;
-  const rollbackSelfUpdate = modules.rollbackSelfUpdate;
   return {
     env,
     modules,
@@ -51,9 +50,6 @@ export function supplyPortOf(ctx: DshHostContext): SupplyPort {
     isNewerVersion: (left, right) => modules.isNewerVersion(left, right),
     startSelfUpdate: (request, onError) => modules.startSelfUpdate(request, onError),
     ...(restartWorkbench === undefined ? {} : { restartWorkbench: (onError) => restartWorkbench(onError) }),
-    ...(rollbackSelfUpdate === undefined
-      ? {}
-      : { rollbackSelfUpdate: (request, onError) => rollbackSelfUpdate(request, onError) }),
   };
 }
 

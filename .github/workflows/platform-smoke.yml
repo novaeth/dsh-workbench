@@ -85,7 +85,6 @@ jobs:
           if ! pnpm --filter @dsh-workbench/adapter-probe exec vitest run \
             src/__tests__/self-update.test.ts \
             src/__tests__/self-update-steps.test.ts \
-            src/__tests__/self-update-rollback.test.ts \
             src/__tests__/self-update-boot.test.ts \
             src/__tests__/version-dir.test.ts \
             src/__tests__/version-switch.test.ts \

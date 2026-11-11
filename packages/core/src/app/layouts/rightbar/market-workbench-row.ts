@@ -47,10 +47,6 @@ export function workbenchRow(
   const note = mark === undefined ? undefined : selfUpdateNote(mark);
   const reason: MarketHintKey | undefined = mark === undefined ? undefined : selfUpdateReasonHint(mark);
   const local = version.local === true;
-  const previous = selfUpdate?.from;
-  const settled = selfUpdate?.state === 'ok' || selfUpdate?.state === 'pending-restart';
-  const canRollback =
-    settled && previous !== undefined && previous !== '' && previous !== (selfUpdate?.version ?? selfUpdate?.to);
   const retry = !local && mark !== undefined && RESULT_KINDS.has(mark.kind);
   const swapping = selfUpdateSwapping(selfUpdate);
   const latest = local ? undefined : version.latest;
@@ -80,7 +76,6 @@ export function workbenchRow(
     canUninstall: false,
     ...(local ? { local: true } : {}),
     ...(canRestart === true ? { canRestart: true } : {}),
-    ...(canRollback && previous !== undefined ? { canRollback: true, rollbackVersion: previous } : {}),
     ...(stale || followUpState || blockedHint === undefined ? {} : { hint: blockedHint }),
     ...(selfUpdate?.migration === true && selfUpdate.state === 'running'
       ? { hint: 'panels.market.selfUpdateMigration' as const }
@@ -111,6 +106,5 @@ export function workbenchActionsOf(row: MarketRow): MarketRowAction[] {
     ...(ready && row.canRestart === true ? (['restart-workbench'] as const) : []),
     ...(ready ? (['later-restart'] as const) : []),
     ...(row.canUpdate ? (['update-workbench'] as const) : []),
-    ...(row.canRollback === true ? (['rollback-workbench'] as const) : []),
   ];
 }

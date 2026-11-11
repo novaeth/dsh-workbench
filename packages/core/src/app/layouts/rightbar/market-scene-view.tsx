@@ -7,7 +7,7 @@ import type { Pending } from './market-view-text';
 import { MarketBody } from './market-body';
 import { MarketChecking, MarketEmpty } from './MarketStates';
 import { MarketDetailPage } from './market-detail-page';
-import { MarketConfirm } from './market-confirm';
+import { UninstallConfirm } from './market-uninstall';
 
 export function MarketSceneView({
   t,
@@ -110,7 +110,7 @@ export function MarketSceneView({
         rechecking={rechecking}
         onOpenDetail={onOpenDetail}
       />
-      <MarketConfirm
+      <UninstallConfirm
         t={t}
         confirming={confirming}
         row={confirmingRow}

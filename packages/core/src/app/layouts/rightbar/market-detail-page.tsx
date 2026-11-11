@@ -3,9 +3,9 @@ import type { Translate } from '@dsh-workbench/shared';
 import type { MarketFailure, MarketRow, MarketRowAction } from './market-row-types';
 import type { Pending } from './market-view-text';
 import { MarketDetail } from './market-detail';
-import { MarketConfirm } from './market-confirm';
+import { UninstallConfirm } from './market-uninstall';
 
-const CONFIRM_ACTIONS: readonly MarketRowAction[] = ['uninstall', 'remove-bundle', 'uninstall-plugin', 'rollback-workbench'];
+const CONFIRM_ACTIONS: readonly MarketRowAction[] = ['uninstall', 'remove-bundle', 'uninstall-plugin'];
 
 export function MarketDetailPage({
   t,
@@ -57,7 +57,7 @@ export function MarketDetailPage({
         onRecheck={onRecheck}
         rechecking={rechecking}
       />
-      <MarketConfirm
+      <UninstallConfirm
         t={t}
         confirming={confirming}
         row={confirmingRow}

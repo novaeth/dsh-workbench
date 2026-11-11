@@ -101,7 +101,6 @@ export function marketActOf(options: MarketActOptions): (id: string, action: Mar
       action === 'uninstall-plugin' ||
       action === 'update-workbench' ||
       action === 'restart-workbench' ||
-      action === 'rollback-workbench' ||
       action === 'migrate-workbench';
     const market = action === 'install-version' ? row?.market : undefined;
     const marketSpec =
@@ -122,7 +121,6 @@ export function marketActOf(options: MarketActOptions): (id: string, action: Mar
             ? {
                 action,
                 name: row?.pkg ?? '',
-                ...(action === 'rollback-workbench' ? { version: row?.rollbackVersion ?? '' } : {}),
               }
             : marketSpec === undefined
               ? { action, unit: id }
@@ -145,26 +143,6 @@ export function marketActOf(options: MarketActOptions): (id: string, action: Mar
       seats.setPending(null);
       seats.setHeld(undefined);
       seats.setNotice(t('panels.market.dismissed'));
-      return;
-    }
-    if (action === 'rollback-workbench') {
-      const rollback = recordOf(recordOf(value)?.rollback);
-      if (rollback?.ok !== true) {
-        seats.setPending(null);
-        seats.setHeld(undefined);
-        seats.setNotice(
-          t(
-            rollback?.refusal === 'no-previous'
-              ? 'panels.market.rollbackNoPrevious'
-              : 'panels.market.rollbackRefused',
-          ),
-        );
-        return;
-      }
-      onChanged({ force: true });
-      seats.setPending(null);
-      seats.setHeld(undefined);
-      seats.setNotice(t('panels.market.rollbackDone', { version: String(rollback.version ?? '') }));
       return;
     }
     if (action === 'restart-workbench') {
