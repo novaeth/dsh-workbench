@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { distModule, distTag, plantCopiedVersion } from './self-update-version-tree.mjs';
 
@@ -20,6 +20,9 @@ function fail(message) {
 async function main() {
   const askedHome = process.argv[2]?.trim() ?? '';
   const dshHome = askedHome === '' ? join(homedir(), '.dsh') : askedHome;
+  if (!isAbsolute(dshHome)) {
+    fail(`第一个参数要给 DSH_HOME 的绝对路径（拿到的是 ${JSON.stringify(askedHome)}）—— 空参数会被当成相对路径`);
+  }
   if (dshHome === join(homedir(), '.dsh') && !(process.env.CI === 'true' || process.env.DSH_SMOKE_ALLOW_REAL_HOME === '1')) {
     fail('这一版是给 CI 用的：要往真实 ~/.dsh 里铺，得显式带上 DSH_SMOKE_ALLOW_REAL_HOME=1');
   }

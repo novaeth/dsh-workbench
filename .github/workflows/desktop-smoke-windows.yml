@@ -147,6 +147,7 @@ jobs:
           Invoke-Logged 'add-plugin-probe' { node scripts/desktop-smoke/cdp-probe.mjs 9226 desktop-${{ inputs.label }}-add-plugin.png --add-plugin $env:DESKTOP_SMOKE_PLUGIN }
           $global:LASTEXITCODE = 0
           # 自更新这条 E2E 已经立住：三段都按硬判据走，红就挡这条腿。
+          $appRoot = Join-Path $env:USERPROFILE '.dsh'
           Stop-App
           Start-Sleep -Seconds 3
           Invoke-Logged 'update-fixture' { node scripts/desktop-smoke/self-update-update-fixture.mjs $appRoot 'desktop' $env:DESKTOP_SMOKE_UPDATE_FROM }
