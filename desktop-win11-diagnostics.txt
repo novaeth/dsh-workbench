@@ -1,0 +1,1108 @@
+
+=== meta ===
+collected-at: 2026-11-11T08:14:23.701Z
+platform: win32 x64 · node v24.22.2
+cwd: D:\a\dsh-workbench\dsh-workbench
+home: C:\Users\runneradmin
+dsh-home: C:\Users\runneradmin\.dsh
+workbench-home: C:\Users\runneradmin\.dsh\workbench
+GITHUB_RUN_ID: 42984719244
+GITHUB_RUN_ATTEMPT: 1
+GITHUB_SHA: fd930abea910d9667fceb9112fca94d3110a35d4
+GITHUB_JOB: smoke
+DESKTOP_SMOKE_STATUS: failure
+probe-log: D:\a\dsh-workbench\dsh-workbench\desktop-win11-probe.log
+git: fd930ab chore: 发布版本 v1.2.3-beta.9
+git-status: M packages/module-hello/client.js
+ M packages/shared/src/host/release-packages.generated.ts
+?? desktop-win11-add-plugin-add-plugin-body.txt
+?? desktop-win11-add-plugin-add-plugin-preview-body.txt
+?? desktop-win11-add-plugin-add-plugin.json
+?? desktop-win11-add-plugin-final-body.txt
+?? desktop-win11-add-plugin-smoke.json
+?? desktop-win11-add-plugin.png
+?? desktop-win11-after-restart-client-bundles.json
+?? desktop-win11-after-restart-console-events.json
+?? desktop-win11-after-restart-final-body.txt
+?? desktop-win11-after-restart-page-internals.json
+?? desktop-win11-after-restart-smoke.json
+?? desktop-win11-after-restart-units.json
+?? desktop-win11-after-restart-verify-body.txt
+?? desktop-win11-final-body.txt
+?? desktop-win11-gate-body.txt
+?? desktop-win11-gate-preflight.json
+?? desktop-win11-gate.png
+?? desktop-win11-market-body.txt
+?? desktop-win11-market-installed.txt
+?? desktop-win11-plugins-body.txt
+?? desktop-win11-smoke.json
+
+=== triage ===
+探针总结: [33.9s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"33.9s","milestones":{"cdp-ready":"0.0s","app-page":"0.0s","cdp-connected":"0.1s","ready":"9.4s","module-card":"13.9s"},"card":true,"units":["panels","hello"]}
+第一处错误: （没有）
+
+里程碑:
+[30.6s] MILESTONE browser-launched @ 30.6s
+[37.9s] MILESTONE ready @ 37.9s
+[41.0s] MILESTONE market-open @ 41.0s
+[47.8s] MILESTONE market-source-added @ 47.8s
+[49.8s] MILESTONE market-listed @ 49.8s
+[51.4s] MILESTONE market-install-clicked @ 51.4s
+[55.4s] MILESTONE market-installed @ 55.4s
+[0.0s] MILESTONE cdp-ready @ 0.0s
+[0.0s] MILESTONE app-page @ 0.0s
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[9.4s] MILESTONE ready @ 9.4s
+[13.9s] MILESTONE module-card @ 13.9s
+
+现场文件:
+[18.4s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-gate-preflight.json (5022 bytes)
+[49.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-market-body.txt (597 bytes)
+[55.4s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-market-installed.txt (626 bytes)
+[55.4s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-smoke.json (214 bytes)
+[55.4s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-final-body.txt (626 bytes)
+[75.4s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+[13.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-verify-body.txt (404 bytes)
+[13.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-units.json (5854 bytes)
+[13.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-client-bundles.json (25 bytes)
+[13.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-page-internals.json (2098 bytes)
+[13.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-console-events.json (9164 bytes)
+[13.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-smoke.json (101 bytes)
+[13.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-final-body.txt (404 bytes)
+[33.9s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+
+体检失败快照:
+（没有）
+
+=== smoke results ===
+desktop-win11-smoke.json:
+{
+  "market": "https://github.com/novaeth/dsh-workbench-market.git",
+  "module": "@dsh-workbench/module-hello",
+  "listed": true,
+  "installed": true,
+  "restartHint": false,
+  "phase": "ready",
+  "bridge": "ok"
+}
+desktop-win11-after-restart-smoke.json:
+{
+  "card": true,
+  "units": [
+    "panels",
+    "hello"
+  ],
+  "phase": "ready",
+  "bridge": "ok"
+}
+
+=== checklist ===
+profile 里有 @dsh-workbench/core: 是（link:D:/a/dsh-workbench/dsh-workbench/packages/core）
+profile 里有 @dsh-workbench/module-hello: 是（github:novaeth/dsh-workbench-market#7135bc722ef4678d5636c84de29a7bf2af739263&path:/packages/module-hello）
+opencli 装上了: 是（C:\Users\runneradmin\.dsh\workbench\opencli\toolchain\node_modules\@jackwener\opencli\package.json）
+市场索引列出模块: 是
+市场装上了模块: 是
+重启后看到了模块卡片: 是
+截图: desktop-win11-add-plugin.png (56703) · desktop-win11-gate.png (12903)
+
+=== probe log ===
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-probe.log（10206 字节，末尾 76 行）
+[0.0s] MILESTONE cdp-ready @ 0.0s
+[0.0s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] app-shell: HARNESS | Loading plugins…
+[2.2s] app-shell: HARNESS | Loading plugins…
+[4.2s] app-shell: ault workspace | New Session | More | Into the Unknown | Preview | Default workspace | Standard mode | Describe what you want to build, / commands, @ files or sessions | Workspace Write | Select model
+[4.3s] STEP click ["Plugins"]: "Plugins"
+[5.5s] plugins-page: d reviews, inspect diffs, and send feedback to the agent. Review local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host.
+[5.5s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-plugins-body.txt (1378 bytes)
+[5.6s] STEP click ["Add plugin"]: "Add plugin"
+[6.4s] add-plugin wait: {"ok":true}
+[6.4s] FIELDS: [{"index":0,"tag":"INPUT","type":"text","placeholder":"Search session names","aria":null,"visible":true},{"index":1,"tag":"INPUT","type":"text","placeholder":"for example dsh-plugin-whale-pet","aria":"Package name or address","visible":true}]
+[6.9s] filled: "D:\\a\\dsh-workbench\\dsh-workbench\\packages\\core"
+[6.9s] STEP click ["Install"]: "Install"
+[8.1s] MILESTONE install-clicked @ 8.1s
+[10.1s] install wait: orkbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Installed |  | @dsh-workbench/core |  | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 |  | Version 1.2.3-beta.9 |  | Show install details | Enable now
+[10.1s] MILESTONE installed @ 10.1s
+[10.1s] STEP click ["Enable now"]: "Enable now"
+[15.4s] health wait [installing] toolchain:ok cli:running(安装 opencli) bridge:pending diy:running :: o the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[18.4s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win11-gate.png (12903 bytes)
+[18.4s] MILESTONE gate-seen @ 18.4s
+[18.4s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-gate-body.txt (1755 bytes)
+[18.4s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-gate-preflight.json (5022 bytes)
+[18.4s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[20.5s] health wait [installing] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: o the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[20.5s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[22.5s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[22.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[24.5s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[24.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[26.5s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[26.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[28.5s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[28.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[30.6s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: ke sure the browser is running and the extension is enabled; install it once from the store if needed (then hit Retry here). | Get the extension in the Chrome Web Store | Open browser | Retry | Enter the workbench anyway
+[30.6s] 模拟用户装扩展：起浏览器 D:\a\_temp\cft\chrome-win64\chrome.exe（--load-extension=D:\a\_temp\opencli-ext，日志 D:\a\dsh-workbench\dsh-workbench\desktop-win11-chrome.log）
+[30.6s] MILESTONE browser-launched @ 30.6s
+[32.7s] extension wait: connected :: [OK] Extension: connected (v1.0.27)
+[32.7s] chrome targets: browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | browser_ui:chrome://webui-toolbar.top-chrome/ | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://omnibox-popup.top-chrome/ | service_worker:chrome-extension://admccjkmockfdflocgggjfgdacdodkdf/background.js | service_worker:chrome-extension://glbjnfimcajjenihimblfaponejbkoph/background.js | service_worker:chrome-extension://eghmcigglheggjiadbmpddohagagpnca/dist/background.js
+[32.7s] STEP click ["Retry","重试"]: "Retry"
+[35.9s] health wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[35.9s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[37.9s] health wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: /core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[37.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: /core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[37.9s] MILESTONE ready @ 37.9s
+[38.0s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Browse the module market"
+[41.0s] market-page: al | Installed modules | 0 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[41.0s] MILESTONE market-open @ 41.0s
+[41.0s] STEP click ["Discover"]: "Discover"
+[43.0s] STEP click ["Add index source","Manage index sources…"]: "Add index source"
+[44.5s] source field: ""
+[44.8s] STEP click ["Add"]: "Add"
+[47.8s] MILESTONE market-source-added @ 47.8s
+[49.8s] market-listing: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[49.8s] MILESTONE market-listed @ 49.8s
+[49.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-market-body.txt (597 bytes)
+[49.9s] STEP row install: "Install Sample module"
+[49.9s] confirm install: {"clicked":false,"labels":["Change address","Cancel","Checking…"]}
+[50.4s] confirm install: {"clicked":false,"labels":["Change address","Cancel","Checking…"]}
+[50.9s] confirm install: {"clicked":false,"labels":["Change address","Cancel","Checking…"]}
+[51.4s] confirm install: {"clicked":true}
+[51.4s] MILESTONE market-install-clicked @ 51.4s
+[51.4s] market-install: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[53.4s] market-install: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[55.4s] market-install:  · Nov 1, 2026 | Installed | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[55.4s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-market-installed.txt (626 bytes)
+[55.4s] MILESTONE market-installed @ 55.4s
+[55.4s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-smoke.json (214 bytes)
+[55.4s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-final-body.txt (626 bytes)
+[55.4s] TITLE: DeepSeek Harness
+[75.4s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+[75.4s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"75.4s","milestones":{"cdp-ready":"0.0s","app-page":"0.1s","cdp-connected":"0.1s","install-clicked":"8.1s","installed":"10.1s","gate-seen":"18.4s","browser-launched":"30.6s","ready":"37.9s","market-open":"41.0s","market-source-added":"47.8s","market-listed":"49.8s","market-install-clicked":"51.4s","market-installed":"55.4s"},"market":"https://github.com/novaeth/dsh-workbench-market.git","module":"@dsh-workbench/module-hello","listed":true,"installed":true,"restartHint":false}
+
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-probe.log（3342 字节，末尾 32 行）
+[0.0s] MILESTONE cdp-ready @ 0.0s
+[0.0s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.0s] pages: dsh-app://app/
+[0.0s] MILESTONE app-page @ 0.0s
+[0.0s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[2.1s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[5.3s] ready wait [checking] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: HARNESS | Loading plugins… | Preparing the workbench |  | Getting the runtime ready…
+[5.3s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[7.4s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[7.4s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[9.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: / commands, @ files or sessions | Select model | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[9.4s] MILESTONE ready @ 9.4s
+[9.4s] verify wait :: host units panels,hello :: cards （无） ::  the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[9.4s] STEP click ["选择模块","Choose modules"]: "Choose modules"
+[10.9s] STEP panel module hello [示例模块/Sample module/hello] dialogs=1 rows=["Sample module"] -> "clicked:hello"
+[13.9s] verify wait :: host units panels,hello :: cards wb-card-hello :: ample module | Restore the default everywhere | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[13.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-verify-body.txt (404 bytes)
+[13.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-units.json (5854 bytes)
+[13.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-client-bundles.json (25 bytes)
+[13.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-page-internals.json (2098 bytes)
+[13.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-console-events.json (9164 bytes)
+[13.9s] MILESTONE module-card @ 13.9s
+[13.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-smoke.json (101 bytes)
+[13.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-final-body.txt (404 bytes)
+[13.9s] TITLE: DeepSeek Harness
+[33.9s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+[33.9s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"33.9s","milestones":{"cdp-ready":"0.0s","app-page":"0.0s","cdp-connected":"0.1s","ready":"9.4s","module-card":"13.9s"},"card":true,"units":["panels","hello"]}
+
+
+=== app stdout/stderr ===
+DESKTOP_SMOKE_APP_LOG: D:\a\_temp\desktop-win11-app.log
+D:\a\_temp\desktop-win11-app.log（275 字节，末尾 6 行）
+
+Checking for update
+Generated new staging user ID: 44fe7fb6-5601-5f28-a81d-3a7d8aba4114
+dsh web: http://127.0.0.1:60396/?token=MWyoh1xN-dJL2t36ckZMV1i-svxFX-9qH-FnoGmUQxE
+Update for version 0.2.2-rc.1 is not available (latest version: 0.2.2-rc.1, downgrade is disallowed).
+
+DESKTOP_SMOKE_APP_ERR: D:\a\_temp\desktop-win11-app.err.log
+D:\a\_temp\desktop-win11-app.err.log（99 字节，末尾 3 行）
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/267b19fd-487f-4a14-a62f-ede8e459c598
+
+DESKTOP_SMOKE_APP_LOG_2: D:\a\_temp\desktop-win11-app2.log
+D:\a\_temp\desktop-win11-app2.log（207 字节，末尾 5 行）
+
+Checking for update
+Update for version 0.2.2-rc.1 is not available (latest version: 0.2.2-rc.1, downgrade is disallowed).
+dsh web: http://127.0.0.1:58937/?token=5zODYCPEp25G9cnaGRUQg2qsdHp_ZeBaRXsUfynd2PM
+
+DESKTOP_SMOKE_APP_ERR_2: D:\a\_temp\desktop-win11-app2.err.log
+D:\a\_temp\desktop-win11-app2.err.log（99 字节，末尾 3 行）
+
+DevTools listening on ws://127.0.0.1:9223/devtools/browser/3e133aa5-c670-46c7-b1b8-a314a4d2d079
+
+
+=== market artifacts ===
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-market-body.txt（608 字节，末尾 35 行）
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Installed
+Discover
+dsh-workbench-market
+Labels
+Sort: Default order
+All
+workbench
+Sample module
+workbench
+Smallest sample module: one extra card on the panel, for trying installs and uninstalls.
+1.1.14-beta.2 · Nov 1, 2026
+Install
+Workbench panel
+No modules on the panel yet
+You can also just tell the agent: “add a module to the panel”.
+Build a module
+Choose modules
+Browse the module market
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-market-installed.txt（637 字节，末尾 38 行）
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Installed
+Discover
+dsh-workbench-market
+Labels
+Sort: Default order
+All
+workbench
+
+Installed: Sample module
+
+Sample module
+workbench
+Smallest sample module: one extra card on the panel, for trying installs and uninstalls.
+1.1.14-beta.2 · Nov 1, 2026
+Installed
+Workbench panel
+No modules on the panel yet
+You can also just tell the agent: “add a module to the panel”.
+Build a module
+Choose modules
+Browse the module market
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-verify-body.txt（不存在）
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-verify-body.txt（412 字节，末尾 28 行）
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Into the Unknown
+Preview
+Standard mode
+Describe what you want to build, / commands, @ files or sessions
+Select model
+Workbench panel
+Panel setup
+⠿
+Sample module
+Restore the default everywhere
+Sample module
+
+hello, workbench
+
+This card comes from a standalone workbench module.
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-final-body.txt（637 字节，末尾 38 行）
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Installed
+Discover
+dsh-workbench-market
+Labels
+Sort: Default order
+All
+workbench
+
+Installed: Sample module
+
+Sample module
+workbench
+Smallest sample module: one extra card on the panel, for trying installs and uninstalls.
+1.1.14-beta.2 · Nov 1, 2026
+Installed
+Workbench panel
+No modules on the panel yet
+You can also just tell the agent: “add a module to the panel”.
+Build a module
+Choose modules
+Browse the module market
+
+=== desktop install tree ===
+resources: C:\Users\runneradmin\AppData\Local\Programs\DeepSeek Harness\resources（在）
+  dir app.asar.unpacked\dsh\node_modules
+  file app.asar.unpacked\dsh\node_modules\clone\.npmignore
+  dir app.asar.unpacked\dsh\node_modules\node-addon-require-builtin-win32-x64-msvc
+  dir app.asar.unpacked\dsh\node_modules\node-pty
+  dir runtime
+  dir runtime\primary-runtime
+  dir runtime\primary-runtime\dependencies\node
+  dir runtime\primary-runtime\dependencies\node\bin
+  dir runtime\primary-runtime\dependencies\node\node_modules
+  dir runtime\primary-runtime\dependencies\pnpm
+  dir runtime\primary-runtime\dependencies\pnpm\bin
+  dir runtime\primary-runtime\dependencies\pnpm\dist
+  dir runtime\primary-runtime\dependencies\python
+  dir runtime\primary-runtime\dependencies\python\DLLs
+  dir runtime\primary-runtime\dependencies\python\include
+  dir runtime\primary-runtime\dependencies\python\Lib
+  dir runtime\primary-runtime\dependencies\python\libs
+  dir runtime\primary-runtime\dependencies\python\Scripts
+  dir runtime\primary-runtime\dependencies\python\tcl
+
+=== opencli doctor ===
+bin: C:\Users\runneradmin\.dsh\workbench\opencli\bin\opencli.cmd（在）
+exit: 0
+opencli v1.8.8 doctor (node v24.22.2)
+
+[OK] Daemon: running on port 19825 (v1.8.8)
+[OK] Extension: connected (v1.0.27)
+
+Profiles:
+  • fsh69tyx: connected v1.0.27
+[OK] Connectivity: connected in 0.0s
+
+Everything looks good!
+
+
+=== runner os ===
+platform: win32 · release: 10.0.26100 · version: Windows Server 2025 Datacenter
+OS env: Windows_NT
+Microsoft Windows [Version 10.0.26100.33674]
+
+=== extension prep ===
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-prep.log（666 字节，末尾 8 行）
+cft: https://storage.googleapis.com/chrome-for-testing-public/157.0.8103.50/win64/chrome-win64.zip
+chrome: 157.0.8103.50
+opencli pin: 1.8.8
+latest release: v2.0.3
+extension: https://github.com/jackwener/opencli/releases/download/v2.0.3/opencli-extension-v1.0.27.zip
+extension version: 1.0.27 · dir: D:\a\_temp\opencli-ext
+env: DESKTOP_SMOKE_CHROME=D:\a\_temp\cft\chrome-win64\chrome.exe · DESKTOP_SMOKE_EXTENSION=D:\a\_temp\opencli-ext · DESKTOP_SMOKE_OPENCLI=C:\Users\runneradmin\.dsh\workbench\opencli\bin\opencli.cmd · DESKTOP_SMOKE_NODE_BIN=C:\Users\runneradmin\AppData\Local\Programs\DeepSeek Harness\resources\runtime\primary-runtime\dependencies\node\bin
+
+
+=== smoke browser ===
+chrome: D:\a\_temp\cft\chrome-win64\chrome.exe
+extension: D:\a\_temp\opencli-ext
+opencli bin: C:\Users\runneradmin\.dsh\workbench\opencli\bin\opencli.cmd
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-chrome.log（99 字节，末尾 3 行）
+
+DevTools listening on ws://127.0.0.1:9333/devtools/browser/7f88c2e7-2eda-412f-a146-10448c76aa30
+
+
+=== units and client injection ===
+desktop-win11-units.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-units.json（不存在）
+desktop-win11-after-restart-units.json:
+{
+  "ok": true,
+  "manifests": [
+    {
+      "id": "panels",
+      "titleKey": "panels.title",
+      "card": null,
+      "tools": [
+        {
+          "name": "workbench_toolbox_list",
+          "writes": false
+        },
+        {
+          "name": "workbench_toolbox_open",
+          "writes": false,
+          "elevates": true
+        },
+        {
+          "name": "workbench_toolbox_close",
+          "writes": false
+        },
+        {
+          "name": "workbench_panels_list",
+          "writes": false
+        },
+        {
+          "name": "workbench_modules_list",
+          "writes": false
+        },
+        {
+          "name": "workbench_market_sources",
+          "writes": false
+        },
+        {
+          "name": "workbench_market_categories",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_status",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_panel",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_components",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_recon",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_spec",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_state",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_html",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_find",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_click",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_hover",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_type",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_fill",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_keys",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_scroll",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_wait",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_eval",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_screenshot",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_network",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_dialog",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_logs_watch",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_logs_read",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_logs_stop",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_record_read",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_record_detail",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_record_stop",
+          "writes": false
+        },
+        {
+          "name": "workbench_long_tasks_list",
+          "writes": false
+        },
+        {
+          "name": "workbench_panels_show",
+          "writes": true
+        },
+        {
+          "name": "workbench_panels_hide",
+          "writes": true
+        },
+        {
+          "name": "workbench_panels_move",
+          "writes": true
+        },
+        {
+          "name": "workbench_panels_reset",
+          "writes": true
+        },
+        {
+          "name": "workbench_panels_follow",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_install",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_update",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_uninstall",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_install_bundle",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_update_dependency",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_update_plugin",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_uninstall_plugin",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_update_workbench",
+          "writes": true
+        },
+        {
+          "name": "workbench_market_enable",
+          "writes": true
+        },
+        {
+          "name": "workbench_market_disable",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_install",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_publish",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_show",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_record_prepare",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_debug_start",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_debug_pause",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_debug_resume",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_debug_stop",
+          "writes": true
+        },
+        {
+          "name": "workbench_long_tasks_stop",
+          "writes": true
+        }
+      ],
+      "host": {
+        "inject": [],
+        "optional": [
+          "tools",
+          "workbenchSeam"
+        ]
+      }
+    },
+    {
+      "id": "hello",
+      "title": {
+        "zh": "示例模块",
+        "en": "Sample module"
+      },
+      "titleKey": "dsh-workbench.unit.hello.title",
+      "card": {
+        "order": 90
+      },
+      "tools": [],
+      "host": {
+        "inject": [],
+        "writes": []
+      }
+    }
+  ],
+  "installable": [
+    "hello"
+  ]
+}
+
+desktop-win11-client-bundles.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-client-bundles.json（不存在）
+desktop-win11-after-restart-client-bundles.json:
+{"names":[],"reports":[]}
+desktop-win11-page-internals.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-page-internals.json（不存在）
+desktop-win11-after-restart-page-internals.json:
+{"href":"dsh-app://app/","scripts":["inline:globalThis.__DSH_BOOT_READY__ = Promise.withResolvers()","dsh-app://app/assets/index-BgUyXZcc.js","inline:(()=>{\nconst pendingQueue=[]\nwindow.__ModuleLoader__={\n  mod","dsh-app://app/plugins/??@deepseek-ai/dsh-client-modules/client.js&rev=296109a7a579","inline:(() => {\n  const preference = \"system\"\n  const systemDark = ","inline:(() => {\n  const boot = () => {\n    const root = document.do"],"loader":"object","bootKeys":["rev","release","entries","batches"],"entries":["{\"id\":\"@deepseek-ai/dsh-api-gateway\",\"url\":\"plugins/??@deepseek-ai/dsh-api-gateway/client.js&rev=04b32ab628f0\",\"rev\":\"04","{\"id\":\"@deepseek-ai/dsh-client-ui-file-actions\",\"url\":\"plugins/??@deepseek-ai/dsh-client-ui-file-actions/client.js&rev=d","{\"id\":\"@deepseek-ai/dsh-client-ui-context-menu\",\"url\":\"plugins/??@deepseek-ai/dsh-client-ui-context-menu/client.js&rev=1","{\"id\":\"@deepseek-ai/dsh-client-ui-open-in-app\",\"url\":\"plugins/??@deepseek-ai/dsh-client-ui-open-in-app/client.js&rev=e23","{\"id\":\"@deepseek-ai/dsh-api-job-controller\",\"url\":\"plugins/??@deepseek-ai/dsh-api-job-controller/client.js&rev=426d71a28","{\"id\":\"@deepseek-ai/dsh-api-terminal-controller\",\"url\":\"plugins/??@deepseek-ai/dsh-api-terminal-controller/client.js&rev","{\"id\":\"@deepseek-ai/dsh-api-workspace-files\",\"url\":\"plugins/??@deepseek-ai/dsh-api-workspace-files/client.js&rev=802ffff","{\"id\":\"@deepseek-ai/dsh-client-ui-settings-account\",\"url\":\"plugins/??@deepseek-ai/dsh-client-ui-settings-account/client.","{\"id\":\"@deepseek-ai/dsh-client-hmr\",\"url\":\"plugins/??@deepseek-ai/dsh-client-hmr/client.js&rev=8ca3de3dc101\",\"rev\":\"8ca3","{\"id\":\"@deepseek-ai/dsh-client-modules\",\"url\":\"plugins/??@deepseek-ai/dsh-client-modules/client.js&rev=ed567075095c\",\"re","{\"id\":\"@deepseek-ai/dsh-cordis-client-runner\",\"url\":\"plugins/??@deepseek-ai/dsh-cordis-client-runner/client.js&rev=ab249","{\"id\":\"@deepseek-ai/dsh-client-ui-theme\",\"url\":\"plugins/??@deepseek-ai/dsh-client-ui-theme/client.js&rev=06b63efd3d5c\",\""]}
+desktop-win11-scripts.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-scripts.json（不存在）
+desktop-win11-after-restart-scripts.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-scripts.json（不存在）
+desktop-win11-console-events.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-console-events.json（不存在）
+desktop-win11-after-restart-console-events.json:
+[
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "timestamp": 1794384782096.449,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "9800.33"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "timestamp": 1794384782100.053,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "9800.34"
+      }
+    }
+  },
+  {
+    "method": "Runtime.consoleAPICalled",
+    "params": {
+      "type": "warning",
+      "args": [
+        {
+          "type": "string",
+          "value": "[dsh-workbench] hello 的卡片没挂上：宿主没有担保 unit「hello」的清单 —— 这个包要么没装进这份 profile，要么它的 dsh.workbench 没通过校验。卡片先不挂：清单只有一处真相"
+        }
+      ],
+      "executionContextId": 1,
+      "timestamp": 1794384786498.027,
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "warnRefusal",
+            "scriptId": "20",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=29578ba7e847",
+            "lineNumber": 22248,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "register",
+            "scriptId": "20",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=29578ba7e847",
+            "lineNumber": 22285,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "registerUnit",
+            "scriptId": "20",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=29578ba7e847",
+            "lineNumber": 38311,
+            "columnNumber": 38
+          },
+          {
+            "functionName": "",
+            "scriptId": "20",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=29578ba7e847",
+            "lineNumber": 38686,
+            "columnNumber": 29
+          },
+          {
+            "functionName": "",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2806
+          },
+          {
+            "functionName": "R1",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 6,
+            "columnNumber": 74
+          },
+          {
+            "functionName": "_execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2684
+          },
+          {
+            "functionName": "effect",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 4228
+          },
+          {
+            "functionName": "apply",
+            "scriptId": "20",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=29578ba7e847",
+            "lineNumber": 38686,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 1539
+          },
+          {
+            "functionName": "",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2806
+          },
+          {
+            "functionName": "R1",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 6,
+            "columnNumber": 74
+          },
+          {
+            "functionName": "_execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2684
+          },
+          {
+            "functionName": "_reload",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 6172
+          }
+        ]
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 405 (Method Not Allowed)",
+        "timestamp": 1794384787312.76,
+        "url": "dsh-app://app/workbench/api/workbench-boot-ok",
+        "networkRequestId": "9800.58"
+      }
+    }
+  }
+]
+
+
+=== dsh startup logs ===
+C:\Users\runneradmin\.dsh\logs（不存在）
+
+=== desktop app logs ===
+（没找到 Desktop 自己的日志文件）
+
+=== workbench home tree（C:\Users\runneradmin\.dsh\workbench） ===
+[D] bin
+  [D] desktop
+    [F] node.cmd (143)
+[D] diy
+  [D] packages
+[D] home
+  [D] AppData
+    [D] Local
+      [D] Microsoft
+[F] host.lock (55)
+[D] market-index
+  [D] 29f96bb3c21eef32
+    [F] index.json (1077)
+    [F] meta.json (89)
+    [D] repo.git
+      [F] config (163)
+      [F] description (73)
+      [F] FETCH_HEAD (90)
+      [F] HEAD (21)
+      [D] hooks
+      [D] info
+      [D] objects
+      [F] packed-refs (103)
+      [D] refs
+      [F] shallow (41)
+  [F] sources.json (331)
+[D] npm-cache
+  [D] _cacache
+    [D] content-v2
+      [D] sha512
+    [D] index-v5
+      [D] 05
+      [D] 34
+    [D] tmp
+[D] npm-logs
+  [F] 2026-11-11T08_13_57_117Z-debug-0.log (1611)
+  [F] 2026-11-11T08_13_59_374Z-debug-0.log (1926)
+  [F] 2026-11-11T08_14_05_845Z-debug-0.log (1724)
+  [F] 2026-11-11T08_14_08_778Z-debug-0.log (1692)
+  [F] 2026-11-11T08_14_08_830Z-debug-0.log (1692)
+[D] opencli
+  [D] bin
+    [F] opencli.cmd (147)
+  [D] home
+    [D] .opencli
+      [D] clis
+      [D] node_modules
+      [F] package.json (76)
+      [D] plugins
+      [F] plugins.lock.json (254)
+      [F] update-check.json (72)
+    [D] AppData
+      [D] Local
+  [D] libs
+    [D] node_modules
+      [D] @jackwener
+  [D] npm-cache
+  [D] plugins-npm
+    [D] node_modules
+      [F] .modules.yaml (677)
+      [D] .pnpm
+      [F] .pnpm-workspace-state-v1.json (923)
+      [D] @jackwener
+      [F] opencli-plugin-hello
+    [F] package.json (61)
+    [F] pnpm-lock.yaml (596)
+    [F] pnpm-workspace.yaml (99)
+  [D] pnpm-cache
+    [F] lockfile-verified.jsonl (1484)
+    [D] v12
+      [D] metadata
+      [D] metadata-full
+  [D] pnpm-store
+    [D] v11
+      [D] files
+      [F] index.db (614400)
+      [D] projects
+  [D] toolchain
+    [D] node_modules
+      [D] .bin
+      [F] .modules.yaml (1740)
+      [D] .pnpm
+      [F] .pnpm-workspace-state-v1.json (964)
+      [D] @jackwener
+    [F] package.json (118)
+    [F] pnpm-lock.yaml (4436)
+[F] seed.log (186)
+[F] self-update-boot.json (84)
+[D] tmp
+[D] workspaces
+  [D] default-workspace-69f8c26f
+    [D] panels
+      [F] config.json (79)
+  [D] _machine
+    [D] panels
+      [F] plugins.json (268)
+
+=== seed.log ===
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+
+
+=== diy/.sync.json ===
+C:\Users\runneradmin\.dsh\workbench\diy\.sync.json（不存在）
+
+=== profile package.json ===
+{
+  "name": "dsh-profile-desktop",
+  "private": true,
+  "dependencies": {
+    "@dsh-workbench/core": "link:D:/a/dsh-workbench/dsh-workbench/packages/core",
+    "@dsh-workbench/module-hello": "github:novaeth/dsh-workbench-market#7135bc722ef4678d5636c84de29a7bf2af739263&path:/packages/module-hello"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "@dsh-workbench/core",
+        "@dsh-workbench/module-hello"
+      ]
+    }
+  }
+}
+
+
+=== profile cordis.patch.yml ===
+# Your patch layer for this dsh profile, applied after every bundle layer:
+# a top-level YAML array of loader patch entries (id-targeted config
+# overrides, disables, and insert lists; `!!js` expressions allowed).
+[]
+
+
+=== profile cordis.yml ===
+# dsh profile root — an empty entry list. The tree is composed as patches:
+# each bundle in package.json's dsh.profile.bundles, then cordis.patch.yml, then any
+# --patch overlays. Edit cordis.patch.yml, not this file.
+[]
+
+
+=== workbench browser.json ===
+C:\Users\runneradmin\.dsh\workbench\browser.json（不存在）
+
+=== dsh home tree（C:\Users\runneradmin\.dsh） ===
+[F] .anonymous-user-id (37)
+[F] .credentials.yaml (161)
+[D] profiles
+  [D] desktop
+    [F] .dsh-workbench-sources.json (165)
+    [D] .plugin-manager
+    [F] cordis.patch.yml (217)
+    [F] cordis.yml (223)
+    [D] node_modules
+    [F] package.json (508)
+    [F] pnpm-lock.yaml (1421)
+    [F] pnpm-workspace.yaml (61)
+[D] sessions
+  [D] --C-Users-runneradmin-Documents-deepseek-harness-default-workspace--
+    [D] session-ec165e50-33a2-4913-aba5-39ce9bb7741b
+[D] storages
+  [D] session_projcache
+    [D] sessions
+  [F] workspace.json (1044)
+[D] workbench
+  [D] bin
+    [D] desktop
+  [D] diy
+    [D] packages
+  [D] home
+    [D] AppData
+  [F] host.lock (55)
+  [D] market-index
+    [D] 29f96bb3c21eef32
+    [F] sources.json (331)
+  [D] npm-cache
+    [D] _cacache
+  [D] npm-logs
+    [F] 2026-11-11T08_13_57_117Z-debug-0.log (1611)
+    [F] 2026-11-11T08_13_59_374Z-debug-0.log (1926)
+    [F] 2026-11-11T08_14_05_845Z-debug-0.log (1724)
+    [F] 2026-11-11T08_14_08_778Z-debug-0.log (1692)
+    [F] 2026-11-11T08_14_08_830Z-debug-0.log (1692)
+  [D] opencli
+    [D] bin
+    [D] home
+    [D] libs
+    [D] npm-cache
+    [D] plugins-npm
+    [D] pnpm-cache
+    [D] pnpm-store
+    [D] toolchain
+  [F] seed.log (186)
+  [F] self-update-boot.json (84)
+  [D] tmp
+  [D] workspaces
+    [D] default-workspace-69f8c26f
+    [D] _machine
+
+=== processes ===
+
