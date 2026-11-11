@@ -186,6 +186,10 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'panels.market.installing': 'Installing…',
   'panels.market.updating': 'Updating…',
   'panels.market.uninstalling': 'Uninstalling…',
+  'panels.market.confirmRollbackTitle': 'Go back to "{version}"?',
+  'panels.market.confirmRollbackDetail': 'This version stays on the machine — you can update again any time.',
+  'panels.market.confirmRollbackAck': 'I understand the switch takes effect after a restart.',
+  'panels.market.confirmBack': 'Switch back',
   'panels.market.confirmUninstallTitle': 'Uninstall "{name}"?',
   'panels.market.confirmUninstallDetail':
     'It will be gone from this machine, and removed from every project panel (bindings and settings are kept).',

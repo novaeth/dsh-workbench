@@ -4,27 +4,34 @@ import { RiskConfirmation } from '@deepseek-ai/dsh-client-ui-primitives';
 import type { MarketRow, MarketRowAction } from './market-rows';
 import { marketRowTitle } from './market-rows';
 
-function ConfirmUninstall({
+function RiskConfirm({
   t,
-  name,
+  row,
   onConfirm,
   onCancel,
 }: {
   readonly t: Translate;
-  readonly name: string | null;
+  readonly row: MarketRow | undefined;
   readonly onConfirm: () => void;
   readonly onCancel: () => void;
 }) {
   const [acknowledged, setAcknowledged] = useState(false);
+  const rollback = row?.canRollback === true;
   return (
     <RiskConfirmation
-      open={name !== null}
-      title={t('panels.market.confirmUninstallTitle', { name: name ?? '' })}
-      description={t('panels.market.confirmUninstallDetail')}
-      acknowledgeLabel={t('panels.market.confirmUninstallAck')}
+      open={row !== undefined}
+      title={
+        rollback
+          ? t('panels.market.confirmRollbackTitle', { version: row?.rollbackVersion ?? '' })
+          : t('panels.market.confirmUninstallTitle', { name: row === undefined ? '' : marketRowTitle(row, t) })
+      }
+      description={
+        rollback ? t('panels.market.confirmRollbackDetail') : t('panels.market.confirmUninstallDetail')
+      }
+      acknowledgeLabel={rollback ? t('panels.market.confirmRollbackAck') : t('panels.market.confirmUninstallAck')}
       cancelLabel={t('panels.market.confirmNo')}
       closeLabel={t('panels.market.confirmNo')}
-      confirmLabel={t('panels.market.confirmYes')}
+      confirmLabel={rollback ? t('panels.market.confirmBack') : t('panels.market.confirmYes')}
       acknowledged={acknowledged}
       onAcknowledgedChange={setAcknowledged}
       onCancel={onCancel}
@@ -33,7 +40,7 @@ function ConfirmUninstall({
   );
 }
 
-export function UninstallConfirm({
+export function MarketConfirm({
   t,
   confirming,
   row,
@@ -49,25 +56,25 @@ export function UninstallConfirm({
   readonly rowById: ReadonlyMap<string, MarketRow>;
 }) {
   return (
-    <ConfirmUninstall
+    <RiskConfirm
       key={confirming ?? ''}
       t={t}
-      name={row === undefined ? null : marketRowTitle(row, t)}
+      row={row}
       onCancel={onClose}
       onConfirm={() => {
         const id = confirming;
         onClose();
         if (id === null) return;
         const target = rowById.get(id);
-        void act(
-          id,
-          target?.plugin === true
-            ? 'uninstall-plugin'
-            : target?.removeViaBundle === true
-              ? 'remove-bundle'
-              : 'uninstall',
-        );
+        void act(id, confirmActionOf(target));
       }}
     />
   );
+}
+
+export function confirmActionOf(row: MarketRow | undefined): MarketRowAction {
+  if (row?.canRollback === true) return 'rollback-workbench';
+  if (row?.plugin === true) return 'uninstall-plugin';
+  if (row?.removeViaBundle === true) return 'remove-bundle';
+  return 'uninstall';
 }

@@ -12,7 +12,7 @@ import { marketSectionIcon } from './market-section-icon';
 import { PanelFoot } from '@/shared/components/PanelFoot';
 import styles from '../market/MarketPage.module.css';
 
-const CONFIRM_UNINSTALL: readonly MarketRowAction[] = ['uninstall', 'remove-bundle', 'uninstall-plugin'];
+const CONFIRM_ACTIONS: readonly MarketRowAction[] = ['uninstall', 'remove-bundle', 'uninstall-plugin', 'rollback-workbench'];
 const NO_ROWS: readonly MarketRow[] = [];
 
 export function MarketBody({
@@ -61,80 +61,50 @@ export function MarketBody({
   );
   const installed = sections.find((section) => section.id === 'installed');
   const pendingSection = sections.find((section) => section.id === 'not-installed');
+  const common = {
+    t,
+    onDefault: setDefault,
+    boardBusy,
+    pending,
+    failureOf,
+    act,
+    confirmActions: CONFIRM_ACTIONS,
+    onConfirming,
+    onOpenDetail,
+    onRecheck,
+    rechecking,
+  } as const;
   return (
     <>
       {notice === null ? null : <div className={styles.marketNote}>{notice}</div>}
-      <MarketSection
-        t={t}
-        rows={self === undefined ? [] : [self]}
-        onDefault={setDefault}
-        boardBusy={boardBusy}
-        pending={pending}
-        failureOf={failureOf}
-        act={act}
-        confirmActions={CONFIRM_UNINSTALL}
-        onConfirming={onConfirming}
-        onOpenDetail={onOpenDetail}
-        onRecheck={onRecheck}
-        rechecking={rechecking}
-      />
+      <MarketSection {...common} rows={self === undefined ? [] : [self]} />
       {self === undefined ? null : (
         <div className={styles.marketSelfDivider} aria-hidden="true" />
       )}
       <MarketSection
-        t={t}
+        {...common}
         titleKey="panels.market.sectionInstalled"
         icon={marketSectionIcon('installed')}
         rows={installed?.rows ?? NO_ROWS}
         keepHead
         headAction={checks.modules}
-        onDefault={setDefault}
-        boardBusy={boardBusy}
-        pending={pending}
-        failureOf={failureOf}
-        act={act}
-        confirmActions={CONFIRM_UNINSTALL}
-        onConfirming={onConfirming}
-        onOpenDetail={onOpenDetail}
-        onRecheck={onRecheck}
-        rechecking={rechecking}
       />
       {pendingSection === undefined ? null : (
         <MarketSection
-          t={t}
+          {...common}
           titleKey={pendingSection.titleKey}
           icon={marketSectionIcon('pending')}
           rows={pendingSection.rows}
-          onDefault={setDefault}
-          boardBusy={boardBusy}
-          pending={pending}
-          failureOf={failureOf}
-          act={act}
-          confirmActions={CONFIRM_UNINSTALL}
-          onConfirming={onConfirming}
-        onOpenDetail={onOpenDetail}
-          onRecheck={onRecheck}
-          rechecking={rechecking}
         />
       )}
       {runtimePluginMarket === false ? null : (
-      <MarketSection
-        t={t}
-        titleKey="panels.market.sectionPlugins"
-        icon={marketSectionIcon('plugins')}
-        rows={pluginList}
-        headAction={checks.plugins}
-        onDefault={setDefault}
-        boardBusy={boardBusy}
-        pending={pending}
-        failureOf={failureOf}
-        act={act}
-        confirmActions={CONFIRM_UNINSTALL}
-        onConfirming={onConfirming}
-        onOpenDetail={onOpenDetail}
-        onRecheck={onRecheck}
-        rechecking={rechecking}
-      />
+        <MarketSection
+          {...common}
+          titleKey="panels.market.sectionPlugins"
+          icon={marketSectionIcon('plugins')}
+          rows={pluginList}
+          headAction={checks.plugins}
+        />
       )}
 
       {foot ? <PanelFoot size="md" text={t('panels.market.foot')} /> : null}

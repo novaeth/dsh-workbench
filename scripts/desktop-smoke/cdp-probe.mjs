@@ -867,6 +867,49 @@ async function smokeMarket(cdp) {
   return result;
 }
 
+async function confirmRollback(cdp, budgetMs = 60_000) {
+  const until = Date.now() + remaining('等切回确认弹窗', budgetMs);
+  let last = '';
+  while (Date.now() < until) {
+    const answer = await cdp.send('Runtime.evaluate', {
+      expression: `(() => {
+        const dialog = document.querySelector('[role="dialog"], [aria-modal="true"]');
+        if (dialog === null) return JSON.stringify({ dialog: false, labels: [] });
+        const box = [...dialog.querySelectorAll('[role="checkbox"], input[type="checkbox"]')].find(
+          (node) => node.getAttribute('aria-checked') !== 'true' && node.checked !== true,
+        );
+        if (box !== undefined) {
+          box.click();
+          return JSON.stringify({ dialog: true, acked: true });
+        }
+        const buttons = [...dialog.querySelectorAll('button')];
+        const target = buttons.find((node) => ['切回', 'Switch back'].includes((node.innerText ?? '').trim()));
+        if (target !== undefined && target.disabled !== true) {
+          target.click();
+          return JSON.stringify({ dialog: true, confirmed: true });
+        }
+        return JSON.stringify({
+          dialog: true,
+          labels: buttons.map((node) => (node.innerText ?? '').trim()).filter((one) => one !== ''),
+        });
+      })()`,
+      returnByValue: true,
+    });
+    last = String(answer.result?.value ?? '');
+    log(`confirm rollback: ${last}`);
+    try {
+      const state = JSON.parse(last);
+      if (state.confirmed === true) return true;
+    } catch (error) {
+      log(`confirm rollback 读不出来：${String(error?.message ?? error)}`);
+    }
+    await sleep(500);
+  }
+  writeText(`${prefix}-rollback-confirm.txt`, last);
+  await fail(cdp, '切回确认弹窗没走完（勾选或确认按钮没找到）', await bodyOf(cdp));
+  return false;
+}
+
 async function smokeRollback(cdp) {
   const result = { rollback: false, alive: false };
   await openMarket(cdp);
@@ -894,6 +937,7 @@ async function smokeRollback(cdp) {
     await fail(cdp, 'workbench row has no "back to previous version" button', await bodyOf(cdp));
   }
   mark('rollback-clicked');
+  await confirmRollback(cdp);
   const rollbackTo = (process.env.DESKTOP_SMOKE_ROLLBACK_TO ?? '').trim();
   const doneUntil = Date.now() + remaining('等切回完成', MODULE_WAIT_MS);
   let done = '';

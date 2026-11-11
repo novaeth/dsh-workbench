@@ -159,16 +159,16 @@ describe('两屏的分工：市场管机器级默认、面板管本工作区', (
 
   it('★ 每一段都要把"默认启用"这两颗传下去（漏一段 = 那段的拨钮点了没反应）', () => {
     const body = readFileSync(new URL('../market-body.tsx', import.meta.url), 'utf8');
+    const common = body.slice(body.indexOf('const common = {'), body.indexOf('} as const;'));
+    expect(common).toContain('onDefault: setDefault');
+    expect(common).toContain('boardBusy,');
     const blocks = body
       .split('<MarketSection')
       .slice(1)
       .map((part) => part.split('/>')[0] ?? '');
 
     expect(blocks.length).toBeGreaterThan(1);
-    for (const block of blocks) {
-      expect(block, block.slice(0, 40)).toContain('onDefault={setDefault}');
-      expect(block, block.slice(0, 40)).toContain('boardBusy={boardBusy}');
-    }
+    for (const block of blocks) expect(block, block.slice(0, 40)).toContain('{...common}');
   });
 
   it('★ 两语言文案齐、无内部词："默认"二字必须在市场那颗开关的文案里', () => {
