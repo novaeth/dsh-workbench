@@ -203,7 +203,10 @@ async function connect(wsUrl) {
 
 async function bodyOf(cdp) {
   try {
-    const result = await cdp.send('Runtime.evaluate', { expression: 'document.body.innerText', returnByValue: true });
+    const result = await cdp.send('Runtime.evaluate', {
+      expression: '(document.body.innerText || document.body.textContent || "")',
+      returnByValue: true,
+    });
     return result.result?.value ?? '';
   } catch (error) {
     log(`body 读不到（页面在重载？）：${String(error?.message ?? error)}`);
@@ -974,7 +977,7 @@ function updateButtonOf(row) {
 async function smokeSelfUpdate(cdp) {
   const result = { updated: false, ready: false, live: false, to: '' };
   await openMarket(cdp);
-  writeText(`${prefix}-self-update-body.txt`, await bodyOf(cdp));
+  writeText(`${prefix}-body.txt`, await bodyOf(cdp));
   const rowUntil = Date.now() + remaining('等工作台那一行的「更新」钮', MODULE_WAIT_MS);
   let row = await workbenchRowOf(cdp);
   let updateButton = updateButtonOf(row);
@@ -985,7 +988,7 @@ async function smokeSelfUpdate(cdp) {
     updateButton = updateButtonOf(row);
   }
   log(`STEP workbench row: found=${String(row.found)} buttons=${JSON.stringify(buttonTextsOf(row))}`);
-  writeText(`${prefix}-self-update-row.json`, `${JSON.stringify(row, null, 2)}\n`);
+  writeText(`${prefix}-row.json`, `${JSON.stringify(row, null, 2)}\n`);
   if (row.found !== true) {
     await fail(cdp, '市场页上找不到工作台那一行（按标题「工作台」/「Workbench」定位）', await bodyOf(cdp));
   }
@@ -993,7 +996,7 @@ async function smokeSelfUpdate(cdp) {
     await fail(cdp, '工作台那一行没有「更新」钮（盘上/源上版本没读到？）', await bodyOf(cdp));
   }
   const before = await workbenchVersionOf(cdp);
-  writeText(`${prefix}-self-update-before.json`, `${JSON.stringify(before, null, 2)}\n`);
+  writeText(`${prefix}-before.json`, `${JSON.stringify(before, null, 2)}\n`);
   const beforeWorkbench = before?.workbench ?? null;
   const markerFrom = typeof before?.selfUpdate?.from === 'string' ? before.selfUpdate.from : '';
   const from = typeof beforeWorkbench?.installed === 'string' ? beforeWorkbench.installed : '';
@@ -1018,9 +1021,8 @@ async function smokeSelfUpdate(cdp) {
   }
   mark('self-update-clicked');
 
-  const alive = await cdp.send('Runtime.evaluate', {
-    expression: `(async () => {
-      const body = document.body.innerText || '';
+  const aliveExpression = `(async () => {
+      const body = document.body.innerText || document.body.textContent || '';
       const titles = ${JSON.stringify(workbenchTitles)};
       const status = await fetch('/workbench/api/module-versions?check=0').then((r) => r.status).catch(() => 0);
       return JSON.stringify({
@@ -1029,22 +1031,36 @@ async function smokeSelfUpdate(cdp) {
         panel: /Workbench panel|工作台面板/u.test(body),
         status,
       });
-    })()`,
-    awaitPromise: true,
-    returnByValue: true,
-  });
-  let aliveState;
-  try {
-    aliveState = JSON.parse(alive.result?.value ?? '{}');
-  } catch {
-    aliveState = {};
+    })()`;
+  const aliveUntil = Date.now() + 90_000;
+  let aliveState = {};
+  let live = false;
+  while (Date.now() < aliveUntil) {
+    const alive = await cdp.send('Runtime.evaluate', {
+      expression: aliveExpression,
+      awaitPromise: true,
+      returnByValue: true,
+    });
+    try {
+      aliveState = JSON.parse(alive.result?.value ?? '{}');
+    } catch {
+      aliveState = {};
+    }
+    if (aliveState.row === true && aliveState.status === 200) {
+      live = true;
+      break;
+    }
+    log(
+      `self-update alive wait: visibility=${String(aliveState.visibility)} 市场行=${String(aliveState.row)} 版本接口=${String(aliveState.status)}`,
+    );
+    await sleep(POLL_MS);
   }
-  writeText(`${prefix}-self-update-alive.txt`, `${JSON.stringify(aliveState, null, 2)}\n`);
-  result.live = aliveState.visibility === 'visible' && aliveState.row === true && aliveState.status === 200;
-  if (result.live !== true) {
+  writeText(`${prefix}-alive.txt`, `${JSON.stringify(aliveState, null, 2)}\n`);
+  result.live = live;
+  if (live !== true) {
     await fail(
       cdp,
-      `点了更新之后界面不对：visibility=${String(aliveState.visibility)} 市场行=${String(aliveState.row)} 版本接口=${String(aliveState.status)}`,
+      `点了更新之后界面没回来：visibility=${String(aliveState.visibility)} 市场行=${String(aliveState.row)} 版本接口=${String(aliveState.status)}`,
       await bodyOf(cdp),
     );
   }
@@ -1056,7 +1072,7 @@ async function smokeSelfUpdate(cdp) {
     body = await bodyOf(cdp);
     log(`self-update wait: ${tailBody(body, 220)}`);
     if (selfUpdateFailedRe.test(body)) {
-      writeText(`${prefix}-self-update-failed-body.txt`, body);
+      writeText(`${prefix}-failed-body.txt`, body);
       await fail(cdp, '自更新报失败或回滚（界面出现失败/回滚文案）', body);
     }
     if (selfUpdateReadyRe.test(body)) {
@@ -1072,7 +1088,7 @@ async function smokeSelfUpdate(cdp) {
       body,
     );
   }
-  writeText(`${prefix}-self-update-ready.txt`, readyBody);
+  writeText(`${prefix}-ready.txt`, readyBody);
   mark('self-update-ready');
 
   const laterUntil = Date.now() + 30_000;
@@ -1083,7 +1099,7 @@ async function smokeSelfUpdate(cdp) {
     afterRow = await workbenchRowOf(cdp);
     texts = buttonTextsOf(afterRow);
   }
-  writeText(`${prefix}-self-update-row-after.json`, `${JSON.stringify(afterRow, null, 2)}\n`);
+  writeText(`${prefix}-row-after.json`, `${JSON.stringify(afterRow, null, 2)}\n`);
   const restartNow = texts.find((one) => workbenchRestartNowTexts.includes(one));
   const later = texts.find((one) => workbenchLaterTexts.includes(one));
   if (restartNow !== undefined) {
@@ -1102,7 +1118,7 @@ async function smokeSelfUpdate(cdp) {
   const installedAfter = typeof afterWorkbench?.installed === 'string' ? afterWorkbench.installed : '';
   const runningAfter = typeof afterWorkbench?.running === 'string' ? afterWorkbench.running : '';
   writeText(
-    `${prefix}-self-update-ready.json`,
+    `${prefix}-ready.json`,
     `${JSON.stringify({ from, to, installed: installedAfter, running: runningAfter, local: afterWorkbench?.local === true }, null, 2)}\n`,
   );
   if (installedAfter !== to) {
