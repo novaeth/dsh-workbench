@@ -894,28 +894,48 @@ async function smokeRollback(cdp) {
     await fail(cdp, 'workbench row has no "back to previous version" button', await bodyOf(cdp));
   }
   mark('rollback-clicked');
-  const done = await waitForBody(
-    cdp,
-    /Switched back to|已经切回|Couldn't switch back|自己退出再打开|上一版已经不在本机/u,
-    MODULE_WAIT_MS,
-    'rollback-done',
-  );
+  const rollbackTo = (process.env.DESKTOP_SMOKE_ROLLBACK_TO ?? '').trim();
+  const doneUntil = Date.now() + remaining('等切回完成', MODULE_WAIT_MS);
+  let done = '';
+  let seen = {};
+  let flipped = false;
+  let refusedBody = '';
+  while (Date.now() < doneUntil) {
+    done = await bodyOf(cdp);
+    if (/Couldn't switch back|自己退出再打开|上一版已经不在本机/u.test(done)) {
+      refusedBody = done;
+      break;
+    }
+    const after = await workbenchVersionOf(cdp, false);
+    seen = after?.workbench ?? {};
+    const installed = typeof seen.installed === 'string' ? seen.installed : '';
+    if (rollbackTo !== '' ? installed === rollbackTo : /Switched back to|已经切回/u.test(done)) {
+      flipped = true;
+      break;
+    }
+    log(`rollback wait: installed=${JSON.stringify(installed)} 期望=${JSON.stringify(rollbackTo)}`);
+    await sleep(POLL_MS);
+  }
   writeText(`${prefix}-rollback-done.txt`, done);
-  const refused = /Couldn't switch back|自己退出再打开|上一版已经不在本机/u.test(done);
-  if (refused) {
-    const before = await workbenchVersionOf(cdp, false);
-    writeText(`${prefix}-rollback-refused.json`, `${JSON.stringify(before, null, 2)}\n`);
-    const seen = before?.workbench ?? {};
-    const mark = before?.selfUpdate ?? {};
+  if (refusedBody !== '') {
+    writeText(`${prefix}-rollback-refused.json`, `${JSON.stringify({ workbench: seen }, null, 2)}\n`);
     await fail(
       cdp,
-      `切回被拒（no-marker / no-seam / no-profile 之一）：installed=${JSON.stringify(seen.installed)} latest=${JSON.stringify(seen.latest)} previous=${JSON.stringify(seen.previous)} local=${String(seen.local)} selfUpdate=${JSON.stringify(mark.state)}`,
+      `切回被拒（no-marker / no-seam / no-profile 之一）：installed=${JSON.stringify(seen.installed)} latest=${JSON.stringify(seen.latest)} local=${String(seen.local)}`,
+      refusedBody,
+    );
+  }
+  if (!flipped) {
+    await fail(
+      cdp,
+      `切回没生效：installed=${JSON.stringify(seen.installed)} 期望=${JSON.stringify(rollbackTo)}`,
       done,
     );
   }
-  result.rollback = /Switched back to|已经切回/u.test(done);
-  result.alive = /Workbench panel|工作台面板/u.test(done);
+  result.rollback = true;
   mark('rollback-done');
+  await sleep(3000);
+  result.alive = /Workbench panel|工作台面板/u.test(await bodyOf(cdp));
   return result;
 }
 

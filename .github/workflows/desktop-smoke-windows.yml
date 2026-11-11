@@ -25,6 +25,7 @@ jobs:
       DESKTOP_SMOKE_MODULE: '@dsh-workbench/module-hello'
       DESKTOP_SMOKE_PLUGIN: opencli-plugin-hello
       DESKTOP_SMOKE_UPDATE_FROM: 1.2.3-beta.4
+      DESKTOP_SMOKE_ROLLBACK_TO: 1.2.3-beta.2
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -149,7 +150,7 @@ jobs:
           # 回退这条 E2E 还在试验中：它自己红只发警告，不挡这条腿既有的信号。
           # pwsh 会把最后一条原生命令的退出码留到步骤末尾，所以每处告警后都把它抹平。
           $appRoot = Join-Path $env:USERPROFILE '.dsh'
-          if (Invoke-Warned 'rollback-fixture' { node scripts/desktop-smoke/self-update-rollback-fixture.mjs $appRoot 'desktop' 1.2.3-beta.2 }) {
+          if (Invoke-Warned 'rollback-fixture' { node scripts/desktop-smoke/self-update-rollback-fixture.mjs $appRoot 'desktop' $env:DESKTOP_SMOKE_ROLLBACK_TO }) {
             Stop-App
             Start-Sleep -Seconds 3
             $app3 = Start-App 9224 $out3 $err3
