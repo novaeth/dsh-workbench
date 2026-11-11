@@ -1,6 +1,6 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { basename, dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execaSync } from 'execa';
 
@@ -47,16 +47,18 @@ function registryOf(profileDir) {
   return fallback;
 }
 
-function targetBeta(profileDir) {
+function registryOfOrFail(profileDir) {
   const registry = registryOf(profileDir);
-  if (registry === undefined) return '读不到（profile 的 .npmrc 里没有 registry）';
-  try {
-    const run = execaSync('npm', ['view', CORE, 'dist-tags.beta', '--registry', registry], { reject: false });
-    const version = (run.stdout ?? '').trim();
-    return run.exitCode === 0 && version !== '' ? version : '读不到';
-  } catch {
-    return '读不到';
-  }
+  if (registry === undefined) fail(`读不到 registry：${join(profileDir, '.npmrc')} 里没有 registry / @dsh-workbench:registry`);
+  return registry;
+}
+
+function distTag(profileDir, tag) {
+  const registry = registryOfOrFail(profileDir);
+  const run = execaSync('npm', ['view', CORE, `dist-tags.${tag}`, '--registry', registry], { reject: false });
+  const version = (run.stdout ?? '').trim();
+  if (run.exitCode !== 0 || version === '') fail(`读不到 ${CORE} 的 ${tag} dist-tag（registry ${registry}）`);
+  return version;
 }
 
 function distModule(...parts) {
@@ -65,30 +67,12 @@ function distModule(...parts) {
   return import(pathToFileURL(file).href);
 }
 
-function seedVersionDir(input) {
-  const { versionDir, version, packages } = input;
-  const modules = join(versionDir, 'node_modules');
+function rewriteVersions(versionDir, version, packages) {
   for (const name of packages) {
-    const from = join(ROOT, 'packages', name.split('/')[1] ?? name);
-    if (!existsSync(join(from, 'package.json'))) fail(`仓里没有 ${name} 的源码目录：${from}`);
-    const at = join(modules, name);
-    mkdirSync(dirname(at), { recursive: true });
-    cpSync(from, at, {
-      recursive: true,
-      dereference: true,
-      filter: (src) => basename(src) !== 'node_modules',
-    });
-    const manifest = join(at, 'package.json');
+    const manifest = join(versionDir, 'node_modules', name, 'package.json');
+    if (!existsSync(manifest)) fail(`安装树里没有 ${name}：${manifest}`);
     const raw = JSON.parse(readFileSync(manifest, 'utf8'));
     writeFileSync(manifest, `${JSON.stringify({ ...raw, version }, null, 2)}\n`);
-  }
-  const repoModules = join(ROOT, 'node_modules');
-  if (!existsSync(repoModules)) fail(`仓根没有 node_modules：${repoModules} —— 先装依赖`);
-  for (const entry of readdirSync(repoModules)) {
-    if (entry === '@dsh-workbench' || entry === '.bin' || entry === '.modules.yaml') continue;
-    const at = join(modules, entry);
-    if (existsSync(at)) continue;
-    symlinkSync(join(repoModules, entry), at, 'junction');
   }
 }
 
@@ -109,19 +93,65 @@ async function main() {
   if (!existsSync(join(profileDir, 'package.json'))) fail(`没有这个 profile：${profileDir}`);
 
   const versions = await distModule('adapter-probe', 'dist', 'version-dir.js');
+  const steps = await distModule('adapter-probe', 'dist', 'self-update-steps.js');
   const plan = await distModule('adapter-probe', 'dist', 'self-update-plan.js');
   const bundles = await distModule('shared', 'dist', 'host', 'profile-bundles.js');
   const files = await distModule('shared', 'dist', 'host', 'fs-write.js');
 
   const paths = plan.selfUpdatePaths();
   const packages = plan.SELF_UPDATE_PACKAGES;
+  const newest = distTag(profileDir, 'beta');
+  if (!(from !== newest)) fail(`起点版号 ${from} 不能等于最新版 ${newest}（那样就试不出「更新」）`);
+
+  const newestDir = join(paths.versionsDir, newest);
+  const project = versions.versionProjectFiles({ profileDir, versionsDir: paths.versionsDir, version: newest, packages });
+  if (!versions.versionSelfCheck({ versionDir: newestDir, version: newest, packages })) {
+    const built = steps.selfUpdateStepsOf({ dshHome, profile, pkg: CORE, from: newest, to: newest, pinned: false }, paths);
+    const install = built.steps.find((step) => step.kind === 'install');
+    if (install === undefined) fail('selfUpdateStepsOf 里没有 install 这一步');
+    out(`真装最新版 ${newest} → ${newestDir}`);
+    const result = await versions.installVersionDir({
+      project,
+      version: newest,
+      command: 'install',
+      deps: {
+        run: async () => {
+          try {
+            const run = execaSync(install.file, [...install.args], {
+              cwd: install.cwd,
+              env: { ...process.env, ...install.env },
+              reject: false,
+              all: true,
+            });
+            return { ok: run.exitCode === 0, detail: run.all ?? `${run.stdout ?? ''}${run.stderr ?? ''}` };
+          } catch (error) {
+            return { ok: false, detail: String(error) };
+          }
+        },
+        log: (message) => out(message),
+      },
+      packages,
+    });
+    if (!result.ok) {
+      fail(`装最新版 ${newest} 没成：\n${result.detail.trimEnd().split('\n').slice(-40).join('\n')}`);
+    }
+    out(result.detail.trimEnd().split('\n').slice(-6).join('\n'));
+  } else {
+    out(`最新版已经装好，跳过安装：${newestDir}`);
+  }
+  if (!versions.versionSelfCheck({ versionDir: newestDir, version: newest, packages })) {
+    fail(`最新版自检没过（包或客户端产物不全）：${newestDir}`);
+  }
+
   const versionDir = join(paths.versionsDir, from);
   rmSync(versionDir, { recursive: true, force: true });
-  seedVersionDir({ versionDir, version: from, packages });
-  out(`铺好「上一版」：${versionDir}（本 commit 构建的 ${String(packages.length)} 个包，版本号改成 ${from}）`);
+  mkdirSync(paths.versionsDir, { recursive: true });
+  cpSync(newestDir, versionDir, { recursive: true, dereference: true });
+  rewriteVersions(versionDir, from, packages);
   if (!versions.versionSelfCheck({ versionDir, version: from, packages })) {
-    fail(`版本目录自检没过（包或客户端产物不全）：${versionDir}`);
+    fail(`起点版本目录自检没过（包或客户端产物不全）：${versionDir}`);
   }
+  out(`起点版 ${from}：内容取自 ${newest} 的安装树（版本号改写），${String(join(versionDir, 'node_modules'))}`);
 
   const links = versions.versionLinksOf({ profileDir, versionDir, packages });
   versions.flipProfileLinks(links);
@@ -152,7 +182,7 @@ async function main() {
   out(`links=${String(links.length)}`);
   out(`settings=${settingsFile}`);
   out(`marker=${paths.marker}`);
-  out(`目标 beta=${targetBeta(profileDir)}`);
+  out(`目标=${newest}`);
 }
 
 await main();
