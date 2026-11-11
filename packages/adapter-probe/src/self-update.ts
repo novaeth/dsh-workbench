@@ -52,6 +52,7 @@ export function selfUpdateBusy(marker: string, at: Date = new Date(clockNow())):
   const record = raw as Readonly<Record<string, unknown>>;
   if (record.state === 'queued') return pidAlive(record.pid);
   if (record.state !== 'running') return false;
+  if (typeof record.pid === 'number') return pidAlive(record.pid);
   const started = typeof record.at === 'string' ? Date.parse(record.at) : Number.NaN;
   if (!Number.isFinite(started)) return true;
   return at.getTime() - started < SELF_UPDATE_RUNNING_TTL_MS;
@@ -97,6 +98,15 @@ export function startSelfUpdate(
   mkdirSync(plan.paths.dir, { recursive: true });
   writeTextFile(plan.planFile, `${JSON.stringify(plan.steps, null, 2)}\n`);
   writeJsonFile(plan.paths.marker, plan.marker);
-  runDetached(plan.command, onError, seam);
+  if (!runDetached(plan.command, onError, seam)) {
+    writeJsonFile(plan.paths.marker, {
+      ...plan.marker,
+      state: 'failed',
+      version: plan.marker.from,
+      reason: 'incomplete',
+      at: new Date(clockNow()).toISOString(),
+    });
+    return { started: false, paths: plan.paths, forward };
+  }
   return { started: true, paths: plan.paths, forward };
 }

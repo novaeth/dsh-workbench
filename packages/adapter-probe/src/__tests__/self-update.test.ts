@@ -161,12 +161,18 @@ describe('起更新：先落现场，再交给外面那个进程', () => {
     expect(processes.calls).toHaveLength(0);
   });
 
-  it('没有执行缝时不假装起来了：留一句人话', () => {
+  it('★ 起不来就不假装起来了：留一句人话，marker 也不留在 running', () => {
     const req = request();
     const messages: string[] = [];
     const started = startSelfUpdate(req, (message) => messages.push(message));
-    expect(started.started).toBe(true);
+
+    expect(started.started).toBe(false);
     expect(messages.join('\n')).toContain('没跑起来');
+    const marker = JSON.parse(readFileSync(join(req.dshHome, 'workbench', 'self-update.json'), 'utf8')) as {
+      state: string;
+      reason?: string;
+    };
+    expect(marker).toMatchObject({ state: 'failed', reason: 'incomplete' });
   });
 });
 
@@ -182,6 +188,12 @@ describe('谁算「已经有一次在跑」', () => {
     const now = new Date('2026-11-10T12:00:00.000Z');
     expect(selfUpdateBusy(markerWith({ state: 'running', at: now.toISOString() }), now)).toBe(true);
     expect(selfUpdateBusy(markerWith({ state: 'running', at: '2026-11-10T00:00:00.000Z' }), now)).toBe(false);
+  });
+
+  it('★ 正在换但那个进程已经没了（runner 崩了）→ 不忙，不用干等 TTL', () => {
+    const now = new Date('2026-11-10T12:00:00.000Z');
+    expect(selfUpdateBusy(markerWith({ state: 'running', pid: 999_999_999, at: now.toISOString() }), now)).toBe(false);
+    expect(selfUpdateBusy(markerWith({ state: 'running', pid: process.pid, at: now.toISOString() }), now)).toBe(true);
   });
 
   it('★ 排着队且那个进程还活着 → 忙；进程没了 → 不忙', () => {
