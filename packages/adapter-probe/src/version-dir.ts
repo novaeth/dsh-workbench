@@ -59,25 +59,40 @@ export function writeVersionProject(project: VersionProject): void {
   if (project.npmrc !== undefined) writeTextFile(join(project.dir, '.npmrc'), project.npmrc);
 }
 
+export function versionMissingOf(input: {
+  readonly versionDir: string;
+  readonly version: string;
+  readonly packages?: readonly string[] | undefined;
+}): readonly string[] {
+  const packages = input.packages ?? SELF_UPDATE_PACKAGES;
+  const missing: string[] = [];
+  for (const pkg of packages) {
+    const manifest = join(input.versionDir, 'node_modules', pkg, 'package.json');
+    if (!existsSync(manifest)) {
+      missing.push(pkg);
+      continue;
+    }
+    try {
+      if ((JSON.parse(readFileSync(manifest, 'utf8')) as { version?: unknown }).version !== input.version) missing.push(pkg);
+    } catch {
+      missing.push(pkg);
+    }
+  }
+  for (const artifact of CORE_ARTIFACTS) {
+    if (!existsSync(join(input.versionDir, 'node_modules', CORE, artifact))) {
+      missing.push(`core/${artifact}`);
+      break;
+    }
+  }
+  return missing;
+}
+
 export function versionSelfCheck(input: {
   readonly versionDir: string;
   readonly version: string;
   readonly packages?: readonly string[] | undefined;
 }): boolean {
-  const packages = input.packages ?? SELF_UPDATE_PACKAGES;
-  for (const pkg of packages) {
-    const manifest = join(input.versionDir, 'node_modules', pkg, 'package.json');
-    if (!existsSync(manifest)) return false;
-    try {
-      if ((JSON.parse(readFileSync(manifest, 'utf8')) as { version?: unknown }).version !== input.version) return false;
-    } catch {
-      return false;
-    }
-  }
-  for (const artifact of CORE_ARTIFACTS) {
-    if (!existsSync(join(input.versionDir, 'node_modules', CORE, artifact))) return false;
-  }
-  return true;
+  return versionMissingOf(input).length === 0;
 }
 
 export async function installVersionDir(input: {

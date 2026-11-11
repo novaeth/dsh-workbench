@@ -181,15 +181,42 @@ describe('自更新：runner 按步骤跑，失败只落在 marker 上', () => {
     });
   });
 
-  it('装成功但自检没过：停在 verify，不换链接', async () => {
+  it('★ 装完不全（只落了俩包）→ 清掉重装一遍，还是不齐就停在 install，不换链接', async () => {
     const { request, paths } = caseDirs();
     const plan = planOf(request, paths);
     const processes = createFakeProcesses([{ stdout: '+ 装完了' }]);
     const result = await runSelfUpdateSteps(plan, { processes: processes.host });
     expect(result.ok).toBe(false);
-    expect(result.ran).toEqual(['version', 'install']);
-    expect(result.detail).toContain('自检没过');
+    expect(result.ran).toEqual(['version']);
+    expect(result.detail).toContain('装了两遍还是不全');
+    expect(result.detail).toContain(CORE);
+    expect(processes.calls.filter((call) => call.args.includes('install'))).toHaveLength(2);
     expect(existsSync(join(plan.profileDir, 'node_modules', CORE))).toBe(false);
+  });
+
+  it('★ 第一遍只落了俩包、第二遍补齐 → 认第二遍，接着往下走', async () => {
+    const { request, paths } = caseDirs();
+    const plan = planOf(request, paths);
+    let round = 0;
+    const processes = createFakeProcesses((call: ProcessSpawnOptions) => {
+      if (call.args.includes('install')) {
+        round += 1;
+        materialize({
+          versionsDir: paths.versionsDir,
+          version: TO,
+          packages: round === 1 ? plan.packages.slice(0, 2) : plan.packages,
+        });
+      }
+      return { stdout: '+ 工作台' };
+    });
+    const lines: string[] = [];
+    const result = await runSelfUpdateSteps(plan, {
+      processes: processes.host,
+      log: (line) => lines.push(line),
+    });
+    expect(result.state).toBe('pending');
+    expect(lines.join('\n')).toContain('重装一遍补齐了');
+    expect(existsSync(join(plan.profileDir, 'node_modules', CORE))).toBe(true);
   });
 
   it('切换那一步抛了：也变成 failed，不冒出未处理的异常', async () => {

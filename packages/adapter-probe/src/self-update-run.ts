@@ -1,4 +1,11 @@
-import { ensureProfileBundle, tailLines, writeJsonFile, type ProcessHost } from '@dsh-workbench/shared/host';
+import { join } from 'node:path';
+import {
+  ensureProfileBundle,
+  removePath,
+  tailLines,
+  writeJsonFile,
+  type ProcessHost,
+} from '@dsh-workbench/shared/host';
 import type {
   SelfUpdateExpectBootStep,
   SelfUpdateInstallStep,
@@ -9,6 +16,7 @@ import { bootVerdict, readBootRecord } from './self-update-boot.js';
 import {
   carryPreviousVersion,
   flipProfileLinks,
+  versionMissingOf,
   versionSelfCheck,
   writeProfileLinks,
   writeVersionProject,
@@ -110,11 +118,23 @@ async function applyStep(
     return { ok: true, detail: `版本目录已铺好：${step.project.dir}` };
   }
   if (step.kind === 'install') {
-    const outcome = await runCommand(step, deps);
-    if (outcome.code !== 0) {
-      return { ok: false, detail: `装这一版没成（退出码 ${outcome.code === null ? '拿不到' : String(outcome.code)}）：${tailLines(outcome.output, 8)}` };
+    const first = await runCommand(step, deps);
+    if (first.code !== 0) {
+      return { ok: false, detail: `装这一版没成（退出码 ${first.code === null ? '拿不到' : String(first.code)}）：${tailLines(first.output, 8)}` };
     }
-    return { ok: true, detail: `装好了：${plan.version}` };
+    const missing = versionMissingOf({ versionDir: plan.versionDir, version: plan.version, packages: plan.packages });
+    if (missing.length === 0) return { ok: true, detail: `装好了：${plan.version}` };
+    log(`装完少了 ${String(missing.length)} 个包（${missing.join('、')}），清掉 node_modules 重装一遍`);
+    removePath(join(plan.versionDir, 'node_modules'));
+    const second = await runCommand(step, deps);
+    const still = versionMissingOf({ versionDir: plan.versionDir, version: plan.version, packages: plan.packages });
+    if (second.code !== 0 || still.length > 0) {
+      return {
+        ok: false,
+        detail: `装了两遍还是不全（${still.length > 0 ? still.join('、') : 'pnpm 退出码不对'}）：${tailLines(second.output, 6)}`,
+      };
+    }
+    return { ok: true, detail: `重装一遍补齐了：${plan.version}` };
   }
   if (step.kind === 'verify') {
     const good = versionSelfCheck({ versionDir: step.versionDir, version: step.version, packages: step.packages });
@@ -123,6 +143,10 @@ async function applyStep(
       : { ok: false, detail: '装完自检没过：版本目录里的包或客户端产物不全' };
   }
   if (step.kind === 'switch') {
+    const broken = versionMissingOf({ versionDir: plan.versionDir, version: plan.version, packages: plan.packages });
+    if (broken.length > 0) {
+      return { ok: false, detail: `版本目录不全（${broken.join('、')}），不切过去：${plan.versionDir}` };
+    }
     const flip = deps.flip ?? flipProfileLinks;
     const flipped = await waitOutInUse(
       () => {
