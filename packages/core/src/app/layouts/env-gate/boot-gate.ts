@@ -12,6 +12,7 @@ import type { RuntimeProfile } from '@dsh-workbench/shared';
 import { readRuntimeCapabilities } from '@/shared/hooks/runtime-queries';
 import { createGateDeadline } from './gate-deadline';
 import { brandMarkIcon, el, spinnerIcon, svgIcon } from './gate-dom';
+import { createForcePlan, retryTargetOf } from './force-plan';
 import { logAtBottom } from './log-follow';
 
 const POLL_MS = 400;
@@ -34,20 +35,6 @@ function stepMark(step: PreflightStep): string {
   if (step.status === 'warn') return '!';
   if (step.status === 'failed') return '×';
   return '-';
-}
-
-export function createForcePlan(): { next(): { hard?: 1 }; again(): void } {
-  let hard = false;
-  return {
-    next() {
-      const query = hard ? { hard: 1 as const } : {};
-      hard = false;
-      return query;
-    },
-    again() {
-      hard = true;
-    },
-  };
 }
 
 export interface BootGate {
@@ -418,7 +405,7 @@ diy.append(diyTitle, diyWhy, diyLines, diyStep, diyCommand.row, diyButtons);
   }
 
   function retryNow(): void {
-    forcePlan.again();
+    forcePlan.again(retryTargetOf(pinned ?? lastSnapshot));
     actions.hidden = true;
     bridge.hidden = true;
     wakeNote.hidden = true;

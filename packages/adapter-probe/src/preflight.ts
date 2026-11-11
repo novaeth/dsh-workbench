@@ -39,7 +39,7 @@ export type { PreflightBridgeIssue } from './bridge-report.js';
 export type { PreflightDiyGap, PreflightSnapshot, PreflightStep } from '@dsh-workbench/shared/host';
 
 export interface Preflight {
-  run(options?: { hard?: boolean }): Promise<PreflightSnapshot>;
+  run(options?: { hard?: boolean; only?: PreflightStepId }): Promise<PreflightSnapshot>;
   snapshot(): PreflightSnapshot;
 }
 
@@ -269,7 +269,11 @@ export function createPreflight(options: {
     return { rows: verdict.rows, detail: verdict.detail, command: DIY_UPGRADE_COMMAND };
   }
 
-  async function doRun(): Promise<PreflightSnapshot> {
+  async function doRun(from?: PreflightStepId): Promise<PreflightSnapshot> {
+    const order: readonly PreflightStepId[] = ['toolchain', 'runtime', 'cli', 'bridge', 'diy', 'warm'];
+    const skip = (id: PreflightStepId): boolean =>
+      from !== undefined && order.indexOf(id) >= 0 && order.indexOf(id) < order.indexOf(from);
+    const previous = new Map(current.steps.map((item) => [item.id, item]));
     shellStalled = false;
     logLines = [];
     stepLogs.clear();
@@ -280,9 +284,12 @@ export function createPreflight(options: {
       guidance: undefined,
       bridgeIssues: undefined,
       diyGap: undefined,
-      steps: steps(),
+      steps: steps().map((item) => {
+        const kept = skip(item.id) ? previous.get(item.id) : undefined;
+        return kept ?? item;
+      }),
     });
-    const toolchainStarted = options.probeToolchain?.();
+    const toolchainStarted = skip('toolchain') ? undefined : options.probeToolchain?.();
     if (toolchainStarted !== undefined) {
       patchStep('toolchain', { status: 'running', action: 'node --version · npm --version · pnpm --version' });
     }
@@ -331,7 +338,7 @@ export function createPreflight(options: {
       }
     }
 
-    if (options.runtimeCheck !== undefined) {
+    if (!skip('runtime') && options.runtimeCheck !== undefined) {
       appendLog('runtime', '> 检查运行环境');
       patchStep('runtime', { status: 'running' });
       const verdict = await options.runtimeCheck().catch((error: unknown) => ({
@@ -343,8 +350,8 @@ export function createPreflight(options: {
       if (!verdict.ok) return set({ phase: 'failed', error: verdict.detail, failure: 'missing', guidance: 'install' });
     }
 
-    const diyStarted = options.probeDiy?.();
-    if (withConsole) {
+    const diyStarted = skip('diy') ? undefined : options.probeDiy?.();
+    if (withConsole && !skip('cli')) {
       patchStep('cli', { status: 'running', action: '检查 opencli 版本' });
       if (diyStarted !== undefined) patchStep('diy', { status: 'running' });
 
@@ -407,8 +414,17 @@ export function createPreflight(options: {
       patchStep('cli', { status: 'ok', detail: version.detail, action: undefined });
     }
 
-    patchStep('bridge', { status: 'running', action: '检查浏览器通道' });
-    const bridge = withBridge ? await probeBridge() : { ok: true, detail: '', issues: [] };
+    const keptBridge = previous.get('bridge');
+    if (!skip('bridge')) patchStep('bridge', { status: 'running', action: '检查浏览器通道' });
+    const bridge: BridgeVerdict = skip('bridge')
+      ? ({
+          ok: keptBridge?.status === 'ok',
+          detail: keptBridge?.detail ?? '',
+          issues: current.bridgeIssues ?? [],
+        } as BridgeVerdict)
+      : withBridge
+        ? await probeBridge()
+        : ({ ok: true, detail: '', issues: [] } as BridgeVerdict);
     if (bridge.stalled === true) {
       patchStep('bridge', { status: 'failed', detail: bridge.detail, action: undefined });
       return hostFailure(bridge.detail);
@@ -443,11 +459,11 @@ export function createPreflight(options: {
     return current.phase === 'ready' && now() - current.at < PREFLIGHT_FRESH_MS;
   }
 
-  async function start(runOptions: { hard?: boolean } = {}): Promise<PreflightSnapshot> {
+  async function start(runOptions: { hard?: boolean; only?: PreflightStepId } = {}): Promise<PreflightSnapshot> {
     if (running !== null) return running;
-    if (runOptions.hard !== true && freshReady()) return current;
+    if (runOptions.hard !== true && runOptions.only === undefined && freshReady()) return current;
 
-    const inflight = doRun().catch((error: unknown) =>
+    const inflight = doRun(runOptions.only).catch((error: unknown) =>
       set({
         phase: 'failed',
         error: error instanceof Error ? error.message : String(error),

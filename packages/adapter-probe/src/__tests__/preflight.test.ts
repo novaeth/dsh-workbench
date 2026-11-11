@@ -240,6 +240,33 @@ describe('createPreflight', () => {
     expect(snapshot.failure).toBe('permission');
   });
 
+  it('★ 重试只从那一步开始：前面已过的步骤不重跑（bridge 重试不再探一遍工具链）', async () => {
+    const toolchainProbe = vi.fn(async () => ({
+      ok: true,
+      detail: 'node v24 · npm 11 · pnpm 11',
+      nodeMissing: false,
+      npmMissing: false,
+      pnpmProblem: false,
+    }));
+    const fake = createFakeShell([
+      { stdout: 'v1.8.8\n' },
+      { stdout: `${GOOD_BRIDGE_REPORT}\n` },
+    ]);
+    const preflight = createPreflight({
+      seam: seamFor(fake.shell),
+      probeToolchain: toolchainProbe,
+    });
+
+    await preflight.run();
+    const callsAfterFirst = fake.calls.length;
+    expect(toolchainProbe).toHaveBeenCalledTimes(1);
+
+    await preflight.run({ only: 'bridge' });
+
+    expect(toolchainProbe).toHaveBeenCalledTimes(1);
+    expect(fake.calls.length).toBeGreaterThan(callsAfterFirst);
+  });
+
   it('★ 包已经在盘上时 --version 非零不算没装：不重装，把真实报错摆出来', async () => {
     const install = vi.fn(async () => ({ ok: true, detail: '不该被调到' }));
     const { preflight } = build(

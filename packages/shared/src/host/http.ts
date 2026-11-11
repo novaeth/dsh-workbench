@@ -237,12 +237,17 @@ export function changesHandler(log: {
 }
 
 export function preflightHandler(preflight: {
-  run(options?: { hard?: boolean }): Promise<unknown>;
+  run(options?: { hard?: boolean; only?: string }): Promise<unknown>;
   snapshot(): unknown;
 }): RouteHandler {
   return (search) => {
     if (flag(search, 'hard')) {
       void preflight.run({ hard: true });
+      return { ok: true, ...(preflight.snapshot() as Record<string, unknown>) };
+    }
+    const only = param(search, 'only');
+    if (only !== undefined && only !== '') {
+      void preflight.run({ only });
       return { ok: true, ...(preflight.snapshot() as Record<string, unknown>) };
     }
     const snapshot = preflight.snapshot() as Record<string, unknown>;
