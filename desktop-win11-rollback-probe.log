@@ -1,0 +1,73 @@
+[0.0s] MILESTONE cdp-ready @ 0.0s
+[0.0s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.0s] pages: dsh-app://app/
+[0.0s] MILESTONE app-page @ 0.0s
+[0.0s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [] none :: HARNESS | Loading plugins…
+[8.0s] ready wait [checking] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: HARNESS | Loading plugins… | Preparing the workbench |  | Getting the runtime ready…
+[8.0s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[10.0s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: odule |  | hello, workbench |  | This card comes from a standalone workbench module. |  | Preparing the workbench | - | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode
+[10.0s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[12.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: | Preview | Standard mode | Describe what you want to build, / commands, @ files or sessions | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[12.1s] MILESTONE ready @ 12.1s
+[12.1s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Workbench module market"
+[15.1s] market-page:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[15.1s] MILESTONE market-open @ 15.1s
+[15.1s] STEP click ["Installed","已安装"]: "Installed"
+[16.6s] STEP rollback: "clicked"
+[16.6s] MILESTONE rollback-clicked @ 16.6s
+[16.6s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[18.6s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[20.6s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[22.7s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[24.7s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[26.7s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[28.7s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[30.7s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[32.7s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[34.7s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[36.7s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[38.7s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[40.7s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[42.7s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[44.7s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[46.7s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[48.7s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[50.7s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[52.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[54.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[56.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[58.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[60.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[62.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[64.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[66.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[68.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[70.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[72.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[74.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[76.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[78.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[80.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[82.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[84.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[86.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[88.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[90.8s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[92.9s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[94.9s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[96.9s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[98.9s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[100.9s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[102.9s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[104.9s] rollback-done:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[106.9s] FATAL Error: rollback-done: 等不到 /Switched back to|已经切回/u
+    at waitForBody (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:394:9)
+    at async smokeRollback (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:894:16)
+    at async main (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:1380:13)
+[106.9s] SMOKE_SUMMARY {"outcome":"failed","elapsed":"106.9s","milestones":{"cdp-ready":"0.0s","app-page":"0.0s","cdp-connected":"0.1s","ready":"12.1s","market-open":"15.1s","rollback-clicked":"16.6s"},"reason":"rollback-done: 等不到 /Switched back to|已经切回/u"}
+[106.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-rollback-fatal-body.txt (677 bytes)
+[126.9s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
