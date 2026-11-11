@@ -1,0 +1,802 @@
+
+=== meta ===
+collected-at: 2026-11-11T03:57:54.298Z
+platform: darwin arm64 · node v24.22.2
+cwd: /Users/runner/work/dsh-workbench/dsh-workbench
+home: /Users/runner
+dsh-home: /Users/runner/.dsh
+workbench-home: /Users/runner/.dsh/workbench
+GITHUB_RUN_ID: 42954837706
+GITHUB_RUN_ATTEMPT: 1
+GITHUB_SHA: 2e46cf8f6512c105f8e4a2a2f7349bd1b4c8b05e
+GITHUB_JOB: macos
+DESKTOP_SMOKE_STATUS: failure
+probe-log: /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-probe.log
+git: 2e46cf8 fix(desktop-smoke): 自更新起点版改成「真装最新版再改标」
+git-status: ?? desktop-mac-console-events.json
+?? desktop-mac-failed-body.txt
+?? desktop-mac-failed-preflight.json
+?? desktop-mac-failed.png
+?? desktop-mac-fatal-body.txt
+?? desktop-mac-fatal.png
+?? desktop-mac-not-ready-body.txt
+?? desktop-mac-plugins-body.txt
+
+=== triage ===
+探针总结: [519.5s] SMOKE_SUMMARY {"outcome":"failed","elapsed":"519.5s","milestones":{"cdp-ready":"0.3s","app-page":"0.4s","cdp-connected":"1.5s","install-clicked":"12.1s","installed":"14.2s","browser-launched":"33.3s"},"reason":"preflight not ready（现场：desktop-mac-failed-body.txt / desktop-mac-failed-preflight.json）"}
+第一处错误: [519.5s] FATAL Error: preflight not ready（现场：desktop-mac-failed-body.txt / desktop-mac-failed-preflight.json）
+
+里程碑:
+[0.3s] MILESTONE cdp-ready @ 0.3s
+[0.4s] MILESTONE app-page @ 0.4s
+[1.5s] MILESTONE cdp-connected @ 1.5s
+[12.1s] MILESTONE install-clicked @ 12.1s
+[14.2s] MILESTONE installed @ 14.2s
+[33.3s] MILESTONE browser-launched @ 33.3s
+
+现场文件:
+[9.4s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-plugins-body.txt (1361 bytes)
+[519.1s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-not-ready-body.txt (1445 bytes)
+[519.1s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-console-events.json (8128 bytes)
+[519.1s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-failed-body.txt (1445 bytes)
+[519.1s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-failed-preflight.json (4481 bytes)
+[519.5s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-failed.png (124350 bytes)
+[519.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-fatal-body.txt (1445 bytes)
+[519.6s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-fatal.png (124350 bytes)
+
+体检失败快照:
+[519.1s] PREFLIGHT_FAILED: {"ok":true,"phase":"ready","steps":[{"id":"toolchain","status":"ok","log":["node v24.21.0（Desktop 自带） · npm 11.19.1 · pnpm 11.28.5（Desktop 自带）","deployment=desktop · resources=/Applications/DeepSeek Harness.app/Contents/Resources · execPath=/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness","bundled node=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node · bundled pnpm=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs · bins=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin|/Applications/DeepSeek Harness.app/Contents/Resourc…","PATH 前两段=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin|/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin","node: exit=0 sandbox=mode=workspace-write root=/Users/runner/.dsh/workbench out=v24.21.0 cmd='/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node'","pnpm: exit=0 sandbox=mode=workspace-write root=/Users/runner/.dsh/workbench out=11.28.5 cmd='/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node' '/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs' --version","npm: exit=0 sandbox=mode=workspace-write root=/Users/runner/.dsh/workbench out=11.19.1"],"detail":"node v24.21.0（Desktop 自带） · npm 11.19.1 · pnpm 11.28.5（Desktop 自带）"},{"id":"cli","status":"ok","log":["> '/Users/runner/.dsh/workbench/opencli/bin/opencli' --version","1.8.8"],"detail":"1.8.8"},{"id":"bridge","status":"ok","log":["> '/Users/runner/.dsh/workbench/opencli/bin/opencli' doctor","opencli v1.8.8 doctor (node v24.21.0)","[OK] Daemon: running on port 19825 (v1.8.8)","[OK] Extension: connected (v1.0.27)","Profiles:","  • qe5e3xvf: connected v1.0.27","[OK] Connectivity: connected in 0.0s","Everything looks good!"],"detail":"Everything looks good!"},{"id":"diy","status":"ok","detail":""}],"at":1794369445740,"log":["node v24.21.0（Desktop 自带） · npm 11.19.1 · pnpm 11.28.5（Desktop 自带）","deployment=desktop · resources=/Applications/DeepSeek Harness.app/Contents/Resources · execPath=/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness","bundled node=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node · bundled pnpm=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs · bins=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin|/Applications/DeepSeek Harness.app/Contents/Resourc…","PATH 前两段=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin|/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin","node: exit=0 sandbox=mode=workspace-write root=/Users/runner/.dsh/workbench out=v24.21.0 cmd='/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node'","pnpm: exit=0 sandbox=mode=workspace-write root=/Users/runner/.dsh/workbench out=11.28.5 cmd='/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node' '/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs' --version","npm: exit=0 sandbox=mode=workspace-write root=/Users/runner/.dsh/workbench out=11.19.1","> '/Users/runner/.dsh/workbench/opencli/bin/opencli' --version","1.8.8","> '/Users/runner/.dsh/workbench/opencli/bin/opencli' doctor","opencli v1.8.8 doctor (node v24.21.0)","[OK] Daemon: running on port 19825 (v1.8.8)","[OK] Extension: connected (v1.0.27)","Profiles:","  • qe5e3xvf: connected v1.0.27","[OK] Connectivity: connected in 0.0s","Everything looks good!"],"canWakeBrowser":true}
+
+=== smoke results ===
+desktop-mac-smoke.json:
+（读不出 JSON）: ENOENT: no such file or directory, open '/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-smoke.json'
+desktop-mac-after-restart-smoke.json:
+（读不出 JSON）: ENOENT: no such file or directory, open '/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-smoke.json'
+
+=== checklist ===
+profile 里有 @dsh-workbench/core: 是（link:/Users/runner/work/dsh-workbench/dsh-workbench/packages/core）
+profile 里有 @dsh-workbench/module-hello: 否
+opencli 装上了: 是（/Users/runner/.dsh/workbench/opencli/toolchain/node_modules/@jackwener/opencli/package.json）
+市场索引列出模块: 否: ENOENT: no such file or directory, open '/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-market-body.txt'
+市场装上了模块: 否: ENOENT: no such file or directory, open '/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-market-installed.txt'
+重启后看到了模块卡片: 否: ENOENT: no such file or directory, open '/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-verify-body.txt'
+截图: desktop-mac-failed.png (124350) · desktop-mac-fatal.png (124350)
+
+=== probe log ===
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-probe.log（92916 字节，末尾 297 行）
+[0.3s] MILESTONE cdp-ready @ 0.3s
+[0.3s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.4s] pages: dsh-app://app/
+[0.4s] MILESTONE app-page @ 0.4s
+[0.5s] target: dsh-app://app/
+[1.5s] MILESTONE cdp-connected @ 1.5s
+[1.5s] app-shell: HARNESS | Loading plugins…
+[3.5s] app-shell: HARNESS | Loading plugins…
+[5.5s] app-shell: HARNESS | Loading plugins…
+[7.6s] app-shell: New Session | ⌘ | N | Plugins | Automation tasks | More | Workspaces | No sessions yet | More | Into the Unknown | Preview | Choose workspace | Standard mode | Choose a workspace to start
+[8.1s] STEP click ["Plugins"]: "Plugins"
+[9.4s] plugins-page: d reviews, inspect diffs, and send feedback to the agent. Review local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host.
+[9.4s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-plugins-body.txt (1361 bytes)
+[9.5s] STEP click ["Add plugin"]: "Add plugin"
+[10.3s] add-plugin wait: {"ok":true}
+[10.3s] FIELDS: [{"index":0,"tag":"INPUT","type":"text","placeholder":"Search session names","aria":null,"visible":true},{"index":1,"tag":"INPUT","type":"text","placeholder":"for example dsh-plugin-whale-pet","aria":"Package name or address","visible":true}]
+[10.9s] filled: "/Users/runner/work/dsh-workbench/dsh-workbench/packages/core"
+[10.9s] STEP click ["Install"]: "Install"
+[12.1s] MILESTONE install-clicked @ 12.1s
+[14.2s] install wait: orkbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Installed |  | @dsh-workbench/core |  | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 |  | Version 1.2.3-beta.6 |  | Show install details | Enable now
+[14.2s] MILESTONE installed @ 14.2s
+[14.2s] STEP click ["Enable now"]: "Enable now"
+[19.2s] health wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[19.2s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[21.2s] health wait [installing] toolchain:ok cli:running(安装 opencli) bridge:pending diy:running :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[21.2s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[23.2s] health wait [installing] toolchain:ok cli:running(安装 opencli) bridge:pending diy:running :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[23.2s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[25.2s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[25.2s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[27.3s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[27.3s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[29.3s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[29.3s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[31.3s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[31.3s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[33.3s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[33.3s] 模拟用户装扩展：起浏览器 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing（--load-extension=/Users/runner/work/_temp/opencli-ext，日志 /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-chrome.log）
+[33.3s] MILESTONE browser-launched @ 33.3s
+[40.9s] extension wait: connected :: [OK] Extension: connected (v1.0.27)
+[40.9s] chrome targets: browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://webui-toolbar.top-chrome/ | service_worker:chrome-extension://admccjkmockfdflocgggjfgdacdodkdf/background.js | service_worker:chrome-extension://glbjnfimcajjenihimblfaponejbkoph/background.js | service_worker:chrome-extension://kmogdbfhcachbdcbjajeghpiogegbbnh/dist/background.js
+[40.9s] STEP click ["Retry","重试"]: "missing"
+[44.2s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[46.2s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[48.3s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[50.3s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[52.3s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[54.4s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[56.4s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[56.4s] STEP click ["Retry","重试"]: "missing"
+[59.7s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[61.7s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[63.8s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[65.8s] health wait [checking] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[65.8s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[67.8s] health wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[67.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[69.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[71.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[74.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[76.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[78.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[80.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[82.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[84.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[86.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[88.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[90.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[92.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[94.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[96.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[98.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[100.4s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[100.4s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[102.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[104.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[106.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[108.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[110.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[112.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[114.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[116.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[118.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[120.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[122.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[124.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[126.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[128.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[130.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[132.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[134.8s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[134.8s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[136.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[138.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[140.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[142.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[144.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[146.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[148.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[151.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[153.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[155.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[157.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[159.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[161.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[163.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[165.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[167.3s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[167.3s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[169.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[171.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[173.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[175.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[177.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[179.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[181.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[183.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[185.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[187.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[189.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[191.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[193.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[195.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[197.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[199.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[201.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[203.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[205.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[207.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[210.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[212.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[214.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[216.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[218.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[220.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[222.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[224.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[226.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[228.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[230.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[232.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[234.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[236.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[238.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[240.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[242.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[244.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[246.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[248.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[250.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[252.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[254.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[256.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[258.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[260.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[262.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[264.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[266.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[268.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[270.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[272.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[274.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[276.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[278.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[280.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[282.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[284.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[286.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[288.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[290.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[292.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[294.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[296.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[298.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[300.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[302.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[304.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[307.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[309.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[311.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[313.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[315.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[317.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[319.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[321.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[323.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[325.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[327.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[329.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[331.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[333.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[335.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[337.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[339.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[341.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[343.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[345.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[347.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[349.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[351.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[353.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[355.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[357.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[359.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[361.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[363.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[365.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[367.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[369.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[371.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[373.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[375.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[377.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[379.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[381.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[383.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[385.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[387.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[389.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[392.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[394.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[396.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[398.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[400.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[402.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[404.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[406.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[408.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[410.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[412.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[414.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[416.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[418.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[420.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[422.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[424.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[426.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[428.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[430.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[432.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[434.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[436.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[438.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[440.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[442.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[444.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[446.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[448.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[450.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[452.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[454.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[456.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[458.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[460.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[462.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[464.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[466.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[468.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[470.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[472.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[474.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[476.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[478.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[480.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[482.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[484.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[486.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[488.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[490.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[492.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[494.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[496.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[498.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[500.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[503.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[505.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[507.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[509.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[511.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[513.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[515.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[517.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: w local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host. | Installed plugins | @dsh-workbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。
+[519.1s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-not-ready-body.txt (1445 bytes)
+[519.1s] FAIL preflight not ready
+[519.1s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-console-events.json (8128 bytes)
+[519.1s] PREFLIGHT_FAILED: {"ok":true,"phase":"ready","steps":[{"id":"toolchain","status":"ok","log":["node v24.21.0（Desktop 自带） · npm 11.19.1 · pnpm 11.28.5（Desktop 自带）","deployment=desktop · resources=/Applications/DeepSeek Harness.app/Contents/Resources · execPath=/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness","bundled node=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node · bundled pnpm=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs · bins=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin|/Applications/DeepSeek Harness.app/Contents/Resourc…","PATH 前两段=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin|/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin","node: exit=0 sandbox=mode=workspace-write root=/Users/runner/.dsh/workbench out=v24.21.0 cmd='/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node'","pnpm: exit=0 sandbox=mode=workspace-write root=/Users/runner/.dsh/workbench out=11.28.5 cmd='/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node' '/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs' --version","npm: exit=0 sandbox=mode=workspace-write root=/Users/runner/.dsh/workbench out=11.19.1"],"detail":"node v24.21.0（Desktop 自带） · npm 11.19.1 · pnpm 11.28.5（Desktop 自带）"},{"id":"cli","status":"ok","log":["> '/Users/runner/.dsh/workbench/opencli/bin/opencli' --version","1.8.8"],"detail":"1.8.8"},{"id":"bridge","status":"ok","log":["> '/Users/runner/.dsh/workbench/opencli/bin/opencli' doctor","opencli v1.8.8 doctor (node v24.21.0)","[OK] Daemon: running on port 19825 (v1.8.8)","[OK] Extension: connected (v1.0.27)","Profiles:","  • qe5e3xvf: connected v1.0.27","[OK] Connectivity: connected in 0.0s","Everything looks good!"],"detail":"Everything looks good!"},{"id":"diy","status":"ok","detail":""}],"at":1794369445740,"log":["node v24.21.0（Desktop 自带） · npm 11.19.1 · pnpm 11.28.5（Desktop 自带）","deployment=desktop · resources=/Applications/DeepSeek Harness.app/Contents/Resources · execPath=/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness","bundled node=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node · bundled pnpm=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs · bins=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin|/Applications/DeepSeek Harness.app/Contents/Resourc…","PATH 前两段=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin|/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin","node: exit=0 sandbox=mode=workspace-write root=/Users/runner/.dsh/workbench out=v24.21.0 cmd='/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node'","pnpm: exit=0 sandbox=mode=workspace-write root=/Users/runner/.dsh/workbench out=11.28.5 cmd='/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node' '/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs' --version","npm: exit=0 sandbox=mode=workspace-write root=/Users/runner/.dsh/workbench out=11.19.1","> '/Users/runner/.dsh/workbench/opencli/bin/opencli' --version","1.8.8","> '/Users/runner/.dsh/workbench/opencli/bin/opencli' doctor","opencli v1.8.8 doctor (node v24.21.0)","[OK] Daemon: running on port 19825 (v1.8.8)","[OK] Extension: connected (v1.0.27)","Profiles:","  • qe5e3xvf: connected v1.0.27","[OK] Connectivity: connected in 0.0s","Everything looks good!"],"canWakeBrowser":true}
+[519.1s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-failed-body.txt (1445 bytes)
+[519.1s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-failed-preflight.json (4481 bytes)
+[519.5s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-failed.png (124350 bytes)
+[519.5s] FATAL Error: preflight not ready（现场：desktop-mac-failed-body.txt / desktop-mac-failed-preflight.json）
+    at fail (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:267:9)
+    at async waitForGateAndReady (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:644:3)
+    at async main (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:1364:20)
+[519.5s] SMOKE_SUMMARY {"outcome":"failed","elapsed":"519.5s","milestones":{"cdp-ready":"0.3s","app-page":"0.4s","cdp-connected":"1.5s","install-clicked":"12.1s","installed":"14.2s","browser-launched":"33.3s"},"reason":"preflight not ready（现场：desktop-mac-failed-body.txt / desktop-mac-failed-preflight.json）"}
+[519.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-fatal-body.txt (1445 bytes)
+[519.6s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-fatal.png (124350 bytes)
+
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-probe.log（不存在）
+
+=== app stdout/stderr ===
+DESKTOP_SMOKE_APP_LOG: /Users/runner/work/_temp/desktop-mac-app.log
+/Users/runner/work/_temp/desktop-mac-app.log（395 字节，末尾 7 行）
+Checking for update
+Generated new staging user ID: b04e3e27-69ab-5912-8df8-e2db0204861e
+Update for version 0.2.2-rc.1 is not available (latest version: 0.2.2-rc.1, downgrade is disallowed).
+dsh web: http://127.0.0.1:49220/?token=sI0pLUzz3m0tXe0VKTOxLVRfwWa7ZKeHU4GLKn40VAo
+Checking for update
+Update for version 0.2.2-rc.1 is not available (latest version: 0.2.2-rc.1, downgrade is disallowed).
+
+DESKTOP_SMOKE_APP_ERR: /Users/runner/work/_temp/desktop-mac-app.err.log
+/Users/runner/work/_temp/desktop-mac-app.err.log（97 字节，末尾 3 行）
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/8de341c1-058d-4f9d-8b42-1695ecdddfd8
+
+DESKTOP_SMOKE_APP_LOG_2: /Users/runner/work/_temp/desktop-mac-app2.log
+/Users/runner/work/_temp/desktop-mac-app2.log（不存在）
+DESKTOP_SMOKE_APP_ERR_2: /Users/runner/work/_temp/desktop-mac-app2.err.log
+/Users/runner/work/_temp/desktop-mac-app2.err.log（不存在）
+
+=== market artifacts ===
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-market-body.txt（不存在）
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-market-installed.txt（不存在）
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-verify-body.txt（不存在）
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-verify-body.txt（不存在）
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-final-body.txt（不存在）
+
+=== desktop install tree ===
+resources: /Applications/DeepSeek Harness.app/Contents/Resources（在）
+  dir app.asar.unpacked/dsh/node_modules
+  dir app.asar.unpacked/dsh/node_modules/@deepseek-ai/node-addon-system-darwin-arm64
+  file app.asar.unpacked/dsh/node_modules/clone/.npmignore
+  dir app.asar.unpacked/dsh/node_modules/node-addon-require-builtin-darwin-arm64
+  dir app.asar.unpacked/dsh/node_modules/node-pty
+  dir runtime
+  dir runtime/primary-runtime
+  dir runtime/primary-runtime/dependencies/node
+  dir runtime/primary-runtime/dependencies/node/bin
+  dir runtime/primary-runtime/dependencies/node/node_modules
+  dir runtime/primary-runtime/dependencies/pnpm
+  dir runtime/primary-runtime/dependencies/pnpm/bin
+  dir runtime/primary-runtime/dependencies/pnpm/dist
+  dir runtime/primary-runtime/dependencies/python
+  dir runtime/primary-runtime/dependencies/python/bin
+  dir runtime/primary-runtime/dependencies/python/include
+  dir runtime/primary-runtime/dependencies/python/lib
+  dir runtime/primary-runtime/dependencies/python/share
+
+=== opencli doctor ===
+bin: /Users/runner/.dsh/workbench/opencli/bin/opencli（在）
+exit: 0
+opencli v1.8.8 doctor (node v24.22.2)
+
+[OK] Daemon: running on port 19825 (v1.8.8)
+[OK] Extension: connected (v1.0.27)
+
+Profiles:
+  • qe5e3xvf: connected v1.0.27
+[OK] Connectivity: connected in 0.0s
+
+Everything looks good!
+
+
+=== runner os ===
+platform: darwin · release: 25.6.0 · version: Darwin Kernel Version 25.6.0: Mon Oct 12 00:39:04 PDT 2026; root:xnu-12377.161.15.701.48~2/RELEASE_ARM64_VMAPPLE
+OS env: （无）
+
+=== extension prep ===
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-prep.log（652 字节，末尾 8 行）
+cft: https://storage.googleapis.com/chrome-for-testing-public/157.0.8103.50/mac-arm64/chrome-mac-arm64.zip
+chrome: Google Chrome for Testing 157.0.8103.50
+opencli pin: 1.8.8
+latest release: v2.0.3
+extension: https://github.com/jackwener/opencli/releases/download/v2.0.3/opencli-extension-v1.0.27.zip
+extension version: 1.0.27 · dir: /Users/runner/work/_temp/opencli-ext
+env: DESKTOP_SMOKE_CHROME=/Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing · DESKTOP_SMOKE_EXTENSION=/Users/runner/work/_temp/opencli-ext · DESKTOP_SMOKE_OPENCLI=/Users/runner/.dsh/workbench/opencli/bin/opencli
+
+
+=== smoke browser ===
+chrome: /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing
+extension: /Users/runner/work/_temp/opencli-ext
+opencli bin: /Users/runner/.dsh/workbench/opencli/bin/opencli
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-chrome.log（97 字节，末尾 3 行）
+
+DevTools listening on ws://127.0.0.1:9333/devtools/browser/96e52410-1a80-49a3-b52c-84f9840b85ba
+
+
+=== units and client injection ===
+desktop-mac-units.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-units.json（不存在）
+desktop-mac-after-restart-units.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-units.json（不存在）
+desktop-mac-client-bundles.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-client-bundles.json（不存在）
+desktop-mac-after-restart-client-bundles.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-client-bundles.json（不存在）
+desktop-mac-page-internals.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-page-internals.json（不存在）
+desktop-mac-after-restart-page-internals.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-page-internals.json（不存在）
+desktop-mac-scripts.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-scripts.json（不存在）
+desktop-mac-after-restart-scripts.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-scripts.json（不存在）
+desktop-mac-console-events.json:
+[
+  {
+    "method": "Runtime.consoleAPICalled",
+    "params": {
+      "type": "error",
+      "args": [
+        {
+          "type": "string",
+          "value": "[dsh-workbench] apply failed"
+        },
+        {
+          "type": "object",
+          "subtype": "error",
+          "className": "Error",
+          "description": "Error: cannot get property \"inputTriggers\" without inject\n    at installContextChips (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=706ce5fe2693:18496:29)\n    at mount (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=706ce5fe2693:23531:8)\n    at new apply (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=706ce5fe2693:23499:9)\n    at A2.execute (dsh-app://app/assets/index-BgUyXZcc.js:10:1540)\n    at dsh-app://app/assets/index-BgUyXZcc.js:10:2807\n    at R1 (dsh-app://app/assets/index-BgUyXZcc.js:7:75)\n    at A2._execute (dsh-app://app/assets/index-BgUyXZcc.js:10:2685)\n    at A2._reload (dsh-app://app/assets/index-BgUyXZcc.js:10:6173)",
+          "objectId": "5020234114928252842.1.1",
+          "preview": {
+            "type": "object",
+            "subtype": "error",
+            "description": "Error: cannot get property \"inputTriggers\" without inject\n    at installContextChips (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=706ce5fe2693:18496:29)\n    at mount (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=706ce5fe2693:23531:8)\n    at new apply (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=706ce5fe2693:23499:9)\n    at A2.execute (dsh-app://app/assets/index-BgUyXZcc.js:10:1540)\n    at dsh-app://app/assets/index-BgUyXZcc.js:10:2807\n    at R1 (dsh-app://app/assets/index-BgUyXZcc.js:7:75)\n    at A2._execute (dsh-app://app/assets/index-BgUyXZcc.js:10:2685)\n    at A2._reload (dsh-app://app/assets/index-BgUyXZcc.js:10:6173)",
+            "overflow": false,
+            "properties": [
+              {
+                "name": "stack",
+                "type": "string",
+                "value": "Error: cannot get property \"inputTriggers\" without… (dsh-app://app/assets/index-BgUyXZcc.js:10:6173)"
+              },
+              {
+                "name": "message",
+                "type": "string",
+                "value": "cannot get property \"inputTriggers\" without inject"
+              }
+            ]
+          }
+        }
+      ],
+      "executionContextId": 1,
+      "timestamp": 1794368969333.91,
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "apply",
+            "scriptId": "26",
+            "url": "dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=706ce5fe2693",
+            "lineNumber": 23500,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 1539
+          },
+          {
+            "functionName": "",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2806
+          },
+          {
+            "functionName": "R1",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 6,
+            "columnNumber": 74
+          },
+          {
+            "functionName": "_execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2684
+          },
+          {
+            "functionName": "_reload",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 6172
+          }
+        ]
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: net::ERR_FAILED",
+        "timestamp": 1794369271332.317,
+        "url": "dsh-app://app/plugins/events",
+        "networkRequestId": "4308.39"
+      }
+    }
+  },
+  {
+    "method": "Runtime.consoleAPICalled",
+    "params": {
+      "type": "error",
+      "args": [
+        {
+          "type": "string",
+          "value": "[dsh-workbench] apply failed"
+        },
+        {
+          "type": "object",
+          "subtype": "error",
+          "className": "Error",
+          "description": "Error: cannot get property \"inputTriggers\" without inject\n    at installContextChips (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=706ce5fe2693:18496:29)\n    at mount (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=706ce5fe2693:23531:8)\n    at new apply (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=706ce5fe2693:23499:9)\n    at A2.execute (dsh-app://app/assets/index-BgUyXZcc.js:10:1540)\n    at dsh-app://app/assets/index-BgUyXZcc.js:10:2807\n    at R1 (dsh-app://app/assets/index-BgUyXZcc.js:7:75)\n    at A2._execute (dsh-app://app/assets/index-BgUyXZcc.js:10:2685)\n    at A2._reload (dsh-app://app/assets/index-BgUyXZcc.js:10:6173)\n    at async A2.await (dsh-app://app/assets/index-BgUyXZcc.js:10:7042)",
+          "objectId": "5020234114928252842.1.2",
+          "preview": {
+            "type": "object",
+            "subtype": "error",
+            "description": "Error: cannot get property \"inputTriggers\" without inject\n    at installContextChips (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=706ce5fe2693:18496:29)\n    at mount (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=706ce5fe2693:23531:8)\n    at new apply (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=706ce5fe2693:23499:9)\n    at A2.execute (dsh-app://app/assets/index-BgUyXZcc.js:10:1540)\n    at dsh-app://app/assets/index-BgUyXZcc.js:10:2807\n    at R1 (dsh-app://app/assets/index-BgUyXZcc.js:7:75)\n    at A2._execute (dsh-app://app/assets/index-BgUyXZcc.js:10:2685)\n    at A2._reload (dsh-app://app/assets/index-BgUyXZcc.js:10:6173)\n    at async A2.await (dsh-app://app/assets/index-BgUyXZcc.js:10:7042)",
+            "overflow": false,
+            "properties": [
+              {
+                "name": "stack",
+                "type": "string",
+                "value": "Error: cannot get property \"inputTriggers\" without… (dsh-app://app/assets/index-BgUyXZcc.js:10:7042)"
+              },
+              {
+                "name": "message",
+                "type": "string",
+                "value": "cannot get property \"inputTriggers\" without inject"
+              }
+            ]
+          }
+        }
+      ],
+      "executionContextId": 1,
+      "timestamp": 1794369274471.5,
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "apply",
+            "scriptId": "26",
+            "url": "dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=706ce5fe2693",
+            "lineNumber": 23500,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 1539
+          },
+          {
+            "functionName": "",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2806
+          },
+          {
+            "functionName": "R1",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 6,
+            "columnNumber": 74
+          },
+          {
+            "functionName": "_execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2684
+          },
+          {
+            "functionName": "_reload",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 6172
+          }
+        ]
+      }
+    }
+  }
+]
+
+desktop-mac-after-restart-console-events.json:
+/Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-console-events.json（不存在）
+
+=== dsh startup logs ===
+/Users/runner/.dsh/logs（不存在）
+
+=== desktop app logs ===
+（没找到 Desktop 自己的日志文件）
+
+=== workbench home tree（/Users/runner/.dsh/workbench） ===
+[D] bin
+  [D] desktop
+    [F] node (127)
+  [F] dsh-wb-module (340)
+[D] diy
+  [D] .agents
+    [D] skills
+      [F] workbench-module-diy
+  [D] packages
+[F] host.lock (54)
+[D] opencli
+  [D] bin
+    [F] opencli (161)
+  [D] home
+    [D] .opencli
+      [D] clis
+      [D] node_modules
+      [F] package.json (76)
+      [F] update-check.json (72)
+  [D] pnpm-cache
+    [F] lockfile-verified.jsonl (719)
+    [D] v12
+      [D] metadata
+      [D] metadata-full
+  [D] pnpm-store
+    [D] v11
+      [D] files
+      [F] index.db (606208)
+      [D] projects
+  [D] toolchain
+    [D] node_modules
+      [D] .bin
+      [F] .modules.yaml (1652)
+      [D] .pnpm
+      [F] .pnpm-workspace-state-v1.json (951)
+      [D] @jackwener
+    [F] package.json (118)
+    [F] pnpm-lock.yaml (4436)
+    [F] pnpm-workspace.yaml (42)
+[F] seed.log (260)
+[F] self-update-boot.json (83)
+
+=== seed.log ===
+→ DIY 工坊入口：/Users/runner/.dsh/workbench/bin/dsh-wb-module
+→ 工坊指引已链上：/Users/runner/.dsh/workbench/diy/.agents/skills/workbench-module-diy → /Users/runner/work/dsh-workbench/dsh-workbench/packages/core/skills/workbench-module-diy
+
+
+=== diy/.sync.json ===
+/Users/runner/.dsh/workbench/diy/.sync.json（不存在）
+
+=== profile package.json ===
+{
+  "name": "dsh-profile-desktop",
+  "private": true,
+  "dependencies": {
+    "@dsh-workbench/core": "link:/Users/runner/work/dsh-workbench/dsh-workbench/packages/core"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "@dsh-workbench/core"
+      ]
+    }
+  }
+}
+
+
+=== profile cordis.patch.yml ===
+# Your patch layer for this dsh profile, applied after every bundle layer:
+# a top-level YAML array of loader patch entries (id-targeted config
+# overrides, disables, and insert lists; `!!js` expressions allowed).
+[]
+
+
+=== profile cordis.yml ===
+# dsh profile root — an empty entry list. The tree is composed as patches:
+# each bundle in package.json's dsh.profile.bundles, then cordis.patch.yml, then any
+# --patch overlays. Edit cordis.patch.yml, not this file.
+[]
+
+
+=== workbench browser.json ===
+/Users/runner/.dsh/workbench/browser.json（不存在）
+
+=== dsh home tree（/Users/runner/.dsh） ===
+[F] .anonymous-user-id (37)
+[F] .credentials.yaml (161)
+[D] profiles
+  [D] desktop
+    [D] .plugin-manager
+    [F] cordis.patch.yml (217)
+    [F] cordis.yml (223)
+    [D] node_modules
+    [F] package.json (340)
+    [F] pnpm-lock.yaml (322)
+    [F] pnpm-workspace.yaml (61)
+[D] storages
+  [F] workspace.json (954)
+[D] workbench
+  [D] bin
+    [D] desktop
+    [F] dsh-wb-module (340)
+  [D] diy
+    [D] .agents
+    [D] packages
+  [F] host.lock (54)
+  [D] opencli
+    [D] bin
+    [D] home
+    [D] pnpm-cache
+    [D] pnpm-store
+    [D] toolchain
+  [F] seed.log (260)
+  [F] self-update-boot.json (83)
+
+=== processes ===
+ 4067     1   08:46 186672 /Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness --remote-debugging-port=9222
+ 4290  4067   08:44  80880 /Applications/DeepSeek Harness.app/Contents/Frameworks/DeepSeek Harness Helper.app/Contents/MacOS/DeepSeek Harness Helper --type=gpu-process --user-data-dir=/Users/runner/Library/Application Support/@deepseek-ai/dsh-desktop --gpu-preferences=WAAAAAAAAAAgAQAEAAAAAAAAAAAAAGAAQAAAAAAAAAADAAAAAAAAADgAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAKAAAAAAAAAAoAAAAAAAAAAgAAAAAAAAADAAAAAEAAAAAAAAAAAAAAAgAAAAAAAAACAAAAAAAAAA= --shared-files --field-trial-handle=1718379636,r,12451012738282236251,13035958211620071946,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,16031237937730998881,6871461967617203890,4 --trace-process-track-uuid=3190708988185955192 --seatbelt-client=29
+ 4292  4067   08:44  50016 /Applications/DeepSeek Harness.app/Contents/Frameworks/DeepSeek Harness Helper.app/Contents/MacOS/DeepSeek Harness Helper --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=network --user-data-dir=/Users/runner/Library/Application Support/@deepseek-ai/dsh-desktop --standard-schemes=dsh-app --secure-schemes=dsh-app --cors-schemes=dsh-app --fetch-schemes=dsh-app --streaming-schemes=dsh-app --code-cache-schemes=dsh-app --shared-files --field-trial-handle=1718379636,r,12451012738282236251,13035958211620071946,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,16031237937730998881,6871461967617203890,4 --trace-process-track-uuid=3190708989122997041 --seatbelt-client=34
+ 4308  4067   08:43 217088 /Applications/DeepSeek Harness.app/Contents/Frameworks/DeepSeek Harness Helper (Renderer).app/Contents/MacOS/DeepSeek Harness Helper (Renderer) --type=renderer --user-data-dir=/Users/runner/Library/Application Support/@deepseek-ai/dsh-desktop --standard-schemes=dsh-app --secure-schemes=dsh-app --cors-schemes=dsh-app --fetch-schemes=dsh-app --streaming-schemes=dsh-app --code-cache-schemes=dsh-app --app-path=/Applications/DeepSeek Harness.app/Contents/Resources/app.asar --enable-sandbox --remote-debugging-port=9222 --lang=en-US --num-raster-threads=1 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --renderer-client-id=4 --launch-time-ticks=272528331 --shared-files --field-trial-handle=1718379636,r,12451012738282236251,13035958211620071946,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,16031237937730998881,6871461967617203890,4 --trace-process-track-uuid=3190708990060038890 --seatbelt-client=55
+ 4314  4067   08:41 201568 /Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness --expose-internals /Applications/DeepSeek Harness.app/Contents/Resources/app.asar/dsh/node_modules/@deepseek-ai/dsh-desktop-host/lib/index.js /Applications/DeepSeek Harness.app/Contents/Resources/app.asar/dsh /Users/runner/.dsh/profiles/desktop /Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime /Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.mjs /Applications/DeepSeek Harness.app/Contents/Resources/runtime/bin
+ 4324  4067   08:37  95392 /Applications/DeepSeek Harness.app/Contents/Frameworks/DeepSeek Harness Helper (Renderer).app/Contents/MacOS/DeepSeek Harness Helper (Renderer) --type=renderer --user-data-dir=/Users/runner/Library/Application Support/@deepseek-ai/dsh-desktop --standard-schemes=dsh-app --secure-schemes=dsh-app --cors-schemes=dsh-app --fetch-schemes=dsh-app --streaming-schemes=dsh-app --code-cache-schemes=dsh-app --app-path=/Applications/DeepSeek Harness.app/Contents/Resources/app.asar --enable-sandbox --remote-debugging-port=9222 --lang=en-US --num-raster-threads=1 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --renderer-client-id=5 --launch-time-ticks=278370944 --shared-files --field-trial-handle=1718379636,r,12451012738282236251,13035958211620071946,262144 --enable-features=PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,16031237937730998881,6871461967617203890,4 --trace-process-track-uuid=3190708990997080739 --dsh-welcome-locale=en --seatbelt-client=68
+ 5167     1   08:17  58256 /Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node /Users/runner/.dsh/workbench/opencli/toolchain/node_modules/.pnpm/@jackwener+opencli@1.8.8/node_modules/@jackwener/opencli/dist/src/daemon.js
+ 5416     1   08:08 229440 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --load-extension=/Users/runner/work/_temp/opencli-ext --disable-extensions-except=/Users/runner/work/_temp/opencli-ext --remote-debugging-port=9333 --disable-features=DisableLoadExtensionCommandLineSwitch --no-sandbox --disable-gpu --disable-software-rasterizer --window-size=1280,900 --no-first-run --no-default-browser-check
+ 5432  5416   08:07  73168 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif) --type=gpu-process --gpu-recent-crash-count=0 --no-sandbox --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --start-stack-profiler --gpu-preferences=WAAAAAAAAACgAAACAAAAAAAAAAAAAGAAQAAAAAAAAAAAAAAAAAAAADgAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAgAAAAAAAAAAgAAAAAAAAACAAAAAAAAAAIAAAAAAAAAAgAAAAAAAAA --use-gl=disabled --shared-files --metrics-shmem-handle=1752395122,r,1338817605709449259,7797163757555109240,262144 --field-trial-handle=1718379636,r,16815722204503464799,7539280730424459750,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,6926806026520438423,13272457538012204129,4 --trace-process-track-uuid=3190708988185955192
+ 5433  5416   08:06  66672 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif) --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=network --no-sandbox --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --start-stack-profiler --shared-files --metrics-shmem-handle=1752395122,r,16887993297287623795,10523960667468681011,524288 --field-trial-handle=1718379636,r,16815722204503464799,7539280730424459750,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,6926806026520438423,13272457538012204129,4 --trace-process-track-uuid=3190708989122997041
+ 5436  5416   08:05  36672 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif) --type=utility --utility-sub-type=storage.mojom.StorageService --lang=en-US --service-sandbox-type=service --no-sandbox --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --shared-files --metrics-shmem-handle=1752395122,r,2154894135141474880,17434509277126810859,524288 --field-trial-handle=1718379636,r,16815722204503464799,7539280730424459750,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,6926806026520438423,13272457538012204129,4 --trace-process-track-uuid=3190708990060038890
+ 5440  5416   08:04 141120 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif Renderer) --type=renderer --top-chrome-webui --gpu-client-id=6 --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --no-sandbox --remote-debugging-port=9333 --disable-gpu-compositing --lang=en-US --disallow-v8-feature-flag-overrides --num-raster-threads=1 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --renderer-client-id=6 --gpu-channel-request-start-time-ticks=311193626 --launch-time-ticks=311195521 --shared-files --metrics-shmem-handle=1752395122,r,6191123792459968240,2091223891708213136,1572864 --field-trial-handle=1718379636,r,16815722204503464799,7539280730424459750,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,6926806026520438423,13272457538012204129,4 --trace-process-track-uuid=3190708991934122588
+ 5442  5416   08:04 103904 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif Renderer) --type=renderer --gpu-client-id=8 --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --start-stack-profiler --no-sandbox --remote-debugging-port=9333 --disable-gpu-compositing --lang=en-US --num-raster-threads=1 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --renderer-client-id=8 --gpu-channel-request-start-time-ticks=311489617 --launch-time-ticks=311490198 --shared-files --metrics-shmem-handle=1752395122,r,3517766236604358984,18057135004290221820,1572864 --field-trial-handle=1718379636,r,16815722204503464799,7539280730424459750,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,6926806026520438423,13272457538012204129,4 --trace-process-track-uuid=3190708993808206286
+ 5443  5416   08:04 144816 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif Renderer) --type=renderer --gpu-client-id=7 --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --ntp-process --no-sandbox --remote-debugging-port=9333 --disable-gpu-compositing --lang=en-US --num-raster-threads=1 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --renderer-client-id=7 --gpu-channel-request-start-time-ticks=311493987 --launch-time-ticks=311494943 --shared-files --metrics-shmem-handle=1752395122,r,10209581719073853809,12063939142237952416,1572864 --field-trial-handle=1718379636,r,16815722204503464799,7539280730424459750,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,6926806026520438423,13272457538012204129,4 --trace-process-track-uuid=3190708992871164437
+ 5454  5416   08:02  81088 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif Renderer) --type=renderer --gpu-client-id=11 --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --extension-process --no-sandbox --remote-debugging-port=9333 --disable-gpu-compositing --lang=en-US --num-raster-threads=1 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --renderer-client-id=11 --gpu-channel-request-start-time-ticks=313587364 --launch-time-ticks=313594902 --shared-files --metrics-shmem-handle=1752395122,r,12223933726725886388,12548513310120336377,1572864 --field-trial-handle=1718379636,r,16815722204503464799,7539280730424459750,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,6926806026520438423,13272457538012204129,4 --trace-process-track-uuid=3190708996619331833
+ 5457  5416   08:01  90160 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif Renderer) --type=renderer --gpu-client-id=12 --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --start-stack-profiler --no-sandbox --remote-debugging-port=9333 --disable-gpu-compositing --lang=en-US --num-raster-threads=1 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --renderer-client-id=12 --gpu-channel-request-start-time-ticks=314050366 --launch-time-ticks=314051259 --shared-files --metrics-shmem-handle=1752395122,r,7203587552278635614,838030112630410330,1572864 --field-trial-handle=1718379636,r,16815722204503464799,7539280730424459750,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,6926806026520438423,13272457538012204129,4 --trace-process-track-uuid=3190708997556373682
+ 5515  5416   07:59  55664 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif Renderer) --type=renderer --gpu-client-id=13 --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --no-sandbox --remote-debugging-port=9333 --disable-gpu-compositing --lang=en-US --num-raster-threads=1 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --renderer-client-id=13 --gpu-channel-request-start-time-ticks=316671001 --launch-time-ticks=316672646 --shared-files --metrics-shmem-handle=1752395122,r,5867859301371561677,236510663549274498,1572864 --field-trial-handle=1718379636,r,16815722204503464799,7539280730424459750,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,6926806026520438423,13272457538012204129,4 --trace-process-track-uuid=3190708998493415531
+ 5649  5416   07:57  55312 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/Frameworks/Google Chrome for Testing Framework.framework/Versions/157.0.8103.50/Helpers/Google Chrome for Testing Helper (Aperitif Renderer).app/Contents/MacOS/Google Chrome for Testing Helper (Aperitif Renderer) --type=renderer --gpu-client-id=14 --user-data-dir=/Users/runner/work/_temp/opencli-browser-profile --no-sandbox --remote-debugging-port=9333 --disable-gpu-compositing --lang=en-US --num-raster-threads=1 --enable-zero-copy --enable-gpu-memory-buffer-compositor-resources --renderer-client-id=14 --gpu-channel-request-start-time-ticks=317849907 --launch-time-ticks=317854465 --shared-files --metrics-shmem-handle=1752395122,r,13950584609357564265,9600129800517678161,1572864 --field-trial-handle=1718379636,r,16815722204503464799,7539280730424459750,262144 --disable-features=DisableLoadExtensionCommandLineSwitch --variations-seed-version --pseudonymization-salt-handle=1935764596,r,6926806026520438423,13272457538012204129,4 --trace-process-track-uuid=3190708999430457380
