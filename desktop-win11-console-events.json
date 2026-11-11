@@ -1,0 +1,185 @@
+[
+  {
+    "method": "Runtime.consoleAPICalled",
+    "params": {
+      "type": "error",
+      "args": [
+        {
+          "type": "string",
+          "value": "[dsh-workbench] apply failed"
+        },
+        {
+          "type": "object",
+          "subtype": "error",
+          "className": "Error",
+          "description": "Error: cannot get property \"sidebarRight\" without inject\n    at Object.sidebarRight [as official] (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:23597:39)\n    at Object.open (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:20701:32)\n    at dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:23632:61\n    at createDshColumnSource (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:20557:20)\n    at mount (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:23632:26)\n    at new apply (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:23500:9)\n    at A2.execute (dsh-app://app/assets/index-BgUyXZcc.js:10:1540)\n    at dsh-app://app/assets/index-BgUyXZcc.js:10:2807\n    at R1 (dsh-app://app/assets/index-BgUyXZcc.js:7:75)",
+          "objectId": "5783284462494729356.1.1",
+          "preview": {
+            "type": "object",
+            "subtype": "error",
+            "description": "Error: cannot get property \"sidebarRight\" without inject\n    at Object.sidebarRight [as official] (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:23597:39)\n    at Object.open (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:20701:32)\n    at dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:23632:61\n    at createDshColumnSource (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:20557:20)\n    at mount (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:23632:26)\n    at new apply (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:23500:9)\n    at A2.execute (dsh-app://app/assets/index-BgUyXZcc.js:10:1540)\n    at dsh-app://app/assets/index-BgUyXZcc.js:10:2807\n    at R1 (dsh-app://app/assets/index-BgUyXZcc.js:7:75)",
+            "overflow": false,
+            "properties": [
+              {
+                "name": "stack",
+                "type": "string",
+                "value": "Error: cannot get property \"sidebarRight\" without … R1 (dsh-app://app/assets/index-BgUyXZcc.js:7:75)"
+              },
+              {
+                "name": "message",
+                "type": "string",
+                "value": "cannot get property \"sidebarRight\" without inject"
+              }
+            ]
+          }
+        }
+      ],
+      "executionContextId": 1,
+      "timestamp": 1794371115661.286,
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "apply",
+            "scriptId": "26",
+            "url": "dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf",
+            "lineNumber": 23501,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 1539
+          },
+          {
+            "functionName": "",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2806
+          },
+          {
+            "functionName": "R1",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 6,
+            "columnNumber": 74
+          },
+          {
+            "functionName": "_execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2684
+          },
+          {
+            "functionName": "_reload",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 6172
+          }
+        ]
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: net::ERR_FAILED",
+        "timestamp": 1794371416458.535,
+        "url": "dsh-app://app/plugins/events",
+        "networkRequestId": "8528.39"
+      }
+    }
+  },
+  {
+    "method": "Runtime.consoleAPICalled",
+    "params": {
+      "type": "error",
+      "args": [
+        {
+          "type": "string",
+          "value": "[dsh-workbench] apply failed"
+        },
+        {
+          "type": "object",
+          "subtype": "error",
+          "className": "Error",
+          "description": "Error: cannot get property \"sidebarRight\" without inject\n    at Object.sidebarRight [as official] (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:23597:39)\n    at Object.open (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:20701:32)\n    at dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:23632:61\n    at createDshColumnSource (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:20557:20)\n    at mount (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:23632:26)\n    at new apply (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:23500:9)\n    at A2.execute (dsh-app://app/assets/index-BgUyXZcc.js:10:1540)\n    at dsh-app://app/assets/index-BgUyXZcc.js:10:2807\n    at R1 (dsh-app://app/assets/index-BgUyXZcc.js:7:75)",
+          "objectId": "5783284462494729356.1.2",
+          "preview": {
+            "type": "object",
+            "subtype": "error",
+            "description": "Error: cannot get property \"sidebarRight\" without inject\n    at Object.sidebarRight [as official] (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:23597:39)\n    at Object.open (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:20701:32)\n    at dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:23632:61\n    at createDshColumnSource (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:20557:20)\n    at mount (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:23632:26)\n    at new apply (dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf:23500:9)\n    at A2.execute (dsh-app://app/assets/index-BgUyXZcc.js:10:1540)\n    at dsh-app://app/assets/index-BgUyXZcc.js:10:2807\n    at R1 (dsh-app://app/assets/index-BgUyXZcc.js:7:75)",
+            "overflow": false,
+            "properties": [
+              {
+                "name": "stack",
+                "type": "string",
+                "value": "Error: cannot get property \"sidebarRight\" without … R1 (dsh-app://app/assets/index-BgUyXZcc.js:7:75)"
+              },
+              {
+                "name": "message",
+                "type": "string",
+                "value": "cannot get property \"sidebarRight\" without inject"
+              }
+            ]
+          }
+        }
+      ],
+      "executionContextId": 1,
+      "timestamp": 1794371419480.877,
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "apply",
+            "scriptId": "26",
+            "url": "dsh-app://app/plugins/??@dsh-workbench/core/client.js&rev=72b129433faf",
+            "lineNumber": 23501,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 1539
+          },
+          {
+            "functionName": "",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2806
+          },
+          {
+            "functionName": "R1",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 6,
+            "columnNumber": 74
+          },
+          {
+            "functionName": "_execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2684
+          },
+          {
+            "functionName": "_reload",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 6172
+          }
+        ]
+      }
+    }
+  }
+]
