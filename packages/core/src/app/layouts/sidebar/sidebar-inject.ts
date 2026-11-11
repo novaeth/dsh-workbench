@@ -27,7 +27,7 @@ export function readPanels(ctx: DshClientContext): PanelEntry[] {
 }
 
 function contextMenusOf(ctx: DshClientContext): DshContextMenus | undefined {
-  return ctx.contextMenus;
+  return ctx.get('contextMenus');
 }
 
 export function sessionMenuSeat(ctx: DshClientContext) {

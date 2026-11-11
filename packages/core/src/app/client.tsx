@@ -142,7 +142,7 @@ type RightbarObservable = {
   subscribe(listener: () => void): () => void;
 };
 
-export const inject = ['slots', 'locale', 'layout', 'uiWorkspace', 'workspaces', 'shortcuts', 'remote', 'inputTriggers'];
+export const inject = ['slots', 'locale', 'layout', 'uiWorkspace', 'workspaces', 'shortcuts', 'remote', 'inputTriggers', 'conversation', 'contextMenus', 'sidebarRight', 'sessions'];
 
 export function apply(ctx: DshClientContext): void {
   try {
@@ -177,7 +177,7 @@ function mount(ctx: DshClientContext): void {
 
   installContextChips(ctx, {
     currentSessionId: () => {
-      const sessions = ctx.sessions;
+      const sessions = ctx.get('sessions');
       const snapshot = sessions?.list.getSnapshot();
       return snapshot === undefined ? undefined : currentSessionId(snapshot, false);
     },
@@ -257,7 +257,7 @@ function mount(ctx: DshClientContext): void {
   };
   const rightbarHooks = { hooks: { rightbar: observable } };
 
-  const sidebarRight = (): DshSidebarRight | undefined => ctx.sidebarRight;
+  const sidebarRight = (): DshSidebarRight | undefined => ctx.get('sidebarRight');
 
   let workbenchColumnArmed = false;
   let disposeWorkbenchColumn: (() => void) | undefined;
@@ -384,14 +384,14 @@ function mount(ctx: DshClientContext): void {
   ctx.effect(() => {
     const mirror = (): void => {
       if (runtimeSidebarEdition() !== 'official') return;
-      const sessions = ctx.sessions;
+      const sessions = ctx.get('sessions');
       if (sessions === undefined) return;
       const current = currentSessionId(sessions.list.getSnapshot(), false);
       const workspace = workspaceOfSession(ctx.workspaces.list.getSnapshot().items, current);
       if (workspace === null) return;
       if (selectedProjectId() !== workspace.workspaceId) selectProject(workspace.workspaceId);
     };
-    const sessions = ctx.sessions;
+    const sessions = ctx.get('sessions');
     const offWorkspaces = ctx.workspaces.list.subscribe(mirror);
     const offSessions = sessions?.list.subscribe?.(mirror) ?? (() => {});
     const offEdition = subscribeSidebarEdition(mirror);

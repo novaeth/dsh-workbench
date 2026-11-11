@@ -3,7 +3,7 @@ import { isWorkshopPath, workshopPresetUpgrade } from '@/shared/api/diy';
 import { currentSessionId, workspaceOfSession } from '@/modules/sessions';
 
 export function installWorkshopPreset(ctx: DshClientContext): () => void {
-  const sessions = ctx.sessions;
+  const sessions = ctx.get('sessions');
   if (sessions === undefined) return () => {};
 
   const asked = new Set<string>();

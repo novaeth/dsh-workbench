@@ -16,6 +16,15 @@
   Desktop 的 latest 通道已经是 0.2.2-rc.1，新用户照旧装得上；还停在 0.2.1-rc.5 的那批先把 dsh
   升上去，启动器会拦下并给升级命令
 
+#### 🐛 修复
+
+- **一启动就「Failed to load plugins」**：服务访问改成 `ctx.<服务名>` 之后，右栏借位
+  （`sidebarRight`）、会话（`sessions`）、共享上下文菜单（`contextMenus`）与对话（`conversation`）
+  这几位没写进 `inject`，cordis 当场抛 `cannot get property … without inject`，整个外壳连同全部
+  模块都不激活。这几处仍按「有就用、没有就退」的读法取服务：外壳不把自己钉死在某一份 dsh 组合上
+- **自检按 cordis 的 inject 规则卡客户端 apply**：替身不再无条件交出全部服务，读到没声明的服务
+  就抛，跟真运行期一样 —— 这一回就是这类读取漏过了自检
+
 ### docs
 
 #### ⚡ 改进

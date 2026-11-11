@@ -158,8 +158,6 @@ export const checks = [
           },
         },
 
-        sidebarRight: ctx.officialRightbar,
-
         get: (name) => (name === 'sidebarRight' ? ctx.officialRightbar : undefined),
 
         remote: {
@@ -179,6 +177,52 @@ export const checks = [
           },
         },
       };
+
+      const injectedServices = new Set([
+        'slots',
+        'locale',
+        'layout',
+        'uiWorkspace',
+        'workspaces',
+        'shortcuts',
+        'remote',
+        'inputTriggers',
+      ]);
+      const cordisApi = new Set([
+        'provide',
+        'effect',
+        'get',
+        'inject',
+        'plugin',
+        'on',
+        'emit',
+        'off',
+        'once',
+        'serial',
+        'parallel',
+        'bail',
+        'waterfall',
+        'logger',
+        'root',
+        'reflect',
+        'registry',
+        'events',
+        'scope',
+        'extend',
+        'isolate',
+        'intercept',
+        'set',
+        'mixin',
+        'start',
+        'stop',
+      ]);
+      ctx.clientCtx = new Proxy(ctx.clientCtx, {
+        get(target, prop, receiver) {
+          if (typeof prop !== 'string' || prop in target) return Reflect.get(target, prop, receiver);
+          if (injectedServices.has(prop) || cordisApi.has(prop)) return undefined;
+          throw new Error(`cannot get property "${prop}" without inject`);
+        },
+      });
 
       ctx.askedModules = [];
       ctx.factoryResult = ctx.boot.factory((name) => {

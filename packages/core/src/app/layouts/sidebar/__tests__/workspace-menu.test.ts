@@ -183,7 +183,7 @@ describe('写口接线：删除走 dsh 的 workspaces.delete，打开位置走�
   it('★ 在文件夹里显示：单数的 remote.session + action reveal，失败走共享提示', () => {
     expect(WRITES).toContain('ctx.remote.session');
     expect(WRITES).toContain("openWorkspacePath({ path, action: 'reveal' })");
-    expect(WRITES).toContain('ctx.contextMenus');
+    expect(WRITES).toContain("ctx.get('contextMenus')");
     expect(WRITES).toContain("notify(t('project.reveal.failed'), false)");
     expect(dictionaries.zh['project.reveal.failed']).toBe('打不开这个文件夹位置，再试一次。');
   });

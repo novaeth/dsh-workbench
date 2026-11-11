@@ -46,7 +46,7 @@ function harness(input: { path?: string; session?: SessionSummary | null; preset
     },
   };
   const ctx = {
-    sessions,
+    get: (name: string) => (name === 'sessions' ? sessions : undefined),
     remote: input.presets === false ? {} : { agentPresets: { select } },
     workspaces: { list: { getSnapshot: () => workspaces, subscribe } },
   } as unknown as DshClientContext;

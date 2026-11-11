@@ -171,7 +171,7 @@ export const checks = [
       const seats = read(pkg('src/app/layouts/sidebar/sidebar-inject.ts'));
       const sessionList = read(pkg('src/app/layouts/sidebar/SessionList.tsx'));
       const rides = clientEntry.includes('...sessionMenuSeat(ctx)') &&
-        seats.includes('ctx.contextMenus') &&
+        seats.includes("ctx.get('contextMenus')") &&
         seats.includes('hooks: {');
       const opens = sessionList.includes('openSessionMenu(node.id, node.title, {');
       const ownMenu = /<Menu\b/.test(sessionList);

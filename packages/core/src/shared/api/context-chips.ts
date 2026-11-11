@@ -68,8 +68,8 @@ export function addContextChip(ref: ContextRef, label: string): ChipResult {
   const sessionId = here.deps.currentSessionId();
   if (sessionId === undefined) return 'unavailable';
 
-  const sessions = here.ctx.sessions;
-  const conversation = here.ctx.conversation;
+  const sessions = here.ctx.get('sessions');
+  const conversation = here.ctx.get('conversation');
   if (sessions === undefined || conversation === undefined) return 'unavailable';
 
   const actx = sessions.scope(sessionId as SessionId);
