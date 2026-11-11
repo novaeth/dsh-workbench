@@ -1,9 +1,8 @@
-import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execaSync } from 'execa';
-import { plantPreviousVersion } from './self-update-rollback-fixture.mjs';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const CORE = '@dsh-workbench/core';
@@ -66,6 +65,33 @@ function distModule(...parts) {
   return import(pathToFileURL(file).href);
 }
 
+function seedVersionDir(input) {
+  const { versionDir, version, packages } = input;
+  const modules = join(versionDir, 'node_modules');
+  for (const name of packages) {
+    const from = join(ROOT, 'packages', name.split('/')[1] ?? name);
+    if (!existsSync(join(from, 'package.json'))) fail(`仓里没有 ${name} 的源码目录：${from}`);
+    const at = join(modules, name);
+    mkdirSync(dirname(at), { recursive: true });
+    cpSync(from, at, {
+      recursive: true,
+      dereference: true,
+      filter: (src) => basename(src) !== 'node_modules',
+    });
+    const manifest = join(at, 'package.json');
+    const raw = JSON.parse(readFileSync(manifest, 'utf8'));
+    writeFileSync(manifest, `${JSON.stringify({ ...raw, version }, null, 2)}\n`);
+  }
+  const repoModules = join(ROOT, 'node_modules');
+  if (!existsSync(repoModules)) fail(`仓根没有 node_modules：${repoModules} —— 先装依赖`);
+  for (const entry of readdirSync(repoModules)) {
+    if (entry === '@dsh-workbench' || entry === '.bin' || entry === '.modules.yaml') continue;
+    const at = join(modules, entry);
+    if (existsSync(at)) continue;
+    symlinkSync(join(repoModules, entry), at, 'junction');
+  }
+}
+
 async function main() {
   const askedHome = process.argv[2]?.trim() ?? '';
   const dshHome = askedHome === '' ? join(homedir(), '.dsh') : askedHome;
@@ -91,14 +117,13 @@ async function main() {
   const packages = plan.SELF_UPDATE_PACKAGES;
   const versionDir = join(paths.versionsDir, from);
   rmSync(versionDir, { recursive: true, force: true });
-
-  const planted = plantPreviousVersion({ home: dshHome, profile, version: from });
-  out(`铺好「上一版」：${planted.versionDir}（从已装的 ${planted.current} 复制、版本号改成 ${from}；${String(planted.packages)} 个包）`);
-  if (!versions.versionSelfCheck({ versionDir: planted.versionDir, version: from, packages })) {
-    fail(`版本目录自检没过（包或客户端产物不全）：${planted.versionDir}`);
+  seedVersionDir({ versionDir, version: from, packages });
+  out(`铺好「上一版」：${versionDir}（本 commit 构建的 ${String(packages.length)} 个包，版本号改成 ${from}）`);
+  if (!versions.versionSelfCheck({ versionDir, version: from, packages })) {
+    fail(`版本目录自检没过（包或客户端产物不全）：${versionDir}`);
   }
 
-  const links = versions.versionLinksOf({ profileDir, versionDir: planted.versionDir, packages });
+  const links = versions.versionLinksOf({ profileDir, versionDir, packages });
   versions.flipProfileLinks(links);
   versions.writeProfileLinks({ profileDir, links });
   const bundleCheck = bundles.ensureProfileBundle(profileDir, CORE);
@@ -123,7 +148,7 @@ async function main() {
 
   out(`profile=${profile}`);
   out(`version=${from}`);
-  out(`versionDir=${planted.versionDir}`);
+  out(`versionDir=${versionDir}`);
   out(`links=${String(links.length)}`);
   out(`settings=${settingsFile}`);
   out(`marker=${paths.marker}`);
