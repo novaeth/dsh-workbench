@@ -109,6 +109,20 @@ interface ProbeReleaseOptions {
   readonly prefix?: string | undefined;
 }
 
+function viewCommandOf(input: {
+  readonly name: string;
+  readonly registry: string;
+  readonly includePrerelease: boolean;
+  readonly cacheDir?: string | undefined;
+}): readonly string[] {
+  const target = input.includePrerelease
+    ? `${quoteShellArg(input.name)} versions --json`
+    : `${quoteShellArg(input.name)} version`;
+  const tail = `--registry ${quoteShellArg(input.registry)}${cacheFlag(input.cacheDir)}`;
+  const pnpm = process.env.DSH_WB_PNPM?.trim() ?? '';
+  return [`npm view ${target} ${tail}`, `${pnpm === '' ? 'pnpm' : pnpm} view ${target} ${tail}`];
+}
+
 async function latestVersionOf(latestCache: Map<string, CacheEntry>, options: {
   seam: Seam;
   name: string;
@@ -122,19 +136,23 @@ async function latestVersionOf(latestCache: Map<string, CacheEntry>, options: {
   const hit = latestCache.get(key);
   if (!force && hit !== undefined && now() - hit.at < versionCacheTtl(hit.value)) return hit.value;
 
-  const command = includePrerelease
-    ? `npm view ${quoteShellArg(name)} versions --json --registry ${quoteShellArg(registry)}${cacheFlag(cacheDir)}`
-    : `npm view ${quoteShellArg(name)} version --registry ${quoteShellArg(registry)}${cacheFlag(cacheDir)}`;
-  const result = await seam
-    .run({
-      command,
-      intent: productWrite(),
-      retry: 'safe',
-      timeoutMs: VERSION_CHECK_TIMEOUT_MS,
-      bestEffort: true,
-    })
-    .catch(() => undefined);
-  const read = result?.exitCode === 0 ? parseNewestVersion(result.stdout, includePrerelease) : undefined;
+  let read: string | undefined;
+  for (const command of viewCommandOf({ name, registry, includePrerelease, cacheDir })) {
+    const result = await seam
+      .run({
+        command,
+        intent: productWrite(),
+        retry: 'safe',
+        timeoutMs: VERSION_CHECK_TIMEOUT_MS,
+        bestEffort: true,
+      })
+      .catch(() => undefined);
+    const found = result?.exitCode === 0 ? parseNewestVersion(result.stdout, includePrerelease) : undefined;
+    if (found !== undefined) {
+      read = found;
+      break;
+    }
+  }
   latestCache.set(key, { at: now(), value: read });
   return read;
 }
@@ -161,16 +179,24 @@ async function versionExists(
   if (!force && hit !== undefined && (hit.value || now() - hit.at < VERSION_CHECK_FAILURE_TTL_MS))
     return hit.value;
 
-  const result = await seam
-    .run({
-      command: `npm view ${quoteShellArg(`${name}@${version}`)} version --registry ${quoteShellArg(registry)}${cacheFlag(cacheDir)}`,
-      intent: productWrite(),
-      retry: 'safe',
-      timeoutMs: VERSION_CHECK_TIMEOUT_MS,
-      bestEffort: true,
-    })
-    .catch(() => undefined);
-  const value = result?.exitCode === 0 && parseVersion(result.stdout) !== undefined;
+  const pnpm = process.env.DSH_WB_PNPM?.trim() ?? '';
+  const spec = `${quoteShellArg(`${name}@${version}`)} version --registry ${quoteShellArg(registry)}${cacheFlag(cacheDir)}`;
+  let value = false;
+  for (const command of [`npm view ${spec}`, `${pnpm === '' ? 'pnpm' : pnpm} view ${spec}`]) {
+    const result = await seam
+      .run({
+        command,
+        intent: productWrite(),
+        retry: 'safe',
+        timeoutMs: VERSION_CHECK_TIMEOUT_MS,
+        bestEffort: true,
+      })
+      .catch(() => undefined);
+    if (result?.exitCode === 0 && parseVersion(result.stdout) !== undefined) {
+      value = true;
+      break;
+    }
+  }
   existsCache.set(key, { at: now(), value });
   return value;
 }

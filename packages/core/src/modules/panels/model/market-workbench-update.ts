@@ -80,7 +80,9 @@ export async function updateWorkbenchOnce(deps: WorkbenchUpdateDeps): Promise<Bu
     throw new Error('拿不到 DSH_HOME 或 profile 名字 —— 自更新要多一个进程在外头跑，这一步做不了。');
   }
   const spec =
-    askedLatest === undefined ? `${read.pkg}@latest` : `${read.pkg}@${askedLatest}`;
+    askedLatest === undefined
+      ? `${read.pkg}@${deps.includePrerelease?.() === true ? 'beta' : 'latest'}`
+      : `${read.pkg}@${askedLatest}`;
   const run = deps.selfUpdate ?? deps.supply?.startSelfUpdate ?? (() => { throw new Error('self-update 适配器未提供'); });
   const started = run(
     {

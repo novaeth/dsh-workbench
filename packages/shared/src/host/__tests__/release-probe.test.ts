@@ -59,28 +59,50 @@ describe('查新版那一次网络请求', () => {
     expect(fake.calls).toHaveLength(2);
   });
 
-  it('★ 一次超时只锁一分钟：慢源回过神来的下一次就能把版本拿回来', async () => {
-    const { fake, probe, seam } = harness([{ exitCode: 1, stderr: 'ETIMEDOUT' }, { stdout: '1.1.5\n' }]);
+  it('★ npm 不在（Desktop 的 node 不带 npm）→ 退到宿主那份 pnpm 再问一次', async () => {
+    const { fake, probe, seam } = harness([
+      { exitCode: 127, stderr: 'npm: command not found' },
+      { stdout: '1.1.5\n' },
+    ]);
+
+    await expect(probe.latestVersion({ seam, name: '@a/mod', registry: REGISTRY })).resolves.toBe('1.1.5');
+
+    expect(fake.calls).toHaveLength(2);
+    expect(fake.calls[0]?.command).toContain('npm view');
+    expect(fake.calls[1]?.command).toContain('view');
+    expect(fake.calls[1]?.command).toContain('@a/mod');
+  });
+
+  it('★ 一次超时只锁一分钟：两条命令都失败后，慢源回过神来的下一次就能把版本拿回来', async () => {
+    const { fake, probe, seam } = harness([
+      { exitCode: 1, stderr: 'ETIMEDOUT' },
+      { exitCode: 1, stderr: 'ETIMEDOUT' },
+      { stdout: '1.1.5\n' },
+    ]);
     const options = { seam, name: '@a/mod', registry: REGISTRY } as const;
 
     expect(VERSION_CHECK_FAILURE_TTL_MS).toBeLessThan(VERSION_CHECK_TTL_MS);
 
     expect(await probe.latestVersion(options)).toBeUndefined();
     expect(await probe.latestVersion(options)).toBeUndefined();
-    expect(fake.calls).toHaveLength(1);
+    expect(fake.calls).toHaveLength(2);
 
     vi.setSystemTime(clock + VERSION_CHECK_FAILURE_TTL_MS);
     expect(await probe.latestVersion(options)).toBe('1.1.5');
-    expect(fake.calls).toHaveLength(2);
+    expect(fake.calls).toHaveLength(3);
   });
 
   it('force 绕开缓存：失败的那一分钟也拦不住用户按那一颗 ⟳', async () => {
-    const { fake, probe, seam } = harness([{ exitCode: 1 }, { stdout: '2.0.0\n' }]);
+    const { fake, probe, seam } = harness([
+      { exitCode: 1 },
+      { exitCode: 1 },
+      { stdout: '2.0.0\n' },
+    ]);
     const options = { seam, name: '@a/mod', registry: REGISTRY } as const;
 
     expect(await probe.latestVersion(options)).toBeUndefined();
     expect(await probe.latestVersion({ ...options, force: true })).toBe('2.0.0');
-    expect(fake.calls).toHaveLength(2);
+    expect(fake.calls).toHaveLength(3);
   });
 });
 
