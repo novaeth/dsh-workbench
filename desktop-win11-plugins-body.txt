@@ -1,0 +1,41 @@
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+More
+Workspaces
+Default workspace
+More
+Update
+Plugins
+Install, enable, and configure plugins
+Refresh
+Add plugin
+Built-in plugin settings
+Subagent
+Set Subagent recursion depth, count, and models.
+Web search
+Set up the DeepSeek search provider.
+Agent loop
+Control how the Agent dispatches tool calls.
+Shell
+Limit how long each command may run and how much it may output.
+Experimental plugins
+More
+Agent teams
+Experimental
+Lets the agent you talk to split a job among named teammates, track it on a shared task board, and report back with their results.
+Voice input
+Experimental
+Transcribe recordings locally with SenseVoice; first use requires installing dependencies.
+Custom plugin indexes
+Experimental
+Adds a Discover tab to Plugins, where you browse and install plugins from plugin indexes you add.
+Auto authorization review
+Experimental
+Adds an Auto review access mode: before each tool call, a model checks it against what you asked for, runs allowed calls at once, and holds denied calls for your approval.
+Change requests & worktrees
+Experimental
+Keep linked GitHub pull requests beside your conversation: follow checks and reviews, inspect diffs, and send feedback to the agent. Review local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host.

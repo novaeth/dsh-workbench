@@ -1,0 +1,4005 @@
+[
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "timestamp": 1794405574887.391,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.33"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "timestamp": 1794405574898.173,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.34"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "timestamp": 1794405576908.263,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.35"
+      }
+    }
+  },
+  {
+    "method": "Runtime.consoleAPICalled",
+    "params": {
+      "type": "warning",
+      "args": [
+        {
+          "type": "string",
+          "value": "[dsh-workbench] hello 的卡片没挂上：宿主没有担保 unit「hello」的清单 —— 这个包要么没装进这份 profile，要么它的 dsh.workbench 没通过校验。卡片先不挂：清单只有一处真相"
+        }
+      ],
+      "executionContextId": 1,
+      "timestamp": 1794405579699.829,
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "warnRefusal",
+            "scriptId": "21",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=8f993cd61791",
+            "lineNumber": 28919,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "register",
+            "scriptId": "21",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=8f993cd61791",
+            "lineNumber": 28956,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "registerUnit",
+            "scriptId": "21",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=8f993cd61791",
+            "lineNumber": 34609,
+            "columnNumber": 38
+          },
+          {
+            "functionName": "",
+            "scriptId": "21",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=8f993cd61791",
+            "lineNumber": 34984,
+            "columnNumber": 29
+          },
+          {
+            "functionName": "",
+            "scriptId": "10",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2806
+          },
+          {
+            "functionName": "R1",
+            "scriptId": "10",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 6,
+            "columnNumber": 74
+          },
+          {
+            "functionName": "_execute",
+            "scriptId": "10",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2684
+          },
+          {
+            "functionName": "effect",
+            "scriptId": "10",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 4228
+          },
+          {
+            "functionName": "apply",
+            "scriptId": "21",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=8f993cd61791",
+            "lineNumber": 34984,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "execute",
+            "scriptId": "10",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 1539
+          },
+          {
+            "functionName": "",
+            "scriptId": "10",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2806
+          },
+          {
+            "functionName": "R1",
+            "scriptId": "10",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 6,
+            "columnNumber": 74
+          },
+          {
+            "functionName": "_execute",
+            "scriptId": "10",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2684
+          },
+          {
+            "functionName": "_reload",
+            "scriptId": "10",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 6172
+          }
+        ]
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405579926.772,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.47"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405579927.8,
+        "url": "dsh-app://app/workbench/api/sidebar-edition",
+        "networkRequestId": "8648.48"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405579928.142,
+        "url": "dsh-app://app/workbench/api/health",
+        "networkRequestId": "8648.49"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405579929.236,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.50"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 405 (Method Not Allowed)",
+        "timestamp": 1794405579929.98,
+        "url": "dsh-app://app/workbench/api/workbench-boot-ok",
+        "networkRequestId": "8648.51"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405580029.593,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.52"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405580031.026,
+        "url": "dsh-app://app/workbench/events?since=0",
+        "networkRequestId": "8648.53"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405580032.42,
+        "url": "dsh-app://app/workbench/api/capability",
+        "networkRequestId": "8648.54"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405580038.219,
+        "url": "dsh-app://app/workbench/api/module-versions?check=0",
+        "networkRequestId": "8648.55"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405580039.079,
+        "url": "dsh-app://app/workbench/api/panels/market-installed",
+        "networkRequestId": "8648.56"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405580044.91,
+        "url": "dsh-app://app/workbench/api/panels/plugins?check=0",
+        "networkRequestId": "8648.57"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405580047.471,
+        "url": "dsh-app://app/workbench/api/panels/diy-record",
+        "networkRequestId": "8648.58"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405580048.369,
+        "url": "dsh-app://app/workbench/api/panels",
+        "networkRequestId": "8648.60"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405580052.206,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.61"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405580056.449,
+        "url": "dsh-app://app/workbench/api/panels?path=C%3A%5CUsers%5Crunneradmin%5C.dsh%5Cworkbench%5Cdiy",
+        "networkRequestId": "8648.63"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405581061.129,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.78"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405581061.324,
+        "url": "dsh-app://app/workbench/events?since=0",
+        "networkRequestId": "8648.79"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405581063.777,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.80"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405582048.746,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.81"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405583041.78,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.82"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405584043.348,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.83"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405584044.956,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.84"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405584069.46,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.85"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405586049.054,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.86"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405586050.017,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.87"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405586082.016,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.88"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405588041.228,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.89"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405588092.414,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.90"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405589041.519,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.91"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405589043.521,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.92"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405590100.302,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.93"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405591048.979,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.95"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405591049.842,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.94"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405592107.112,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.96"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405593042.931,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.97"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405594042.414,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.98"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405594120.388,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.99"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405595052.832,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.100"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405596126.012,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.101"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405597041.04,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.103"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405597041.963,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.102"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405598130.878,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.104"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405599042.386,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.105"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405599044.162,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.106"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405600135.326,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.107"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405601040.927,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.108"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405602042.289,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.109"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405602043.738,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.110"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405602156.26,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.111"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405604042.377,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.112"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405604044.149,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.113"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405604162.338,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.114"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405606042.237,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.115"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405606189.575,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.116"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405607041.765,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.117"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405608044.068,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.118"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405608203.485,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.119"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405610043.313,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.121"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405610044.149,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.120"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405610211.185,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.122"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405612040.448,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.123"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405612221.018,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.124"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405613040.604,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.125"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405613042.355,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.126"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405614229.719,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.127"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405615040.023,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.128"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405616041.093,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.129"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405616043.091,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.130"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405616236.428,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.131"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405618041.85,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.132"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405618043.678,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.133"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405618242.887,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.134"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405620041.197,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.135"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405620248.188,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.136"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405621040.649,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.137"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405622040.285,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.138"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405622256.263,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.139"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405624047.983,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.141"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405624049.043,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.140"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405624270.026,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.142"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405626042.268,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.143"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405626277.663,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.144"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405627042.365,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.145"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405628055.379,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.146"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405628283.391,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.147"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405630042.783,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.149"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405630043.732,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.148"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405630289.969,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.150"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405632042.837,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.151"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405632296.506,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.152"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405633042.272,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.153"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405634041.901,
+        "url": "dsh-app://app/workbench/api/unit-manifests",
+        "networkRequestId": "8648.154"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405634306.284,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.155"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405635050.46,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.156"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405636320.439,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.157"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405638043.829,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.158"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405638329.657,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.159"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405640336.865,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.160"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405641054.213,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.161"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405642343.587,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.162"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405644047.142,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.163"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405644349.194,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.164"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405646357.258,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.165"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405647042.638,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.166"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405648376.292,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.167"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405650041.872,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.168"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405650383.172,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.169"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405652391.647,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.170"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405653041.778,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.171"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405654406.758,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.172"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405656043.573,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.173"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405656412.707,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.174"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405658422.37,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.175"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405659054.82,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.176"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405660435.959,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.177"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405662041.766,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.178"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405662443.706,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.179"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405664449.33,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.180"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405665041.37,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.181"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405666456.994,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.182"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405668042.528,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.183"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405668464.156,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.184"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405670480.577,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.185"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405671042.234,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.186"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405672486.82,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.187"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405674041.997,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.188"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405674501.7,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.189"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405676507.774,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.190"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405677040.449,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.191"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405678513.565,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.192"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405680041.271,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.193"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405680529.323,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.194"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405682538.259,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.195"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405683042.28,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.196"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405684545.001,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.197"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405686041.742,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.198"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405686557.117,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.199"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405688563.224,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.200"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405689041.788,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.201"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405690568.754,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.202"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405692046.637,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.203"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405692574.474,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.204"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405694581.722,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.205"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405695041.275,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.206"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405696586.183,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.207"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405698040.195,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.208"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405698592.464,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.209"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405700605.836,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.210"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405701046.594,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.211"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405702614.509,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.212"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405704041.864,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.213"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405704620.808,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.214"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405706627.254,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.215"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405707045.455,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.216"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405708633.653,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.217"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405710039.884,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.218"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405710640.343,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.219"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405712646.675,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.220"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405713040.649,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.221"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405714656.131,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.222"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405716040.874,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.223"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405716665.422,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.224"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405718675.285,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.225"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405719042.108,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.226"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405720681.671,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.227"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405722041.284,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.228"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405722687.225,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.229"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405724701.234,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.230"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405725041.864,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.231"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405726710.524,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.232"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405728040.954,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.233"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405728716.501,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.234"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405730729.155,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.235"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405731043.657,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.236"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405732734.53,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.237"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405734040.302,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.238"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405734741.909,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.239"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405736747.692,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.240"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405737040.4,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.241"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405738754.433,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.242"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405740044.75,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.243"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405740760.727,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.244"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405742769.636,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.245"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405743049.848,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.246"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405744775.575,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.247"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405746040.528,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.248"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405746785.883,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.249"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405748794.359,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.250"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405749040.765,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.251"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405750804.591,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.252"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405752042.014,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.253"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405752811.226,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.254"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405754817.098,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.255"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405755043.411,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.256"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405756822.341,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.257"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405758040.263,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.258"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405758828.427,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.259"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405760836.878,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.260"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405761041.744,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.261"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405762843.588,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.262"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405764040.099,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.263"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405764856.157,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.264"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405766861.011,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.265"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405767042.128,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.266"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405768866.991,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.267"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405770047.337,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.268"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405770873.206,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.269"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405772878.458,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.270"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405773041.105,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.271"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405774882.992,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.272"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405776045.147,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.273"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405776888.452,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.274"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405778894.259,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.275"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405779040.802,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.276"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405780901.281,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.277"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405782041.317,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.278"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405782909.324,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.279"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405784914.047,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.280"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405785041.668,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.281"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405786921.046,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.282"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405788040.962,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.283"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405788927.551,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.284"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405790947.379,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.285"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405791042.098,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.286"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405792953.14,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.287"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405794039.782,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.288"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405794958.564,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.289"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405796964.302,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.290"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405797053.504,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.291"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405798970.626,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.292"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405800040.959,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.293"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405800981.925,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.294"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405802990.617,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.295"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405803041.107,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.296"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405804995.351,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.297"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405806040.706,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.298"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405807009.297,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.299"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405809019.821,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.300"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405809049.936,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.301"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405811028.61,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.302"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405812041.549,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.303"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405813034.896,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.304"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405815040.757,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.305"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405815041.476,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.306"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405817046.552,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.307"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405818049.433,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.308"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405819053.343,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.309"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405821041.76,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.310"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405821061.478,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.311"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405823067.223,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.312"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405824039.611,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.313"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405825077.52,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.314"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405827040.261,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.315"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405827083.143,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.316"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405829095.794,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.317"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405830040.608,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.318"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405831101.457,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.319"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405833049.213,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.320"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405833107.477,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.321"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405835112.307,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.322"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405836040.051,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.323"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405837116.526,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.324"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405839040.6,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.325"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405839122.156,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.326"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405841127.836,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.327"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405842048.379,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.328"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405843133.288,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.329"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405845039.812,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.330"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405845137.086,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.331"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405847143.959,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.332"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405848039.673,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.333"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405849149.686,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.334"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405851040.042,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.335"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405851155.47,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.336"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405853160.675,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.337"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405854041.775,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.338"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405855165.977,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.339"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405857041.271,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.340"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405857176.337,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.341"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405859181.156,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.342"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405860053.692,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.343"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405861193.504,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.344"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405863043.745,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.345"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405863199.221,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.346"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405865203.978,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.347"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405866041.462,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.348"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405867210.126,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.349"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405869040.914,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.350"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405869215.046,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.351"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405871221.086,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.352"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405872047.409,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.353"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405873235.468,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.354"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405875039.298,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.355"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405875241.181,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.356"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405877247.344,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "8648.357"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": 1794405878039.56,
+        "url": "dsh-app://app/workbench/api/changes?since=0",
+        "networkRequestId": "8648.358"
+      }
+    }
+  }
+]
