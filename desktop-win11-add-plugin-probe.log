@@ -1,0 +1,45 @@
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [] none :: HARNESS | Loading plugins…
+[4.2s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[4.2s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[8.6s] ready wait [checking] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: HARNESS | Loading plugins…
+[8.6s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[10.8s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: le module |  | hello, workbench |  | This card comes from a standalone workbench module. |  | Preparing the workbench | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode
+[10.8s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[12.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: | Preview | Standard mode | Describe what you want to build, / commands, @ files or sessions | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[12.8s] MILESTONE ready @ 12.8s
+[12.9s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Workbench module market"
+[15.9s] market-page:  installed | Uninstall | After installing, enable it in the panel page of that project. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[15.9s] MILESTONE market-open @ 15.9s
+[15.9s] MILESTONE add-plugin-market @ 15.9s
+[15.9s] STEP click ["添加模块","Add module"]: "Add module"
+[17.1s] add-plugin dialog wait: {"field":true,"buttons":["Close","Install guide and examples","Source\nnpm registry","Install"]}
+[17.1s] add-plugin spec field: ""
+[17.6s] add-plugin filled: "opencli-plugin-hello"
+[17.6s] STEP click ["安装","Install"]: "Install"
+[18.8s] MILESTONE plugin-check-clicked @ 18.8s
+[18.8s] plugin preview wait: ello, workbench |  | This card comes from a standalone workbench module. |  | Add module |  | Enter a module or opencli plugin package name, Git repository URL, or local directory path. |  | Checking…
+[20.8s] plugin preview wait: ello, workbench |  | This card comes from a standalone workbench module. |  | Add module |  | Enter a module or opencli plugin package name, Git repository URL, or local directory path. |  | Checking…
+[22.9s] plugin preview wait: ello, workbench |  | This card comes from a standalone workbench module. |  | Add module |  | Enter a module or opencli plugin package name, Git repository URL, or local directory path. |  | Checking…
+[24.9s] plugin preview wait: ello, workbench |  | This card comes from a standalone workbench module. |  | Add module |  | Enter a module or opencli plugin package name, Git repository URL, or local directory path. |  | Checking…
+[26.9s] plugin preview wait: ALERT This package cannot be installed here: opencli-plugin-hello declares no dsh.bundle. This entry recognises workbench modules and opencli plugins by package name, and installs either; but a git URL or a tarball does not reveal what it is — if it is really one of those two, use its package name or a local folder instead. :: ples | Source | npm registry |  | Make sure you trust the source. Modules run on this machine with your permissions; an unknown module can damage the workbench or read and leak your data. |  | Install
+[26.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-add-plugin-add-plugin-body.txt (1131 bytes)
+[26.9s] FAIL 插件预检没通过：This package cannot be installed here: opencli-plugin-hello declares no dsh.bundle. This entry recognises workbench modules and opencli plugins by package name, and installs either; but a git URL or a tarball does not reveal what it is — if it is really one of those two, use its package name or a local folder instead.
+[26.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-add-plugin-console-events.json (9559 bytes)
+[26.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-add-plugin-failed-body.txt (1131 bytes)
+[46.9s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+[46.9s] FATAL Error: 插件预检没通过：This package cannot be installed here: opencli-plugin-hello declares no dsh.bundle. This entry recognises workbench modules and opencli plugins by package name, and installs either; but a git URL or a tarball does not reveal what it is — if it is really one of those two, use its package name or a local folder instead.（现场：desktop-win11-add-plugin-failed-body.txt / desktop-win11-add-plugin-failed-preflight.json）
+    at fail (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:258:9)
+    at async waitForPluginPreview (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:747:7)
+    at async addPluginViaMarket (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:765:23)
+    at async main (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:1141:9)
+[46.9s] SMOKE_SUMMARY {"outcome":"failed","elapsed":"46.9s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.1s","ready":"12.8s","market-open":"15.9s","add-plugin-market":"15.9s","plugin-check-clicked":"18.8s"},"reason":"插件预检没通过：This package cannot be installed here: opencli-plugin-hello declares no dsh.bundle. This entry recognises workbench modules and opencli plugins by package name, and installs either; but a git URL or a tarball does not reveal what it is — if it is really one of those two, use its package name or a local folder instead.（现场：desktop-win11-add-plugin-failed-body.txt / desktop-win11-add-plugin-failed-preflight.json）"}
+[46.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-add-plugin-fatal-body.txt (1131 bytes)
+[47.9s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win11-add-plugin-fatal.png (63798 bytes)

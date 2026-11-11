@@ -1,0 +1,39 @@
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Installed
+Discover
+dsh-workbench-market
+Labels
+Sort: Default order
+All
+workbench
+
+Reading the index
+
+Installed: Sample module
+
+Sample module
+workbench
+Smallest sample module: one extra card on the panel, for trying installs and uninstalls.
+1.1.14-beta.2 · Nov 1, 2026
+Install
+Workbench panel
+No modules on the panel yet
+You can also just tell the agent: “add a module to the panel”.
+Build a module
+Choose modules
+Browse the module market
