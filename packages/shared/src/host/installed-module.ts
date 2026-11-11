@@ -21,7 +21,7 @@ function asText(value: unknown): string {
 }
 
 export function profileDirOf(ctx: DshHostContext): string | null {
-  const profile = ctx.get<{ dir?: unknown }>('profileContext');
+  const profile = ctx.get('profileContext');
   const dir = typeof profile?.dir === 'string' ? profile.dir.trim() : '';
   return dir === '' ? null : dir;
 }

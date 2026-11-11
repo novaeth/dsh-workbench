@@ -11,6 +11,7 @@ import {
   type AdapterSet,
   type CoreAdapterSet,
 } from './adapters.js';
+import { profileDirOf } from './installed-module.js';
 import { isPackageName } from './spec.js';
 
 export interface WorkbenchConfig {
@@ -134,12 +135,6 @@ function failure(
     detail,
     ...(cause === undefined ? {} : { cause }),
   };
-}
-
-function profileDirOf(ctx: DshHostContext): string | null {
-  const profile = ctx.get<{ dir?: unknown }>('profileContext');
-  const dir = typeof profile?.dir === 'string' ? profile.dir.trim() : '';
-  return dir === '' ? null : dir;
 }
 
 function packageDirOf(spec: string, from: string): string | undefined {

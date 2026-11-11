@@ -1,16 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { DshRequest, DshResponse } from '@dsh-workbench/shared';
 import { createFactLog } from '@dsh-workbench/shared/host';
 import { createFactStream } from '../events';
 
+function requestOf(method: string, url: string): DshRequest {
+  return { method, url } as unknown as DshRequest;
+}
+
 function fakeRes(): {
-  res: {
-    statusCode: number;
-    setHeader(name: string, value: string): void;
-    end(body?: string): void;
-    write(chunk: string): void;
-    writeHead(status: number, headers: Record<string, string>): void;
-    on(event: 'close', listener: () => void): void;
-  };
+  res: DshResponse;
   chunks: string[];
   headers: Record<string, string>;
   close(): void;
@@ -20,30 +18,31 @@ function fakeRes(): {
   const headers: Record<string, string> = {};
   let closed: (() => void) | null = null;
   let ended: string | undefined;
+  const res = {
+    statusCode: 0,
+    setHeader(name: string, value: string) {
+      headers[name] = value;
+    },
+    writeHead(status: number, next: Record<string, string>) {
+      res.statusCode = status;
+      Object.assign(headers, next);
+    },
+    end(body?: string) {
+      ended = body;
+    },
+    write(chunk: string) {
+      chunks.push(chunk);
+    },
+    on(event: string, listener: () => void) {
+      if (event === 'close') closed = listener;
+    },
+  };
   return {
     chunks,
     headers,
     close: () => closed?.(),
     ended: () => ended,
-    res: {
-      statusCode: 0,
-      setHeader(name, value) {
-        headers[name] = value;
-      },
-      writeHead(status, next) {
-        this.statusCode = status;
-        Object.assign(headers, next);
-      },
-      end(body) {
-        ended = body;
-      },
-      write(chunk) {
-        chunks.push(chunk);
-      },
-      on(event, listener) {
-        if (event === 'close') closed = listener;
-      },
-    },
+    res: res as unknown as DshResponse,
   };
 }
 
@@ -61,7 +60,7 @@ describe('createFactStream', () => {
     const stream = createFactStream(log);
     const sink = fakeRes();
 
-    stream.handler({ method: 'GET', url: '/workbench/events?since=0' }, sink.res);
+    stream.handler(requestOf('GET', '/workbench/events?since=0'), sink.res);
 
     expect(sink.headers['content-type']).toBe('text/event-stream; charset=utf-8');
     expect(sink.headers['cache-control']).toContain('no-transform');
@@ -72,7 +71,7 @@ describe('createFactStream', () => {
     const log = createFactLog({ epoch: 'e1' });
     const stream = createFactStream(log);
     const sink = fakeRes();
-    stream.handler({ method: 'GET', url: '/workbench/events' }, sink.res);
+    stream.handler(requestOf('GET', '/workbench/events'), sink.res);
 
     log.bump(['inventory/summary']);
 
@@ -86,7 +85,7 @@ describe('createFactStream', () => {
     const stream = createFactStream(log);
     const sink = fakeRes();
 
-    stream.handler({ method: 'GET', url: '/workbench/events?since=1' }, sink.res);
+    stream.handler(requestOf('GET', '/workbench/events?since=1'), sink.res);
 
     expect(frames(sink.chunks)[0]).toMatchObject({ type: 'sync', rev: 1, facts: [] });
   });
@@ -95,7 +94,7 @@ describe('createFactStream', () => {
     const log = createFactLog({ epoch: 'e1' });
     const stream = createFactStream(log);
     const sink = fakeRes();
-    stream.handler({ method: 'GET', url: '/workbench/events' }, sink.res);
+    stream.handler(requestOf('GET', '/workbench/events'), sink.res);
     const before = sink.chunks.length;
 
     sink.close();
@@ -110,8 +109,8 @@ describe('createFactStream', () => {
     const stream = createFactStream(log);
     const first = fakeRes();
     const second = fakeRes();
-    stream.handler({ method: 'GET', url: '/workbench/events' }, first.res);
-    stream.handler({ method: 'GET', url: '/workbench/events' }, second.res);
+    stream.handler(requestOf('GET', '/workbench/events'), first.res);
+    stream.handler(requestOf('GET', '/workbench/events'), second.res);
 
     stream.closeAll();
     log.bump(['panels']);
@@ -125,7 +124,7 @@ describe('createFactStream', () => {
     const stream = createFactStream(createFactLog({ epoch: 'e1' }));
     const sink = fakeRes();
 
-    stream.handler({ method: 'POST', url: '/workbench/events' }, sink.res);
+    stream.handler(requestOf('POST', '/workbench/events'), sink.res);
 
     expect(sink.res.statusCode).toBe(405);
     expect(sink.chunks).toHaveLength(0);
@@ -142,7 +141,7 @@ describe('createFactStream', () => {
     };
 
     expect(() =>
-      stream.handler({ method: 'GET', url: '/workbench/events?since=0' }, plain as never),
+      stream.handler(requestOf('GET', '/workbench/events?since=0'), plain as never),
     ).not.toThrow();
     expect(JSON.parse(String(plain.end.mock.calls[0]?.[0]))).toMatchObject({
       ok: true,

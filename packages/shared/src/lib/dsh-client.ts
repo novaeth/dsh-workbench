@@ -1,66 +1,145 @@
-import type { HTMLAttributes, ReactNode } from 'react';
+import type {} from '@deepseek-ai/dsh-agent-preset-registry/remote';
+import type {} from '@deepseek-ai/dsh-api-gateway/client';
+import type {} from '@deepseek-ai/dsh-api-remote-access/client';
+import type {} from '@deepseek-ai/dsh-api-session-controller/client';
+import type {} from '@deepseek-ai/dsh-api-session-controller/remote';
+import type {} from '@deepseek-ai/dsh-api-workspace-controller/client';
+import type {} from '@deepseek-ai/dsh-client-locale/client';
+import type {} from '@deepseek-ai/dsh-client-shortcuts/client';
+import type {} from '@deepseek-ai/dsh-client-ui-context-menu/client';
+import type {} from '@deepseek-ai/dsh-client-ui-conversation/client';
+import type {} from '@deepseek-ai/dsh-client-ui-input-trigger/client';
+import type {} from '@deepseek-ai/dsh-client-ui-layout/client';
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client';
+import type {} from '@deepseek-ai/dsh-client-ui-session/client';
+import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client';
+import type {} from '@deepseek-ai/dsh-client-ui-settings/client';
+import type {} from '@deepseek-ai/dsh-client-ui-workspace/client';
+import type {} from '@deepseek-ai/dsh-subagent';
+import type { SlotRegistry } from '@deepseek-ai/dsh-client-ui-renderer/client';
+import type { PropsRenderSlots, SlotLabel } from '@deepseek-ai/dsh-client-ui-slots';
+import type { SessionInput as OfficialSessionInput } from '@deepseek-ai/dsh-client-ui-conversation/client';
+import type { SessionStatus as OfficialSessionStatus } from '@deepseek-ai/dsh-client-ui-session/client';
+import type { SessionSummary as OfficialSessionSummary } from '@deepseek-ai/dsh-api-session-controller/client';
+import type {
+  WorkspaceSnapshot as OfficialWorkspaceSnapshot,
+  WorkspaceView as OfficialWorkspaceView,
+} from '@deepseek-ai/dsh-api-workspace-controller/client';
+import type { SubagentCatalogEntry as OfficialSubagentCatalogEntry } from '@deepseek-ai/dsh-subagent';
+
+export type { Context as DshClientContext } from '@deepseek-ai/cordis';
+export type { ChildrenDecl } from '@deepseek-ai/dsh-client-ui-slots';
+export type { MainPanelId } from '@deepseek-ai/dsh-client-ui-layout/client';
+export type { WorkspaceId } from '@deepseek-ai/dsh-api-workspace-controller/client';
+export type { SessionTarget } from '@deepseek-ai/dsh-api-session-controller/client';
+export type { SessionId } from '@deepseek-ai/dsh-session/types';
+export type { ClientRemote as DshClientRemote } from '@deepseek-ai/dsh-api-gateway/client';
+export type { IWorkspaces as DshWorkspaces } from '@deepseek-ai/dsh-api-workspace-controller/client';
+export type { ISessions as DshSessionsService } from '@deepseek-ai/dsh-api-session-controller/client';
+export type { ObservableSnapshot as DshObservable } from '@deepseek-ai/dsh-client-store';
+export type { SnapshotSelectorHook, Translate } from '@deepseek-ai/dsh-client-ui-slots';
+export type { LocaleRuntime as DshLocale } from '@deepseek-ai/dsh-client-locale/client';
+export type { ILayout as DshLayout, PanelInfo } from '@deepseek-ai/dsh-client-ui-layout/client';
+export type { Shortcuts as DshShortcutCatalog } from '@deepseek-ai/dsh-client-shortcuts/client';
+export type { SlotRegistry as DshSlots } from '@deepseek-ai/dsh-client-ui-renderer/client';
+export type { UiWorkspace as DshUiWorkspace } from '@deepseek-ai/dsh-client-ui-workspace/client';
+export type { StartSessionOptions } from '@deepseek-ai/dsh-client-ui-workspace/client';
+export type { IConversation as DshConversationService } from '@deepseek-ai/dsh-client-ui-conversation/client';
+export type { ReferenceInsert as DshReferenceInsert, SessionInput } from '@deepseek-ai/dsh-client-ui-conversation/client';
+export type { TokenSpan as DshTokenSpan } from '@deepseek-ai/dsh-client-ui-conversation/client';
+export type { InputTriggerServiceContract as DshInputTriggers } from '@deepseek-ai/dsh-client-ui-input-trigger/client';
+export type { ISidebarRight as DshSidebarRight } from '@deepseek-ai/dsh-client-ui-sidebar-right/client';
+export type { RemoteResult as DshRemoteOutcome } from '@deepseek-ai/dsh-typert-protocol';
+export type {
+  ContextMenuBindings as DshContextMenuBindings,
+  ContextMenuTarget as DshContextMenuTarget,
+  ContextMenus as DshContextMenus,
+  ContextMenuTriggerProps as DshContextMenuTriggerProps,
+  MenuPoint as DshMenuPoint,
+  UseContextMenu as DshUseContextMenu,
+} from '@deepseek-ai/dsh-client-ui-context-menu/client';
+/**
+ * 会话一行的来源（标题、空会话、在跑与否、被谁留住）；id 按外壳的宽串用。
+ */
+export type SessionSummary = Omit<OfficialSessionSummary, 'id'> & {
+  readonly id: string;
+};
 
 /**
- * 左栏一行的来源：dsh workspaces.list 快照里的一项，两个时间戳都是毫秒。
+ * 右栏宽度的写口；dsh 没给这一位时右栏宽度就只是内存态，属于外壳自己的扩展位。
  */
-export interface WorkspaceView {
-  readonly workspaceId: string;
-  readonly path: string;
-  readonly title: string;
-  readonly sessionIds: readonly string[];
-  readonly createdAt: number;
-  readonly updatedAt: number;
+export type DshLayoutPanels = {
+  setRightbar?(px: number): void;
+};
+
+declare module '@deepseek-ai/dsh-client-ui-slots' {
+  interface LocaleNamespaceMap {
+    workbench: string;
+  }
+
+  interface SlotMap {
+    'sidebar.brand.mark': { kind: 'single'; scope: 'root' };
+    'sidebar.brand.name': { kind: 'single'; scope: 'root' };
+    'sidebar.toggle.badge': { kind: 'single'; scope: 'root' };
+    'sidebar.panellist': { kind: 'list'; scope: 'root' };
+    'sidebar.panellist.actions': { kind: 'list'; scope: 'root' };
+    'sidebar.settings': { kind: 'single'; scope: 'root' };
+    'sidebar.footer.action': { kind: 'list'; scope: 'root' };
+    'conversation.approval.detail': { kind: 'single'; scope: 'root' };
+  }
 }
+
+/**
+ * 左栏一行的来源：dsh workspaces.list 快照里的一项，id 按外壳的宽串用，两个时间戳原样透传。
+ */
+export type WorkspaceView = Omit<
+  OfficialWorkspaceView,
+  'workspaceId' | 'sessionIds' | 'createdAt' | 'updatedAt'
+> & {
+  readonly workspaceId: string;
+  readonly sessionIds: readonly string[];
+  readonly createdAt: number | string;
+  readonly updatedAt: number | string;
+};
 
 /**
  * workspaces.list 的整份快照：可见工作区，加上归档与置顶的会话 id；外壳只读不改。
  */
-export interface WorkspaceSnapshot {
+export type WorkspaceSnapshot = Pick<
+  OfficialWorkspaceSnapshot,
+  'archivedSessionIds' | 'pinnedSessionIds'
+> & {
   readonly items: readonly WorkspaceView[];
-  readonly archivedSessionIds: readonly string[];
-  readonly pinnedSessionIds: readonly string[];
-}
-
-/**
- * 会话一行的来源（标题、空会话、在跑与否、被谁留住）；retainedBy 按视图名记留住它的份数，mainView 大于 0 即正被主视图占着。
- * projectionValues 是 dsh 的会话投影，外壳只读 `agentPreset` 一位（没选过模式时没有这一位）。
- */
-export interface SessionSummary {
-  readonly id: string;
-  readonly displayTitle: string;
-  readonly blank: boolean;
-  readonly running: boolean;
-  readonly updatedAt: number;
-  readonly origin?: string;
-  readonly retainedBy: Readonly<Partial<Record<string, number>>>;
-  readonly projectionValues?: Readonly<Record<string, unknown>>;
-}
+};
 
 /**
  * 会话投影里的一条子代理目录项；外壳只认 id，其余字段随 dsh 变。
  */
-export interface SubagentCatalogEntry {
-  readonly id: string;
-}
+export type SubagentCatalogEntry = Pick<OfficialSubagentCatalogEntry, 'id'>;
+
+/**
+ * 一条会话投影视图；外壳只读 values.subagentCatalog 一位。
+ */
+export type SessionProjectionView = {
+  readonly values?: {
+    readonly subagentCatalog?: readonly SubagentCatalogEntry[];
+  };
+};
 
 /**
  * dsh sessions.list 的快照：按 id 找会话，投影里可能挂着一串子代理目录。
  */
-export interface SessionsSnapshot {
+export type SessionsSnapshot = {
   readonly byId: Readonly<Record<string, SessionSummary>>;
-  readonly projectionsBySession: Readonly<
-    Record<string, { values?: { subagentCatalog?: readonly SubagentCatalogEntry[] } } | undefined>
-  >;
-}
+  readonly projectionsBySession: Readonly<Record<string, SessionProjectionView | undefined>>;
+};
 
 /**
- * 一个会话的三个状态位（在跑 / 有未读完成 / 等着用户交互）；字段缺省就是这一位不知道。
+ * 一个会话的三个状态位；字段缺省就是这一位不知道，pendingInteraction 只认 kind。
  */
-export interface SessionStatus {
-  readonly running?: boolean;
-  readonly completionUnread?: boolean;
-  readonly pendingInteraction?: { readonly kind?: string };
-}
+export type SessionStatus = Omit<Partial<OfficialSessionStatus>, 'pendingInteraction'> & {
+  readonly pendingInteraction?: { readonly kind?: string } | undefined;
+};
 
 /**
  * 会话 id 到状态位的只读表；查不到的 id 就是没有这一条状态。
@@ -68,338 +147,66 @@ export interface SessionStatus {
 export type SessionStatusSnapshot = ReadonlyMap<string, SessionStatus>;
 
 /**
- * dsh layout 的面板选择位；activePanelId 为 null 表示用户把面板关了。
- */
-export interface PanelInfo {
-  readonly activePanelId: string | null;
-}
-
-/**
  * 某个插槽上注册着的一项（id、顺序、文案）；label 允许是函数，因为文案要跟语言走。
  */
-export interface PanelEntry {
+export type PanelEntry = {
   readonly id: string;
   readonly order: number;
-  readonly label: string | (() => string);
-}
+  readonly label: SlotLabel;
+};
 
 /**
- * 选择器 hook 的形状（dsh 那套 useSyncExternalStore）：外壳拿它从快照里取一小块并在变更时重取。
+ * 外壳渲染 dsh 插槽用的那把口；键与 owner 由官方插槽表定，选项对到官方 RenderOpts。
  */
-export type SnapshotSelectorHook<T> = <R>(selector: (state: T) => R) => R;
+export type RenderSlot = PropsRenderSlots<
+  | 'sidebar.brand.mark'
+  | 'sidebar.brand.name'
+  | 'sidebar.toggle.badge'
+  | 'sidebar.panellist'
+  | 'sidebar.panellist.actions'
+  | 'sidebar.settings'
+  | 'sidebar.footer.action'
+  | 'sidebar.workspaces.session.row.action'
+  | 'sidebar.session.row.leading'
+  | 'sidebar.session.row.hover'
+>['renderSlot'];
 
 /**
- * 渲染 dsh 某个插槽的函数；key 定插槽，fallback 是空槽兜底，only 用来只渲染其中一个注册项。
+ * 往 dsh 插槽注册一项要给的参数（官方 register 的第一个位置）。
  */
-export type RenderSlot = (
-  key: string,
-  owner?: Record<string, unknown>,
-  options?: { fallback?: ReactNode; hookContext?: unknown; only?: string },
-) => ReactNode;
+export type SlotRegisterOptions = Parameters<SlotRegistry['register']>[0];
 
 /**
- * 文案函数：给键（可带参数）回一句当前语言的文本；缺键时由 dsh 决定回什么，调用点不兜。
+ * 起一个新会话时能带的选项；外壳只带 agent 预设这一项。
  */
-export type Translate = (key: string, params?: Record<string, unknown>) => string;
-
-/**
- * 往 dsh 插槽注册一项要给的参数；priority 与 order 小者靠前，inject 声明这一项要用到的作用域。
- */
-export interface SlotRegisterOptions {
-  name: string;
-  priority?: number;
-  key?: string;
-  id?: string;
-  order?: number;
-  locale?: string;
-  label?: string | (() => string);
-  children?: Record<string, unknown>;
-  inject?: (scope?: unknown) => Record<string, unknown>;
-}
-
-/**
- * dsh 的插槽服务：注册一项、注入作用域、订阅变更，以及按名取已注册项。
- */
-export interface DshSlots {
-  inject(name: string, callback: () => void | (() => void) | Iterable<() => void>): () => void;
-  register(options: SlotRegisterOptions, component: unknown): () => void;
-  entriesOfSlot(name: string): Array<{ options: SlotRegisterOptions }>;
-  subscribe(name: string, callback: () => void): () => void;
-  specDynamic?(name: string): unknown;
-  onMutate?(callback: (name: string) => void): () => void;
-}
-
-/**
- * dsh 的语言服务：按命名空间注册字典，再取回那个命名空间的文案函数；
- * `resolveText` 按当前语言取一份字面量（字符串原样返回，映射按语言回退链取）。
- */
-export interface DshLocale {
-  register(namespace: string, dictionaries: Record<string, Record<string, string>>): () => void;
-  bind(namespace: string): Translate;
-  resolveText?(text: string | Readonly<Record<string, string | undefined>>): string;
-}
-
-/**
- * dsh 的布局服务：选面板、开关左栏、开合右栏；右栏宽度经可选的 panels 写。
- */
-export interface DshLayout {
-  selectPanel(panelId: string | null): void;
-  toggleSidebar(): void;
-  openRightbar(track: boolean, fullscreen: boolean): void;
-  closeRightbar(): void;
-  readonly panels?: DshLayoutPanels;
-}
-
-/**
- * layout 上那个可选的右栏宽度写口；dsh 没给这一位时右栏宽度就只是内存态。
- */
-export interface DshLayoutPanels {
-  setRightbar?(px: number): void;
-}
-
-/**
- * 快捷键目录的口子；外壳只把它透出去，形状与内容随 dsh。
- */
-export interface DshShortcutCatalog {
-  readonly catalog: unknown;
-}
-
-/**
- * 起一个新会话时能带的选项；目前只有 agent 预设这一项。
- */
-export interface DshSessionStartOptions {
-  readonly agentPreset?: string;
-}
-
-/**
- * dsh 的工作区与会话动作：开工作区、开会话、起会话、挑目录。
- */
-export interface DshUiWorkspace {
-  openWorkspace(workspaceId: string): Promise<unknown>;
-  openSession(sessionId: string): void;
-  startSession(workspaceId: string, options?: DshSessionStartOptions): void;
-  pickDirectory(): Promise<string | null>;
-}
+export type DshSessionStartOptions = Pick<
+  import('@deepseek-ai/dsh-client-ui-workspace/client').StartSessionOptions,
+  'agentPreset'
+>;
 
 /**
  * 工作区写口回的那点事实（新 id 或新标题）；字段都可能缺，缺了按「没写回」算。
  */
-export interface DshWorkspaceWritten {
-  readonly workspaceId?: string;
-  readonly title?: string;
-}
+export type DshWorkspaceWritten = Pick<OfficialWorkspaceView, 'workspaceId' | 'title'>;
 
 /**
- * dsh 的工作区服务：list 是可订阅快照，create / rename / delete 是写口；三个写口失败都抛错。
+ * dsh 远端会话写口（`remote.session`）：建会话，以及把宿主上的路径交给桌面打开。
  */
-export interface DshWorkspaces {
-  readonly list: DshObservable<WorkspaceSnapshot>;
-  create(request: { path: string }): Promise<DshWorkspaceWritten | undefined>;
-  rename(workspaceId: string, title: string): Promise<DshWorkspaceWritten>;
-  delete(workspaceId: string): Promise<void>;
-}
+export type DshSessionsRemote = Pick<DshClientRemoteSession, 'create' | 'openWorkspacePath'>;
+
+type DshClientRemoteSession = import('@deepseek-ai/dsh-api-gateway/client').ClientRemote['session'];
 
 /**
- * 往输入框插一条引用时要给的载荷：来源、引用文本、显示文案与剪贴板文本。
+ * remote.agentPresets 写口：给还没开跑的会话挑模式。
  */
-export interface DshReferenceInsert {
-  readonly source: string;
-  readonly ref: string;
-  readonly label: string;
-  readonly appearance?: 'session' | 'file' | 'folder';
-  readonly clipboardText: string;
-}
-
-/**
- * 输入框里一段 token 的区间；draftRev 用来确认还是同一版草稿，插入引用时用它定位。
- */
-export interface DshTokenSpan {
-  readonly start: number;
-  readonly end: number;
-  readonly draftRev: number;
-}
-
-/**
- * 某一个会话的输入框句柄；外壳借它插引用与弹提示，state 用来核对草稿版本。
- */
-export interface DshSessionInput {
-  caretSpan?: () => { start: number; end: number };
-  readonly state: { getSnapshot(): { draftRev: number } | undefined };
-  insertReference(ref: DshReferenceInsert, span: DshTokenSpan): boolean;
-  notify(level: 'info' | 'error', text: string): void;
-}
-
-/**
- * 注册 @ 触发源的口子：候选由外壳现取，选中后的动作也归外壳，dsh 只负责触发。
- */
-export interface DshInputTriggers {
-  registerSource(source: {
-    readonly trigger: '@';
-    readonly name: string;
-    readonly order?: number;
-    candidates: () => Promise<readonly unknown[]>;
-    onPick: () => undefined;
-    lexicon?: (session: unknown) => readonly string[] | undefined;
-    subscribeLexicon?: (session: unknown, listener: () => void) => () => void;
-    readonly codec?: {
-      clipboardText(ref: string): string;
-      serialize(ref: string, signal?: AbortSignal): Promise<string>;
-    };
-  }): () => void;
-}
-
-/**
- * dsh 的对话服务；外壳只用它按会话取输入框句柄。
- */
-export interface DshConversationService {
-  readonly input: { for(actx: unknown): DshSessionInput };
-}
-
-/**
- * 浏览器侧的会话服务：快照加按 id 取作用域；create 是可选写口，不是每个 dsh 版本都有。
- */
-export interface DshSessionsService {
-  readonly list: {
-    getSnapshot(): SessionsSnapshot;
-    subscribe?(listener: () => void): () => void;
-  };
-  scope(sessionId: string): unknown | undefined;
-  create?(request: {
-    readonly workspaceId?: string;
-    readonly sessionId?: string;
-    readonly cwd?: string;
-    readonly agentPreset?: string;
-  }): Promise<unknown>;
-}
-
-/**
- * dsh 侧最小的可订阅值：取当前快照加订阅变更，外壳用它接进 React。
- */
-export interface DshObservable<T> {
-  getSnapshot(): T;
-  subscribe(listener: () => void): () => void;
-}
-
-/**
- * dsh 共享上下文菜单捕获的一个目标：kind 定族，value 是那一族认得的值；会话族只认 sessionId。
- */
-export interface DshContextMenuTarget {
-  readonly kind: string;
-  readonly value: { readonly sessionId?: string };
-}
-
-/**
- * 共享上下文菜单的开合位置：视口 CSS 像素，原点在左上。
- */
-export interface DshMenuPoint {
-  readonly x: number;
-  readonly y: number;
-}
-
-/**
- * dsh 的共享上下文菜单服务：active 是在场目标（关着时 null），open 与 close 开合那一个弹层。
- * 会话行的「更多」走它 —— 菜单项由 dsh 按目标族现算，外壳只给目标与位置。
- * notify 是在覆盖层说一句结果（工作台用它报"打开位置"没成）。
- */
-export interface DshContextMenus {
-  readonly active: DshObservable<DshContextMenuTarget | null>;
-  open(
-    target: {
-      readonly kind: 'session';
-      readonly value: { readonly sessionId: string; readonly displayTitle: string };
-    },
-    point: DshMenuPoint,
-  ): void;
-  close(): void;
-  notify(text: string, success: boolean): void;
-}
-
-/**
- * 手势铺在元素上的那几位：dsh 给回来的 onContextMenu / onKeyDown / tabIndex。
- */
-export type DshContextMenuTriggerProps = Pick<
-  HTMLAttributes<HTMLElement>,
-  'onContextMenu' | 'onKeyDown' | 'tabIndex'
+export type DshAgentPresetsRemote = Pick<
+  import('@deepseek-ai/dsh-api-gateway/client').ClientRemote['agentPresets'],
+  'select'
 >;
 
 /**
- * 右键与键盘唤出共享菜单的绑定：绑到一个显式对象上，回一份要铺在元素上的处理与焦点位。
+ * 某一个会话的输入框句柄；外壳借它插引用与弹提示，caretSpan 是外壳要的额外一位。
  */
-export interface DshContextMenuBindings {
-  getTriggerProps(
-    target: DshContextMenuTarget | undefined,
-    handlers?: DshContextMenuTriggerProps,
-  ): DshContextMenuTriggerProps;
-}
-
-/**
- * dsh 的全局标准道具 useContextMenu：每个槽位作用域都有，外壳拿它给会话行这类对象绑右键。
- */
-export type DshUseContextMenu = () => DshContextMenuBindings;
-
-/**
- * dsh 的右栏服务：mounted 是在场与否的可订阅值，展开与开资源另走方法。
- */
-export interface DshSidebarRight {
-  readonly mounted: DshObservable<string | undefined>;
-  isExpanded(): boolean;
-  toggleExpanded(): void;
-  openResource(address: string, options?: unknown): void;
-  openTab(kind: string, options?: unknown): void;
-}
-
-/**
- * dsh 远端调用的返回：`ok` 为真才有 `value`，失败原因留给宿主日志；外壳只看 `ok`。
- */
-export interface DshRemoteOutcome<T> {
-  readonly ok: boolean;
-  readonly value?: T;
-}
-
-/**
- * dsh 的会话写口（`remote.session`）：建会话，以及把宿主上的路径交给桌面打开。
- * `openWorkspacePath` 传 `action: 'reveal'` 是"在文件管理器里显示"（macOS 是 Finder）。
- */
-export interface DshSessionsRemote {
-  create(request: {
-    readonly workspaceId?: string;
-    readonly cwd?: string;
-    readonly agentPreset?: string;
-  }): Promise<DshRemoteOutcome<{ readonly sessionId: string }>>;
-  openWorkspacePath(
-    request: { readonly path: string; readonly action?: 'reveal' },
-    signal?: AbortSignal,
-  ): Promise<DshRemoteOutcome<{ readonly opened: true }>>;
-}
-
-/**
- * remote.agentPresets 写口：给还没开跑的会话挑模式（同一件事就是模式选择器点一下）；
- * 会话发出第一条消息后 dsh 会拒（模式已锁）。
- */
-export interface DshAgentPresetsRemote {
-  select(sessionId: string, presetId: string): Promise<unknown>;
-}
-
-/**
- * dsh 客户端的远端写口集合；会话与模式两家。
- */
-export interface DshClientRemote {
-  readonly session: DshSessionsRemote;
-  readonly agentPresets?: DshAgentPresetsRemote;
-}
-
-/**
- * 客户端插件拿到的上下文：所有服务从它取，effect 注册的清理随插件卸载跑。
- */
-export interface DshClientContext {
-  get<T = unknown>(name: string): T | undefined;
-  provide(name: string, value: unknown): void;
-  effect(effect: () => void | (() => void), label?: string): () => void;
-  readonly slots: DshSlots;
-  readonly locale: DshLocale;
-  readonly layout: DshLayout;
-  readonly uiWorkspace: DshUiWorkspace;
-  readonly workspaces: DshWorkspaces;
-  readonly shortcuts: DshShortcutCatalog;
-  readonly remote: DshClientRemote;
-}
+export type DshSessionInput = OfficialSessionInput & {
+  caretSpan?: () => { readonly start: number; readonly end: number };
+};

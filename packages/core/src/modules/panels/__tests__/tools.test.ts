@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { DshToolDefinition, UnitManifest } from '@dsh-workbench/shared';
+import type { DshToolDefinition, DshToolRunContext, UnitManifest } from '@dsh-workbench/shared';
 import { createValueHandoff, type ValueHandoff } from '@dsh-workbench/shared/host';
 import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 import { panelsHandoffEntry } from '../model/handoff';
@@ -37,7 +37,7 @@ afterEach(() => {
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
-const EXEC = { agent: { session: { header: { cwd: '/w/a' } } } };
+const EXEC = { agent: { session: { header: { cwd: '/w/a' } } } } as unknown as DshToolRunContext;
 const A = '/w/a';
 
 function harness(values?: ValueHandoff) {

@@ -5,6 +5,7 @@ import type {
   DshMenuPoint,
   DshUseContextMenu,
   RenderSlot,
+  SessionId,
   SessionStatusSnapshot,
   SessionsSnapshot,
   SnapshotSelectorHook,
@@ -89,7 +90,7 @@ function SessionLeading({
   if (node.blank) return null;
   const primary = statuses[0];
   if (primary === undefined || primary.state === 'idle') {
-    return <>{renderSlot('sidebar.session.row.leading', { sessionId: node.id })}</>;
+    return <>{renderSlot('sidebar.session.row.leading', { sessionId: node.id as SessionId })}</>;
   }
   return (
     <>
@@ -120,7 +121,7 @@ function SessionHoverContent({
       {node.blank ? null : (
         <div className="wb-sessionHoverTime">{relativeTimeAgo(node.updatedAt, t)}</div>
       )}
-      {renderSlot('sidebar.session.row.hover', { sessionId: node.id })}
+      {renderSlot('sidebar.session.row.hover', { sessionId: node.id as SessionId })}
       {statuses.map((status) => (
         <div className="wb-sessionHoverStatus" key={status.label}>
           <StateDot state={status.state} />
@@ -160,8 +161,8 @@ function SessionRow({
   const marquee = useTitleMarquee(titleRef);
   const trailing = statuses[0]?.trailingLabel;
 
-  const owner = { sessionId: node.id, displayTitle: node.title };
-  const menuTarget = { kind: 'session', value: owner };
+  const owner = { sessionId: node.id as SessionId, displayTitle: node.title };
+  const menuTarget = { kind: 'session', value: owner } as const;
 
   return (
     <HoverCard

@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
-import type { DshAgentPresetRegistry, DshHostContext, DshLoader } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared';
 import { diyPresetFrom, now, standardPresetConfigOf } from '@dsh-workbench/shared/host';
 
 const RETRY_MS = 250;
@@ -46,9 +46,9 @@ export function registerDiyPreset(ctx: DshHostContext): void {
 
   function attempt(): void {
     if (stopped || gaveUp) return;
-    const registry = ctx.get<DshAgentPresetRegistry>('agentPresets');
-    const loader = ctx.get<DshLoader>('loader');
-    if (registry?.register === undefined || loader === undefined) {
+    const registry = ctx.get('agentPresets');
+    const loader = ctx.get('loader');
+    if (typeof registry?.register !== 'function' || loader === undefined) {
       schedule();
       return;
     }

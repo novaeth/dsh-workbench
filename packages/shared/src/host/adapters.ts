@@ -44,7 +44,7 @@ export type CoreAdapterSet = Pick<
 export type WorkbenchAdapters = AdapterSet;
 
 export function adaptersOf(ctx: DshHostContext): AdapterSet {
-  const adapters = ctx.get<AdapterSet>(WORKBENCH_ADAPTERS, false);
+  const adapters = ctx.get(WORKBENCH_ADAPTERS, false) as AdapterSet | undefined;
   if (adapters !== undefined) return adapters;
   throw new Error('workbenchAdapters 未提供');
 }

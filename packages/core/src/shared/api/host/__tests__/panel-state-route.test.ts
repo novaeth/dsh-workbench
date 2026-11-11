@@ -5,38 +5,38 @@ import { createPanelStateStore, registerPanelState } from '@dsh-workbench/shared
 
 function fakeRes() {
   const state = { statusCode: 0, headers: {} as Record<string, string>, body: '' };
-  const res: DshResponse = {
+  const res = {
     get statusCode() {
       return state.statusCode;
     },
     set statusCode(value: number) {
       state.statusCode = value;
     },
-    setHeader: (name, value) => {
+    setHeader: (name: string, value: string) => {
       state.headers[name] = value;
     },
-    end: (body) => {
+    end: (body?: string) => {
       state.body = body ?? '';
     },
-  };
+  } as unknown as DshResponse;
   return { res, state };
 }
 
 function fakeCtx() {
   const registered: DshWebRoute[] = [];
-  const ctx: DshHostContext = {
-    get: <T,>() => ({ dir: '/Users/x/.dsh/profiles/workbench' }) as T,
+  const ctx = {
+    get: () => ({ dir: '/Users/x/.dsh/profiles/workbench' }),
     provide: () => () => {},
     effect: () => () => {},
     inject: () => () => {},
     logger: { info: () => {}, warn: () => {} },
     webServer: {
-      register: (route) => {
+      register: (route: DshWebRoute) => {
         registered.push(route);
         return () => {};
       },
     },
-  };
+  } as unknown as DshHostContext;
   return { ctx, registered };
 }
 

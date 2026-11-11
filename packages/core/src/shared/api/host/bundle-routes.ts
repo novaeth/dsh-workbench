@@ -219,7 +219,7 @@ export function moduleVersionsHandler(
     const dir = supply.profileDirOf(ctx);
     const found = supply.profileModules(dir);
     const refusals = new Map<string, readonly string[]>(
-      (ctx.get<{ refusals(): readonly UnitRefusal[] }>(UNITS_SERVICE)?.refusals() ?? [])
+      ((ctx.get(UNITS_SERVICE) as { refusals(): readonly UnitRefusal[] } | undefined)?.refusals() ?? [])
         .filter((one) => one.unit !== '')
         .map((one) => [one.unit, one.reasons]),
     );

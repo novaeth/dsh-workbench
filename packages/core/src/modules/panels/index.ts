@@ -81,7 +81,7 @@ export const panelsHost: UnitOwnedFace = {
     const toolbox = createToolbox({
       manifests,
       visibleUnits,
-      mcp: () => ctx.get<McpToolsPort>(MCP_TOOLS_SERVICE)?.servers() ?? [],
+      mcp: () => (ctx.get(MCP_TOOLS_SERVICE) as McpToolsPort | undefined)?.servers() ?? [],
     });
     const toolboxPort: ToolboxPort = {
       packsOf: (session, preset) => toolbox.packsOf(session, preset),
@@ -109,7 +109,7 @@ export const panelsHost: UnitOwnedFace = {
 
     const profileDir = supply.profileDirOf(ctx);
     const includePrerelease = (): boolean =>
-      ctx.get<WorkbenchSettingsStore>(WORKBENCH_SETTINGS_SERVICE)?.read().includePrerelease === true;
+      (ctx.get(WORKBENCH_SETTINGS_SERVICE) as WorkbenchSettingsStore | undefined)?.read().includePrerelease === true;
     const seam = seamOf(ctx);
     const moduleManifests = (): readonly UnitManifest[] => {
       const list = manifests();

@@ -1,38 +1,51 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { DshSidebarRight } from '@dsh-workbench/shared';
 import { createDshBorrow } from '../dsh-borrow';
 
-function fakeOfficial() {
-  return {
+type FakeOfficial = DshSidebarRight & {
+  expanded: boolean;
+  toggles: number;
+  refuses: boolean;
+  opened: unknown[][];
+  mounted: {
+    value: string | undefined;
+    listeners: Set<() => void>;
+  };
+};
+
+function fakeOfficial(): FakeOfficial {
+  const shape = {
     expanded: false,
     toggles: 0,
     refuses: false,
     isExpanded() {
-      return this.expanded;
+      return shape.expanded;
     },
     toggleExpanded() {
-      if (this.refuses) throw new Error('sidebarRight: no session surface is mounted');
-      this.toggles += 1;
-      this.expanded = !this.expanded;
+      if (shape.refuses) throw new Error('sidebarRight: no session surface is mounted');
+      shape.toggles += 1;
+      shape.expanded = !shape.expanded;
     },
     openResource(address: string) {
-      this.opened.push(['resource', address]);
+      shape.opened.push(['resource', address]);
     },
     openTab(kind: string) {
-      this.opened.push(['tab', kind]);
+      shape.opened.push(['tab', kind]);
     },
     opened: [] as unknown[][],
     mounted: {
       value: 's1' as string | undefined,
       listeners: new Set<() => void>(),
       getSnapshot() {
-        return this.value;
+        return shape.mounted.value;
       },
       subscribe(listener: () => void) {
-        this.listeners.add(listener);
-        return () => this.listeners.delete(listener);
+        shape.mounted.listeners.add(listener);
+        return () => shape.mounted.listeners.delete(listener);
       },
     },
   };
+  return shape as unknown as FakeOfficial;
 }
 
 function seatHost(onScreen: boolean) {

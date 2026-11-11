@@ -37,7 +37,7 @@ export function createDiyPresetProbe(
   const deadlineMs = options.deadlineMs ?? 15_000;
   const everyMs = options.everyMs ?? 400;
   return async () => {
-    const registry = ctx.get<DshAgentPresetRegistry>('agentPresets');
+    const registry = ctx.get('agentPresets') as DshAgentPresetRegistry | undefined;
     if (registry === undefined || typeof registry.list !== 'function') return undefined;
     const until = now() + deadlineMs;
     for (;;) {

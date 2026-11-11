@@ -9,16 +9,17 @@ interface SkillRegistry {
 const registered = new WeakSet<object>();
 
 function skillsOf(agent: unknown): SkillRegistry | undefined {
-  const handle = typeof agent === 'object' && agent !== null ? (agent as { ctx?: unknown }) : undefined;
-  const ctx = typeof handle?.ctx === 'object' && handle.ctx !== null ? handle.ctx : undefined;
-  const service = (ctx as { get?<T>(name: string): T | undefined } | undefined)?.get?.<SkillRegistry>('skills');
+  const handle = typeof agent === 'object' && agent !== null ? (agent as { ctx?: DshHostContext }) : undefined;
+  const service = handle?.ctx?.get('skills') as SkillRegistry | undefined;
   return service?.register === undefined ? undefined : service;
 }
 
 export function registerCapabilitySkill(ctx: DshHostContext, agent: unknown): void {
   if (typeof agent !== 'object' || agent === null || registered.has(agent)) return;
   try {
-    const brief = ctx.get<ToolboxPort>(TOOLBOX_SERVICE)?.capabilityBrief?.(toolScopeContextOf(agent)?.workspace ?? null);
+    const brief = (ctx.get(TOOLBOX_SERVICE) as ToolboxPort | undefined)?.capabilityBrief?.(
+      toolScopeContextOf(agent)?.workspace ?? null,
+    );
     if (brief === undefined) return;
     const skills = skillsOf(agent);
     if (skills === undefined) {

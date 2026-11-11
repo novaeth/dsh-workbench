@@ -48,7 +48,7 @@ import {
 } from './diy-record';
 
 export function registerRecordTools(ctx: DshHostContext, store: RecordStore): readonly (() => void)[] {
-  const tools = ctx.get<DshToolRegistry>('tools');
+  const tools = ctx.get('tools') as DshToolRegistry | undefined;
   if (tools === undefined) {
     ctx.logger?.info?.('[dsh-workbench] 没有 tools 服务，跳过录制交接工具注册');
     return [];

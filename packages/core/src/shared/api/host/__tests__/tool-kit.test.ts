@@ -3,7 +3,7 @@ import type { DshToolRunContext } from '@dsh-workbench/shared';
 import { jsonText, sessionWorkspace, TEXT_OUTPUT, textOutput, textRender } from '@dsh-workbench/shared/host';
 
 const at = (cwd: string | undefined): DshToolRunContext =>
-  cwd === undefined ? {} : ({ agent: { session: { header: { cwd } } } } as DshToolRunContext);
+  (cwd === undefined ? {} : { agent: { session: { header: { cwd } } } }) as DshToolRunContext;
 
 describe('sessionWorkspace', () => {
   it('取 dsh 给的事实；没有 / 空白都是 null（绝不编一个路径）', () => {

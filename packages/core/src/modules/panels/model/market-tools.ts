@@ -183,7 +183,7 @@ export function registerMarketTools(
   sources?: MarketSourceGateway,
   categories?: () => Promise<DiscoverPayload>,
 ): Array<() => void> {
-  const tools = ctx.get<DshToolRegistry>('tools');
+  const tools = ctx.get('tools') as DshToolRegistry | undefined;
   if (tools === undefined) {
     ctx.logger?.info?.('[dsh-workbench] 没有 tools 服务，跳过模块市场工具注册');
     return [];

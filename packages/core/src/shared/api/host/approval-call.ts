@@ -3,12 +3,12 @@ import { sessionIdOf, sessionWorkspace, type ApprovalCall } from '@dsh-workbench
 
 export interface ApprovalExec {
   readonly arguments?: unknown;
-  readonly agent?: DshToolRunContext['agent'];
+  readonly agent?: { readonly session?: unknown } | undefined;
 }
 
 export function approvalCallOf(exec: ApprovalExec | undefined, name: string | undefined): ApprovalCall {
-  const workspace = sessionWorkspace(exec) ?? undefined;
-  const session = sessionIdOf(exec) ?? undefined;
+  const workspace = sessionWorkspace(exec as DshToolRunContext | undefined) ?? undefined;
+  const session = sessionIdOf(exec as DshToolRunContext | undefined) ?? undefined;
   return {
     ...(name === undefined ? {} : { name }),
     arguments: exec?.arguments,

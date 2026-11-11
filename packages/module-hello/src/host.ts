@@ -14,7 +14,7 @@ export const name = PLUGIN_ID;
 export const inject = ['workbenchUnits'];
 
 export function apply(ctx: HostContext): void {
-  const units = ctx.get<UnitRegistry>('workbenchUnits');
+  const units = (ctx.get as (name: string) => UnitRegistry | undefined)('workbenchUnits');
   if (units === undefined) {
     ctx.logger?.warn?.(`[${UNIT_ID}] 外壳没有提供 workbenchUnits 服务：这个模块装不进来`);
     return;

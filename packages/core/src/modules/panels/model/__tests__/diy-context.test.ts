@@ -99,7 +99,7 @@ describe('工坊工具那一层共用的小东西', () => {
   it('输出的渲染口：拿 text 那一段，缺了才退回 JSON', () => {
     const rendered = OUTPUT.render({}, { text: '一句话', unit: 'demo' });
     expect(rendered).toEqual([{ type: 'text', text: '一句话' }]);
-    expect(String(OUTPUT.render({}, { unit: 'demo' })[0]?.['text'])).toContain('"unit"');
+    expect(String((OUTPUT.render({}, { unit: 'demo' })[0] as { text?: unknown } | undefined)?.text)).toContain('"unit"');
   });
 });
 
@@ -125,7 +125,7 @@ describe('DIY 落在这条会话登记的工作区上（不猜、不回落到工
   }
 
   it('★★ 取会话登记的根 —— cwd 在子目录里也落到工作区根', async () => {
-    const ctx = ctxOf({ id: 'w1', path: root, title: 'modules-repo' });
+    const ctx = ctxOf({ id: 'w1', path: root, title: 'modules-repo' } as unknown as DshWorkspaceRecord);
 
     expect(await workspaceOf(ctx, execAt(`${root}/packages/module-inventory`))).toEqual({ root, title: 'modules-repo' });
   });

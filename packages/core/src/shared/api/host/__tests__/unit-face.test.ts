@@ -407,7 +407,7 @@ describe('★ 注册期抛了：已经注册进去的那些要撤回（不留"�
     const unit = hostOf(manifest('a', { inject: [] }), (deps) => ({
       routes: { a: () => ({ ok: true }) },
       registerTools: () => {
-        const tools = deps.ctx.get<DshToolRegistry>('tools');
+        const tools = (deps.ctx.get('tools') as DshToolRegistry | undefined);
         tools?.register({ name: 'a_one' } as DshToolDefinition);
         tools?.register({ name: 'a_two' } as DshToolDefinition);
         throw new Error('OUTPUT is not defined');
@@ -432,7 +432,7 @@ describe('★ 注册期抛了：已经注册进去的那些要撤回（不留"�
     const unit = hostOf(manifest('a', { inject: [] }), (deps) => ({
       routes: { a: () => ({ ok: true }) },
       registerTools: () => {
-        const tools = deps.ctx.get<DshToolRegistry>('tools');
+        const tools = (deps.ctx.get('tools') as DshToolRegistry | undefined);
         tools?.register({ name: 'a_one' } as DshToolDefinition);
         return [];
       },

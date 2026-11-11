@@ -1,4 +1,4 @@
-import type { DshHostContext, DshWorkspaceRegistry, UnitManifest } from '@dsh-workbench/shared';
+import type { DshHostContext, DshPromptAssembly, UnitManifest } from '@dsh-workbench/shared';
 import { provideWorkbenchSeam } from '@/shared/api/host/workbench-seam';
 import { holdHostLock } from '@/shared/api/host/host-lock';
 import { bootChores } from '@/shared/api/host/boot-chores';
@@ -115,12 +115,9 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   const renderers = new Map<string, ContextRenderer>();
   const packageRoot = adapters.runtime.packageRoot(import.meta.url);
   const reconcileProfile = async (): Promise<boolean> => {
-    const hmr = ctx.get<{
-      runExclusive?: <T>(operation: () => Promise<T>) => Promise<T>;
-      reconcileProfile?: () => Promise<unknown>;
-    }>('hmr');
+    const hmr = ctx.get('hmr');
     if (hmr?.runExclusive === undefined || hmr.reconcileProfile === undefined) return false;
-    await hmr.runExclusive(() => hmr.reconcileProfile!());
+    await hmr.runExclusive(() => hmr.reconcileProfile());
     return true;
   };
   const sidebarReconcile = async (): Promise<void> => {
@@ -149,7 +146,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   });
   assembleHostUnits(units);
   ctx.inject(['workspaceRegistry'], (scoped) => {
-    const registry = scoped.get<DshWorkspaceRegistry>('workspaceRegistry');
+    const registry = scoped.get('workspaceRegistry');
     const workshop = workshopPathOf(scoped);
     if (registry === undefined || workshop === null) return;
     void registry.create(workshop, WORKSHOP_TITLE).catch((error: unknown) => {
@@ -166,7 +163,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     needs: needsOf(manifest),
   });
   const releasedOf = (unit: string): boolean =>
-    ctx.get<ReleasedLookup>(PANELS_SERVICE)?.isReleased(unit) ?? false;
+    (ctx.get(PANELS_SERVICE) as ReleasedLookup | undefined)?.isReleased(unit) ?? false;
   const probeOne = async (unit: string, force = false): Promise<UnitCapability | undefined> => {
     if (seam === undefined) return undefined;
     const manifest = manifestOf(unit);
@@ -196,7 +193,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
       ? undefined
       : adapters.plugins.createUnits({
           registry: units,
-          rows: () => ctx.get<PluginRowsSource>(PANELS_SERVICE)?.listPlugins(null) ?? [],
+          rows: () => (ctx.get(PANELS_SERVICE) as PluginRowsSource | undefined)?.listPlugins(null) ?? [],
           declared: (plugin) => adapters.probe.declaredPluginCommands(profileDir).get(plugin) ?? new Set<string>(),
           toolNames: () => new Set(unitsOfTool().keys()),
           logger: ctx.logger,
@@ -283,7 +280,8 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
         longTasks: {
           scope: process.env['DSH_HOME'] ?? '',
           bump: (names) => facts.bump([...names, LONG_TASKS_ROUTE]),
-          notify: (change) => notifyLongTaskChange(ctx.get<AgentsLookup>('agents'), host.unit, change),
+          notify: (change) =>
+            notifyLongTaskChange(ctx.get('agents') as AgentsLookup | undefined, host.unit, change),
         },
         longTaskRuns,
       });
@@ -412,9 +410,9 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
       return () => pluginTools.dispose();
     }, `${PLUGIN_ID}: 已装且上板的插件各合成一个单元（工具面照旧由面板那道闸收窄）`);
     ctx.effect(() => {
-      const panels = ctx.get<PluginRowsSource & { subscribe?(listener: () => void): () => void }>(
-        PANELS_SERVICE,
-      );
+      const panels = ctx.get(PANELS_SERVICE) as
+        | (PluginRowsSource & { subscribe?(listener: () => void): () => void })
+        | undefined;
       const off = panels?.subscribe?.(() => pluginTools.touch());
       return () => off?.();
     }, `${PLUGIN_ID}: 面板配置一动就重探插件命令面（装上 / 收起都在那一条链上）`);
@@ -454,6 +452,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
       toolScope.apply(payload?.agent);
       registerCapabilitySkill(ctx, payload?.agent);
       pluginTools?.touch();
+      return undefined;
     });
     return () => off?.();
   }, `${PLUGIN_ID}: agent 的工具面按工作区收窄（创建时）`);
@@ -461,7 +460,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     const off = ctx.on?.('system-prompt/assemble', async (_assembly, context, next) => {
       pluginTools?.touch();
       const resolved = await next();
-      return toolScope.narrow(resolved, context?.agent ?? context?.scope);
+      return toolScope.narrow(resolved as DshPromptAssembly, context?.agent ?? context?.scope);
     });
     return () => off?.();
   }, `${PLUGIN_ID}: 打包提示时就把收起的工具从清单里去掉（不靠限制的生效时机）`);

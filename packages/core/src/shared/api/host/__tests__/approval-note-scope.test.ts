@@ -129,7 +129,7 @@ function rig(): Rig {
     manifest: MANIFEST,
     mount(deps: UnitMountDeps): UnitMountResult {
       scoped = deps.ctx;
-      const tools = deps.ctx.get<DshToolRegistry>('tools');
+      const tools = (deps.ctx.get('tools') as DshToolRegistry | undefined);
       return {
         routes: {},
         registerTools: () =>
@@ -228,8 +228,8 @@ describe('★ 附注的射程：装配期一格都不加，只有插件命令族
   it('★ 只包发给套件的那一份：dsh 那个注册表对象本身没被动过', () => {
     const h = rig();
 
-    expect(h.ctx.get<DshToolRegistry>('tools')?.register).toBe(h.rawRegister);
-    expect(h.scoped()?.get<DshToolRegistry>('tools')).not.toBe(h.registry);
+    expect((h.ctx.get('tools') as DshToolRegistry | undefined)?.register).toBe(h.rawRegister);
+    expect((h.scoped()?.get('tools') as DshToolRegistry | undefined)).not.toBe(h.registry);
   });
 
   it('套件看到的 ctx 其余成员照旧（别的服务、logger、provide 都还在）', () => {

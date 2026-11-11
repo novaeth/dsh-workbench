@@ -1,14 +1,9 @@
-import type {
-  DshAgentPresetsRemote,
-  DshClientContext,
-  DshSessionsService,
-  WorkspaceView,
-} from '@dsh-workbench/shared';
+import type { DshClientContext, SessionId, SessionsSnapshot, WorkspaceView } from '@dsh-workbench/shared';
 import { isWorkshopPath, workshopPresetUpgrade } from '@/shared/api/diy';
 import { currentSessionId, workspaceOfSession } from '@/modules/sessions';
 
 export function installWorkshopPreset(ctx: DshClientContext): () => void {
-  const sessions = ctx.get<DshSessionsService>('sessions');
+  const sessions = ctx.sessions;
   if (sessions === undefined) return () => {};
 
   const asked = new Set<string>();
@@ -16,7 +11,7 @@ export function installWorkshopPreset(ctx: DshClientContext): () => void {
     ctx.workspaces.list.getSnapshot().items.find((item) => isWorkshopPath(item.path));
 
   const upgrade = (): void => {
-    const snapshot = sessions.list.getSnapshot();
+    const snapshot = sessions.list.getSnapshot() as SessionsSnapshot;
     const sessionId = currentSessionId(snapshot, false);
     if (sessionId === undefined || asked.has(sessionId)) return;
     const workshop = workshopOf();
@@ -28,10 +23,10 @@ export function installWorkshopPreset(ctx: DshClientContext): () => void {
       preset: snapshot.byId[sessionId]?.projectionValues?.agentPreset,
     });
     if (preset === undefined) return;
-    const presets = ctx.get<DshAgentPresetsRemote>('remote.agentPresets');
+    const presets = ctx.remote.agentPresets;
     if (presets === undefined) return;
     asked.add(sessionId);
-    void presets.select(sessionId, preset).catch((error: unknown) => {
+    void presets.select(sessionId as SessionId, preset).catch((error: unknown) => {
       console.warn(`[dsh-workbench] 工坊那条会话没切到 DIY 模式 —— ${String(error)}`);
     });
   };

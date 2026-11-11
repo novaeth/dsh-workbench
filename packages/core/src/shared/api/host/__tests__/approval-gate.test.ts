@@ -17,7 +17,7 @@ function contextOf(approval: 'ask' | 'never', sandbox: string): DshHostContext {
   return {
     get: (name: string) =>
       name === 'approval'
-        ? { effectivePolicy: () => approval }
+        ? { overrideOf: () => approval }
         : name === 'sandboxPolicy'
           ? { resolve: () => ({ mode: sandbox }) }
           : undefined,

@@ -3,10 +3,9 @@ import { SESSION_PROJECTIONS_SERVICE, type ToolScopeContext } from '@dsh-workben
 import type { DshPromptAssembly } from '@dsh-workbench/shared';
 import { createToolScope, type ToolScope, type ToolScopeAgent } from './tool-scope';
 
-export interface SessionProjections {
-  stateOf(session: unknown, key: string): unknown;
-  onChanged(listener: (session: unknown, key: string, value: unknown, seq: unknown) => void): () => void;
-}
+export type SessionProjections = DshHostContext['sessionProjections'];
+
+type ProjectionSession = Parameters<SessionProjections['stateOf']>[0];
 
 export interface PresetScopeOptions {
   readonly ctx: DshHostContext;
@@ -20,10 +19,10 @@ export interface PresetScopeOptions {
 const PRESET_KEY = 'agentPreset';
 
 export function presetOfSession(ctx: DshHostContext, handle: ToolScopeAgent): string | null {
-  const projections = ctx.get<SessionProjections>(SESSION_PROJECTIONS_SERVICE);
+  const projections = ctx.get(SESSION_PROJECTIONS_SERVICE);
   if (projections === undefined || handle.session === undefined) return null;
   try {
-    const preset = projections.stateOf(handle.session, PRESET_KEY);
+    const preset = projections.stateOf(handle.session as ProjectionSession, PRESET_KEY);
     return typeof preset === 'string' && preset !== '' ? preset : null;
   } catch (error: unknown) {
     ctx.logger?.warn?.(`[dsh-workbench] 读 preset 投影失败，退回会话创建事实：${String(error)}`);
@@ -33,7 +32,7 @@ export function presetOfSession(ctx: DshHostContext, handle: ToolScopeAgent): st
 
 function watchPreset(ctx: DshHostContext, listener: () => void): void {
   ctx.inject([SESSION_PROJECTIONS_SERVICE], (scoped) => {
-    const projections = scoped.get<SessionProjections>(SESSION_PROJECTIONS_SERVICE);
+    const projections = scoped.get(SESSION_PROJECTIONS_SERVICE);
     if (projections === undefined) return;
     scoped.effect(() => {
       const off = projections.onChanged((_session, key) => {

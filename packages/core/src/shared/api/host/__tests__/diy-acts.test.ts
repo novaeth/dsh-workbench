@@ -15,14 +15,14 @@ function fakeServer(): FakeServer {
   const live = new Set<string>();
   const routes = new Map<string, DshWebRoute>();
   const bumps: string[][] = [];
-  const ctx: DshHostContext = {
-    get: <T,>() => undefined as T,
+  const ctx = {
+    get: () => undefined,
     provide: () => () => {},
     effect: () => () => {},
     inject: () => () => {},
     logger: { info: () => {}, warn: () => {} },
     webServer: {
-      register: (route) => {
+      register: (route: DshWebRoute) => {
         const key = `${route.kind}:${route.path}`;
         if (live.has(key)) throw new Error(`webserver: duplicate ${route.kind} route "${route.path}"`);
         live.add(key);
@@ -33,7 +33,7 @@ function fakeServer(): FakeServer {
         };
       },
     },
-  };
+  } as unknown as DshHostContext;
   return { ctx, live, routes, bumps };
 }
 
@@ -112,10 +112,10 @@ describe('两族的用户键：各自一条写前缀，接上与拆掉都成对'
       },
     };
     const server = fakeServer();
-    const ctx: DshHostContext = {
+    const ctx = {
       ...server.ctx,
-      get: <T,>(name: string) => (name === 'workbenchDiyRecord' ? (withRelease as unknown as T) : undefined),
-    };
+      get: (name: string) => (name === 'workbenchDiyRecord' ? withRelease : undefined),
+    } as unknown as DshHostContext;
 
     const dispose = registerDiyActs(ctx, { bump: (names) => server.bumps.push([...names]) });
     const answer = await drive(server, '/workbench/api/diy-record', { intent: 'stop' });
@@ -151,10 +151,10 @@ describe('两族的用户键：各自一条写前缀，接上与拆掉都成对'
     });
     const sent: unknown[] = [];
     const server = fakeServer();
-    const ctx: DshHostContext = {
+    const ctx = {
       ...server.ctx,
-      get: <T,>(name: string) => {
-        if (name === 'workbenchDiyDebug') return debug as unknown as T;
+      get: (name: string) => {
+        if (name === 'workbenchDiyDebug') return debug;
         if (name === 'agents') {
           return {
             get: () => ({
@@ -162,11 +162,11 @@ describe('两族的用户键：各自一条写前缀，接上与拆掉都成对'
               inject: (message: unknown) => sent.push(message),
               followup: (message: unknown) => sent.push(message),
             }),
-          } as unknown as T;
+          };
         }
         return undefined;
       },
-    };
+    } as unknown as DshHostContext;
 
     const dispose = registerDiyActs(ctx, { bump: () => {} });
     const answer = await drive(server, '/workbench/api/diy-debug', { intent: 'pause' });
@@ -184,10 +184,10 @@ describe('两族的用户键：各自一条写前缀，接上与拆掉都成对'
     const store = createRecordStore();
     store.begin(pact);
     const server = fakeServer();
-    const ctx: DshHostContext = {
+    const ctx = {
       ...server.ctx,
-      get: <T,>(name: string) => (name === 'workbenchDiyRecord' ? (store as unknown as T) : undefined),
-    };
+      get: (name: string) => (name === 'workbenchDiyRecord' ? store : undefined),
+    } as unknown as DshHostContext;
 
     const dispose = registerDiyActs(ctx, { bump: () => {} });
     const answer = await drive(server, '/workbench/api/diy-record', { intent: 'cancel' });

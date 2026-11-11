@@ -1,13 +1,8 @@
-import type { DshHostContext } from '../api/dsh.js';
+import type { DshHostContext, DshPluginManager } from '../api/dsh.js';
 import type { RouteHandler } from './http.js';
 import type { DshPluginRow, DshPluginsSnapshot } from '../contract/protocol/dsh-plugins.js';
 
 import { PLUGIN_MANAGER_SERVICE } from './bundle-manager.js';
-
-interface DshPluginManagerFace {
-  listBundles?(): Promise<unknown>;
-  listPlugins?(): Promise<unknown>;
-}
 
 function asRecord(value: unknown): Readonly<Record<string, unknown>> | undefined {
   return typeof value === 'object' && value !== null ? (value as Readonly<Record<string, unknown>>) : undefined;
@@ -46,7 +41,7 @@ function rowsOf(value: unknown): readonly DshPluginRow[] {
 }
 
 export async function readDshPlugins(ctx: DshHostContext): Promise<DshPluginsSnapshot> {
-  const manager = ctx.get<DshPluginManagerFace>(PLUGIN_MANAGER_SERVICE);
+  const manager = ctx.get(PLUGIN_MANAGER_SERVICE) as DshPluginManager | undefined;
   if (manager === undefined) return { available: false, bundles: [], plugins: [] };
   const [bundles, plugins] = await Promise.all([
     manager.listBundles === undefined ? undefined : manager.listBundles(),

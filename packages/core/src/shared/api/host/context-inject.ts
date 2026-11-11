@@ -51,12 +51,17 @@ export function installContextInject(options: {
     if (decision.kind === 'reject') return decision;
     try {
       const message = await options.injector.inject(
-        (decision.messages ?? []) as readonly ScannableMessage[],
+        decision.messages as readonly ScannableMessage[],
         payload?.agent,
       );
       const queued = options.held(String((payload?.agent as { id?: unknown } | undefined)?.id ?? ''));
       const extra = [...queued, ...(message === undefined ? [] : [message])];
-      return extra.length === 0 ? decision : { ...decision, messages: [...(decision.messages ?? []), ...extra] };
+      return extra.length === 0
+        ? decision
+        : {
+            ...decision,
+            messages: [...decision.messages, ...(extra as typeof decision.messages)],
+          };
     } catch (error) {
       options.ctx.logger?.warn?.(`[dsh-workbench] 对话引用注入失败：${String(error)}`);
       return decision;

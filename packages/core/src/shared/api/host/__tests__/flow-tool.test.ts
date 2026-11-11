@@ -33,9 +33,9 @@ function harness() {
     nextId: () => `run-${(n += 1)}`,
   });
   const tool = flowTool({ name: 'flow_check', description: '检查', flow, actions, runs });
-  const exec: DshToolRunContext = {
+  const exec = {
     agent: { session: { id: 's1', header: { cwd: '/w/a' } } },
-  };
+  } as unknown as DshToolRunContext;
   return { tool, exec };
 }
 
@@ -57,7 +57,7 @@ describe('flowTool', () => {
 
   it('没有工作区就拒，不硬跑', async () => {
     const { tool } = harness();
-    const out = (await tool.execute({ input: {} }, {})) as ToolResult;
+    const out = (await tool.execute({ input: {} }, {} as DshToolRunContext)) as ToolResult;
     expect(out).toEqual({ ok: false, text: '这个会话没有工作区。' });
   });
 

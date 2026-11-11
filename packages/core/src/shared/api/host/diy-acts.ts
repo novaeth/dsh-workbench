@@ -12,16 +12,16 @@ export function registerDiyActs(
   const offDebug = registerDiyDebugAct(
     ctx,
     debugActResource({
-      store: () => ctx.get<DebugStore>(DIY_DEBUG_SERVICE),
-      agents: () => ctx.get<AgentsLookup>('agents'),
+      store: () => ctx.get(DIY_DEBUG_SERVICE) as DebugStore | undefined,
+      agents: () => ctx.get('agents') as AgentsLookup | undefined,
     }),
     log,
   );
   const offRecord = registerDiyRecordAct(
     ctx,
     recordActResource({
-      store: () => ctx.get<RecordStore>(DIY_RECORD_SERVICE),
-      agents: () => ctx.get<AgentsLookup>('agents'),
+      store: () => ctx.get(DIY_RECORD_SERVICE) as RecordStore | undefined,
+      agents: () => ctx.get('agents') as AgentsLookup | undefined,
     }),
     log,
   );

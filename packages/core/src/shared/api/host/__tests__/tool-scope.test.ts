@@ -120,7 +120,9 @@ describe('tool-scope', () => {
           .filter((name) => name.startsWith('mcp__') && context.session === 's-1'),
     });
 
-    const assembly = { tools: [{ name: 'mcp__chrome__a' }, { name: 'workbench_panels_list' }] };
+    const assembly = {
+      tools: [{ name: 'mcp__chrome__a' }, { name: 'workbench_panels_list' }],
+    } as unknown as DshPromptAssembly;
     const narrowed = scope.narrow(assembly, agentWith(registry, '/w/a', undefined, 's-1'));
 
     expect(narrowed.tools).toEqual([{ name: 'workbench_panels_list' }]);
@@ -303,7 +305,7 @@ describe('tool-scope', () => {
 describe('tool-scope · 装配期过滤', () => {
   const assembly = {
     tools: [{ name: 'workbench_panels' }, { name: 'workbench_demo_issues' }],
-  };
+  } as unknown as DshPromptAssembly;
 
   it('★ 限制被撤掉之后（插件热换），下一次装配仍然按配置过滤', () => {
     const { registry } = fakeTools();
@@ -365,8 +367,8 @@ describe('tool-scope · 装配期过滤', () => {
 
   it('载荷没有 tools（或根本不是对象）时原样返回，不抛', () => {
     const scope = createToolScope({ deniedTools: () => ['workbench_panels'] });
-    const empty = {};
-    const missing = { tools: undefined };
+    const empty = {} as unknown as DshPromptAssembly;
+    const missing = { tools: undefined } as unknown as DshPromptAssembly;
 
     expect(scope.narrow(empty, {})).toBe(empty);
     expect(scope.narrow(missing, {})).toBe(missing);

@@ -232,7 +232,7 @@ function faceOf(
     unit: unit.id,
     manifest,
     mount(deps): UnitMountResult {
-      const tools = deps.ctx.get<DshToolRegistry>('tools');
+      const tools = deps.ctx.get('tools') as DshToolRegistry | undefined;
       if (tools === undefined) {
         deps.logger?.info?.(`[dsh-workbench] 没有 tools 服务，跳过 ${unit.plugin} 的命令工具注册`);
         return { routes: {}, registerTools: () => [] };

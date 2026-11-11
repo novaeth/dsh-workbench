@@ -110,7 +110,7 @@ function closedText(toolbox: Toolbox, session: string, preset: string | null, cl
 }
 
 export function registerToolboxTools(ctx: DshHostContext, toolbox: Toolbox): Array<() => void> {
-  const tools = ctx.get<DshToolRegistry>('tools');
+  const tools = ctx.get('tools') as DshToolRegistry | undefined;
   if (tools === undefined) {
     ctx.logger?.info?.('[dsh-workbench] 没有 tools 服务，跳过工具包控制工具注册');
     return [];

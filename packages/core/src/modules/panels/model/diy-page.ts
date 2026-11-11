@@ -150,7 +150,7 @@ export async function pageAt(
   }
   const seam = seamOf(ctx);
   if (seam === undefined) throw new Error('这台机器上没有 shell 服务，动不了浏览器');
-  const store = ctx.get<DebugStore>(DIY_DEBUG_SERVICE);
+  const store = ctx.get(DIY_DEBUG_SERVICE) as DebugStore | undefined;
   const held = store?.live(Date.now()) ?? null;
   const sessionId = sessionIdOf(exec);
   if (options.requirePact !== false) {

@@ -344,7 +344,7 @@ describe('workbench_long_tasks_stop：四面围栏与四类回执', () => {
 
     expect(list?.render(undefined, { text: '一句话', runs: [] })).toEqual([{ type: 'text', text: '一句话' }]);
     expect(stop?.render(undefined, { text: '停了', stopped: true })).toEqual([{ type: 'text', text: '停了' }]);
-    expect(String(list?.render(undefined, { runs: [] })[0]?.['text'])).toContain('"runs"');
-    expect(String(stop?.render(undefined, null)[0]?.['text'])).toBe('null');
+    expect(String((list?.render(undefined, { runs: [] })[0] as { text?: unknown } | undefined)?.text)).toContain('"runs"');
+    expect(String((stop?.render(undefined, null)[0] as { text?: unknown } | undefined)?.text)).toBe('null');
   });
 });

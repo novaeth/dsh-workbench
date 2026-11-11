@@ -1,311 +1,123 @@
-/**
- * 宿主侧的日志口；info 与 warn 都可能没有，调用前要判存在。
- */
-export interface DshLogger {
-  info?(message: string): void;
-  warn?(message: string): void;
-}
+import type { IncomingMessage, ServerResponse } from 'node:http';
 
-/**
- * 宿主 HTTP 路由拿到的请求：方法与 URL，请求体是异步可迭代的字节流。
- */
-export interface DshRequest {
-  readonly method?: string;
-  readonly url?: string;
-  [Symbol.asyncIterator]?(): AsyncIterator<Uint8Array>;
-}
+import type {} from '@deepseek-ai/cordis-plugin-loader';
+import type {} from '@deepseek-ai/dsh-agent';
+import type {} from '@deepseek-ai/dsh-agent-preset-registry';
+import type {} from '@deepseek-ai/dsh-app-boot';
+import type {} from '@deepseek-ai/dsh-hmr';
+import type {} from '@deepseek-ai/dsh-host-webserver';
+import type {} from '@deepseek-ai/dsh-plugin-manager';
+import type {} from '@deepseek-ai/dsh-sandbox-policy';
+import type {} from '@deepseek-ai/dsh-session';
+import type {} from '@deepseek-ai/dsh-session-projection';
+import type {} from '@deepseek-ai/dsh-shell';
+import type {} from '@deepseek-ai/dsh-system-prompt';
+import type {} from '@deepseek-ai/dsh-tools';
+import type {} from '@deepseek-ai/dsh-user-approval';
+import type {} from '@deepseek-ai/dsh-workspace';
 
-/**
- * 宿主 HTTP 路由要写的响应：statusCode、setHeader 与 end 必备，流式那几个方法可选。
- */
-export interface DshResponse {
-  statusCode: number;
-  setHeader(name: string, value: string): void;
-  end(body?: string): void;
-  writeHead?(status: number, headers: Record<string, string>): void;
-  write?(chunk: string): void;
-  on?(event: 'close', listener: () => void): void;
-}
+import type { Context } from '@deepseek-ai/cordis';
+import type { Entry, Loader } from '@deepseek-ai/cordis-plugin-loader';
+import type { AgentPresetRegistry, PresetDefinition } from '@deepseek-ai/dsh-agent-preset-registry';
+import type { ProfileContext } from '@deepseek-ai/dsh-app-boot';
+import type { IndexInjection, WebRoute } from '@deepseek-ai/dsh-host-webserver';
+import type { dshHomePath } from '@deepseek-ai/dsh-home-paths';
+import type { PluginInstallRequestId, PluginManager } from '@deepseek-ai/dsh-plugin-manager';
+import type { ApprovalService } from '@deepseek-ai/dsh-user-approval';
+import type { SandboxPolicyService } from '@deepseek-ai/dsh-sandbox-policy';
+import type { ShellExecution, ShellExecutor } from '@deepseek-ai/dsh-shell';
+import type { AssembleContext, PromptAssembly } from '@deepseek-ai/dsh-system-prompt';
+import type { ToolDefinition, ToolOutputDefinition, ToolRunContext, ToolsService } from '@deepseek-ai/dsh-tools';
+import type { Workspace, WorkspaceRegistry } from '@deepseek-ai/dsh-workspace';
+import type { ToolSchema } from '@deepseek-ai/dsh-llm';
 
-/**
- * 一条挂到 dsh web 服务器上的路由；kind 说明 path 是前缀还是全等匹配，handler 自己写响应。
- */
-export interface DshWebRoute {
-  readonly kind: 'prefix' | 'exact';
-  readonly path: string;
-  readonly handler: (req: DshRequest, res: DshResponse) => void | Promise<void>;
-}
+/** 宿主 logger（`ctx.logger`）的原型，`info` 与 `warn` 调用前仍要判存在。 */
+export type { LoggerService as DshLogger } from '@deepseek-ai/cordis';
 
-/**
- * 宿主插件能看到的 profile 现场；dir 缺省表示 dsh 没给这个信息。
- */
-export interface DshProfileContext {
-  readonly dir?: string;
-}
+/** 宿主 HTTP 路由拿到的请求（node:http 的 `IncomingMessage`）。 */
+export type DshRequest = IncomingMessage;
 
-/**
- * 工具声明的静态半（名字加其余关键字）；外壳只按 name 认工具。
- */
-export interface DshToolSchema {
-  readonly name: string;
-  readonly [key: string]: unknown;
-}
+/** 宿主 HTTP 路由要写的响应（node:http 的 `ServerResponse`）。 */
+export type DshResponse = ServerResponse;
 
-/**
- * 系统提示词装配到一半的那份；tools 是可改的工具表，其余字段随 dsh。
- */
-export interface DshPromptAssembly {
-  readonly tools?: readonly DshToolSchema[] | undefined;
-  readonly [key: string]: unknown;
-}
+/** 一条挂到 dsh web 服务器上的路由（`ctx.webServer.register` 收的形状）。 */
+export type { WebRoute as DshWebRoute };
 
-/**
- * 装配提示词时给判定方的现场（哪个 agent、哪个作用域）；两者都可能缺。
- */
-export interface DshAssemblyContext {
-  readonly agent?: unknown;
-  readonly scope?: unknown;
-  readonly [key: string]: unknown;
-}
+/** 宿主插件能看到的 profile 现场（服务名 `profileContext`）。 */
+export type { ProfileContext as DshProfileContext };
 
-/**
- * 一条 index 注入行：脚本 / 样式 / 预载 / 原始片段，放在 head 或 body。
- */
-export type DshIndexRow =
-  | { readonly kind: 'script'; readonly placement: 'head' | 'body'; readonly text: string }
-  | { readonly kind: 'style'; readonly placement: 'head' | 'body'; readonly text: string }
-  | { readonly kind: 'script-src'; readonly placement: 'head' | 'body'; readonly src: string }
-  | { readonly kind: 'preload'; readonly placement: 'head'; readonly src: string }
-  | { readonly kind: 'raw'; readonly placement: 'head' | 'body'; readonly html: string };
+/** 工具声明的静态半（名字、描述与参数表）。 */
+export type { ToolSchema as DshToolSchema };
 
-/**
- * 宿主插件上下文：on 订阅 dsh 的钩子（提示词装配、工具执行前后、agent 生命周期），webServer 挂路由。
- */
-export interface DshHostContext {
-  on?: {
-    (
-      event: 'system-prompt/assemble',
-      listener: (
-        assembly: DshPromptAssembly,
-        context: DshAssemblyContext,
-        next: () => Promise<DshPromptAssembly>,
-      ) => Promise<DshPromptAssembly>,
-    ): (() => void) | undefined;
-  } & {
-    (
-      event: 'tools/pre-execute',
-      listener: (
-        exec: {
-          name?: string;
-          arguments?: unknown;
-          readonly agent?: DshToolRunContext['agent'];
-        },
-        next: () => Promise<
-          | { kind: 'allow' }
-          | { kind: 'deny'; reason: string }
-          | { kind: 'cancel' }
-          | { kind: 'ask'; reason?: string; displayReason?: Record<string, string> }
-        >,
-      ) => Promise<
-        | { kind: 'allow' }
-        | { kind: 'deny'; reason: string }
-        | { kind: 'cancel' }
-        | { kind: 'ask'; reason?: string; displayReason?: Record<string, string> }
-      >,
-    ): (() => void) | undefined;
-  } & {
-    (
-      event: 'tools/post-execute',
-      listener: (
-        exec: { name?: string; arguments?: unknown },
-        result: unknown,
-        next: () => unknown,
-      ) => unknown,
-    ): (() => void) | undefined;
-  } & {
-    (
-      event: 'agent/created',
-      listener: (payload: { agent?: unknown }) => void,
-    ): (() => void) | undefined;
-  } & {
-    (
-      event: 'agent/pre-step',
-      listener: (
-        payload: { agent?: unknown; messages?: readonly unknown[] },
-        next: () => Promise<{ kind: string; messages?: readonly unknown[] }>,
-      ) => Promise<{ kind: string; messages?: readonly unknown[] }>,
-    ): (() => void) | undefined;
-  } & {
-    (
-      event: 'webserver/index-inject',
-      listener: (table: DshIndexRow[]) => void,
-    ): (() => void) | undefined;
-  };
-  get<T = unknown>(name: string, strict?: boolean): T | undefined;
-  provide(name: string, value: unknown): () => void;
-  effect(effect: () => void | (() => void), label?: string): () => void;
-  inject(names: readonly string[], effect: (scoped: DshHostContext) => void): () => void;
-  readonly logger?: DshLogger;
-  readonly webServer: { register(route: DshWebRoute): () => void };
-}
+/** 系统提示词装配到一半的那份（`system-prompt/assemble` 的第一个参数）。 */
+export type { PromptAssembly as DshPromptAssembly };
 
-/**
- * 一次 shell 执行的结果口：result() 给退出码、超时与中断标志，以及截断过的 stdout / stderr。
- */
-export interface DshShellExecution {
-  result(): Promise<{
-    exitCode: number | null;
-    timedOut: boolean;
-    aborted: boolean;
-    stdout: { text: string; truncated: boolean };
-    stderr: { text: string; truncated: boolean };
-    sandbox?: { mode?: string; denied?: boolean; enforcement?: string; runnerFailed?: boolean } | undefined;
-  }>;
-}
+/** 装配提示词时给判定方的现场（`system-prompt/assemble` 的第二个参数）。 */
+export type { AssembleContext as DshAssemblyContext };
 
-/**
- * dsh 的 shell 服务：先 resolve 出执行规格，再把它原样喂给 execute。
- * `env` 是**叠加**在宿主环境上的变量覆盖（不是替换），所以设一个变量不必自己拼 shell 语法。
- */
-export interface DshShell {
-  resolve(request: {
-    command: string;
-    workdir?: string;
-    timeoutMs?: number;
-    onExpiry?: 'kill' | 'none';
-    stdoutMaxBytes?: number;
-    signal?: AbortSignal;
-    env?: Readonly<Record<string, string>>;
-    sandboxPolicy?: {
-      mode: 'read-only' | 'workspace-write' | 'danger-full-access';
-      workspaceRoot: string;
-    };
-  }): unknown;
-  execute(spec: unknown): Promise<DshShellExecution>;
-}
+/** 一条 index 注入行（`webserver/index-inject` 表里的项）。 */
+export type { IndexInjection as DshIndexRow };
 
-/** 一条工作区记录：id、磁盘路径与显示名（登记处按路径认领 / 新建时认的就是它）。 */
-export interface DshWorkspaceRecord {
-  readonly id: string;
-  readonly path: string;
-  readonly title: string;
-}
+/** dsh 的插件管理服务（服务名 `pluginManager`）：装卸组合包、列版本、读来源。 */
+export type { PluginManager as DshPluginManager };
 
-/**
- * 宿主侧的工作区登记处：按 id 查、按路径认领、按路径新建。
- */
-export interface DshWorkspaceRegistry {
-  get(id: string): { id: string; path?: string; title?: string } | undefined;
-  resolveByPath(path: string): Promise<DshWorkspaceRecord | undefined>;
-  create(path: string, title?: string): Promise<{ id?: string; path?: string; title?: string } | undefined>;
-}
+/** 一次插件安装请求的 id（dsh 的 branded 串）。 */
+export type { PluginInstallRequestId as DshPluginInstallRequestId };
 
-/**
- * agent preset 名单里的一行：id 与显示名；`broken` 非空表示这一行**挂不起来**（dsh 自己给的原因原文）。
- */
-export interface DshAgentPresetRow {
-  readonly id: string;
-  readonly name?: string;
-  readonly broken?: string;
-}
+/** 宿主插件上下文：cordis 的 `Context`，dsh 各服务与事件靠官方包的模块声明补进来。 */
+export type { Context as DshHostContext };
 
-/**
- * 一条 agent preset 的定义：`@deepseek-ai/dsh-agent-preset` 收的那份配置（`plugins` 是整表插件行）。
- * DIY 的那一份在启动时从这一轮 dsh 的 `standard` 现场派生，不再有生成物。
- */
-export interface DshAgentPresetDefinition {
-  readonly id: string;
-  readonly name?: string;
-  readonly description?: string;
-  readonly order?: number;
-  readonly plugins: readonly unknown[];
-}
+/** 一次 shell 执行的句柄：`result()` 给退出码、超时与中断标志和截断过的输出。 */
+export type { ShellExecution as DshShellExecution };
 
-/** 注册成功后拿到的注销函数；插件卸载时调它，别把 preset 留在名册里。 */
-export type DshAgentPresetUnregister = () => Promise<void>;
+/** dsh 的 shell 服务（服务名 `shell`）；外壳只用到 `resolve` 与 `execute`。 */
+export type DshShell = Pick<ShellExecutor, 'resolve' | 'execute'>;
 
-/**
- * 宿主侧的 agent preset 名册（服务名 `agentPresets`）：`list()` 给启动体检读，`register()` 给 DIY 注册现场派生出来的那份。
- */
-export interface DshAgentPresetRegistry {
-  list(): Promise<readonly DshAgentPresetRow[]>;
-  register?(definition: DshAgentPresetDefinition): Promise<DshAgentPresetUnregister>;
-}
+/** 一条工作区记录（dsh 工作区登记处的实体，按路径认领 / 新建时认的就是它）。 */
+export type { Workspace as DshWorkspaceRecord };
 
-/**
- * dsh loader 里的一行：只读插件名与它收到的原始 config。
- * DIY 从 `standard` 那一行的 config 现场派生；loader 的 `entries()` 递归给出这一轮组合里的所有行。
- */
-export interface DshLoaderEntry {
-  readonly id?: string;
-  readonly disabled?: boolean;
-  readonly options?: {
-    readonly name?: string;
-    readonly config?: unknown;
-  };
-}
+/** 宿主侧的工作区登记处（服务名 `workspaceRegistry`）。 */
+export type DshWorkspaceRegistry = Pick<WorkspaceRegistry, 'create' | 'resolveByPath'>;
+
+/** agent preset 名册里的一行：id、显示名与 dsh 自己给的挂起原因。 */
+export type { AgentPreset as DshAgentPresetRow } from '@deepseek-ai/dsh-agent-preset-registry';
+
+/** 一条 agent preset 的定义（`@deepseek-ai/dsh-agent-preset` 收的那份配置）。 */
+export type { PresetDefinition as DshAgentPresetDefinition };
+
+/** `register()` 成功后拿到的注销函数。 */
+export type DshAgentPresetUnregister = Awaited<ReturnType<AgentPresetRegistry['register']>>;
+
+/** 宿主侧的 agent preset 名册（服务名 `agentPresets`）。 */
+export type DshAgentPresetRegistry = Pick<AgentPresetRegistry, 'list' | 'register'>;
+
+/** dsh loader 里的一行：插件名与它收到的原始 config。 */
+export type DshLoaderEntry = Entry;
 
 /** loader 服务（服务名 `loader`）：插件行都在它的 `entries()` 里。 */
-export interface DshLoader {
-  entries(): Iterable<DshLoaderEntry>;
-}
+export type DshLoader = Pick<Loader, 'entries'>;
 
-/**
- * 把相对路径拼成 dsh home 下的绝对路径（服务名 dshHomePath）；外壳存自己的状态用它，不自己拼 home。
- */
-export type DshHomePath = (relative: string) => string;
+/** 把相对路径拼成 dsh home 下绝对路径的那个函数（`@deepseek-ai/dsh-home-paths` 的 `dshHomePath`）。 */
+export type DshHomePath = typeof dshHomePath;
 
-/**
- * 要注册进 dsh 的一把工具：名字、描述、参数表、输出渲染与执行体。
- */
-export interface DshToolDefinition {
-  name: string;
-  description: string;
-  parameters: Record<string, unknown>;
-  output: {
-    schema: Record<string, unknown>;
-    render(args: unknown, value: unknown): Array<Record<string, unknown>>;
-  };
-  execute(args: unknown, exec: DshToolRunContext): Promise<unknown>;
-}
+/** 要注册进 dsh 的一把工具：模型面 schema、输出声明与执行体。 */
+export type { ToolDefinition as DshToolDefinition };
 
-/**
- * 工具执行时给的那点现场（会话 id 与 cwd）；层级都可能缺，缺了就当不知道。
- */
-export interface DshToolRunContext {
-  readonly agent?:
-    | {
-        readonly session?:
-          | {
-              readonly id?: string;
-              readonly header?: { readonly cwd?: string } | undefined;
-            }
-          | undefined;
-      }
-    | undefined;
-}
+/** 一把工具的输出声明：校验用的 JSON Schema 加投影函数。 */
+export type { ToolOutputDefinition as DshToolOutputDefinition };
 
-/**
- * dsh 的审批服务（服务名 `approval`）：读一个会话此刻生效的审批策略。
- * 方法可选：服务缺席或老版本没有它时，调用方必须当成「不知道」而不是「已关闭」。
- */
-export interface DshApprovalService {
-  effectivePolicy?(session: unknown): 'ask' | 'never' | undefined;
-}
+/** 工具执行时给的那点现场（会话与 cwd 都在 `exec.agent.session` 上）。 */
+export type { ToolRunContext as DshToolRunContext };
 
-/**
- * dsh 的沙箱策略服务（服务名 `sandboxPolicy`）：按会话解析这次调用生效的文件边界。
- * 方法可选：服务缺席或老版本没有它时，调用方必须当成「不知道」而不是「完全放行」。
- */
-export interface DshSandboxPolicy {
-  resolve?(request?: { readonly session?: unknown; readonly mode?: string }):
-    | { readonly mode?: string; readonly workspaceRoot?: string }
-    | undefined;
-}
+/** dsh 的审批服务（服务名 `approval`）：读一个会话此刻生效的审批策略。 */
+export type DshApprovalService = Pick<ApprovalService, 'config' | 'overrideOf'>;
 
-/**
- * dsh 的工具表；register 回的清理函数负责在插件卸载时摘掉这条工具。
- */
-export interface DshToolRegistry {
-  register(definition: DshToolDefinition): () => void;
-}
+/** 一次调用生效的文件边界（dsh 的沙箱执行策略）。 */
+export type { SandboxExecutionPolicy as DshShellSandboxPolicy } from '@deepseek-ai/dsh-sandbox';
+
+/** dsh 的沙箱策略服务（服务名 `sandboxPolicy`）：按会话解析这次调用生效的文件边界。 */
+export type DshSandboxPolicy = Pick<SandboxPolicyService, 'resolve'>;
+
+/** dsh 的工具表（服务名 `tools`）；`register` 回的清理函数在卸载时摘掉这条工具。 */
+export type DshToolRegistry = Pick<ToolsService, 'register'>;
+

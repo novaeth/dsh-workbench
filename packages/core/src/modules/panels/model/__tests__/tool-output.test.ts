@@ -13,7 +13,7 @@ describe('工具返回的文本外壳', () => {
   it('要额外字段就叠在 text 后面，不改 text 的口径', () => {
     const output = textOutput({ sources: { type: 'array', items: { type: 'object' } } });
 
-    expect(Object.keys(output.schema.properties)).toEqual(['text', 'sources']);
+    expect(Object.keys(output.schema.properties ?? {})).toEqual(['text', 'sources']);
   });
 
   it('render 拿 text 直接上屏；没有 text 就退成 JSON', () => {

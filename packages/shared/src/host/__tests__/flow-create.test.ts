@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { DshToolRunContext } from '../../api/dsh.js';
 import { createFlowHost } from '../flow/kit.js';
 import { createFlowTask } from '../flow/create.js';
 import { createLongTaskHost } from '../long-task.js';
@@ -42,7 +43,7 @@ describe('createFlowTask：流程 + 长任务 + 工具的三件套', () => {
     expect(task.tool.name).toBe('run');
     const output = await task.tool.execute(
       { runId: started.id },
-      { agent: { session: { header: { cwd: '/w/a' } } } },
+      { agent: { session: { header: { cwd: '/w/a' } } } } as unknown as DshToolRunContext,
     );
     expect(output).toMatchObject({ ok: true, runId: started.id, status: 'ok' });
     longTasks.dispose();

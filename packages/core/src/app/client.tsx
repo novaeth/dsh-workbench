@@ -1,6 +1,14 @@
 import '@/shared/dev-surface/install';
 import { createElement } from 'react';
-import type { DshClientContext, PanelStep } from '@dsh-workbench/shared';
+import type {
+  ChildrenDecl,
+  DshClientContext,
+  DshLayoutPanels,
+  MainPanelId,
+  PanelStep,
+  SessionTarget,
+  WorkspaceId,
+} from '@dsh-workbench/shared';
 import { LOCALE_NS, UNITS_SERVICE } from '@dsh-workbench/shared';
 import { readPanels, sessionMenuSeat, workspaceWrites } from '@/app/layouts/sidebar/sidebar-inject';
 import { MARKET_PANEL_ID, registerMarketPanel } from '@/app/layouts/market/panel';
@@ -29,7 +37,7 @@ import { installContextChips } from '@/shared/api/context-chips';
 import { installWorkbenchStyles } from '@/app/layouts/workbench-styles';
 import { setRuntimeTextResolver } from '@/shared/hooks/locale-text';
 import { currentSessionId, workspaceOfSession } from '@/modules/sessions';
-import type { DshSessionsService, DshSidebarRight } from '@dsh-workbench/shared';
+import type { DshSidebarRight } from '@dsh-workbench/shared';
 import { createRightbarStore, type RightbarColumn, type RightbarState } from '@/app/layouts/rightbar/store';
 import {
   releaseRightbarWidthMemory,
@@ -169,7 +177,7 @@ function mount(ctx: DshClientContext): void {
 
   installContextChips(ctx, {
     currentSessionId: () => {
-      const sessions = ctx.get<DshSessionsService>('sessions');
+      const sessions = ctx.sessions;
       const snapshot = sessions?.list.getSnapshot();
       return snapshot === undefined ? undefined : currentSessionId(snapshot, false);
     },
@@ -200,8 +208,8 @@ function mount(ctx: DshClientContext): void {
 
   const startSessionIn = (workspaceId: string): void => {
     const options = diyStartOptions(workspaceId, workshopWorkspace()?.workspaceId);
-    if (options === undefined) ctx.uiWorkspace.startSession(workspaceId);
-    else ctx.uiWorkspace.startSession(workspaceId, options);
+    if (options === undefined) ctx.uiWorkspace.startSession(workspaceId as WorkspaceId);
+    else ctx.uiWorkspace.startSession(workspaceId as WorkspaceId, options);
   };
 
   const buildModule = (): void => {
@@ -214,17 +222,18 @@ function mount(ctx: DshClientContext): void {
     startSessionIn(workshop.workspaceId);
   };
 
-  restoreRightbarWidth(ctx.layout.panels);
+  const layoutPanels = (ctx.layout as typeof ctx.layout & { readonly panels?: DshLayoutPanels }).panels;
+  restoreRightbarWidth(layoutPanels);
   let rightbarWidthSeeded = false;
   const seedWidthOnce = (): void => {
     if (rightbarWidthSeeded) return;
     rightbarWidthSeeded = true;
-    seedRightbarWidth(ctx.layout.panels);
+    seedRightbarWidth(layoutPanels);
   };
-  ctx.effect(() => () => releaseRightbarWidthMemory(ctx.layout.panels), 'dsh-workbench: 记住右栏宽度');
+  ctx.effect(() => () => releaseRightbarWidthMemory(layoutPanels), 'dsh-workbench: 记住右栏宽度');
 
   const rightbarActions = {
-    openMarket: () => ctx.layout.selectPanel(MARKET_PANEL_ID),
+    openMarket: () => ctx.layout.selectPanel(MARKET_PANEL_ID as MainPanelId),
     applyRightbar: ({ shown, track, fullscreen }: { shown: boolean; track: boolean; fullscreen: boolean }) => {
       if (shown) {
         seedWidthOnce();
@@ -248,7 +257,7 @@ function mount(ctx: DshClientContext): void {
   };
   const rightbarHooks = { hooks: { rightbar: observable } };
 
-  const sidebarRight = (): DshSidebarRight | undefined => ctx.get<DshSidebarRight>('sidebarRight');
+  const sidebarRight = (): DshSidebarRight | undefined => ctx.sidebarRight;
 
   let workbenchColumnArmed = false;
   let disposeWorkbenchColumn: (() => void) | undefined;
@@ -333,14 +342,14 @@ function mount(ctx: DshClientContext): void {
             },
             ...workspaceWrites(ctx),
             openWorkspace: (workspaceId: string) => {
-              void ctx.uiWorkspace.openWorkspace(workspaceId);
+              void ctx.uiWorkspace.openWorkspace(workspaceId as WorkspaceId);
             },
             createWorkspace: (path: string) => ctx.workspaces.create({ path }),
             pickDirectory: () => ctx.uiWorkspace.pickDirectory(),
-            openSession: (sessionId: string) => ctx.uiWorkspace.openSession(sessionId),
+            openSession: (sessionId: string) => ctx.uiWorkspace.openSession(sessionId as SessionTarget),
             startSession: startSessionIn,
             toggleSidebar: () => ctx.layout.toggleSidebar(),
-            selectPanel: (panelId: string | null) => ctx.layout.selectPanel(panelId),
+            selectPanel: (panelId: string | null) => ctx.layout.selectPanel(panelId as MainPanelId | null),
           }),
         },
         Sidebar,
@@ -375,14 +384,14 @@ function mount(ctx: DshClientContext): void {
   ctx.effect(() => {
     const mirror = (): void => {
       if (runtimeSidebarEdition() !== 'official') return;
-      const sessions = ctx.get<DshSessionsService>('sessions');
+      const sessions = ctx.sessions;
       if (sessions === undefined) return;
       const current = currentSessionId(sessions.list.getSnapshot(), false);
       const workspace = workspaceOfSession(ctx.workspaces.list.getSnapshot().items, current);
       if (workspace === null) return;
       if (selectedProjectId() !== workspace.workspaceId) selectProject(workspace.workspaceId);
     };
-    const sessions = ctx.get<DshSessionsService>('sessions');
+    const sessions = ctx.sessions;
     const offWorkspaces = ctx.workspaces.list.subscribe(mirror);
     const offSessions = sessions?.list.subscribe?.(mirror) ?? (() => {});
     const offEdition = subscribeSidebarEdition(mirror);
@@ -399,11 +408,12 @@ function mount(ctx: DshClientContext): void {
   registerWorkbenchSettingsSection(ctx);
   ctx.effect(() => {
     const workshop = workshopWorkspace();
-    if (workshop === undefined) return;
+    if (workshop === undefined) return () => undefined;
     const title = ctx.workspaces.list.getSnapshot().items.find((item) => item.workspaceId === workshop.workspaceId)?.title;
     if (title !== undefined && WORKSHOP_PAST_TITLES.includes(title) && title !== WORKSHOP_TITLE) {
-      void ctx.workspaces.rename(workshop.workspaceId, WORKSHOP_TITLE).catch(() => undefined);
+      void ctx.workspaces.rename(workshop.workspaceId as WorkspaceId, WORKSHOP_TITLE).catch(() => undefined);
     }
+    return () => undefined;
   }, 'dsh-workbench: 工坊那一行的旧名字换成新名字');
 
   ctx.effect(
@@ -461,7 +471,7 @@ function registerWorkbenchSettingsSection(ctx: DshClientContext): void {
   );
 }
 
-function sidebarChildren() {
+function sidebarChildren(): ChildrenDecl {
   return {
     'sidebar.brand.mark': { kind: 'single', scope: 'root' },
     'sidebar.brand.name': { kind: 'single', scope: 'root' },

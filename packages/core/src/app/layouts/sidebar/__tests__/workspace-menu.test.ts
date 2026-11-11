@@ -177,13 +177,13 @@ describe('删除工作区：点菜单不删，二次确认之后才删', () => {
 describe('写口接线：删除走 dsh 的 workspaces.delete，打开位置走后端的 reveal', () => {
   it('★ 删完才算：deleteWorkspace 只认“不抛错”这一种成功', () => {
     expect(CLIENT).toContain('...workspaceWrites(ctx)');
-    expect(WRITES).toContain('await ctx.workspaces.delete(workspaceId)');
+    expect(WRITES).toContain('await ctx.workspaces.delete(workspaceId as WorkspaceId)');
   });
 
   it('★ 在文件夹里显示：单数的 remote.session + action reveal，失败走共享提示', () => {
     expect(WRITES).toContain('ctx.remote.session');
     expect(WRITES).toContain("openWorkspacePath({ path, action: 'reveal' })");
-    expect(WRITES).toContain("ctx.get<DshContextMenus>('contextMenus')");
+    expect(WRITES).toContain('ctx.contextMenus');
     expect(WRITES).toContain("notify(t('project.reveal.failed'), false)");
     expect(dictionaries.zh['project.reveal.failed']).toBe('打不开这个文件夹位置，再试一次。');
   });

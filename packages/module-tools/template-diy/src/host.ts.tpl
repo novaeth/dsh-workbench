@@ -60,7 +60,7 @@ const face: UnitModuleFace = {
         },
       },
       registerTools: () => {
-        const tools = deps.ctx.get<DshToolRegistry>('tools');
+        const tools = (deps.ctx.get as (name: string) => DshToolRegistry | undefined)('tools');
         if (tools === undefined) {
           deps.logger?.warn?.(`[${UNIT_ID}] 外壳没有提供 tools 服务：这两把工具注册不进去`);
           return [];

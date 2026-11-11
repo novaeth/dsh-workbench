@@ -345,7 +345,7 @@ export function mountUnits(
       continue;
     }
     const unit = host.manifest.id;
-    const tools = deps.ctx.get<DshToolRegistry>('tools');
+    const tools = deps.ctx.get('tools');
     const toolJournal: Array<() => void> = [];
     const mountCtx = tools === undefined ? deps.ctx : scopedMountCtx(deps.ctx, tools, toolJournal, declaredNotes);
     const longTasks =

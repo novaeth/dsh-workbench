@@ -39,8 +39,8 @@ export function createFakeShell(replies: ShellReply[] | ((call: ShellCall, index
   const replyAt = (index: number): ShellReply =>
     typeof replies === 'function' ? replies(calls[index] as ShellCall, index) : (replies[index] ?? {});
 
-  const shell: DshShell = {
-    resolve(request) {
+  const shell = {
+    resolve(request: Parameters<DshShell['resolve']>[0]) {
       calls.push(request as ShellCall);
       return request;
     },
@@ -67,7 +67,7 @@ export function createFakeShell(replies: ShellReply[] | ((call: ShellCall, index
         },
       };
     },
-  };
+  } as unknown as DshShell;
 
   return {
     shell,

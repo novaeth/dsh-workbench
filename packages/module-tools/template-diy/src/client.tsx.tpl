@@ -19,7 +19,7 @@ const face: UnitClientFace = {
 export const inject = ['workbenchUnits'];
 
 export function apply(ctx: ClientContext): void {
-  const units = ctx.get<UnitClientApi>('workbenchUnits');
+  const units = (ctx.get as (name: string) => UnitClientApi | undefined)('workbenchUnits');
   if (units === undefined) {
     console.warn(`[${UNIT_ID}] 外壳没有提供 workbenchUnits 服务：这张卡片装不进来`);
     return;

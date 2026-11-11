@@ -26,7 +26,7 @@ export function createHostRoutes(input: {
 }): RouteTable {
   const { ctx, facts, runtimes, running, profile } = input;
   const includePrerelease = (): boolean =>
-    ctx.get<WorkbenchSettingsStore>(WORKBENCH_SETTINGS_SERVICE)?.read().includePrerelease === true;
+    (ctx.get(WORKBENCH_SETTINGS_SERVICE) as WorkbenchSettingsStore | undefined)?.read().includePrerelease === true;
   return {
     health: healthHandler(ctx, runtimes),
     changes: changesHandler(facts),

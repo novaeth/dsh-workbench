@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { DshLoaderEntry } from '../../api/dsh.js';
 import { DIY_PRESET_ID } from '../../contract/protocol/diy.js';
 import { DiyPresetSourceError, diyPresetFrom, standardPresetConfigOf } from '../diy-preset.js';
 
@@ -133,7 +134,7 @@ describe('standardPresetConfigOf（从 loader 的行里认 standard）', () => {
         id: 'include:preset-standard',
         options: { name: '@deepseek-ai/dsh-agent-preset', config: standard() },
       },
-    ]);
+    ] as unknown as Iterable<DshLoaderEntry>);
     expect(found).toBeDefined();
   });
 
@@ -145,7 +146,7 @@ describe('standardPresetConfigOf（从 loader 的行里认 standard）', () => {
           disabled: true,
           options: { name: '@deepseek-ai/dsh-agent-preset', config: standard() },
         },
-      ]),
+      ] as unknown as Iterable<DshLoaderEntry>),
     ).toBeUndefined();
     expect(standardPresetConfigOf([])).toBeUndefined();
   });

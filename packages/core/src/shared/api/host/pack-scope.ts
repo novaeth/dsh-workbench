@@ -14,7 +14,7 @@ interface ToolRegistryView {
 }
 
 function registeredToolNames(ctx: DshHostContext, scope?: unknown): readonly string[] {
-  const registry = ctx.get<ToolRegistryView>('tools');
+  const registry = ctx.get('tools') as unknown as ToolRegistryView | undefined;
   if (registry === undefined) return [];
   try {
     return [...(registry.view(scope).knownNames ?? [])];
@@ -29,7 +29,7 @@ export interface McpScope {
 }
 
 function openMatcher(ctx: DshHostContext, context: ToolScopeContext): (pack: string) => boolean {
-  const box = ctx.get<ToolboxPort>(TOOLBOX_SERVICE);
+  const box = ctx.get(TOOLBOX_SERVICE) as ToolboxPort | undefined;
   if (box === undefined) return () => true;
   const open = box.packsOf(context.session, context.preset);
   return (pack) => open.has(pack);

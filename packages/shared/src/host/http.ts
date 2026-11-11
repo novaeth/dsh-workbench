@@ -269,7 +269,7 @@ export function healthHandler(
   runtimes?: Readonly<Record<string, RuntimeStatus>>,
 ): RouteHandler {
   return () => {
-    const profile = ctx.get<{ dir?: string }>('profileContext');
+    const profile = ctx.get('profileContext');
     const dir = profile?.dir;
     return {
       ok: true,

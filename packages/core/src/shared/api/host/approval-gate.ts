@@ -1,4 +1,4 @@
-import type { DshHostContext, DshToolRunContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared';
 import { approvalFor, type ApprovalCall, type ToolUnit, type UnitMountResult } from '@dsh-workbench/shared/host';
 import { approvalCallOf } from './approval-call';
 import { fullPermissionOf } from './permission-mode';
@@ -6,14 +6,13 @@ import { fullPermissionOf } from './permission-mode';
 export interface ApprovalGateExec {
   readonly name?: string;
   readonly arguments?: unknown;
-  readonly agent?: DshToolRunContext['agent'];
+  readonly agent?: { readonly session?: unknown } | undefined;
 }
 
 export type ApprovalGateDecision =
   | { readonly kind: 'allow' }
-  | { readonly kind: 'deny'; readonly reason: string }
   | { readonly kind: 'cancel' }
-  | { readonly kind: 'ask'; readonly reason?: string; readonly displayReason?: Record<string, string> };
+  | Exclude<Awaited<ReturnType<typeof approvalFor>>, undefined>;
 
 export interface ApprovalGateDeps {
   readonly ctx: DshHostContext;

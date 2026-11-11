@@ -46,7 +46,7 @@ describe('会话行与 dsh 0.2.x 的官方行（ui-workspace / Rows）逐条对�
     expect(VIEW).toContain('openDelayMs={800}');
     expect(VIEW).toContain("copyLabel={t('session.copy')}");
     expect(VIEW).toContain("copiedLabel={t('hover.copied')}");
-    expect(VIEW).toContain("renderSlot('sidebar.session.row.hover', { sessionId: node.id })");
+    expect(VIEW).toContain("renderSlot('sidebar.session.row.hover', { sessionId: node.id as SessionId })");
     expect(VIEW).toContain('relativeTimeAgo(node.updatedAt, t)');
   });
 

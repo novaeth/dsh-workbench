@@ -20,7 +20,7 @@ export async function sessionWorkspaceOf(
 ): Promise<SessionWorkspace | null> {
   const start = typeof workspace === 'string' ? workspace.trim() : '';
   if (start === '') return null;
-  const registry = ctx.get<DshWorkspaceRegistry>('workspaceRegistry');
+  const registry = ctx.get('workspaceRegistry');
   if (registry === undefined) return null;
   let dir = start;
   for (;;) {

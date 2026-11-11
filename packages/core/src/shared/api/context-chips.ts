@@ -1,10 +1,4 @@
-import type {
-  DshClientContext,
-  DshConversationService,
-  DshInputTriggers,
-  DshReferenceInsert,
-  DshSessionsService,
-} from '@dsh-workbench/shared';
+import type { DshClientContext, DshReferenceInsert, DshSessionInput, SessionId } from '@dsh-workbench/shared';
 import { buildMarker, encodeRef, markerBody, type ContextRef } from '@dsh-workbench/shared';
 
 /**
@@ -39,7 +33,7 @@ const INSERT_RETRY_DELAY_MS = 80;
 export function installContextChips(ctx: DshClientContext, deps: ContextChipsDeps): void {
   runtime = { ctx, deps };
 
-  const triggers = ctx.get<DshInputTriggers>('inputTriggers');
+  const triggers = ctx.inputTriggers;
   if (triggers === undefined) return;
 
   ctx.effect(
@@ -74,16 +68,16 @@ export function addContextChip(ref: ContextRef, label: string): ChipResult {
   const sessionId = here.deps.currentSessionId();
   if (sessionId === undefined) return 'unavailable';
 
-  const sessions = here.ctx.get<DshSessionsService>('sessions');
-  const conversation = here.ctx.get<DshConversationService>('conversation');
+  const sessions = here.ctx.sessions;
+  const conversation = here.ctx.conversation;
   if (sessions === undefined || conversation === undefined) return 'unavailable';
 
-  const actx = sessions.scope(sessionId);
+  const actx = sessions.scope(sessionId as SessionId);
   if (actx === undefined) return 'unavailable';
 
   let input;
   try {
-    input = conversation.input.for(actx);
+    input = conversation.input.for(actx) as DshSessionInput;
   } catch {
     return 'unavailable';
   }

@@ -13,8 +13,23 @@ import { registerDebugTools } from './diy-debug-tools';
 import { registerLogTools } from './diy-logs';
 import { registerBrowserTools } from './diy-browser-tools';
 
+async function unitsAt(
+  ctx: DshHostContext,
+  exec: DshToolRunContext,
+): Promise<{ readonly root: string; readonly units: ReturnType<typeof unitsOf>['units'] }> {
+  const { root } = await workspaceOf(ctx, exec);
+  return { root, units: unitsOf(ctx, root).units };
+}
+
+const UNIT_PARAMETERS = {
+  type: 'object',
+  properties: { unit: { type: 'string', description: '模块 id（workbench_diy_status 会给）。' } },
+  required: ['unit'],
+  additionalProperties: false,
+} as const;
+
 export function browserBridgeOn(ctx: DshHostContext): boolean {
-  const adapters = ctx.get<AdapterSet>(WORKBENCH_ADAPTERS, false);
+  const adapters = ctx.get(WORKBENCH_ADAPTERS, false) as AdapterSet | undefined;
   if (adapters === undefined) return true;
   return adapters.runtime.capabilities(ctx).browserBridge;
 }
@@ -60,7 +75,7 @@ export function registerDiyTools(
   inferredAuthorOf: (unit: string) => Promise<string | undefined> = async () => undefined,
 ): Array<() => void> {
   const supply = supplyPortOf(ctx);
-  const tools = ctx.get<DshToolRegistry>('tools');
+  const tools = ctx.get('tools') as DshToolRegistry | undefined;
   if (tools === undefined) {
     ctx.logger?.info?.('[dsh-workbench] 没有 tools 服务，跳过 DIY 工具注册');
     return [];
@@ -78,9 +93,8 @@ export function registerDiyTools(
     },
     output: OUTPUT,
     async execute(raw: unknown, exec: DshToolRunContext) {
-      const { root } = await workspaceOf(ctx, exec);
-      const { units } = unitsOf(ctx, root);
-      const registry = ctx.get<UnitRegistry>(UNITS_SERVICE);
+      const { root, units } = await unitsAt(ctx, exec);
+      const registry = ctx.get(UNITS_SERVICE) as UnitRegistry | undefined;
       const panelEntries = panelEntriesOf(panels, root);
       const wanted = asText(asRecord(raw)['unit']);
       const picked = wanted === '' ? units : units.filter((one) => one.unit === wanted);
@@ -125,8 +139,8 @@ export function registerDiyTools(
     async execute(raw: unknown, exec: DshToolRunContext) {
       const { root } = await workspaceOf(ctx, exec);
       const { installed, units } = unitsOf(ctx, root);
-      const panelState = ctx.get<PanelStateStore>(PANEL_STATE_SERVICE);
-      const registry = ctx.get<UnitRegistry>(UNITS_SERVICE);
+      const panelState = ctx.get(PANEL_STATE_SERVICE) as PanelStateStore | undefined;
+      const registry = ctx.get(UNITS_SERVICE) as UnitRegistry | undefined;
       const panelEntries = panelEntriesOf(panels, root);
       const snapshot = panelState?.snapshot(root) ?? { workspace: root, at: 0, units: [] };
       const wanted = asText(asRecord(raw)['unit']);
@@ -246,16 +260,10 @@ export function registerDiyTools(
   const showTool: DshToolDefinition = {
     name: DIY_SHOW_TOOL,
     description: '只上板（不装）：把一个已经装好的模块显示在当前工作区的面板上。',
-    parameters: {
-      type: 'object',
-      properties: { unit: { type: 'string', description: '模块 id（workbench_diy_status 会给）。' } },
-      required: ['unit'],
-      additionalProperties: false,
-    },
+    parameters: UNIT_PARAMETERS,
     output: OUTPUT,
     async execute(raw: unknown, exec: DshToolRunContext) {
-      const { root } = await workspaceOf(ctx, exec);
-      const { units } = unitsOf(ctx, root);
+      const { root, units } = await unitsAt(ctx, exec);
       const found = unitAmong(units, raw, 'workbench_diy_show');
       if (!found.installed) {
         throw new Error(
@@ -275,12 +283,7 @@ export function registerDiyTools(
     description:
       '把这个工作区里造好的模块装上并上到当前工作区的面板。这是持久变更，一个模块只装一次：' +
       '之后改源码只需 dsh-wb-module build（宿主侧秒级热换）。',
-    parameters: {
-      type: 'object',
-      properties: { unit: { type: 'string', description: '模块 id（workbench_diy_status 会给）。' } },
-      required: ['unit'],
-      additionalProperties: false,
-    },
+    parameters: UNIT_PARAMETERS,
     output: OUTPUT,
     async execute(raw: unknown, exec: DshToolRunContext) {
       const { root } = await workspaceOf(ctx, exec);

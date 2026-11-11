@@ -170,7 +170,7 @@ export async function watchFinishStepOf(
     const caught = page.calls.length;
     const summary = `工作台 DIY：用户按了「结束录制」（${String(caught)} 条）`;
     deliverDebugNotice(
-      input.ctx.get<AgentsLookup>('agents'),
+      input.ctx.get('agents') as AgentsLookup | undefined,
       input.sessionId,
       noticeMessage(
         `用户按了「结束录制」（页面钩子上 ${String(caught)} 条）—— 去 ${DIY_RECORD_READ_TOOL} 取这一段清单，要某一条原文用 ${DIY_RECORD_DETAIL_TOOL}。`,

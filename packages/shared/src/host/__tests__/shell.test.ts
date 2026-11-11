@@ -4,14 +4,14 @@ import { runShell } from '../shell.js';
 
 function hangingShell(): DshShell {
   return {
-    resolve: (request) => request,
+    resolve: (request: Parameters<DshShell['resolve']>[0]) => request,
     execute: () => new Promise<DshShellExecution>(() => {}),
-  };
+  } as unknown as DshShell;
 }
 
 function replyingShell(exitCode: number, timedOut = false): DshShell {
   return {
-    resolve: (request) => request,
+    resolve: (request: Parameters<DshShell['resolve']>[0]) => request,
     execute: async () => ({
       result: async () => ({
         exitCode,
@@ -21,12 +21,12 @@ function replyingShell(exitCode: number, timedOut = false): DshShell {
         stderr: { text: '', truncated: false },
       }),
     }),
-  };
+  } as unknown as DshShell;
 }
 
 function sandboxedShell(): DshShell {
   return {
-    resolve: (request) => request,
+    resolve: (request: Parameters<DshShell['resolve']>[0]) => request,
     execute: async () => ({
       result: async () => ({
         exitCode: 3_221_225_794,
@@ -37,7 +37,7 @@ function sandboxedShell(): DshShell {
         sandbox: { mode: 'workspace-write', denied: false, runnerFailed: true },
       }),
     }),
-  };
+  } as unknown as DshShell;
 }
 
 describe('runShell', () => {
@@ -83,8 +83,8 @@ describe('runShell', () => {
 
   it('★ env 走 resolve 的覆盖字段，不拼进命令行的 shell 语法', async () => {
     const seen: Array<Record<string, unknown>> = [];
-    const shell: DshShell = {
-      resolve: (request) => {
+    const shell = {
+      resolve: (request: Parameters<DshShell['resolve']>[0]) => {
         seen.push(request as unknown as Record<string, unknown>);
         return request;
       },
@@ -97,7 +97,7 @@ describe('runShell', () => {
           stderr: { text: '', truncated: false },
         }),
       }),
-    };
+    } as unknown as DshShell;
 
     await runShell(shell, 'node --version', { env: { OPENCLI_WINDOW: 'background' } });
 
@@ -106,12 +106,12 @@ describe('runShell', () => {
   });
 
   it('★ 宿主自己抛错 → 照旧抛出去，不吞成 stalled', async () => {
-    const shell: DshShell = {
-      resolve: (request) => request,
+    const shell = {
+      resolve: (request: Parameters<DshShell['resolve']>[0]) => request,
       execute: async () => {
         throw new Error('spawn /bin/sh ENOENT');
       },
-    };
+    } as unknown as DshShell;
 
     await expect(runShell(shell, 'node --version')).rejects.toThrow('ENOENT');
   });

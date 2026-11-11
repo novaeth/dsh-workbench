@@ -15,14 +15,14 @@ function fakeServer(stale: readonly string[] = []): FakeServer {
   const live = new Set(stale);
   const routes = new Map<string, DshWebRoute>();
   const warnings: string[] = [];
-  const ctx: DshHostContext = {
-    get: <T,>() => undefined as T,
+  const ctx = {
+    get: () => undefined,
     provide: () => () => {},
     effect: () => () => {},
     inject: () => () => {},
-    logger: { info: () => {}, warn: (message) => warnings.push(message) },
+    logger: { info: () => {}, warn: (message: string) => warnings.push(message) },
     webServer: {
-      register: (route) => {
+      register: (route: DshWebRoute) => {
         const key = `${route.kind}:${route.path}`;
         if (live.has(key)) throw new Error(`webserver: duplicate ${route.kind} route "${route.path}"`);
         live.add(key);
@@ -33,7 +33,7 @@ function fakeServer(stale: readonly string[] = []): FakeServer {
         };
       },
     },
-  };
+  } as unknown as DshHostContext;
   return { ctx, live, routes, warnings };
 }
 

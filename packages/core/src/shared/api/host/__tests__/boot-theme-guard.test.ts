@@ -30,8 +30,7 @@ describe('启动主题兜底', () => {
 
     const pushed = rows();
     expect(pushed).toHaveLength(1);
-    expect(pushed[0]?.kind).toBe('script');
-    expect(pushed[0]?.placement).toBe('body');
+    expect(pushed[0]).toMatchObject({ kind: 'script', placement: 'body' });
   });
 
   it('★ 脚本按服务端写好的偏好把 body 的深色属性按回去', () => {

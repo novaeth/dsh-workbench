@@ -214,7 +214,7 @@ function faceOf(plugin: string, commands: readonly CannedCommand[]): UnitOwnedFa
       host: { inject: [] },
     } as never,
     mount(deps) {
-      const tools = deps.ctx.get<DshToolRegistry>('tools');
+      const tools = deps.ctx.get('tools') as DshToolRegistry | undefined;
       if (tools === undefined) return { routes: {}, registerTools: () => [] };
       const disposers = definitions.map((definition) =>
         tools.register({

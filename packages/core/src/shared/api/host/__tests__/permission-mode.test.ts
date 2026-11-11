@@ -10,7 +10,7 @@ function contextOf(services: Record<string, unknown>): DshHostContext {
 }
 
 function approvalOf(policy: string | undefined): Record<string, unknown> {
-  return { effectivePolicy: () => policy };
+  return { overrideOf: () => policy };
 }
 
 function sandboxOf(mode: string | undefined): Record<string, unknown> {
@@ -55,7 +55,7 @@ describe('fullPermissionOf：完全权限 = 审批 never + 文件边界 danger-f
 
   it('★ 读策略时抛了 ⇒ 当不是', () => {
     const approval = {
-      effectivePolicy: () => {
+      overrideOf: () => {
         throw new Error('会话还没打开');
       },
     };
@@ -82,7 +82,7 @@ describe('fullPermissionOf：完全权限 = 审批 never + 文件边界 danger-f
   it('★ 每次都现读：用户中途切到完全权限，下一次调用就生效', () => {
     let policy: string | undefined = 'ask';
     const ctx = contextOf({
-      approval: { effectivePolicy: () => policy },
+      approval: { overrideOf: () => policy },
       sandboxPolicy: sandboxOf('danger-full-access'),
     });
 

@@ -1,5 +1,5 @@
 import { homedir } from 'node:os';
-import type { DshHostContext, DshSandboxPolicy, DshShell } from '@dsh-workbench/shared';
+import type { DshHostContext, DshSandboxPolicy } from '@dsh-workbench/shared';
 import {
   WORKBENCH_SEAM,
   createSeam,
@@ -9,8 +9,10 @@ import {
   type SeamPolicy,
 } from '@dsh-workbench/shared/host';
 
+type SandboxSession = NonNullable<Parameters<DshSandboxPolicy['resolve']>[0]>['session'];
+
 export function provideWorkbenchSeam(ctx: DshHostContext): Seam | undefined {
-  const shell = ctx.get<DshShell>('shell');
+  const shell = ctx.get('shell');
   if (shell === undefined) return undefined;
   const runtimeRoot = workbenchRoot();
   const seam = createSeam({
@@ -20,7 +22,7 @@ export function provideWorkbenchSeam(ctx: DshHostContext): Seam | undefined {
     allowHost: true,
     logger: ctx.logger,
     grantOf: (session): SeamPolicy | undefined => {
-      const resolved = ctx.get<DshSandboxPolicy>('sandboxPolicy')?.resolve?.({ session });
+      const resolved = ctx.get('sandboxPolicy')?.resolve({ session: session as SandboxSession });
       if (resolved === undefined || resolved.mode === undefined || resolved.workspaceRoot === undefined) {
         return undefined;
       }

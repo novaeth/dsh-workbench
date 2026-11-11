@@ -40,7 +40,7 @@ function summary(id: string, patch: Partial<SessionSummary> = {}): SessionSummar
 function snapshot(rows: readonly SessionSummary[]): SessionsSnapshot {
   const byId: Record<string, SessionSummary> = {};
   for (const row of rows) byId[row.id] = row;
-  return { byId, projectionsBySession: {} };
+  return { byId, projectionsBySession: {} } as unknown as SessionsSnapshot;
 }
 
 function statuses(entries: Array<[string, SessionStatus]>): SessionStatusSnapshot {

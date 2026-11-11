@@ -26,7 +26,7 @@ function looseRegistry(...records: DshWorkspaceRecord[]): DshWorkspaceRegistry {
     get: () => undefined,
     create: async () => undefined,
     resolveByPath: async (dir: string) => records.find((record) => record.path === dir),
-  };
+  } as unknown as DshWorkspaceRegistry;
 }
 
 function strictRegistry(seen: string[], record: DshWorkspaceRecord): DshWorkspaceRegistry {
@@ -38,13 +38,13 @@ function strictRegistry(seen: string[], record: DshWorkspaceRecord): DshWorkspac
       if (dir === record.path) return record;
       throw new Error(`ENOENT: ${dir}`);
     },
-  };
+  } as unknown as DshWorkspaceRegistry;
 }
 
 describe('sessionWorkspaceOf（会话的登记工作区）', () => {
   it('cwd 就是登记工作区的根：直接命中', async () => {
     const root = tempRoot();
-    const workspace = { id: 'w1', path: root, title: '演示工作区' };
+    const workspace = { id: 'w1', path: root, title: '演示工作区' } as unknown as DshWorkspaceRecord;
 
     expect(await sessionWorkspaceOf(ctxFor(looseRegistry(workspace)), root)).toEqual({
       root,
@@ -54,7 +54,7 @@ describe('sessionWorkspaceOf（会话的登记工作区）', () => {
 
   it('★ cwd 在它的子目录里：逐级向上，命中登记的根（板与模块都按工作区根算）', async () => {
     const root = tempRoot();
-    const workspace = { id: 'w1', path: root, title: '演示工作区' };
+    const workspace = { id: 'w1', path: root, title: '演示工作区' } as unknown as DshWorkspaceRecord;
 
     expect(await sessionWorkspaceOf(ctxFor(looseRegistry(workspace)), join(root, 'modules-repo', 'packages', 'x'))).toEqual({
       root,
@@ -80,7 +80,7 @@ describe('sessionWorkspaceOf（会话的登记工作区）', () => {
 
   it('★ resolveByPath 抛（路径不存在 / realpath 失败）就跳过这一级，继续向上', async () => {
     const root = tempRoot();
-    const workspace = { id: 'w1', path: root, title: '登记名' };
+    const workspace = { id: 'w1', path: root, title: '登记名' } as unknown as DshWorkspaceRecord;
     const seen: string[] = [];
     const deep = join(root, 'a', 'b', 'c');
 
@@ -93,7 +93,7 @@ describe('sessionWorkspaceOf（会话的登记工作区）', () => {
 
   it('★ 走到文件系统根就停下（不无限循环），没命中回 null', async () => {
     const root = tempRoot();
-    const workspace = { id: 'w1', path: join(root, 'elsewhere'), title: '别处' };
+    const workspace = { id: 'w1', path: join(root, 'elsewhere'), title: '别处' } as unknown as DshWorkspaceRecord;
     const seen: string[] = [];
     const deep = join(root, 'x', 'y', 'z');
 

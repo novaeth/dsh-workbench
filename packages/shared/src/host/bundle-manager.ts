@@ -1,4 +1,4 @@
-import type { DshHostContext } from '../api/dsh.js';
+import type { DshHostContext, DshPluginInstallRequestId, DshPluginManager } from '../api/dsh.js';
 import { RESTART_REASONS } from '../contract/protocol/bundle-install.js';
 import type { BundleManager } from './adapter-types.js';
 import type {
@@ -15,22 +15,6 @@ import type {
 } from '../contract/protocol/bundle-install.js';
 
 export const PLUGIN_MANAGER_SERVICE = 'pluginManager';
-
-interface PluginManagerFace {
-  registries?(): Promise<unknown>;
-  inspect?(spec: string, options?: { readonly registry?: BundleRegistry }): Promise<unknown>;
-  installBundle?(spec: string, options?: unknown): Promise<unknown>;
-  removeBundle?(name: string): Promise<unknown>;
-  setBundleEnabled?(name: string, enabled: boolean): Promise<unknown>;
-  cancelInstall?(requestId: string): Promise<unknown>;
-  listVersions?(name: string, options?: { readonly registry?: BundleRegistry }): Promise<unknown>;
-  updateBundle?(
-    name: string,
-    version: string,
-    options?: { readonly registry?: BundleRegistry; readonly requestId?: string },
-  ): Promise<unknown>;
-  waitForInstall?(requestId: string): Promise<unknown>;
-}
 
 const APPLICATIONS = ['applied', 'restart-required', 'overridden', 'failed', 'cancelled'] as const;
 const STAGES = ['install', 'enable', 'remove'] as const;
@@ -299,7 +283,7 @@ function asUpdateOutcome(raw: unknown): BundleUpdateOutcome | null {
 }
 
 export function readBundleManager(ctx: DshHostContext): BundleManager | undefined {
-  const face = ctx.get<PluginManagerFace>(PLUGIN_MANAGER_SERVICE);
+  const face = ctx.get(PLUGIN_MANAGER_SERVICE) as DshPluginManager | undefined;
   if (face === undefined) return undefined;
   if (typeof face.installBundle !== 'function' || typeof face.removeBundle !== 'function') return undefined;
   return {
@@ -314,8 +298,10 @@ export function readBundleManager(ctx: DshHostContext): BundleManager | undefine
     async install(request) {
       const options = {
         ...(request.registry === undefined ? {} : { registry: request.registry }),
-        ...(request.requestId === undefined ? {} : { requestId: request.requestId }),
-        ...(request.approvedBuilds === undefined ? {} : { approvedBuilds: request.approvedBuilds }),
+        ...(request.requestId === undefined
+          ? {}
+          : { requestId: request.requestId as DshPluginInstallRequestId }),
+        ...(request.approvedBuilds === undefined ? {} : { approvedBuilds: [...request.approvedBuilds] }),
       };
       return asChange(await face.installBundle?.(request.spec, options));
     },
@@ -328,7 +314,10 @@ export function readBundleManager(ctx: DshHostContext): BundleManager | undefine
     },
     async cancel(requestId) {
       if (typeof face.cancelInstall !== 'function') return null;
-      return pick(CANCELLATIONS, (asRecord(await face.cancelInstall(requestId)) ?? {}).status) ?? null;
+      return pick(
+        CANCELLATIONS,
+        (asRecord(await face.cancelInstall(requestId as DshPluginInstallRequestId)) ?? {}).status,
+      ) ?? null;
     },
     async listVersions(name, registry) {
       if (typeof face.listVersions !== 'function') return null;
@@ -338,13 +327,15 @@ export function readBundleManager(ctx: DshHostContext): BundleManager | undefine
       if (typeof face.updateBundle !== 'function') return null;
       const options = {
         ...(request.registry === undefined ? {} : { registry: request.registry }),
-        ...(request.requestId === undefined ? {} : { requestId: request.requestId }),
+        ...(request.requestId === undefined
+          ? {}
+          : { requestId: request.requestId as DshPluginInstallRequestId }),
       };
       return asUpdateOutcome(await face.updateBundle(name, version, options));
     },
     async waitForInstall(requestId) {
       if (typeof face.waitForInstall !== 'function') return null;
-      return asChange(await face.waitForInstall(requestId));
+      return asChange(await face.waitForInstall(requestId as DshPluginInstallRequestId));
     },
   };
 }

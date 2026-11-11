@@ -1,4 +1,6 @@
-import type { DshShell } from '../api/dsh.js';
+import type { DshShell, DshShellSandboxPolicy } from '../api/dsh.js';
+
+export type { DshShellSandboxPolicy };
 import { GIT_TIMEOUT_MS } from '../config/constants.js';
 
 export interface ShellSandboxFacts {
@@ -45,11 +47,6 @@ async function settleWithin<T>(work: Promise<T>, limitMs: number): Promise<T | n
   } finally {
     if (timer !== undefined) clearTimeout(timer);
   }
-}
-
-export interface DshShellSandboxPolicy {
-  readonly mode: 'read-only' | 'workspace-write' | 'danger-full-access';
-  readonly workspaceRoot: string;
 }
 
 export async function runShell(

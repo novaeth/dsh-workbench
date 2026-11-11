@@ -5,7 +5,7 @@ import { installWorkshopPreset } from '../workshop-preset';
 
 const WORKSHOP_PATH = '/Users/you/.dsh/workbench/diy';
 
-function sessionOf(input: { blank?: boolean; preset?: unknown }): SessionSummary {
+function sessionOf(input: { blank?: boolean; preset?: string | null }): SessionSummary {
   return {
     id: 's1',
     displayTitle: '新会话',
@@ -45,22 +45,9 @@ function harness(input: { path?: string; session?: SessionSummary | null; preset
       subscribe,
     },
   };
-  const remote = new Proxy(
-    {},
-    {
-      get(_target, prop) {
-        throw new Error(`cannot get property "remote.${String(prop)}" without inject`);
-      },
-    },
-  );
   const ctx = {
-    get: (name: string) =>
-      name === 'sessions'
-        ? sessions
-        : name === 'remote.agentPresets' && input.presets !== false
-          ? { select }
-          : undefined,
-    remote,
+    sessions,
+    remote: input.presets === false ? {} : { agentPresets: { select } },
     workspaces: { list: { getSnapshot: () => workspaces, subscribe } },
   } as unknown as DshClientContext;
   return {
@@ -81,7 +68,7 @@ describe('工坊空白会话补 DIY 模式', () => {
     expect(select).toHaveBeenCalledWith('s1', DIY_PRESET_ID);
   });
 
-  it('★ 写口只能经 ctx.get 拿：没在 inject 里声明 remote.agentPresets 也不能把 apply 炸掉（真机 = 整个外壳 + 全部模块不激活）', () => {
+  it('★ 写口经官方 ctx.remote.agentPresets 拿：这一位不在也不能把 apply 炸掉（真机 = 整个外壳 + 全部模块不激活）', () => {
     const { ctx, select } = harness();
     expect(() => installWorkshopPreset(ctx)).not.toThrow();
     expect(select).toHaveBeenCalledWith('s1', DIY_PRESET_ID);

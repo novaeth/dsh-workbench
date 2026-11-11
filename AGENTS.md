@@ -76,9 +76,12 @@ pnpm run check                        # 门禁：整仓那一套（= `pnpm -w ru
 1. **看板承载轻交互；界面不直接写平台。** 用户直接发起的单步业务动作走动作路由
    （点击即确认，不审批，记一次 run），且必须与一把 agent 工具共用同一实现；其余业务写入只走
    agent 工具与审批。看板不承载全量业务操作。细节见 ADR-0090。
-2. **dsh 的包：浏览器半侧直接用，宿主半侧不许。** 浏览器半侧经 dsh 的模块表 require
-   `@deepseek-ai/dsh-client-ui-primitives`，**不手搓**；dsh 有的要么直接用、要么基于它扩展，
-   **不许从 DOM+CSS 重画**。实测样板：dsh 自己的图标-only 钮就是 `Button variant="ghost" size="sm"`。
+2. **dsh 的包：浏览器半侧直接用，宿主半侧不 require。** 浏览器半侧经 dsh 的模块表 require
+   `@deepseek-ai/dsh-client-ui-primitives`，**不手搓**；宿主半侧不 require dsh 的包，dsh 的类型
+   只经 `@dsh-workbench/shared` 的别名层（`packages/shared/src/api/**`、`src/lib/**`）按类型引官方
+   声明，`kernel/**` 与 `src/contract/**` 里一个 `@deepseek-ai/*` 都不许出现。dsh 有的要么直接用、
+   要么基于它扩展，**不许从 DOM+CSS 重画**。实测样板：dsh 自己的图标-only 钮就是
+   `Button variant="ghost" size="sm"`。
 3. **两个运行时不许互引。** 宿主侧在 `packages/core/src/shared/api/host/**`、`packages/core/src/modules/*/model/**` 与
    `packages/core/src/kernel/host/**`；浏览器侧不许进这三个前缀。
    `@dsh-workbench/shared` 的宿主侧只许从 `@dsh-workbench/shared/host` 取运行值。

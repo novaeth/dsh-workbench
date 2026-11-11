@@ -158,6 +158,8 @@ export const checks = [
           },
         },
 
+        sidebarRight: ctx.officialRightbar,
+
         get: (name) => (name === 'sidebarRight' ? ctx.officialRightbar : undefined),
 
         remote: {

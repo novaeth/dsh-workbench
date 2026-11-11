@@ -20,7 +20,7 @@ describe('mountUnits：mount 抛错时撤回已注册工具', () => {
       get: (name: string) => (name === 'tools' ? tools : undefined),
     } as never;
     const host = hostOf(manifest('boom', { inject: [] }), (deps) => {
-      deps.ctx.get<DshToolRegistry>('tools')?.register({
+      (deps.ctx.get('tools') as DshToolRegistry | undefined)?.register({
         name: 'boom_tool',
         description: '试一下注册期抛错',
         parameters: { type: 'object', properties: {} },

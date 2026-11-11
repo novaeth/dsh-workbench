@@ -110,7 +110,7 @@ export function diyPresetFrom(standard: unknown, skillsDir: string): DshAgentPre
     name: DIY_PRESET_NAME,
     description: DIY_PRESET_DESCRIPTION,
     order: DIY_PRESET_ORDER,
-    plugins,
+    plugins: plugins as unknown as DshAgentPresetDefinition['plugins'],
   };
 }
 

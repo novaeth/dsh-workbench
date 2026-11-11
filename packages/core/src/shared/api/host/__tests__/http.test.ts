@@ -6,51 +6,51 @@ import { changesHandler, flag, healthHandler, param, registerActions, registerAp
 
 function fakeRes() {
   const state = { statusCode: 0, headers: {} as Record<string, string>, body: '' };
-  const res: DshResponse = {
+  const res = {
     get statusCode() {
       return state.statusCode;
     },
     set statusCode(value: number) {
       state.statusCode = value;
     },
-    setHeader: (name, value) => {
+    setHeader: (name: string, value: string) => {
       state.headers[name] = value;
     },
-    end: (body) => {
+    end: (body?: string) => {
       state.body = body ?? '';
     },
-  };
+  } as unknown as DshResponse;
   return { res, state };
 }
 
 function fakeCtx() {
   const registered: DshWebRoute[] = [];
   const warnings: string[] = [];
-  const ctx: DshHostContext = {
-    get: <T,>() => ({ dir: '/Users/x/.dsh/profiles/workbench' }) as T,
+  const ctx = {
+    get: () => ({ dir: '/Users/x/.dsh/profiles/workbench' }),
     provide: () => () => {},
     effect: () => () => {},
     inject: () => () => {},
-    logger: { info: () => {}, warn: (message) => warnings.push(message) },
+    logger: { info: () => {}, warn: (message: string) => warnings.push(message) },
     webServer: {
-      register: (route) => {
+      register: (route: DshWebRoute) => {
         registered.push(route);
         return () => {};
       },
     },
-  };
+  } as unknown as DshHostContext;
   return { ctx, registered, warnings };
 }
 
 async function call(
   routes: RouteTable,
-  request: DshRequest,
+  request: { method?: string; url?: string },
 ): Promise<{ status: number; body: Record<string, unknown> }> {
   const { ctx, registered } = fakeCtx();
   registerApi(ctx, routes);
   const route = registered[0] as DshWebRoute;
   const { res, state } = fakeRes();
-  await route.handler(request, res);
+  await route.handler(request as DshRequest, res);
   return { status: state.statusCode, body: JSON.parse(state.body) as Record<string, unknown> };
 }
 
@@ -131,7 +131,7 @@ describe('registerApi', () => {
     });
     const route = registered[0] as DshWebRoute;
     const { res, state } = fakeRes();
-    await route.handler({ method: 'GET', url: `${API_PREFIX}/issues` }, res);
+    await route.handler({ method: 'GET', url: `${API_PREFIX}/issues` } as DshRequest, res);
 
     expect(state.statusCode).toBe(500);
     expect(JSON.parse(state.body)).toMatchObject({ ok: false, error: { code: 'internal' } });
@@ -155,7 +155,7 @@ describe('registerApi', () => {
     });
     const route = registered[0] as DshWebRoute;
     const { res, state } = fakeRes();
-    await route.handler({ method: 'GET', url: `${API_PREFIX}/issues` }, res);
+    await route.handler({ method: 'GET', url: `${API_PREFIX}/issues` } as DshRequest, res);
 
     expect(JSON.parse(state.body)).toMatchObject({
       ok: false,
@@ -200,7 +200,7 @@ describe('healthHandler', () => {
 
   it('没有 profileContext 时给出 null 而不是崩', () => {
     const { ctx } = fakeCtx();
-    const bare: DshHostContext = { ...ctx, get: () => undefined };
+    const bare = { ...ctx, get: () => undefined } as unknown as DshHostContext;
     const payload = healthHandler(bare)(new URLSearchParams()) as Record<string, unknown>;
     expect(payload.profile).toBeNull();
     expect(payload.profileDir).toBeNull();

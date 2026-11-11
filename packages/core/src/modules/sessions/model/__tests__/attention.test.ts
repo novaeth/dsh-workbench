@@ -45,7 +45,7 @@ function snapshot(
   for (const [sessionId, children] of Object.entries(subagents)) {
     projections[sessionId] = { values: { subagentCatalog: children.map((id) => ({ id })) } };
   }
-  return { byId, projectionsBySession: projections };
+  return { byId, projectionsBySession: projections } as unknown as SessionsSnapshot;
 }
 
 function statuses(entries: Array<[string, SessionStatus]>): SessionStatusSnapshot {

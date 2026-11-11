@@ -1,6 +1,7 @@
 import type {
   DshHostContext,
   DshToolDefinition,
+  DshToolOutputDefinition,
   DshToolRegistry,
   DshToolRunContext,
 } from '@dsh-workbench/shared';
@@ -27,7 +28,7 @@ const NO_RUN = '没有这一趟 —— unit/id 对不上。';
 
 const STALE_REGISTRY = '这一份工作台还是上一版的注册表，停不了 —— 重新起一下工作台就能停';
 
-const LIST_OUTPUT = {
+const LIST_OUTPUT: DshToolOutputDefinition = {
   schema: {
     type: 'object',
     properties: {
@@ -59,7 +60,7 @@ const LIST_OUTPUT = {
   ],
 };
 
-const STOP_OUTPUT = {
+const STOP_OUTPUT: DshToolOutputDefinition = {
   schema: {
     type: 'object',
     properties: { text: { type: 'string' }, stopped: { type: 'boolean' } },
@@ -148,7 +149,7 @@ export function registerLongTaskTools(
   ctx: DshHostContext,
   longTaskRuns?: LongTaskRunsLookup | undefined,
 ): Array<() => void> {
-  const tools = ctx.get<DshToolRegistry>('tools');
+  const tools = ctx.get('tools') as DshToolRegistry | undefined;
   if (tools === undefined) {
     ctx.logger?.info?.('[dsh-workbench] 没有 tools 服务，跳过外壳长任务工具注册');
     return [];

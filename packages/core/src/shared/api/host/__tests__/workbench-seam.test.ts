@@ -27,7 +27,7 @@ function contextOf(options: {
       if (name === 'sandboxPolicy' && options.grant !== undefined) {
         return {
           resolve: () => options.grant,
-        } satisfies Partial<DshSandboxPolicy>;
+        } as unknown as DshSandboxPolicy;
       }
       return undefined;
     },
