@@ -47,10 +47,15 @@ function registryOf(profileDir) {
   return fallback;
 }
 
+function npmDefaultRegistry() {
+  const run = execaSync('npm', ['config', 'get', 'registry'], { reject: false });
+  const registry = (run.stdout ?? '').trim();
+  if (run.exitCode === 0 && registry !== '') return registry;
+  return 'https://registry.npmjs.org/';
+}
+
 function registryOfOrFail(profileDir) {
-  const registry = registryOf(profileDir);
-  if (registry === undefined) fail(`读不到 registry：${join(profileDir, '.npmrc')} 里没有 registry / @dsh-workbench:registry`);
-  return registry;
+  return registryOf(profileDir) ?? npmDefaultRegistry();
 }
 
 function distTag(profileDir, tag) {
