@@ -7,7 +7,7 @@ import type { Seam } from '@dsh-workbench/shared/host';
 import { bootstrapEnv, runBootstrapCommand } from './bootstrap-run.js';
 import { storeMismatchIn } from './store-mismatch.js';
 import { hostSurface } from './platform.js';
-import { desktopPnpmPath } from './desktop-runtime.js';
+import { desktopNodeExecutable, desktopPnpmPath } from './desktop-runtime.js';
 import type { PnpmProcess } from './desktop-runtime.js';
 
 export { desktopBundledBins, desktopNodeExecutable, desktopPnpmPath, desktopPnpmVersion, desktopResourcesDir, desktopRuntimeEnv, desktopRuntimeEnvPath } from './desktop-runtime.js';
@@ -280,12 +280,29 @@ export function toolchainBinDir(root: string): string {
   return join(root, 'bin', 'desktop');
 }
 
+function desktopPnpmShim(proc: ToolchainProcess, exists: (path: string) => boolean, platform: NodeJS.Platform): string | undefined {
+  const pnpm = desktopPnpmPath(proc, exists);
+  if (pnpm === undefined) return undefined;
+  const node = desktopNodeExecutable(proc, exists);
+  const runner = node === undefined ? undefined : quoteShellArgFor(node, platform);
+  if (platform === 'win32') {
+    return runner === undefined
+      ? `@echo off\r\n"${proc.execPath}" "${pnpm}" %*\r\n`
+      : `@echo off\r\n${runner} "${pnpm}" %*\r\n`;
+  }
+  return runner === undefined
+    ? `#!/bin/sh\nexec ${quoteShellArgFor(proc.execPath, platform)} ${quoteShellArgFor(pnpm, platform)} "$@"\n`
+    : `#!/bin/sh\nexec ${runner} ${quoteShellArgFor(pnpm, platform)} "$@"\n`;
+}
+
 export function ensureToolchain(options: ToolchainOptions): ToolchainResult {
   const platform = options.platform ?? process.platform;
   const shim = desktopNodeShim(options.proc ?? process, platform);
   if (shim === undefined) return { files: [] };
   const pathDir = toolchainBinDir(options.root);
   const file = join(pathDir, platform === 'win32' ? 'node.cmd' : 'node');
+  const pnpmShim = desktopPnpmShim(options.proc ?? process, existsSync, platform);
+  const pnpmFile = join(pathDir, platform === 'win32' ? 'pnpm.cmd' : 'pnpm');
   const files: string[] = [];
   let release: (() => void) | undefined;
   try {
@@ -295,6 +312,11 @@ export function ensureToolchain(options: ToolchainOptions): ToolchainResult {
       rmSync(file, { force: true });
       writeTextFile(file, shim, { mode: 0o755 });
       files.push(file);
+    }
+    if (pnpmShim !== undefined && readText(pnpmFile) !== pnpmShim) {
+      rmSync(pnpmFile, { force: true });
+      writeTextFile(pnpmFile, pnpmShim, { mode: 0o755 });
+      files.push(pnpmFile);
     }
   } catch (error) {
     options.log?.(`工具链 shim 没写成：${String(error)}`);

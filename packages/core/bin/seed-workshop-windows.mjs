@@ -23,7 +23,43 @@ const manifest = join(diy, 'package.json');
 const syncState = join(diy, '.sync.json');
 const syncLock = join(diy, '.sync.lock');
 const pnpmPin = 'pnpm@10.32.1';
-const pnpm = which.sync('pnpm', { nothrow: true }) ?? 'pnpm';
+function splitCommand(line) {
+  const parts = [];
+  let current = '';
+  let quote = '';
+  for (const char of line) {
+    if (quote !== '') {
+      if (char === quote) quote = '';
+      else current += char;
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+    if (char === ' ') {
+      if (current !== '') parts.push(current);
+      current = '';
+      continue;
+    }
+    current += char;
+  }
+  if (current !== '') parts.push(current);
+  return parts;
+}
+
+function pnpmCommand() {
+  const override = process.env.DSH_WB_PNPM?.trim() ?? '';
+  if (override !== '') {
+    const parts = splitCommand(override);
+    if (parts.length > 0) return { file: parts[0], args: parts.slice(1) };
+  }
+  const found = which.sync('pnpm', { nothrow: true });
+  if (found !== null) return { file: found, args: [] };
+  return { file: 'pnpm', args: [] };
+}
+
+const pnpm = pnpmCommand();
 
 function say(message) {
   process.stdout.write(`[dsh-workbench] ${message}\n`);
@@ -250,7 +286,7 @@ function manifestCoreSpec() {
 
 function install() {
   say('装工坊依赖（第一次会下载 react / typescript / vitest）...');
-  return execa(pnpm, ['install'], {
+  return execa(pnpm.file, [...pnpm.args, 'install'], {
     cwd: diy,
     stdio: 'inherit',
     env: process.env,

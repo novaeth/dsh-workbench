@@ -1,4 +1,4 @@
-import { productWrite, quoteShellArg, type Seam } from '@dsh-workbench/shared/host';
+import { productWrite, quoteShellArg, VERSION_CHECK_TIMEOUT_MS, type Seam } from '@dsh-workbench/shared/host';
 import { delimiter } from 'node:path';
 import { homedir } from 'node:os';
 import {
@@ -39,7 +39,7 @@ async function toolVersion(
       command: line,
       intent: productWrite(),
       retry: 'safe',
-      timeoutMs: 10_000,
+      timeoutMs: VERSION_CHECK_TIMEOUT_MS,
       ...(extra?.workdir === undefined ? {} : { workdir: extra.workdir }),
     });
     const text = (result.stdout || result.stderr).trim().split('\n')[0] ?? '';
@@ -68,14 +68,12 @@ export async function probeDesktopToolchain(seam: Seam): Promise<ToolchainReport
   const preferBundled = bundledPnpm !== undefined && Number(bundledMajor ?? '0') >= 10;
   const nodeCommand = bundledNode === undefined ? 'node' : quoteShellArg(bundledNode);
   const pnpmLine = preferBundled
-    ? `${nodeCommand} ${quoteShellArg(bundledPnpm ?? '')} --version`
-    : 'pnpm --version';
+    ? `${nodeCommand} ${quoteShellArg(bundledPnpm ?? '')} --config.manage-package-manager-versions=false --version`
+    : 'pnpm --config.manage-package-manager-versions=false --version';
   const path = desktopRuntimeEnv().PATH;
-  const [node, npm, pnpm] = await Promise.all([
-    toolVersion(seam, `${nodeCommand} --version`),
-    toolVersion(seam, 'npm --version'),
-    toolVersion(seam, pnpmLine),
-  ]);
+  const node = await toolVersion(seam, `${nodeCommand} --version`);
+  const npm = await toolVersion(seam, 'npm --version');
+  const pnpm = await toolVersion(seam, pnpmLine);
   if (node.stalled || npm.stalled || pnpm.stalled) {
     return {
       ok: false,
@@ -93,9 +91,7 @@ export async function probeDesktopToolchain(seam: Seam): Promise<ToolchainReport
   const desktop = hostSurface({ proc: process }).deployment === 'desktop';
   const parts = [
     nodeMissing
-      ? desktop
-        ? 'node 不在 PATH（Desktop 自带 Node 的 shim 没生效）'
-        : 'node 不在 PATH'
+      ? `node 跑不起来（exit=${node.code === null ? '没返回' : String(node.code)}${node.raw === '' ? '' : `：${node.raw}`}）`
       : desktop
         ? `node ${node.text}（Desktop 自带）`
         : `node ${node.text}`,

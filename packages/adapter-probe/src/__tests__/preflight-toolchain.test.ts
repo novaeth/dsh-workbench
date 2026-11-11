@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { DshShell, DshShellExecution } from '@dsh-workbench/shared';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
-import { createSeam } from '@dsh-workbench/shared/host';
+import { createSeam, VERSION_CHECK_TIMEOUT_MS } from '@dsh-workbench/shared/host';
 import { createPreflight, probeDesktopToolchain } from '../index.js';
 import { ALL_OK } from './preflight-fixtures';
 
@@ -22,7 +22,7 @@ describe('Desktop 工具链步骤', () => {
     vi.useFakeTimers();
     try {
       const pending = probeDesktopToolchain(seamFor(hangingShell()));
-      await vi.advanceTimersByTimeAsync(11_000);
+      await vi.advanceTimersByTimeAsync((VERSION_CHECK_TIMEOUT_MS + 1_000) * 3);
       const report = await pending;
 
       expect(report.stalled).toBe(true);

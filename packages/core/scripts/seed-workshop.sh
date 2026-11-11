@@ -461,8 +461,15 @@ manifest.pnpm = {
 fs.writeFileSync(file, `${JSON.stringify(manifest, null, 2)}\n`);
 NODE
 
-  if ! command -v pnpm >/dev/null 2>&1; then
-    reason="PATH 上没有 pnpm；装好 pnpm 后重跑：cd $DIY_DIR && pnpm install"
+  # 先认宿主铺好的那份（Desktop 只出 pnpm.cjs，PATH 上没有 pnpm 这个名字）；
+  # 没有再退回 PATH 上的 pnpm。
+  local pnpm_run=""
+  if [ -n "${DSH_WB_PNPM:-}" ]; then
+    pnpm_run="$DSH_WB_PNPM"
+  elif command -v pnpm >/dev/null 2>&1; then
+    pnpm_run="pnpm"
+  else
+    reason="找不到 pnpm：宿主没铺好，PATH 上也没有；装好 pnpm 后重跑：cd $DIY_DIR && pnpm install"
     write_sync_state failed "$shell_v" "$reason"
     log_line "→ ⚠️ 自愈失败：$reason"
     return 1
@@ -470,7 +477,7 @@ NODE
 
   log_line "→ 在工坊里 pnpm install（增量，用 .npmrc 里那份 store/cache）"
   local out="" ok=1
-  out="$( (cd "$DIY_DIR" && pnpm install) 2>&1 )" || ok=0
+  out="$( (cd "$DIY_DIR" && eval "$pnpm_run install") 2>&1 )" || ok=0
   # 原话照录：失败时"为什么"全在这几行里，不能让用户只看到一句"装不上"。
   [ -z "$out" ] || printf '%s\n' "$out" >>"$SEED_LOG" 2>/dev/null || true
 
