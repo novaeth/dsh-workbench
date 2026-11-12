@@ -243,6 +243,9 @@ jobs:
           git config user.name ci
           git config user.email ci@example.com
           shopt -s nullglob
+          for log in "$RUNNER_TEMP"/desktop-${{ inputs.label }}*.log; do
+            cp "$log" "./$(basename "$log")" 2>/dev/null || true
+          done
           files=(desktop-${{ inputs.label }}*.png desktop-${{ inputs.label }}*.txt desktop-${{ inputs.label }}*.json desktop-${{ inputs.label }}*.log)
           if [ ${#files[@]} -gt 0 ]; then
             git add -f "${files[@]}"
