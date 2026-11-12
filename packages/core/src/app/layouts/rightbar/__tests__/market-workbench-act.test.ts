@@ -92,6 +92,22 @@ describe('工作台自己那一行的更新：只走三拍，不额外加话', (
     expect(seen.notice.at(-1)).toBe('panels.market.migrateDone');
   });
 
+  it('★ 迁移结果里读不到项目数 → 提示里不写数字', async () => {
+    const { seen, seats } = seatsOf();
+    const act = marketActOf({
+      t,
+      mocked: false,
+      rowOf: () => followUpRow(false),
+      seats,
+      send: async () => ({ ok: true, value: { files: 3 } }),
+      onChanged: () => undefined,
+    });
+
+    await act('workbench', 'migrate-workbench');
+
+    expect(seen.notice.at(-1)).toBe('panels.market.migrateDoneNoCount');
+  });
+
   it('★ 非硬性的待办可以不再提醒 → 发的是 follow-up id，并给一条"旧数据还在"的提示', async () => {
     const { seen, seats } = seatsOf();
     const sent: Array<Record<string, unknown>> = [];

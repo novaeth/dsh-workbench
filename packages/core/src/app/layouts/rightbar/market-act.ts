@@ -145,7 +145,9 @@ export function marketActOf(options: MarketActOptions): (id: string, action: Mar
       seats.setPending(null);
       seats.setHeld(undefined);
       seats.setNotice(
-        t('panels.market.migrateDone', { added: typeof added === 'number' ? String(added) : '0' }),
+        typeof added === 'number'
+          ? t('panels.market.migrateDone', { added: String(added) })
+          : t('panels.market.migrateDoneNoCount'),
       );
       return;
     }

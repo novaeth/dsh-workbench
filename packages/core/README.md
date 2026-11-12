@@ -37,7 +37,7 @@ npx @dsh-workbench/core --profile wb2
 
 全局装过就不用 `npx`：`npm i -g @dsh-workbench/core` 之后直接 `dsh-workbench`。
 
-从 1.0.0 之前的独立实例升级上来时，旧数据**不会**自动合并。请先退出所有 dsh，再执行：
+从 1.0.0 之前的独立实例升级上来时，旧数据**不会**自动迁移。请先退出所有 dsh，再执行：
 
 ```bash
 dsh-workbench migrate          # 切共用根 + 并旧会话/项目/附件
@@ -47,7 +47,7 @@ dsh-workbench migrate --force  # 已经迁过一次、想再补并一次
 迁移只补充缺少的部分，不覆盖已有内容，旧目录会保留。用 npx 的用户请把 `dsh-workbench` 换成 `npx @dsh-workbench/core`。
 
 更新后，也可以直接在模块市场的「工作台」那一行点「迁移旧数据」。它和命令行走的是同一套迁移逻辑，不需要自己敲命令。
-这只是一条提示，点「不再提醒」可以收起；它不会删除旧数据，旧项目仍留在旧目录，以后需要时还可以执行 `dsh-workbench migrate`。
+这只是一条提示，点「不再提醒」只是不再显示这条提示；它不会删除旧数据，旧项目仍留在旧目录，以后需要时还可以执行 `dsh-workbench migrate`。
 
 先决条件：
 
@@ -117,7 +117,7 @@ dsh-workbench migrate --force  # 已经迁过一次、想再补并一次
 | DIY 工坊依赖安装日志 | `~/.dsh/workbench/seed.log` |
 
 独立实例**只分 profile，不分数据根**：会话、项目、附件跟 `dsh web` 和 Desktop 是同一份，
-只有设置与插件各一份。旧版本中数据目录曾经独立的实例，启动时**不会**自动合并；请先退出所有 dsh，再执行
+只有设置与插件各一份。旧版本中数据目录曾经独立的实例，启动时**不会**自动迁移；请先退出所有 dsh，再执行
 `dsh-workbench migrate`（只补充缺失内容，不覆盖，旧目录保留）。
 
 设置只保存在 profile 里（与会话、项目不同，不共用）：
