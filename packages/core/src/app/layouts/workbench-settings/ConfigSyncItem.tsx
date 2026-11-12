@@ -15,7 +15,7 @@ import { Button, IconRefreshOutlineRegular, StateDot } from '@deepseek-ai/dsh-cl
 import { useApiResource } from '@/shared/hooks/use-api-resource';
 import { useHostWrite } from '@/shared/hooks/use-host-write';
 import { useVisibleBusy } from '@/shared/hooks/use-visible-busy';
-import { SettingsItem } from './SettingsItem';
+import { SettingsDisclosure } from './SettingsDisclosure';
 import { SourceRows } from './ConfigSyncRows';
 import styles from './ConfigSyncItem.module.css';
 
@@ -88,7 +88,7 @@ function ReadingRow({ t }: SectionText): JSX.Element {
         <Spinner />
         {t('configSync.loading')}
       </p>
-      <SkeletonRows rows={3} />
+      <SkeletonRows rows={2} />
     </div>
   );
 }
@@ -170,16 +170,34 @@ function SourceList({
   return (
     <>
       <SourceRows t={t} rows={rows} picked={picked} profile={profile} onToggle={onToggle} />
-      <div className={styles.foot}>
-        <Button variant="primary" size="md" disabled={!canApply || busy} onClick={onApply}>
-          {chosenCount === 0
-            ? t('configSync.applyNone')
-            : busy
-              ? t('configSync.applying')
-              : t('configSync.apply', { count: chosenCount })}
-        </Button>
-      </div>
+      {canApply ? (
+        <div className={styles.foot}>
+          <Button variant="primary" size="md" disabled={busy} onClick={onApply}>
+            {busy ? t('configSync.applying') : t('configSync.apply', { count: chosenCount })}
+          </Button>
+        </div>
+      ) : (
+        <Note>{t('configSync.pickHint')}</Note>
+      )}
     </>
+  );
+}
+
+function RefreshButton({
+  t,
+  disabled,
+  onClick,
+}: SectionText & { readonly disabled: boolean; readonly onClick: () => void }): JSX.Element {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      icon={<IconRefreshOutlineRegular size={16} aria-hidden="true" />}
+      aria-label={t('configSync.refresh')}
+      title={t('configSync.refresh')}
+      onClick={onClick}
+      disabled={disabled}
+    />
   );
 }
 
@@ -203,26 +221,8 @@ function selectionOf(input: {
   return { picked, chosen, canApply: chosen.length > 0 };
 }
 
-function RefreshButton({
-  t,
-  disabled,
-  onClick,
-}: SectionText & { readonly disabled: boolean; readonly onClick: () => void }): JSX.Element {
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      icon={<IconRefreshOutlineRegular size={16} aria-hidden="true" />}
-      onClick={onClick}
-      disabled={disabled}
-      title={t('configSync.refresh')}
-    >
-      {t('configSync.refresh')}
-    </Button>
-  );
-}
-
 export function ConfigSyncItem({ t }: ConfigSyncItemProps) {
+  const [open, setOpen] = useState(false);
   const [source, setSource] = useState('');
   const [revision, setRevision] = useState(0);
   const [guard, setGuard] = useState(0);
@@ -232,6 +232,7 @@ export function ConfigSyncItem({ t }: ConfigSyncItemProps) {
     CONFIG_SYNC_ROUTE,
     source === '' ? {} : { source },
     revision,
+    { enabled: open },
   );
   const value = snapshot.phase === 'ready' ? snapshot.value : undefined;
   const failure = useMemo(() => {
@@ -249,13 +250,13 @@ export function ConfigSyncItem({ t }: ConfigSyncItemProps) {
     return blocker.hint === undefined ? { ...blocker, hint: t('configSync.readHint') } : blocker;
   }, [snapshot.phase, snapshot.error, t]);
   useEffect(() => {
-    if (failure === null || guard > 0) return undefined;
+    if (failure === null || guard > 0 || !open) return undefined;
     const timer = setTimeout(() => {
       setGuard((current) => current + 1);
       setRevision((current) => current + 1);
     }, AUTO_RETRY_MS);
     return () => clearTimeout(timer);
-  }, [failure, guard]);
+  }, [failure, guard, open]);
   const write = useHostWrite<ConfigSyncApplied>({
     channel: 'actions',
     resource: CONFIG_SYNC_RESOURCE,
@@ -272,6 +273,15 @@ export function ConfigSyncItem({ t }: ConfigSyncItemProps) {
     value !== undefined && value.profiles.length > 0 && value.reason !== undefined
       ? { path: `${value.home}/profiles/${value.source}/cordis.patch.yml`, reason: value.reason }
       : null;
+  const summary = reading.busy
+    ? t('configSync.summary.loading')
+    : failure !== null
+      ? t('configSync.summary.error')
+      : value === undefined
+        ? undefined
+        : rows.length === 0
+          ? t('configSync.summary.none')
+          : t('configSync.summary.ready', { count: rows.length });
 
   const toggle = (key: string, next: boolean): void => {
     const rest = picked.filter((item) => item !== key);
@@ -308,18 +318,23 @@ export function ConfigSyncItem({ t }: ConfigSyncItemProps) {
   };
 
   return (
-    <SettingsItem
+    <SettingsDisclosure
       title={t('configSync.nav')}
       description={t('configSync.lead')}
-      action={
-        failure === null ? (
-          <RefreshButton t={t} disabled={reading.busy} onClick={reread} />
-        ) : undefined
-      }
+      meta={summary}
+      open={open}
+      onToggle={() => setOpen((current) => !current)}
     >
       <div className={styles.body}>
         {value === undefined ? null : (
-          <SourcePicker t={t} profiles={value.profiles} source={value.source} onPick={pickSource} />
+          <div className={styles.toolbar}>
+            {value.profiles.length > 1 ? (
+              <SourcePicker t={t} profiles={value.profiles} source={value.source} onPick={pickSource} />
+            ) : (
+              <span className={styles.grow} />
+            )}
+            <RefreshButton t={t} disabled={reading.busy} onClick={reread} />
+          </div>
         )}
         {reading.busy ? <ReadingRow t={t} /> : null}
         {failure !== null && !reading.busy ? (
@@ -349,6 +364,6 @@ export function ConfigSyncItem({ t }: ConfigSyncItemProps) {
           </>
         ) : null}
       </div>
-    </SettingsItem>
+    </SettingsDisclosure>
   );
 }

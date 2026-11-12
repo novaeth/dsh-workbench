@@ -9,8 +9,8 @@ import {
   SIDEBAR_EDITION_ROUTE,
 } from '@/kernel/contract/sidebar-edition';
 import type { Translate } from '@dsh-workbench/shared';
-import { ChoiceGroup, MIN_BUSY_MS, Note } from '@dsh-workbench/shared';
-import { Button } from '@deepseek-ai/dsh-client-ui-primitives';
+import { MIN_BUSY_MS } from '@dsh-workbench/shared';
+import { Button, SegmentedControl } from '@deepseek-ai/dsh-client-ui-primitives';
 import { useApiResource } from '@/shared/hooks/use-api-resource';
 import { useHostWrite } from '@/shared/hooks/use-host-write';
 import { useVisibleBusy } from '@/shared/hooks/use-visible-busy';
@@ -20,7 +20,8 @@ import {
   disarmCustomSidebarTakeover,
   markSidebarEditionPending,
 } from '@/app/layouts/sidebar/edition-boot';
-import { SettingsItem } from './SettingsItem';
+import { SettingsRow } from './SettingsRow';
+import styles from './SidebarEditionItem.module.css';
 
 export interface SidebarEditionItemProps {
   readonly t: Translate;
@@ -41,8 +42,7 @@ export function SidebarEditionItem({ t }: SidebarEditionItemProps): JSX.Element 
 
   useEffect(() => subscribeSidebarEdition(() => setRuntime(runtimeSidebarEdition())), []);
 
-  const choose = (next: string): void => {
-    if (next !== 'official' && next !== 'custom') return;
+  const choose = (next: SidebarEdition): void => {
     if (next === 'custom') armCustomSidebarTakeover();
     void write.send({ edition: next }).then((outcome) => {
       if (!outcome.ok) {
@@ -59,43 +59,41 @@ export function SidebarEditionItem({ t }: SidebarEditionItemProps): JSX.Element 
     });
   };
 
+  const current: SidebarEdition = stored ?? runtime;
+  const description =
+    busy.busy || switching
+      ? t('sidebarEdition.saving')
+      : current === 'official'
+        ? t('sidebarEdition.officialHint')
+        : t('sidebarEdition.customHint');
+
   return (
-    <SettingsItem title={t('sidebarEdition.nav')} description={t('sidebarEdition.lead')}>
-      <ChoiceGroup
-        label={t('sidebarEdition.nav')}
-        name="sidebar-edition"
-        value={stored ?? runtime}
-        variant="boxed"
-        disabled={stored === undefined || switching}
-        loading={busy.busy || switching}
-        loadingText={t('sidebarEdition.saving')}
-        options={[
-          {
-            value: 'official',
-            label: t('sidebarEdition.official'),
-            description: t('sidebarEdition.officialHint'),
-          },
-          {
-            value: 'custom',
-            label: t('sidebarEdition.custom'),
-            description: t('sidebarEdition.customHint'),
-          },
-        ]}
-        onChange={choose}
-      />
-      {write.failed === null ? null : (
-        <Note tone="problem" role="alert">
-          {write.failed}
-        </Note>
-      )}
+    <SettingsRow
+      title={t('sidebarEdition.nav')}
+      description={description}
+      error={write.failed}
+      control={
+        <SegmentedControl
+          id="sidebar-edition"
+          label={t('sidebarEdition.nav')}
+          value={current}
+          disabled={stored === undefined || switching || busy.busy}
+          onChange={choose}
+          options={[
+            { value: 'official', label: t('sidebarEdition.official') },
+            { value: 'custom', label: t('sidebarEdition.custom') },
+          ]}
+        />
+      }
+    >
       {stored === undefined || stored === runtime ? null : (
-        <Note>
-          {t('sidebarEdition.reloadRequired')}{' '}
+        <div className={styles.reload}>
+          <span>{t('sidebarEdition.reloadRequired')}</span>
           <Button variant="ghost" size="sm" onClick={() => globalThis.location?.reload()}>
             {t('sidebarEdition.reload')}
           </Button>
-        </Note>
+        </div>
       )}
-    </SettingsItem>
+    </SettingsRow>
   );
 }

@@ -1,6 +1,5 @@
 import { createElement as h } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
-import { SettingsSection } from '@dsh-workbench/shared';
 import { clientSurface } from '@/shared/api/platform/client';
 import { AdapterSetItem } from './AdapterSetItem';
 import { ConfigSyncItem } from './ConfigSyncItem';
@@ -17,19 +16,22 @@ export interface WorkbenchSettingsSectionProps {
 export function WorkbenchSettingsSection({ t }: WorkbenchSettingsSectionProps): JSX.Element {
   const desktop = clientSurface().deployment === 'desktop';
   return (
-    <SettingsSection
-      label={t('workbenchSettings.nav')}
-      title={<span className={styles.title}>{t('workbenchSettings.nav')}</span>}
-    >
-      <div className={styles.body}>
+    <section className={styles.page} aria-label={t('workbenchSettings.nav')}>
+      <header className={styles.head}>
+        <h2 className={styles.title}>{t('workbenchSettings.nav')}</h2>
         <p className={styles.lead}>{t('workbenchSettings.lead')}</p>
+      </header>
+      <div className={styles.rows}>
         <AdapterSetItem t={t} />
         <SidebarEditionItem t={t} />
-        <ConfigSyncItem t={t} />
         <McpOnDemandItem t={t} />
         <UpdatePrereleaseItem t={t} />
-        {desktop ? null : <NewWorkbenchItem t={t} />}
       </div>
-    </SettingsSection>
+      <section className={styles.advanced} aria-label={t('workbenchSettings.advanced')}>
+        <h3 className={styles.advancedTitle}>{t('workbenchSettings.advanced')}</h3>
+        <ConfigSyncItem t={t} />
+        {desktop ? null : <NewWorkbenchItem t={t} />}
+      </section>
+    </section>
   );
 }

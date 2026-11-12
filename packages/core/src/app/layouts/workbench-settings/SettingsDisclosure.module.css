@@ -1,0 +1,93 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  padding: var(--wb-len-16) 0;
+}
+
+.section + .section {
+  border-top: var(--wb-len-0-5) solid var(--dsw-alias-border-l2);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wb-len-24);
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.head:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid
+    var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: var(--wb-len-4);
+  border-radius: var(--dsw-radius-sm);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-4);
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--dsw-font-s-14-font-size);
+  line-height: var(--wb-line-20);
+  color: var(--dsw-alias-label-primary);
+}
+
+.description {
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.tail {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-len-8);
+}
+
+.meta {
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.chevron {
+  width: var(--wb-len-6);
+  height: var(--wb-len-6);
+  border-right: 1.5px solid var(--dsw-alias-label-tertiary);
+  border-bottom: 1.5px solid var(--dsw-alias-label-tertiary);
+  transform: rotate(-45deg);
+  transition: transform var(--wb-dur-0-12) ease;
+}
+
+.head[aria-expanded='true'] .chevron {
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-12);
+  margin-top: var(--wb-len-12);
+  padding: var(--wb-len-14) var(--wb-len-16);
+  border-radius: var(--dsw-radius-lg);
+  background: var(--dsw-alias-bg-module-platform);
+}

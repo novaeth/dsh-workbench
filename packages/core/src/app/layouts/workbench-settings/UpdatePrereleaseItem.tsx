@@ -12,8 +12,6 @@ export function UpdatePrereleaseItem({ t }: UpdatePrereleaseItemProps): JSX.Elem
       field="includePrerelease"
       title={t('updatePrerelease.nav')}
       description={t('updatePrerelease.lead')}
-      label={t('updatePrerelease.toggle')}
-      note={t('updatePrerelease.on')}
       failed={t('updatePrerelease.failed')}
     />
   );

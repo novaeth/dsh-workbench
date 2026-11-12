@@ -4,21 +4,32 @@
   gap: var(--wb-len-12);
 }
 
-.sources {
+.toolbar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--wb-len-8);
+  min-width: 0;
+}
+
+.sources {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wb-len-6);
+  min-width: 0;
 }
 
 .sourcesLabel {
   font-size: var(--dsw-font-xxs-12-font-size);
-  color: var(--dsw-alias-label-secondary);
+  line-height: var(--wb-line-18);
+  color: var(--dsw-alias-label-tertiary);
 }
 
 button.sourceOn {
   border-color: var(--dsw-alias-brand-primary);
 }
+
 .sourceCount {
   margin-left: var(--wb-len-4);
   font-variant-numeric: tabular-nums;
@@ -73,4 +84,8 @@ button.sourceOn {
 .foot {
   display: flex;
   justify-content: flex-end;
+}
+
+.grow {
+  flex: 1 1 auto;
 }

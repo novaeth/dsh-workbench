@@ -12,8 +12,6 @@ export function McpOnDemandItem({ t }: McpOnDemandItemProps): JSX.Element {
       field="mcpOnDemand"
       title={t('mcpOnDemand.nav')}
       description={t('mcpOnDemand.lead')}
-      label={t('mcpOnDemand.toggle')}
-      note={t('mcpOnDemand.on')}
       failed={t('mcpOnDemand.failed')}
     />
   );

@@ -1,14 +1,18 @@
-import { Fragment, createElement as h, useMemo, useState } from 'react';
+import { Fragment, createElement as h, useCallback, useMemo, useState } from 'react';
 import type { ProfileCreateApplied, ProfileCreateSnapshot } from '@/kernel/contract/profile-create';
 import { PROFILE_CREATE_RESOURCE, PROFILE_CREATE_ROUTE } from '@/kernel/contract/profile-create';
 import type { Translate } from '@dsh-workbench/shared';
 import { MIN_BUSY_MS, Note, SelectField, TextField } from '@dsh-workbench/shared';
-import { Button, Checkbox } from '@deepseek-ai/dsh-client-ui-primitives';
+import { Button, Checkbox, writeClipboard } from '@deepseek-ai/dsh-client-ui-primitives';
+import { FormRow, FormRows } from '@dsh-workbench/shared';
 import { useApiResource } from '@/shared/hooks/use-api-resource';
 import { useHostWrite } from '@/shared/hooks/use-host-write';
 import { useVisibleBusy } from '@/shared/hooks/use-visible-busy';
-import { SettingsItem } from './SettingsItem';
+import { SettingsDisclosure } from './SettingsDisclosure';
 import styles from './NewWorkbenchItem.module.css';
+
+const COPIED_MS = 1200;
+const NAME_ID = 'workbench-settings-new-name';
 
 export interface NewWorkbenchItemProps {
   readonly t: Translate;
@@ -26,12 +30,19 @@ function defaultSourceOf(snapshot: ProfileCreateSnapshot): string {
 }
 
 export function NewWorkbenchItem({ t }: NewWorkbenchItemProps): JSX.Element {
+  const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [sourcePick, setSourcePick] = useState('');
   const [copy, setCopy] = useState<CopyFlags>({ settings: true });
   const [revision, setRevision] = useState(0);
   const [applied, setApplied] = useState<ProfileCreateApplied | null>(null);
-  const snapshot = useApiResource<ProfileCreateSnapshot>(PROFILE_CREATE_ROUTE, {}, revision);
+  const [copied, setCopied] = useState(false);
+  const snapshot = useApiResource<ProfileCreateSnapshot>(
+    PROFILE_CREATE_ROUTE,
+    {},
+    revision,
+    { enabled: open },
+  );
   const value = snapshot.phase === 'ready' ? snapshot.value : undefined;
   const profiles = useMemo(() => value?.profiles ?? [], [value]);
   const source = sourcePick !== '' ? sourcePick : value === undefined ? '' : defaultSourceOf(value);
@@ -61,9 +72,23 @@ export function NewWorkbenchItem({ t }: NewWorkbenchItemProps): JSX.Element {
       setRevision((current) => current + 1);
     });
   };
+  const command = applied?.command;
+  const copyCommand = useCallback((): void => {
+    if (command === undefined) return;
+    void writeClipboard(command).then((ok) => {
+      if (!ok) return;
+      setCopied(true);
+      setTimeout(() => setCopied(false), COPIED_MS);
+    });
+  }, [command]);
 
   return (
-    <SettingsItem title={t('profileCreate.nav')} description={t('profileCreate.lead')}>
+    <SettingsDisclosure
+      title={t('profileCreate.nav')}
+      description={t('profileCreate.lead')}
+      open={open}
+      onToggle={() => setOpen((current) => !current)}
+    >
       <div className={styles.body}>
         {snapshot.phase === 'error' ? (
           <Note tone="problem">
@@ -73,39 +98,38 @@ export function NewWorkbenchItem({ t }: NewWorkbenchItemProps): JSX.Element {
             </Button>
           </Note>
         ) : null}
-        {reading.busy ? <p className={styles.hint}>{t('profileCreate.reading')}</p> : null}
+        {reading.busy ? <Note>{t('profileCreate.reading')}</Note> : null}
         {value === undefined ? null : (
           <>
             {profiles.length === 0 ? <Note>{t('profileCreate.noProfiles')}</Note> : null}
-            <label className={styles.field}>
-              <span className={styles.label}>{t('profileCreate.name')}</span>
-              <TextField
-                value={name}
-                placeholder={t('profileCreate.nameHint')}
-                autoComplete="off"
-                spellCheck={false}
-                className={styles.input}
-                onChange={(event) => setName(event.currentTarget.value)}
-              />
-            </label>
-            <div className={styles.field}>
-              <span className={styles.label}>{t('profileCreate.source')}</span>
-              <SelectField
-                value={source}
-                options={options}
-                onChange={setSourcePick}
-                ariaLabel={t('profileCreate.source')}
-                invalid={source === ''}
-              />
-            </div>
-            <fieldset className={styles.copy}>
-              <legend className={styles.label}>{t('profileCreate.copy')}</legend>
-              <Checkbox
-                checked={copy.settings}
-                label={t('profileCreate.settings')}
-                onChange={(next) => toggle('settings', next)}
-              />
-            </fieldset>
+            <FormRows>
+              <FormRow label={t('profileCreate.name')} htmlFor={NAME_ID}>
+                <TextField
+                  id={NAME_ID}
+                  value={name}
+                  placeholder={t('profileCreate.nameHint')}
+                  autoComplete="off"
+                  spellCheck={false}
+                  onChange={(event) => setName(event.currentTarget.value)}
+                />
+              </FormRow>
+              <FormRow label={t('profileCreate.source')}>
+                <SelectField
+                  value={source}
+                  options={options}
+                  onChange={setSourcePick}
+                  ariaLabel={t('profileCreate.source')}
+                  invalid={source === ''}
+                />
+              </FormRow>
+              <FormRow label={t('profileCreate.copy')}>
+                <Checkbox
+                  checked={copy.settings}
+                  label={t('profileCreate.settings')}
+                  onChange={(next) => toggle('settings', next)}
+                />
+              </FormRow>
+            </FormRows>
             {write.failed === null ? null : (
               <Note tone="problem" role="alert">
                 {write.failed}
@@ -119,19 +143,24 @@ export function NewWorkbenchItem({ t }: NewWorkbenchItemProps): JSX.Element {
           </>
         )}
         {applied === null ? null : (
-          <Note>
-            {t('profileCreate.created', { profile: applied.profile })}
-            {applied.command === undefined ? (
-              <span>{t('profileCreate.commandUnsupported')}</span>
+          <div className={styles.result}>
+            <Note>{t('profileCreate.created', { profile: applied.profile })}</Note>
+            {command === undefined ? (
+              <Note>{t('profileCreate.commandUnsupported')}</Note>
             ) : (
               <>
-                <span className={styles.commandLabel}>{t('profileCreate.command')}</span>
-                <code className={styles.command}>{applied.command}</code>
+                <Note>{t('profileCreate.command')}</Note>
+                <div className={styles.commandRow}>
+                  <code className={styles.command}>{command}</code>
+                  <Button variant="ghost" size="sm" onClick={copyCommand}>
+                    {copied ? t('profileCreate.copied') : t('profileCreate.copyCommand')}
+                  </Button>
+                </div>
               </>
             )}
-          </Note>
+          </div>
         )}
       </div>
-    </SettingsItem>
+    </SettingsDisclosure>
   );
 }
