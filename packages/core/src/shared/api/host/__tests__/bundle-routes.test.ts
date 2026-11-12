@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { rememberPackageSource } from '@dsh-workbench/shared/host';
 import { fakeSeamOf } from './seam-fake';
 import { BUNDLE_REGISTRY_DEFAULT } from '@/kernel/contract/bundle-install';

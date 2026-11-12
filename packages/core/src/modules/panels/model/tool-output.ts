@@ -1,4 +1,4 @@
-import type { DshToolOutputDefinition } from '@dsh-workbench/shared';
+import type { DshToolOutputDefinition } from '@dsh-workbench/shared/host';
 
 type Rendered = ReturnType<DshToolOutputDefinition['render']>;
 

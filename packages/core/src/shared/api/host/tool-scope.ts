@@ -1,4 +1,4 @@
-import type { DshPromptAssembly } from '@dsh-workbench/shared';
+import type { DshPromptAssembly } from '@dsh-workbench/shared/host';
 import type { ToolScopeContext } from '@dsh-workbench/shared/host';
 
 export interface ScopedToolRegistry {

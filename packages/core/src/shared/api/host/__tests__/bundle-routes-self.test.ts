@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import type { Seam } from '@dsh-workbench/shared/host';
 import { PLUGIN_ID, RELEASE_PACKAGES } from '@dsh-workbench/shared/host';
 import { SELF_UPDATE_STATES } from '@dsh-workbench/shared/contract/protocol/bundle-install';

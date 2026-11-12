@@ -1,4 +1,4 @@
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { TOOLBOX_SERVICE, type ToolboxCapability, type ToolboxPort } from '@dsh-workbench/shared/host';
 import { toolScopeContextOf } from './tool-scope';
 

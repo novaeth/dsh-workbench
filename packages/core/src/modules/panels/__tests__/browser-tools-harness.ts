@@ -2,7 +2,7 @@ import { afterEach } from 'vitest';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared/host';
 import { DIY_DEBUG_SERVICE, UNITS_SERVICE, WORKBENCH_ADAPTERS, createDebugStore, createSeam } from '@dsh-workbench/shared/host';
 import { opencliSurface } from './test-adapters';
 import { registerBrowserTools } from '../model/diy-browser-tools';

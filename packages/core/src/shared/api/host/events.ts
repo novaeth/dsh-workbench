@@ -1,4 +1,4 @@
-import type { DshHostContext, DshRequest, DshResponse } from '@dsh-workbench/shared';
+import type { DshHostContext, DshRequest, DshResponse } from '@dsh-workbench/shared/host';
 import { EVENTS_PATH } from '@dsh-workbench/shared/host';
 import type { FactChange, FactLog } from '@dsh-workbench/shared/host';
 

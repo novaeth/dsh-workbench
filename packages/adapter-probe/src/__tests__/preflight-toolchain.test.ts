@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { DshShell, DshShellExecution } from '@dsh-workbench/shared';
+import type { DshShell, DshShellExecution } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { createSeam } from '@dsh-workbench/shared/host';
 import { createPreflight, probeDesktopToolchain, skippableNpmProbe } from '../index.js';

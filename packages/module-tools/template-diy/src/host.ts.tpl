@@ -1,4 +1,4 @@
-import type { DshToolRegistry, UnitModuleFace } from '@dsh-workbench/core/contract';
+import type { ToolRegistry, UnitModuleFace } from '@dsh-workbench/core/contract';
 import {
   defineUnitHostPlugin,
   factOfRoute,
@@ -60,7 +60,7 @@ const face: UnitModuleFace = {
         },
       },
       registerTools: () => {
-        const tools = (deps.ctx.get as (name: string) => DshToolRegistry | undefined)('tools');
+        const tools = deps.ctx.get<ToolRegistry>('tools');
         if (tools === undefined) {
           deps.logger?.warn?.(`[${UNIT_ID}] 外壳没有提供 tools 服务：这两把工具注册不进去`);
           return [];

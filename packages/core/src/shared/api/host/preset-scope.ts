@@ -1,6 +1,6 @@
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { SESSION_PROJECTIONS_SERVICE, type ToolScopeContext } from '@dsh-workbench/shared/host';
-import type { DshPromptAssembly } from '@dsh-workbench/shared';
+import type { DshPromptAssembly } from '@dsh-workbench/shared/host';
 import { createToolScope, type ToolScope, type ToolScopeAgent } from './tool-scope';
 
 export type SessionProjections = DshHostContext['sessionProjections'];

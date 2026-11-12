@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { DshHostContext, UnitManifest } from '@dsh-workbench/shared';
+import type { UnitManifest } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import type { UnitModuleFace } from '@dsh-workbench/shared/host';
 import { unitTitleKey } from '@dsh-workbench/shared/host';
 import { mountUnits } from '../mount-units';
@@ -15,7 +16,7 @@ describe('mountUnits：交给套件的 ctx 转发 get 的 strict', () => {
     const face: UnitModuleFace = {
       unit: 'probe',
       mount: (deps) => {
-        seen = deps.ctx.get('workbenchAdapters', false);
+        seen = (deps.ctx.get as (name: string, strict?: boolean) => unknown)('workbenchAdapters', false);
         return { routes: {}, registerTools: () => [] };
       },
     };

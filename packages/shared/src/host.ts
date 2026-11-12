@@ -1,5 +1,6 @@
 export * from './config/constants.js';
 export * from './api/context-ref.js';
+export * from './contract/module-context.js';
 export * from './contract/unit.js';
 export * from './contract/needs.js';
 export * from './contract/data.js';
@@ -134,3 +135,4 @@ export * from './host/market-index.js';
 export * from './host/market-index-claim.js';
 export * from './host/changelog.js';
 export * from './host/installed-sources.js';
+export * from './api/dsh.js';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshHostContext, DshRequest, DshResponse, DshWebRoute } from '@dsh-workbench/shared';
+import type { DshHostContext, DshRequest, DshResponse, DshWebRoute } from '@dsh-workbench/shared/host';
 import { ACTIONS_PREFIX, PREFS_PREFIX, PROVISION_PREFIX } from '@dsh-workbench/shared/host';
 import type { UnitsPlan } from '@/kernel/host/mount-units.js';
 import { createPostChannels } from '../post-channels.js';

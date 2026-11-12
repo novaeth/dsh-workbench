@@ -1,4 +1,4 @@
-import type { DshHostContext, DshIndexRow } from '@dsh-workbench/shared';
+import type { DshHostContext, DshIndexRow } from '@dsh-workbench/shared/host';
 
 const GUARD_SCRIPT = `(() => {
   const boot = () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshShell } from '@dsh-workbench/shared';
+import type { DshShell } from '@dsh-workbench/shared/host';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
 import { fakeSeamOf } from '../../__tests__/seam-fake';
 import { ACT_TIMEOUT_MS, actBrowser, actErrorOf, type ActStep } from '../diy-browser-act';

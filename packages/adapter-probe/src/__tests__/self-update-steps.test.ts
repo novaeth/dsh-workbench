@@ -147,8 +147,11 @@ describe('自更新：runner 按步骤跑，失败只落在 marker 上', () => {
     expect(result.ok).toBe(true);
     expect(result.state).toBe('pending');
     expect(result.ran).toEqual(['version', 'install', 'verify', 'switch', 'bundles', 'marker', 'expect-boot']);
-    expect(processes.calls).toHaveLength(1);
+    expect(processes.calls).toHaveLength(2);
     expect(processes.calls[0]?.args).toContain('install');
+    expect(processes.calls[1]?.args).toEqual(
+      expect.arrayContaining(['install', '--dir', plan.profileDir, '--prefer-offline']),
+    );
 
     const link = join(plan.profileDir, 'node_modules', CORE);
     expect(lstatSync(link).isSymbolicLink()).toBe(true);
@@ -363,7 +366,7 @@ describe('确认窗口：只认「这一版确认可用」，不再自动回滚'
     expect(result.state).toBe('pending');
     expect(JSON.parse(readFileSync(plan.markerPath, 'utf8'))).toMatchObject({ state: 'pending-restart', version: TO });
     expect(linkedVersion(plan.profileDir)).toBe(TO);
-    expect(processes.calls).toHaveLength(1);
+    expect(processes.calls).toHaveLength(2);
   });
 
   it('★ 新版起来但工作台那半一直没露面 → 也不翻回去', async () => {
@@ -390,7 +393,7 @@ describe('确认窗口：只认「这一版确认可用」，不再自动回滚'
     expect(result.state).toBe('pending');
     expect(JSON.parse(readFileSync(plan.markerPath, 'utf8'))).toMatchObject({ state: 'pending-restart', version: TO });
     expect(linkedVersion(plan.profileDir)).toBe(TO);
-    expect(processes.calls).toHaveLength(1);
+    expect(processes.calls).toHaveLength(2);
   });
 });
 

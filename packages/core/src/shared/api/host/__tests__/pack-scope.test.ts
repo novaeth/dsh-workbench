@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { MCP_TOOLS_SERVICE, TOOLBOX_SERVICE } from '@dsh-workbench/shared/host';
 import type { McpToolsPort } from '@dsh-workbench/shared/host';
 import type { WorkbenchSettings } from '@/kernel/contract/workbench-settings';

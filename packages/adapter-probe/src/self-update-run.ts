@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   ensureProfileBundle,
@@ -159,14 +158,14 @@ async function applyStep(
     );
     if (!flipped.ok) return { ok: false, detail: flipped.detail };
     writeProfileLinks({ profileDir: step.profileDir, links: step.links });
-    const lockNote = await refreshProfileLock(plan, deps, log);
+    const reinstallNote = await reinstallProfile(plan, deps, log);
     return {
       ok: true,
       detail: `${
         flipped.waited
           ? `已经指到 ${plan.versionDir}（等你退出后换上的，重启生效）`
           : `已经指到 ${plan.versionDir}（重启后生效）`
-      }${lockNote}`,
+      }${reinstallNote}`,
       marks: 'flip',
     };
   }
@@ -226,27 +225,26 @@ function runCommand(step: SelfUpdateInstallStep, deps: SelfUpdateRunDeps): Promi
   });
 }
 
-async function refreshProfileLock(
+export function profileInstallArgs(head: string | undefined, profileDir: string): readonly string[] {
+  const args = ['install', '--dir', profileDir, '--prefer-offline', '--config.confirm-modules-purge=false'];
+  return head !== undefined && head.endsWith('.cjs') ? [head, ...args] : args;
+}
+
+async function reinstallProfile(
   plan: SelfUpdateSteps,
   deps: SelfUpdateRunDeps,
   log: (message: string) => void,
 ): Promise<string> {
-  const lock = join(plan.profileDir, 'pnpm-lock.yaml');
-  if (!existsSync(lock)) return '';
   const install = plan.steps.find((step) => step.kind === 'install');
   if (install === undefined) return '';
-  const head = install.args[0];
-  const args =
-    head !== undefined && head.endsWith('.cjs')
-      ? [head, 'install', '--lockfile-only', '--dir', plan.profileDir]
-      : ['install', '--lockfile-only', '--dir', plan.profileDir];
-  const outcome = await runCommand({ ...install, args, cwd: plan.profileDir }, deps);
+  const args = profileInstallArgs(install.args[0], plan.profileDir);
+  const outcome = await runCommand({ ...install, args: [...args], cwd: plan.profileDir }, deps);
   if (outcome.code === 0) {
-    log('profile 的 lockfile 已同步到新的 link: 规格');
-    return '；profile 的 lockfile 已同步';
+    log('profile 已按新的 link 重装（旧 shared 带进来的 dsh 包会被清掉）');
+    return '；profile 已按新依赖重装';
   }
-  log(`profile 的 lockfile 没同步上（退出码 ${String(outcome.code)}）：${tailLines(outcome.output, 4)}`);
-  return '；profile 的 lockfile 没同步（重启前先别在 profile 里装东西）';
+  log(`profile 重装没成（退出码 ${String(outcome.code)}）：${tailLines(outcome.output, 4)}`);
+  return '；profile 没重装（启动器会拦下旧的 dsh 层，重启前先别在 profile 里装东西）';
 }
 
 async function expectBoot(

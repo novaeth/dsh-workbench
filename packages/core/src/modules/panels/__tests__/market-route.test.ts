@@ -6,7 +6,7 @@ import { createWorkspaceStore } from '@dsh-workbench/shared/host';
 const PLUGIN_MANIFEST_FILE = 'opencli-plugin.json';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { fakeSeamOf } from './seam-fake';
-import type { DshShell } from '@dsh-workbench/shared';
+import type { DshShell } from '@dsh-workbench/shared/host';
 import type { BundleChange, BundleInstallRequest } from '@/kernel/contract/bundle-install';
 import type { BundleManager, ProvisionProblem, Seam, SupplyPort } from '@dsh-workbench/shared/host';
 import { diagnoseInstallFailure, planStepText, refusalReason } from '@dsh-workbench/shared/host';

@@ -4,7 +4,8 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createFakeShell, createNoopDataReader,
 } from '@dsh-workbench/shared/testing';
-import type { DshShell, UnitManifest } from '@dsh-workbench/shared';
+import type { UnitManifest } from '@dsh-workbench/shared';
+import type { DshShell } from '@dsh-workbench/shared/host';
 import { createHostKit, createWorkspaceStore, hostSurface } from '@dsh-workbench/shared/host';
 import { PANELS_FILE, PANELS_MODULE_ID, RELEASED_FILE } from '../model/service';
 import { ALL_TOOLS, DIY_PACK_TOOLS, MANAGE_TOOLS, TOOLBOX_TOOLS, panelsUnit } from '../unit';

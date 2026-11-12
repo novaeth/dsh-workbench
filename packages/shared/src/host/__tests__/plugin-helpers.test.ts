@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { defineUnitHostPlugin, type UnitHostContextLike } from '../unit-plugin.js';
+import { defineUnitHostPlugin } from '../unit-plugin.js';
+import type { HostContext } from '../../contract/module-context.js';
 import { recordOf, textOf } from '../payload.js';
 import { writeApprovalOf } from '../tool-approval.js';
 import type { UnitModuleFace } from '../unit-face.js';
@@ -53,7 +54,7 @@ describe('defineUnitHostPlugin', () => {
       run();
       return () => {};
     });
-    plugin.apply({ get: () => ({ register }), effect } as unknown as UnitHostContextLike);
+    plugin.apply({ get: () => ({ register }), effect } as unknown as HostContext);
     expect(register).toHaveBeenCalledWith(face);
     expect(effect).toHaveBeenCalledWith(expect.any(Function), '@demo/module: 注册 demo');
   });
@@ -61,7 +62,7 @@ describe('defineUnitHostPlugin', () => {
   it('外壳没给服务：warn 一声，不抛', () => {
     const plugin = defineUnitHostPlugin({ name: '@demo/module', unit: 'demo', face });
     const warn = vi.fn();
-    const ctx = { get: () => undefined, effect: () => () => {}, logger: { warn } } as unknown as UnitHostContextLike;
+    const ctx = { get: () => undefined, effect: () => () => {}, logger: { warn } } as unknown as HostContext;
     expect(() => plugin.apply(ctx)).not.toThrow();
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('workbenchUnits'));
   });

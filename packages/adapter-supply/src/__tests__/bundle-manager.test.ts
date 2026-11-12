@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { readBundleManager } from '../index.js';
 
 function fakeContext(manager: unknown): DshHostContext {

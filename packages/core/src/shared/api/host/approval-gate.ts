@@ -1,4 +1,4 @@
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { approvalFor, type ApprovalCall, type ToolUnit, type UnitMountResult } from '@dsh-workbench/shared/host';
 import { approvalCallOf } from './approval-call';
 import { fullPermissionOf } from './permission-mode';

@@ -1,4 +1,4 @@
-import type { DshToolDefinition, UnitMountDeps } from '@dsh-workbench/core/contract';
+import type { ToolDefinition, UnitMountDeps } from '@dsh-workbench/core/contract';
 import {
   TEXT_OUTPUT,
   createFlowTask,
@@ -25,7 +25,7 @@ export interface StartResult {
 
 export interface Sample {
   readonly runs: LongTaskRegistry<LongTaskBase> | undefined;
-  readonly runTool: DshToolDefinition;
+  readonly runTool: ToolDefinition;
   startFromPayload(payload: unknown): StartResult;
 }
 
@@ -78,7 +78,7 @@ export function createSample(deps: UnitMountDeps): Sample {
     return { ok: true, runId: run.id, status: run.status, text: headlineOf(run) };
   };
 
-  const runTool: DshToolDefinition = flowTask?.tool ?? {
+  const runTool: ToolDefinition = flowTask?.tool ?? {
     name: DECLARED_TOOLS.run.name,
     description: runDescription,
     parameters: { type: 'object', properties: {}, additionalProperties: true },

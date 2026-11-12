@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { createSeam, quoteShellArgFor } from '@dsh-workbench/shared/host';
 import { createFakeProcesses, createFakeShell } from '@dsh-workbench/shared/testing';
 import { isInstalledCopy, localPnpmBin, localPnpmCommand, opencliWrapperScript, packageRootOf, prependPath, runDetached, runtimeSeedPaths, runtimeSeedRootOf, seedRuntimeFiles, seedWorkbenchToolchain, workshopSeedPlan } from '../index.js';

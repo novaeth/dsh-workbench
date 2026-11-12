@@ -1,14 +1,6 @@
 import { UNITS_SERVICE } from '../config/constants.js';
+import type { HostContext } from '../contract/module-context.js';
 import type { UnitModuleFace } from './unit-face.js';
-
-/**
- * 宿主面注册只需要的那点上下文：`get` / `effect` / 可选的 `logger`。
- */
-export interface UnitHostContextLike {
-  get<T = unknown>(name: string): T | undefined;
-  effect(effect: () => void | (() => void), label?: string): () => void;
-  readonly logger?: { warn?(message: string): void } | undefined;
-}
 
 /**
  * 一个宿主插件导出的三件：`name` / `inject` / `apply`。
@@ -16,7 +8,7 @@ export interface UnitHostContextLike {
 export interface UnitHostPlugin {
   readonly name: string;
   readonly inject: readonly string[];
-  apply(ctx: UnitHostContextLike): void;
+  apply(ctx: HostContext): void;
 }
 
 /**
@@ -37,7 +29,7 @@ export function defineUnitHostPlugin(options: {
   return {
     name,
     inject: [UNITS_SERVICE],
-    apply(ctx: UnitHostContextLike): void {
+    apply(ctx: HostContext): void {
       const units = ctx.get<{ register(face: UnitModuleFace): () => void }>(UNITS_SERVICE);
       if (units === undefined) {
         ctx.logger?.warn?.(`[${unit}] 外壳没有提供 workbenchUnits 服务：这个模块装不进来`);

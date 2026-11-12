@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { loadAdapterSet, resolveAdapterSet, type AdapterSet } from '@dsh-workbench/shared/host';
 import { createAdapterSet, FIXTURE_MARKER } from '../index.js';
 

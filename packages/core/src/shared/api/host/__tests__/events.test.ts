@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { DshRequest, DshResponse } from '@dsh-workbench/shared';
+import type { DshRequest, DshResponse } from '@dsh-workbench/shared/host';
 import { createFactLog } from '@dsh-workbench/shared/host';
 import { createFactStream } from '../events';
 

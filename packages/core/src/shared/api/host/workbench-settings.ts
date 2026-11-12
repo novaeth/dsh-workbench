@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import type { PostResource, RouteTable } from '@dsh-workbench/shared/host';
 import { writeJsonFile } from '@dsh-workbench/shared/host';
 import type {

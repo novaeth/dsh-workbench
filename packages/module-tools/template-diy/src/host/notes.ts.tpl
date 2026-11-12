@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { DshToolDefinition, UnitMountDeps } from '@dsh-workbench/core/contract';
+import type { ToolDefinition, UnitMountDeps } from '@dsh-workbench/core/contract';
 import { TEXT_OUTPUT, recordOf, sessionWorkspace, textOf } from '@dsh-workbench/shared/host';
 import { DECLARED_TOOLS } from '../declared-tools';
 import {
@@ -24,7 +24,7 @@ export interface NotesResult {
 export interface Notes {
   list(workspace: string): Note[];
   add(workspace: string, rawText: unknown): NotesResult;
-  readonly tool: DshToolDefinition;
+  readonly tool: ToolDefinition;
   handle(payload: unknown): unknown;
 }
 
@@ -48,7 +48,7 @@ export function createNotes(deps: UnitMountDeps): Notes {
     return { ok: true, note, notes };
   };
 
-  const tool: DshToolDefinition = {
+  const tool: ToolDefinition = {
     name: DECLARED_TOOLS.addNote.name,
     description: '往当前工作区的模块笔记里加一条（最多 20 条，只写本模块自己的文件夹，不动平台）。',
     parameters: {

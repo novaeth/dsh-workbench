@@ -25,7 +25,7 @@ PKG_DIR="$(cd "$SELF_DIR/.." && pwd -P)"
 PKG_VERSION="$(node -p "require('$PKG_DIR/package.json').version")"
 # 版本下限门禁要的是 `>=X`：假 dsh 直接报那个 X（正好够）。
 DSH_FLOOR="$(node -p "require('$PKG_DIR/package.json').engines?.dsh ?? ''" 2>/dev/null || true)"
-FAKE_DSH_VERSION="${DSH_FLOOR#>=[[:space:]]}"
+FAKE_DSH_VERSION="$(printf '%s' "$DSH_FLOOR" | sed -E 's/^>=[[:space:]]*//; s/[[:space:]].*$//')"
 
 work="$(mktemp -d)"; trap 'rm -rf "$work"' EXIT
 fail() { echo "FAIL: $1"; exit 1; }
@@ -36,15 +36,16 @@ fake_bin() {
 #!/usr/bin/env bash
 if [ "${1:-}" = "--version" ]; then echo "$FAKE_DSH_VERSION"; exit 0; fi
 if [ "${1:-}" = "plugin" ]; then
-  shift; profile=""; spec=""
+  shift; profile=""; spec=""; action=""
   while [ $# -gt 0 ]; do
     case "$1" in
       --profile) profile="$2"; shift 2 ;;
-      add) shift; spec="${1:-}"; shift ;;
+      add) action=add; shift; spec="${1:-}"; shift ;;
       *) shift ;;
     esac
   done
-  [ -n "$profile" ] && [ -n "$spec" ] || exit 0
+  [ -n "$profile" ] || exit 0
+  [ -n "$spec" ] || exit 0
   WB_MANIFEST="$FAKE_DSH_HOME/profiles/$profile/package.json" WB_SPEC="$spec" node -e '
 const fs = require("node:fs");
 const file = process.env.WB_MANIFEST;
@@ -194,5 +195,47 @@ DSH_HOME="$wb3_home" WORKBENCH_PROFILE=wb3 \
   fail "⑨ pin-port 单跑失败（见 $work/pin.out）"
 cmp -s "$patch" "$work/wb3.patch.pinned" || fail "⑨ pin-port 不幂等：第二次跑改了字节"
 grep -q "已有 webserver 行" "$work/pin.out" || fail "⑨ 第二次跑没说清「一个字节没动」"
+
+# ⑩ profile 里的 dsh 插件层：旧版装进来的那份必须被认出来，第三方插件不误伤
+#
+# 现场：旧版 `@dsh-workbench/shared` 把 dsh 包放在 `dependencies`（类型面用，ADR-0110），
+# 装包时会跟着进 profile；dsh 一升级，预检就把这批旧插件逐个停用，启动只剩一句
+# "N required plugins did not activate"。新装已经不会再带这棵树，这里只拦旧 profile。
+make_fake_runtime() {
+  local root="$1"
+  mkdir -p "$root/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-session" \
+    "$root/node_modules/.bin"
+  printf '{"name":"@deepseek-ai/dsh","version":"%s"}\n' "$FAKE_DSH_VERSION" \
+    >"$root/node_modules/@deepseek-ai/dsh/package.json"
+  printf '{"name":"@deepseek-ai/dsh-session","version":"%s"}\n' "$FAKE_DSH_VERSION" \
+    >"$root/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-session/package.json"
+  fake_bin "$root/node_modules/@deepseek-ai/dsh/lib"
+  ln -s ../@deepseek-ai/dsh/lib/dsh "$root/node_modules/.bin/dsh"
+}
+
+layer_home="$work/layer-home"
+layer_rt="$work/layer-rt"
+make_fake_runtime "$layer_rt"
+mkdir -p "$layer_home/profiles/probe/node_modules/@deepseek-ai/dsh-session" \
+  "$layer_home/profiles/probe/node_modules/@deepseek-ai/dsh-web-search-exa"
+printf '{"name":"probe","dependencies":{},"dsh":{"profile":{"bundles":["@dsh-workbench/core"]}}}\n' \
+  >"$layer_home/profiles/probe/package.json"
+printf '{"name":"@deepseek-ai/dsh-session","version":"9.9.9"}\n' \
+  >"$layer_home/profiles/probe/node_modules/@deepseek-ai/dsh-session/package.json"
+printf '{"name":"@deepseek-ai/dsh-web-search-exa","version":"9.9.9"}\n' \
+  >"$layer_home/profiles/probe/node_modules/@deepseek-ai/dsh-web-search-exa/package.json"
+
+PATH="$layer_rt/node_modules/.bin:$PATH" DSH_HOME="$layer_home" FAKE_DSH_HOME="$layer_home" \
+  FAKE_DSH_VERSION="$FAKE_DSH_VERSION" \
+  bash "$PKG_DIR/bin/dsh-workbench" --profile probe >"$work/layer.out" 2>&1 &&
+  fail "⑩ 插件层和运行时不同代，启动器没拒绝"
+grep -q "dsh 插件层和运行时不是同一版" "$work/layer.out" ||
+  fail "⑩ 拒绝时没说清是插件层不同代（见 $work/layer.out）"
+grep -q "@deepseek-ai/dsh-session@9.9.9" "$work/layer.out" ||
+  fail "⑩ 没列出对不上的那个包"
+grep -q "dsh-web-search-exa" "$work/layer.out" &&
+  fail "⑩ 把运行时里没有的第三方插件也当成插件层（会误伤）"
+grep -q "dsh plugin --profile probe add @dsh-workbench/core" "$work/layer.out" ||
+  fail "⑩ 没给重装工作台的修复命令"
 
 echo "ALL OK"

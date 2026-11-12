@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshHostContext, DshRequest, DshResponse, DshWebRoute } from '@dsh-workbench/shared';
+import type { DshHostContext, DshRequest, DshResponse, DshWebRoute } from '@dsh-workbench/shared/host';
 import { ACTIONS_PREFIX, PANEL_STATE_PREFIX, PREFS_PREFIX } from '@dsh-workbench/shared/host';
 import { createPanelStateStore, registerPanelState } from '@dsh-workbench/shared/host';
 

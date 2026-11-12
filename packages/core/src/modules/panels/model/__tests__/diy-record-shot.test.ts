@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { BROWSER_RECORD_SESSION } from '@dsh-workbench/shared/host';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import type { Seam } from '@dsh-workbench/shared/host';
 import { createDiyRig } from '../../__tests__/diy-harness';
 import { URL, heldStore } from '../../__tests__/record-fixtures';

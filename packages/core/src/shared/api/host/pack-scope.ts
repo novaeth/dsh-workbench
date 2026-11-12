@@ -1,4 +1,4 @@
-import type { DshHostContext, DshPromptAssembly } from '@dsh-workbench/shared';
+import type { DshHostContext, DshPromptAssembly } from '@dsh-workbench/shared/host';
 import {
   MCP_TOOLS_SERVICE,
   TOOLBOX_SERVICE,

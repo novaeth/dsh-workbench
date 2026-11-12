@@ -21,6 +21,7 @@ import {
   type SelfUpdateRequest,
 } from '../index.js';
 import { createSupplyPort } from '../supply-port.js';
+import { profileInstallArgs } from '../self-update-run.js';
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -173,6 +174,26 @@ describe('起更新：先落现场，再交给外面那个进程', () => {
       reason?: string;
     };
     expect(marker).toMatchObject({ state: 'failed', reason: 'incomplete' });
+  });
+});
+
+describe('自更新换完链接之后', () => {
+  it('★ 按新依赖重装 profile，而不是只同步 lockfile（旧 dsh 层要靠 install 清掉）', () => {
+    expect(profileInstallArgs(undefined, '/p')).toEqual([
+      'install',
+      '--dir',
+      '/p',
+      '--prefer-offline',
+      '--config.confirm-modules-purge=false',
+    ]);
+    expect(profileInstallArgs('/x/pnpm.cjs', '/p')).toEqual([
+      '/x/pnpm.cjs',
+      'install',
+      '--dir',
+      '/p',
+      '--prefer-offline',
+      '--config.confirm-modules-purge=false',
+    ]);
   });
 });
 

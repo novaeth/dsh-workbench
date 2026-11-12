@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared';
+import type { DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared/host';
 import { mountUnits } from '@/kernel/host/mount-units';
 import type { UnitMountDeps } from '@dsh-workbench/shared/host';
 import type { HostUnit } from '@/kernel/host/unit-registry';

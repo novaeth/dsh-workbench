@@ -1,4 +1,4 @@
-import type { DshToolDefinition, DshToolRunContext } from '../../api/dsh.js';
+import type { ToolDefinition, ToolRunContext } from '../../contract/module-context.js';
 import { TEXT_OUTPUT, sessionIdOf, sessionWorkspace } from '../tool-kit.js';
 import type { FlowActionRegistry, FlowDefinition } from './types.js';
 import type { LongTaskBase, LongTaskRegistry } from '../long-task.js';
@@ -26,12 +26,12 @@ export interface FlowToolOptions {
   readonly flow: FlowDefinition;
   readonly actions: FlowActionRegistry;
   readonly runs: LongTaskRegistry<LongTaskBase>;
-  readonly workspaceOf?: ((exec: DshToolRunContext | undefined) => string | null) | undefined;
-  readonly sessionOf?: ((exec: DshToolRunContext | undefined) => string | null) | undefined;
+  readonly workspaceOf?: ((exec: ToolRunContext | undefined) => string | null) | undefined;
+  readonly sessionOf?: ((exec: ToolRunContext | undefined) => string | null) | undefined;
 }
 
 /** 把一条流程包成 agent 工具：不带 runId 起一条，带 runId 只看那条。 */
-export function flowTool(options: FlowToolOptions): DshToolDefinition {
+export function flowTool(options: FlowToolOptions): ToolDefinition {
   const workspaceOf = options.workspaceOf ?? sessionWorkspace;
   const sessionOf = options.sessionOf ?? sessionIdOf;
 

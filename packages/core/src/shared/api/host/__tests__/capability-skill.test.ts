@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { TOOLBOX_SERVICE } from '@dsh-workbench/shared/host';
 import { registerCapabilitySkill } from '../capability-skill';
 

@@ -1,5 +1,6 @@
-import type { DshHostContext, HostSurface } from '@dsh-workbench/shared';
-import type { DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared';
+import type { HostContext, HostSurface } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
+import type { DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared/host';
 import { APPROVAL_NOTE_ARG } from '@dsh-workbench/shared/host';
 import type { UnitManifest } from '@dsh-workbench/shared/host';
 import { type RouteTable } from '@dsh-workbench/shared/host';
@@ -362,7 +363,7 @@ export function mountUnits(
       const seam = unitSeamOf(deps.seam, unit, host.manifest);
       result = host.face.mount({
         manifest: host.manifest,
-        ctx: mountCtx,
+        ctx: mountCtx as unknown as HostContext,
         logger: deps.logger,
         manifests: deps.manifests,
         ownedUnits,

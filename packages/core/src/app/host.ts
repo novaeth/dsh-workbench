@@ -1,4 +1,4 @@
-import type { DshHostContext, DshPromptAssembly, UnitManifest } from '@dsh-workbench/shared';
+import type { UnitManifest } from '@dsh-workbench/shared';
 import { provideWorkbenchSeam } from '@/shared/api/host/workbench-seam';
 import { holdHostLock } from '@/shared/api/host/host-lock';
 import { bootChores } from '@/shared/api/host/boot-chores';
@@ -31,7 +31,7 @@ import { UNIT_MANIFESTS_ROUTE } from '@/kernel/contract/unit-manifests';
 import { LONG_TASKS_ROUTE } from '@/kernel/contract/long-tasks';
 import { liveLongTaskRows } from '@/shared/api/host/long-tasks';
 import { createContextInjector, installContextInject, type ContextRenderer } from '@/shared/api/host/context-inject';
-import type { LongTaskBase, LongTaskRegistry, UnitCall, UnitMountResult, ToolScopeContext } from '@dsh-workbench/shared/host';
+import type { DshHostContext, DshPromptAssembly, LongTaskBase, LongTaskRegistry, UnitCall, UnitMountResult, ToolScopeContext } from '@dsh-workbench/shared/host';
 import { applyPlanFailures, declaredNotesOf, mountUnits, failureReasonOf, type UnitsPlan } from '@/kernel/host/mount-units';
 import {
   createUnitRegistry,

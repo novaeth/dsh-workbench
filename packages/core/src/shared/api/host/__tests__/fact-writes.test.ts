@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshHostContext, DshRequest, DshWebRoute } from '@dsh-workbench/shared';
+import type { DshHostContext, DshRequest, DshWebRoute } from '@dsh-workbench/shared/host';
 import { ACTIONS_PREFIX, PREFS_PREFIX } from '@dsh-workbench/shared';
 import { registerActions, registerPrefs, type PostResource } from '@dsh-workbench/shared/host';
 

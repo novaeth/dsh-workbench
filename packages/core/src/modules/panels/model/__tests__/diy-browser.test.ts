@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshShell } from '@dsh-workbench/shared';
+import type { DshShell } from '@dsh-workbench/shared/host';
 import { quoteShellArg } from '@dsh-workbench/shared/host';
 import { bindCurrentTab, jsonOf, readyPageOf, runBrowserStep, writeShotsDir } from '../diy-browser';
 import { cardSelectorOf } from '../diy-scripts';

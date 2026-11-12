@@ -1,5 +1,5 @@
 import type { UnitManifest } from '@dsh-workbench/shared';
-import type { RecordStore, UnitOwnedFace } from '@dsh-workbench/shared/host';
+import type { DshHostContext, RecordStore, UnitOwnedFace } from '@dsh-workbench/shared/host';
 import { DIY_DEBUG_SERVICE, DIY_RECORD_SERVICE, MCP_TOOLS_SERVICE, TOOLBOX_SERVICE, createDebugStore, createRecordStore, supplyNeedsOf, PANELS_SERVICE, dshHome, seamOf, supplyPortOf, workbenchRoot } from '@dsh-workbench/shared/host';
 import type { McpToolsPort, ToolboxPort, ToolScopeContext } from '@dsh-workbench/shared/host';
 import { basename } from 'node:path';
@@ -50,7 +50,8 @@ import { panelsUnit, screenOnlyToolsFor } from './unit';
 export const panelsHost: UnitOwnedFace = {
   unit: panelsUnit.id,
   manifest: panelsUnit,
-  mount({ ctx, logger, manifests, ownedUnits, installable, probe, store, values, longTaskRuns }) {
+  mount({ ctx: moduleCtx, logger, manifests, ownedUnits, installable, probe, store, values, longTaskRuns }) {
+    const ctx = moduleCtx as unknown as DshHostContext;
     const supply = supplyPortOf(ctx);
     const pluginDir = supply.vendorPluginsDir?.();
     const pluginManifest = supply.pluginManifestFile?.();

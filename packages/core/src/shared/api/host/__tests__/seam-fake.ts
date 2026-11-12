@@ -1,6 +1,6 @@
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { DshShell } from '@dsh-workbench/shared';
+import type { DshShell } from '@dsh-workbench/shared/host';
 import { createSeam, type Seam } from '@dsh-workbench/shared/host';
 
 const ROOT = join(tmpdir(), 'wb-seam-test');

@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it, vi } from 'vitest';
-import type { DshToolDefinition, DshToolRunContext } from '@dsh-workbench/core/contract';
+import type { ToolDefinition, ToolRunContext } from '@dsh-workbench/core/contract';
 import { createFlowHost, createLongTaskHost, type LongTaskBase } from '@dsh-workbench/shared/host';
 
 vi.mock('@dsh-workbench/core/client', () => ({
@@ -90,7 +90,7 @@ interface OverviewAnswer {
 
 interface Harness {
   readonly mounted: Mounted;
-  readonly tools: DshToolDefinition[];
+  readonly tools: ToolDefinition[];
 }
 
 const scratch = mkdtempSync(join(tmpdir(), 'dsh-wb-diy-'));
@@ -104,7 +104,7 @@ afterAll(() => {
 });
 
 function harness(): Harness {
-  const tools: DshToolDefinition[] = [];
+  const tools: ToolDefinition[] = [];
   const longTasks = createLongTaskHost({ scope: 'plugin-test', unit: '__UNIT__', bump: () => {} });
   const files = new Map<string, Map<string, unknown>>();
   const storeFor = (workspace: string | null) => {
@@ -126,7 +126,7 @@ function harness(): Harness {
     get: (target: string) =>
       target === 'tools'
         ? {
-            register(tool: DshToolDefinition) {
+            register(tool: ToolDefinition) {
               tools.push(tool);
               return () => {};
             },
@@ -150,7 +150,7 @@ function harness(): Harness {
   return { mounted: hostFace().mount(deps), tools };
 }
 
-function toolOf(h: Harness, name: string): DshToolDefinition | undefined {
+function toolOf(h: Harness, name: string): ToolDefinition | undefined {
   return h.tools.find((tool) => tool.name === name);
 }
 
@@ -208,7 +208,7 @@ async function settled(h: Harness, id: string): Promise<LongTaskBase | null> {
 
 const execContext = {
   agent: { session: { id: 'session-1', header: { cwd: join(scratch, 'sample') } } },
-} as unknown as DshToolRunContext;
+} as unknown as ToolRunContext;
 
 describe('__NAME__ 的面', () => {
   it('插件名就是包名', () => {
@@ -294,7 +294,7 @@ describe('宿主侧的长任务与工具', () => {
     const tool = toolOf(h, DECLARED_TOOLS.run.name);
     const started = (await tool?.execute({}, execContext)) as { ok: boolean; runId: string };
     await settled(h, started.runId);
-    const again = (await tool?.execute({ runId: started.runId }, {} as DshToolRunContext)) as { ok: boolean; runId: string };
+    const again = (await tool?.execute({ runId: started.runId }, {} as ToolRunContext)) as { ok: boolean; runId: string };
     expect(again.runId).toBe(started.runId);
   });
 
@@ -309,7 +309,7 @@ describe('宿主侧的长任务与工具', () => {
   it('没有工作区时工具说清楚，不抛', async () => {
     const h = harness();
     h.mounted.registerTools();
-    const answer = (await toolOf(h, DECLARED_TOOLS.run.name)?.execute({}, {} as DshToolRunContext)) as { ok: boolean; text: string };
+    const answer = (await toolOf(h, DECLARED_TOOLS.run.name)?.execute({}, {} as ToolRunContext)) as { ok: boolean; text: string };
     expect(answer.ok).toBe(false);
     expect(answer.text).toContain('工作区');
   });

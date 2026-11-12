@@ -1,4 +1,4 @@
-import type { DshWorkspaceRecord, DshWorkspaceRegistry } from '@dsh-workbench/shared';
+import type { DshWorkspaceRecord, DshWorkspaceRegistry } from '@dsh-workbench/shared/host';
 
 export function fakeWorkspaceRegistry(...records: readonly DshWorkspaceRecord[]): DshWorkspaceRegistry {
   const registry = {

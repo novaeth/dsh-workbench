@@ -1,4 +1,4 @@
-import type { DshApprovalService, DshHostContext } from '@dsh-workbench/shared';
+import type { DshApprovalService, DshHostContext } from '@dsh-workbench/shared/host';
 
 type ApprovalSession = Parameters<DshApprovalService['overrideOf']>[0];
 

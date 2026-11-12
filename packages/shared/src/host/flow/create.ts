@@ -1,4 +1,4 @@
-import type { DshToolDefinition, DshToolRunContext } from '../../api/dsh.js';
+import type { ToolDefinition, ToolRunContext } from '../../contract/module-context.js';
 import type { FlowHost } from './kit.js';
 import type { FlowActionRegistry, FlowDefinition } from './types.js';
 import type {
@@ -20,7 +20,7 @@ export interface FlowTaskStartOptions {
 export interface FlowTask {
   readonly runs: LongTaskRegistry<LongTaskBase>;
   start(options: FlowTaskStartOptions): LongTaskBase;
-  readonly tool: DshToolDefinition;
+  readonly tool: ToolDefinition;
 }
 
 /** `createFlowTask` 的入参：流程、动作、两个 host，以及工具的名字与说明。 */
@@ -34,14 +34,14 @@ export interface CreateFlowTaskOptions {
     readonly name: string;
     readonly description: string;
   };
-  readonly workspaceOf?: ((exec: DshToolRunContext | undefined) => string | null) | undefined;
-  readonly sessionOf?: ((exec: DshToolRunContext | undefined) => string | null) | undefined;
+  readonly workspaceOf?: ((exec: ToolRunContext | undefined) => string | null) | undefined;
+  readonly sessionOf?: ((exec: ToolRunContext | undefined) => string | null) | undefined;
 }
 
 /**
  * 校验流程、建长任务注册表、给出 `start` 与工具；失败直接抛，不建半截注册表。
  * @param options 流程、动作、`flow` / `longTasks` host 与工具文案。
- * @returns 注册表、`start` 与 `DshToolDefinition`。
+ * @returns 注册表、`start` 与 `ToolDefinition`。
  */
 export function createFlowTask(options: CreateFlowTaskOptions): FlowTask {
   const checked = options.flowHost.check(options.flow, options.actions);

@@ -1,4 +1,4 @@
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import type { ModulePort } from '@dsh-workbench/shared/host';
 import { nowIso, runningVersionOf, workbenchBootFile, writeBootRecord } from '@dsh-workbench/shared/host';
 import { resumeQueuedSelfUpdate } from './self-update-resume';

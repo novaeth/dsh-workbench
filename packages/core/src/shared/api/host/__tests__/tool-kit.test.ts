@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshToolRunContext } from '@dsh-workbench/shared';
+import type { DshToolRunContext } from '@dsh-workbench/shared/host';
 import { jsonText, sessionWorkspace, TEXT_OUTPUT, textOutput, textRender } from '@dsh-workbench/shared/host';
 
 const at = (cwd: string | undefined): DshToolRunContext =>

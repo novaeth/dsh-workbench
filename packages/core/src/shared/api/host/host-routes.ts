@@ -1,4 +1,4 @@
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { basename } from 'node:path';
 import type { FactLog, ProfilePort, RouteTable } from '@dsh-workbench/shared/host';
 import { changesHandler, healthHandler, seamOf } from '@dsh-workbench/shared/host';

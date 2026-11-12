@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import type { DshHostContext, DshSandboxPolicy } from '@dsh-workbench/shared';
+import type { DshHostContext, DshSandboxPolicy } from '@dsh-workbench/shared/host';
 import { WORKBENCH_SEAM } from '@dsh-workbench/shared/host';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { provideWorkbenchSeam } from '../workbench-seam';

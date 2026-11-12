@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshHostContext, DshIndexRow } from '@dsh-workbench/shared';
+import type { DshHostContext, DshIndexRow } from '@dsh-workbench/shared/host';
 import { registerBootThemeGuard } from '../boot-theme-guard';
 
 type Listener = (table: DshIndexRow[]) => void;

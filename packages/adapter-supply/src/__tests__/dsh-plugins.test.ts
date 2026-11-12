@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { DSH_PLUGINS_ROUTE } from '@dsh-workbench/shared/contract/protocol/dsh-plugins';
 import { dshPluginsHandler, readDshPlugins } from '../index.js';
 

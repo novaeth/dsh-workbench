@@ -8,6 +8,31 @@
 
 ### core
 
+#### 🐛 修复
+
+- **升级 dsh 之后启动失败：profile 里的 dsh 插件层和运行时不是同一代**。`@dsh-workbench/shared` 的
+  官方 dsh 包原先放在 `dependencies` 里（发布的 `.d.ts` 用），装工作台或模块时会跟着进 profile；
+  dsh 一升级，兼容性预检就把这批旧插件逐个停用（只在 stderr 里写 `disabling profile plugin ...`），
+  `tools` / `sessions` / `agents` 没有提供方，启动最后只剩一句 `N required plugins did not activate`。
+  现在这些包只留在 `devDependencies`，装包不会再带第二份 dsh 插件层（ADR-0112）；模块作者那边
+  取官方类型的别名只保形状、引用缺失包的字段会退化成 `any`，工作台自己的 kit / 契约类型不受影响
+- **自更新换完链接后按新依赖重装 profile**：以前只同步 `pnpm-lock.yaml`，旧版 shared 带进来的
+  dsh 包会留在 `node_modules` 里，升完 dsh 仍可能起不来。现在翻链之后跑一次
+  `pnpm install`（优先用本地 store），旧 dsh 层会被清掉；装失败不影响翻链，启动器只读对账仍会拦下
+- **兜底：启动前只读对账**。启动器比较 profile 里**运行时也提供**的那批 `dsh-*` 包与
+  `dsh --version`，不同代就拒绝并列出对不上的包，提示重装一次工作台（重装会按新依赖把旧 dsh
+  包清掉）。第三方插件（运行时里没有同名包的）不参与比较，仍由 dsh 自己的预检处理
+
+#### 🧱 模块契约
+
+- **模块只拿工作台自己的类型**：`@dsh-workbench/core/contract` 不再导出 `DshHostContext` /
+  `DshClientContext` / `DshToolDefinition` / `DshToolRegistry` / `DshToolRunContext`。
+  `HostContext` / `ClientContext` 收成 `get` / `effect` / `logger` 的窄接口；工具声明、执行与
+  注册用工作台的 `ToolDefinition` / `ToolRunContext` / `ToolRegistry`。模块要用 dsh 官方类型
+  就把对应包装进自己的 `devDependencies`，装进 profile 仍然不带 dsh（ADR-0113）
+- 宿主侧官方别名移到 `@dsh-workbench/shared/host`；`@dsh-workbench/shared` 根入口不再导出
+  宿主类型。模块模板与 `module-hello` 已按新类型改过
+
 #### 🗑️ 移除
 
 - **撤掉「立即重启」与「稍后」**：工作台更新完成后那一行不再给两颗钮，只留「重启后生效」与

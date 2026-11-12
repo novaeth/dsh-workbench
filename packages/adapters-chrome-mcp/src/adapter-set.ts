@@ -1,4 +1,4 @@
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import type { AdapterSet, Seam } from '@dsh-workbench/shared/host';
 import { ADAPTER_SET_API_VERSION, runningVersionOf, seamOf } from '@dsh-workbench/shared/host';
 

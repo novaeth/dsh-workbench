@@ -43,14 +43,11 @@ export type {
   DataReader,
   DataRequest,
   DataResult,
-  DshToolDefinition,
-  DshToolRegistry,
-  DshToolRunContext,
   RequestRecipe,
   UnitClientApi,
   UnitClientFace,
 } from '@dsh-workbench/shared';
-export type { DshClientContext as ClientContext, DshHostContext as HostContext } from '@dsh-workbench/shared';
+export type { ClientContext, HostContext, ToolDefinition, ToolRegistry, ToolRunContext } from '@dsh-workbench/shared';
 export type {
   ClientCapabilities,
   ClientShell,

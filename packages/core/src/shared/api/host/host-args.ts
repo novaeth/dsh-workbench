@@ -1,4 +1,4 @@
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 
 export function asArgs(value: unknown): Readonly<Record<string, unknown>> {
   return typeof value === 'object' && value !== null ? (value as Readonly<Record<string, unknown>>) : {};

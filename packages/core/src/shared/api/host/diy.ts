@@ -1,4 +1,4 @@
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { join } from 'node:path';
 import { workbenchRoot } from '@dsh-workbench/shared/host';
 

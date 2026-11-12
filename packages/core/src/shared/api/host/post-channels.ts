@@ -1,4 +1,4 @@
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import type { PostResource, PostWrite } from '@dsh-workbench/shared/host';
 import {
   ACTIONS_PREFIX,

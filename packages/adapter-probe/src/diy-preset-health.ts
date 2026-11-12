@@ -1,5 +1,5 @@
 import { now } from '@dsh-workbench/shared/host';
-import type { DshAgentPresetRegistry, DshAgentPresetRow, DshHostContext } from '@dsh-workbench/shared';
+import type { DshAgentPresetRegistry, DshAgentPresetRow, DshHostContext } from '@dsh-workbench/shared/host';
 import { DIY_PRESET_ID } from '@dsh-workbench/shared/contract/protocol/diy';
 
 export const DIY_UPGRADE_COMMAND = 'npm i -g @deepseek-ai/dsh@latest';

@@ -1,6 +1,5 @@
 export * from './api/blocker-table.js';
 export * from './api/context-ref.js';
-export * from './api/dsh.js';
 export * from './api/host-write.js';
 export * from './api/workbench-client.js';
 export * from './components/Activity.js';
@@ -38,6 +37,7 @@ export * from './components/board-module.js';
 export * from './components/icons.js';
 export * from './config/constants.js';
 export * from './config/storage.js';
+export * from './contract/module-context.js';
 export * from './contract/approval.js';
 export * from './contract/blocker.js';
 export * from './contract/data.js';

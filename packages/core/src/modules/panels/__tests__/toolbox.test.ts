@@ -3,7 +3,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createNoopDataReader } from '@dsh-workbench/shared/testing';
-import type { DshHostContext, DshToolDefinition, UnitManifest } from '@dsh-workbench/shared';
+import type { HostContext, UnitManifest } from '@dsh-workbench/shared';
+import type { DshToolDefinition } from '@dsh-workbench/shared/host';
 import { approvalFor, MCP_TOOLS_SERVICE, type McpServerPacks } from '@dsh-workbench/shared/host';
 import { createHostKit, createWorkspaceStore, hostSurface, WORKBENCH_ADAPTERS } from '@dsh-workbench/shared/host';
 import { panelsHost } from '../index';
@@ -78,7 +79,7 @@ function mount(mcp: readonly McpServerPacks[] = [], extra: readonly UnitManifest
           : undefined,
     provide: () => () => {},
     logger: { info: () => {}, warn: () => {} },
-  } as unknown as DshHostContext;
+  } as unknown as HostContext;
 
   const mounted = panelsHost.mount({
     manifest: panelsUnit,

@@ -1,5 +1,5 @@
 import { now as clockNow } from '@dsh-workbench/shared/host';
-import type { DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared';
+import type { DshToolDefinition, DshToolOutputDefinition, DshToolRegistry } from '@dsh-workbench/shared/host';
 import type { UnitManifest } from '@dsh-workbench/shared';
 import type { UnitOwnedFace, UnitMountResult } from '@dsh-workbench/shared/host';
 import { PROBE_TTL_MS, TEXT_OUTPUT, jsonText, sessionWorkspace, unitTitleKey } from '@dsh-workbench/shared/host';
@@ -242,7 +242,7 @@ function faceOf(
         name: tool.name,
         description: pluginToolDescription(tool.command),
         parameters: pluginToolParameters(tool.command),
-        output: TEXT_OUTPUT,
+        output: TEXT_OUTPUT as unknown as DshToolOutputDefinition,
         async execute(raw, exec) {
           const workspace = sessionWorkspace(exec);
           try {

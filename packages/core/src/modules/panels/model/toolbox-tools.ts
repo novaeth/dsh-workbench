@@ -1,4 +1,4 @@
-import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared/host';
 import { sessionIdOf, sessionWorkspace } from '@dsh-workbench/shared/host';
 import { TOOLBOX_CLOSE_TOOL, TOOLBOX_LIST_TOOL, TOOLBOX_OPEN_TOOL } from '../unit';
 import { textOutput } from './tool-output';

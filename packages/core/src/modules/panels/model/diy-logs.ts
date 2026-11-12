@@ -1,4 +1,4 @@
-import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared/host';
 import { OUTPUT, plainJson } from './diy-context';
 import { pageAt } from './diy-page';
 import { actBrowser, actErrorOf } from './diy-browser-act';

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import type { ApprovalPolicy, ToolUnit, UnitMountResult } from '@dsh-workbench/shared/host';
 import { createApprovalGate, type ApprovalGateDecision } from '../approval-gate';
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { createFactLog, WORKBENCH_ADAPTERS, type ProfilePort } from '@dsh-workbench/shared/host';
 import { createHostRoutes } from '../host-routes';
 import { MODULE_VERSIONS_ROUTE } from '@/kernel/contract/bundle-install';

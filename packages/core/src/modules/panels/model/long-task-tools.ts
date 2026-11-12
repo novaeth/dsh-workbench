@@ -1,10 +1,4 @@
-import type {
-  DshHostContext,
-  DshToolDefinition,
-  DshToolOutputDefinition,
-  DshToolRegistry,
-  DshToolRunContext,
-} from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolDefinition, DshToolOutputDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared/host';
 import type { LongTaskBase, LongTaskRegistry } from '@dsh-workbench/shared/host';
 import { sessionIdOf, sessionWorkspace } from '@dsh-workbench/shared/host';
 import { LONG_TASKS_LIST_TOOL, LONG_TASKS_STOP_TOOL } from '../unit';

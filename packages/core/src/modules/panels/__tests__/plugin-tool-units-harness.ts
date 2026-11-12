@@ -1,4 +1,4 @@
-import type { DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared';
+import type { DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared/host';
 import { createHostKit, hostSurface, toolUnits, type PluginUnitsPort, type ToolScopeContext, type UnitOwnedFace, type WorkspaceStore } from '@dsh-workbench/shared/host';
 import { createFakeShell, createNoopDataReader,
 } from '@dsh-workbench/shared/testing';

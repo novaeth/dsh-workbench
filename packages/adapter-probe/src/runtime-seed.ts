@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 
 import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { delimiter, dirname, join, sep } from 'node:path';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { pathWithBinsOf, quoteShellArg, quoteShellArgFor, workbenchRoot, writeTextFile } from '@dsh-workbench/shared/host';
 import type { Seam } from '@dsh-workbench/shared/host';
 import {

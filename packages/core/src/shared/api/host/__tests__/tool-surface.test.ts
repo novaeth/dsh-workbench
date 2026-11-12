@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshHostContext, DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared/host';
 import { createRecordStore } from '@dsh-workbench/shared/host';
 import { registerPanelTools } from '@/modules/panels/model/tools';
 import { registerMarketTools } from '@/modules/panels/model/market-tools';

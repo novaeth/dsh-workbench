@@ -1,4 +1,4 @@
-import type { DshHostContext } from '../api/dsh.js';
+import type { HostContext } from '../contract/module-context.js';
 import type { UnitManifest } from '../contract/unit.js';
 import type { RouteTable } from '../host/http.js';
 import type { LongTaskBase, LongTaskHost, LongTaskRegistry } from '../host/long-task.js';
@@ -22,7 +22,7 @@ export interface ToolScopeContext {
 
 export interface UnitMountDeps extends HostKit {
   readonly manifest: UnitManifest;
-  readonly ctx: DshHostContext;
+  readonly ctx: HostContext;
   readonly logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
   readonly manifests: () => readonly UnitManifest[];
   readonly ownedUnits: () => readonly string[];

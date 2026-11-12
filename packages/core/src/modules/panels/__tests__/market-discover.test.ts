@@ -2,7 +2,7 @@ import { mkdtempSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { DshShell } from '@dsh-workbench/shared';
+import type { DshShell } from '@dsh-workbench/shared/host';
 import type { MarketIndex, MarketSourceConfig } from '@dsh-workbench/shared/contract/protocol/market-index';
 import type { MarketIndexReader } from '@/shared/api/host/market-index-fetch';
 import type { MarketDocReader } from '@/shared/api/host/market-doc';

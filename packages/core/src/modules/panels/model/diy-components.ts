@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared/host';
 import { dshHome, readTokens, seamOf, supplyPortOf } from '@dsh-workbench/shared/host';
 import {
   findFileOf,

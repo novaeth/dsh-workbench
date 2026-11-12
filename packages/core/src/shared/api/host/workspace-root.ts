@@ -1,5 +1,5 @@
 import { dirname } from 'node:path';
-import type { DshHostContext, DshWorkspaceRecord, DshWorkspaceRegistry } from '@dsh-workbench/shared';
+import type { DshHostContext, DshWorkspaceRecord, DshWorkspaceRegistry } from '@dsh-workbench/shared/host';
 
 export interface SessionWorkspace {
   readonly root: string;

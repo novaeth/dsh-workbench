@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { BROWSER_RECORD_SESSION } from '@dsh-workbench/shared/host';
 import { RECORD_STALE_MS } from '@dsh-workbench/shared/host';
-import type { DshHostContext, DshShell } from '@dsh-workbench/shared';
+import type { DshHostContext, DshShell } from '@dsh-workbench/shared/host';
 import type { Seam } from '@dsh-workbench/shared/host';
 import { fakeSeamOf } from '../../__tests__/seam-fake';
 import { takeHeldNotices } from '@/shared/api/host/diy-debug-act';

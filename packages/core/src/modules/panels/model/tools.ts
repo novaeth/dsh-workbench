@@ -1,4 +1,4 @@
-import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared/host';
 import { sessionWorkspace } from '@dsh-workbench/shared/host';
 import type { ValueHandoff } from '@dsh-workbench/shared/host';
 import { panelsHandoffEntry } from './handoff';

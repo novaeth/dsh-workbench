@@ -36,7 +36,7 @@ export const checks = [
     run(_ctx, report) {
       const probe = posixProbeOf(pkg('scripts/check-launcher-spec.sh'));
       const passed = probe.endsWith('ALL OK');
-      report(LAUNCHER_SPEC_TITLE, passed, passed ? '四格都按契约 ✅' : `探针输出：${probe}`);
+      report(LAUNCHER_SPEC_TITLE, passed, passed ? '各格都按契约 ✅' : `探针输出：${probe}`);
     },
   },
 ];

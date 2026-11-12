@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshHostContext, DshRequest, DshResponse, DshWebRoute } from '@dsh-workbench/shared';
+import type { DshHostContext, DshRequest, DshResponse, DshWebRoute } from '@dsh-workbench/shared/host';
 import { createDebugStore, createRecordStore } from '@dsh-workbench/shared/host';
 import { takeHeldNotices } from '../diy-debug-act';
 import { registerDiyActs } from '../diy-acts';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshHostContext, DshRequest, DshResponse, DshWebRoute } from '@dsh-workbench/shared';
+import type { DshHostContext, DshRequest, DshResponse, DshWebRoute } from '@dsh-workbench/shared/host';
 import { ACTIONS_PREFIX, API_PREFIX, PREFS_PREFIX } from '@dsh-workbench/shared/host';
 import { WorkbenchDataError } from '@dsh-workbench/shared/host';
 import { changesHandler, flag, healthHandler, param, registerActions, registerApi, registerPrefs, registerProvision, type RouteTable } from '@dsh-workbench/shared/host';

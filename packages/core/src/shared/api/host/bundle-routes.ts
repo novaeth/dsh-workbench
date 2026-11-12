@@ -1,5 +1,5 @@
 import { basename, dirname } from 'node:path';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import {
   declarationApiVersionOf,
   declarationProblemsOf,

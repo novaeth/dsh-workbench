@@ -1,4 +1,4 @@
-import type { DshHostContext, DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared/host';
 import type {
   DiscoverPayload,
   MarketSourceConfig,

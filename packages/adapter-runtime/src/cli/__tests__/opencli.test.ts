@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createFakeLogger, createFakeShell } from '@dsh-workbench/shared/testing';
 import { createSeam } from '@dsh-workbench/shared/host';
-import type { DshShell } from '@dsh-workbench/shared';
+import type { DshShell } from '@dsh-workbench/shared/host';
 
 function seamFor(shell: DshShell) {
   return createSeam({ shell, runtimeRoot: '/tmp/wb-seam-test' });

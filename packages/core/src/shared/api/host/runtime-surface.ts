@@ -1,4 +1,4 @@
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import type { AdapterSet, RuntimeCommandSurface } from '@dsh-workbench/shared/host';
 import { WORKBENCH_ADAPTERS } from '@dsh-workbench/shared/host';
 

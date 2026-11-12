@@ -1,4 +1,4 @@
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import type { UnitMountResult } from '@dsh-workbench/shared/host';
 import { presetOfSession } from './preset-scope';
 import { toolScopeContextOf } from './tool-scope';

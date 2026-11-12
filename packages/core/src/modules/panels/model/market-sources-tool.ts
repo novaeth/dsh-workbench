@@ -1,4 +1,4 @@
-import type { DshToolDefinition } from '@dsh-workbench/shared';
+import type { DshToolDefinition } from '@dsh-workbench/shared/host';
 import type { MarketSourcesPayload } from '@dsh-workbench/shared/contract/protocol/market-index';
 import { MARKET_SOURCES_TOOL } from '../unit';
 import { textOutput } from './tool-output';

@@ -1,10 +1,5 @@
 import { join } from 'node:path';
-import type {
-  DshHostContext,
-  DshToolDefinition,
-  DshToolRegistry,
-  DshToolRunContext,
-} from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared/host';
 import {
   CHANGELOG_FILE,
   CHANGELOG_KINDS,

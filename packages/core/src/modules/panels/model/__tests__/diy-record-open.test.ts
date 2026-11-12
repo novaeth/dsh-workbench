@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshShell } from '@dsh-workbench/shared';
+import type { DshShell } from '@dsh-workbench/shared/host';
 import { openRecordPage, samePageOf } from '../diy-record-open';
 import { fakeSeamOf } from '../../__tests__/seam-fake';
 

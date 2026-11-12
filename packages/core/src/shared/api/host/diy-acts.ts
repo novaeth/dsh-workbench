@@ -1,4 +1,4 @@
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { DIY_DEBUG_SERVICE, DIY_RECORD_SERVICE, registerDiyDebugAct, registerDiyRecordAct } from '@dsh-workbench/shared/host';
 import type { DebugStore, RecordStore } from '@dsh-workbench/shared/host';
 import { debugActResource, type AgentsLookup } from './diy-debug-act';

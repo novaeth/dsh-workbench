@@ -1,6 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import type { DshHostContext, RuntimeCapabilities } from '@dsh-workbench/shared';
+import type { RuntimeCapabilities } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import type { RouteTable } from '@dsh-workbench/shared/host';
 import { PREFLIGHT_INSTALL_TIMEOUT_MS, preflightHandler, quoteShellArgFor, removePath, type Seam, workbenchRoot } from '@dsh-workbench/shared/host';
 import { toolchainDir, toolchainOpencliDir } from '@dsh-workbench/adapter-runtime';

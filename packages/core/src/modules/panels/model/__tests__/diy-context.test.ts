@@ -9,7 +9,7 @@ import {
   verdictOf,
   workspaceOf,
 } from '../diy-context';
-import type { DshHostContext, DshToolRunContext, DshWorkspaceRecord } from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolRunContext, DshWorkspaceRecord } from '@dsh-workbench/shared/host';
 import type { BundleChange } from '@/kernel/contract/bundle-install';
 import type { PanelsService } from '../service';
 

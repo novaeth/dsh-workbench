@@ -1,4 +1,4 @@
-import type { DshToolRunContext } from '@dsh-workbench/shared';
+import type { DshToolRunContext } from '@dsh-workbench/shared/host';
 import { sessionIdOf, sessionWorkspace, type ApprovalCall } from '@dsh-workbench/shared/host';
 
 export interface ApprovalExec {

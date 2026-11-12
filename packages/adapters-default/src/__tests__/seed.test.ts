@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { createSeam, WORKBENCH_SEAM } from '@dsh-workbench/shared/host';
 import { createFakeProcesses, createFakeShell } from '@dsh-workbench/shared/testing';
 import { createRuntimePort } from '../runtime-port.js';

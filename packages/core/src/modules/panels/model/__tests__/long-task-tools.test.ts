@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshHostContext, DshToolDefinition, DshToolRunContext } from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolDefinition, DshToolRunContext } from '@dsh-workbench/shared/host';
 import type { LongTaskBase, LongTaskChange, LongTaskRegistry } from '@dsh-workbench/shared/host';
 import { createLongTaskRegistry } from '@dsh-workbench/shared/host';
 import { panelsFactsOf } from '../handoff';

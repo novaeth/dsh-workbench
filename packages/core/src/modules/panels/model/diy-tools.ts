@@ -1,9 +1,4 @@
-import type {
-  DshHostContext,
-  DshToolDefinition,
-  DshToolRegistry,
-  DshToolRunContext,
-} from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared/host';
 import type { DebugStore, PanelStateStore } from '@dsh-workbench/shared/host';
 import { PANEL_STATE_SERVICE, UNITS_SERVICE, WORKBENCH_ADAPTERS, supplyPortOf } from '@dsh-workbench/shared/host';
 import type { AdapterSet } from '@dsh-workbench/shared/host';

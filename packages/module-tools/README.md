@@ -351,3 +351,7 @@ dry-run、真发后的元数据与发布失败回滚。
 | 判据红了怎么读 | [REVIEW.md](../core/skills/workbench-module-diy/REVIEW.md) |
 | 最小可安装样本 | [module-hello](../module-hello/README.md) |
 | 契约类型与共享组件 | [shared](../shared/README.md) |
+
+模块的 `apply(ctx)` / `mount(deps)` 只拿工作台自己的类型（`HostContext` / `ClientContext` /
+`ToolDefinition` / `ToolRegistry` / `ToolRunContext`，都在 `@dsh-workbench/core/contract`）；
+要用 dsh 的官方类型，把对应包放进**模块自己的** `devDependencies`，不要放进 `dependencies`。

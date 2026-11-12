@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import type { RuntimePort } from '@dsh-workbench/shared/host';
 import { packageRootOf, seamOf } from '@dsh-workbench/shared/host';
 import { backgroundLine, libsBinDir } from '@dsh-workbench/adapter-runtime';

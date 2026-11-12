@@ -46,7 +46,7 @@ die() {
 }
 
 usage() {
-  sed -n '3,12p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  sed -n '3,13p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
 
 if [ "${1:-}" = "create" ]; then
@@ -149,6 +149,7 @@ if ! command -v dsh >/dev/null 2>&1; then
   echo "dsh-workbench: PATH 上没有 dsh。先装：npm i -g @deepseek-ai/dsh" >&2
   exit 1
 fi
+DSH_BIN="$(command -v dsh)"
 
 # ── 硬门禁：dsh 太旧就别起（DIY 模式会整个不见，而且一句错都不报）────────────
 #
@@ -207,6 +208,45 @@ fi
 
 pkg_version() {
   node -p "require('$REPO_DIR/package.json').version" 2>/dev/null || echo "0.0.0"
+}
+
+# ── profile 里的 dsh 插件层：必须和运行时同代 ───────────────────────────────
+#
+# 症状（2026-11-12 的现场）：把 dsh 升到下一个 rc 之后，工作台起不来，
+# 终端只剩一句 "N required plugins did not activate" 加一长串在等 tools / sessions / agents 的插件。
+# 真正的原因在 stderr 里：dsh 的兼容性预检把 profile 里那批 rc.1 的插件逐个停用
+# （`disabling profile plugin row "session": ... is incompatible with dsh <运行时版本>`）。
+#
+# 那批插件是谁装进来的：旧版 `@dsh-workbench/shared` 把 dsh 的包放在 `dependencies`（为了让
+# 发布的 `.d.ts` 能解析官方类型，ADR-0110）。profile 里装的是**带版本区间的整包**时，pnpm 会
+# 把这棵树一起装进 `profile/node_modules`；而 dsh 的 bundle patch 只写插件名，预检与加载器都
+# 从 profile 目录解析 —— 于是 profile 里这份旧插件盖住了 dsh 自带的那份。
+#
+# 新版 shared 已把它们降为 devDependencies，新装的 profile 不会再带这棵树；这里只做**只读对账**，
+# 拦住已经被旧版装坏的 profile，并告诉用户重装一次工作台。判据只认**运行时也提供**的那批包；
+# 第三方插件（例如 `@deepseek-ai/dsh-web-search-exa`）不归这里管，仍由 dsh 自己的预检处理。
+WB_LAYER_SCRIPT="$REPO_DIR/scripts/profile-dsh-layer.mjs"
+
+profile_layer() {
+  if [ -n "$DSH_BIN" ]; then
+    node "$WB_LAYER_SCRIPT" check --profile-dir "$PROFILE_DIR" --runtime "$DSH_VERSION" --dsh-bin "$DSH_BIN"
+  else
+    node "$WB_LAYER_SCRIPT" check --profile-dir "$PROFILE_DIR" --runtime "$DSH_VERSION"
+  fi
+}
+
+json_field() {
+  WB_JSON_IN="$1" WB_JSON_KEY="$2" node -e '
+const value = JSON.parse(process.env.WB_JSON_IN ?? "");
+process.stdout.write(String(value[process.env.WB_JSON_KEY ?? ""] ?? ""));
+'
+}
+
+json_join() {
+  WB_JSON_IN="$1" WB_JSON_KEY="$2" node -e '
+const value = JSON.parse(process.env.WB_JSON_IN ?? "")[process.env.WB_JSON_KEY ?? ""];
+process.stdout.write(Array.isArray(value) ? value.join("、") : String(value ?? ""));
+'
 }
 
 # ── setup：建 profile + 把工作台装进去 ─────────────────────────────────────
@@ -340,6 +380,38 @@ if [ "$BUNDLE_GUARD" -ne 0 ]; then
   fi
   echo "  修好它（幂等，会补上这一项）: $REPO_DIR/bin/dsh-workbench setup" >&2
   exit 1
+fi
+
+# ── 硬门禁：profile 里的 dsh 插件层必须和运行时同代 ─────────────────────────
+#
+# 判据：profile 的 `node_modules/@deepseek-ai` 里，**运行时也提供**的那批 `dsh-*` 包，
+# 版本都要等于 `dsh --version`。第三方插件（运行时里没有同名包的，例如 web-search-exa）
+# 不归这里管，仍由 dsh 自己的兼容性预检处理。
+#
+# 为什么非拦不可：预检把提供 `tools` / `sessions` / `agents` 的这些行停用之后，进程还会
+# 继续组树，最后只抛一句 "N required plugins did not activate"，而把真正的原因留在 stderr。
+# 用户在启动日志里看不到那几十行 `disabling profile plugin`，只会猜是不是工具或插件的问题。
+# 这条门把那一类失败提前成一句能读懂的诊断 + 一条能照抄的修复命令。
+#
+# 权威仍是 dsh 自己的预检：这里读不出层（脚本报错 / 找不到 dsh 的安装目录）就只提醒、不拦。
+if [ -n "$DSH_VERSION" ]; then
+  LAYER_GUARD=0
+  LAYER_JSON="$(profile_layer)" || LAYER_GUARD=$?
+  if [ "$LAYER_GUARD" -eq 1 ]; then
+    LAYER_COUNT="$(json_field "$LAYER_JSON" mismatchCount)"
+    LAYER_SAMPLE="$(json_join "$LAYER_JSON" mismatchSample)"
+    echo "dsh-workbench: profile '$PROFILE' 里的 dsh 插件层和运行时不是同一版：" >&2
+    echo "  运行时是 ${DSH_VERSION}；profile 里有 ${LAYER_COUNT} 个包不是（${LAYER_SAMPLE}）。" >&2
+    echo "  这通常是旧版工作台装进去的（它的 shared 把 dsh 包写进了 dependencies）。" >&2
+    echo "  dsh 的兼容性预检会逐个停用它们（只在 stderr 里写 \"disabling profile plugin ...\"），" >&2
+    echo "  tools / sessions / agents 这些服务就没人提供，最后只剩一句 \"N required plugins did not activate\"。" >&2
+    echo "  修法：重新安装一次工作台，让 profile 按新依赖重装（旧版装进去的 dsh 包会被 pnpm 清掉）：" >&2
+    echo "    dsh plugin --profile $PROFILE add $PKG" >&2
+    exit 1
+  fi
+  if [ "$LAYER_GUARD" -ne 0 ]; then
+    echo "dsh-workbench: 提醒 —— 没读成 profile 里的 dsh 插件层（见上一条）；这次仍按现状起。" >&2
+  fi
 fi
 
 # ── 已有实例：只整理配置，旧数据不自动迁移

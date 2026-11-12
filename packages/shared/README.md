@@ -80,13 +80,29 @@ hooks 或模块自己的 `model/` 里，所以同一张卡片在真数据和夹�
 ## 开发
 
 ```bash
-pnpm --filter @dsh-workbench/shared run build      # tsc + 搬 CSS
+pnpm --filter @dsh-workbench/shared run build      # tsc + 打类型 + 搬 CSS
 pnpm --filter @dsh-workbench/shared run test
 pnpm --filter @dsh-workbench/shared run selfcheck  # check-state：无模块级可变状态
 ```
 
 两个 barrel 用 `pnpm run barrels` 重生成；`pnpm run arch` 跑这个包自己的分层配置。
 代码零注释，只有公开成员的导出 JSDoc 例外（它会进 `.d.ts`，是给消费方看的）。
+
+## 官方 dsh 包只在编译期
+
+官方 `@deepseek-ai/dsh-*` 全部在 `devDependencies`：本仓编译时按包名取真类型，
+但装包的人不会再把这棵树带进 profile（ADR-0112）。`dependencies` 只剩
+`@deepseek-ai/cordis` / `cordis-plugin-loader` 与 dayjs / execa / semver / write-file-atomic，
+`react` 仍是 peer。
+
+模块契约（`@dsh-workbench/core/contract`）只交工作台自己的类型：`HostContext` /
+`ClientContext` / `ToolDefinition` / `ToolRegistry` / `ToolRunContext`，以及 `UnitManifest` 与
+kit；它不引用 dsh。官方 `Dsh*` 别名只留给工作台内部（宿主侧在 `/host`，客户端侧在根入口），
+模块不需要它们。如果模块作者自己要直接引某个 `Dsh*` 别名，就把对应的官方包放进**自己的**
+`devDependencies`，编译期拿真类型，装进 profile 仍然不带 dsh。
+
+`selfcheck` 会拒绝 `dependencies` 里出现 `@deepseek-ai/dsh*` —— 这条一红，装进 profile 的就是
+第二份 dsh 插件层。
 
 ## 相关文档
 

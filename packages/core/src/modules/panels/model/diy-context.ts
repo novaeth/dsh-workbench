@@ -1,4 +1,4 @@
-import type { DshHostContext, DshToolRunContext } from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolRunContext } from '@dsh-workbench/shared/host';
 import { sessionWorkspace } from '@dsh-workbench/shared/host';
 import { modulesIn } from '@/shared/api/host/diy-modules';
 import { sessionWorkspaceOf } from '@/shared/api/host/workspace-root';

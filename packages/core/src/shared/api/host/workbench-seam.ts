@@ -1,5 +1,5 @@
 import { homedir } from 'node:os';
-import type { DshHostContext, DshSandboxPolicy } from '@dsh-workbench/shared';
+import type { DshHostContext, DshSandboxPolicy } from '@dsh-workbench/shared/host';
 import {
   WORKBENCH_SEAM,
   createSeam,

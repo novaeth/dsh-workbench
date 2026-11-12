@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { DshHostContext, DshToolRunContext } from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolRunContext } from '@dsh-workbench/shared/host';
 import { createDiyRig } from '../../__tests__/diy-harness';
 import type { WorkbenchPage } from '../diy-browser';
 import { boardStateOf, debugOffBoardText, pageAt } from '../diy-page';

@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { diyPresetFrom, now, standardPresetConfigOf } from '@dsh-workbench/shared/host';
 
 const RETRY_MS = 250;

@@ -1,4 +1,4 @@
-import type { DshHostContext, DshToolRunContext } from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolRunContext } from '@dsh-workbench/shared/host';
 import { BROWSER_SCREEN_SESSION, seamOf, type Seam } from '@dsh-workbench/shared/host';
 import { DIY_DEBUG_SERVICE, sessionIdOf } from '@dsh-workbench/shared/host';
 import type { DebugState, DebugStore } from '@dsh-workbench/shared/host';

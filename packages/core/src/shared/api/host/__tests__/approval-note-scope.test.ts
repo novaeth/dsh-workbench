@@ -2,7 +2,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import type { DshHostContext, DshToolDefinition, DshToolRegistry, UnitManifest } from '@dsh-workbench/shared';
+import type { UnitManifest } from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared/host';
 import type { UnitMountDeps, UnitMountResult } from '@dsh-workbench/shared/host';
 import { APPROVAL_NOTE_ARG, createWorkspaceStore } from '@dsh-workbench/shared/host';
 import { unitTitleKey } from '@dsh-workbench/shared/host';
@@ -128,7 +129,7 @@ function rig(): Rig {
     unit: MANIFEST.id,
     manifest: MANIFEST,
     mount(deps: UnitMountDeps): UnitMountResult {
-      scoped = deps.ctx;
+      scoped = deps.ctx as unknown as DshHostContext;
       const tools = (deps.ctx.get('tools') as DshToolRegistry | undefined);
       return {
         routes: {},

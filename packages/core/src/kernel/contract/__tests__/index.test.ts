@@ -4,7 +4,7 @@ import type {
   BoardProps,
   CardView,
   ClientContext,
-  DshToolDefinition,
+  ToolDefinition,
   FlowDefinition,
   HostContext,
   UnitClientApi,
@@ -22,8 +22,8 @@ it('exposes the module protocol from one contract entry', () => {
   expectTypeOf<UnitMountDeps>().toHaveProperty('data');
   expectTypeOf<UnitMountDeps>().toHaveProperty('flow');
   expectTypeOf<FlowDefinition>().toHaveProperty('steps');
-  expectTypeOf<DshToolDefinition>().toHaveProperty('execute');
-  expectTypeOf<DshToolDefinition>().toHaveProperty('parameters');
+  expectTypeOf<ToolDefinition>().toHaveProperty('execute');
+  expectTypeOf<ToolDefinition>().toHaveProperty('parameters');
   expectTypeOf<UnitMountResult>().toHaveProperty('routes');
   expectTypeOf<UnitRegistry>().toHaveProperty('register');
   expectTypeOf<UnitClientFace>().toHaveProperty('unit');

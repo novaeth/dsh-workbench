@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { encodeRef, parseMarkers, type ContextRef } from '@dsh-workbench/shared/host';
 import type { ContextRenderer } from '@dsh-workbench/shared/host';
 

@@ -126,6 +126,7 @@ export const checks = [
             'scripts/clone-profile.mjs',
             'scripts/create-workbench.mjs',
             'scripts/patch-blocks.mjs',
+            'scripts/profile-dsh-layer.mjs',
             'scripts/share-data-root.mjs',
           ];
           const missing = wanted.filter((entry) => !(manifest.files ?? []).includes(entry));

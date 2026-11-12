@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DshHostContext } from '@dsh-workbench/shared';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { createDebugStore, type DebugPact } from '@dsh-workbench/shared/host';
 import { createDiyRig } from '../../__tests__/diy-harness';
 import { stopObservers, withObserverCleanup } from '../diy-observers';

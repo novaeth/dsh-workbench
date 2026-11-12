@@ -100,7 +100,7 @@ dsh-workbench migrate --force  # 已经迁过一次、想再补并一次
 | `profile/` | 出厂 profile 模板：可写根那一行（启动器 `--patch` 用，seed 也抄进 profile） |
 | `skills/` | 模块 DIY 指引，安装完成后提供给 agent；漏掉也不会报错，只是 agent 不知道如何创建模块 |
 | `bin/` | `dsh-workbench` 启动器、隔离 opencli 的入口 |
-| `scripts/` | 随包出货的脚本：`seed-profile.sh` / `seed-workshop.sh` / `create-workbench.mjs` / `clone-profile.mjs` / `share-data-root.mjs` / `patch-blocks.mjs` |
+| `scripts/` | 随包出货的脚本：`seed-profile.sh` / `seed-workshop.sh` / `create-workbench.mjs` / `clone-profile.mjs` / `share-data-root.mjs` / `patch-blocks.mjs` / `profile-dsh-layer.mjs` |
 | `icon.svg` | 插件图标（dsh 插件页用） |
 
 「工作台 DIY 模式」不在这个表里：**启动时现场派生**，没有生成物 —— `src/shared/api/host/diy-preset.ts` 从本次 dsh 的 `standard` preset 克隆出插件表、叠加三处差分并注册；纯规则在 `../shared/src/host/diy-preset.ts`。dsh 加工具 / 改行时它自动跟上。
@@ -133,7 +133,8 @@ dsh-workbench migrate --force  # 已经迁过一次、想再补并一次
 |---|---|
 | 起工作台 | `npx @dsh-workbench/core` |
 | 换端口 | `WORKBENCH_PORT=3091 npx @dsh-workbench/core` |
-| 升级 | 重新执行一次 `npx --yes @dsh-workbench/core@latest setup`（幂等），然后重启工作台。工坊工具链会在下次启动时自动更新到同一版本，不需要手动删除工坊 |
+| 升级 | 市场里「工作台」那一行走自更新，或重新执行一次 `npx --yes @dsh-workbench/core@latest setup`（幂等），然后重启工作台。自更新换完链接会按新依赖重装 profile，旧版装进去的 dsh 包会被清掉；工坊工具链会在下次启动时自动更新到同一版本，不需要手动删除工坊 |
+| 升级 dsh 之后 | 先升工作台、再升 dsh。旧版装出来的 profile 里还留着 dsh 插件层，新启动器会在起进程前拒绝并提示重装一次（`setup` 或 `dsh plugin --profile <名字> add @dsh-workbench/core`）；重装会按新依赖把旧 dsh 包清掉 |
 | 重建 profile | 先执行 `mv ~/.dsh/profiles/workbench ~/.dsh/profiles/workbench.bak`，再执行一次 `setup` |
 | 换左栏 | 设置 → 工作台设置 → 会话列表：默认官方；切换后会自动刷新页面生效（从旧版本升级上来的实例，第一次需要重启） |
 | 从 `dsh web` 同步设置 | 设置 → 工作台设置 → 配置同步 → 选来源 → 勾行 → 同步 |
@@ -177,6 +178,7 @@ dsh-workbench migrate --force  # 已经迁过一次、想再补并一次
 | 模型列表里只有出厂的几个、没有自己配的供应商 | 新 profile 不带设置。设置 → 工作台设置 → 配置同步 → 勾选 `llm-` 那几行 → 同步 |
 | 配置同步里某行说 `@x 还没装` | 那一行点名的包不在这个 profile 的 `node_modules` 里：执行 `dsh plugin --profile workbench add @x`（或在模块市场安装）。安装完成后 dsh 会自行重组；等它报告 `restartReason` 时再重启 |
 | 启动被拒，提示 dsh 太旧 | 执行 `npm i -g @deepseek-ai/dsh@latest`，安装完成后重启工作台 |
+| 升级 dsh 之后启动失败，日志只有 `N required plugins did not activate` | profile 里的 dsh 插件层是旧版工作台装进去的：dsh 的兼容性预检会逐个停用它们，`tools` / `sessions` / `agents` 就没人提供。重新安装一次工作台（`setup` 或 `dsh plugin --profile <名字> add @dsh-workbench/core`），pnpm 会按新依赖把旧 dsh 包清掉，再重启 |
 | 左栏没有「工作台DIY」，模式下拉里也没有「工作台 DIY 模式」 | DIY preset 在启动时从本次 dsh 的 `standard` 派生：如果 dsh 太旧（没有 `loader` / `agentPresets` 的注册入口），或 `standard` 的行发生了变化，就无法派生。dsh 的模式选择器只列出能挂载的项，因此整个入口会消失且不报错。启动检查会指出这一点并给出升级命令；要自行核对，可以查看 dsh 的 设置 → 「Agent presets」那一行的红标与原因 |
 | 在自己项目里开了 DIY，面板却说没找到模块 | 模块跟随**这条会话的工作区**，不跟随工坊：① 该工作区的某个 `package.json` 要声明 `dsh.workbench`；② 从工坊带过去的模块，需要把模块目录移动或复制到那个仓库；③ 旧截图不会迁移（新的放在 `~/.dsh/workbench/artifacts/<工作区>/`）。细节见工作台模块指引 |
 

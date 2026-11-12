@@ -1,10 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type {
-  DshAgentPresetDefinition,
-  DshAgentPresetRegistry,
-  DshAgentPresetUnregister,
-  DshHostContext,
-} from '@dsh-workbench/shared';
+import type { DshAgentPresetDefinition, DshAgentPresetRegistry, DshAgentPresetUnregister, DshHostContext } from '@dsh-workbench/shared/host';
 import { registerDiyPreset } from '../diy-preset';
 
 const STANDARD = {

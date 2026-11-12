@@ -1,14 +1,14 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const SRC = fileURLToPath(new URL('../src', import.meta.url));
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 function walk(dir, acc = []) {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, acc);
-    else if (/\.tsx?$/.test(entry) && !/\.test\.tsx?$/.test(entry)) acc.push(full);
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory()) walk(join(dir, entry.name), acc);
+    else if (/\.tsx?$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name)) acc.push(join(dir, entry.name));
   }
   return acc;
 }
@@ -85,10 +85,17 @@ for (const rel of PROTOCOL_FILES) {
   });
 }
 
+const manifest = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+for (const name of Object.keys(manifest.dependencies ?? {})) {
+  if (name === '@deepseek-ai/dsh' || name.startsWith('@deepseek-ai/dsh-')) {
+    findings.push(`package.json dependencies 里还有官方插件包：${name}（它会被装进 profile，盖住运行时那份）`);
+  }
+}
+
 if (findings.length > 0) {
   console.error(`✖ 共享包判据不过：${findings.length} 处`);
   for (const finding of findings) console.error(`  · ${finding}`);
   console.error('  （带状态的东西留外壳，靠 kit / peer 保证只有一份；共享包会被每个消费者各打一份）');
   process.exit(1);
 }
-console.log('✔ 共享包无模块级可变状态、协议面没有运行时实现名（工厂与纯函数可以安全复制）');
+console.log('✔ 共享包无模块级可变状态、协议面没有运行时实现名（工厂与纯函数可以安全复制）；运行期依赖里没有官方 dsh 包');

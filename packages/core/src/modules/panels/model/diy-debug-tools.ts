@@ -1,9 +1,4 @@
-import type {
-  DshHostContext,
-  DshToolDefinition,
-  DshToolRegistry,
-  DshToolRunContext,
-} from '@dsh-workbench/shared';
+import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared/host';
 import { sessionIdOf } from '@dsh-workbench/shared/host';
 import type { DebugMove, DebugRefusal, DebugState, DebugStore } from '@dsh-workbench/shared/host';
 import { asRecord, asText, OUTPUT, plainJson, unitsOf, workspaceOf } from './diy-context';
