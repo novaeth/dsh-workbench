@@ -2,6 +2,24 @@
 
 仓库从这一版开始记录：`v1.1.1` 是这份历史的第一个版本。
 
+## v1.2.7
+
+`2026-11-12`
+
+### core
+
+#### 🐛 修复
+
+- **左栏工作区的菜单与「在 Finder 中显示」**：工作区三点菜单改用 dsh `Menu` 的 `anchorRef` 加
+  CSS anchor，不再自己算坐标；右键菜单把根节点 portal 到 `body`，开在指针处；菜单打开期间
+  不卸载三点钮，鼠标移开也不会自己关。平台识别补了 UA 兜底，dev 下没有
+  `<html data-platform>` 时也认得出 macOS；「在 Finder 中显示」恢复可用，并补上
+  `remote.session` 与 `remote.agentPresets` 注入
+
+### 📦 产物
+
+- [@dsh-workbench/core@1.2.7](https://www.npmjs.com/package/@dsh-workbench/core/v/1.2.7)
+
 ## v1.2.6
 
 `2026-11-12`

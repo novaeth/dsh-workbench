@@ -40,7 +40,8 @@
     "scripts/share-data-root.mjs",
     "scripts/seed-profile.sh",
     "scripts/seed-workshop.sh",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "meta": {
     "title": "Workbench",

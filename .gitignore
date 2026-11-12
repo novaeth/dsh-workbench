@@ -19,6 +19,7 @@ private-docs/
 dist/
 coverage/
 packages/core/client.js
+packages/core/CHANGELOG.md
 packages/docs/site-dist/
 
 # 门禁中间产物：跑 `pnpm run check` 时在仓内出现、正常跑完会自己清掉的那几样。
