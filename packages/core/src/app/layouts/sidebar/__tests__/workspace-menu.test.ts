@@ -18,11 +18,11 @@ const WRITES = read('sidebar-inject.ts');
 const CLIENT = read('../../client.tsx');
 
 describe('工作区行的三点菜单：悬停换图标、点开是菜单', () => {
-  it('★ 三点那颗挨着行尾开（align=end），还是那个 rect', () => {
+  it('★ 三点那颗挨着行尾开（align=end），锚点就是那颗钮本身', () => {
     expect(ROW_ACTION).toContain('IconEllipsisOutlineRegular');
     expect(ROW_ACTION).not.toContain('IconEditOutlineRegular');
     expect(ROW_ACTION).toContain('aria-haspopup="menu"');
-    expect(ROW_ACTION).toContain("onMenu({ anchor: event.currentTarget.getBoundingClientRect(), align: 'end', mode: 'toggle' })");
+    expect(ROW_ACTION).toContain("onMenu({ element: event.currentTarget, align: 'end', mode: 'toggle' })");
     expect(ROW_ACTION).toContain('data-workspace-menu-trigger=""');
     expect(ROW_ACTION).toContain('aria-expanded={menuOpen}');
     expect(ITEMS).toContain('menuOpen={openMenuId === workspace.workspaceId}');
@@ -59,12 +59,13 @@ describe('工作区行的三点菜单：悬停换图标、点开是菜单', () =
     expect(branch).toContain('onReveal(path)');
   });
 
-  it('★ 菜单本体挂在开关上（SelectField 的兄弟），靠点的那一刻量到的坐标定位', () => {
+  it('★ 菜单本体挂在开关上（SelectField 的兄弟），锚点交给那颗钮：CSS anchor 定位，不自己算坐标', () => {
     expect(SWITCHER).toContain('<WorkspaceRowMenu');
     expect(MENU).toContain('<Menu');
     expect(MENU).toContain('portal');
-    expect(MENU).toContain('anchorPoint={anchorPoint}');
-    expect(MENU).toContain("=== 'end' ? anchor.right : anchor.left");
+    expect(MENU).toContain('anchorRef={anchorRef}');
+    expect(MENU).not.toContain('anchorPoint=');
+    expect(MENU).not.toContain('getBoundingClientRect');
   });
 
   it('★ 关菜单这件事归菜单自己（window 捕获）：别的弹层先关、或事件被谁 stop 掉，都带不走它', () => {
@@ -95,19 +96,20 @@ describe('右键工作区那一项：跟 dsh 官方同一套（指针位置开�
     expect(ROW_LABEL).toContain("row.addEventListener('contextmenu', context)");
     expect(ROW_LABEL).toContain('event.preventDefault()');
     expect(ROW_LABEL).toContain('event.stopPropagation()');
-    expect(ROW_LABEL).toContain("menuRef.current?.({ anchor: new DOMRect(x, y, 0, 0), align: 'start', mode: 'open' })");
+    expect(ROW_LABEL).toContain("menuRef.current?.({ element: row, align: 'start', mode: 'open' })");
     expect(MENU).toContain("align={target?.align ?? 'end'}");
   });
 
-  it('★ 键盘那次开在行的左下：ContextMenu 键与 Shift+F10（跟官方同一个判据）', () => {
+  it('★ 键盘那次：ContextMenu 键与 Shift+F10（跟官方同一个判据），锚在那一行上', () => {
     expect(ROW_LABEL).toContain("event.key !== 'ContextMenu'");
     expect(ROW_LABEL).toContain("event.key === 'F10' && event.shiftKey");
-    expect(ROW_LABEL).toContain('show(event, rect.left, rect.bottom)');
+    expect(ROW_LABEL).toContain('show(event)');
+    expect(ROW_LABEL).toContain('element: row');
   });
 
-  it('★ 右键落点：有指针坐标就用它，客户端坐标是 0（键盘触发）才退回行的 rect', () => {
-    expect(ROW_LABEL).toContain('const keyboard = event.clientX === 0 && event.clientY === 0');
-    expect(ROW_LABEL).toContain('rect?.left ?? event.clientX, rect?.bottom ?? event.clientY');
+  it('★ 右键落点：菜单挂在那一行（不自己算指针坐标，交给 CSS anchor）', () => {
+    expect(ROW_LABEL).not.toContain('event.clientX');
+    expect(ROW_LABEL).not.toContain('new DOMRect');
     expect(ROW_LABEL).toContain('row.focus({ preventScroll: true })');
   });
 });

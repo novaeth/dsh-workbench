@@ -27,7 +27,7 @@ export function WorkspaceRowAction({ workspace, t, menuOpen, onMenu }: Workspace
       data-workspace-menu-trigger=""
       onClick={(event) => {
         event.stopPropagation();
-        onMenu({ anchor: event.currentTarget.getBoundingClientRect(), align: 'end', mode: 'toggle' });
+        onMenu({ element: event.currentTarget, align: 'end', mode: 'toggle' });
       }}
     />
   );

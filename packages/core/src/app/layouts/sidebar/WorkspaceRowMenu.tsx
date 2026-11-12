@@ -14,7 +14,7 @@ import styles from './WorkspaceRowMenu.module.css';
 export const WORKSPACE_MENU_TRIGGER = 'data-workspace-menu-trigger';
 
 export interface WorkspaceMenuAnchor {
-  readonly anchor: DOMRect;
+  readonly element: HTMLElement;
   readonly align: 'start' | 'end';
 }
 
@@ -33,7 +33,7 @@ export function nextWorkspaceMenu(
 ): WorkspaceMenuTarget | null {
   const openFor = current?.workspace.workspaceId ?? null;
   if (shouldToggleWorkspaceMenu(open.mode, openFor, workspace.workspaceId)) return null;
-  return { workspace, anchor: open.anchor, align: open.align };
+  return { workspace, element: open.element, align: open.align };
 }
 
 export interface WorkspaceRowMenuProps {
@@ -70,12 +70,8 @@ export function WorkspaceRowMenu({ target, t, onClose, onAlias, onDelete, onReve
       },
     ];
   }, [target, t]);
-  const anchor = target?.anchor ?? null;
   const open = target !== null;
-  const anchorPoint =
-    anchor === null
-      ? undefined
-      : { x: (target?.align ?? 'end') === 'end' ? anchor.right : anchor.left, y: anchor.bottom };
+  const anchorRef = useMemo(() => ({ current: target?.element ?? null }), [target]);
 
   useEffect(() => {
     if (!open) return;
@@ -125,7 +121,7 @@ export function WorkspaceRowMenu({ target, t, onClose, onAlias, onDelete, onReve
       portal
       autoFocus
       align={target?.align ?? 'end'}
-      anchorPoint={anchorPoint}
+      anchorRef={anchorRef}
       className={styles.anchor}
       listClassName={styles.list}
     />
