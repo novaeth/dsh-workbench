@@ -1,0 +1,5 @@
+
+Checking for update
+dsh web: http://127.0.0.1:54753/?token=SqfLXyS5SE5Y93_pDO-3h3o_b1L9fr6ovjKWiR1WOvc
+Staging percentage: 1, percentage: 0.02376675233798259, user id: 77e7080c-fb81-5e36-8e59-7b74061593f0
+Update for version 0.2.2-rc.2 is not available (latest version: 0.2.2-rc.1, downgrade is disallowed).
