@@ -1,0 +1,32 @@
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [] none :: HARNESS | Loading plugins…
+[4.2s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[4.2s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[8.4s] ready wait [checking] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: HARNESS | Loading plugins… | Preparing the workbench |  | Getting the runtime ready…
+[8.4s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[11.0s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: o the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[11.0s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[13.0s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: mmands, @ files or sessions | Select model | Workbench panel | No modules on the panel yet | You can also tell the agent directly: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[13.0s] MILESTONE ready @ 13.0s
+[13.1s] verify wait :: host units panels,hello :: cards （无） ::  panel yet | You can also tell the agent directly: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[13.1s] STEP click ["选择模块","Choose modules"]: "Choose modules"
+[14.6s] STEP panel module hello [示例模块/Sample module/hello] dialogs=1 rows=["Sample module"] -> "clicked:hello"
+[17.6s] verify wait :: host units panels,hello :: cards wb-card-hello :: ample module | Restore the default everywhere | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[17.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-verify-body.txt (404 bytes)
+[17.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-units.json (5854 bytes)
+[17.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-client-bundles.json (25 bytes)
+[17.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-page-internals.json (2096 bytes)
+[17.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-console-events.json (9685 bytes)
+[17.6s] MILESTONE module-card @ 17.6s
+[17.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-smoke.json (101 bytes)
+[17.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-final-body.txt (404 bytes)
+[17.6s] TITLE: DeepSeek Harness
+[37.6s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+[37.6s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"37.6s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.1s","ready":"13.0s","module-card":"17.6s"},"card":true,"units":["panels","hello"]}
