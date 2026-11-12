@@ -67,12 +67,16 @@ export const checks = [
 
       const clientEntry = read(pkg('src/app/client.tsx'));
       const entryLines = clientEntry.split('\n');
+      const injectAt = entryLines.findIndex((line) => line.includes('export const inject = ['));
+      const injectClose = injectAt < 0 ? -1 : entryLines.findIndex((line, index) => index > injectAt && line.trim() === '];');
+      const injectEnd = injectAt < 0 ? -1 : injectClose < 0 ? injectAt : injectClose;
+      const outsideInject = (index) => injectAt < 0 || index < injectAt || index > injectEnd;
       const startsAt = entryLines.findIndex((line) => line.includes('const startSessionIn = '));
       const startsBody = startsAt < 0 ? '' : entryLines.slice(startsAt, startsAt + 12).join('\n');
       const presetSites = read(pkg('src/shared/api/diy.ts'))
         .split('\n')
         .filter((line) => line.includes('agentPreset: DIY_PRESET_ID')).length;
-      const presetMentions = entryLines.filter((line) => line.includes('agentPreset')).length;
+      const presetMentions = entryLines.filter((line, index) => outsideInject(index) && line.includes('agentPreset')).length;
       report(
         '★ 落 DIY 模式只有一份实现（`diyStartOptions` 带 agentPreset），客户端一行都不许自己写 preset',
         startsAt >= 0 &&

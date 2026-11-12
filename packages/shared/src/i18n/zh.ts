@@ -24,7 +24,7 @@ export const zh = {
   'project.menu.row': '「{name}」的更多操作',
   'project.menu.alias': '设置别名',
   'project.menu.reveal.finder': '在 Finder 中显示',
-  'project.menu.reveal.folder': '在文件夹中显示',
+  'project.menu.reveal.folder': '在文件夹显示',
   'project.menu.delete': '删除工作区',
   'project.alias.title': '给「{name}」设置别名',
   'project.alias.description': '别名显示在目录名旁边，不改文件夹名。',

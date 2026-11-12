@@ -132,6 +132,7 @@ describe('菜单里的三项：设置别名 / 在 Finder 中显示 / 删除工�
     expect(MENU).toContain("'project.menu.reveal.finder'");
     expect(MENU).toContain("'project.menu.reveal.folder'");
     expect(dictionaries.zh['project.menu.reveal.finder']).toBe('在 Finder 中显示');
+    expect(dictionaries.zh['project.menu.reveal.folder']).toBe('在文件夹显示');
     expect(dictionaries.en['project.menu.reveal.finder']).toBe('Show in Finder');
   });
 
@@ -180,6 +181,7 @@ describe('写口接线：删除走 dsh 的 workspaces.delete，打开位置走�
   });
 
   it('★ 在文件夹里显示：单数的 remote.session + action reveal，失败走共享提示', () => {
+    expect(CLIENT).toContain("'remote.session'");
     expect(WRITES).toContain('ctx.remote.session');
     expect(WRITES).toContain("openWorkspacePath({ path, action: 'reveal' })");
     expect(WRITES).toContain("ctx.get('contextMenus')");

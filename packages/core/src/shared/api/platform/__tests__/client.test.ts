@@ -23,6 +23,31 @@ describe('客户端平台面', () => {
     expect(surface.capabilities.macFileManager).toBe(false);
   });
 
+  it('页面没写 data-platform 时按 UA 认系统（浏览器里的 macOS 也算 darwin）', () => {
+    const navigatorDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    const documentDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'document');
+    try {
+      Object.defineProperty(globalThis, 'navigator', {
+        value: { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)' },
+        configurable: true,
+      });
+      Object.defineProperty(globalThis, 'document', {
+        value: { documentElement: { getAttribute: () => null } },
+        configurable: true,
+      });
+      expect(clientSurface({ win: {} }).capabilities.macFileManager).toBe(true);
+      Object.defineProperty(globalThis, 'document', {
+        value: { documentElement: { getAttribute: () => 'linux' } },
+        configurable: true,
+      });
+      expect(clientSurface({ win: {} }).capabilities.macFileManager).toBe(false);
+    } finally {
+      if (navigatorDescriptor !== undefined) Object.defineProperty(globalThis, 'navigator', navigatorDescriptor);
+      if (documentDescriptor !== undefined) Object.defineProperty(globalThis, 'document', documentDescriptor);
+      else delete (globalThis as { document?: unknown }).document;
+    }
+  });
+
   it('未知平台不假装成 linux', () => {
     const surface = clientSurface({ win: {}, platform: 'freebsd' });
     expect(surface.hostOs).toBe('other');

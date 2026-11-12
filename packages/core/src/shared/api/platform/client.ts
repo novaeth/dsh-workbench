@@ -16,9 +16,18 @@ function defaultWindow(): ClientSurfaceInput['win'] {
   return window as unknown as { readonly dshDesktop?: { readonly protocolVersion?: number } };
 }
 
+function platformOfUserAgent(userAgent: string): string {
+  if (/Macintosh|Mac OS X/iu.test(userAgent)) return 'darwin';
+  if (/Windows/iu.test(userAgent)) return 'win32';
+  if (/Linux|X11/iu.test(userAgent)) return 'linux';
+  return '';
+}
+
 function defaultPlatform(): string {
   if (typeof document === 'undefined' || document.documentElement === undefined) return '';
-  return document.documentElement.getAttribute('data-platform') ?? '';
+  const declared = document.documentElement.getAttribute('data-platform') ?? '';
+  if (declared !== '') return declared;
+  return typeof navigator === 'undefined' ? '' : platformOfUserAgent(navigator.userAgent);
 }
 
 export function clientSurface(input: ClientSurfaceInput = {}): ClientSurface {

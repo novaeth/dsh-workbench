@@ -36,7 +36,7 @@ export function workspaceOptions(options: WorkspaceItemsOptions): SelectFieldOpt
           onHover={(hovering) => onHover(hovering ? workspace.workspaceId : null)}
           onMenu={openMenu}
           action={
-            hoverId === workspace.workspaceId ? (
+            hoverId === workspace.workspaceId || openMenuId === workspace.workspaceId ? (
               <WorkspaceRowAction
                 workspace={workspace}
                 t={t}
