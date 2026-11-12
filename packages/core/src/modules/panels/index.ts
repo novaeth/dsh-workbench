@@ -2,7 +2,7 @@ import type { UnitManifest } from '@dsh-workbench/shared';
 import type { DshHostContext, RecordStore, UnitOwnedFace } from '@dsh-workbench/shared/host';
 import { DIY_DEBUG_SERVICE, DIY_RECORD_SERVICE, MCP_TOOLS_SERVICE, TOOLBOX_SERVICE, createDebugStore, createRecordStore, supplyNeedsOf, PANELS_SERVICE, dshHome, seamOf, supplyPortOf, workbenchRoot } from '@dsh-workbench/shared/host';
 import type { McpToolsPort, ToolboxPort, ToolScopeContext } from '@dsh-workbench/shared/host';
-import { basename } from 'node:path';
+import { basename, join } from 'node:path';
 import { workshopPathOf } from '@/shared/api/host/diy';
 import { hostSurface } from '@dsh-workbench/shared/host';
 import { BROWSER_RECORD_SESSION } from '@dsh-workbench/shared/host';
@@ -27,6 +27,7 @@ import { markSourceReadOnly, marketSourcesAction, marketSourcesRoutes } from './
 import { publishPreviewRoutes } from './model/publish-preview-routes';
 import { createMarketIndexReader } from '@/shared/api/host/market-index-fetch';
 import { createMarketDocReader } from '@/shared/api/host/market-doc';
+import { createInstalledPackageReader } from '@/shared/api/host/installed-package';
 import { createMarketSourcesStore } from '@/shared/api/host/market-sources-store';
 import { createMarketSourceInitializer } from '@/shared/api/host/market-source-init';
 import { affectedUnitsOf } from './model/market-dependency';
@@ -40,6 +41,8 @@ import { WORKBENCH_SETTINGS_SERVICE, type WorkbenchSettingsStore } from '@/share
 import { createPluginLedger } from './model/plugin-ledger';
 import { pluginPanelRefs } from './model/plugin-panel';
 import { pluginRoutes } from './model/plugin-section';
+import { pluginDirOf } from './model/plugin-name';
+import { installedPackageRoutes } from './model/installed-package-routes';
 import { registerPanelTools } from './model/tools';
 import { createToolbox } from './model/toolbox';
 import { capabilityBriefOf } from './model/capability-brief';
@@ -109,6 +112,15 @@ export const panelsHost: UnitOwnedFace = {
     ctx.provide(DIY_RECORD_SERVICE, record);
 
     const profileDir = supply.profileDirOf(ctx);
+    const installedPackages = createInstalledPackageReader({
+      profileDir,
+      sharedLibsDir: join(supply.isolatedRoot(), 'libs', 'node_modules'),
+      workbenchRoot: workbenchRoot(),
+      pluginDirOf: (pkg) => {
+        const entry = ledger.read(pkg);
+        return entry === undefined ? undefined : pluginDirOf(entry, ledger.pluginFiles);
+      },
+    });
     const includePrerelease = (): boolean =>
       (ctx.get(WORKBENCH_SETTINGS_SERVICE) as WorkbenchSettingsStore | undefined)?.read().includePrerelease === true;
     const seam = seamOf(ctx);
@@ -161,6 +173,7 @@ export const panelsHost: UnitOwnedFace = {
       store: marketSources,
       reader: marketIndex,
       docs: marketDocs,
+      installedDocs: (name, version, kind) => installedPackages.doc(name, version, kind),
       modules: () => supply.profileModules(profileDir),
       ...(profileDir === null ? {} : { profilePath: profileDir }),
       defaultRegistry: async () => {
@@ -214,6 +227,7 @@ export const panelsHost: UnitOwnedFace = {
             probe: (url: string) => probeGitAddressCached(url, { timeoutMs: 4000 }).then((one) => one.status),
           }),
         })),
+        ...installedPackageRoutes((pkg) => installedPackages.info(pkg)),
         ...publishPreviewRoutes(workshopPathOf(ctx), (unit) =>
           inferredAuthorOf(workshopPathOf(ctx), unit),
         ),

@@ -95,6 +95,7 @@ describe('panelsHost', () => {
       'panels/market-doc',
       'panels/market-sources',
       'panels/market-installed',
+      'panels/market-installed-info',
       'panels/market-publish-preview',
     ]);
     expect(result.gate).toBeDefined();

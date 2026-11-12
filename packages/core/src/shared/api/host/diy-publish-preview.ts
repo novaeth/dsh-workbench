@@ -31,6 +31,7 @@ import type { ChangelogKind } from '@dsh-workbench/shared/host';
 import type { GitRunner } from './git-process';
 import { runGitProcess } from './git-process';
 import { modulesIn } from './diy-modules';
+import { authorOf } from './package-author';
 
 const ARTIFACTS = ['dist', 'client.js', 'cordis.patch.yml', 'README.md', 'CHANGELOG.md', 'package.json'];
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)/;
@@ -320,17 +321,6 @@ function labelsOfManifest(record: Record<string, unknown>): readonly string[] {
   return [
     ...new Set(labels.flatMap((one) => (typeof one === 'string' && one.trim() !== '' ? [one.trim()] : []))),
   ];
-}
-
-function authorOf(manifest: Record<string, unknown>): string {
-  const author = manifest['author'];
-  if (typeof author === 'string') return author.trim();
-  if (author === null || typeof author !== 'object') return '';
-  const record = author as Record<string, unknown>;
-  const name = typeof record['name'] === 'string' ? record['name'].trim() : '';
-  if (name === '') return '';
-  const email = typeof record['email'] === 'string' ? record['email'].trim() : '';
-  return email === '' ? name : `${name} <${email}>`;
 }
 
 function targetVersionOf(

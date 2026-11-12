@@ -4,6 +4,7 @@ import {
   MARKET_DISCOVER_ROUTE,
   MARKET_DOC_ROUTE,
   MARKET_GIT_PROBE_ROUTE,
+  MARKET_INSTALLED_INFO_ROUTE,
   MARKET_INSTALLED_ROUTE,
   MARKET_PUBLISH_PREVIEW_ROUTE,
   MARKET_SOURCES_ROUTE,
@@ -11,6 +12,7 @@ import {
   type DiscoverDocKind,
   type DiscoverPayload,
   type GitProbePayload,
+  type InstalledPackageInfo,
   type MarketInstalledPayload,
   type MarketSourcesPayload,
   type PublishPreview,
@@ -30,6 +32,10 @@ export function readGitProbe(url: string): Promise<ApiResponse<GitProbePayload>>
 
 export function readMarketInstalled(): Promise<ApiResponse<MarketInstalledPayload>> {
   return apiGet<MarketInstalledPayload>(MARKET_INSTALLED_ROUTE);
+}
+
+export function readInstalledInfo(pkg: string): Promise<ApiResponse<{ readonly info: InstalledPackageInfo | null }>> {
+  return apiGet<{ readonly info: InstalledPackageInfo | null }>(MARKET_INSTALLED_INFO_ROUTE, { pkg });
 }
 
 export function readMarketDoc(

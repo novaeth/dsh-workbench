@@ -1,10 +1,8 @@
-import { Fragment, createElement as h, useMemo, useRef, useState } from 'react';
-import type { KeyboardEvent } from 'react';
+import { Fragment, createElement as h, useMemo, useState } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import { marketText } from '@dsh-workbench/shared';
 import type { DiscoverEntry, DiscoverVersionRow } from '@/kernel/contract/market-index';
 import {
-  IconChevronDownOutlineRegular,
   IconWarningOutlineRegular,
   Tag,
 } from '@deepseek-ai/dsh-client-ui-primitives';
@@ -13,73 +11,9 @@ import type { SourceFact } from './discover-view';
 import { EntryAction, MarketIcon } from './discover-rows';
 import { DiscoverVersions } from './discover-versions';
 import { DiscoverDocPanel } from './discover-doc';
+import { DetailTabs, detailTabItems, type DetailTab } from './detail-tabs';
+import { MarketDetailTop } from '../rightbar/market-detail-top';
 import styles from './MarketPage.module.css';
-
-type DetailTab = 'overview' | 'readme' | 'changelog';
-
-interface DetailTabItem {
-  readonly value: DetailTab;
-  readonly label: string;
-  readonly id: string;
-  readonly panelId: string;
-}
-
-interface DetailTabsProps {
-  readonly items: readonly DetailTabItem[];
-  readonly value: DetailTab;
-  readonly onChange: (tab: DetailTab) => void;
-  readonly label: string;
-}
-
-function DetailTabs({ items, value, onChange, label }: DetailTabsProps) {
-  const buttons = useRef<Array<HTMLButtonElement | null>>([]);
-  const move = (event: KeyboardEvent<HTMLButtonElement>, index: number): void => {
-    const last = items.length - 1;
-    let target: number;
-    switch (event.key) {
-      case 'ArrowRight':
-        target = index === last ? 0 : index + 1;
-        break;
-      case 'ArrowLeft':
-        target = index === 0 ? last : index - 1;
-        break;
-      case 'Home':
-        target = 0;
-        break;
-      case 'End':
-        target = last;
-        break;
-      default:
-        return;
-    }
-    event.preventDefault();
-    onChange(items[target].value);
-    buttons.current[target]?.focus();
-  };
-  return (
-    <div className={styles.discoverTabStrip} role="tablist" aria-label={label}>
-      {items.map((item, index) => (
-        <button
-          key={item.value}
-          ref={(node) => {
-            buttons.current[index] = node;
-          }}
-          type="button"
-          role="tab"
-          id={item.id}
-          aria-controls={item.panelId}
-          aria-selected={item.value === value}
-          tabIndex={item.value === value ? 0 : -1}
-          className={styles.discoverTab}
-          onClick={() => onChange(item.value)}
-          onKeyDown={(event) => move(event, index)}
-        >
-          {item.label}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 export interface DiscoverDetailProps {
   readonly t: Translate;
@@ -203,59 +137,44 @@ export function DiscoverDetail(props: DiscoverDetailProps) {
   const idPrefix = `market-detail-${entry.name.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
   const tabItems = useMemo(
     () =>
-      [
-        {
-          value: 'overview' as const,
-          label: t('panels.discover.tabOverview'),
-          id: `${idPrefix}-tab-overview`,
-          panelId: `${idPrefix}-panel-overview`,
-        },
-        {
-          value: 'readme' as const,
-          label: t('panels.discover.tabReadme'),
-          id: `${idPrefix}-tab-readme`,
-          panelId: `${idPrefix}-panel-readme`,
-        },
-        {
-          value: 'changelog' as const,
-          label: t('panels.discover.tabChangelog'),
-          id: `${idPrefix}-tab-changelog`,
-          panelId: `${idPrefix}-panel-changelog`,
-        },
-      ] as const,
+      detailTabItems(idPrefix, {
+        overview: t('panels.discover.tabOverview'),
+        readme: t('panels.discover.tabReadme'),
+        changelog: t('panels.discover.tabChangelog'),
+      }),
     [idPrefix, t],
   );
   return (
     <div className={styles.discoverDetail} data-market-detail={entry.name}>
-      <div className={styles.discoverDetailTop}>
-        <button type="button" className={styles.discoverCrumb} onClick={props.onBack}>
-          <IconChevronDownOutlineRegular className={styles.discoverCrumbIcon} aria-hidden="true" />
-          <span>{t('panels.discover.detailBack')}</span>
-        </button>
-        <div className={styles.discoverDetailHead}>
-          <span className={styles.discoverArtwork} aria-hidden="true">
-            <MarketIcon src={entry.icon} />
-          </span>
-          <div className={styles.discoverMain}>
-            <div className={styles.discoverTitleRow}>
-              <h3 className={styles.discoverDetailTitle}>{title}</h3>
-              {latest === undefined ? null : <Tag tone="neutral">{latest.version}</Tag>}
+      <MarketDetailTop
+        t={t}
+        onBack={props.onBack}
+        backLabelKey="panels.discover.detailBack"
+        icon={<MarketIcon src={entry.icon} />}
+        end={
+          latest === undefined ? undefined : (
+            <div className={styles.marketDetailEnd}>
+              <EntryAction
+                t={t}
+                entry={entry}
+                title={title}
+                onInstall={props.onInstall}
+                onShowInstalled={props.onShowInstalled}
+                installDisabled={props.installDisabled === true}
+              />
             </div>
-            {title === entry.name ? null : <span className={styles.discoverMeta}>{entry.name}</span>}
+          )
+        }
+        tabs={<DetailTabs items={tabItems} value={tab} onChange={setTab} label={t('panels.discover.detailTabs')} />}
+      >
+        <div className={styles.discoverMain}>
+          <div className={styles.discoverTitleRow}>
+            <h3 className={styles.discoverDetailTitle}>{title}</h3>
+            {latest === undefined ? null : <Tag tone="neutral">{latest.version}</Tag>}
           </div>
-          {latest === undefined ? null : (
-            <EntryAction
-              t={t}
-              entry={entry}
-              title={title}
-              onInstall={props.onInstall}
-              onShowInstalled={props.onShowInstalled}
-              installDisabled={props.installDisabled === true}
-            />
-          )}
+          {title === entry.name ? null : <span className={styles.discoverMeta}>{entry.name}</span>}
         </div>
-        <DetailTabs items={tabItems} value={tab} onChange={setTab} label={t('panels.discover.detailTabs')} />
-      </div>
+      </MarketDetailTop>
       {tab === 'overview' ? (
         <div
           className={styles.discoverDetailPanel}

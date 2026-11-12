@@ -38,4 +38,21 @@ describe('详情页顶部：面包屑 + 图标 + 标题区 + 右侧操作位', (
     expect(shown).toContain('MAIN');
     expect(shown).toContain('END');
   });
+
+  it('★ 发现页复用同一块头部：面包屑换词，tab 条挂在头部下面', () => {
+    const tree = MarketDetailTop({
+      t,
+      onBack: () => undefined,
+      icon: 'ARTWORK',
+      children: 'MAIN',
+      backLabelKey: 'panels.discover.detailBack',
+      wrap: false,
+      tabs: 'TABS',
+    });
+    const shown = texts(tree);
+
+    expect(shown).toContain('panels.discover.detailBack');
+    expect(shown).not.toContain('panels.market.detailBack');
+    expect(shown).toContain('TABS');
+  });
 });

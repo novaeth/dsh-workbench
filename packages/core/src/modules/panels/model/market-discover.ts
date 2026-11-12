@@ -42,6 +42,9 @@ export interface MarketDiscoverOptions {
   readonly store: MarketSourcesStore;
   readonly reader: MarketIndexReader;
   readonly docs: MarketDocReader;
+  readonly installedDocs?:
+    | ((name: string, version: string, kind: DiscoverDocKind) => DiscoverDoc | Promise<DiscoverDoc>)
+    | undefined;
   readonly modules: () => readonly ProfileModule[];
   readonly defaultRegistry: () => Promise<string | undefined>;
   readonly profilePath?: string | undefined;
@@ -262,6 +265,12 @@ export function createMarketDiscover(options: MarketDiscoverOptions): MarketDisc
     return payloadOf(source, read.index, rows, source.id, filter, read.fetchedAt, read.commit);
   }
 
+  async function installedDoc(name: string, version: string, kind: DiscoverDocKind): Promise<DiscoverDoc | undefined> {
+    if (options.installedDocs === undefined) return undefined;
+    const doc = await options.installedDocs(name, version, kind);
+    return doc.ok ? doc : undefined;
+  }
+
   async function document(
     name: string,
     version: string,
@@ -270,24 +279,40 @@ export function createMarketDiscover(options: MarketDiscoverOptions): MarketDisc
     const { sources, selected } = options.store.read();
     const source = selected === null ? undefined : sources.find((item) => item.id === selected);
     if (source === undefined) {
-      return { ok: false, kind, version, reason: 'unavailable', detail: '没有选中的模块来源' };
+      return (
+        (await installedDoc(name, version, kind)) ?? {
+          ok: false,
+          kind,
+          version,
+          reason: 'unavailable',
+          detail: '没有选中的模块来源',
+        }
+      );
     }
     const read = await options.reader.read(source);
     const index = read.ok ? read.index : read.cached?.index;
     if (index === undefined) {
-      return {
-        ok: false,
-        kind,
-        version,
-        reason: 'unavailable',
-        ...(read.ok ? {} : { detail: read.problem.detail }),
-      };
+      return (
+        (await installedDoc(name, version, kind)) ?? {
+          ok: false,
+          kind,
+          version,
+          reason: 'unavailable',
+          ...(read.ok ? {} : { detail: read.problem.detail }),
+        }
+      );
     }
     const row = index.plugins
       .find((one) => one.name === name)
       ?.versions.find((one) => one.version === version);
-    if (row === undefined) return { ok: false, kind, version, reason: 'missing' };
-    return options.docs.read(source, { name, version, source: row.source }, kind);
+    if (row === undefined) {
+      return (
+        (await installedDoc(name, version, kind)) ?? { ok: false, kind, version, reason: 'missing' }
+      );
+    }
+    const doc = await options.docs.read(source, { name, version, source: row.source }, kind);
+    if (doc.ok) return doc;
+    return (await installedDoc(name, version, kind)) ?? doc;
   }
 
   return { snapshot, document };

@@ -1,5 +1,6 @@
 import { marketInstallTarget } from '@dsh-workbench/shared';
 import type { Translate } from '@dsh-workbench/shared';
+import type { InstalledPackageInfo } from '@/kernel/contract/market-index';
 import type { MarketRow } from './market-row-types';
 import type { SharedRow } from './market-shared-rows';
 
@@ -7,6 +8,8 @@ export interface MarketDetailFact {
   readonly labelKey: string;
   readonly value: string;
   readonly code?: boolean;
+  readonly link?: boolean;
+  readonly tags?: readonly string[];
 }
 
 const DIRECT_SOURCE = /^(?:git\+|git:|github:|gitlab:|bitbucket:|https?:|ssh:|file:|link:|workspace:|\.{0,2}\/|\/)/i;
@@ -53,8 +56,39 @@ function addFact(
   facts.push({ labelKey, value, ...(code ? { code: true } : {}) });
 }
 
-export function marketDetailFacts(row: MarketRow, t: Translate): readonly MarketDetailFact[] {
+function httpUrlOf(value: string): string | undefined {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function infoFactsOf(info: InstalledPackageInfo | null | undefined): MarketDetailFact[] {
+  if (info === null || info === undefined) return [];
   const facts: MarketDetailFact[] = [];
+  addFact(facts, 'panels.market.detailAuthor', info.author);
+  const homepage = info.homepage === undefined ? undefined : httpUrlOf(info.homepage.trim());
+  if (homepage !== undefined) {
+    facts.push({ labelKey: 'panels.market.detailHomepage', value: homepage, link: true });
+  }
+  if (info.keywords.length > 0) {
+    facts.push({
+      labelKey: 'panels.market.detailKeywords',
+      value: info.keywords.join(' · '),
+      tags: info.keywords,
+    });
+  }
+  return facts;
+}
+
+export function marketDetailFacts(
+  row: MarketRow,
+  t: Translate,
+  info?: InstalledPackageInfo | null,
+): readonly MarketDetailFact[] {
+  const facts: MarketDetailFact[] = infoFactsOf(info);
   const source = installSourceOf(row, t);
   addFact(facts, 'panels.market.detailSource', source.text, source.code);
   if (row.plugin === true) {
@@ -110,8 +144,12 @@ export function marketDetailFacts(row: MarketRow, t: Translate): readonly Market
   return facts;
 }
 
-export function sharedDetailFacts(row: SharedRow, t: Translate): readonly MarketDetailFact[] {
-  const facts: MarketDetailFact[] = [];
+export function sharedDetailFacts(
+  row: SharedRow,
+  t: Translate,
+  info?: InstalledPackageInfo | null,
+): readonly MarketDetailFact[] {
+  const facts: MarketDetailFact[] = infoFactsOf(info);
   const source =
     row.source === undefined
       ? undefined

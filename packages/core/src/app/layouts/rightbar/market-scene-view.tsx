@@ -7,7 +7,7 @@ import type { Pending } from './market-view-text';
 import { MarketBody } from './market-body';
 import { MarketChecking, MarketEmpty } from './MarketStates';
 import { MarketDetailPage } from './market-detail-page';
-import { SharedDetail } from './market-shared-detail';
+import { SharedDetailPage } from './market-shared-detail';
 import { UninstallConfirm } from './market-uninstall';
 
 export function MarketSceneView({
@@ -69,7 +69,8 @@ export function MarketSceneView({
 }) {
   if (detailShared !== undefined) {
     return (
-      <SharedDetail
+      <SharedDetailPage
+        key={detailShared.id}
         t={t}
         row={detailShared}
         pending={pending}
@@ -84,6 +85,7 @@ export function MarketSceneView({
   if (detailRow !== undefined) {
     return (
       <MarketDetailPage
+        key={detailRow.id}
         t={t}
         row={detailRow}
         pending={pending}

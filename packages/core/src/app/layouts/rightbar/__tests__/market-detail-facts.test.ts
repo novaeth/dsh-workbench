@@ -177,3 +177,40 @@ describe('详情页的「来源信息」：模块 / 插件 / 索引给的新版�
     expect(facts['panels.market.detailUpdateVersion']).toBe('0.2.0');
   });
 });
+
+describe('已安装包自己的元数据：作者 · 主页 · 关键词', () => {
+  it('★ package.json 里有的先摆出来，主页可点，关键词挂标签', () => {
+    const facts = marketDetailFacts(
+      rowOf({ pkg: '@a/hello', version: { installed: '0.1.2' } }),
+      t,
+      {
+        pkg: '@a/hello',
+        version: '0.1.2',
+        author: '张三',
+        homepage: 'https://example.com/hello',
+        keywords: ['演示', '模块'],
+      },
+    );
+    const byKey = Object.fromEntries(facts.map((fact) => [fact.labelKey, fact]));
+
+    expect(byKey['panels.market.detailAuthor']?.value).toBe('张三');
+    expect(byKey['panels.market.detailHomepage']?.value).toBe('https://example.com/hello');
+    expect(byKey['panels.market.detailHomepage']?.link).toBe(true);
+    expect(byKey['panels.market.detailKeywords']?.tags).toEqual(['演示', '模块']);
+  });
+
+  it('★ 主页只认 http(s)，别的协议不摆成可点的链接', () => {
+    const facts = marketDetailFacts(rowOf({ pkg: '@a/hello' }), t, {
+      pkg: '@a/hello',
+      homepage: 'javascript:alert(1)',
+      keywords: [],
+    });
+    expect(facts.map((fact) => fact.labelKey)).not.toContain('panels.market.detailHomepage');
+  });
+
+  it('★ 没有元数据时不添空行', () => {
+    const facts = marketDetailFacts(rowOf({ pkg: '@a/hello' }), t, null);
+    expect(facts.map((fact) => fact.labelKey)).not.toContain('panels.market.detailAuthor');
+    expect(facts.map((fact) => fact.labelKey)).not.toContain('panels.market.detailHomepage');
+  });
+});

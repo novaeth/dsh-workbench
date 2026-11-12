@@ -1,9 +1,11 @@
-import { Fragment, createElement as h } from 'react';
+import { Fragment, createElement as h, useState } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import type { MarketFailure, MarketRow, MarketRowAction } from './market-row-types';
 import type { Pending } from './market-view-text';
 import { MarketDetail } from './market-detail';
 import { UninstallConfirm } from './market-uninstall';
+import { useInstalledInfo } from '../market/use-installed-info';
+import type { DetailTab } from '../market/detail-tabs';
 
 const CONFIRM_ACTIONS: readonly MarketRowAction[] = ['uninstall', 'remove-bundle', 'uninstall-plugin'];
 
@@ -40,6 +42,8 @@ export function MarketDetailPage({
   readonly onRecheck: () => void;
   readonly rechecking: boolean;
 }) {
+  const [tab, setTab] = useState<DetailTab>('overview');
+  const info = useInstalledInfo(row.pkg);
   return (
     <>
       <MarketDetail
@@ -56,6 +60,9 @@ export function MarketDetailPage({
         onDefault={(next) => void onDefault(row.id, next)}
         onRecheck={onRecheck}
         rechecking={rechecking}
+        tab={tab}
+        onTab={setTab}
+        info={info}
       />
       <UninstallConfirm
         t={t}

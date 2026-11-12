@@ -6,6 +6,7 @@ export const MARKET_DISCOVER_ROUTE = 'panels/market-discover';
 export const MARKET_DOC_ROUTE = 'panels/market-doc';
 export const MARKET_GIT_PROBE_ROUTE = 'panels/git-probe';
 export const MARKET_INSTALLED_ROUTE = 'panels/market-installed';
+export const MARKET_INSTALLED_INFO_ROUTE = 'panels/market-installed-info';
 export const MARKET_PUBLISH_PREVIEW_ROUTE = 'panels/market-publish-preview';
 export const MARKET_SOURCES_RESOURCE = 'market-sources';
 export const MARKET_SOURCES_ROUTE = 'panels/market-sources';
@@ -242,6 +243,15 @@ export interface MarketInstalledModule {
 
 export interface MarketInstalledPayload {
   readonly modules: readonly MarketInstalledModule[];
+}
+
+export interface InstalledPackageInfo {
+  readonly pkg: string;
+  readonly version?: string;
+  readonly description?: string;
+  readonly author?: string;
+  readonly homepage?: string;
+  readonly keywords: readonly string[];
 }
 
 export interface MarketPublishDestination {

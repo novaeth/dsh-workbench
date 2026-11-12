@@ -119,3 +119,35 @@ describe('共用依赖详情页：面包屑 · 名称 · 版本 · 依赖信息'
     expect(shown).not.toContain('panels.market.update');
   });
 });
+
+describe('共用依赖详情页：跟发现页同一套 tab 与本地包元数据', () => {
+  it('★ 概览 / 说明 / 更新日志三格都在，元数据摆进依赖信息', () => {
+    const tree = SharedDetail({
+      t,
+      row: ROW,
+      pending: null,
+      failure: null,
+      onBack: () => undefined,
+      onAct: () => undefined,
+      onRecheck: () => undefined,
+      rechecking: false,
+      info: {
+        pkg: 'opencli-plugin-coding',
+        version: '1.0.52',
+        description: '编码插件',
+        author: '张三',
+        homepage: 'https://example.com/coding',
+        keywords: ['opencli', 'coding'],
+      },
+    });
+    const shown = texts(tree);
+
+    expect(shown).toContain('panels.market.detailTabOverview');
+    expect(shown).toContain('panels.market.detailTabReadme');
+    expect(shown).toContain('panels.market.detailTabChangelog');
+    expect(shown).toContain('编码插件');
+    expect(shown).toContain('张三');
+    expect(shown).toContain('panels.market.detailKeywords');
+    expect(shown).toContain('opencli');
+  });
+});

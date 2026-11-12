@@ -50,6 +50,10 @@ function setup(options: {
   readonly fetchImpl?: ((url: string, init: RequestInit) => Promise<Response>) | undefined;
   readonly seam?: Seam | undefined;
   readonly repoDir?: string | undefined;
+  readonly docs?: MarketDocReader | undefined;
+  readonly installedDocs?:
+    | ((name: string, version: string, kind: 'readme' | 'changelog') => { ok: true; kind: 'readme' | 'changelog'; version: string; text: string } | { ok: false; kind: 'readme' | 'changelog'; version: string; reason: 'missing' | 'unavailable' })
+    | undefined;
 }) {
   const sources = options.sources ?? [SOURCE];
   const selected = options.selected === undefined ? (sources[0]?.id ?? null) : options.selected;
@@ -63,13 +67,14 @@ function setup(options: {
     cached: () => undefined,
     pathOf: () => options.repoDir ?? '/tmp/none',
   };
-  const docs: MarketDocReader = {
+  const docs: MarketDocReader = options.docs ?? {
     read: async (_source, target, kind) => ({ ok: true, kind, version: target.version, text: `# ${kind}` }),
   };
   return createMarketDiscover({
     store,
     reader,
     docs,
+    ...(options.installedDocs === undefined ? {} : { installedDocs: options.installedDocs }),
     modules: () => options.installed ?? [],
     defaultRegistry: async () => 'https://npm.company.com/',
     shellVersion: '0.3.11',
@@ -223,6 +228,58 @@ describe('模块文档', () => {
     expect(doc.ok).toBe(false);
     if (doc.ok) return;
     expect(doc.reason).toBe('unavailable');
+  });
+
+  it('★ 索引读不到文档时，用本机已安装的同版本文档兜底', async () => {
+    const discover = setup({
+      index: indexOf([entry('@a/x', '0.1.0')]),
+      docs: {
+        read: async (_source, target, kind) => ({ ok: false, kind, version: target.version, reason: 'missing' }),
+      },
+      installedDocs: (name, version, kind) => ({
+        ok: true,
+        kind,
+        version,
+        text: `# ${name}@${version} ${kind} 来自本机`,
+      }),
+    });
+    expect(await discover.document('@a/x', '0.1.0', 'readme')).toEqual({
+      ok: true,
+      kind: 'readme',
+      version: '0.1.0',
+      text: '# @a/x@0.1.0 readme 来自本机',
+    });
+  });
+
+  it('★ 索引里有文档时以索引为准，本机那份只兜底', async () => {
+    const discover = setup({
+      index: indexOf([entry('@a/x', '0.1.0')]),
+      installedDocs: () => ({ ok: true, kind: 'readme', version: '0.1.0', text: '# 本机' }),
+    });
+    expect(await discover.document('@a/x', '0.1.0', 'readme')).toEqual({
+      ok: true,
+      kind: 'readme',
+      version: '0.1.0',
+      text: '# readme',
+    });
+  });
+
+  it('★ 没有选中的索引源时也能读本机已安装包', async () => {
+    const discover = setup({
+      index: indexOf([]),
+      sources: [],
+      selected: null,
+      installedDocs: (_name, version, kind) => ({
+        ok: true,
+        kind,
+        version,
+        text: '# 本机',
+      }),
+    });
+    expect(await discover.document('@a/x', '0.1.0', 'changelog')).toMatchObject({
+      ok: true,
+      text: '# 本机',
+    });
   });
 });
 
