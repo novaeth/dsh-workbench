@@ -9,6 +9,7 @@ export interface McpOnDemandItemProps {
 export function McpOnDemandItem({ t }: McpOnDemandItemProps): JSX.Element {
   return (
     <WorkbenchToggleItem
+      t={t}
       field="mcpOnDemand"
       title={t('mcpOnDemand.nav')}
       description={t('mcpOnDemand.lead')}

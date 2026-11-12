@@ -15,7 +15,7 @@ import { MARKET_PANEL_ID, registerMarketPanel } from '@/app/layouts/market/panel
 import { registerDebugFooter } from '@/app/layouts/sidebar/debug-footer';
 import { clientSurface } from '@/shared/api/platform/client';
 import { registerRecordFooter } from '@/app/layouts/sidebar/record-footer';
-import { WorkbenchSettingsSection } from '@/app/layouts/workbench-settings/WorkbenchSettingsSection';
+import { registerWorkbenchSettings } from '@/app/layouts/workbench-settings/register';
 import { selectProject, selectedProjectId } from '@/app/layouts/project-selection';
 import { WORKSHOP_PAST_TITLES, WORKSHOP_TITLE, diyStartOptions, isWorkshopPath } from '@/shared/api/diy';
 import { installWorkshopPreset } from '@/app/layouts/sidebar/workshop-preset';
@@ -407,7 +407,7 @@ function mount(ctx: DshClientContext): void {
   registerMarketPanel(ctx, units);
   if (clientSurface().capabilities.debugFooter) registerDebugFooter(ctx);
   registerRecordFooter(ctx);
-  registerWorkbenchSettingsSection(ctx);
+  registerWorkbenchSettings(ctx);
   ctx.effect(() => {
     const workshop = workshopWorkspace();
     if (workshop === undefined) return () => undefined;
@@ -451,24 +451,6 @@ function mount(ctx: DshClientContext): void {
         inject: () => ({ selectColumn, dshColumn, ...rightbarHooks }),
       },
       ColumnSwitch,
-    ),
-  );
-}
-
-const WORKBENCH_SETTINGS_SECTION_ID = 'workbench-settings';
-
-function registerWorkbenchSettingsSection(ctx: DshClientContext): void {
-  ctx.slots.inject('settings.section', () =>
-    ctx.slots.register(
-      {
-        name: 'settings.section',
-        id: WORKBENCH_SETTINGS_SECTION_ID,
-        order: 40,
-        locale: LOCALE_NS,
-        label: () => ctx.locale.bind(LOCALE_NS)('workbenchSettings.nav'),
-        inject: () => ({ t: ctx.locale.bind(LOCALE_NS) }),
-      },
-      WorkbenchSettingsSection,
     ),
   );
 }

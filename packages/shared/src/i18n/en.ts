@@ -732,6 +732,7 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'workbenchSettings.nav': 'Workbench settings',
   'workbenchSettings.lead': 'These settings affect only this workbench; sessions and projects are shared with other workbenches.',
   'workbenchSettings.advanced': 'Advanced',
+  'workbenchSettings.readFailed': 'Could not read this setting. Try again.',
 
   'sidebarEdition.nav': 'Session list',
   'sidebarEdition.lead': 'Which interface the session list in the left column uses.',
@@ -740,8 +741,6 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'sidebarEdition.custom': 'Custom',
   'sidebarEdition.customHint': 'One project per screen, sessions sorted by latest update.',
   'sidebarEdition.saving': 'Saving…',
-  'sidebarEdition.reloadRequired': 'Saved. Reload the page to apply.',
-  'sidebarEdition.reload': 'Reload page',
   'sidebarEdition.failed': 'Could not save. Try again.',
 
 

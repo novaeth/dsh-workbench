@@ -9,6 +9,7 @@ export interface UpdatePrereleaseItemProps {
 export function UpdatePrereleaseItem({ t }: UpdatePrereleaseItemProps): JSX.Element {
   return (
     <WorkbenchToggleItem
+      t={t}
       field="includePrerelease"
       title={t('updatePrerelease.nav')}
       description={t('updatePrerelease.lead')}

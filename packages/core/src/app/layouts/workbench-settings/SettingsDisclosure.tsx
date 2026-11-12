@@ -1,5 +1,6 @@
-import { createElement as h, useId } from 'react';
+import { createElement as h } from 'react';
 import type { ReactNode } from 'react';
+import { IconChevronDownOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives';
 import styles from './SettingsDisclosure.module.css';
 
 export interface SettingsDisclosureProps {
@@ -19,14 +20,12 @@ export function SettingsDisclosure({
   onToggle,
   children,
 }: SettingsDisclosureProps): JSX.Element {
-  const panelId = useId();
   return (
     <div className={styles.section}>
       <button
         type="button"
         className={styles.head}
         aria-expanded={open}
-        aria-controls={panelId}
         onClick={onToggle}
       >
         <span className={styles.text}>
@@ -35,11 +34,13 @@ export function SettingsDisclosure({
         </span>
         <span className={styles.tail}>
           {meta === undefined || meta === '' ? null : <span className={styles.meta}>{meta}</span>}
-          <span className={styles.chevron} aria-hidden="true" />
+          <span className={styles.chevron} aria-hidden="true">
+            <IconChevronDownOutlineRegular size={16} />
+          </span>
         </span>
       </button>
       {open ? (
-        <div className={styles.panel} id={panelId}>
+        <div className={styles.panel}>
           {children}
         </div>
       ) : null}

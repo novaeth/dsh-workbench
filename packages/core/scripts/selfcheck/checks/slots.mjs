@@ -235,12 +235,12 @@ export const checks = [
     },
   },
   {
-    title: '一共就注册这十个槽名，十一条注册（多一条都要想清楚为什么）',
+    title: '一共就注册这十一个槽名，十二条注册（多一条都要想清楚为什么）',
     run(ctx, report) {
       const { registrations } = ctx;
 
       report(
-        '一共就注册这八个槽名，九条注册（多一条都要想清楚为什么）',
+        '一共就注册这十一个槽名，十二条注册（多一条都要想清楚为什么）',
         [...new Set(registrations.map((r) => r.options.name))].sort().join(',') ===
           [
             'conversation.session.header.corner',
@@ -253,10 +253,11 @@ export const checks = [
             'main',
             'conversation.approval.detail',
             'settings.section',
+            'settings.section.icon',
           ]
             .sort()
             .join(',') &&
-          registrations.length === 11,
+          registrations.length === 12,
         registrations
           .map((r) => `${r.options.name}${r.options.id === undefined ? '' : `#${r.options.id}`}`)
           .join('、'),

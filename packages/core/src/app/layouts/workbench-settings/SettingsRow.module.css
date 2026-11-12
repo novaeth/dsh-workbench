@@ -19,14 +19,14 @@
 
 .title {
   font-size: var(--dsw-font-s-14-font-size);
-  line-height: var(--wb-line-20);
+  line-height: var(--wb-line-22);
   color: var(--dsw-alias-label-primary);
 }
 
 .description {
   font-size: var(--dsw-font-xxs-12-font-size);
   line-height: var(--wb-line-18);
-  color: var(--dsw-alias-label-secondary);
+  color: var(--dsw-alias-label-tertiary);
 }
 
 .error {

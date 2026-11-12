@@ -728,6 +728,7 @@ export const zh = {
   'workbenchSettings.nav': '工作台设置',
   'workbenchSettings.lead': '只影响这份工作台；会话和项目与其他工作台共用。',
   'workbenchSettings.advanced': '高级',
+  'workbenchSettings.readFailed': '无法读取这项设置，请重试。',
 
   'sidebarEdition.nav': '会话列表',
   'sidebarEdition.lead': '左栏会话列表使用哪套界面。',
@@ -736,8 +737,6 @@ export const zh = {
   'sidebarEdition.custom': '自定义',
   'sidebarEdition.customHint': '一屏显示一个项目，会话按最近更新排序。',
   'sidebarEdition.saving': '保存中…',
-  'sidebarEdition.reloadRequired': '已保存，刷新页面后生效。',
-  'sidebarEdition.reload': '刷新页面',
   'sidebarEdition.failed': '保存失败，请重试。',
 
 

@@ -1,6 +1,7 @@
 import { createElement as h, useState } from 'react';
+import type { Translate } from '@dsh-workbench/shared';
 import { MIN_BUSY_MS } from '@dsh-workbench/shared';
-import { Switch } from '@deepseek-ai/dsh-client-ui-primitives';
+import { Button, Switch } from '@deepseek-ai/dsh-client-ui-primitives';
 import type {
   WorkbenchSettingsApplied,
   WorkbenchSettingsSnapshot,
@@ -17,6 +18,7 @@ import { SettingsRow } from './SettingsRow';
 export type WorkbenchToggleField = 'mcpOnDemand' | 'includePrerelease';
 
 export interface WorkbenchToggleItemProps {
+  readonly t: Translate;
   readonly field: WorkbenchToggleField;
   readonly title: string;
   readonly description: string;
@@ -24,12 +26,14 @@ export interface WorkbenchToggleItemProps {
 }
 
 export function WorkbenchToggleItem({
+  t,
   field,
   title,
   description,
   failed,
 }: WorkbenchToggleItemProps): JSX.Element {
-  const snapshot = useApiResource<WorkbenchSettingsSnapshot>(WORKBENCH_SETTINGS_ROUTE, {}, 0);
+  const [revision, setRevision] = useState(0);
+  const snapshot = useApiResource<WorkbenchSettingsSnapshot>(WORKBENCH_SETTINGS_ROUTE, {}, revision);
   const write = useHostWrite<WorkbenchSettingsApplied>({
     channel: 'actions',
     resource: WORKBENCH_SETTINGS_RESOURCE,
@@ -37,6 +41,7 @@ export function WorkbenchToggleItem({
   });
   const busy = useVisibleBusy(write.busy, MIN_BUSY_MS);
   const [override, setOverride] = useState<boolean | null>(null);
+  const readFailed = snapshot.phase === 'error';
   const stored =
     snapshot.phase === 'ready' && snapshot.value !== undefined
       ? snapshot.value.settings[field]
@@ -54,14 +59,20 @@ export function WorkbenchToggleItem({
     <SettingsRow
       title={title}
       description={description}
-      error={write.failed}
+      error={write.failed ?? (readFailed ? t('workbenchSettings.readFailed') : null)}
       control={
-        <Switch
-          checked={checked}
-          disabled={stored === undefined || busy.busy}
-          label={title}
-          onChange={toggle}
-        />
+        readFailed ? (
+          <Button variant="ghost" size="sm" onClick={() => setRevision((current) => current + 1)}>
+            {t('blocker.retry')}
+          </Button>
+        ) : (
+          <Switch
+            checked={checked}
+            disabled={stored === undefined || busy.busy}
+            label={title}
+            onChange={toggle}
+          />
+        )
       }
     />
   );

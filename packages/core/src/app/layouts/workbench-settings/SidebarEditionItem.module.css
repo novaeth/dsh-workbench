@@ -1,8 +1,0 @@
-.reload {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--wb-len-4);
-  font-size: var(--dsw-font-xxs-12-font-size);
-  line-height: var(--wb-line-18);
-  color: var(--dsw-alias-label-tertiary);
-}
