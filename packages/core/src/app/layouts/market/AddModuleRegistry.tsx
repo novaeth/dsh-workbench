@@ -2,11 +2,8 @@ import { createElement as h, useRef } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import styles from './AddModule.module.css';
 import { TextField } from '@dsh-workbench/shared';
-import {
-  IconChevronDownOutlineRegular,
-  useAnchoredPosition,
-  useDismissOnOutsidePointer,
-} from '@deepseek-ai/dsh-client-ui-primitives';
+import { IconChevronDownOutlineRegular, useDismissOnOutsidePointer } from '@deepseek-ai/dsh-client-ui-primitives';
+import { useAnchoredPosition } from '@/shared/hooks/use-anchored-position';
 import { customRegistryAllowed, optionLabel, registryName } from './add-module-text';
 import type { AddModuleState } from './use-add-module';
 

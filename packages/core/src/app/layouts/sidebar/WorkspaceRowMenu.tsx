@@ -1,4 +1,4 @@
-import { createElement as h, useCallback, useEffect, useMemo } from 'react';
+import { createElement as h, useEffect, useMemo } from 'react';
 import type { Translate, WorkspaceView } from '@dsh-workbench/shared';
 import type { MenuEntry } from '@deepseek-ai/dsh-client-ui-primitives';
 import {
@@ -71,8 +71,11 @@ export function WorkspaceRowMenu({ target, t, onClose, onAlias, onDelete, onReve
     ];
   }, [target, t]);
   const anchor = target?.anchor ?? null;
-  const getAnchorRect = useCallback(() => anchor, [anchor]);
   const open = target !== null;
+  const anchorPoint =
+    anchor === null
+      ? undefined
+      : { x: (target?.align ?? 'end') === 'end' ? anchor.right : anchor.left, y: anchor.bottom };
 
   useEffect(() => {
     if (!open) return;
@@ -122,7 +125,7 @@ export function WorkspaceRowMenu({ target, t, onClose, onAlias, onDelete, onReve
       portal
       autoFocus
       align={target?.align ?? 'end'}
-      getAnchorRect={getAnchorRect}
+      anchorPoint={anchorPoint}
       className={styles.anchor}
       listClassName={styles.list}
     />

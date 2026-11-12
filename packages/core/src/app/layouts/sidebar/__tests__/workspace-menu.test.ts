@@ -59,12 +59,12 @@ describe('工作区行的三点菜单：悬停换图标、点开是菜单', () =
     expect(branch).toContain('onReveal(path)');
   });
 
-  it('★ 菜单本体挂在开关上（SelectField 的兄弟），靠点的那一刻量到的 rect 定位', () => {
+  it('★ 菜单本体挂在开关上（SelectField 的兄弟），靠点的那一刻量到的坐标定位', () => {
     expect(SWITCHER).toContain('<WorkspaceRowMenu');
     expect(MENU).toContain('<Menu');
     expect(MENU).toContain('portal');
-    expect(MENU).toContain('getAnchorRect={getAnchorRect}');
-    expect(MENU).toContain('useCallback(() => anchor, [anchor])');
+    expect(MENU).toContain('anchorPoint={anchorPoint}');
+    expect(MENU).toContain("=== 'end' ? anchor.right : anchor.left");
   });
 
   it('★ 关菜单这件事归菜单自己（window 捕获）：别的弹层先关、或事件被谁 stop 掉，都带不走它', () => {
