@@ -209,7 +209,7 @@ describe('左栏入口那枚标签：三档（模块异常 / 重启后生效 / �
     ).toEqual({ ...PROBLEM, moreKeys: ['panels.market.pendingRestart', 'panels.market.hasNew'] });
   });
 
-  it('★ 重启后生效 + 有新版 → 徽标说重启，名字里带上「有新版本」', () => {
+  it('★ 有新版时先说新版：不能一边说「重启后生效」一边给「更新」钮（用户还没更新过）', () => {
     expect(
       marketHintOf({
         manifests: [MANIFEST],
@@ -217,7 +217,7 @@ describe('左栏入口那枚标签：三档（模块异常 / 重启后生效 / �
         modules: [],
         workbench: { pkg: CORE, installed: '0.1.19', latest: '0.1.20', running: '0.1.18' },
       }),
-    ).toEqual({ ...RESTART, moreKeys: ['panels.market.hasNew'] });
+    ).toEqual(NEW);
   });
 
   it('★ 未生效 + 源上有新版 → 仍然是「重启后生效」（黄 state 盖不住「装了没载入」）', () => {

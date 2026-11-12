@@ -55,7 +55,8 @@ export function workbenchRow(
   const blocked = update === undefined ? undefined : version.latestBlocked;
   const blockedHint: MarketHintKey | undefined =
     blocked === undefined ? undefined : 'panels.market.workbenchUpdateNeedsDsh';
-  const stale = !local && version.running !== undefined && version.running !== version.installed;
+  const stale =
+    !local && update === undefined && version.running !== undefined && version.running !== version.installed;
   const followUp = version.followUp;
   const followUpState = !stale && followUp !== undefined;
   return {
