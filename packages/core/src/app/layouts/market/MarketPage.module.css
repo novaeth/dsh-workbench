@@ -902,7 +902,7 @@
 
 .discoverError {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--wb-len-6);
   margin: 0;
   font: var(--dsw-font-xs-13);

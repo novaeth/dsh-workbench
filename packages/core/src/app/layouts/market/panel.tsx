@@ -1,4 +1,4 @@
-import { createElement as h, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { createElement as h, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { DshClientContext } from '@dsh-workbench/shared';
 import type { ClientUnitRegistry } from '@/kernel/client/registry';
 import type { Translate } from '@dsh-workbench/shared';
@@ -25,6 +25,7 @@ import { useEnabledUnits } from '../rightbar/use-panels';
 import { useSettlingModules } from './use-settling-modules';
 import { useModuleVersions } from './use-module-versions';
 import { useMarketReload } from './use-market-reload';
+import { useMarketPanelScroll } from './use-market-panel-scroll';
 import { AddModuleDialog } from './AddModuleDialog';
 import styles from './MarketPage.module.css';
 
@@ -116,43 +117,8 @@ function MarketPanel({
   const [adding, setAdding] = useState(false);
   const [acting, setActing] = useState(false);
   const [tab, setTab] = useState<MarketTab>('installed');
-  const [installedDetailOpen, setInstalledDetailOpen] = useState(false);
-  const [discoverDetailOpen, setDiscoverDetailOpen] = useState(false);
-  const installedPanel = useRef<HTMLDivElement>(null);
-  const discoverPanel = useRef<HTMLDivElement>(null);
-  const installedScroll = useRef(0);
-  const discoverScroll = useRef(0);
+  const { installedDetailOpen, discoverDetailOpen, setInstalledDetailOpen, setDiscoverDetailOpen, installedPanel, discoverPanel, trackInstalledScroll, trackDiscoverScroll } = useMarketPanelScroll();
   const openAddModule = useCallback((): void => setAdding(true), []);
-
-  const trackInstalledScroll = (): void => {
-    if (installedPanel.current === null || installedDetailOpen) return;
-    installedScroll.current = installedPanel.current.scrollTop;
-  };
-
-  const trackDiscoverScroll = (): void => {
-    if (discoverPanel.current === null || discoverDetailOpen) return;
-    discoverScroll.current = discoverPanel.current.scrollTop;
-  };
-
-  useLayoutEffect(() => {
-    const panel = installedPanel.current;
-    if (panel === null) return;
-    if (installedDetailOpen) {
-      panel.scrollTop = 0;
-      return;
-    }
-    panel.scrollTop = installedScroll.current;
-  }, [installedDetailOpen]);
-
-  useLayoutEffect(() => {
-    const panel = discoverPanel.current;
-    if (panel === null) return;
-    if (discoverDetailOpen) {
-      panel.scrollTop = 0;
-      return;
-    }
-    panel.scrollTop = discoverScroll.current;
-  }, [discoverDetailOpen]);
 
   const updates = useMemo(() => marketUpdatesOf(modules), [modules]);
   const installed = modules === null ? undefined : withClientRefusals(modules, units.refusals());
