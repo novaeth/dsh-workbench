@@ -1,0 +1,15 @@
+[
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 405 (Method Not Allowed)",
+        "timestamp": 1794448053907.701,
+        "url": "dsh-app://app/workbench/api/workbench-boot-ok",
+        "networkRequestId": "3982.101"
+      }
+    }
+  }
+]

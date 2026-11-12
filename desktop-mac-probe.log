@@ -1,0 +1,64 @@
+[0.3s] MILESTONE cdp-ready @ 0.3s
+[0.3s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.3s] pages: dsh-app://app/
+[0.3s] MILESTONE app-page @ 0.3s
+[0.4s] target: dsh-app://app/
+[1.4s] MILESTONE cdp-connected @ 1.4s
+[1.5s] app-shell: HARNESS | Loading plugins…
+[3.6s] app-shell: HARNESS | Loading plugins…
+[5.6s] app-shell: HARNESS | Loading plugins…
+[7.8s] app-shell: New Session | ⌘ | N | Plugins | Automation tasks | More | Workspaces | No sessions yet | More | Into the Unknown | Preview | Choose workspace | Choose a workspace to start | Loading settings…
+[8.0s] STEP click ["Plugins"]: "Plugins"
+[9.2s] plugins-page: New Session | ⌘ | N | Plugins | Automation tasks | More | Workspaces | No sessions yet | More | Plugins | Install, enable, and configure plugins | Refresh | Add plugin
+[9.2s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-plugins-body.txt (143 bytes)
+[9.2s] STEP click ["Add plugin"]: "missing"
+[10.0s] add-plugin wait: {"ok":false,"dialog":false,"body":"ack to the agent. Review local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host."}
+[11.6s] STEP click ["Add plugin"]: "Add plugin"
+[12.4s] add-plugin wait: {"ok":true}
+[12.5s] FIELDS: [{"index":0,"tag":"INPUT","type":"text","placeholder":"Search session names","aria":null,"visible":true},{"index":1,"tag":"INPUT","type":"text","placeholder":"for example dsh-plugin-whale-pet","aria":"Package name or address","visible":true}]
+[13.3s] filled: "/Users/runner/work/dsh-workbench/dsh-workbench/packages/core"
+[13.4s] STEP click ["Install"]: "Install"
+[14.6s] MILESTONE install-clicked @ 14.6s
+[16.6s] install wait: l installation and return to editing | Installing the plugin… |  | @dsh-workbench/core |  | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 |  | Version 1.2.3-beta.12 |  | Show install details | Cancel install
+[18.6s] install wait: rkbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Installed |  | @dsh-workbench/core |  | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 |  | Version 1.2.3-beta.12 |  | Show install details | Enable now
+[18.6s] MILESTONE installed @ 18.6s
+[18.7s] STEP click ["Enable now"]: "Enable now"
+[23.7s] health wait [installing] toolchain:ok cli:running(安装 opencli) bridge:pending diy:running :: o the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[23.8s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-gate.png (18782 bytes)
+[23.8s] MILESTONE gate-seen @ 23.8s
+[23.8s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-gate-body.txt (1742 bytes)
+[23.8s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-gate-preflight.json (5025 bytes)
+[23.8s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[25.8s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[25.8s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[27.8s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[27.8s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[29.8s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[29.8s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[31.8s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[31.8s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[33.8s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: r/browser-extension; (2) click the link below to install it from the Chrome Web Store. When done, come back and click Retry. | Get the extension in the Chrome Web Store | Open browser | Retry | Enter the workbench anyway
+[33.8s] 模拟用户装扩展：起浏览器 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing（--load-extension=/Users/runner/work/_temp/opencli-ext，日志 /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-chrome.log）
+[33.8s] MILESTONE browser-launched @ 33.8s
+[39.9s] extension wait: connected :: [OK] Extension: connected (v1.0.27)
+[39.9s] chrome targets: browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://webui-toolbar.top-chrome/ | service_worker:chrome-extension://admccjkmockfdflocgggjfgdacdodkdf/background.js | service_worker:chrome-extension://glbjnfimcajjenihimblfaponejbkoph/background.js | service_worker:chrome-extension://kmogdbfhcachbdcbjajeghpiogegbbnh/dist/background.js
+[40.0s] STEP click ["Retry","重试"]: "Retry"
+[43.2s] health wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: e | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also tell the agent directly: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[43.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: e | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also tell the agent directly: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[43.3s] MILESTONE ready @ 43.3s
+[43.4s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Browse the module market"
+[46.4s] market-page:  Installed modules | 0 | Workbench panel | No modules on the panel yet | You can also tell the agent directly: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[46.4s] MILESTONE market-open @ 46.4s
+[46.4s] STEP click ["Discover"]: "Discover"
+[48.4s] STEP click ["Add index source","Manage index sources…"]: "missing"
+[50.0s] FAIL 发现页上没有添加索引源的入口
+[50.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-console-events.json (396 bytes)
+[50.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-failed-body.txt (517 bytes)
+[50.5s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-failed.png (74518 bytes)
+[50.5s] FATAL Error: 发现页上没有添加索引源的入口（现场：desktop-mac-failed-body.txt / desktop-mac-failed-preflight.json）
+    at fail (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:269:9)
+    at async smokeMarket (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:842:28)
+    at async main (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:1394:17)
+[50.5s] SMOKE_SUMMARY {"outcome":"failed","elapsed":"50.5s","milestones":{"cdp-ready":"0.3s","app-page":"0.3s","cdp-connected":"1.4s","install-clicked":"14.6s","installed":"18.6s","gate-seen":"23.8s","browser-launched":"33.8s","ready":"43.3s","market-open":"46.4s"},"reason":"发现页上没有添加索引源的入口（现场：desktop-mac-failed-body.txt / desktop-mac-failed-preflight.json）"}
+[50.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-fatal-body.txt (517 bytes)
+[50.6s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-fatal.png (74518 bytes)
