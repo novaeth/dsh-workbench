@@ -180,6 +180,13 @@ async function applyStep(
       ? { ok: true, detail: `清单里缺了 ${step.bundle} 这一行，已经补回` }
       : { ok: true, detail: `清单里 ${step.bundle} 那一行一直都在` };
   }
+  const broken = versionMissingOf({ versionDir: plan.versionDir, version: plan.version, packages: plan.packages });
+  if (broken.length > 0) {
+    return {
+      ok: false,
+      detail: `切过去之前又不对了（${broken.join('、')}）：${plan.versionDir}`,
+    };
+  }
   writeJsonFile(plan.markerPath, { ...plan.marker, state: step.state, version: step.version, at: now() });
   log(`marker 落 ${step.state}`);
   return { ok: true, detail: `${plan.version} 已就绪，重启后生效` };

@@ -266,11 +266,13 @@ jobs:
             echo "== versions"; ls -1 "$USERPROFILE/.dsh/workbench/versions" 2>/dev/null
             for v in "$USERPROFILE"/.dsh/workbench/versions/*; do
               echo "== 版本目录 $v"
-              ls -1 "$v/node_modules/@dsh-workbench" 2>/dev/null
+              ls -l "$v/node_modules/@dsh-workbench" 2>/dev/null
+              echo "  .pnpm 条目数: $(ls -1 "$v/node_modules/.pnpm" 2>/dev/null | wc -l)"
               for pkg in "$v"/node_modules/@dsh-workbench/*; do
                 name="$(basename "$pkg")"
-                echo "  $name: pkg=$(test -f "$pkg/package.json" && echo yes || echo no) host=$(test -f "$pkg/dist/host/index.js" -o -f "$pkg/dist/host.js" && echo yes || echo no) client=$(test -f "$pkg/client.js" && echo yes || echo no)"
+                echo "  $name: pkg=$(test -f "$pkg/package.json" && echo yes || echo no) host=$(test -f "$pkg/dist/host/index.js" -o -f "$pkg/dist/host.js" && echo yes || echo no) client=$(test -f "$pkg/client.js" && echo yes || echo no) 内容=$(ls -1A "$pkg" 2>/dev/null | wc -l) 个"
               done
+              echo "  目录时间: $(ls -ld "$v" | awk '{print $6, $7, $8}')"
             done
           } > "desktop-${{ inputs.label }}-self-update-state.txt" 2>&1 || true
           for log in "$RUNNER_TEMP"/desktop-${{ inputs.label }}*.log; do
