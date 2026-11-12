@@ -19,7 +19,7 @@ describe('停长任务那一档（ADR-0070）：自己的免问、别人的/用�
     expect(verdict?.kind).toBe('ask');
     expect(verdict?.kind === 'ask' ? verdict.reason : '').toContain(LONG_TASKS_STOP_TOOL);
     expect(verdict?.kind === 'ask' ? verdict.fallback.zh : '').toBe(
-      'agent 想停掉工作台 [inventory] 那一趟「env-prod」长任务，别的会话起的，允许吗？',
+      'agent 想停止工作台 [inventory] 的「env-prod」长任务，由其他会话发起，允许吗？',
     );
   });
 
@@ -29,12 +29,12 @@ describe('停长任务那一档（ADR-0070）：自己的免问、别人的/用�
     expect(verdict?.kind).toBe('ask');
     if (verdict?.kind !== 'ask') return;
     expect(verdict.fallback.zh).toBe(
-      'agent 想停掉工作台 [inventory] 那一趟「env-prod」长任务，用户自己按的，允许吗？',
+      'agent 想停止工作台 [inventory] 的「env-prod」长任务，由用户发起，允许吗？',
     );
     expect(verdict.fallback.en).toBe(
       'The agent wants to stop a long-running workbench job [inventory] "env-prod" the user started. Allow?',
     );
-    expect(verdict.question.zh).toContain('会停掉');
+    expect(verdict.question.zh).toContain('会停止');
   });
 
   it('★ 不认识的 id / 不认识的单元 / 没给 id：allow（无可停 = 无可写；处理函数会回那句"没有这一趟"）', () => {

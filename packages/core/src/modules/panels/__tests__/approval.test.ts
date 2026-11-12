@@ -73,10 +73,10 @@ describe('改面板的五个动作各自一把工具，每把都要问', () => {
     ]);
 
     expect(five[0]).toContain('加到当前项目的面板');
-    expect(five[1]).toContain('收起');
+    expect(five[1]).toContain('移除');
     expect(five[2]).toContain('最前面');
     expect(five[3]).toContain('清空');
-    expect(five[4]).toContain('跟随机器级默认板');
+    expect(five[4]).toContain('恢复为跟随机器级默认值');
     expect(new Set(five).size).toBe(5);
     for (const zh of five) {
       expect(zh).toContain('允许吗');
@@ -89,9 +89,9 @@ describe('改面板的五个动作各自一把工具，每把都要问', () => {
     const clear = await zhOf({ name: PANELS_RESET_TOOL, arguments: { scope: 'machine' } });
     const local = await zhOf({ name: PANELS_SHOW_TOOL, arguments: { id: 'issues' } });
 
-    expect(machine).toContain('机器级默认板');
+    expect(machine).toContain('机器级默认值');
     expect(machine).not.toContain('当前项目的面板');
-    expect(clear).toContain('机器级默认板');
+    expect(clear).toContain('机器级默认值');
     expect(local).toContain('当前项目的面板');
   });
 
@@ -100,9 +100,9 @@ describe('改面板的五个动作各自一把工具，每把都要问', () => {
     const all = await zhOf({ name: PANELS_FOLLOW_TOOL, arguments: {} });
 
     expect(one).toContain('issues');
-    expect(one).toContain('跟随机器级默认板');
+    expect(one).toContain('恢复为跟随机器级默认值');
     expect(one).not.toContain('加到');
-    expect(all).toContain('跟随机器级默认板');
+    expect(all).toContain('恢复为跟随机器级默认值');
     expect(all).not.toContain('issues');
   });
 
@@ -111,7 +111,7 @@ describe('改面板的五个动作各自一把工具，每把都要问', () => {
     const fallback = panelsApproval({ name: PANELS_HIDE_TOOL, arguments: { id: 'issues', scope: 'machine' } });
 
     expect(hide?.kind === 'ask' ? hide.question.zh : '').toContain('当前项目的面板');
-    expect(fallback?.kind === 'ask' ? fallback.question.zh : '').toContain('机器级默认板');
+    expect(fallback?.kind === 'ask' ? fallback.question.zh : '').toContain('机器级默认值');
   });
 
   it('目标模块：能拿到就说名字，拿不到就说"面板"', async () => {
@@ -207,13 +207,13 @@ describe('工坊那一族一律不问（用户 2026-10-16 的决定：闭环里�
   it('★★ 调试那四把不跟"整族 allow"走：开始与继续要点头，暂停与收工不问（ADR-0055）', () => {
     const start = panelsApproval({ name: DIY_DEBUG_START_TOOL, arguments: { unit: 'demo' } });
     expect(start?.kind).toBe('ask');
-    expect(start?.kind === 'ask' ? start.question.zh : '').toContain('这个工作区的那块板');
-    expect(start?.kind === 'ask' ? start.question.zh : '').toContain('留在那一屏');
+    expect(start?.kind === 'ask' ? start.question.zh : '').toContain('占用当前页面');
+    expect(start?.kind === 'ask' ? start.question.zh : '').toContain('请留在该页面');
     expect(start?.kind === 'ask' ? start.reason : '').toContain(DIY_DEBUG_START_TOOL);
 
     const resume = panelsApproval({ name: DIY_DEBUG_RESUME_TOOL, arguments: {} });
     expect(resume?.kind).toBe('ask');
-    expect(resume?.kind === 'ask' ? resume.question.zh : '').toContain('请回到那一屏');
+    expect(resume?.kind === 'ask' ? resume.question.zh : '').toContain('请回到该页面');
 
     expect(panelsApproval({ name: DIY_DEBUG_PAUSE_TOOL, arguments: {} })).toEqual({ kind: 'allow' });
     expect(panelsApproval({ name: DIY_DEBUG_STOP_TOOL, arguments: {} })).toEqual({ kind: 'allow' });
@@ -348,7 +348,7 @@ describe('文案口径：说清是工作台的动作、目标是哪个模块 / �
     [PANELS_HIDE_TOOL]: '模块',
     [PANELS_MOVE_TOOL]: '模块',
     [PANELS_RESET_TOOL]: '面板',
-    [PANELS_FOLLOW_TOOL]: '模块这一行',
+    [PANELS_FOLLOW_TOOL]: '模块条目',
     [MODULES_INSTALL_TOOL]: '模块',
     [MODULES_UPDATE_TOOL]: '模块',
     [MODULES_UNINSTALL_TOOL]: '模块',
@@ -362,8 +362,8 @@ describe('文案口径：说清是工作台的动作、目标是哪个模块 / �
     [DIY_DEBUG_START_TOOL]: '调试',
     [DIY_DEBUG_RESUME_TOOL]: '调试',
     [LONG_TASKS_STOP_TOOL]: '长任务',
-    [MARKET_ENABLE_TOOL]: '索引源',
-    [MARKET_DISABLE_TOOL]: '索引源',
+    [MARKET_ENABLE_TOOL]: '模块来源',
+    [MARKET_DISABLE_TOOL]: '模块来源',
   };
 
   const SCENARIOS: readonly { readonly call: ApprovalCall; readonly noun: string }[] = [
@@ -374,7 +374,7 @@ describe('文案口径：说清是工作台的动作、目标是哪个模块 / �
     { call: { name: PANELS_FOLLOW_TOOL, arguments: {} }, noun: '面板' },
     { call: { name: PANELS_SHOW_TOOL, arguments: { id: 'inventory', scope: 'machine' } }, noun: '模块' },
     { call: { name: PANELS_HIDE_TOOL, arguments: { id: 'inventory', scope: 'machine' } }, noun: '模块' },
-    { call: { name: PANELS_RESET_TOOL, arguments: { scope: 'machine' } }, noun: '机器级默认板' },
+    { call: { name: PANELS_RESET_TOOL, arguments: { scope: 'machine' } }, noun: '机器级默认值' },
   ];
 
   it('★ 每把要问的写工具都在名词表里 —— 场景不再手写，是从清单本身长出来的', () => {
@@ -464,7 +464,7 @@ describe('文案口径：说清是工作台的动作、目标是哪个模块 / �
       { writes: true, policy: panelsApproval },
     );
 
-    expect(decision?.kind === 'ask' ? decision.displayReason.zh : '').toBe('申请录制调试');
+    expect(decision?.kind === 'ask' ? decision.displayReason.zh : '').toBe('申请录制调试会话');
   });
 
   it('★ 数据再长也不许把标题顶爆：把 id / 插件名 / 单元换成 20 字长名，仍是一行、仍在装配上限内', async () => {
@@ -491,7 +491,7 @@ describe('文案口径：说清是工作台的动作、目标是哪个模块 / �
     expect(zh({ name: MODULES_UPDATE_PLUGIN_TOOL, arguments: { plugin: 'inventory' } })).toContain(
       '工作台 [inventory] 插件',
     );
-    expect(zh({ name: PANELS_FOLLOW_TOOL, arguments: { id: 'inventory' } })).toContain('工作台 [inventory] 模块这一行');
+    expect(zh({ name: PANELS_FOLLOW_TOOL, arguments: { id: 'inventory' } })).toContain('工作台 [inventory] 模块条目');
   });
 
   it('★ 移动位置说的是参数里的那一格：0 是最前面，其余按 0 基算成第几位', () => {

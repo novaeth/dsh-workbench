@@ -103,7 +103,7 @@ if (found === undefined) die(`工坊里没有单元 id 为「${String(target)}�
 
 if (command === 'install') {
   const spec = workshopPathOf(found.dir);
-  console.log(`① 装上：${found.name}`);
+  console.log(`① 安装：${found.name}`);
   const installed = await post('/provision', { action: 'install-bundle', spec });
   if (installed.ok !== true) die(`安装接口回了失败：${JSON.stringify(installed).slice(0, 300)}`);
   console.log(`   ${verdictOf(installed.change)}`);

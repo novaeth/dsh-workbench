@@ -134,13 +134,13 @@ function StatusNotes({
         </Note>
       )}
       {applied === null ? null : <AppliedRows t={t} applied={applied} />}
-      {value.profiles.length === 0 ? <Note tone="problem">{t('configSync.noSource')}</Note> : null}
+      {value.profiles.length === 0 ? <Note>{t('configSync.noSource')}</Note> : null}
       {broken === null ? null : (
         <Note tone="problem">
           {t('configSync.unreadable', { path: broken.path, reason: broken.reason })}
         </Note>
       )}
-      {value.emptyProviders ? <Note tone="problem">{t('configSync.emptyProviders')}</Note> : null}
+      {value.emptyProviders ? <Note>{t('configSync.emptyProviders')}</Note> : null}
       {rows.length === 0 ? <Note>{t('configSync.nothing')}</Note> : null}
     </>
   );

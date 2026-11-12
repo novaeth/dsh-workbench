@@ -19,7 +19,7 @@ describe('Desktop 里 DIY 页面工具的说明', () => {
     expect(text).toContain('dsh-app://app/');
     expect(text).toContain('Chrome');
     expect(text).toContain('about:blank');
-    expect(text).toContain('屏调试');
+    expect(text).toContain('页面调试');
     expect(text).toContain('read=<地址>');
     expect(text).toContain('_record_*');
     expect(text).toContain('diy_status');
@@ -29,6 +29,6 @@ describe('Desktop 里 DIY 页面工具的说明', () => {
     const text = desktopPageText();
 
     expect(text).not.toContain('现在绑到的是');
-    expect(text).toContain('没有可绑的目标');
+    expect(text).toContain('没有可绑定的目标');
   });
 });

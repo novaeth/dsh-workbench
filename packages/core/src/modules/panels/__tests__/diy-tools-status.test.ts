@@ -95,7 +95,7 @@ describe('workbench_diy · status', () => {
       status: StatusRow[];
     };
     expect(out.status[0]?.stale).toBe(false);
-    expect(out.status[0]?.next).toContain('不要再装一遍');
+    expect(out.status[0]?.next).toContain('无需再次安装');
   });
 
   it('上板了、但还没构建：下一步是 build（产物缺失）', async () => {
@@ -108,7 +108,7 @@ describe('workbench_diy · status', () => {
       status: StatusRow[];
     };
     expect(out.status[0]?.artifacts.every((one) => one.at === null)).toBe(true);
-    expect(out.status[0]?.next).toContain('还没构建');
+    expect(out.status[0]?.next).toContain('尚未构建');
   });
 
   it('不带 unit：把工坊里每个模块都过一遍', async () => {
@@ -140,7 +140,7 @@ describe('workbench_diy · open', () => {
   it('没装：报清楚 open 只负责上板', async () => {
     rig.scaffold('demo');
     const { tool } = rig.harness();
-    await expect(tool(DIY_SHOW_TOOL)?.execute({ unit: 'demo' }, rig.diyExec())).rejects.toThrow('还没装');
+    await expect(tool(DIY_SHOW_TOOL)?.execute({ unit: 'demo' }, rig.diyExec())).rejects.toThrow('还没安装');
   });
 });
 

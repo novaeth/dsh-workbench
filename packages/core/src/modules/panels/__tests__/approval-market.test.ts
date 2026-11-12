@@ -32,7 +32,7 @@ describe('索引源设为可发布：审批屏点名是哪个仓库', () => {
     expect(verdict?.kind).toBe('ask');
     expect(JSON.stringify(verdict)).toContain('团队');
     expect(JSON.stringify(verdict)).toContain('https://git.example/wb/market.git');
-    expect(JSON.stringify(verdict)).toContain('不碰仓库');
+    expect(JSON.stringify(verdict)).toContain('不触碰仓库');
   });
 
   it('已经是可发布：不问（这一步什么都不会写）', () => {
@@ -56,7 +56,7 @@ describe('索引源设为可发布：审批屏点名是哪个仓库', () => {
 
   it('有 store 但没选中任何源：直接拒，不弹审批', () => {
     const policy = panelsApprovalFor(undefined, undefined, undefined, storeOf([], null));
-    expect(policy(callOf({}))).toEqual({ kind: 'deny', reason: expect.stringContaining('还没有选中的索引源') });
+    expect(policy(callOf({}))).toEqual({ kind: 'deny', reason: expect.stringContaining('还没有选中的模块来源') });
   });
 
   it('没有 store 可查：退回问「当前选中的索引源」，不冒认某个仓库', () => {
@@ -76,7 +76,7 @@ describe('索引源改回只读：也要问一句（可发布的才问）', () =
     expect(verdict?.kind).toBe('ask');
     expect(JSON.stringify(verdict)).toContain('团队');
     expect(JSON.stringify(verdict)).toContain('https://git.example/wb/market.git');
-    expect(JSON.stringify(verdict)).toContain('不碰仓库');
+    expect(JSON.stringify(verdict)).toContain('不触碰仓库');
   });
 
   it('已经只读：不问（这一步什么都不会写）', () => {
@@ -93,7 +93,7 @@ describe('索引源改回只读：也要问一句（可发布的才问）', () =
 
   it('有 store 但没这个源：直接拒，不弹审批', () => {
     const policy = panelsApprovalFor(undefined, undefined, undefined, storeOf([gitSource], 'team'));
-    expect(policy(disableOf({ id: 'nope' }))).toEqual({ kind: 'deny', reason: expect.stringContaining('没有这个索引源') });
+    expect(policy(disableOf({ id: 'nope' }))).toEqual({ kind: 'deny', reason: expect.stringContaining('没有这个模块来源') });
   });
 
   it('没有 store 可查：退回问「当前选中的索引源」', () => {

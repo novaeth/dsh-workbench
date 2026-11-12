@@ -174,7 +174,7 @@ describe('工具箱：默认只留控制面，按会话开包', () => {
     const again = await call(registered, TOOLBOX_OPEN_TOOL, { targets: ['manage'] }, 's-1');
 
     expect(again['newly']).toEqual([]);
-    expect(String(again['text'])).toContain('本来就在开');
+    expect(String(again['text'])).toContain('原本已启用');
   });
 
   it('收包：立刻从清单里收回，不需要审批', async () => {

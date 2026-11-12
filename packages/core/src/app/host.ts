@@ -288,11 +288,11 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     } catch (error) {
       mountFailures.set(id, { reason: failureReasonOf(error), host });
       units.fail(id, failureReasonOf(error));
-      ctx.logger?.warn?.(`[dsh-workbench] ${id} 套件起不来（装配期）：${failureReasonOf(error)}`);
+      ctx.logger?.warn?.(`[dsh-workbench] ${id} 模块启动失败（初始化阶段）：${failureReasonOf(error)}`);
       return;
     }
     for (const item of one.skipped) {
-      ctx.logger?.warn?.(`[dsh-workbench] ${item.id} 套件缺硬依赖，跳过：${item.missing.join(', ')}`);
+      ctx.logger?.warn?.(`[dsh-workbench] ${item.id} 模块缺必需依赖，跳过：${item.missing.join(', ')}`);
     }
     applyPlanFailures(one.failed, {
       note: (unit, reason) => {
@@ -308,7 +308,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     }
     if (slot.readiness.missingSoft.length > 0) {
       ctx.logger?.warn?.(
-        `[dsh-workbench] ${host.unit} 套件降级：缺 ${slot.readiness.missingSoft.join(', ')}`,
+        `[dsh-workbench] ${host.unit} 模块降级：缺 ${slot.readiness.missingSoft.join(', ')}`,
       );
     }
     const added: string[] = [];
@@ -339,7 +339,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
       one.disposeLongTasks();
       mountFailures.set(id, { reason: failureReasonOf(error), host });
       units.fail(id, failureReasonOf(error));
-      ctx.logger?.warn?.(`[dsh-workbench] ${id} 套件起不来（注册期）：${failureReasonOf(error)}`);
+      ctx.logger?.warn?.(`[dsh-workbench] ${id} 模块启动失败（注册阶段）：${failureReasonOf(error)}`);
     }
   }
   function rebindPost(): void {
@@ -365,7 +365,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     rebindPost();
   }
   if (seam === undefined) {
-    ctx.logger?.warn?.('[dsh-workbench] 没有 shell 服务：需要执行缝的套件会降级');
+    ctx.logger?.warn?.('[dsh-workbench] 没有 shell 服务：需要执行缝的模块会降级');
   } else {
     adapters.probe.registerPreflight({
       routes,

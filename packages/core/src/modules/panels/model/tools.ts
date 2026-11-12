@@ -14,42 +14,42 @@ import {
   PANELS_SHOW_TOOL,
 } from '../unit';
 
-const MACHINE_LABEL = '机器级默认板 —— 还没配过的工作区默认开这些：';
+const MACHINE_LABEL = '机器级默认值（尚未配置过的工作区默认启用以下模块）：';
 
-const MACHINE_CAVEAT = '机器级默认板只是还没配过的工作区的默认值：已经自己配过的工作区保持自己的选择，不会被它改。';
+const MACHINE_CAVEAT = '机器级默认值只影响尚未配置过的工作区；已经配置过的工作区保持自己的选择。';
 
 const SCOPE_PARAM = {
   type: 'string',
-  description: 'workspace（默认）=只动当前工作区；machine=动机器级默认板（只影响还没配过的工作区）。',
+  description: 'workspace（默认）修改当前工作区；machine 修改机器级默认值，只影响尚未配置过的工作区。',
   enum: [...BOARD_TARGETS],
 };
 
-const ID_PARAM = { type: 'string', description: '模块 id（如 inventory）。' };
+const ID_PARAM = { type: 'string', description: '模块标识（如 inventory）。' };
 
 function listed(entries: readonly PanelEntry[]): string {
   return entries
     .map(
       (entry, index) =>
         `${index + 1}. ${entry.id} · ${entry.shown ? '已启用' : '未启用'}` +
-        `${entry.hasCard ? '' : '（无卡片）'}${entry.source === 'user' ? ' · 用户改过' : ''}`,
+        `${entry.hasCard ? '' : '（无模块界面）'}${entry.source === 'user' ? ' · 用户改过' : ''}`,
     )
     .join('\n');
 }
 
 function render(entries: readonly PanelEntry[], workspace: string | null, scope: BoardTarget): string {
   if (scope === 'machine') {
-    if (entries.length === 0) return '机器级默认板是空的（还没配过的工作区默认什么卡片都不开）——用 workbench_panels_show 放一个上去。';
+    if (entries.length === 0) return '机器级默认值为空。尚未配置过的工作区默认不启用任何模块。请用 workbench_panels_show 添加一项。';
     return `${MACHINE_LABEL}\n${listed(entries)}`;
   }
   const where = workspace === null ? '（不知道当前会话在哪个工作区）' : workspace;
-  if (entries.length === 0) return `这个工作区的面板是空的（${where}）——用 workbench_panels_show 放一个上去。`;
+  if (entries.length === 0) return `当前工作区的面板为空（${where}）。请用 workbench_panels_show 添加一项。`;
   return `当前工作区：${where}\n${listed(entries)}`;
 }
 
 function parseScope(raw: unknown): BoardTarget {
   if (raw === undefined) return DEFAULT_BOARD_TARGET;
   if (typeof raw === 'string' && BOARD_TARGETS.includes(raw as BoardTarget)) return raw as BoardTarget;
-  throw new Error(`不认识的 scope：${String(raw)}（可用：workspace / machine）`);
+  throw new Error(`无法识别的 scope：${String(raw)}（可用值：workspace / machine）`);
 }
 
 const panelsOutput = () =>
@@ -97,8 +97,8 @@ export function registerPanelTools(
   const listTool: DshToolDefinition = {
     name: PANELS_LIST_TOOL,
     description:
-      '看现在这份板：哪些套件开着、什么顺序。两份板：本工作区那份优先，没提过的行看机器级默认板 ——' +
-      '那只是还没配过的工作区的默认值（自己配过的保持自己的选择）。',
+      '查看面板配置：已启用哪些模块、顺序如何。当前工作区的配置优先；未单独配置过的项使用机器级默认值。' +
+      '机器级默认值只影响尚未配置过的工作区。',
     parameters: {
       type: 'object',
       properties: { scope: SCOPE_PARAM },
@@ -119,7 +119,7 @@ export function registerPanelTools(
 
   const showTool: DshToolDefinition = {
     name: PANELS_SHOW_TOOL,
-    description: '这个工作区要它：之前收起的也放回来，卡片与 agent 工具一起上线；那份板上写过"不要"的也划掉。',
+    description: '为当前工作区启用该模块：恢复此前隐藏的项，同时启用模块界面与 agent 工具，并清除机器级默认值中的禁用记录。',
     parameters: {
       type: 'object',
       properties: { id: ID_PARAM, scope: SCOPE_PARAM },
@@ -133,7 +133,7 @@ export function registerPanelTools(
       const workspace = sessionWorkspace(exec);
       if (id === undefined || id === '') {
         throw new Error(
-          `workbench_panels_show 需要一个 id（例如 issues）。当前套件：${panels
+          `workbench_panels_show 需要一个 id，例如 issues。当前配置中的模块：${panels
             .list(workspace, scope)
             .map((entry) => entry.id)
             .join(', ')}`,
@@ -142,8 +142,8 @@ export function registerPanelTools(
       const units = panels.show(id, workspace, scope);
       const text =
         scope === 'machine'
-          ? `已把 ${id} 放进机器级默认板 —— 还没配过的工作区会带上它（卡片与工具一起上线）；那份板上要是给它写过"不要"，这一下也划掉了。${MACHINE_CAVEAT}\n${render(units, workspace, scope)}`
-          : `已启用 ${id} —— 这个工作区要它：之前收起的也放回来了，卡片与工具一起上线。\n${render(units, workspace, scope)}`;
+          ? `已把 ${id} 写入机器级默认值：尚未配置过的工作区会包含它，模块界面与工具同时启用。若默认值中曾将它标记为"不要"，本次操作已清除该标记。${MACHINE_CAVEAT}\n${render(units, workspace, scope)}`
+          : `已启用 ${id}：当前工作区需要它。此前隐藏的项已恢复，模块界面与工具同时启用。\n${render(units, workspace, scope)}`;
       return { units, text };
     },
   };
@@ -151,8 +151,8 @@ export function registerPanelTools(
   const hideTool: DshToolDefinition = {
     name: PANELS_HIDE_TOOL,
     description:
-      '这个工作区明确不要它：卡片与 agent 工具一起下线（机器板上开着的也照样收起）；别的项目不受影响，' +
-      '要放回来用 workbench_panels_show。在机器板上 hide 是写下"不要"这一笔，比名单管用。',
+      '当前工作区明确不要该模块：模块界面与 agent 工具同时停用，机器级默认值中已启用的模块也同样停用。' +
+      '其他项目不受影响，要恢复请用 workbench_panels_show。在机器级默认值上执行 hide 会写入"不要"标记，优先级高于名单。',
     parameters: {
       type: 'object',
       properties: { id: ID_PARAM, scope: SCOPE_PARAM },
@@ -166,7 +166,7 @@ export function registerPanelTools(
       const workspace = sessionWorkspace(exec);
       if (id === undefined || id === '') {
         throw new Error(
-          `workbench_panels_hide 需要一个 id（例如 issues）。当前套件：${panels
+          `workbench_panels_hide 需要一个 id，例如 issues。当前配置中的模块：${panels
             .list(workspace, scope)
             .map((entry) => entry.id)
             .join(', ')}`,
@@ -175,20 +175,20 @@ export function registerPanelTools(
       const units = panels.hide(id, workspace, scope);
       const text =
         scope === 'machine'
-          ? `已把 ${id} 从机器级默认板划掉，并在那份板上明确写下"不要它" —— 还没配过的工作区从此看不到它（卡片与工具一起下线）；名单里还列着它也一样不算数，要放回来用 workbench_panels_show。${MACHINE_CAVEAT}\n${render(units, workspace, scope)}`
-          : `已收起 ${id} —— 这个工作区明确不要它：卡片与工具一起下线（默认在机器上也开着的套件同样收起），别的项目不受影响；要放回来用 workbench_panels_show。\n${render(units, workspace, scope)}`;
+          ? `已把 ${id} 从机器级默认值中清除，并在默认值中标记"不要它"：尚未配置过的工作区从此不再显示它，模块界面与工具同时停用；名单中仍列着它也无效，要恢复请用 workbench_panels_show。${MACHINE_CAVEAT}\n${render(units, workspace, scope)}`
+          : `已停用 ${id}：当前工作区明确不要它，模块界面与工具同时停用；机器级默认值中已启用的模块也同样停用。其他项目不受影响，要恢复请用 workbench_panels_show。\n${render(units, workspace, scope)}`;
       return { units, text };
     },
   };
 
   const moveTool: DshToolDefinition = {
     name: PANELS_MOVE_TOOL,
-    description: '调顺序：放到最前面（新开一行时排最后）。顺序只属于工作区；机器级默认板上没有顺序一说。',
+    description: '调整顺序：将模块移到指定位置（默认最前），新启用的行排在最后。顺序仅属于工作区；机器级默认值没有顺序。',
     parameters: {
       type: 'object',
       properties: {
         id: ID_PARAM,
-        index: { type: 'integer', description: '位置，0 基（数的是当前开着的那几行）。' },
+        index: { type: 'integer', description: '位置，从 0 开始计数（按当前已启用的行）。' },
         scope: SCOPE_PARAM,
       },
       required: ['id'],
@@ -201,7 +201,7 @@ export function registerPanelTools(
       const workspace = sessionWorkspace(exec);
       if (id === undefined || id === '') {
         throw new Error(
-          `workbench_panels_move 需要一个 id（例如 issues）。当前套件：${panels
+          `workbench_panels_move 需要一个 id，例如 issues。当前配置中的模块：${panels
             .list(workspace, scope)
             .map((entry) => entry.id)
             .join(', ')}`,
@@ -213,7 +213,7 @@ export function registerPanelTools(
       const units = panels.move(id, index, workspace, scope);
       const text =
         scope === 'machine'
-          ? `已把 ${id} 放到机器级默认板第 ${index + 1} 位 —— 只影响还没配过的工作区。${MACHINE_CAVEAT}\n${render(units, workspace, scope)}`
+          ? `已把 ${id} 放到机器级默认值第 ${index + 1} 位，只影响尚未配置过的工作区。${MACHINE_CAVEAT}\n${render(units, workspace, scope)}`
           : `已把 ${id} 放到第 ${index + 1} 位。\n${render(units, workspace, scope)}`;
       return { units, text };
     },
@@ -221,7 +221,7 @@ export function registerPanelTools(
 
   const resetTool: DshToolDefinition = {
     name: PANELS_RESET_TOOL,
-    description: '清掉这个工作区改过的行（改完全部回到跟着机器级默认板走）；scope=machine 清的是整份机器级默认板。',
+    description: '清除当前工作区修改过的行；清除后全部恢复为跟随机器级默认值。scope=machine 清除整份机器级默认值。',
     parameters: {
       type: 'object',
       properties: { scope: SCOPE_PARAM },
@@ -234,15 +234,15 @@ export function registerPanelTools(
       const units = panels.reset(workspace, scope);
       const text =
         scope === 'machine'
-          ? `机器级默认板已清空 —— 从今往后，没在这一行改过的工作区默认什么都不开。${MACHINE_CAVEAT}\n${render(units, workspace, scope)}`
-          : `这个工作区改过的行已全部清掉 —— 每一行都回到跟着机器级默认板走。\n${render(units, workspace, scope)}`;
+          ? `机器级默认值已清空。此后未修改过的工作区默认不启用任何模块。${MACHINE_CAVEAT}\n${render(units, workspace, scope)}`
+          : `当前工作区修改过的行已全部清除，每一行都恢复为跟随机器级默认值。\n${render(units, workspace, scope)}`;
       return { units, text };
     },
   };
 
   const followTool: DshToolDefinition = {
     name: PANELS_FOLLOW_TOOL,
-    description: '某一行放回跟随机器级默认板（带 id = 只那一行，不带 = 全部）。',
+    description: '让某一行恢复为跟随机器级默认值（带 id 仅限该行，不带则全部）。',
     parameters: {
       type: 'object',
       properties: { id: ID_PARAM, scope: SCOPE_PARAM },
@@ -254,15 +254,15 @@ export function registerPanelTools(
       const scope = scopeOf(raw);
       const workspace = sessionWorkspace(exec);
       if (scope === 'machine') {
-        throw new Error('机器级默认板没有"放回跟随"一说：它就是那份默认本身，直接 show / hide 写它。');
+        throw new Error('机器级默认值没有"恢复跟随"这一操作：它本身就是默认值，请直接使用 show / hide 写入。');
       }
       const units = panels.follow(workspace, id);
       return {
         units,
         text:
           id === undefined
-            ? `这个工作区改过的行全部清掉 —— 每一行都回到跟着机器级默认板走（那份板以后改了，这里跟着变）。\n${render(units, workspace, scope)}`
-            : `${id} 放回跟随 —— 它不再由这个工作区定，改跟机器级默认板走。\n${render(units, workspace, scope)}`,
+            ? `当前工作区修改过的行已全部清除，每一行都恢复为跟随机器级默认值。默认值以后修改时，这里随之变化。\n${render(units, workspace, scope)}`
+            : `${id} 已恢复跟随：它不再由当前工作区设定，改为跟随机器级默认值。\n${render(units, workspace, scope)}`,
       };
     },
   };

@@ -34,9 +34,9 @@ describe('workbench_diy · 起得来没（装配失败的现场）', () => {
     const out = await statusOf({ failures: { demo: '路由形状不对：routes 少了 overview' } });
 
     expect(out.status[0]?.health).toEqual({ state: 'failed', reason: '路由形状不对：routes 少了 overview' });
-    expect(out.status[0]?.next).toContain('它起不来');
-    expect(out.status[0]?.next).toContain('别去重装');
-    expect(out.text).toContain('起得来：不是 —— 路由形状不对');
+    expect(out.status[0]?.next).toContain('它启动失败');
+    expect(out.status[0]?.next).toContain('不要重新安装');
+    expect(out.text).toContain('启动状态：否（路由形状不对');
   });
 
   it('声明被拒（没挂上）也走同一支：原因来自 refusals，不是"重启一次试试"', async () => {
@@ -45,7 +45,7 @@ describe('workbench_diy · 起得来没（装配失败的现场）', () => {
     const out = await statusOf({ refused: [{ unit: 'demo', reasons: ['单元 id "demo" 与别的撞了'] }] });
 
     expect(out.status[0]?.health).toEqual({ state: 'failed', reason: '单元 id "demo" 与别的撞了' });
-    expect(out.status[0]?.next).toContain('它起不来');
+    expect(out.status[0]?.next).toContain('它启动失败');
   });
 
   it('挂上了就是"起来了"（不再靠"面板认得 + 开着"这两件事推）', async () => {
@@ -54,7 +54,7 @@ describe('workbench_diy · 起得来没（装配失败的现场）', () => {
     const out = await statusOf({ mounted: ['panels', 'demo'] });
 
     expect(out.status[0]?.health.state).toBe('ok');
-    expect(out.text).toContain('起得来：是');
+    expect(out.text).toContain('启动状态：是');
   });
 
   it('装了但工作台根本没读到它的声明：说清是"还没读到"，不是"没装"', async () => {
@@ -69,7 +69,7 @@ describe('workbench_diy · 起得来没（装配失败的现场）', () => {
   it('没装：起得来那一格直说还没装（不假装它在跑）', async () => {
     rig.scaffold('demo');
     const out = await statusOf({ mounted: ['panels'] });
-    expect(out.status[0]?.health).toEqual({ state: 'absent', reason: '还没装' });
+    expect(out.status[0]?.health).toEqual({ state: 'absent', reason: '尚未安装' });
   });
 });
 

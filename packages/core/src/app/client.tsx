@@ -193,7 +193,7 @@ function mount(ctx: DshClientContext): void {
         ...messagesOf(units.all()),
       ]);
       for (const problem of problems) {
-        console.warn(`[dsh-workbench] 套件 ${problem.unit} 的文案没并进来（只有它少了这几句）：${problem.reason}`);
+        console.warn(`[dsh-workbench] 模块 ${problem.unit} 的文案未合并（只有它少了这几句）：${problem.reason}`);
       }
       disposeDictionary = ctx.locale.register(LOCALE_NS, merged);
     };

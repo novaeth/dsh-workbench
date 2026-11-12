@@ -40,7 +40,7 @@ describe('读出来怎么说（没装钩子 ≠ 没有报错）', () => {
   });
 
   it('装了但一条都没有：如实说"还没打过 console.*"', () => {
-    expect(renderLogs({ ok: true, code: '', seen: 0, lines: [] })).toContain('一条 console.* 都没打过');
+    expect(renderLogs({ ok: true, code: '', seen: 0, lines: [] })).toContain('一条 console.* 记录都没有');
   });
 
   it('逐条列出来，并说清只列了最近多少条', () => {
@@ -131,8 +131,8 @@ describe('★ 三把真的注册进工坊，而且是一动词一把（没有 ac
 
     const answer = (await built.tool(DIY_LOGS_STOP_TOOL).execute({}, rig.diyExec())) as { text: string };
 
-    expect(answer.text).toContain('卸掉 5 个钩子');
-    expect(answer.text).toContain('扔掉 12 条');
+    expect(answer.text).toContain('卸载 5 个钩子');
+    expect(answer.text).toContain('清空 12 条');
   });
 
   it('opencli 回错信封时不当成功', async () => {

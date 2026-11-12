@@ -284,7 +284,7 @@ export function moduleVersionsHandler(
           const line = refused.join('；');
           if (refusalLog.get(module.pkg) !== line) {
             refusalLog.set(module.pkg, line);
-            ctx.logger?.warn?.(`[dsh-workbench] ${module.pkg} 装上了但用不了：${line}`);
+            ctx.logger?.warn?.(`[dsh-workbench] ${module.pkg} 已安装但不可用：${line}`);
           }
         }
         return {

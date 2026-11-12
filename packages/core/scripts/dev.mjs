@@ -72,13 +72,13 @@ async function ensureProfile() {
   }
   if (why.length === 0) return;
 
-  console.log(`dev：先跑一次 setup —— ${why.join('；')}`);
+  console.log(`dev：先运行一次 setup —— ${why.join('；')}`);
   console.log(`     （${path.relative(pkgRoot, bin)} setup，幂等，可重复跑）`);
   const setup = execa(...launcher(['setup']), { cwd: pkgRoot, stdio: 'inherit', reject: false });
   const code = await exitCodeOf(setup);
   if (code !== 0) {
     if (!IS_WIN) {
-      console.error(`dev：setup 失败（退出码 ${code}）——先手动跑一次看它怎么说：${bin} setup`);
+      console.error(`dev：setup 失败（退出码 ${code}）——先手动运行一次查看输出：${bin} setup`);
     }
     process.exit(code);
   }
@@ -138,7 +138,7 @@ function shutdown(code) {
 
 process.on('SIGINT', () => {
   if (closing) process.exit(130);
-  console.log(desktop ? '\ndev：收工 —— 关掉监听。' : '\ndev：收工 —— 关掉监听与工作台。');
+  console.log(desktop ? '\ndev：结束 —— 关闭监听。' : '\ndev：结束 —— 关闭监听与工作台。');
   shutdown(0);
 });
 process.on('SIGTERM', () => shutdown(0));
@@ -158,7 +158,7 @@ function newestMtime(dir) {
 
 function reportSharedBuildFailure(code) {
   console.error(`dev：packages/shared 重建失败（退出码 ${code}）`);
-  console.error('     （自动重建走的是它自己声明的 build 脚本；失败就手动跑一次：');
+  console.error('     （自动重建走的是它自己声明的 build 脚本；失败就手动运行一次：');
   console.error('       pnpm --filter @dsh-workbench/shared run build）');
 }
 
@@ -219,7 +219,7 @@ if (desktop) {
 } else if (process.env.DSH_WB_DEV_NO_LAUNCH === '1') {
   console.log('dev：DSH_WB_DEV_NO_LAUNCH=1 —— 只监听，工作台自己起。');
 } else if (await busy(port)) {
-  console.log(`dev：:${port} 已经有工作台在跑 —— 只监听重建，不重复起第二个。`);
+  console.log(`dev：:${port} 已经有工作台在运行 —— 只监听重建，不重复起第二个。`);
   console.log('     浏览器里那个页面不用刷新，客户端改动会自己换。');
 } else {
   console.log(`dev：起工作台 :${port} …`);

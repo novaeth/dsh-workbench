@@ -126,9 +126,9 @@ describe('板事实：那一屏画着哪块板', () => {
 
     expect(debugOffBoardText(held, 'off-workspace')).toContain('不在「工坊」');
     expect(debugOffBoardText(held, 'off-workspace')).toContain('切回「工坊」');
-    expect(debugOffBoardText(held, 'panel-closed')).toContain('工作台面板没画在屏上');
-    expect(debugOffBoardText(held, 'panel-closed')).toContain('把「工作台面板」切回来');
-    expect(debugOffBoardText(held, 'other-board')).toContain('画的不是「工坊」那块板');
+    expect(debugOffBoardText(held, 'panel-closed')).toContain('工作台面板未显示在页面上');
+    expect(debugOffBoardText(held, 'panel-closed')).toContain('把「工作台面板」切回');
+    expect(debugOffBoardText(held, 'other-board')).toContain('显示的不是「工坊」的面板');
 
     for (const one of ['off-workspace', 'panel-closed', 'other-board'] as const) {
       expect(debugOffBoardText(held, one)).toContain('进行中');
@@ -145,7 +145,7 @@ describe('板事实：那一屏画着哪块板', () => {
 
     await expect(
       pageAt(built.ctx as unknown as DshHostContext, rig.diyExec() as DshToolRunContext, { unit: 'demo' }),
-    ).rejects.toThrow('不拿别的板当目标');
+    ).rejects.toThrow('不会以其他面板为目标');
   });
 
   it('★★ 面板收着 ⇒ 收闸，说的是"看不见"，不是"别的板"', async () => {
@@ -156,7 +156,7 @@ describe('板事实：那一屏画着哪块板', () => {
 
     await expect(
       pageAt(built.ctx as unknown as DshHostContext, rig.diyExec() as DshToolRunContext, { unit: 'demo' }),
-    ).rejects.toThrow('右栏收着');
+    ).rejects.toThrow('右栏已收起');
   });
 
   it('★★ 画的就是工坊那块板 ⇒ 放行，并把这格事实报出去（look 的话靠它）', async () => {
@@ -261,7 +261,7 @@ describe('没有调试约定 ⇒ 看 / 动 / 网络 / 日志整族零调用', ()
       pageAt(built.ctx as unknown as DshHostContext, rig.diyExec() as DshToolRunContext, { unit: 'demo' }, {
         requirePact: false,
       }),
-    ).rejects.toThrow('不拿别的板当目标');
+    ).rejects.toThrow('不会以其他面板为目标');
   });
 
   it('★ 只有开约定那两把能不走约定（start / resume 自己就是那道门）', async () => {

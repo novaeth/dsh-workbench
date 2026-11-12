@@ -4,12 +4,12 @@ export function publishClaimDenyOf(claim: MarketClaim | undefined, name: string)
   if (claim === undefined) return undefined;
   if (claim.state === 'unit-taken') {
     return (
-      `市场里 ${claim.entry} 已经用了这个模块 id —— 两个模块不能共用一个，装在一起会撞。` +
+      `市场里 ${claim.entry} 已经用了这个模块标识 —— 两个模块不能共用一个，装在一起会撞。` +
       '给这个模块换一个 unit（dsh.workbench.unit）再发。'
     );
   }
   if (claim.state === 'path-taken') {
-    return `市场仓库里的产物目录已经被 ${claim.entry} 占了 —— 换一个包名再发。`;
+    return `市场仓库里的打包文件位置已经被 ${claim.entry} 占了 —— 换一个包名再发。`;
   }
   if (claim.state === 'conflict') {
     return (

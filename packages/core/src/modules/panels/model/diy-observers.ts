@@ -45,19 +45,19 @@ export function withObserverCleanup(
 
   const sweep = async (at: number, workspace: string | null): Promise<void> => {
     if (epoch !== at) {
-      logger?.warn?.('收工那一拍：已经有新的调试约定开始了 —— 跳过收观察（新那一场自己收）');
+      logger?.warn?.('结束阶段：已经有新的调试约定开始 —— 跳过收尾观察（新一场自行收尾）');
       return;
     }
     try {
       const out = await cleanup(workspace);
       if (!out.net || !out.logs) {
         logger?.warn?.(
-          `收工那一拍没把观察收干净（网络 ${String(out.net)} / 日志 ${String(out.logs)}）—— ` +
-            '网络那条最多 15 分钟自己收工，日志钩子随页面刷新消失',
+          `结束阶段未完成观察收尾（网络 ${String(out.net)} / 日志 ${String(out.logs)}）—— ` +
+            '网络观察最多 15 分钟后自动结束，日志钩子随页面刷新消失',
         );
       }
     } catch (error) {
-      logger?.warn?.(`收工那一拍收观察抛了：${error instanceof Error ? error.message : String(error)}`);
+      logger?.warn?.(`结束阶段收尾观察时抛出异常：${error instanceof Error ? error.message : String(error)}`);
     }
   };
 

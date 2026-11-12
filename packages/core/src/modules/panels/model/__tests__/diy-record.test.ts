@@ -76,7 +76,7 @@ describe('录制交接：prepare / read / stop 三把', () => {
 
     await expect(
       built.tool(DIY_RECORD_PREPARE_TOOL).execute({ unit: 'demo', doing: '发布' }, rig.diyExec()),
-    ).rejects.toThrow('要那一页的 url');
+    ).rejects.toThrow('需要该页面的 url');
   });
 
   it('★★ read：页面说录完了就把状态推到 finished，只回要的那几条（还带诚实字段）', async () => {
@@ -201,9 +201,9 @@ describe('录制交接：prepare / read / stop 三把', () => {
     expect(out.capturedInSegment).toBe(2);
     expect(out.lastFile.endsWith('rec-demo.jsonl.last')).toBe(true);
     expect(out.cleaned).toEqual({ tab: true, capture: true, hook: true });
-    expect(out.text).toContain('原文留在');
-    expect(out.text).toContain('不许复现');
-    expect(out.text).toContain('这段原文可以直接落');
+    expect(out.text).toContain('原文保留在');
+    expect(out.text).toContain('不要重放');
+    expect(out.text).toContain('这段原文可以直接写入');
     expect(record.live(Date.now())).toBeNull();
     expect(built.commands.some((one) => one.includes('tab') && one.includes('close'))).toBe(true);
   });
@@ -340,7 +340,7 @@ describe('录制交接：detail 那一拍（清单 → 挑一条 → 原文）',
     };
 
     expect(out.found).toBe(false);
-    expect(out.text).toContain('钩子那一份问不到');
+    expect(out.text).toContain('无法从页面钩子读取');
     expect(built.commands.some((one) => one.includes('eval'))).toBe(false);
   });
 
@@ -348,7 +348,7 @@ describe('录制交接：detail 那一拍（清单 → 挑一条 → 原文）',
     const built = rig.harness({ withTools: true, pact: false, probe: [] });
 
     await expect(built.tool(DIY_RECORD_DETAIL_TOOL).execute({ key: 'POST x' }, rig.diyExec())).rejects.toThrow(
-      '这一场录制已经不在了',
+      '本次录制已不存在',
     );
   });
 });

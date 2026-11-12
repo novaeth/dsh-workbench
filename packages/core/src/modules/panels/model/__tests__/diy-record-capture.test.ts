@@ -380,8 +380,8 @@ describe('捕获这条来源接进 read / stop（真工具 + shell 桩）', () =
     expect(out.noBody).toBe(true);
     expect(out.probeCommand).toBe('');
     expect(out.lastFile.endsWith('.last')).toBe(true);
-    expect(out.text).toContain('一共 2 条请求（页面钩子 0 条 · 会话捕获这一段 2 条）');
-    expect(out.text).toContain('只有方法 / URL，body 拿不到');
-    expect(out.text).toContain('先问过用户');
+    expect(out.text).toContain('该段共 2 条请求（页面钩子 0 条；会话捕获该段 2 条）');
+    expect(out.text).toContain('只有方法 / URL，无法获取 body');
+    expect(out.text).toContain('先征得用户同意');
   });
 });

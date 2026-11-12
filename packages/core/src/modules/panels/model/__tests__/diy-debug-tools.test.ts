@@ -55,7 +55,7 @@ describe('调试约定：说出口的四把动词', () => {
 
     await expect(
       built.tool(DIY_DEBUG_START_TOOL).execute({ unit: 'demo' }, rig.diyExec()),
-    ).rejects.toThrow('已经持有一场调试');
+    ).rejects.toThrow('已持有一场调试');
   });
 
   it('★★ 另一场调试占着那块屏 ⇒ 别人的会话来开就被拒（一次只允许一场）', async () => {
@@ -64,7 +64,7 @@ describe('调试约定：说出口的四把动词', () => {
 
     await expect(
       built.tool(DIY_DEBUG_START_TOOL).execute({ unit: 'demo' }, rig.diyExec('s2')),
-    ).rejects.toThrow('另一场调试还占着那块屏');
+    ).rejects.toThrow('另一场调试仍占用该页面');
   });
 
   it('★★ 暂停之后动作族关闸（不再拿屏当目标）；继续之后才放行', async () => {
@@ -96,8 +96,8 @@ describe('调试约定：说出口的四把动词', () => {
     await built.tool(DIY_DEBUG_START_TOOL).execute({ unit: 'demo' }, rig.diyExec());
 
     const failure = built.tool(DIY_CLICK_TOOL).execute({ unit: 'demo' }, rig.diyExec());
-    await expect(failure).rejects.toThrow('发不出去');
-    await expect(built.tool(DIY_CLICK_TOOL).execute({ unit: 'demo' }, rig.diyExec())).rejects.toThrow('仍然**进行中**');
+    await expect(failure).rejects.toThrow('当前不可用');
+    await expect(built.tool(DIY_CLICK_TOOL).execute({ unit: 'demo' }, rig.diyExec())).rejects.toThrow('仍处于**进行中**');
     await expect(built.tool(DIY_CLICK_TOOL).execute({ unit: 'demo' }, rig.diyExec())).rejects.toThrow(
       'workbench_diy_debug_pause',
     );
@@ -110,7 +110,7 @@ describe('调试约定：说出口的四把动词', () => {
     await built.tool(DIY_DEBUG_START_TOOL).execute({ unit: 'demo' }, rig.diyExec('s1'));
 
     await expect(built.tool(DIY_CLICK_TOOL).execute({ unit: 'demo' }, rig.diyExec('s2'))).rejects.toThrow(
-      '另一场调试正占着那块屏',
+      '另一场调试正在占用该页面',
     );
   });
 
@@ -118,12 +118,12 @@ describe('调试约定：说出口的四把动词', () => {
     const built = rig.harness({ withTools: true, pact: false, probe: [{ stdout: HERE() }] });
     await built.tool(DIY_DEBUG_START_TOOL).execute({ unit: 'demo' }, rig.diyExec());
 
-    await expect(built.tool(DIY_DEBUG_STOP_TOOL).execute({}, rig.diyExec('s2'))).rejects.toThrow('不是你这个会话的');
+    await expect(built.tool(DIY_DEBUG_STOP_TOOL).execute({}, rig.diyExec('s2'))).rejects.toThrow('不属于当前会话');
     const stopped = (await built.tool(DIY_DEBUG_STOP_TOOL).execute({}, rig.diyExec())) as { text: string };
 
-    expect(stopped.text).toContain('收工了');
+    expect(stopped.text).toContain('调试已结束');
     expect(built.debug.live(Date.now())).toBeNull();
-    await expect(built.tool(DIY_DEBUG_STOP_TOOL).execute({}, rig.diyExec())).rejects.toThrow('现在没有调试态');
+    await expect(built.tool(DIY_DEBUG_STOP_TOOL).execute({}, rig.diyExec())).rejects.toThrow('当前没有调试态');
   });
 
   it('★★ 收工那一拍把网络捕获与日志钩子一起收了（不用再回头调 net_stop / logs_stop）', async () => {
@@ -137,7 +137,7 @@ describe('调试约定：说出口的四把动词', () => {
     const stopped = (await built.tool(DIY_DEBUG_STOP_TOOL).execute({}, rig.diyExec())) as { text: string };
     await settled();
 
-    expect(stopped.text).toContain('顺手把这一场的观察收一收');
+    expect(stopped.text).toContain('同时收尾该场调试的观察');
     expect(built.commands.some((one) => one.includes('net-workbench.jsonl.pid'))).toBe(false);
     expect(built.commands.some((one) => one.includes("'eval'") && one.includes('unhooked'))).toBe(true);
   });
@@ -145,7 +145,7 @@ describe('调试约定：说出口的四把动词', () => {
   it('★ 没开始就暂停 ⇒ 一句人话（不是崩）', async () => {
     const built = rig.harness({ withTools: true, pact: false });
 
-    await expect(built.tool(DIY_DEBUG_PAUSE_TOOL).execute({}, rig.diyExec())).rejects.toThrow('现在没有调试态');
+    await expect(built.tool(DIY_DEBUG_PAUSE_TOOL).execute({}, rig.diyExec())).rejects.toThrow('当前没有调试态');
   });
 
   it('★★ 收工之后约定就没了：看 / 动又被拒（约定是这一族唯一的入口）', async () => {
@@ -170,7 +170,7 @@ describe('调试态的每一句拒绝都要能照做', () => {
     expect(debugRefusalText('none')).toContain('没有调试态');
     expect(debugRefusalText('held-by-other')).toContain('只允许一场');
     expect(debugRefusalText('already-held')).toContain('workbench_diy_debug_stop');
-    expect(debugRefusalText('not-owner')).toContain('谁开始');
+    expect(debugRefusalText('not-owner')).toContain('发起调试的会话');
     expect(debugRefusalText('already-paused')).toContain('workbench_diy_debug_resume');
     expect(debugRefusalText('already-debugging')).toContain('正在调试中');
   });

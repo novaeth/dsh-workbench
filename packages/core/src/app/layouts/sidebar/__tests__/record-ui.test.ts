@@ -55,7 +55,7 @@ describe('左栏底部那一格：四态各说各的话', () => {
   it('★★ 等他出手 ⇒ "取证交接 · 等你出手" + 请他按开始/结束，只有「取消」', () => {
     const view = recordFooterView(state(), t);
 
-    expect(view.label).toBe('取证交接 · 等你出手');
+    expect(view.label).toBe('录制交接 · 等待你操作');
     expect(view.note).toContain('开始录制');
     expect(view.note).toContain('结束录制');
     expect(view.acts.map((one) => one.intent)).toEqual(['stop']);
@@ -66,14 +66,14 @@ describe('左栏底部那一格：四态各说各的话', () => {
     const view = recordFooterView(state({ phase: 'recording', t0: 1000 }), t);
 
     expect(view.label).toBe('录制中');
-    expect(view.note).toContain('先取再收');
+    expect(view.note).toContain('先读取结果再结束');
     expect(view.acts.map((one) => one.intent)).toEqual(['halt']);
     expect(view.acts[0]?.label).toBe('停');
   });
 
-  it('★★ 录制中 + 拍过 ⇒ 那句里并上张数；没拍过 ⇒ 那半句一个字都不出现（不许"已拍 0 张"）', () => {
+  it('★★ 录制中 + 拍过 ⇒ 那句里并上张数；没拍过 ⇒ 那半句一个字都不出现（不许"已截图 0 张"）', () => {
     const none = recordFooterView(state({ phase: 'recording', t0: 1000 }), t);
-    expect(none.note).not.toContain('已拍');
+    expect(none.note).not.toContain('已截图');
     expect(none.label).toBe('录制中');
     expect(none.acts.map((one) => one.intent)).toEqual(['halt']);
 
@@ -82,7 +82,7 @@ describe('左栏底部那一格：四态各说各的话', () => {
       t,
     );
     expect(one.note).toContain('「截图」');
-    expect(one.note).toContain('已拍 1 张');
+    expect(one.note).toContain('已截图 1 张');
     expect(one.label).toBe('录制中');
     expect(one.acts.map((one) => one.intent)).toEqual(['halt']);
 
@@ -97,7 +97,7 @@ describe('左栏底部那一格：四态各说各的话', () => {
       }),
       t,
     );
-    expect(two.note).toContain('已拍 2 张');
+    expect(two.note).toContain('已截图 2 张');
   });
 
   it('★★ 那一句只归「录制中」：等在那一页（armed）时不许带张数（他还没地方按截图）', () => {
@@ -105,7 +105,7 @@ describe('左栏底部那一格：四态各说各的话', () => {
       state({ shots: [{ n: 1, at: 5, path: '/w/shots/rec-shot-inventory-1.png' }] }),
       t,
     );
-    expect(view.note).not.toContain('已拍');
+    expect(view.note).not.toContain('已截图');
   });
 
   it('★★ 录完 ⇒ 只报状态、一颗键都没有（agent 自己来取、自己收工）', () => {

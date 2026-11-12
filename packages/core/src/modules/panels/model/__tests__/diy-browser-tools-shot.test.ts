@@ -136,7 +136,7 @@ describe('★★ 端到端：命令形状是 browser workbench <verb>，返回�
     const rig = browserRig({ scaffold: false, answer: () => ({ stdout: PAGE }) });
 
     await expect(run(rig, DIY_CLICK_TOOL, { args: ['.wb-cardOpen'], scope: 'card' })).rejects.toThrow(
-      '要卡作用域',
+      '使用模块作用域',
     );
     expect(rig.commands.some((line) => line.includes("'click'"))).toBe(false);
   });
@@ -315,7 +315,7 @@ describe('★★ 前置照旧：没约定 / 板不对 ⇒ 一条 verb 命令都�
     const rig = browserRig({ answer: () => ({ stdout: other }) });
 
     await expect(run(rig, DIY_CLICK_TOOL, { unit: 'demo', args: ['.wb-cardOpen'], scope: 'card' })).rejects.toThrow(
-      '不拿别的板当目标',
+      '不会以其他面板为目标',
     );
     expect(rig.commands.some((line) => line.includes("'click'"))).toBe(false);
     expect(rig.commands).toHaveLength(1);
@@ -332,7 +332,7 @@ describe('★★ 前置照旧：没约定 / 板不对 ⇒ 一条 verb 命令都�
     });
     const rig = browserRig({ answer: () => ({ stdout: closed }) });
 
-    await expect(run(rig, DIY_KEYS_TOOL, { unit: 'demo', args: ['Escape'] })).rejects.toThrow('右栏收着');
+    await expect(run(rig, DIY_KEYS_TOOL, { unit: 'demo', args: ['Escape'] })).rejects.toThrow('右栏已收起');
     expect(rig.commands.some((line) => line.includes("'keys'"))).toBe(false);
   });
 });

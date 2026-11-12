@@ -212,7 +212,7 @@ describe('createMarketService：update', () => {
       seam: fakeSeamOf(fake.shell),
     });
 
-    await expect(market.update('issues')).rejects.toThrow(/还是旧的样子/);
+    await expect(market.update('issues')).rejects.toThrow(/仍是旧版本/);
   });
 });
 

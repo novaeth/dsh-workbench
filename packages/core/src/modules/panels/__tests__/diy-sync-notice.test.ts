@@ -54,7 +54,7 @@ function row(dir: string): ModuleStatus {
     installed: false,
     known: false,
     open: false,
-    health: { state: 'absent', reason: '还没装' },
+    health: { state: 'absent', reason: '尚未安装' },
   });
 }
 
@@ -75,12 +75,12 @@ describe('工坊代际：failed 说人话', () => {
 
     const text = textOf(dir, '0.3.0');
 
-    expect(text).toContain('工坊工具链还是上一代');
-    expect(text).toContain('工坊里 core 0.2.0 / module-tools 0.2.0 / shared 0.2.0');
-    expect(text).toContain('工作台已经是 0.3.0');
+    expect(text).toContain('工坊工具链仍为上一代');
+    expect(text).toContain('工坊中 core 0.2.0 / module-tools 0.2.0 / shared 0.2.0');
+    expect(text).toContain('工作台已是 0.3.0');
     expect(text).toContain('没有 pnpm，装不动');
     expect(text).toContain('pnpm install');
-    expect(text).toContain('重启一次工作台');
+    expect(text).toContain('重启工作台');
     expect(text.startsWith(`工作区：${dir}\n⚠️`)).toBe(true);
   });
 
@@ -92,7 +92,7 @@ describe('工坊代际：failed 说人话', () => {
 
     const text = textOf(dir, '0.3.0');
 
-    expect(text).toContain('(没给原因)');
+    expect(text).toContain('(未提供原因)');
     expect(text).not.toContain('undefined');
   });
 
@@ -104,7 +104,7 @@ describe('工坊代际：failed 说人话', () => {
 
     const text = textOf(dir, '0.3.0');
 
-    expect(text).toContain('工坊里读不到那三个包的版本');
+    expect(text).toContain('工坊中读不到那三个包的版本');
     expect(text).toContain('装到一半断了');
     expect(text).toContain('pnpm install');
   });
@@ -116,13 +116,13 @@ describe('工坊代际：failed 说人话', () => {
     const record = syncStateOf(join(root, 'diy'));
 
     const generic = syncNotice({ sync: record, shellVersion: '0.3.0', toolchain: OLD });
-    expect(generic).toContain('下一轮工作台启动时会对齐到 0.3.0');
+    expect(generic).toContain('下一轮工作台启动时会同步到 0.3.0');
     expect(generic).not.toContain('正在后台同步');
     expect(generic).not.toContain('离线');
-    expect(generic).not.toContain('还是上一代（工坊里 core 0.2.0 / module-tools 0.2.0 / shared 0.2.0；工作台已经是');
+    expect(generic).not.toContain('还是上一代（工坊中 core 0.2.0 / module-tools 0.2.0 / shared 0.2.0；工作台已经是');
     expect(syncNotice({ sync: record, shellVersion: '0.3.0', toolchain: undefined })).toBeUndefined();
     const text = textOf(dir, '0.3.0');
-    expect(text).not.toContain('还是上一代');
+    expect(text).not.toContain('仍为上一代');
     expect(text).not.toContain('后台同步');
   });
 
@@ -132,7 +132,7 @@ describe('工坊代际：failed 说人话', () => {
       installed: '0.3.0',
     });
 
-    expect(textOf(dir, '0.3.0')).not.toContain('还是上一代');
+    expect(textOf(dir, '0.3.0')).not.toContain('仍为上一代');
   });
 
   it('算不出当前外壳版本：一声不响（不冒充）', () => {
@@ -147,7 +147,7 @@ describe('工坊代际：failed 说人话', () => {
         toolchain: OLD,
       }),
     ).toBeUndefined();
-    expect(renderStatus(dir, [row(dir)])).not.toContain('还是上一代');
+    expect(renderStatus(dir, [row(dir)])).not.toContain('仍为上一代');
   });
 });
 
@@ -171,7 +171,7 @@ describe('工坊代际：正在同步', () => {
 
     const text = textOf(dir, '0.3.0');
 
-    expect(text).toContain('上一次同步没走完');
+    expect(text).toContain('上次同步未完成');
     expect(text).toContain('2020-01-01T00:00:00Z');
     expect(text).not.toContain('正在后台同步');
     expect(text).toContain('pnpm install');
@@ -186,7 +186,7 @@ describe('工坊代际：正在同步', () => {
     expect(SYNC_STALE_MINUTES).toBe(15);
     expect(syncNotice({ ...base, windowMs: SYNC_STALE_MS, sync: sync(14) })).toContain('正在后台同步');
     expect(syncNotice({ ...base, windowMs: SYNC_STALE_MS, sync: sync(15) })).toContain('正在后台同步');
-    expect(syncNotice({ ...base, windowMs: SYNC_STALE_MS, sync: sync(16) })).toContain('上一次同步没走完');
+    expect(syncNotice({ ...base, windowMs: SYNC_STALE_MS, sync: sync(16) })).toContain('上次同步未完成');
     expect(syncNotice({ ...base, windowMs: 5 * 60_000, sync: sync(6) })).toContain('超过 5 分钟');
   });
 
@@ -229,7 +229,7 @@ describe('工坊代际：正在同步', () => {
 
     const text = textOf(dir, '0.3.0');
 
-    expect(text).toContain('下一轮工作台启动时会对齐到 0.3.0');
+    expect(text).toContain('下一轮工作台启动时会同步到 0.3.0');
     expect(text).not.toContain('正在后台同步');
   });
 
@@ -241,8 +241,8 @@ describe('工坊代际：正在同步', () => {
 
     const text = textOf(dir, '0.3.1');
 
-    expect(text).toContain('工坊里 core 0.3.0 / module-tools 0.3.0 / shared 0.3.0，工作台 0.3.1');
-    expect(text).toContain('下一轮工作台启动时会对齐到 0.3.1');
+    expect(text).toContain('工坊中 core 0.3.0 / module-tools 0.3.0 / shared 0.3.0，工作台 0.3.1');
+    expect(text).toContain('下一轮工作台启动时会同步到 0.3.1');
     expect(text).toContain('seed.log');
     expect(text).not.toContain('正在后台同步');
     expect(text).not.toContain('正在同步');
@@ -256,9 +256,9 @@ describe('工坊代际：正在同步', () => {
 
     const text = textOf(dir, '0.3.0');
 
-    expect(text).toContain('下一轮工作台启动时会对齐到 0.3.0');
+    expect(text).toContain('下一轮工作台启动时会同步到 0.3.0');
     expect(text).not.toContain('正在后台同步');
-    expect(text).not.toContain('工作台已经是 0.3.0');
+    expect(text).not.toContain('工作台已是 0.3.0');
   });
 });
 
@@ -269,10 +269,10 @@ describe('工坊代际：与今天一致', () => {
     expect(textOf(dir, '0.3.0')).toBe(
       `工作区：${dir}\n` +
         '—— demo（demo）\n' +
-        '   装：没有 · 面板认得：不是 · 板上开着：没有\n' +
-        '   起得来：还没有（还没装）\n' +
-        '   产物：没有\n' +
-        '   下一步：装：workbench_diy_install（第一次）',
+        '   安装：否 · 面板已识别：否 · 面板已启用：否\n' +
+        '   启动状态：尚未就绪（尚未安装）\n' +
+        '   产物：无\n' +
+        '   下一步：安装：workbench_diy_install（首次）',
     );
   });
 
@@ -309,7 +309,7 @@ describe('工坊代际：与今天一致', () => {
     const text = renderStatus(dir, [], { shellVersion: '0.3.0' });
 
     expect(text).toContain('没有模块源码');
-    expect(text).toContain('还是上一代');
+    expect(text).toContain('仍为上一代');
   });
 });
 

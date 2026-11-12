@@ -22,7 +22,7 @@ const STATUS_WORDS: Readonly<Record<string, string>> = {
 
 const NO_WORKSPACE = '不知道当前会话在哪个工作区 —— 长任务按工作区记，这条读不了。';
 
-const NO_RUNS = '这个工作区现在没有长任务在跑（也没有十分钟内刚收尾的）。';
+const NO_RUNS = '这个工作区现在没有长任务运行中（也没有十分钟内刚结束的）。';
 
 const NO_RUN = '没有这一趟 —— unit/id 对不上。';
 
@@ -158,7 +158,7 @@ export function registerLongTaskTools(
   const listTool: DshToolDefinition = {
     name: LONG_TASKS_LIST_TOOL,
     description:
-      '看这个工作区在跑（十分钟内也算）的长任务；等人处理的行会写明要人做什么；' +
+      '看这个工作区正在运行（十分钟内也算）的长任务；等人处理的行会写明要人做什么；' +
       '要停就调 workbench_long_tasks_stop。',
     parameters: { type: 'object', properties: {}, additionalProperties: false },
     output: LIST_OUTPUT,
@@ -199,7 +199,7 @@ export function registerLongTaskTools(
         return { text: `这一趟不在你当前的工作区（它在 ${run.workspace}）—— 没动它。`, stopped: false };
       }
       if (!registry.stop(id, sessionIdOf(exec) ?? undefined)) {
-        return { text: `这一趟已经不在跑了（${statusWord(run.status)}）—— 没动它。`, stopped: false };
+        return { text: `这一趟已停止运行（${statusWord(run.status)}）—— 没动它。`, stopped: false };
       }
       return {
         text: `停了：${unit} · ${run.target}（${id}）。这一趟的活儿收到中断信号 —— 它认不认、停在哪一步看它自己。`,

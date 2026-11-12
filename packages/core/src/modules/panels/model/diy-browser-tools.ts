@@ -120,41 +120,41 @@ export const BROWSER_TOOLS: readonly BrowserToolRow[] = [
   {
     tool: DIY_STATE_TOOL,
     verb: ['state'],
-    description: '这一页有什么：URL / 标题 / 可点的元素与索引。',
+    description: '查看当前页面：URL / 标题 / 可点击元素及其索引。',
     argsHelp: '`{cmd}` state 的参数（如 --source ax）。',
   },
   {
     tool: DIY_HTML_TOOL,
     verb: ['get', 'html'],
-    description: '取 DOM：默认整页 HTML，--as json 给 {tag,attrs,text,children} 树。',
+    description: '获取 DOM：默认整页 HTML；--as json 返回元素树。',
     argsHelp: '`{cmd}` get html 的参数（--selector / --as json / --depth / --children-max / --text-max）。',
     css: { kind: 'flag', flag: '--selector' },
   },
   {
     tool: DIY_FIND_TOOL,
     verb: ['find'],
-    description: '按 CSS 或语义找元素，回 {matches_n, entries[]}（ref 只在那一次快照里有效）。',
+    description: '按 CSS 或语义查找元素，返回 {matches_n, entries[]}（ref 仅当次快照有效）。',
     argsHelp: '`{cmd}` find 的参数（--css / --role / --name / --testid / --limit / --text-max）。',
     css: { kind: 'flag', flag: '--css' },
   },
   {
     tool: DIY_CLICK_TOOL,
     verb: ['click'],
-    description: '点一个元素。',
+    description: '点击一个元素。',
     argsHelp: '`{cmd}` click 的参数（选择器 / --role / --name / --nth）。',
     css: { kind: 'positional', at: 0 },
   },
   {
     tool: DIY_HOVER_TOOL,
     verb: ['hover'],
-    description: '把鼠标移到元素上。',
+    description: '将鼠标移到元素上。',
     argsHelp: '`{cmd}` hover 的参数（选择器 / --role / --name）。',
     css: { kind: 'positional', at: 0 },
   },
   {
     tool: DIY_TYPE_TOOL,
     verb: ['type'],
-    description: '点一下再敲字。',
+    description: '选中元素后输入文字。',
     argsHelp: '`{cmd}` type 的参数（选择器在前，然后是字）。',
     css: { kind: 'positional', at: 0 },
   },
@@ -168,40 +168,40 @@ export const BROWSER_TOOLS: readonly BrowserToolRow[] = [
   {
     tool: DIY_KEYS_TOOL,
     verb: ['keys'],
-    description: '给焦点发按键。',
+    description: '向焦点元素发送按键。',
     argsHelp: '`{cmd}` keys 的参数（如 Enter / Meta+K）。',
   },
   {
     tool: DIY_SCROLL_TOOL,
     verb: ['scroll'],
-    description: '滚一屏。',
+    description: '滚动一屏。',
     argsHelp: '`{cmd}` scroll 的参数（up|down / --amount）。',
   },
   {
     tool: DIY_WAIT_TOOL,
     verb: ['wait'],
-    description: '等一件事：选择器 / 文字 / 时间 / XHR / 下载。',
+    description: '等待某个条件：选择器 / 文字 / 时间 / XHR / 下载。',
     argsHelp: '`{cmd}` wait 的参数（selector|text|time|xhr|download + --timeout）。',
     css: { kind: 'positional', at: 1, onlyWhenFirst: 'selector' },
   },
   {
     tool: DIY_EVAL_TOOL,
     verb: ['eval'],
-    description: '在页面里跑一段 JS（return 什么就回什么）。',
+    description: '在页面中执行一段 JS（return 什么就返回什么）。',
     argsHelp: '`{cmd}` eval 的参数：一段 JS（in=card 时可用注入的 root）。',
     evalInCard: true,
   },
   {
     tool: DIY_SCREENSHOT_TOOL,
     verb: ['screenshot'],
-    description: '拍一张图（写文件；clip 给 CSS px 就只裁那一块）。',
+    description: '截取一张图片（写入文件；clip 传入 CSS px 时只裁剪该区域）。',
     argsHelp: '`{cmd}` screenshot 的参数：文件路径在前，然后 --full-page / --width / --height / --annotate。',
     clip: true,
   },
   {
     tool: DIY_NETWORK_TOOL,
     verb: ['network'],
-    description: '看网络：捕获到的请求形状（URL / 方法 / key）；body 取不到，要 body 用 _eval 里 fetch 打一条。',
+    description: '查看网络：捕获的请求结构（URL / 方法 / key）。无法获取 body；需要时用 _eval 中的 fetch 发送请求。',
     argsHelp: '`{cmd}` network 的参数（--since / --until / --detail / --filter / --all / --raw / --follow）。',
   },
   {
@@ -219,21 +219,21 @@ function parametersOf(row: BrowserToolRow, command: string): Record<string, unkn
     timeoutMs: { type: 'number', description: '超时毫秒（默认 30000）。' },
     read: {
       type: 'string',
-      description: '只读线：给站点地址；Desktop 用这条。',
+      description: '只读线：提供站点地址；Desktop 使用此项。',
     },
   };
   if (row.css !== undefined) {
     properties['scope'] = {
       type: 'string',
       enum: ['page', 'card'],
-      description: 'card = 把 CSS 目标收进这张卡；默认 page（原样转发）。',
+      description: 'card = 把 CSS 目标限定在该模块界面内；默认 page（原样转发）。',
     };
   }
   if (row.evalInCard === true) {
     properties['in'] = {
       type: 'string',
       enum: ['page', 'card'],
-      description: 'card = 脚本在卡根里跑（注入 root；脚本自己 return）。',
+      description: 'card = 脚本在模块根节点中执行（注入 root，脚本自行 return）。',
     };
   }
   if (row.clip === true) {
@@ -247,7 +247,7 @@ function parametersOf(row: BrowserToolRow, command: string): Record<string, unkn
       },
       required: ['x', 'y', 'width', 'height'],
       additionalProperties: false,
-      description: '只要这一块：拍完本地裁；不在视口里就退回整屏图。',
+      description: '只截取该区域：截图后本地裁剪；区域不在视口内时退回整屏截图。',
     };
   }
   return { type: 'object', properties, additionalProperties: false };
@@ -306,10 +306,10 @@ async function onSiteOnce(seam: Seam, command: string, site: string, line?: Line
 function loginHintOf(stdout: string, site: string): string {
   const code = jsonOf(stdout)?.['code'];
   if (code === 'not-logged-in') {
-    return `没登录：去 ${site} 登一次再重跑（读线的约定：脚本回 { ok: false, code: "not-logged-in" }）。`;
+    return `未登录：请先在 ${site} 登录，再重新运行（读线约定：脚本返回 { ok: false, code: "not-logged-in" }）。`;
   }
   if (code === 'not-on-site') {
-    return `还不在 ${site} 上：我开过一次了 —— 让用户在那扇窗里切过去登一次，再重跑。`;
+    return `当前不在 ${site}：我已打开过页面。请用户在该窗口中切换并登录，然后重新运行。`;
   }
   return '';
 }
@@ -321,9 +321,9 @@ function readRefusalOf(row: BrowserToolRow, raw: Record<string, unknown>): strin
     asText(raw['in']) === 'card' ||
     stringsOf(raw['args']).some((one) => one.includes(CARD_TOKEN));
   if (cardAsked) {
-    return '只读线上没有「用户那张卡」：unit / scope=card / in=card / $card 只在屏那一档能用。';
+    return '只读线没有「用户模块界面」：unit、scope=card、in=card 与 $card 仅在页面调试模式下可用。';
   }
-  return row.clip === true ? '只读线不截图裁剪 —— clip 是屏那一档的事（要图走 _screenshot）。' : '';
+  return row.clip === true ? '只读线不支持截图裁剪：clip 仅在页面调试模式下可用（需要图片请使用 _screenshot）。' : '';
 }
 
 async function runReadTool(
@@ -335,7 +335,7 @@ async function runReadTool(
   const refused = readRefusalOf(row, raw);
   if (refused !== '') throw new Error(refused);
   const seam = seamOf(ctx);
-  if (seam === undefined) throw new Error('这台机器上没有 shell 服务，驱动不了浏览器');
+  if (seam === undefined) throw new Error('这台机器上没有 shell 服务，无法驱动浏览器');
   const command = cliCommandOf(ctx);
   const requested = asNumber(raw['timeoutMs']);
   const timeoutMs = requested !== undefined && requested > 0 ? requested : DEFAULT_TIMEOUT_MS;
@@ -376,7 +376,7 @@ async function runBrowserTool(
   const page = await pageAt(ctx, exec, raw, { requireUnit: false });
   if (needsCardOf(row, page.args) && page.unit === '') {
     throw new Error(
-      '要卡作用域（scope=card / $card / in=card）就得给一个 unit —— 这个工作区里不止一个模块时，我不知道你说哪一张卡。',
+      '使用模块作用域（scope=card / $card / in=card）时必须提供 unit。当前工作区有多个模块，无法确定指哪一个模块界面。',
     );
   }
   const requested = asNumber(page.args['timeoutMs']);
@@ -411,7 +411,7 @@ async function runBrowserTool(
     shot['file'] = step.ok ? file : '';
     if (clipAsked && clip === undefined) {
       shot['cropped'] = false;
-      shot['cropReason'] = 'clip 不是完整矩形（要 x/y ≥ 0，width/height > 0）—— 给的是整屏图';
+      shot['cropReason'] = 'clip 不是完整矩形（需 x/y ≥ 0、width/height > 0），已返回整屏图。';
     } else if (clip !== undefined && step.ok) {
       const viewport = await viewportOf(page);
       const note = clipNote(clip, viewport);

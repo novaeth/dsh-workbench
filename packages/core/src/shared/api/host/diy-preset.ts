@@ -19,7 +19,7 @@ export function registerDiyPreset(ctx: DshHostContext): void {
   const skillsDir = skillsDirOf();
   if (skillsDir === null) {
     ctx.logger?.warn?.(
-      '[dsh-workbench] 读不到自己的包根：DIY 的 skills 目录定不下来，这一轮不注册「工作台 DIY 模式」',
+      '[dsh-workbench] 读不到自己的包根：DIY 的 skills 目录定不下来，本次不注册「工作台 DIY 模式」',
     );
     return;
   }
@@ -37,7 +37,7 @@ export function registerDiyPreset(ctx: DshHostContext): void {
       gaveUp = true;
       ctx.logger?.warn?.(
         `[dsh-workbench] 等了 ${DEADLINE_MS}ms 仍没拿到 dsh 的 standard preset —— ` +
-          '这一轮不注册「工作台 DIY 模式」（dsh 的 loader 里没有 preset-standard？）',
+          '本次不注册「工作台 DIY 模式」（dsh 的 loader 里没有 preset-standard？）',
       );
       return;
     }
@@ -82,7 +82,7 @@ export function registerDiyPreset(ctx: DshHostContext): void {
         }
         unregister = off;
         ctx.logger?.info?.(
-          `[dsh-workbench] 「工作台 DIY 模式」从这一轮 dsh 的 standard 现场派生（${definition.plugins.length} 行）`,
+          `[dsh-workbench] 「工作台 DIY 模式」从本次 dsh 的 standard 现场派生（${definition.plugins.length} 行）`,
         );
       },
       (error: unknown) => {
@@ -98,5 +98,5 @@ export function registerDiyPreset(ctx: DshHostContext): void {
       if (timer !== undefined) clearTimeout(timer);
       if (unregister !== undefined) void unregister();
     };
-  }, 'dsh-workbench: DIY 模式从这一轮 dsh 的 standard 现场派生（没有生成物）');
+  }, 'dsh-workbench: DIY 模式从本次 dsh 的 standard 现场派生（没有生成物）');
 }

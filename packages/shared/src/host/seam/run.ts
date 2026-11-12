@@ -366,7 +366,7 @@ export function createSeam(ports: SeamPorts): Seam {
       failure = error;
       settleExit({ code: null, signal: null });
       if (errorListeners.size === 0) {
-        ports.logger?.warn?.(`[dsh-workbench] 双向通道起不来（${display}）：${String(error)}`);
+        ports.logger?.warn?.(`[dsh-workbench] 双向通道启动失败（${display}）：${String(error)}`);
         return;
       }
       for (const listener of errorListeners) listener(error);

@@ -7,11 +7,11 @@
 
 | 要做什么 | 用 |
 |---|---|
-| 认路、装没装、起不起得来 | `_status`（`unit` 可省）；它的「下一步」就是下一件事；带 `unit` 时 text 末尾多一条「发布出口：…」 |
+| 定位、是否已安装、能否启动 | `_status`（`unit` 可省略）；它的「下一步」就是下一件事；带 `unit` 时 text 末尾多一条「发布出口：…」 |
 | 卡片空白 / 崩了 / 读不到 | `_panel` |
 | 找 opencli 命令、看命令形状 | `_recon` → `_spec`（`--help -f json` 原样） |
 | kit 有什么 / 令牌叫什么 | `_components`（`bucket` / `name` 取声明；`scope: tokens` 现读 `--dsw-*` / `--wb-*`） |
-| 装一次 / 只上板 | `_install` / `_show` |
+| 安装一次 / 只添加到看板 | `_install` / `_show` |
 | 发布（顺带记这一版改了什么） | `_publish`，只在用户说「帮我发布」之后；这一版还没有更新日志时带 `changelogNote` |
 | 看 / 动当前页 | `_state` · `_html` · `_find` · `_screenshot` · `_click` · `_hover` · `_type` · `_fill` · `_keys` · `_scroll` · `_wait` · `_network` · `_dialog` |
 | 控制台 | `_logs_watch` → 操作 → `_logs_read` → `_logs_stop` |
@@ -20,7 +20,7 @@
 ## 2 前置
 
 - 只在 DIY 模式的会话出现；面板得画在屏上。
-- 看 / 动 / 网络 / 日志族先 `_debug_start`（审批一次），否则整族拒、零命令；收工 `_debug_stop`。
+- 看屏 / 操作 / 网络 / 日志族要先调用 `_debug_start`（审批一次），否则整族工具都会被拒绝，一条命令也无法执行；结束时调用 `_debug_stop`。
   `_debug_pause` 只暂停看屏。不碰屏的：`_status` / `_panel` / `_components` / `_recon` / `_spec` /
   `_install` / `_show` / `_publish`；`_find` / `_eval` 带 `read=` 时也不碰。
 - 录制独立：`_record_prepare` 审批一次，其余不问；同时只有一场，要重来先 `_record_stop`。
@@ -33,18 +33,18 @@
   不解析、不翻译；参数不明先 `args: ['<verb>', '--help']`。
 - 卡作用域：`unit` 指卡；`scope: 'card'` / `in: 'card'` / `$card` 需要它，
   `$card` 在 args 里换成 `#wb-card-<unit> .wb-card`。
-- 只读线：带 `read: <地址>` 时跑在 `workbench-read` 会话，不碰屏、不认卡作用域、能代开站点；
+- 只读线：带 `read: <地址>` 时运行在 `workbench-read` 会话，不碰屏、不认卡作用域、能代开站点；
   `_eval` 返回 `not-logged-in` 时让用户去登录。
 - `_screenshot` 不给路径时写 artifacts 目录；拿不到选择器就先 `_eval` 量盒再 `clip`。
 - `state` 没有 `scope`；`_select` 不存在（下拉两拍）；ref 只在一次快照内有效；
   `_dialog` 不校验 `accept|dismiss`；`_network --detail` 没有 body，要 body 用 `_eval` 的 fetch。
-- 录制按 URL 去静态资源后落盘；`_record_read` 不回体，取体用 `_record_detail`；
+- 录制会按 URL 去除静态资源后写入；`_record_read` 不回体，取体用 `_record_detail`；
   `_record_stop` 先读文件再另存 `.last`，所以先 read / detail 再 stop。取不到时给 DevTools 复制 curl。
-  场次 15 分钟过期；过期或台账变更会停捕获、收标签。
+  场次 15 分钟过期；过期或记录变更时会停止捕获并收回标签。
 
 ## 4 发布
 
-只在用户明确说「帮我发布」后调。这一版还没有更新日志（`_status` 会说）时，把改了什么写进 `changelogNote`（一行一条，`changelogType` 选分类，缺省 changed）：审批屏会展示将写进 `CHANGELOG.md` 的那一段，用户点了头才落盘，文件不在会先建。这一版已有内容就不用传，带了也不追加。
+只在用户明确说「帮我发布」后调用。如果这一版还没有更新日志（`_status` 会提示），把改动内容写进 `changelogNote`（一行一条，`changelogType` 选择分类，缺省为 changed）：审批屏会展示将要写进 `CHANGELOG.md` 的那一段，用户批准后才写入；文件不存在时会先创建。这一版已有内容则不必传，传了也不会追加。
 这个模块还没有市集标签（`_status` 会说）时，自己给它想 1–2 个短词放进 `labels`（说它干什么，比如「发布编排」「构建状态」）；已有标签就不用传，传了会替换原来的。
 出口、署名、标题、安装命令由工具与审批屏处理，不用问、不用补；没写作者时审批屏显示推断的署名（市集里上次的 / 同工坊的 / 本机 git 身份），用户觉得不对就拒绝后再说，他点名了才传 `author=…`。
 需要用户接管时返回 `needsUser: { step, text, command? }`：把 `text` 说给用户，等「好了」再跑；不向用户要 token。

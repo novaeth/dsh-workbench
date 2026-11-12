@@ -1126,7 +1126,7 @@ export async function release({ root, args = [] }) {
         process.stdout.write(`${JSON.stringify(error.toJSON())}\n`);
       } else {
         console.error(`✖ ${error.message}`);
-        console.error('  这是可续跑的中断：加 --resume 再跑一次。');
+        console.error('  这是可继续运行的中断：加 --resume 再次运行。');
       }
       process.exit(4);
     }

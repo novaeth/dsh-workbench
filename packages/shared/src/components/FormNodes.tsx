@@ -37,7 +37,7 @@ export function duplicateKeysOf(fields: readonly { readonly key: string }[]): re
 }
 
 /**
- * 装配错了要当场诊断：`key` 缺失或重复时给 `console.error` —— 但照渲不误，不 throw。
+ * 初始化出错时要当场诊断：`key` 缺失或重复时给 `console.error` —— 但照渲不误，不 throw。
  * 形式与理由同 `FormActions` 里那颗多出来的 `primary`：装配的小错不该让 `CardBoundary` 把用户的整张卡变空白。
  * @param fields - 表单的字段清单（通常是已经过滤过可见性的那份）。
  */

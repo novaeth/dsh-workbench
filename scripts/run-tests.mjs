@@ -47,7 +47,7 @@ const runOne = ({ name, script }) => {
       return { name, script, status: result.exitCode ?? -1 };
     })
     .catch((error) => {
-      console.error(`[${name}] ✖ 起不来：${error.message}`);
+      console.error(`[${name}] ✖ 启动失败：${error.message}`);
       return { name, script, status: -1 };
     });
 };

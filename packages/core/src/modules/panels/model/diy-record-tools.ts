@@ -57,27 +57,27 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
   const prepareTool: DshToolDefinition = {
     name: DIY_RECORD_PREPARE_TOOL,
     description:
-      '开一扇浏览器窗口并顶到最前，让用户自己录一次真实的写（开窗要点头一次）。' +
-      '同一时刻只有一场：已经有一场活着时它当场拒（连问都不问）—— 先 ' +
-      `${DIY_RECORD_STOP_TOOL}，再重新 prepare 一场。` +
-      '用户按开始/结束后用 ' +
-      `${DIY_RECORD_READ_TOOL} 取那一段、${DIY_RECORD_STOP_TOOL} 收工。` +
-      '用户按浮条上的「截图」不用另外点头（同一场同一屏，屏幕在开窗那一拍已经借过）—— 那张图与提交那一刻的快照一起进 ' +
+      '打开浏览器窗口并置于最前，让用户录制一次真实写入（打开窗口需批准）。' +
+      '同一时刻只允许一场录制；已有录制时直接拒绝，需先 ' +
+      `${DIY_RECORD_STOP_TOOL} 再 prepare 一场。` +
+      '开始或结束后用 ' +
+      `${DIY_RECORD_READ_TOOL} 读取该段，用 ${DIY_RECORD_STOP_TOOL} 结束录制。` +
+      '浮条「截图」无需另行批准：页面在打开窗口时已获授权，截图与提交快照一起进入 ' +
       `${DIY_RECORD_DETAIL_TOOL} 的字段证据表。`,
     parameters: {
       type: 'object',
       properties: {
-        unit: { type: 'string', description: '这次录的叫谁（默认 page；给了装过的 unit 就用它的名字）。' },
-        url: { type: 'string', description: '那一页（用户平时看这套系统的入口；与已探明的读源同 domain）。' },
-        doing: { type: 'string', description: '那一下叫什么，例：发布 / 提交（可选，默认「操作」）。' },
+        unit: { type: 'string', description: '本次录制名称（默认 page；给已安装的 unit 则用其名称）。' },
+        url: { type: 'string', description: '该页面（用户访问系统的入口；与已探明的读源同 domain）。' },
+        doing: { type: 'string', description: '本次操作名称，如发布 / 提交（可选，默认「操作」）。' },
         expect: {
           type: 'object',
           properties: {
-            method: { type: 'string', description: '想抓的那条的 HTTP 方法，例 POST（不填就按"像写的那几条"挑）。' },
-            urlContains: { type: 'string', description: 'URL 里必须含的片段（不填就不筛）。' },
+            method: { type: 'string', description: '要捕获的那条请求的 HTTP 方法，例如 POST（不填则按"类似写入的请求"挑选）。' },
+            urlContains: { type: 'string', description: 'URL 中必须包含的片段（不填则不筛选）。' },
           },
           additionalProperties: false,
-          description: '你想抓的那条长什么样。',
+          description: '要捕获的请求特征。',
         },
       },
       required: ['url'],
@@ -95,7 +95,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
       const url = asText(args['url']);
       if (url === '') {
         throw new Error(
-          '要那一页的 url（用户平时看这套系统的入口；先用 workbench_diy_recon 或问用户"你平时在哪看这个"）—— 我不猜是哪个站点。',
+          '需要该页面的 url（用户平时访问这套系统的入口；请先用 workbench_diy_recon，或询问用户平时在哪里查看）。我不猜测站点。',
         );
       }
       const foreign =
@@ -107,7 +107,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
       const urlContains = asText(rawExpect['urlContains']);
       const expect: RecordExpect | null = method === '' && urlContains === '' ? null : { method, urlContains };
       const seam = seamOf(ctx);
-      if (seam === undefined) throw new Error('这台机器上没有 shell 服务，开不了录制窗');
+      if (seam === undefined) throw new Error('这台机器上没有 shell 服务，无法打开录制窗口');
       const command = cliCommandOf(ctx);
       const sessionId = sessionIdOf(exec) ?? '';
       const held = store.live(Date.now());
@@ -134,7 +134,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
         const armed = await actBrowser(seam, command, BROWSER_RECORD_SESSION, ['eval', RECORD_ARM_SCRIPT]);
         const page = recordPageOf(armed.payload);
         if (!armed.ok || !page.ok) {
-          throw new Error(`浮条没装上：${armed.stderr || armed.stdout || '那一页还在加载'} —— 等用户那一页站稳了再试。`);
+          throw new Error(`浮条安装失败：${armed.stderr || armed.stdout || '页面仍在加载'}。请等用户页面加载完成后再试。`);
         }
         stopLiveCapture(captureFile);
         const capture = await startRecordCapture(seam, command, BROWSER_RECORD_SESSION, captureFile);
@@ -151,7 +151,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
           captureFile,
           size: page.calls.length,
           talk,
-          text: capture ? talk : `${talk}（捕获那条没起来 —— 这次只有页面钩子）`,
+          text: capture ? talk : `${talk}（捕获未启动，本次只有页面钩子）`,
         });
       } catch (error) {
         await releaseQuietly({ seam, command, session: BROWSER_RECORD_SESSION, url, captureFile });
@@ -164,13 +164,13 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
   const readTool: DshToolDefinition = {
     name: DIY_RECORD_READ_TOOL,
     description:
-      '读这一段录到的请求（用户按「结束录制」之后用）；没按开始 / 没装钩子都会说清，不假装是"没有请求"。',
+      '读取本次录制到的请求（用户按「结束录制」后使用）。未按开始或未安装钩子时都会说明，不会误报为"没有请求"。',
     parameters: {
       type: 'object',
       properties: {
         waitMs: {
           type: 'integer',
-          description: '阻塞等用户按「结束」最多这么久（毫秒，默认 0 = 立刻回；帽 15 分钟）。',
+          description: '等待用户按「结束」的最长时间（毫秒，默认 0 = 立即返回，上限 15 分钟）。',
         },
       },
       additionalProperties: false,
@@ -178,7 +178,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
     output: OUTPUT,
     async execute(raw: unknown, exec: DshToolRunContext) {
       const seam = seamOf(ctx);
-      if (seam === undefined) throw new Error('这台机器上没有 shell 服务，读不了录制');
+      if (seam === undefined) throw new Error('这台机器上没有 shell 服务，无法读取录制');
       const sessionId = sessionIdOf(exec) ?? '';
       const held = store.live(Date.now());
       if (held === null) throw new Error(recordMissingText());
@@ -222,8 +222,8 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
         holdNotice(
           sessionId,
           noticeMessage(
-            `录制还没结束（等了约 ${waited} 秒）：用户按了「结束」再 read 一次。`,
-            `工作台 DIY：录制还没结束（等了约 ${waited} 秒）`,
+            `录制尚未结束（已等待约 ${waited} 秒）。请用户按「结束」后再调用 read。`,
+            `工作台 DIY：录制尚未结束（已等待约 ${waited} 秒）`,
           ),
         );
       }
@@ -255,11 +255,11 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
         beatMs: state.beatMs,
       });
       const note = over
-        ? ['用户按「结束」时那一扇录制窗就收掉了 —— 下面是磁盘上（捕获文件）这一段的清单。']
+        ? ['用户按「结束」后录制窗口已关闭。以下为磁盘上（捕获文件）该段的清单。']
         : [];
       const said = stepOk
-        ? [readText, timedOut ? `还在录 —— 等用户按「结束」（要等就带 waitMs，帽 ${String(WAIT_CAP_MS / 60000)} 分钟）。` : '']
-        : ['那一页上读不到了（那一扇录制窗可能已经关了）—— 台账与捕获文件这一段的清单照样在：', readText];
+        ? [readText, timedOut ? `仍在录制。请等用户按「结束」（需要等待时传入 waitMs，上限 ${String(WAIT_CAP_MS / 60000)} 分钟）。` : '']
+        : ['该页面上已无法读取（录制窗口可能已关闭）。台账与捕获文件中的该段清单仍然保留：', readText];
       const text = [...note, ...said].filter((one) => one !== '').join('\n');
       return plainJson({
         ok: stepOk && page.ok,
@@ -289,17 +289,17 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
   const detailTool: DshToolDefinition = {
     name: DIY_RECORD_DETAIL_TOOL,
     description:
-      '取录制这一段里某一条请求的原文：入参（request body）与出参（response body）。先用 record_read 拿清单（每条带 key），再用它挑一条 —— 清单不删条，"那一条"永远挑得到。',
+      '读取本次录制中某条请求的原文（request / response body）。先用 record_read 取清单（每条带 key），再挑一条；清单不删条。',
     parameters: {
       type: 'object',
       properties: {
-        key: { type: 'string', description: '清单里那一条的 key（原样给，含 #2 这种后缀）。' },
-        index: { type: 'integer', description: '清单里的序号（0 起）；只在那一场还开着时可用。' },
+        key: { type: 'string', description: '清单中该条的 key（原样传入，含 #2 后缀）。' },
+        index: { type: 'integer', description: '清单序号（从 0 开始）；仅在录制进行时可用。' },
         at: {
           type: 'integer',
-          description: '清单里那一行的 at（毫秒时间戳）：同一个 key 跨轮会重名，带上它才钉得住是哪一次。',
+          description: '清单中该行的 at（毫秒时间戳）；同一 key 跨轮重名，带上即可定位。',
         },
-        unit: { type: 'string', description: '那一场已经收工、只能去读取证目录里 rec-<unit>.jsonl.last 时给。' },
+        unit: { type: 'string', description: '录制已结束、只能读 rec-<unit>.jsonl.last 时提供。' },
         maxBody: {
           type: 'integer',
           description: `入参 / 出参各自最多回多少字符（默认 ${String(DETAIL_MAX_BYTES)}，0 = 不限）。`,
@@ -312,7 +312,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
       const { root } = await workspaceOf(ctx, exec);
       const artifactsDir = artifactsDirOf(root);
       const seam = seamOf(ctx);
-      if (seam === undefined) throw new Error('这台机器上没有 shell 服务，取不了详情');
+      if (seam === undefined) throw new Error('这台机器上没有 shell 服务，无法读取详情');
       const args = asRecord(raw);
       const unit = asText(args['unit']);
       const askedKey = asText(args['key']).trim();
@@ -330,16 +330,16 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
         held !== null ? held.captureFile : unit === '' ? '' : lastCaptureFileOf(captureFileOf(artifactsDir, unit));
       if (file === '') {
         throw new Error(
-          `这一场录制已经不在了（收工 / 过期 / 不是你这个会话的）—— 要给一个 unit（我去取证目录读 rec-<unit>.jsonl.last），或者重新 ${DIY_RECORD_PREPARE_TOOL} 一场。`,
+          `本次录制已不存在（已结束、已过期，或不属于当前会话）。请提供 unit（我会从取证目录读取 rec-<unit>.jsonl.last），或重新 ${DIY_RECORD_PREPARE_TOOL} 一场。`,
         );
       }
       const command = cliCommandOf(ctx);
       let key = askedKey;
       let page: RecordPageRead | null = null;
       if (key === '') {
-        if (index === null) throw new Error('给一个 key（清单里那一条的）或 index（清单里的序号）。');
+        if (index === null) throw new Error('请提供 key（清单中该条的 key）或 index（清单中的序号）。');
         if (held === null) {
-          throw new Error('收工之后只能用 key —— index 是"那一场清单里"的序号，这一场已经清掉了。');
+          throw new Error('结束之后只能使用 key：index 是"该场清单中"的序号，本场清单已清除。');
         }
         page = recordPageOf(
           (await actBrowser(seam, command, BROWSER_RECORD_SESSION, ['eval', RECORD_READ_SCRIPT])).payload,
@@ -348,7 +348,7 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
         const row = bundle.rows[index];
         if (row === undefined) {
           throw new Error(
-            `这一段清单里没有第 ${String(index)} 条（一共 ${String(bundle.rows.length)} 条）—— 先 ${DIY_RECORD_READ_TOOL} 拿一份新的清单。`,
+            `该段清单中没有第 ${String(index)} 条（共 ${String(bundle.rows.length)} 条）。请先调用 ${DIY_RECORD_READ_TOOL} 获取最新清单。`,
           );
         }
         key = row.key;
@@ -393,8 +393,8 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
           source: '',
           maxBytes,
           note: over
-            ? `「${key}」不在这一场的快照原文（${file}）里 —— 这一场已经结束 / 收工，那一页也收掉了，钩子那一份问不到`
-            : `「${key}」既不在这一场的快照原文（${file}）里，也不在这一页的钩子那一份里`,
+            ? `「${key}」不在该场录制的快照原文（${file}）中。该场录制已结束，页面也已关闭，无法从页面钩子读取。`
+            : `「${key}」既不在该场录制的快照原文（${file}）中，也不在该页面的钩子记录中。`,
         }),
       });
     },
@@ -402,12 +402,12 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
 
   const stopTool: DshToolDefinition = {
     name: DIY_RECORD_STOP_TOOL,
-    description: '录制收工：卸浮条、停捕获、收掉那个标签、清状态（不动别的标签）。',
+    description: '结束录制：卸载浮条、停止捕获、关闭该标签、清除状态（不影响其他标签）。',
     parameters: { type: 'object', properties: {}, additionalProperties: false },
     output: OUTPUT,
     async execute(_raw: unknown, exec: DshToolRunContext) {
       const seam = seamOf(ctx);
-      if (seam === undefined) throw new Error('这台机器上没有 shell 服务，收不了工');
+      if (seam === undefined) throw new Error('这台机器上没有 shell 服务，无法结束录制');
       const sessionId = sessionIdOf(exec) ?? '';
       const held = store.live(Date.now());
       if (held === null) throw new Error(recordMissingText());
@@ -445,21 +445,21 @@ export function registerRecordTools(ctx: DshHostContext, store: RecordStore): re
         probeCommand,
         cleaned: { ...cleaned, hook: page.ok && page.unhooked },
         text: [
-          `收工了：${held.unit} 的「${held.action}」这一段一共 ${String(bundle.merged.length)} 条请求（页面钩子 ${String(hookCaught)} 条 · 会话捕获这一段 ${String(bundle.inside.length)} 条）。`,
+          `录制已结束：${held.unit} 的「${held.action}」该段共 ${String(bundle.merged.length)} 条请求（页面钩子 ${String(hookCaught)} 条；会话捕获该段 ${String(bundle.inside.length)} 条）。`,
           kept
-            ? `原文留在 ${lastFile}（下一场 prepare 会清掉它）—— 要再看某一条用 ${DIY_RECORD_DETAIL_TOOL}（给 unit + key；同一个 key 跨轮会重名，再带上清单里那行的 at 就钉住了）。`
-            : '没留下原文（这一场的捕获文件是空的或没起来）—— 要哪一条就让用户从 DevTools 复制 curl。',
+            ? `原文保留在 ${lastFile}（下一场 prepare 会清除）。如需查看某一条，请使用 ${DIY_RECORD_DETAIL_TOOL}：提供 unit + key；同一个 key 跨轮会重名，再带上清单中该行的 at 即可准确定位。`
+            : '未保留原文（本场捕获文件为空或捕获未启动）。如需某一条，请让用户从 DevTools 复制 curl。',
           bundle.capture.round === 'fail'
-            ? '（会话捕获最近一轮没跑成 —— 这一场可能只有页面钩子。）'
+            ? '（会话捕获最近一轮未成功，本场可能只有页面钩子。）'
             : '',
-          cleaned.tab ? '录制窗那个标签收掉了。' : '那个标签没关掉（用户自己关一下）。',
-          cleaned.capture ? '' : '捕获那条没停干净（最多 15 分钟自己收工）。',
+          cleaned.tab ? '录制窗口的标签已关闭。' : '该标签未关闭，请用户手动关闭。',
+          cleaned.capture ? '' : '捕获进程未完全停止（最多 15 分钟自动结束）。',
           probeCommand !== ''
-            ? '这段原文可以直接落 design.json 的 writes[].probeCommand。'
+            ? '这段原文可以直接写入 design.json 的 writes[].probeCommand。'
             : noBody
-              ? '只有方法 / URL，body 拿不到 —— 补到 body 再落 writes[].probeCommand；要体就让用户从 DevTools 复制 curl，或在用户那一页上用 _eval 里的 fetch 打一条同形的（先问过用户）。'
-              : '这一段的原文是空的 —— 别硬写进 design.json。',
-          '不许复现这一段（没预览档的写一次就是真的）。',
+              ? '只有方法 / URL，无法获取 body。请先补全 body，再写入 writes[].probeCommand。如需请求体，请让用户从 DevTools 复制 curl，或在用户页面上用 _eval 中的 fetch 发送一条同形请求（先征得用户同意）。'
+              : '本段原文为空，请勿写入 design.json。',
+          '不要重放这段请求：没有预览模式时，写入一次即为真实写入。',
         ]
           .filter((one) => one !== '')
           .join('\n'),

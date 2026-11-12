@@ -128,7 +128,7 @@ describe('套在 store 外面那一层：只有真的收工才收观察，而且
     await boom.settle?.();
 
     expect(warnings).toHaveLength(2);
-    expect(warnings[0]).toContain('没把观察收干净');
+    expect(warnings[0]).toContain('未完成观察收尾');
     expect(warnings[1]).toContain('kill 没跑成');
   });
 

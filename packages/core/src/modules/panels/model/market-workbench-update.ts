@@ -70,7 +70,7 @@ export async function updateWorkbenchOnce(deps: WorkbenchUpdateDeps): Promise<Bu
     });
     if (missing.length > 0) {
       throw new Error(
-        `源上已经有 ${read.pkg}@${askedLatest}，但这一份发布还没铺齐：${missing.join('、')} 在这一版上还拉不到。装上会缺依赖，稍等再试 —— 市场页那颗「重新检查」会重新探一次。`,
+        `源上已经有 ${read.pkg}@${askedLatest}，但这一份发布还没铺齐：${missing.join('、')} 在这一版上还拉不到。安装后会缺依赖，稍等再试 —— 市场页那颗「重新检查」会重新探一次。`,
       );
     }
   }
@@ -96,7 +96,7 @@ export async function updateWorkbenchOnce(deps: WorkbenchUpdateDeps): Promise<Bu
     (message: string) => deps.logger?.warn?.(`[dsh-workbench] ${message}`),
   );
   deps.logger?.info?.(
-    `[dsh-workbench] 自更新交给外部执行器（${started.paths.planFile}）：${read.version} → ${askedLatest ?? '最新版'}，这一跳不掉自己那一行`,
+    `[dsh-workbench] 自更新交给外部执行器（${started.paths.planFile}）：${read.version} → ${askedLatest ?? '最新版'}，本次操作不删除自己那一行`,
   );
   return {
     change: {

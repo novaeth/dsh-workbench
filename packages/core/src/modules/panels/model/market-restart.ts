@@ -5,9 +5,9 @@ export function restartLogLine(change: BundleChange | null | undefined): string 
   if (change === null || change === undefined || change.application !== 'restart-required') {
     return undefined;
   }
-  const why = change.restartReason ?? '没给';
+  const why = change.restartReason ?? '未提供';
   return (
-    `[dsh-workbench] ${change.target} 装上了，但这一版要${hostSurface().restartHint} 才生效` +
-    `（dsh 那边给的理由：${why}）`
+    `[dsh-workbench] ${change.target} 已安装，但这一版要${hostSurface().restartHint} 才生效` +
+    `（dsh 返回的理由：${why}）`
   );
 }

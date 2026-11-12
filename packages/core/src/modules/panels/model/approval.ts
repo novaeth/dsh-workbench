@@ -73,7 +73,7 @@ function workbenchDependency(id: string | undefined): Pair {
 function workbenchPanelRow(id: string | undefined): Pair {
   return missing(id)
     ? { zh: '工作台在当前项目的面板', en: "the workbench panel for this project" }
-    : { zh: `工作台${pad(`[${id}]`)}模块这一行`, en: `the workbench [${id}] module row` };
+    : { zh: `工作台${pad(`[${id}]`)}模块条目`, en: `the workbench [${id}] module entry` };
 }
 
 function specOf(raw: Record<string, unknown>): string {
@@ -84,7 +84,7 @@ function specOf(raw: Record<string, unknown>): string {
 
 function boardName(scope: string | undefined): Pair {
   return scope === 'machine'
-    ? { zh: '机器级默认板', en: 'the machine-level board' }
+    ? { zh: '机器级默认值', en: 'the machine-level defaults' }
     : { zh: '当前项目的面板', en: "this project's panel" };
 }
 
@@ -132,19 +132,19 @@ function stopVerdict(call: ApprovalCall, runs: LongTaskRunsLookup | undefined): 
   const target = run === null ? '' : run.target.trim();
   const where =
     target === ''
-      ? `工作台 [${unit}] 那一趟长任务`
-      : `工作台 [${unit}] 那一趟「${clipped(target)}」长任务`;
+      ? `工作台 [${unit}] 的一个长任务`
+      : `工作台 [${unit}] 的「${clipped(target)}」长任务`;
   const whereEn =
     target === ''
       ? `a long-running workbench job [${unit}]`
       : `a long-running workbench job [${unit}] "${clipped(target)}"`;
-  const origin = session === '' ? '用户自己按的' : '别的会话起的';
+  const origin = session === '' ? '由用户发起' : '由其他会话发起';
   const originEn = session === '' ? 'the user started' : 'another session started';
   return askOf(
     `${LONG_TASKS_STOP_TOOL} ${unit} stops a long run someone else started`,
-    pair(`会停掉${where}，${origin}，允许吗？`, `it stops ${whereEn} ${originEn}. Allow?`),
+    pair(`会停止${where}，${origin}，允许吗？`, `it stops ${whereEn} ${originEn}. Allow?`),
     pair(
-      `agent 想停掉${where}，${origin}，允许吗？`,
+      `agent 想停止${where}，${origin}，允许吗？`,
       `The agent wants to stop ${whereEn} ${originEn}. Allow?`,
     ),
   );
@@ -183,27 +183,27 @@ function publishVerdict(
     return {
       kind: 'deny',
       reason:
-        `这一版还没有更新日志（${found.changelog.version}）—— 带上 changelogNote（一行一条）再调，` +
-        '发布时会一起写进 CHANGELOG.md 并随包发',
+        `当前版本尚未提供更新日志（${found.changelog.version}）。请提供 changelogNote（一行一条）后再调用；` +
+        '发布时会一并写入 CHANGELOG.md 并随包发布',
     };
   }
   const category = categoryOfArgs(raw);
   if (/[\r\n]/u.test(category)) {
-    return { kind: 'deny', reason: '分类只认一个短词：不能换行' };
+    return { kind: 'deny', reason: '分类只接受一个短词，不能包含换行。' };
   }
   const labels = labelsOfArgs(raw);
   if (labels.length > 2) {
     return {
       kind: 'deny',
-      reason: `标签最多两个（收到 ${String(labels.length)} 个）—— 挑最能说明这个模块干什么的 1–2 个`,
+      reason: `标签最多两个（收到 ${String(labels.length)} 个）。请挑选最能说明该模块用途的 1–2 个。`,
     };
   }
   if (target === 'market' && category === '' && (found?.category ?? '') === '') {
     return {
       kind: 'deny',
       reason:
-        '这个模块还没有市集分类 —— 发布到市场时用 category 定一个（一个短词，说它属于哪类，比如「任务与协作」）；' +
-        '已经有分类就不用传',
+        '该模块尚未设置市集分类。发布到市场时请用 category 指定一个短词（说明它属于哪类，例如「任务与协作」）；' +
+        '已有分类则无需传入。',
     };
   }
   const copies = copiesOf(label, labelEn);
@@ -216,7 +216,7 @@ function publishVerdict(
         : `${found.name}@${found.version} → ${target}${found.registry === undefined ? '' : ` (${found.registry})`}`;
   const question = refresh
     ? pair(
-        `只刷新${label}在市集里的元数据（标题 / 作者 / 说明 / 标签 / 分类），不升版本、不重发产物，允许吗？`,
+        `只刷新${label}在市集里的元数据（标题 / 作者 / 说明 / 标签 / 分类），不升级版本、不重新发布产物，允许吗？`,
         `Only refresh ${labelEn}'s market metadata (title, author, description, labels, category); no version bump, no artifacts. Allow?`,
       )
     : pair(copy.zh, copy.en);
@@ -253,16 +253,16 @@ export function approvalVerdict(
       `${call.name}${target} takes over the user's screen to debug a workbench module`,
       pair(
         starting
-          ? '要在这个工作区的那块板上开始调试 —— 调试中请留在那一屏，允许吗？'
-          : '要接着调试 —— 请回到那一屏，允许吗？',
+          ? '要占用当前页面开始调试工作台模块，调试期间请留在该页面，允许吗？'
+          : '要继续调试并再次占用当前页面，请回到该页面，允许吗？',
         starting
           ? "it takes over your screen to debug on this workspace's board — please stay on that screen. Allow?"
           : 'it needs your screen again to keep debugging — please go back to that screen. Allow?',
       ),
       pair(
         starting
-          ? 'agent 要占用你的屏幕开始调试工作台模块，允许吗？'
-          : 'agent 要接着占用你的屏幕，继续调试工作台模块，允许吗？',
+          ? 'agent 要占用你的屏幕，开始调试一个工作台模块，允许吗？'
+          : 'agent 要再次占用你的屏幕，继续调试工作台模块，允许吗？',
         starting
           ? 'The agent wants to take over your screen to start debugging a workbench module. Allow?'
           : 'The agent wants your screen again to keep debugging a workbench module. Allow?',
@@ -276,7 +276,7 @@ export function approvalVerdict(
     const raw = argsOf(call);
     const asked = typeof raw['url'] === 'string' ? raw['url'].replace(/\s+/g, ' ').trim() : '';
     const act = typeof raw['doing'] === 'string' ? raw['doing'].replace(/\s+/g, ' ').trim() : '';
-    const title = pair('申请录制调试', 'Request recording a debug session');
+    const title = pair('申请录制调试会话', 'Request recording a debug session');
     return askOf(
       `${DIY_RECORD_PREPARE_TOOL} opens a browser window in front on ${asked} to record one real write` +
         (act === '' ? '' : ` (${act})`),
@@ -312,11 +312,11 @@ export function approvalVerdict(
       return askOf(
         `${PANELS_HIDE_TOOL} ${id ?? ''} takes a workbench module row off this project's board`,
         pair(
-          `会把${row.zh}从${board.zh}上收起，允许吗？`,
+          `会把${row.zh}从${board.zh}上移除，允许吗？`,
           `it takes ${row.en} off ${board.en} — its card and its tools go too. Allow?`,
         ),
         pair(
-          `agent 想把${row.zh}收起，允许吗？`,
+          `agent 想移除${row.zh}，允许吗？`,
           `The agent wants to take ${row.en} off the board. Allow?`,
         ),
       );
@@ -340,13 +340,13 @@ export function approvalVerdict(
       return askOf(
         `${PANELS_RESET_TOOL} clears the rows this project changed on the workbench panel`,
         pair(
-          scope === 'machine' ? '会清空工作台那份机器级默认板，允许吗？' : '会清空工作台在当前项目的面板，允许吗？',
+          scope === 'machine' ? '会清空工作台的机器级默认值，允许吗？' : '会清空工作台在当前项目中的面板配置，允许吗？',
           `it clears the rows this project changed on the workbench ${board.en}. Allow?`,
         ),
         pair(
           scope === 'machine'
-            ? 'agent 想清空工作台那份机器级默认板，允许吗？'
-            : 'agent 想清空工作台在当前项目的面板，允许吗？',
+            ? 'agent 想清空工作台的机器级默认值，允许吗？'
+            : 'agent 想清空工作台在当前项目中的面板配置，允许吗？',
           `The agent wants to clear this project's rows on the workbench ${board.en}. Allow?`,
         ),
       );
@@ -354,23 +354,23 @@ export function approvalVerdict(
       const row = workbenchPanelRow(id);
       return askOf(
         `${PANELS_FOLLOW_TOOL} ${id ?? ''} puts a workbench panel row back to following the machine-level board`,
-        pair(`会把${row.zh}改回跟随机器级默认板，允许吗？`, `it puts ${row.en} back to following the machine-level board. Allow?`),
-        pair(`agent 想把${row.zh}改回跟随机器级默认板，允许吗？`, `The agent wants to put ${row.en} back to following the machine-level board. Allow?`),
+        pair(`会把${row.zh}恢复为跟随机器级默认值，允许吗？`, `it puts ${row.en} back to following the machine-level board. Allow?`),
+        pair(`agent 想将${row.zh}恢复为跟随机器级默认值，允许吗？`, `The agent wants to put ${row.en} back to following the machine-level board. Allow?`),
       );
     }
     case MODULES_INSTALL_TOOL:
     case MODULES_UPDATE_TOOL: {
       const install = call.name === MODULES_INSTALL_TOOL;
-      const verb = install ? '装' : '升';
+      const verb = install ? '安装' : '升级';
       const verbEn = install ? 'installs' : 'upgrades';
       return askOf(
         `${call.name} ${id ?? ''} changes the plugins and libraries a workbench module declares`,
         pair(
-          `会${verb}${workbenchModule(id).zh}要的插件与库，不换模块包本身，允许吗？`,
+          `会${verb}${workbenchModule(id).zh}需要的插件与库，不替换模块包本身，允许吗？`,
           `it ${verbEn} the plugins the ${workbenchModule(id).en} declares, without replacing its package. Allow?`,
         ),
         pair(
-          `agent 想${verb}${workbenchModule(id).zh}要的插件与库，允许吗？`,
+          `agent 想${verb}${workbenchModule(id).zh}需要的插件与库，允许吗？`,
           `The agent wants to ${install ? 'install' : 'upgrade'} the plugins ${workbenchModule(id).en} declares. Allow?`,
         ),
       );
@@ -379,15 +379,15 @@ export function approvalVerdict(
       const target = workbenchModule(id);
       return askOf(
         `${MODULES_UNINSTALL_TOOL} ${id ?? ''} removes a workbench module from this machine`,
-        pair(`会把${target.zh}连它的包一起卸掉，允许吗？`, `it uninstalls ${target.en}, package included. Allow?`),
+        pair(`会把${target.zh}连同它的包一起卸载，允许吗？`, `it uninstalls ${target.en}, package included. Allow?`),
         pair(`agent 想卸载${target.zh}，允许吗？`, `The agent wants to uninstall ${target.en}. Allow?`),
       );
     }
     case MODULES_INSTALL_BUNDLE_TOOL:
       return askOf(
         `${MODULES_INSTALL_BUNDLE_TOOL} ${spec} installs a module package into this profile`,
-        pair(`会把 [${spec}] 装成工作台的模块包，允许吗？`, `it installs [${spec}] as a workbench module package. Allow?`),
-        pair(`agent 想装工作台的模块包 [${spec}]，允许吗？`, `The agent wants to install the workbench module package [${spec}]. Allow?`),
+        pair(`会把 [${spec}] 安装为工作台的模块包，允许吗？`, `it installs [${spec}] as a workbench module package. Allow?`),
+        pair(`agent 想安装工作台的模块包 [${spec}]，允许吗？`, `The agent wants to install the workbench module package [${spec}]. Allow?`),
       );
     case MODULES_UPDATE_DEPENDENCY_TOOL: {
       const target = workbenchDependency(id);
@@ -416,8 +416,8 @@ export function approvalVerdict(
     case MODULES_UPDATE_WORKBENCH_TOOL:
       return askOf(
         `${MODULES_UPDATE_WORKBENCH_TOOL} replaces the workbench itself with the new version from the registry`,
-        pair('会把工作台本身更新到源上的新版，允许吗？', 'it updates the workbench itself to the new version from the registry. Allow?'),
-        pair('agent 想把工作台本身更新到源上的新版，允许吗？', 'The agent wants to update the workbench itself from the registry. Allow?'),
+        pair('会把工作台本身更新到来源上的最新版本，允许吗？', 'it updates the workbench itself to the new version from the registry. Allow?'),
+        pair('agent 想把工作台本身更新到来源上的最新版本，允许吗？', 'The agent wants to update the workbench itself from the registry. Allow?'),
       );
     case MARKET_ENABLE_TOOL: {
       const id = text('id');
@@ -427,29 +427,29 @@ export function approvalVerdict(
           kind: 'deny',
           reason:
             id === undefined
-              ? '这台机器上还没有选中的索引源 —— 先在「模块市场 → 发现」里添加并选中一个'
-              : `没有这个索引源：${id}`,
+              ? '这台机器上还没有选中的模块来源。请先在「模块市场 → 发现」中添加并选中一个。'
+              : `没有这个模块来源：${id}`,
         };
       }
       if (source !== undefined && source.policy === 'artifacts-in-repo') return { kind: 'allow' };
       if (source !== undefined && source.kind === 'http') {
-        return { kind: 'deny', reason: 'http 索引源只能读，不能当发布目的地' };
+        return { kind: 'deny', reason: 'HTTP 模块来源只能读取，不能作为发布目的地。' };
       }
       const where =
         source === undefined
           ? {
-              zh: id === undefined ? '工作台当前选中的索引源' : `工作台的索引源「${id}」`,
+              zh: id === undefined ? '工作台当前选中的模块来源' : `工作台的模块来源「${id}」`,
               en: id === undefined ? 'the selected workbench index source' : `the workbench index source "${id}"`,
             }
           : {
-              zh: `工作台的索引源「${source.label}」`,
+              zh: `工作台的模块来源「${source.label}」`,
               en: `the workbench index source "${source.label}"`,
             };
       return askOf(
         `${MARKET_ENABLE_TOOL}${source === undefined ? '' : ` ${source.url}`} marks a market index source as a publish destination on this machine`,
         pair(`把${where.zh}设为可发布，允许吗？`, `Make ${where.en} a publish destination. Allow?`),
         pair(
-          `会把${where.zh}设为可发布，只改本机配置，不碰仓库，允许吗？`,
+          `会把${where.zh}设为可发布；只修改本机配置，不触碰仓库，允许吗？`,
           `It makes ${where.en} a publish destination on this machine, without touching the repository. Allow?`,
         ),
       );
@@ -462,16 +462,16 @@ export function approvalVerdict(
           kind: 'deny',
           reason:
             id === undefined
-              ? '这台机器上还没有选中的索引源 —— 先在「模块市场 → 发现」里添加并选中一个'
-              : `没有这个索引源：${id}`,
+              ? '这台机器上还没有选中的模块来源。请先在「模块市场 → 发现」中添加并选中一个。'
+              : `没有这个模块来源：${id}`,
         };
       }
       if (source === undefined) {
         return askOf(
           `${MARKET_DISABLE_TOOL} stops using a market index source as a publish destination on this machine`,
-          pair('把工作台当前选中的索引源改回只读，允许吗？', 'Make the selected workbench index source read-only again. Allow?'),
+          pair('把工作台当前选中的模块来源改回只读，允许吗？', 'Make the selected workbench index source read-only again. Allow?'),
           pair(
-            '会把工作台当前选中的索引源改回只读，只改本机配置，不碰仓库，允许吗？',
+            '会把工作台当前选中的模块来源改回只读；只修改本机配置，不触碰仓库，允许吗？',
             'It makes the selected workbench index source read-only again on this machine, without touching the repository. Allow?',
           ),
         );
@@ -479,9 +479,9 @@ export function approvalVerdict(
       if (source.kind !== 'git' || source.policy !== 'artifacts-in-repo') return { kind: 'allow' };
       return askOf(
         `${MARKET_DISABLE_TOOL} ${source.url} stops using a market index source as a publish destination on this machine`,
-        pair(`把工作台的索引源「${source.label}」改回只读，允许吗？`, `Make the workbench index source "${source.label}" read-only again. Allow?`),
+        pair(`把工作台的模块来源「${source.label}」改回只读，允许吗？`, `Make the workbench index source "${source.label}" read-only again. Allow?`),
         pair(
-          `会把工作台的索引源「${source.label}」改回只读，只改本机配置，不碰仓库，允许吗？`,
+          `会把工作台的模块来源「${source.label}」改回只读；只修改本机配置，不触碰仓库，允许吗？`,
           `It makes the workbench index source "${source.label}" read-only again on this machine, without touching the repository. Allow?`,
         ),
       );

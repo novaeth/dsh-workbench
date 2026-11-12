@@ -225,7 +225,7 @@ export function sourceProblemText(problem: ProvisionProblem, env: string | undef
     );
   }
   if (problem === 'malformed') {
-    return '这份安装的方式写得不完整（等于没声明）—— 只能自己动手。';
+    return '这份安装的方式写得不完整（等于没声明）—— 只能手动处理。';
   }
-  return '这份安装没声明安装方式 —— 没声明就不猜地址，只能自己动手。';
+  return '这份安装没声明安装方式 —— 没声明就不猜地址，只能手动处理。';
 }

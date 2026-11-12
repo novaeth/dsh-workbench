@@ -270,7 +270,7 @@ export function createMarketDiscover(options: MarketDiscoverOptions): MarketDisc
     const { sources, selected } = options.store.read();
     const source = selected === null ? undefined : sources.find((item) => item.id === selected);
     if (source === undefined) {
-      return { ok: false, kind, version, reason: 'unavailable', detail: '没有选中的索引源' };
+      return { ok: false, kind, version, reason: 'unavailable', detail: '没有选中的模块来源' };
     }
     const read = await options.reader.read(source);
     const index = read.ok ? read.index : read.cached?.index;

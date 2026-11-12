@@ -21,7 +21,7 @@
 
 - 显示可读的步骤名，不用内部步骤号。
 - 要登录：给登录入口；登录后续跑，不重来。
-- 失败：卡在哪步、一句原因、原始输出（折叠）、一条可照做的路。
+- 失败：停在哪一步、一句原因、原始输出（折叠）、一条可照做的路。
 - 不画进度条、不画流程控制台。
 
 中途停止可续：用户说"接着做"即从上次继续。
@@ -98,6 +98,6 @@ warmReads: () => [['<unit>', '<target>']],
 ```
 
 - `context`：把 agent 上下文里的引用渲染成人话；`kinds` 列出识别的类型；形状不对就 `throw`。
-- `warmReads`：只给走 opencli 适配器的读。条目是该 opencli 命令的 argv，启动 preflight 先跑一遍。
+- `warmReads`：只给走 opencli 适配器的读。条目是该 opencli 命令的 argv，启动 preflight 先运行一次。
   本地读盘、browser bridge、直连接口的读不要写。
 - `values`：跨单元传值。`values.hand({fact, key}, 值)` / `values.take({fact, key})`。

@@ -629,7 +629,7 @@ describe('workbench_diy_publish · 审批', () => {
     expect(verdict?.kind).toBe('ask');
     if (verdict?.kind !== 'ask') return;
     expect(verdict.question.zh).toContain('只刷新');
-    expect(verdict.question.zh).toContain('不升版本');
+    expect(verdict.question.zh).toContain('不升级版本');
     expect(verdict.reason).toContain('（元数据）');
   });
 
@@ -785,7 +785,7 @@ describe('workbench_diy_publish · 审批', () => {
 
     expect(verdict?.kind).toBe('deny');
     expect(verdict?.kind === 'deny' ? verdict.reason : '').toContain('@demo/other');
-    expect(verdict?.kind === 'deny' ? verdict.reason : '').toContain('模块 id');
+    expect(verdict?.kind === 'deny' ? verdict.reason : '').toContain('模块标识');
   });
 
   it('参数带了这个署名：认领按这次的署名判，不拿模块里那个', () => {

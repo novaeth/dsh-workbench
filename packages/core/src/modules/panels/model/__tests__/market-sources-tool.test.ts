@@ -39,10 +39,10 @@ describe('workbench_market_sources：只读的索引源清单', () => {
     const payload = await run(() => ({ sources: [], selected: null }));
 
     expect(payload['sources']).toEqual([]);
-    expect(String(payload['text'])).toContain('还没有索引源');
+    expect(String(payload['text'])).toContain('还没有模块来源');
   });
 
   it('没有索引源服务：直说看不了', async () => {
-    await expect(run(undefined)).rejects.toThrow(/没有索引源服务/);
+    await expect(run(undefined)).rejects.toThrow(/没有模块来源服务/);
   });
 });

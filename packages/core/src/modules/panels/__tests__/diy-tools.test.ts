@@ -34,15 +34,15 @@ describe('workbench_diy · status（入口：我手上有什么）', () => {
     expect(result.status.map((one) => one.unit)).toEqual(['demo', 'other']);
     expect(result.status.find((one) => one.unit === 'demo')?.installed).toBe(false);
     expect(result.status.find((one) => one.unit === 'other')?.installed).toBe(true);
-    expect(result.text).toContain('装：没有');
-    expect(result.text).toContain('装：是');
+    expect(result.text).toContain('安装：否');
+    expect(result.text).toContain('安装：是');
   });
 
   it('什么都没有：回空态 + 一句能照做的下一步（不抛）', async () => {
     const { tool } = rig.harness();
     const result = (await tool(DIY_STATUS_TOOL)?.execute({}, rig.diyExec())) as { text: string };
 
-    expect(result.text).toContain('这个工作区里没有模块源码');
+    expect(result.text).toContain('这个工作区中没有模块源码');
     expect(result.text).toContain('dsh-wb-module init');
   });
 
@@ -71,8 +71,8 @@ describe('workbench_diy · status（入口：我手上有什么）', () => {
 
     expect(result.publish?.market?.url).toBe('https://git.example.com/wb/market.git');
     expect(result.text).toContain('发布出口：市场索引 https://git.example.com/wb/market.git');
-    expect(result.text).toContain('这一版会发 0.1.1');
-    expect(result.text).toContain('还差 0.1.1');
+    expect(result.text).toContain('本次将发布 0.1.1');
+    expect(result.text).toContain('缺少 0.1.1');
   });
 
   it('★ 没配索引源也没声明 registry：说安装包，不编造仓库', async () => {
@@ -229,7 +229,7 @@ describe('workbench_diy · install（装 + 上板一次做完）', () => {
     expect(specs).toHaveLength(1);
     expect(result.install.application).toBe('applied');
     expect(result.panel.ok).toBe(false);
-    expect(result.panel.reason).toContain('没有这个套件');
+    expect(result.panel.reason).toContain('没有这个模块');
     expect(result.text).toContain('workbench_diy_show');
   });
 });

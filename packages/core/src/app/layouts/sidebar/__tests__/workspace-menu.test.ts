@@ -170,7 +170,7 @@ describe('删除工作区：点菜单不删，二次确认之后才删', () => {
   it('★ 失败落在对话框里，不在控制台', () => {
     expect(DELETE).toContain("t('project.delete.failed')");
     expect(WRITE).toContain('setFailed(true)');
-    expect(dictionaries.zh['project.delete.failed']).toBe('没删掉，再试一次。');
+    expect(dictionaries.zh['project.delete.failed']).toBe('删除失败，请重试。');
   });
 });
 
@@ -185,6 +185,6 @@ describe('写口接线：删除走 dsh 的 workspaces.delete，打开位置走�
     expect(WRITES).toContain("openWorkspacePath({ path, action: 'reveal' })");
     expect(WRITES).toContain("ctx.get('contextMenus')");
     expect(WRITES).toContain("notify(t('project.reveal.failed'), false)");
-    expect(dictionaries.zh['project.reveal.failed']).toBe('打不开这个文件夹位置，再试一次。');
+    expect(dictionaries.zh['project.reveal.failed']).toBe('无法打开文件夹位置，请重试。');
   });
 });

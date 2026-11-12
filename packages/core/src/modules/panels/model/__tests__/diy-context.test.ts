@@ -81,7 +81,7 @@ describe('工坊工具那一层共用的小东西', () => {
     expect(verdictOf(change({ application: 'restart-required' }))).toContain('要重启一次');
     expect(verdictOf(change({ application: 'overridden' }))).toContain('盖住');
     expect(verdictOf(change({ application: 'cancelled' }))).toContain('取消');
-    expect(verdictOf(change({ application: 'failed', errorCode: 'boom' }))).toContain('没装上（boom）');
+    expect(verdictOf(change({ application: 'failed', errorCode: 'boom' }))).toContain('安装失败（boom）');
   });
 
   it('上板那一步失败不抛，把原因原样带出来（下一步才有话可说）', () => {

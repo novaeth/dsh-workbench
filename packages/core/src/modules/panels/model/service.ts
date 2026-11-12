@@ -148,7 +148,7 @@ export function createPanelsService(options: {
   function requireKnown(id: string): void {
     const all = manifests();
     if (!all.some((manifest) => manifest.id === id)) {
-      throw new Error(`没有这个套件：${id}（可用：${all.map((manifest) => manifest.id).join(', ')}）`);
+      throw new Error(`没有这个模块：${id}（可用：${all.map((manifest) => manifest.id).join(', ')}）`);
     }
   }
 
@@ -165,7 +165,7 @@ export function createPanelsService(options: {
     requireKnown(id);
     const manifest = manifests().find((item) => item.id === id);
     if (manifest?.card === null && ownedSet().has(id)) {
-      throw new Error(`${id} 没有卡片，不能收起（它是把别的套件放回来的入口）`);
+      throw new Error(`${id} 没有卡片，不能收起（它是把别的模块放回来的入口）`);
     }
   }
 

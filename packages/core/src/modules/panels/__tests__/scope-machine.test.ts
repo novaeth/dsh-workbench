@@ -76,7 +76,7 @@ it('★ show / hide 带 scope: machine 只写机器级板、不碰当前工作�
     expect(panels.boards(A).workspace).toBeNull();
     expect(panels.isEnabled('boarded', A)).toBe(true);
 
-    await expect(run(PANELS_FOLLOW_TOOL, { scope: 'machine' }, null)).rejects.toThrow(/机器级默认板/);
+    await expect(run(PANELS_FOLLOW_TOOL, { scope: 'machine' }, null)).rejects.toThrow(/机器级默认值/);
   });
 
 
@@ -90,7 +90,7 @@ it('★ show / hide 带 scope: machine 只写机器级板、不碰当前工作�
 
     expect(on).toContain('boarded');
     expect(on).not.toContain('project-only');
-    expect(listed.text).toContain('机器级默认板');
+    expect(listed.text).toContain('机器级默认值');
     expect(listed.text).not.toContain('当前工作区');
 
     await expect(run(PANELS_LIST_TOOL, { scope: 'nope' }, null)).rejects.toThrow(/workspace \/ machine/);

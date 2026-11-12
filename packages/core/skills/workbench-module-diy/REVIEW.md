@@ -93,7 +93,7 @@ export default [
 
 ## 怀疑门禁
 
-骨架刚 `init`、未改动却红 → 模板或工具问题，不是模块问题。
+骨架刚 `init`、尚未改动就判红，说明是模板或工具的问题，与模块无关。
 
 ## 卡片故障：四步取证
 
@@ -101,15 +101,15 @@ export default [
 
 1. `workbench_diy_panel`：每卡的读取状态（宿主码与原文）、是否崩过（原因、次数）。有结论即止。
 2. 看卡片：`workbench_diy_screenshot` / `_html` / `_find` / `_eval`，作用于用户当前页的该卡（`unit=…`）。
-   这一族（14 把 + `logs_*`）需先 `workbench_diy_debug_start`（`unit=…`，审批一次），否则拒绝；
-   `_panel` / `_status` / `read=` 档不需要。用完 `_debug_pause`，收工 `_debug_stop`。
-3. `workbench_diy_status`（`unit=…`）：看"起得来"行（装配错误 / 声明被拒原文）。
+   这一族（14 把 + `logs_*`）需要先调用 `workbench_diy_debug_start`（`unit=…`，审批一次），否则会被拒绝；
+   `_panel` / `_status` / `read=` 这几档不需要。用完后调用 `_debug_pause`，结束时调用 `_debug_stop`。
+3. `workbench_diy_status`（`unit=…`）：查看「起得来」一行（初始化错误 / 声明被拒原文）。
 4. 直接请求路由：`curl '<工作台地址>/workbench/api/<unit>/<route>'`（默认 `http://127.0.0.1:3081`）。
    接口对 → 渲染侧；接口错 → 宿主侧（按 [DATASOURCE.md](DATASOURCE.md) 重探）。需要在页面内请求时用
    `_eval`（`read=<站点>`）。控制台：`_logs_watch` → 操作 → `_logs_read`（每页 200 条 / 单条 400 字，
    刷新即失；用 `_logs_stop` 卸载）。`opencli browser … console` 是空桩（恒空、exit 0），不用。
    宿主热换 / 装载错误在启动工作台的终端。
 
-不要求用户截图或转述报错。验收由 agent 用上述工具逐条走三张表：读数、动作返回、收发包、日志均算证据；
-走通才 `design accept`，走不通记"未验"。参数与返回为 opencli 原样（[FAMILY.md](FAMILY.md)）。
+不要求用户截图或转述报错。验收由 agent 用上述工具逐条对照三张表：读数、动作返回、收发包与日志都算证据；
+全部走通后才执行 `design accept`，走不通就记为「未验」。参数与返回保持 opencli 原样（[FAMILY.md](FAMILY.md)）。
 面板运行态由用户页面上报；第 1 步为空时，先让用户切到该工作区并刷新一次。

@@ -22,7 +22,7 @@ function asRecord(value: unknown): Readonly<Record<string, unknown>> | undefined
 
 export function parseMarketSourcesAction(payload: unknown): MarketSourcesAction {
   const record = asRecord(payload);
-  if (record === undefined) throw new Error('索引源写需要一个对象：{ action, source? , id? }');
+  if (record === undefined) throw new Error('模块来源写入需要一个对象：{ action, source? , id? }');
   const action = record['action'];
   if (action === 'save') {
     const parsed = parseSourceConfig(record['source']);
@@ -53,7 +53,7 @@ export function parseMarketSourcesAction(payload: unknown): MarketSourcesAction 
     const stampOnly = record['stampOnly'] === true;
     return { action, id: id.trim(), ...(ref === '' ? {} : { ref }), ...(stampOnly ? { stampOnly } : {}) };
   }
-  throw new Error(`不认识的索引源动作：${String(action)}`);
+  throw new Error(`不认识的模块来源动作：${String(action)}`);
 }
 
 export async function markSourceReadOnly(
@@ -61,8 +61,8 @@ export async function markSourceReadOnly(
   id: string,
 ): Promise<MarketSourceConfig> {
   const source = store.read().sources.find((one) => one.id === id);
-  if (source === undefined) throw new Error('这个索引源已经不在了 —— 刷新后再试');
-  if (source.kind !== 'git') throw new Error('http 索引源本来就是只读');
+  if (source === undefined) throw new Error('这个模块来源已不存在 —— 刷新后再试');
+  if (source.kind !== 'git') throw new Error('http 模块来源本来就是只读');
   const next: MarketSourceConfig = { ...source, policy: 'catalog-only' };
   if (source.policy !== 'catalog-only') await store.apply({ action: 'save', source: next });
   return next;

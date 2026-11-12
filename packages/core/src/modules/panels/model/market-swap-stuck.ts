@@ -51,7 +51,7 @@ export async function swapExternally(
     ).paths.marker;
   } catch (error) {
     deps.logger?.warn?.(
-      `[dsh-workbench] 外部换版起不来（${input.pkg}）：${error instanceof Error ? error.message : String(error)}`,
+      `[dsh-workbench] 外部版本切换启动失败（${input.pkg}）：${error instanceof Error ? error.message : String(error)}`,
     );
     return undefined;
   }

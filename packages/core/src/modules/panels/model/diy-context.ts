@@ -41,14 +41,14 @@ export function plainJson<T>(value: T): T {
 }
 
 export function verdictOf(change: BundleChange): string {
-  if (change.application === 'applied') return '装好了，已生效';
+  if (change.application === 'applied') return '安装完成，已生效';
   if (change.application === 'restart-required') {
-    return `装好了，要${hostSurface().restartHint} 才生效（装新模块、同名重装、替换已有包都走这一支）`;
+    return `安装完成，要${hostSurface().restartHint} 才生效（装新模块、同名重装、替换已有包都走这一支）`;
   }
   if (change.application === 'overridden') return '被更高层的声明盖住了，这次没生效';
   if (change.application === 'cancelled') return '安装被取消，没有生效';
   const tail = (change.packageResult?.output ?? change.errorDetail ?? '').trim().split('\n').slice(-3).join(' | ');
-  return `没装上（${change.errorCode ?? 'failed'}）${tail === '' ? '' : `：${tail}`}`;
+  return `安装失败（${change.errorCode ?? 'failed'}）${tail === '' ? '' : `：${tail}`}`;
 }
 
 export function showOrReason(

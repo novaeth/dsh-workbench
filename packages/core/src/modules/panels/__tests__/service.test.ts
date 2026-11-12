@@ -296,7 +296,7 @@ describe('createPanelsService：未知 id', () => {
   it('报错并列出可用项（不静默忽略）', () => {
     const service = mount();
 
-    expect(() => service.show('nope', A)).toThrow(/没有这个套件：nope/);
+    expect(() => service.show('nope', A)).toThrow(/没有这个模块：nope/);
     expect(() => service.show('nope', A)).toThrow(/issues/);
   });
 });

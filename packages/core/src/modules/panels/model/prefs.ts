@@ -57,7 +57,7 @@ export function applyPanelsPref(panels: PanelsService, payload: unknown): { ok: 
   if (action.action === 'reset') return { ok: true, units: panels.reset(path, scope) };
   if (action.id === undefined) {
     throw new Error(
-      `${action.action} 需要一个 id（当前套件：${panels.list(path).map((entry) => entry.id).join(', ')}）`,
+      `${action.action} 需要一个 id（当前模块：${panels.list(path).map((entry) => entry.id).join(', ')}）`,
     );
   }
   if (action.action === 'show') return { ok: true, units: panels.show(action.id, path, scope) };

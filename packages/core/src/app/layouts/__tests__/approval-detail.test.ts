@@ -78,12 +78,12 @@ describe('发布审批：版本单独一行，仓库 / 分支 / 两个 commit �
       ['目标', '按配置默认'],
       ['作者', '未署名'],
       ['标签', '探针'],
-      ['分类', '还没有（发布到市场时定一个）'],
+      ['分类', '尚未设置，发布到市场时需要指定'],
       ['仓库', market.url],
       ['分支', 'main'],
       ['打包文件', 'artifacts/probe · dist · client.js'],
       ['索引', 'market'],
-      ['提交', '打包文件 + 条目文件两次提交，一次推送'],
+      ['提交', '打包文件和条目文件分两次提交，一次推送'],
     ]);
   });
 
@@ -141,26 +141,26 @@ describe('发布审批：版本单独一行，仓库 / 分支 / 两个 commit �
     );
     expect(owned.find((row) => row.label === '认领人')?.value).toBe('陈康 <kang@example.com>');
     const conflict = publishRows({ unit: 'probe' }, { ...preview, claim: { state: 'conflict', owner: '甲' } }, t);
-    expect(conflict.find((row) => row.label === '认领人')?.value).toBe('已有主人：甲');
+    expect(conflict.find((row) => row.label === '认领人')?.value).toBe('已被认领：甲');
     const unowned = publishRows({ unit: 'probe' }, { ...preview, claim: { state: 'unowned' } }, t);
-    expect(unowned.find((row) => row.label === '认领人')?.value).toBe('原来没署名');
+    expect(unowned.find((row) => row.label === '认领人')?.value).toBe('原先未署名');
     const fresh = publishRows({ unit: 'probe' }, { ...preview, claim: { state: 'new' } }, t);
     expect(fresh.some((row) => row.label === '认领人')).toBe(false);
   });
 
-  it('★ 模块 id / 产物目录被占：各一行说清是谁', () => {
+  it('★ 模块标识 / 打包文件位置被占：各一行说清是谁', () => {
     const unit = publishRows(
       { unit: 'probe' },
       { ...preview, claim: { state: 'unit-taken', entry: '@demo/other' } },
       t,
     );
-    expect(unit.find((row) => row.label === '模块 id')?.value).toBe('已被 @demo/other 占用');
+    expect(unit.find((row) => row.label === '模块标识')?.value).toBe('已被 @demo/other 占用');
     const path = publishRows(
       { unit: 'probe' },
       { ...preview, claim: { state: 'path-taken', entry: '@demo/other' } },
       t,
     );
-    expect(path.find((row) => row.label === '产物目录')?.value).toBe('已被 @demo/other 占用');
+    expect(path.find((row) => row.label === '打包文件位置')?.value).toBe('已被 @demo/other 占用');
   });
 });
 
@@ -180,7 +180,7 @@ describe('审批详情座：外壳自己的族也画同一件 ApprovalPlan', () 
       .map((row) => `${row.label}=${row.value}`)
       .join(' · ');
 
-    expect(text).toContain('没给站点地址');
+    expect(text).toContain('没有提供站点地址');
     expect(text).toContain('一次操作');
     expect(text).toContain('shots/rec-<unit>.jsonl');
     expect(text).not.toMatch(/undefined|NaN|\[object|approval\./);
@@ -202,12 +202,12 @@ describe('审批详情座：外壳自己的族也画同一件 ApprovalPlan', () 
     }
   });
 
-  it('★ 那一屏画的就是 ApprovalPlan：三行 + 一句 warn（"录完不替你切回来"）', () => {
+  it('★ 那一屏画的就是 ApprovalPlan：三行 + 一句 warn（"录制结束后不会自动切回"）', () => {
     const view = planOf({ unit: 'demo', url: SITE, doing: '发布' });
 
     expect(view?.type).toBe(ApprovalPlan);
     expect(view?.props.rows).toHaveLength(3);
-    expect(view?.props.warn).toBe('录完不会替你切回来（左栏底部会亮一条状态）');
+    expect(view?.props.warn).toBe('录制结束后不会自动切回，左栏底部会显示一条状态。');
   });
 });
 
@@ -305,7 +305,7 @@ describe('插件命令的审批详情座：从清单与参数把"跑哪条命令
     expect(rows.map((row) => [row.label, row.value])).toEqual([
       ['插件', 'pagoda-permission'],
       ['命令', 'personnel-authorize'],
-      ['agent 说', '给陈孝群(20191104004)加开发者角色'],
+      ['agent 说明', '给陈孝群(20191104004)加开发者角色'],
       ['ASCode', 'auth_6dc3eb9b7012119'],
       ['authorizations', '[{"code":"20191104004","roleCode":"dify_developer"}]'],
     ]);
@@ -313,14 +313,14 @@ describe('插件命令的审批详情座：从清单与参数把"跑哪条命令
 
   it('★ 没给附注就没有那一行；折行压成一个空格（详情座里不重复标题的截断）', () => {
     const without = pluginApprovalRows({ plugin: 'demo', command: 'run', args: ['page'] }, { page: 1 }, t);
-    expect(without.some((row) => row.label === 'agent 说')).toBe(false);
+    expect(without.some((row) => row.label === 'agent 说明')).toBe(false);
 
     const folded = pluginApprovalRows(
       { plugin: 'demo', command: 'run', args: [] },
       { approval_note: '第一行\n  第二行' },
       t,
     );
-    expect(folded.at(-1)).toEqual({ label: 'agent 说', value: '第一行 第二行' });
+    expect(folded.at(-1)).toEqual({ label: 'agent 说明', value: '第一行 第二行' });
   });
 
   it('★ 值怎么上屏：字符串原样、数字 / 布尔 / null 照写、对象与数组走紧凑 JSON（不出 [object Object]）', () => {
@@ -347,7 +347,7 @@ describe('插件命令的审批详情座：从清单与参数把"跑哪条命令
     expect(rows.map((row) => [row.label, row.value])).toEqual([
       ['插件', 'inventory'],
       ['命令', 'build'],
-      ['agent 说', '把预发那条构建发出去'],
+      ['agent 说明', '把预发那条构建发出去'],
       ['enterprise', 'tencent'],
     ]);
   });
@@ -409,7 +409,7 @@ describe('索引源审批：把源的名字、地址、操作与当前状态摆�
 
   it('★ 设为可发布：源 / 地址 / 操作 / 当前状态', () => {
     expect(marketSourceRows(MARKET_ENABLE_TOOL, {}, payload, t)).toEqual([
-      { label: '索引源', value: '团队（team）' },
+      { label: '模块来源', value: '团队（team）' },
       { label: '地址', value: 'https://git.example/wb/market.git' },
       { label: '这次操作', value: '设为可发布' },
       { label: '当前状态', value: '可发布' },
@@ -484,10 +484,10 @@ describe('工具包审批：详情座一行一个包，范围与写工具的口�
 
   it('★ 外壳包与单元包各一行：名字 + 共 N 把（读 / 写）', () => {
     expect(toolboxApprovalRows({ targets: ['manage', 'unit:inventory'] }, [unit], t)).toEqual([
-      { label: '工具包', value: '工作台管理 · 共 21 把（读 5 / 写 16）' },
-      { label: '工具包', value: '库存 · 共 2 把（读 1 / 写 1）' },
+      { label: '工具包', value: '工作台管理 · 共 21 个（读 5 / 写 16）' },
+      { label: '工具包', value: '库存 · 共 2 个（读 1 / 写 1）' },
       { label: '范围', value: '这个会话' },
-      { label: '写入', value: '包里的写工具仍逐条确认' },
+      { label: '写入', value: '工具包中的写工具仍会逐条确认' },
     ]);
   });
 

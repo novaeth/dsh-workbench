@@ -13,7 +13,7 @@ export function marketCategoriesTool(
 ): DshToolDefinition {
   return {
     name: MARKET_CATEGORIES_TOOL,
-    description: '看当前索引里已经有哪些分类：发布模块时挑一个沿用，别每发一次造一个新词。',
+    description: '看当前索引里已经有哪些分类：发布模块时挑一个沿用，别每发一次创建一个新词。',
     parameters: { type: 'object', properties: {}, additionalProperties: false },
     output: OUTPUT,
     async execute() {

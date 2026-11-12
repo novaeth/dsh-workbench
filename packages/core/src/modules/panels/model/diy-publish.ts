@@ -201,16 +201,16 @@ export function registerPublishTool(
   const publishTool: DshToolDefinition = {
     name: DIY_PUBLISH_TOOL,
     description:
-      '用户说“发布”后才用：把这一格发到 target 指定的出口（不填按环境默认）。' +
-      '这一版还没有更新日志时把 changelogNote 一起带上 —— 发布时写进 CHANGELOG.md，随包发。' +
-      '这个模块还没有市集分类时把 category 带上（一个短词）；标签 labels 可选（最多两个短词）。',
+      '用户说“发布”后使用：把模块发到 target 指定的出口（不填按环境默认）。' +
+      '缺更新日志时带上 changelogNote，发布时写入 CHANGELOG.md。' +
+      '缺市集分类时带上 category（一个短词）；labels 可选（最多两个）。',
     parameters: {
       type: 'object',
       properties: {
-        unit: { type: 'string', description: '模块 id（workbench_diy_status 会给）。' },
+        unit: { type: 'string', description: '模块标识（workbench_diy_status 会给）。' },
         changelogNote: {
           type: 'string',
-          description: '这一版改了什么，一行一条；这一版还没有更新日志时必填（文件不在会先建）。',
+          description: '这一版改了什么，一行一条；缺更新日志时必填（会先建文件）。',
         },
         changelogType: {
           type: 'string',
@@ -221,27 +221,27 @@ export function registerPublishTool(
           type: 'array',
           items: { type: 'string' },
           description:
-            '市集条目的标签，可选，最多两个短词（说它干什么，比如「发布编排」「构建状态」）；传了会替换掉原来的。',
+            '市集标签，可选，最多两个短词；会替换原有标签。',
         },
         category: {
           type: 'string',
           description:
-            '市集条目的分类，一个短词（比如「任务与协作」）。发布到市场时必填：条目还没有分类必须给一个，' +
-            '已有分类可省；传了会替换掉原来的。',
+            '市集分类，一个短词（如「任务与协作」）。发市场且条目无分类时必填；' +
+            '会替换原有分类。',
         },
         target: {
           type: 'string',
           enum: [...RELEASE_TARGETS],
           description:
-            '发到哪：团队源 / 公共 npm / 安装包 / git / 模块市场索引；不填按环境默认（有可写索引走市场，有私源走团队源，否则安装包）。',
+            '发到哪：团队源 / 公共 npm / 安装包 / git / 模块市场索引；不填按环境默认。',
         },
         version: {
           type: 'string',
-          description: '可选：patch / minor / major / x.y.z；不填首次用当前版本，之后自动 patch。',
+          description: 'patch / minor / major / x.y.z；不填首次用当前版本，之后自动 patch。',
         },
         source: {
           type: 'string',
-          description: '发布到哪个索引源（workbench_market_sources 会给 id）；不填用唯一可发布的源。',
+          description: '发布到哪个模块来源（workbench_market_sources 给 id）；不填用唯一可发布的源。',
         },
         verify: {
           type: 'boolean',
@@ -257,7 +257,7 @@ export function registerPublishTool(
         },
         author: {
           type: 'string',
-          description: '署谁的名（姓名，或 姓名 <邮箱>）；用户点了名才传，不传按模块里写的，没写用推断的署名。',
+          description: '署名（姓名，或 姓名 <邮箱>）；用户点名才传，否则按模块声明或推断。',
         },
         refresh: {
           type: 'boolean',

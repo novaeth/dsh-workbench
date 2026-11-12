@@ -43,7 +43,7 @@ describe('healthOf（起得来没：装配失败的现场）', () => {
   it('没装 = absent"还没装"（不假装它在跑）', () => {
     expect(healthOf({ registry: registry({}), unit: 'demo', installed: false })).toEqual({
       state: 'absent',
-      reason: '还没装',
+      reason: '尚未安装',
     });
   });
 
@@ -63,14 +63,14 @@ describe('时间与人话', () => {
   });
 
   it('每种取数收尾都有一句人话（读不到时把码与原文都带上）', () => {
-    expect(readText({ unit: 'demo', route: 'demo/o', phase: 'ready', at: now }, now)).toContain('读到了');
-    expect(readText({ unit: 'demo', route: 'demo/o', phase: 'error', at: now }, now)).toContain('读不到（unknown）');
+    expect(readText({ unit: 'demo', route: 'demo/o', phase: 'ready', at: now }, now)).toContain('已读取');
+    expect(readText({ unit: 'demo', route: 'demo/o', phase: 'error', at: now }, now)).toContain('读取失败（unknown）');
     expect(
       readText(
         { unit: 'demo', route: 'demo/o', phase: 'error', at: now, error: { code: 'host-500', message: '宿主炸了' } },
         now,
       ),
-    ).toContain('读不到（host-500）：宿主炸了');
+    ).toContain('读取失败（host-500）：宿主炸了');
   });
 });
 
@@ -86,9 +86,9 @@ describe('statusOf / renderStatus', () => {
       health: { state: 'failed', reason: 'boom' },
     });
 
-    expect(status.next).toContain('它起不来');
-    expect(status.next).toContain('别去重装');
-    expect(renderStatus('/w', [status])).toContain('起得来：不是 —— boom');
+    expect(status.next).toContain('它启动失败');
+    expect(status.next).toContain('不要重新安装');
+    expect(renderStatus('/w', [status])).toContain('启动状态：否（boom）');
   });
 
   it('空的清单回到 list 那一屏（不打印"工作区："加一片空白）', () => {
@@ -114,8 +114,8 @@ describe('renderPanel（面板上现在究竟是什么样）', () => {
       now,
     });
 
-    expect(text).toContain('还没有一条面板运行态上报');
-    expect(text).toContain('没上报');
+    expect(text).toContain('还没有面板运行态上报');
+    expect(text).toContain('未上报');
   });
 
   it('有上报：每行带状态、取数收尾与崩溃次数', () => {
@@ -135,10 +135,10 @@ describe('renderPanel（面板上现在究竟是什么样）', () => {
       now,
     });
 
-    expect(text).toContain('面板上有 2 张卡');
-    expect(text).toContain('demo/overview 读到了');
-    expect(text).toContain('崩过：没有');
-    expect(text).toContain('不是 —— mount 抛了');
+    expect(text).toContain('面板上有 2 个模块界面');
+    expect(text).toContain('demo/overview 已读取');
+    expect(text).toContain('未发生崩溃');
+    expect(text).toContain('否（mount 抛了）');
     expect(text).toContain('共 3 次');
   });
 });
@@ -148,8 +148,8 @@ describe('renderList', () => {
     const text = renderList('/w', [
       { unit: 'demo', name: 'demo', description: '', installed: true, dir: '/w/demo' },
     ]);
-    expect(text).toContain('不要再装');
-    expect(text).toContain('demo · 已装');
+    expect(text).toContain('不要再次安装');
+    expect(text).toContain('demo · 已安装');
   });
 
   it('还有没装的：给出 install 的调用形状', () => {

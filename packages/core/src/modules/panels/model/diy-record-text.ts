@@ -104,11 +104,11 @@ export function bodyMissingOf(calls: readonly RecordCall[]): boolean {
 export function recordRefusalText(code: RecordRefusal, held?: RecordState): string {
   switch (code) {
     case 'held-by-other':
-      return `另一场录制还占着（${held === undefined ? '另一个会话' : held.sessionId}）—— 一台机器同时只允许一场：让它先 ${DIY_RECORD_STOP_TOOL}，或等它收工。`;
+      return `另一场录制还占着（${held === undefined ? '另一个会话' : held.sessionId}）—— 一台机器同时只允许一场：让它先 ${DIY_RECORD_STOP_TOOL}，或等它结束。`;
     case 'already-held':
       return `你这个会话已经持有一场录制（${held === undefined ? '' : `${held.unit}，${held.phase}`}）—— 一台机器同时只允许一场：要换目标、要再来一场，都先 ${DIY_RECORD_STOP_TOOL}，再重新 ${DIY_RECORD_PREPARE_TOOL}（新的一场会再问他一次）。`;
     case 'not-owner':
-      return '这一场录制不是你这个会话的 —— 谁开的谁收工。';
+      return '这一场录制不是你这个会话的 —— 谁开始的谁结束。';
     case 'none':
       return '现在没有录制中的那一场。';
     case 'already-recording':
@@ -123,7 +123,7 @@ export function recordRefusalText(code: RecordRefusal, held?: RecordState): stri
 }
 
 export function recordMissingText(): string {
-  return `现在没有录制中的那一场（${DIY_RECORD_PREPARE_TOOL} 起的那一场可能已经过期或收工了）—— 先调 ${DIY_RECORD_PREPARE_TOOL}。`;
+  return `现在没有录制中的那一场（${DIY_RECORD_PREPARE_TOOL} 起的那一场可能已经过期或结束了）—— 先调 ${DIY_RECORD_PREPARE_TOOL}。`;
 }
 
 export function recordTalkOf(): string {
@@ -329,7 +329,7 @@ export function renderRecordDetail(input: RecordDetailFacts): string {
   if (!input.found) {
     return [
       `没找到这一条：${input.note}`,
-      `可用的取法：② 还在这场录制里时用清单里的 key 或 index；③ 这一场已经收工的话，给 unit 让我去读 shots/rec-<unit>.jsonl.last；④ 都不行就让他打开 DevTools，把那次请求复制成 curl。`,
+      `可用的取法：② 还在这场录制里时用清单里的 key 或 index；③ 这一场已经结束的话，给 unit 让我去读 shots/rec-<unit>.jsonl.last；④ 都不行就让他打开 DevTools，把那次请求复制成 curl。`,
     ].join('\n');
   }
   const req = clip(input.request, input.maxBytes);

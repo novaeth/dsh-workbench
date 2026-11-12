@@ -151,7 +151,7 @@ describe('添加模块浮层：文案与来源选项（按 dsh 插件页的骨�
     expect(sentence).toContain('tarball');
     expect(sentence).toContain('包名');
     expect(sentence).toContain('本地目录');
-    expect(sentence).toContain('判断不出');
+    expect(sentence).toContain('无法判断类型');
   });
 
   it('★ 按包名来的插件**不再**落到那句：两语言都不许再说"插件不走这个入口 / 改用包名"（那正是自相矛盾的来源）', () => {
@@ -237,7 +237,7 @@ describe('添加模块浮层：文案与来源选项（按 dsh 插件页的骨�
     }
 
     const why = restartWhy(change({ application: 'restart-required', restartReason: 'package-moved' }), t);
-    expect(why).toContain('为什么这一版要重启');
+    expect(why).toContain('这个版本需要重启的原因');
     expect(why).toContain((zh as Record<string, string>)['panels.market.add.restartWhy.package-moved']);
 
     expect(restartWhyKey(undefined)).toBeUndefined();
@@ -281,7 +281,7 @@ describe('添加模块浮层：文案与来源选项（按 dsh 插件页的骨�
       failureCode(change({ errorCode: 'operation-error', errorDetail: 'ERR_PNPM_FETCH_404  GET https://x: Not Found' })),
     ).toBe('operation-error');
     expect(failureReason('credentials', 'failed', t)).toContain('要凭证');
-    expect(failureReason('failed', 'failed', t)).toBe('没成功，但它没说是为什么（详情见安装输出的那一行）');
+    expect(failureReason('failed', 'failed', t)).toBe('操作失败，但没有给出原因，详情见安装输出的对应行。');
     expect(failureReason('some-new-code', 'failed', t)).toBe('some-new-code');
   });
 

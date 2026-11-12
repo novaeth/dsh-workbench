@@ -261,9 +261,9 @@ describe('workbench_modules · install-bundle（按 spec 装模块包）', () =>
 
     const payload = await call(h, MODULES_INSTALL_BUNDLE_TOOL, { spec: '@dsh-workbench/module-hello' });
 
-    expect(String(payload.text)).toContain('装好了，已生效');
+    expect(String(payload.text)).toContain('安装完成，已生效');
     expect(String(payload.text)).toContain('hello（@dsh-workbench/module-hello）');
-    expect(String(payload.text)).toContain('插件也装上了');
+    expect(String(payload.text)).toContain('插件也已安装');
     expect(h.fake.commands()).toEqual(["'opencli' plugin install 'git@x:hello.git'"]);
     expectLossless(payload);
   });
@@ -411,7 +411,7 @@ describe('workbench_market_enable：把索引源设为可发布', () => {
       marketSources: { read: () => ({ sources: [], selected: null }), init: vi.fn(), readOnly: vi.fn() },
     });
 
-    await expect(call(h, MARKET_ENABLE_TOOL, {})).rejects.toThrow(/先在「模块市场 → 发现 → 索引源」/);
+    await expect(call(h, MARKET_ENABLE_TOOL, {})).rejects.toThrow(/先在「模块市场 → 发现 → 模块来源」/);
   });
 
   it('声明成写工具（走审批）', () => {

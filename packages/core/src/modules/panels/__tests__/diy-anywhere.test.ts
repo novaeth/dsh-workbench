@@ -45,7 +45,7 @@ describe('工作区结构未知：看 / 调不需要模块源码', () => {
 
     const out = (await tool(DIY_STATUS_TOOL)?.execute({}, rig.diyExec())) as { text: string };
 
-    expect(out.text).toContain('这个工作区里没有模块源码');
+    expect(out.text).toContain('这个工作区中没有模块源码');
     expect(out.text).toContain('不需要模块');
     expect(out.text).toContain('workbench_diy_panel');
   });
@@ -91,7 +91,7 @@ describe('工作区结构未知：看 / 调不需要模块源码', () => {
 
     await expect(
       tool(DIY_RECORD_PREPARE_TOOL)?.execute({ unit: 'demo', doing: '发布' }, rig.diyExec()),
-    ).rejects.toThrow(/要那一页的 url/);
+    ).rejects.toThrow(/需要该页面的 url/);
   });
 
   it('★★ 只给一个链接：record 不再拦在 unit 上（unit 只是文件名标签，默认 page）', async () => {

@@ -218,7 +218,7 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
 
     expect(out.rows).toHaveLength(1);
     expect(out.text).toContain('录完了 · 1 条（⭐ 1）');
-    expect(out.text).toContain('那一扇录制窗就收掉了');
+    expect(out.text).toContain('录制窗口已关闭');
     expect(built.commands.some((one) => one.includes("'eval'"))).toBe(false);
   });
 
@@ -347,7 +347,7 @@ describe('录制结束那一刻就关窗：先叫醒、再收掉那一扇', () =
     };
 
     expect(out.cleaned.tab).toBe(true);
-    expect(out.text).toContain('录制窗那个标签收掉了');
+    expect(out.text).toContain('录制窗口的标签已关闭');
     expect(out.text).not.toContain('那个标签没关掉');
   });
 });

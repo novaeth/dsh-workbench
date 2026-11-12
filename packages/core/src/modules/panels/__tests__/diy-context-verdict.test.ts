@@ -10,7 +10,7 @@ describe('DIY 交代里那句装机结论', () => {
   it('★ 结构化失败带 errorDetail：结论里带上原文（以前只剩一个码，原因没了）', () => {
     const said = verdictOf(change({ errorCode: 'operation-error', errorDetail: '没有写入权限（退出码 1）：\nERR_PNPM' }));
 
-    expect(said).toContain('没装上');
+    expect(said).toContain('安装失败');
     expect(said).toContain('没有写入权限');
     expect(said).toContain('ERR_PNPM');
   });
@@ -29,6 +29,6 @@ describe('DIY 交代里那句装机结论', () => {
   });
 
   it('装好了照旧说装好了', () => {
-    expect(verdictOf(change({ application: 'applied', changed: true }))).toBe('装好了，已生效');
+    expect(verdictOf(change({ application: 'applied', changed: true }))).toBe('安装完成，已生效');
   });
 });

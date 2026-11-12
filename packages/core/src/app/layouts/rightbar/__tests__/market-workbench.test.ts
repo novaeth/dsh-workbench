@@ -445,7 +445,7 @@ describe('工作台那一行上的人话', () => {
       expect(withCommand, `${language}:withCommand`).toContain('{command}');
       expect(noFix, `${language}:noFix`).not.toContain('{command}');
     }
-    expect(dictionaries.zh['panels.market.workbenchBroken']).toContain('读不到工作台那一份（装坏了）');
+    expect(dictionaries.zh['panels.market.workbenchBroken']).toContain('无法读取工作台的这份安装（安装已损坏）');
   });
 
   it('★ 自更新那几档的话两种语言都有：不混排、不出内部词', () => {
@@ -465,7 +465,7 @@ describe('工作台那一行上的人话', () => {
       }
     }
     expect(dictionaries.zh['panels.market.selfUpdateQueued']).toContain('Desktop');
-    expect(dictionaries.zh['panels.market.selfUpdateRetry']).toContain('再点一次');
+    expect(dictionaries.zh['panels.market.selfUpdateRetry']).toContain('再次点击');
   });
 });
 

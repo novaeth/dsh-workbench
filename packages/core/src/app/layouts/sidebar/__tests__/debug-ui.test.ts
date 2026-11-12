@@ -60,16 +60,16 @@ describe('底部那一格：一行状态 + 一句指引', () => {
     const view = debugFooterView(state(), t, 'workspace');
 
     expect(view.trouble).toBe('workspace');
-    expect(view.label).toBe('调试要你看一眼（工坊）');
-    expect(view.note).toBe('请切回「工坊」那一屏');
+    expect(view.label).toBe('调试需要你确认（工坊）');
+    expect(view.note).toBe('请切换回「工坊」页面');
   });
 
   it('★★ 人在那条工作区、可那块板没画在屏上 ⇒ 那一行改说"异常"，指引是"切面板"', () => {
     const view = debugFooterView(state(), t, 'panel');
 
     expect(view.trouble).toBe('panel');
-    expect(view.label).toBe('调试要你看一眼（工坊）');
-    expect(view.note).toBe('请切回工作台面板');
+    expect(view.label).toBe('调试需要你确认（工坊）');
+    expect(view.note).toBe('请切换回工作台面板');
   });
 
   it('★★ 暂停时：屏在哪都不喊异常（切工作区 / 面板收起来都随你），只说"已暂停"', () => {
@@ -84,8 +84,8 @@ describe('底部那一格：一行状态 + 一句指引', () => {
       expect(view.stalled).toBe(true);
     }
     const running = debugFooterView(state({ phase: 'debugging' }), t, 'panel');
-    expect(running.label).toBe('调试要你看一眼（工坊）');
-    expect(running.note).toBe('请切回工作台面板');
+    expect(running.label).toBe('调试需要你确认（工坊）');
+    expect(running.note).toBe('请切换回工作台面板');
     expect(running.trouble).toBe('panel');
   });
 

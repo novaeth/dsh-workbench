@@ -23,20 +23,20 @@
 
 3. **无现成命令 → 让用户录一次**（你准备，用户执行）：
 
-   - `workbench_diy_record_prepare({ unit, url, doing })`：开窗置前（**需审批一次**：站点、录哪一下、保存到、
-     录完不切回），装浮条。用户：① 开始录制 ② 做一次动作 ③ 结束录制。不要让用户点第二次。
+   - `workbench_diy_record_prepare({ unit, url, doing })`：打开窗口并置于前台（**需要审批一次**：站点、录制哪一步、保存位置、
+     结束后不切回），显示浮动条。用户依次：① 开始录制 ② 执行一次动作 ③ 结束录制。不要让用户操作第二次。
      `url` 必须与模块读源同域（`design.json` 声明过读源时跨域当场拒）。
-   - 表填好、提交前，请用户按浮条「截图」：不额外审批；产出整页图 + 页面快照（控件 `name` / `id`、
-     标签、必填痕迹、填值、是否空、是否改过）。提交时会自动再抓一份。
+   - 表格填好、提交前，请用户按浮动条「截图」：不额外审批；产出整页图与页面快照（控件 `name` / `id`、
+     标签、必填痕迹、填值、是否为空、是否改过）。提交时会自动再采集一份。
    - `workbench_diy_record_read`：取清单 `rows`（`index` / `key` / `method` / `url` / `status` / `ct` /
      `size` / `source` / `hasRequest` / `hasResponse` / `likelyWrite` / `marked`），不删行、不回体；
      `expect` 只标 ⭐ 并置顶。按 `key`（或 `index`）调 `workbench_diy_record_detail`：
      返回请求体与响应体原文 + 请求头（可能含凭据，不写入 `design.json`）。同 key 跨轮重名，带 `at` 定位。
-     未结束时 read 会说"还在录"；可带 `waitMs`（上限 15 分钟）。**一场 = 一个周期**；上一场未收工再
+     未结束时 read 会说"还在录"；可带 `waitMs`（上限 15 分钟）。**一场 = 一个周期**；上一场未结束再
      prepare 会当场拒（不弹审批）。
    - `workbench_diy_record_stop`：停捕获、收标签、清状态，原文另存 `shots/rec-<unit>.jsonl.last`。
      **先 read / detail，再 stop**。左栏键只发消息；录完无键。
-   - 抓不到：原生 `<form>` 提交 / WebSocket / service worker / 其他标签。页面钩子只认 `fetch` 与 XHR，
+   - 抓不到时，可能是原生 `<form>` 提交、WebSocket、service worker 或其他标签。页面钩子只识别 `fetch` 与 XHR，
      上限 50 条、单条请求体 16 KB。兜底：`opencli browser <会话> bind`（当前聚焦窗活动标签）或
      `open … --window foreground`，先 `network --follow` 再让用户操作；取 body 用 `network --raw`
      （同一调用内）；仍无则请用户从 DevTools 复制 curl。
@@ -49,7 +49,7 @@
 
 ## 执行体（写工具里那一下）
 
-写工具被点头之后，按这个顺序选：
+写工具获得批准之后，按以下顺序选择：
 
 1. **有现成 opencli 写命令** → `opencli <site> <name> …`；`--yes` 只在 `confirm === true` 时加，
    没有预览档的写不许试写（见上面四步）。

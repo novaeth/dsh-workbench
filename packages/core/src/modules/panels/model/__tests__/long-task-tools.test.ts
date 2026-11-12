@@ -194,14 +194,14 @@ describe('workbench_long_tasks_list：一个工作区现在有哪几趟，一眼
   it('★ 空态：这个工作区一趟都没有（也没有十分钟内刚收尾的）', async () => {
     const result = await run(LONG_TASKS_LIST_TOOL, seeded([]), {}, execAt('/w/x', 's1'));
 
-    expect(result['text']).toBe('这个工作区现在没有长任务在跑（也没有十分钟内刚收尾的）。');
+    expect(result['text']).toBe('这个工作区现在没有长任务运行中（也没有十分钟内刚结束的）。');
     expect(result['runs']).toEqual([]);
   });
 
   it('★ 没有注册表（老外壳）也回那句空态，不炸', async () => {
     const result = await run(LONG_TASKS_LIST_TOOL, undefined, {}, execAt('/w/x', 's1'));
 
-    expect(result['text']).toBe('这个工作区现在没有长任务在跑（也没有十分钟内刚收尾的）。');
+    expect(result['text']).toBe('这个工作区现在没有长任务运行中（也没有十分钟内刚结束的）。');
   });
 
   it('★ 不知道工作区：这条读不了（长任务按工作区记）', async () => {
@@ -281,8 +281,8 @@ describe('workbench_long_tasks_stop：四面围栏与四类回执', () => {
     const done = await run(LONG_TASKS_STOP_TOOL, finished, { unit: 'inventory', id: 'run-1' }, execAt('/w/x', 's1'));
     const stopped = await run(LONG_TASKS_STOP_TOOL, inventory('stopped'), { unit: 'inventory', id: 'run-1' }, execAt('/w/x', 's1'));
 
-    expect(done['text']).toBe('这一趟已经不在跑了（已完成）—— 没动它。');
-    expect(stopped['text']).toBe('这一趟已经不在跑了（被停了）—— 没动它。');
+    expect(done['text']).toBe('这一趟已停止运行（已完成）—— 没动它。');
+    expect(stopped['text']).toBe('这一趟已停止运行（被停了）—— 没动它。');
     expect(done['stopped']).toBe(false);
     expect(finished().get('inventory')?.snapshot('run-1')?.status).toBe('ok');
   });

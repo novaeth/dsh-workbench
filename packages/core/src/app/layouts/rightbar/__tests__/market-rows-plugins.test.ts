@@ -86,7 +86,7 @@ it('★ 插件名 ≠ 包名 → 标题给插件名、版本号那格给「包�
     expect(row?.state).toBe('broken');
     expect(MARKET_STATE_KEY.broken).toBe('panels.market.broken');
     expect(MARKET_DOT.broken).toBe('error');
-    expect(dictionaries.zh['panels.market.broken']).toBe('装坏了');
+    expect(dictionaries.zh['panels.market.broken']).toBe('安装已损坏');
     expect(row?.note?.key).toBe('panels.market.pluginBroken');
     expect(marketActions(row as never)).toEqual(['uninstall-plugin']);
   });

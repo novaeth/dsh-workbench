@@ -38,14 +38,14 @@
 纪律：样式走 `*.module.css`，类名不带 `wb-` 前缀（外壳全局类；借契约类写 `:global(.wb-…)`）；
 `src/**` 零注释；说明写 `README.md` 或 spec。
 
-## 3 安装、上板
+## 3 安装、添加到看板
 
-`workbench_diy_install`（`unit=<id>`）：只认当前工作区造好的模块；装后在当前工作区面板打开；不弹审批。
+`workbench_diy_install`（`unit=<id>`）：只识别当前工作区创建的模块；安装后会在当前工作区面板中打开，不弹审批。
 
-- 只装一次。包名已在 profile 后再次调用会返回"已装过"；迭代用 `dsh-wb-module build`。
-- 装 ≠ 上板。返回里说未打开时，待生效后调 `workbench_diy_show`（只上板）。
-- 状态不明问 `workbench_diy_status`（`unit=…`）：装没装 / 面板认没认 / 项目内开没开 / 产物齐不齐 /
-  源码是否新于产物 / 下一步。不要自行拼 panels、profile、目录三处。
+- 只需安装一次。包名已在 profile 中时，再次调用会返回「已装过」；迭代开发请用 `dsh-wb-module build`。
+- 安装不等于添加到看板。如果返回提示尚未打开，等它生效后再调用 `workbench_diy_show`（它只做添加到看板这一步）。
+- 状态不明确时询问 `workbench_diy_status`（`unit=…`）：是否已安装 / 面板是否已识别 / 项目内是否已打开 / 产物是否齐全 /
+  源码是否新于产物 / 下一步。不要自行拼合 panels、profile、目录三处信息。
 - 用户选「完全权限」时，需审批的调用直接过；未认领的写与 `{blocked}` 仍拒。
 
 DIY 族仅在选了 DIY 模式的会话出现（按模式，不按工作区）；全表 [FAMILY.md](FAMILY.md)。
@@ -53,7 +53,7 @@ DIY 族仅在选了 DIY 模式的会话出现（按模式，不按工作区）�
 
 ## 4 热换
 
-装后不再安装。改源码 → `dsh-wb-module build`：
+安装后不再重复安装。修改源码后执行 `dsh-wb-module build`：
 
 - 宿主侧 → `dist/host.js`：秒级热换，不重启、不刷新。
 - 客户端侧 → `client.js`：刷新页面；`*.module.css` 就地改写 `<style>`，刷新生效。
@@ -62,22 +62,21 @@ DIY 族仅在选了 DIY 模式的会话出现（按模式，不按工作区）�
 
 ## 5 发布
 
-默认 `private: true`，不发任何源。用户说「帮我发布」时，**不要手改 `package.json`、不要让他看 npm**，
-走 `workbench_diy_publish`（`unit=…`）：
+默认 `private: true`，不发布到任何来源。用户说「帮我发布」时，**不要手动修改 `package.json`，也不要让用户直接操作 npm**，改走 `workbench_diy_publish`（`unit=…`）：
 
-1. 这一版还没有更新日志时（`workbench_diy_status` 会说），把改了什么放进 `changelogNote`（一行一条；`changelogType` 选分类，缺省 changed），
-   发布时一起写进 `CHANGELOG.md`（文件不在先建）；审批屏展示将写入的那一段，用户点头才落盘。已有内容就不用传。
+1. 如果这一版还没有更新日志（`workbench_diy_status` 会提示），把改动内容放进 `changelogNote`（一行一条；`changelogType` 选择分类，缺省为 changed），
+   发布时一并写进 `CHANGELOG.md`（文件不存在会先创建）；审批屏会展示将要写入的那一段，用户批准后才写入。已有内容则不必传。
    真卡片验收过（`design accept`）。
-   出口、署名、标题、安装命令都由工具与审批屏处理：不用问、不用补；用户没点名出口就不传 target。
-   索引源跟当前选中无关：只有一个可发布源就用它；有多个时传 `source=<id>`（`workbench_market_sources` 会给）。
-   用户要换署名（或在审批屏上说作者不对）：传 `author="姓名 <邮箱>"`（或只给姓名），别手改 `package.json`，也别自己编。
-   没写作者时审批屏显示推断的署名；他拒绝后说换成谁，再用 `author` 重发。
+   出口、署名、标题与安装命令都由工具和审批屏处理：不需要询问，也不需要补传；用户没有点名出口时不要传 target。
+   模块来源跟当前选中无关：只有一个可发布源就用它；有多个时传 `source=<id>`（`workbench_market_sources` 会给）。
+   用户要更换署名（或在审批屏上说作者不对）时，传 `author="姓名 <邮箱>"`（也可以只给姓名）；不要手动修改 `package.json`，也不要自行编造。
+   没有写作者时，审批屏会显示推断的署名；用户拒绝后说明要换成谁，再用 `author` 重新发布。
    市场里一个包名归第一次发布的人（`market/<包名>/` 条目里的 `owner`）：换署名发同名会被拒，审批也放不过去；
-   用户真是接手的人，让他先找索引维护者改那一条的 `owner`，别自己改成对方的署名去绕。
-   一个模块 id（`dsh.workbench.unit`）在同一个市场里只能有一个条目：换包名、沿用旧 unit 会被拒 ——
-   换包名时把 unit 也换掉，别为了保留 id 去改别人的条目。
-   分类用 `category`（一个短词，比如「任务与协作」）：发布到市场时强制 —— 条目还没有分类必须给一个，
-   已有就不用传；拿不准时先调 `workbench_market_categories` 看当前索引用过的那批，尽量沿用，别每发一次造一个新词。
+   用户真是接手的人，让他先找模块来源的维护者改那一条的 `owner`，别自己改成对方的署名去绕。
+   一个模块 id（`dsh.workbench.unit`）在同一个市场里只能有一个条目：更换包名时沿用旧 unit 会被拒绝，
+   所以换包名时要把 unit 一起换掉，不要为了保留 id 去修改别人的条目。
+   分类用 `category`（一个短词，例如「任务与协作」），发布到市场时必填：条目还没有分类时必须提供一个，
+   已有分类则不必传；拿不准时先调用 `workbench_market_categories` 查看当前模块来源用过的那批，尽量沿用，不要每次发布都新增一个词。
    标签 `labels` 可选（最多两个短词，比如「发布编排」「构建状态」）：有就传，传了会替换原来的；没有不用编。
    分类会出现在发现页的 chip 行，新模块带一个新分类，页面自动多一个。
 2. 工具回 `needsUser` 时照 `text` 转述，不在对话里要 token / OTP；`otp` 交接后 `verify=true` 只核不发。

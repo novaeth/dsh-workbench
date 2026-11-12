@@ -263,7 +263,7 @@ export const RECORD_ARM_SCRIPT = `(() => {
   const paint = () => {
     const phase = state.phase;
     const taken = typeof state.shots === 'number' ? state.shots : 0;
-    label.textContent = (phase === 'recording' ? '录制中 · ' : phase === 'finished' ? '录制完成 · ' : '录制 · 等开始 · ') + String(state.calls.length) + ' 条' + (taken > 0 ? ' · 已拍 ' + String(taken) + ' 张' : '');
+    label.textContent = (phase === 'recording' ? '录制中 · ' : phase === 'finished' ? '录制完成 · ' : '录制 · 等开始 · ') + String(state.calls.length) + ' 条' + (taken > 0 ? ' · 已截图 ' + String(taken) + ' 张' : '');
     dot.style.display = phase === 'recording' ? 'inline-block' : 'none';
     start.disabled = phase !== 'armed';
     shot.disabled = phase !== 'recording';

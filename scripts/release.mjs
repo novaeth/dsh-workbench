@@ -829,7 +829,7 @@ function restoreDevArtifact() {
       allowFailure: true,
     });
     if (status === 0) console.log("   ✅ 开发档已重建 —— `pnpm run dev` 与 `?wbMock=1` 照常");
-    else console.error("   ⚠️  开发档重建失败，跑一次 `cd packages/core && node scripts/build.mjs client` 即可");
+    else console.error("   ⚠️  开发档重建失败，运行一次 `cd packages/core && node scripts/build.mjs client` 即可");
   } catch (error) {
     console.error(`   ⚠️  开发档重建没跑成：${error instanceof Error ? error.message : String(error)}`);
   }

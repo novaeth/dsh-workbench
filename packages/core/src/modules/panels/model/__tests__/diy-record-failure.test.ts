@@ -57,7 +57,7 @@ describe('录制交接：半路失败与实话（每一档都单独说）', () =
 
     await expect(
       built.tool(DIY_RECORD_PREPARE_TOOL).execute({ unit: 'demo', url: URL2, doing: '发布' }, rig.diyExec()),
-    ).rejects.toThrow('浮条没装上');
+    ).rejects.toThrow('浮条安装失败');
     expect(built.record.live(Date.now())).toBeNull();
   });
 
@@ -192,7 +192,7 @@ describe('录制交接：半路失败与实话（每一档都单独说）', () =
 
     expect(out.cleaned.capture).toBe(true);
     expect(out.cleaned.tab).toBe(false);
-    expect(out.text).toContain('那个标签没关掉');
+    expect(out.text).toContain('该标签未关闭');
     expect(built.commands.some((one) => one.includes("'close'"))).toBe(true);
   });
 
@@ -295,7 +295,7 @@ describe('录制交接：半路失败与实话（每一档都单独说）', () =
     expect(record.live(Date.now())?.phase).toBe('recording');
     const queued = takeHeldNotices('s1');
     expect(queued).toHaveLength(1);
-    expect(queued[0]?.content[0]?.text).toContain('还没结束');
+    expect(queued[0]?.content[0]?.text).toContain('尚未结束');
     expect(queued[0]?.source.kind).toBe('workbench-diy');
   });
 

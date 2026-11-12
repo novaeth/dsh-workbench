@@ -4,7 +4,7 @@
 
 ## 先跑起来
 
-<PagodaDocLinkToView view="guide/quickstart">快速开始</PagodaDocLinkToView>：三件事 —— 建实例、起实例、装第一个模块。要的东西只有一个 `dsh`、Node 与 pnpm，再加一个能装扩展的浏览器；第一次打开要装一次 OpenCLI 扩展，面板才有数据。
+<PagodaDocLinkToView view="guide/quickstart">快速开始</PagodaDocLinkToView>：三件事：创建实例、启动实例、安装第一个模块。需要 `dsh`、Node 与 pnpm，外加一个能安装扩展的浏览器。第一次打开时还要安装一次 OpenCLI 扩展，面板才有数据。
 
 ## 决定装在哪
 
@@ -12,7 +12,7 @@
 
 ## 让面板有东西
 
-<PagodaDocLinkToView view="guide/modules">面板与模块</PagodaDocLinkToView>：面板能力是模块，装什么有什么；没有现成的就让 agent 开 DIY 现场做一个。面板读的是你浏览器里的登录状态 —— 先装好 OpenCLI 扩展、开着浏览器，再按卡片提示登录。
+<PagodaDocLinkToView view="guide/modules">面板与模块</PagodaDocLinkToView>：面板能力来自模块，安装什么就有什么；没有现成的就让 agent 开启 DIY 现场创建。面板读取的是你浏览器里的登录状态：请先安装 OpenCLI 扩展并保持浏览器打开，再按卡片提示登录。
 
 ## 搞清数据在哪
 
@@ -23,5 +23,5 @@
 <PagodaDocLinkToView view="guide/architecture">架构</PagodaDocLinkToView>：层序、两个运行时、单元协议、门禁那条链，以及为什么全仓零注释。
 
 :::tip 找不到答案
-<PagodaDocLinkToView view="faq">常见问题</PagodaDocLinkToView> 按症状排：起不来、界面不对、装进 Desktop 之后没反应。
+<PagodaDocLinkToView view="faq">常见问题</PagodaDocLinkToView> 按症状排：启动失败、界面不对、装进 Desktop 之后没反应。
 :::

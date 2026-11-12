@@ -70,7 +70,7 @@ export function createToolScope(options: ToolScopeOptions): ToolScope {
   function sync(handle: ToolScopeAgent): void {
     const tools = toolsOf(handle);
     if (tools === undefined) {
-      options.logger?.warn?.('[dsh-workbench] 拿不到 agent 作用域的工具面：这次不收窄（下次再试）');
+      options.logger?.warn?.('[dsh-workbench] 拿不到 agent 作用域的工具面：本次不限制（下次再试）');
       return;
     }
 
@@ -85,7 +85,7 @@ export function createToolScope(options: ToolScopeOptions): ToolScope {
     previous?.dispose();
 
     if (deny.length === 0) {
-      options.logger?.info?.('[dsh-workbench] 这个工作区启用了全部套件：不收窄工具面');
+      options.logger?.info?.('[dsh-workbench] 这个工作区启用了全部模块：不限制工具面');
       applied.delete(handle);
       return;
     }
@@ -93,10 +93,10 @@ export function createToolScope(options: ToolScopeOptions): ToolScope {
     try {
       applied.set(handle, { signature, dispose: tools.restrict({ deny }) });
       options.logger?.info?.(
-        `[dsh-workbench] 按会话收窄工具面：${where ?? '(未知工作区)'} 里收起 ${deny.length} 个工具（${deny.join(', ')}）`,
+        `[dsh-workbench] 按会话限制工具面：${where ?? '(未知工作区)'} 里收起 ${deny.length} 个工具（${deny.join(', ')}）`,
       );
     } catch (error) {
-      options.logger?.warn?.(`[dsh-workbench] 收窄工具面失败：${String(error)}`);
+      options.logger?.warn?.(`[dsh-workbench] 限制工具面失败：${String(error)}`);
     }
   }
 

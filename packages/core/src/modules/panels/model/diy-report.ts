@@ -23,7 +23,7 @@ export const SYNC_STALE_MINUTES = 15;
 export const SYNC_STALE_MS = SYNC_STALE_MINUTES * 60_000;
 
 function fixText(): string {
-  return `   修法：在工坊目录里跑一次 pnpm install（${join(workbenchRoot(), 'diy')}）；还不行就把这个目录删掉再重启一次工作台（骨架会自己重建；\`packages/\` 下你造的模块先留着或另存）。`;
+  return `   修复方法：在工坊目录中运行一次 pnpm install（${join(workbenchRoot(), 'diy')}）。若仍失败，请删除该目录后重启工作台（骨架会自动重建；\`packages/\` 下你创建的模块请先保留或另存）。`;
 }
 
 function syncingStillRunning(at: string, now: number, windowMs: number): boolean {
@@ -58,27 +58,27 @@ export function syncNotice(input: {
   if (toolchain !== undefined && gap === undefined) return undefined;
   const about = sync !== undefined && sync.version === shellVersion ? sync : undefined;
   if (about === undefined && gap === undefined) return undefined;
-  const where = gap === undefined ? '工坊里读不到那三个包的版本' : `工坊里 ${gap}`;
+  const where = gap === undefined ? '工坊中读不到那三个包的版本' : `工坊中 ${gap}`;
   if (about !== undefined && about.state === 'failed') {
     return [
-      `⚠️ 工坊工具链还是上一代（${where}；工作台已经是 ${shellVersion}）：${about.reason ?? '(没给原因)'}`,
+      `⚠️ 工坊工具链仍为上一代（${where}；工作台已是 ${shellVersion}）：${about.reason ?? '(未提供原因)'}`,
       fixText(),
     ].join('\n');
   }
   if (about !== undefined && about.state === 'syncing') {
     if (syncingStillRunning(about.at, now, windowMs)) {
-      return `⏳ 工坊工具链正在后台同步到 ${shellVersion} —— 这段期间按上一代在跑，不用等它。`;
+      return `⏳ 工坊工具链正在后台同步到 ${shellVersion}。同步期间按上一代版本运行，无需等待。`;
     }
     return [
-      `⚠️ 工坊工具链上一次同步没走完（这条停在 ${about.at}，超过 ${String(Math.round(windowMs / 60_000))} 分钟了）：` +
-        `${where}，工作台已经是 ${shellVersion}。`,
+      `⚠️ 工坊工具链上次同步未完成（记录停在 ${about.at}，已超过 ${String(Math.round(windowMs / 60_000))} 分钟）：` +
+        `${where}；工作台已是 ${shellVersion}。`,
       fixText(),
     ].join('\n');
   }
   if (gap === undefined) return undefined;
   return (
-    `⏳ 工坊工具链还是上一代（工坊里 ${gap}，工作台 ${shellVersion}）—— ` +
-    `下一轮工作台启动时会对齐到 ${shellVersion}；一直这样就看工坊的 seed.log（${join(workbenchRoot(), 'seed.log')}）。`
+    `⏳ 工坊工具链仍为上一代（工坊中 ${gap}，工作台 ${shellVersion}）。` +
+    `下一轮工作台启动时会同步到 ${shellVersion}；若持续如此，请查看工坊的 seed.log（${join(workbenchRoot(), 'seed.log')}）。`
   );
 }
 
@@ -106,14 +106,14 @@ export function healthOf(options: {
   if (registry?.all().some((one) => one.unit === unit) === true) return { state: 'ok' };
   return {
     state: 'absent',
-    reason: installed ? '工作台还没读到它的声明 —— 新装的模块要重启一次工作台' : '还没装',
+    reason: installed ? '工作台尚未读取它的声明；新安装的模块需要重启一次工作台' : '尚未安装',
   };
 }
 
 function healthText(health: SuiteHealth): string {
   if (health.state === 'ok') return '是';
-  if (health.state === 'failed') return `不是 —— ${health.reason ?? '(没给原因)'}`;
-  return `还没有（${health.reason ?? '还不知道'}）`;
+  if (health.state === 'failed') return `否（${health.reason ?? '(未提供原因)'}）`;
+  return `尚未就绪（${health.reason ?? '状态未知'}）`;
 }
 
 export function ageText(at: number, now: number): string {
@@ -131,12 +131,12 @@ export function stampOf(at: number): string {
 
 export function readText(read: PanelUnitReport['cards'][number], now: number): string {
   const when = `${stampOf(read.at)} · ${ageText(read.at, now)}`;
-  if (read.phase === 'ready') return `${read.route} 读到了（${when}）`;
-  if (read.phase === 'loading') return `${read.route} 正在读（${when}）`;
-  if (read.phase === 'idle') return `${read.route} 没在取数（${when}）`;
+  if (read.phase === 'ready') return `${read.route} 已读取（${when}）`;
+  if (read.phase === 'loading') return `${read.route} 正在读取（${when}）`;
+  if (read.phase === 'idle') return `${read.route} 未在取数（${when}）`;
   const code = read.error?.code ?? 'unknown';
   const message = read.error?.message ?? '';
-  return `${read.route} 读不到（${code}）${message === '' ? '' : `：${message}`}（${when}）`;
+  return `${read.route} 读取失败（${code}）${message === '' ? '' : `：${message}`}（${when}）`;
 }
 
 export function renderPanel(options: {
@@ -155,21 +155,20 @@ export function renderPanel(options: {
   const head = `工作区：${root}`;
   const note =
     at === 0
-      ? '\n还没有一条面板运行态上报 —— 面板上一个取数 / 渲染都没发生过：' +
-        '要么这个工作区的面板上没开卡片，要么用户那一页还是刷新前的旧版本（上报要页面刷一次才带上）。'
-      : `\n面板上有 ${String(board.length)} 张卡｜运行态来自用户那一页（最后一次上报 ${stampOf(at)} · ${ageText(at, now)}）`;
+      ? '\n还没有面板运行态上报。面板上从未发生取数或渲染：可能是当前工作区的面板未启用模块界面，也可能是用户页面仍为刷新前的旧版本（上报需要刷新一次页面才会带上）。'
+      : `\n面板上有 ${String(board.length)} 个模块界面；运行态来自用户页面（最后一次上报 ${stampOf(at)}，${ageText(at, now)}）`;
   const body = rows.map((row) => {
     const title = `—— ${row.unit}${row.name === '' ? '' : `（${row.name}）`} · ${healthText(row.health)}`;
     const report = row.report;
     if (report === undefined) {
-      return [title, `   没上报：卡片没渲染出来，或者用户那一页还没刷新到带这份补丁的版本`].join('\n');
+      return [title, `   未上报：模块界面未渲染，或用户页面尚未刷新到包含该补丁的版本`].join('\n');
     }
     const reads = report.cards.slice(0, 6).map((one) => `   数据 · ${readText(one, now)}`);
     const more = report.cards.length > 6 ? [`   数据 · …还有 ${String(report.cards.length - 6)} 条`] : [];
     const crash =
       report.crash === undefined
-        ? '   崩过：没有'
-        : `   崩过：是 —— ${report.crash.reason}（${stampOf(report.crash.at)} · 共 ${String(report.crash.count)} 次）`;
+        ? '   未发生崩溃'
+        : `   发生过崩溃：${report.crash.reason}（${stampOf(report.crash.at)}，共 ${String(report.crash.count)} 次）`;
     return [title, ...reads, ...more, crash].join('\n');
   });
   return body.length === 0 ? `${head}${note}` : `${head}${note}\n${body.join('\n')}`;
@@ -202,19 +201,19 @@ export function statusOf(options: {
 
   const next =
     health.state === 'failed'
-      ? `它起不来：${health.reason ?? '(没给原因)'} —— 先把这一条修掉（改模块源码 → build；` +
-        '改了 package.json / cordis.patch.yml 要重启工作台），别去重装'
+      ? `它启动失败：${health.reason ?? '(未提供原因)'}。请先修复该问题（修改模块源码后执行 build；` +
+      '若修改了 package.json / cordis.patch.yml，需要重启工作台）。不要重新安装'
       : !installed
-        ? '装：workbench_diy_install（第一次）'
+        ? '安装：workbench_diy_install（首次）'
         : !known
-          ? '面板还不认得这个单元 —— 重启一次工作台（新装的模块要重启才注册进面板），重启后再 workbench_diy_show'
+          ? '面板尚未识别该模块。请重启一次工作台（新安装的模块需要重启后才注册到面板），然后再调用 workbench_diy_show'
           : !open
-            ? '上板：workbench_diy_show（只上板，不重装）'
+            ? '显示在看板：workbench_diy_show（仅显示，不重新安装）'
             : !facts.builtAll
-              ? '还没构建：pnpm exec dsh-wb-module build'
+              ? '尚未构建：pnpm exec dsh-wb-module build'
               : facts.stale
-                ? '源码比产物新：pnpm exec dsh-wb-module build（宿主侧秒级热换；改了 client.js 刷新页面）'
-                : '都在生效：改源码 → build（宿主侧秒级热换；改了 client.js 刷新页面），不要再装一遍';
+                ? '源码比产物新：pnpm exec dsh-wb-module build（宿主侧秒级热替换；修改 client.js 后刷新页面）'
+                : '均已生效：修改源码后执行 build（宿主侧秒级热替换；修改 client.js 后刷新页面），无需再次安装';
 
   return {
     unit,
@@ -250,15 +249,15 @@ export function renderStatus(
   const block = lines.map((one) => {
     const head = `—— ${one.unit}（${one.name}）`;
     const facts =
-      `   装：${one.installed ? '是' : '没有'} · 面板认得：${one.known ? '是' : '不是'}` +
-      ` · 板上开着：${one.open ? '是' : '没有'}`;
+      `   安装：${one.installed ? '是' : '否'} · 面板已识别：${one.known ? '是' : '否'}` +
+      ` · 面板已启用：${one.open ? '是' : '否'}`;
     const artifacts =
       one.artifacts.length === 0
-        ? '   产物：没有'
+        ? '   产物：无'
         : `   产物：${one.artifacts
             .map((item) => `${item.path}${item.at === null ? '（缺）' : ` ${item.at.slice(11, 19)}Z`}`)
-            .join(' · ')}` + ` · 源码比产物新：${one.stale ? '是' : '没有'}`;
-    return [head, facts, `   起得来：${healthText(one.health)}`, artifacts, `   下一步：${one.next}`].join('\n');
+            .join(' · ')}` + ` · 源码比产物新：${one.stale ? '是' : '否'}`;
+    return [head, facts, `   启动状态：${healthText(one.health)}`, artifacts, `   下一步：${one.next}`].join('\n');
   });
   const head = notice === undefined ? `工作区：${root}` : `工作区：${root}\n${notice}`;
   return `${head}\n${block.join('\n')}`;
@@ -269,23 +268,23 @@ export function publishStatusOf(preview: PublishPreview | null): string {
   const exit =
     preview.market === undefined
       ? preview.registry === undefined
-        ? '发布出口：安装包（这个环境没配可写市场索引源，模块也没声明 publishConfig.registry）'
+        ? '发布出口：安装包（当前环境未配置可发布的模块来源，模块也未声明 publishConfig.registry）'
         : `发布出口：团队源 ${preview.registry}（package.json 的 publishConfig.registry）`
       : `发布出口：市场索引 ${preview.market.url}` +
         `${preview.market.ref === undefined ? '' : `（${preview.market.ref}）`}` +
-        `—— 不填 target 时默认发这里；这一版会发 ${preview.market.nextVersion ?? preview.version}`;
+        `。未提供 target 时默认发布到这里；本次将发布 ${preview.market.nextVersion ?? preview.version}`;
   const labels =
     preview.market === undefined
       ? undefined
       : preview.labels === undefined || preview.labels.length === 0
-        ? '标签：还没有 —— 发布到市场时带上 1–2 个（labels）'
+        ? '标签：尚未设置。发布到市场时请提供 1–2 个（labels）'
         : `标签：${preview.labels.join(' · ')}`;
   const changelog =
     preview.changelog === undefined
       ? undefined
       : preview.changelog.missing
-        ? `发布前置：CHANGELOG 还差 ${preview.changelog.version} 这一版 —— 发布时带 changelogNote（会先建文件）`
-        : `发布前置：CHANGELOG 里已有 ${preview.changelog.version}`;
+        ? `发布前置：CHANGELOG 中缺少 ${preview.changelog.version} 版本。发布时请提供 changelogNote（会先创建文件）`
+        : `发布前置：CHANGELOG 中已有 ${preview.changelog.version}`;
   return [exit, labels, changelog].filter((one) => one !== undefined).join('\n');
 }
 
@@ -296,23 +295,23 @@ export function renderList(root: string, modules: readonly DiyModule[], shape: W
         ? '它声明了 workspace，但里面的包没有一个报 dsh.workbench.unit'
         : shape === 'package'
           ? '它是一个包（有 package.json），但没声明 dsh.workbench.unit，也没声明 workspace'
-          : '它没有 package.json（空项目 / 一堆散文件都算这一档）';
+          : '它没有 package.json（空项目或散落的文件都属于这一类）';
     return [
-      `这个工作区里没有模块源码（${root}）—— ${what}；这条会话也还没装过任何模块。`,
-      '只看面板 / 调卡片的话不需要模块（workbench_diy_panel 直接看）。',
-      '要在这里造一个，先给它一个包目录：pnpm exec dsh-wb-module init <名字> --dir <包目录>/module-<名字> --template diy。',
-      '目录按这个仓库的实际情况定 —— 别为了造模块硬改它的结构。',
+      `这个工作区中没有模块源码（${root}）。${what}；当前会话也尚未安装任何模块。`,
+      '只看面板或调试模块界面时不需要模块（workbench_diy_panel 可直接查看）。',
+      '要在这里创建模块，请先提供包目录：pnpm exec dsh-wb-module init <名字> --dir <包目录>/module-<名字> --template diy。',
+      '目录按该仓库的实际情况确定，不要为了创建模块而强行修改其结构。',
     ].join('\n');
   }
   const lines = modules.map(
     (one) =>
-      `${one.unit} · ${one.installed ? '已装' : '没装'} · ${one.name}` +
+      `${one.unit} · ${one.installed ? '已安装' : '未安装'} · ${one.name}` +
       (one.description === '' ? '' : `\n${' '.repeat(one.unit.length)}      ${one.description}`),
   );
   const pending = modules.filter((one) => !one.installed);
   const footer =
     pending.length === 0
-      ? '都已装过 —— **不要再装**：改源码 + dsh-wb-module build（宿主侧秒级热换；改了 client.js 刷新一下页面）。'
-      : '装：workbench_diy_install（unit=<上面那个 unit>）';
+        ? '均已安装过，**不要再次安装**：修改源码后执行 dsh-wb-module build（宿主侧秒级热替换；修改 client.js 后刷新页面）。'
+        : '安装：workbench_diy_install（unit=<上述 unit>）';
   return `工作区：${root}\n${lines.join('\n')}\n\n${footer}`;
 }

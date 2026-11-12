@@ -90,7 +90,7 @@ export function componentsTool(ctx: DshHostContext): DshToolDefinition {
       if (bin === null) {
         throw new Error(
           `这个工作区（和它各模块）里还没有 dsh-wb-module（${join(root, 'node_modules')} 下没有）—— ` +
-            '在它根目录跑一次 pnpm install 就有了；workbench_diy_status 会告诉你卡在哪一步',
+            '在它根目录跑一次 pnpm install 就有了；workbench_diy_status 会告诉你停在哪一步',
         );
       }
       const seam = seamOf(ctx);

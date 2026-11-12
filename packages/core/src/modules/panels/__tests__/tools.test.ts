@@ -203,14 +203,14 @@ describe('workbench_panels_*：scope（机器级默认板的写者）', () => {
     expect(show.required).toEqual(['id']);
     expect(show.properties?.approval_note).toBeUndefined();
     expect(show.properties?.scope?.enum).toEqual(['workspace', 'machine']);
-    expect(show.properties?.scope?.description).toContain('还没配过的工作区');
+    expect(show.properties?.scope?.description).toContain('尚未配置过的工作区');
     expect(list.required).toBeUndefined();
     expect(Object.keys(list.properties ?? {})).toEqual(['scope']);
     expect(reset.properties?.index).toBeUndefined();
 
     const listText = toolOf(registered, PANELS_LIST_TOOL).description;
-    expect(listText).toContain('机器级默认板');
-    expect(listText).toContain('自己配过的保持自己的选择');
+    expect(listText).toContain('机器级默认值');
+    expect(listText).toContain('机器级默认值只影响尚未配置过的工作区');
   });
 
   it('★ scope: machine 的 show / hide / reset 说清"它只是没配过的工作区的默认值"，且都落盘', async () => {
@@ -219,22 +219,22 @@ describe('workbench_panels_*：scope（机器级默认板的写者）', () => {
     const shown = (await toolOf(registered, PANELS_SHOW_TOOL).execute({ id: 'ci', scope: 'machine' }, EXEC)) as {
       text: string;
     };
-    expect(shown.text).toContain('还没配过的工作区会带上它');
-    expect(shown.text).toContain('机器级默认板只是还没配过的工作区的默认值');
+    expect(shown.text).toContain('尚未配置过的工作区会包含它');
+    expect(shown.text).toContain('机器级默认值只影响尚未配置过的工作区');
     expect(JSON.parse(fs.readFileSync(machineConfig(store), 'utf8'))).toEqual({ shown: ['ci'], hidden: [] });
 
     const hidden = (await toolOf(registered, PANELS_HIDE_TOOL).execute({ id: 'ci', scope: 'machine' }, EXEC)) as {
       text: string;
     };
-    expect(hidden.text).toContain('还没配过的工作区从此看不到它');
-    expect(hidden.text).toContain('名单里还列着它也一样不算数');
-    expect(shown.text).toContain('这一下也划掉了');
+    expect(hidden.text).toContain('尚未配置过的工作区从此不再显示它');
+    expect(hidden.text).toContain('名单中仍列着它也无效');
+    expect(shown.text).toContain('本次操作已清除该标记');
     expect(JSON.parse(fs.readFileSync(machineConfig(store), 'utf8'))).toEqual({ shown: [], hidden: ['ci'] });
 
     const cleared = (await toolOf(registered, PANELS_RESET_TOOL).execute({ scope: 'machine' }, EXEC)) as {
       text: string;
     };
-    expect(cleared.text).toContain('机器级默认板已清空');
+    expect(cleared.text).toContain('机器级默认值已清空');
     expect(fs.existsSync(machineConfig(store))).toBe(true);
     expect(JSON.parse(fs.readFileSync(machineConfig(store), 'utf8'))).toEqual({ shown: [], hidden: [] });
   });
@@ -265,7 +265,7 @@ describe('workbench_panels_*：scope（机器级默认板的写者）', () => {
 
     await expect(
       toolOf(registered, PANELS_FOLLOW_TOOL).execute({ scope: 'machine' }, EXEC),
-    ).rejects.toThrow(/机器级默认板没有"放回跟随"一说/);
+    ).rejects.toThrow(/机器级默认值没有"恢复跟随"这一操作/);
   });
 });
 
@@ -276,12 +276,12 @@ describe('workbench_panels_hide = "这个工作区明确不要它"（B-7）', ()
     const show = toolOf(registered, PANELS_SHOW_TOOL).description;
     const reset = toolOf(registered, PANELS_RESET_TOOL).description;
 
-    expect(hide).toContain('这个工作区明确不要它');
-    expect(hide).toContain('机器板上开着的也照样收起');
-    expect(hide).toContain('比名单管用');
-    expect(show).toContain('之前收起的也放回来');
-    expect(show).toContain('那份板上写过"不要"的也划掉');
-    expect(reset).toContain('清掉这个工作区改过的行');
+    expect(hide).toContain('当前工作区明确不要该模块');
+    expect(hide).toContain('机器级默认值中已启用的模块也同样停用');
+    expect(hide).toContain('优先级高于名单');
+    expect(show).toContain('恢复此前隐藏的项');
+    expect(show).toContain('并清除机器级默认值中的禁用记录');
+    expect(reset).toContain('清除当前工作区修改过的行');
   });
 
   it('★ hide 在当前工作区落 hidden、show 划掉它，并说清"这个工作区不要它"', async () => {
@@ -289,13 +289,13 @@ describe('workbench_panels_hide = "这个工作区明确不要它"（B-7）', ()
 
     const hidden = (await toolOf(registered, PANELS_HIDE_TOOL).execute({ id: 'issues' }, EXEC)) as { text: string };
 
-    expect(hidden.text).toContain('这个工作区明确不要它');
-    expect(hidden.text).toContain('默认在机器上也开着的套件同样收起');
+    expect(hidden.text).toContain('当前工作区明确不要它');
+    expect(hidden.text).toContain('机器级默认值中已启用的模块也同样停用');
     expect(JSON.parse(fs.readFileSync(workspaceConfig(store, A), 'utf8'))).toEqual({ shown: [], hidden: ['issues'] });
 
     const shown = (await toolOf(registered, PANELS_SHOW_TOOL).execute({ id: 'issues' }, EXEC)) as { text: string };
 
-    expect(shown.text).toContain('之前收起的也放回来了');
+    expect(shown.text).toContain('此前隐藏的项已恢复');
     expect(JSON.parse(fs.readFileSync(workspaceConfig(store, A), 'utf8'))).toEqual({
       shown: ['issues'],
       hidden: [],
@@ -309,7 +309,7 @@ describe('workbench_panels_hide = "这个工作区明确不要它"（B-7）', ()
 
     const cleared = (await toolOf(registered, PANELS_RESET_TOOL).execute({}, EXEC)) as { text: string };
 
-    expect(cleared.text).toContain('每一行都回到跟着机器级默认板走');
+    expect(cleared.text).toContain('每一行都恢复为跟随机器级默认值');
     expect(JSON.parse(fs.readFileSync(workspaceConfig(store, A), 'utf8'))).toEqual({ shown: [], hidden: [] });
   });
 

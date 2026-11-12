@@ -298,7 +298,7 @@ describe('tool-scope', () => {
 
     expect(() => scope.apply(agentWith(boom, '/w/a'))).not.toThrow();
     expect(warn).toHaveBeenCalledTimes(1);
-    expect(String(warn.mock.calls[0]?.[0])).toContain('收窄工具面失败');
+    expect(String(warn.mock.calls[0]?.[0])).toContain('限制工具面失败');
   });
 });
 

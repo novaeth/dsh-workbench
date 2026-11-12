@@ -42,21 +42,21 @@
    **Desktop**：这条 `read=` 探索线照旧；Desktop 只是不能对 Electron 里的工作台页做屏调试，
    不影响站点探索。录制（`_record_*`）也照旧。
 
-   - 不知道数据在哪：先跑 `performance.getEntriesByType('resource')`，筛 `/api/`、`.json`。
+   - 不知道数据在哪：先执行 `performance.getEntriesByType('resource')`，筛选 `/api/`、`.json`。
      有 → 接口读；无但页面有整块表格 → DOM 读。判断一次即可。
-   - `opencli` 随工作台预装（隔离运行时 `$DSH_HOME/workbench/opencli/`，启动体检安装，不碰 `~/.opencli`）。
-     未装好时工具会报"隔离运行时还没装好"；转述原文，不猜 URL。
+   - `opencli` 随工作台预装（隔离运行时位于 `$DSH_HOME/workbench/opencli/`，启动检查时安装，不碰 `~/.opencli`）。
+     如果隔离运行时尚未安装完成，工具会报错提示；请转述原文，不要猜测 URL。
    - 脚本约定：不在站点 → `{ ok: false, code: "not-on-site" }`；登录过期 → `{ ok: false, code: "not-logged-in" }`
      （工具归一为 `auth-required`）；成功 → `{ ok: true, ...数据 }`。
    - 新 session 的 `eval` 会静默开 `about:blank`（后台容器窗，不抢焦点）。脚本第一行判断
-     `location.origin`；不在站点则 `open` 该页，等约 1 秒再 eval。在 shell 里跑 opencli 时不要自己
-     拼命令前缀：`OPENCLI_WINDOW` 这类环境变量走宿主 shell 的 env 覆盖（`env` 是叠加，POSIX / pwsh 通用），
+     `location.origin`；不在站点则 `open` 该页，等约 1 秒再 eval。在 shell 里运行 opencli 时不要自行
+     拼接命令前缀：`OPENCLI_WINDOW` 这类环境变量通过宿主 shell 的 env 覆盖（`env` 是叠加，POSIX / pwsh 通用），
      手写 `env NAME=value` / `$env:NAME` 在另一个平台就是坏的。
    - 读与屏用不同会话：`data.read({ kind: 'browser' })` 默认读会话 `workbench-read`；`workbench` 是看 / 动族的屏会话。同名会把用户的页导航走。需要独立标签就传 `session: "<unit>"`。
-   - DOM 读不要在宿主脚本里 `querySelectorAll`：宿主产物禁止 `document.`，且无法单测。探时用
-     `workbench_diy_find`（`read=…, args=["--css", "<选择器>"]`）；固化用
-     `data.read({ kind: 'browser', url, script })` 返回 JSON，把"切格 + 按列取值"做成两个纯函数。
-   - 工作台刚重启时桥未就绪：首次读报"命令跑不起来"，等一秒重读；超时不重试。
+   - DOM 读取不要在宿主脚本里使用 `querySelectorAll`：宿主产物禁止 `document.`，而且无法做单元测试。探测时用
+     `workbench_diy_find`（`read=…, args=["--css", "<选择器>"]`）；固化时用
+     `data.read({ kind: 'browser', url, script })` 返回 JSON，把「切换格 + 按列取值」做成两个纯函数。
+   - 工作台刚重启时桥接尚未就绪：首次读取会报「命令跑不起来」，等一秒后重读；超时不要重试。
 
 3. **试一条最小读** —— 先证明能拿到，再写模块。记录：结构化字段形状；未登录长什么样；超时 / 被墙的形状。
    产出必须是一条可重复的命令或请求。

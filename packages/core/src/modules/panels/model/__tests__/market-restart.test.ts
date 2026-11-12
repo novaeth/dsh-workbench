@@ -20,7 +20,7 @@ describe('要重启那一下留的日志', () => {
   });
 
   it('dsh 没给理由时照写，但说清"没给"（不许编一个）', () => {
-    expect(restartLogLine(change({ application: 'restart-required' }))).toContain('没给');
+    expect(restartLogLine(change({ application: 'restart-required' }))).toContain('未提供');
   });
 
   it('不是"要重启"的三种情形都不写：applied / failed / 没有结果', () => {

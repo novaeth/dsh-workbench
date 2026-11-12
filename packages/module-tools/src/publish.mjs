@@ -108,7 +108,7 @@ export async function publish({ root }) {
 
   if (manifest.private === true) {
     console.log('✔ 清单干净。包是 `private: true` —— **不会**发到任何源（DIY 的模块都该这样）。');
-    console.log(`  要给别人用：摘掉 private + 写上发布目标，再自己跑 \`npm publish\`（这条命令不会替你发）。`);
+    console.log(`  要给别人用：摘掉 private + 写上发布目标，再自己跑 \`npm publish\`（这条命令不会自动发布）。`);
     return;
   }
   console.log('✔ 清单干净。真要发就自己跑（凭据在你手上）：');

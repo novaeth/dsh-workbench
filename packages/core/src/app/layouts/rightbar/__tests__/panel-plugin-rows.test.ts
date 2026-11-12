@@ -91,7 +91,7 @@ describe('面板配置那一屏的行：模块 + 插件行', () => {
         for (const word of internal) expect(sentence, `${language}:${key}:${word}`).not.toContain(word);
       }
     }
-    expect(dictionaries.zh['panels.groupBoardless']).toBe('无看板模块');
+    expect(dictionaries.zh['panels.groupBoardless']).toBe('未加入看板的模块');
     expect(dictionaries.zh['panels.groupPlugins']).toBe('插件');
   });
 });
