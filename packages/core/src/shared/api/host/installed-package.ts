@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, realpathSync } from 'node:fs';
-import { join, sep } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { authorOf } from './package-author';
 import type {
   DiscoverDoc,
@@ -10,7 +10,6 @@ import type {
 export interface InstalledPackageReaderOptions {
   readonly profileDir: string | null;
   readonly sharedLibsDir: string | null;
-  readonly workbenchRoot: string;
   readonly pluginDirOf?: ((pkg: string) => string | undefined) | undefined;
 }
 
@@ -68,16 +67,6 @@ function manifestOf(dir: string): Record<string, unknown> | null {
   }
 }
 
-function within(root: string, dir: string): boolean {
-  try {
-    const realRoot = realpathSync(root);
-    const realDir = realpathSync(dir);
-    return realDir === realRoot || realDir.startsWith(`${realRoot}${sep}`);
-  } catch {
-    return false;
-  }
-}
-
 function safeName(pkg: string): boolean {
   const text = pkg.trim();
   if (text === '' || !PACKAGE_NAME.test(text)) return false;
@@ -94,14 +83,8 @@ export function createInstalledPackageReader(
     const plugin = options.pluginDirOf?.(pkg);
     if (plugin !== undefined && existsSync(join(plugin, 'package.json'))) dirs.push(plugin);
     if (!safeName(pkg)) return dirs;
-    if (options.profileDir !== null) {
-      const dir = join(options.profileDir, 'node_modules', pkg);
-      if (within(options.profileDir, dir) || within(options.workbenchRoot, dir)) dirs.push(dir);
-    }
-    if (options.sharedLibsDir !== null) {
-      const dir = join(options.sharedLibsDir, pkg);
-      if (within(options.sharedLibsDir, dir)) dirs.push(dir);
-    }
+    if (options.profileDir !== null) dirs.push(join(options.profileDir, 'node_modules', pkg));
+    if (options.sharedLibsDir !== null) dirs.push(join(options.sharedLibsDir, pkg));
     return [...new Set(dirs)];
   }
 

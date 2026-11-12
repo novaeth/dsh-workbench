@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -42,7 +42,6 @@ describe('已安装包的元数据与文档：先从本机包目录读，读不�
     const reader = createInstalledPackageReader({
       profileDir,
       sharedLibsDir: null,
-      workbenchRoot: root,
     });
 
     expect(reader.info('@a/hello')).toEqual({
@@ -67,6 +66,28 @@ describe('已安装包的元数据与文档：先从本机包目录读，读不�
     });
   });
 
+  it('★ 安装源 link 到 profile 外（工作台自己那份）也读得到', () => {
+    const root = tempRoot();
+    const profileDir = join(root, 'profile');
+    const source = join(root, 'checkout', 'packages', 'core');
+    writePackage(
+      source,
+      { name: '@dsh-workbench/core', version: '1.2.7', description: '工作台' },
+      { 'README.md': '# 工作台说明' },
+    );
+    mkdirSync(join(profileDir, 'node_modules', '@dsh-workbench'), { recursive: true });
+    symlinkSync(source, join(profileDir, 'node_modules', '@dsh-workbench', 'core'), 'dir');
+    const reader = createInstalledPackageReader({ profileDir, sharedLibsDir: null });
+
+    expect(reader.info('@dsh-workbench/core')).toMatchObject({ description: '工作台' });
+    expect(reader.doc('@dsh-workbench/core', '1.2.7', 'readme')).toEqual({
+      ok: true,
+      kind: 'readme',
+      version: '1.2.7',
+      text: '# 工作台说明',
+    });
+  });
+
   it('★ 版本对不上时不拿别的版本冒充，直接说缺失', () => {
     const root = tempRoot();
     const profileDir = join(root, 'profile');
@@ -78,7 +99,6 @@ describe('已安装包的元数据与文档：先从本机包目录读，读不�
     const reader = createInstalledPackageReader({
       profileDir,
       sharedLibsDir: null,
-      workbenchRoot: root,
     });
 
     expect(reader.doc('@a/hello', '1.0.0', 'readme')).toEqual({
@@ -96,7 +116,6 @@ describe('已安装包的元数据与文档：先从本机包目录读，读不�
     const reader = createInstalledPackageReader({
       profileDir,
       sharedLibsDir: null,
-      workbenchRoot: root,
     });
 
     expect(reader.doc('plain', '1.0.0', 'readme')).toMatchObject({
@@ -113,7 +132,6 @@ describe('已安装包的元数据与文档：先从本机包目录读，读不�
     const reader = createInstalledPackageReader({
       profileDir: null,
       sharedLibsDir: null,
-      workbenchRoot: root,
       pluginDirOf: (pkg) => (pkg === '/tmp/mine' ? pluginDir : undefined),
     });
 
@@ -131,7 +149,6 @@ describe('已安装包的元数据与文档：先从本机包目录读，读不�
     const reader = createInstalledPackageReader({
       profileDir: null,
       sharedLibsDir,
-      workbenchRoot: root,
     });
 
     expect(reader.info('opencli-workflow')).toMatchObject({
@@ -149,7 +166,6 @@ describe('已安装包的元数据与文档：先从本机包目录读，读不�
     const reader = createInstalledPackageReader({
       profileDir,
       sharedLibsDir: null,
-      workbenchRoot: root,
     });
 
     expect(reader.info('../secret')).toBeNull();

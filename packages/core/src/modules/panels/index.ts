@@ -115,7 +115,6 @@ export const panelsHost: UnitOwnedFace = {
     const installedPackages = createInstalledPackageReader({
       profileDir,
       sharedLibsDir: join(supply.isolatedRoot(), 'libs', 'node_modules'),
-      workbenchRoot: workbenchRoot(),
       pluginDirOf: (pkg) => {
         const entry = ledger.read(pkg);
         return entry === undefined ? undefined : pluginDirOf(entry, ledger.pluginFiles);
