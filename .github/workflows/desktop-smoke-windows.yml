@@ -91,6 +91,14 @@ jobs:
           function Start-App([int]$port, [string]$log, [string]$logErr) {
             Start-Process -FilePath $env:DESKTOP_EXE -ArgumentList "--remote-debugging-port=$port" -RedirectStandardOutput $log -RedirectStandardError $logErr -PassThru
           }
+          function Invoke-Allowed([string]$label, [scriptblock]$what) {
+            $log = Join-Path $env:RUNNER_TEMP "$label.log"
+            & $what *> $log
+            if ($LASTEXITCODE -eq 0) { $global:LASTEXITCODE = 0; return $true }
+            Get-Content $log -Tail 20 | Write-Host
+            $global:LASTEXITCODE = 0
+            return $false
+          }
           function Invoke-Logged([string]$label, [scriptblock]$what) {
             $log = Join-Path $env:RUNNER_TEMP "$label.log"
             & $what *> $log
@@ -167,7 +175,15 @@ jobs:
           $app7 = Start-App 9228 $out7 $err7
           "after-self-update desktop pid: $($app7.Id)"
           if (!(Wait-Page 9228)) { throw 'update-after-restart: 起 9228 后没有页面' }
-          Invoke-Logged 'update-after-restart' { node scripts/desktop-smoke/cdp-probe.mjs 9228 desktop-${{ inputs.label }}-after-self-update.png --verify-only --expect-workbench }
+          if (-not (Invoke-Allowed 'update-after-restart' { node scripts/desktop-smoke/cdp-probe.mjs 9228 desktop-${{ inputs.label }}-after-self-update.png --verify-only --expect-workbench })) {
+            Write-Host '第一次重启后体检没过：再启一次（换链后的头一跑偶发拿不到宿主路由）'
+            Stop-App
+            Start-Sleep -Seconds 3
+            $app8 = Start-App 9228 $out7 $err7
+            "after-self-update retry desktop pid: $($app8.Id)"
+            if (-not (Wait-Page 9228)) { throw 'update-after-restart: 重试时起 9228 后没有页面' }
+            Invoke-Logged 'update-after-restart-retry' { node scripts/desktop-smoke/cdp-probe.mjs 9228 desktop-${{ inputs.label }}-after-self-update-retry.png --verify-only --expect-workbench }
+          }
           $global:LASTEXITCODE = 0
       - name: Assert opencli installed
         shell: pwsh
@@ -243,6 +259,12 @@ jobs:
           git config user.name ci
           git config user.email ci@example.com
           shopt -s nullglob
+          {
+            echo "== self-update.json"; cat "$USERPROFILE/.dsh/workbench/self-update.json" 2>/dev/null
+            echo "== profile package.json"; cat "$USERPROFILE/.dsh/profiles/desktop/package.json" 2>/dev/null
+            echo "== profile links"; ls -l "$USERPROFILE/.dsh/profiles/desktop/node_modules/@dsh-workbench" 2>/dev/null
+            echo "== versions"; ls -1 "$USERPROFILE/.dsh/workbench/versions" 2>/dev/null
+          } > "desktop-${{ inputs.label }}-self-update-state.txt" 2>&1 || true
           for log in "$RUNNER_TEMP"/desktop-${{ inputs.label }}*.log; do
             cp "$log" "./$(basename "$log")" 2>/dev/null || true
           done

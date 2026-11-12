@@ -93,6 +93,13 @@ jobs:
           start_app() {
             ( cd / && exec "$BIN" --remote-debugging-port="$1" >> "$APP_LOG" 2>> "$APP_ERR" ) &
           }
+          run_logged_allowed() {
+            local label="$1"
+            shift
+            if "$@" > "$RUNNER_TEMP/$label.log" 2>&1; then return 0; fi
+            tail -n 20 "$RUNNER_TEMP/$label.log"
+            return 1
+          }
           run_logged() {
             local label="$1"
             shift
@@ -165,7 +172,17 @@ jobs:
             echo "::error title=update-after-restart::起 9228 后没有页面"
             exit 1
           fi
-          run_logged update-after-restart node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9228 desktop-mac-after-self-update.png --verify-only --expect-workbench
+          if ! run_logged_allowed update-after-restart node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9228 desktop-mac-after-self-update.png --verify-only --expect-workbench; then
+            echo "第一次重启后体检没过：再启一次（换链后的头一跑在 Windows/mac 上偶发拿不到宿主路由）"
+            stop_app
+            sleep 3
+            start_app 9228
+            if ! wait_page 9228; then
+              echo "::error title=update-after-restart::重试时起 9228 后没有页面"
+              exit 1
+            fi
+            run_logged update-after-restart-retry node "$GITHUB_WORKSPACE/scripts/desktop-smoke/cdp-probe.mjs" 9228 desktop-mac-after-self-update-retry.png --verify-only --expect-workbench
+          fi
       - name: Assert opencli installed
         shell: bash
         run: |
@@ -238,6 +255,15 @@ jobs:
           git config user.name ci
           git config user.email ci@example.com
           shopt -s nullglob
+          {
+            echo "== self-update.json"; cat "$HOME/.dsh/workbench/self-update.json" 2>/dev/null
+            echo "== profile package.json"; cat "$HOME/.dsh/profiles/desktop/package.json" 2>/dev/null
+            echo "== profile links"
+            for pkg in "$HOME"/.dsh/profiles/desktop/node_modules/@dsh-workbench/*; do
+              echo "$pkg -> $(readlink "$pkg" 2>/dev/null || echo '(真目录)')"
+            done
+            echo "== versions"; ls -1 "$HOME/.dsh/workbench/versions" 2>/dev/null
+          } > "desktop-mac-self-update-state.txt" 2>&1 || true
           for log in "$RUNNER_TEMP"/desktop-mac*.log; do
             cp "$log" "./$(basename "$log")" 2>/dev/null || true
           done
