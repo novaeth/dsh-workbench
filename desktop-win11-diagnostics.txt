@@ -1,0 +1,1576 @@
+
+=== meta ===
+collected-at: 2026-11-12T01:06:38.156Z
+platform: win32 x64 · node v24.22.2
+cwd: D:\a\dsh-workbench\dsh-workbench
+home: C:\Users\runneradmin
+dsh-home: C:\Users\runneradmin\.dsh
+workbench-home: C:\Users\runneradmin\.dsh\workbench
+GITHUB_RUN_ID: 43130135118
+GITHUB_RUN_ATTEMPT: 1
+GITHUB_SHA: f852dc7d39fe3d6039ba587308ab38afa2b3bc38
+GITHUB_JOB: smoke
+DESKTOP_SMOKE_STATUS: failure
+probe-log: D:\a\dsh-workbench\dsh-workbench\desktop-win11-probe.log
+git: f852dc7 ci(desktop-smoke): 失败时把主进程 stdout/stderr 一起收进日志分支
+git-status: M packages/module-hello/client.js
+ M packages/shared/src/host/release-packages.generated.ts
+?? desktop-win11-add-plugin-add-plugin-body.txt
+?? desktop-win11-add-plugin-add-plugin-preview-body.txt
+?? desktop-win11-add-plugin-add-plugin.json
+?? desktop-win11-add-plugin-final-body.txt
+?? desktop-win11-add-plugin-smoke.json
+?? desktop-win11-add-plugin.png
+?? desktop-win11-after-restart-client-bundles.json
+?? desktop-win11-after-restart-console-events.json
+?? desktop-win11-after-restart-final-body.txt
+?? desktop-win11-after-restart-page-internals.json
+?? desktop-win11-after-restart-smoke.json
+?? desktop-win11-after-restart-units.json
+?? desktop-win11-after-restart-verify-body.txt
+?? desktop-win11-after-self-update-console-events.json
+?? desktop-win11-after-self-update-failed-body.txt
+?? desktop-win11-after-self-update-failed-preflight.json
+?? desktop-win11-after-self-update-fatal-body.txt
+?? desktop-win11-after-self-update-fatal.png
+?? desktop-win11-after-self-update-not-ready-body.txt
+?? desktop-win11-final-body.txt
+?? desktop-win11-gate-body.txt
+?? desktop-win11-gate-preflight.json
+?? desktop-win11-gate.png
+?? desktop-win11-market-body.txt
+?? desktop-win11-market-installed.txt
+?? desktop-win11-plugins-body.txt
+?? desktop-win11-self-update-alive.txt
+?? desktop-win11-self-update-before.json
+?? desktop-win11-self-update-body.txt
+?? desktop-win11-self-update-final-body.txt
+?? desktop-win11-self-update-ready.json
+?? desktop-win11-self-update-ready.txt
+?? desktop-win11-self-update-row-after.json
+?? desktop-win11-self-update-row.json
+?? desktop-win11-self-update-smoke.json
+?? desktop-win11-smoke.json
+?? desktop-win11.png
+
+=== triage ===
+探针总结: [37.8s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"37.8s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.1s","ready":"13.2s","module-card":"17.8s"},"card":true,"units":["panels","hello"]}
+第一处错误: （没有）
+
+里程碑:
+[40.2s] MILESTONE browser-launched @ 40.2s
+[46.1s] MILESTONE ready @ 46.1s
+[49.2s] MILESTONE market-open @ 49.2s
+[56.1s] MILESTONE market-source-added @ 56.1s
+[58.1s] MILESTONE market-listed @ 58.1s
+[59.7s] MILESTONE market-install-clicked @ 59.7s
+[63.7s] MILESTONE market-installed @ 63.7s
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[13.2s] MILESTONE ready @ 13.2s
+[17.8s] MILESTONE module-card @ 17.8s
+
+现场文件:
+[24.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-gate-preflight.json (5170 bytes)
+[58.1s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-market-body.txt (585 bytes)
+[63.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-market-installed.txt (631 bytes)
+[63.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-smoke.json (214 bytes)
+[63.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-final-body.txt (631 bytes)
+[64.3s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win11.png (58422 bytes)
+[17.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-verify-body.txt (404 bytes)
+[17.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-units.json (5854 bytes)
+[17.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-client-bundles.json (25 bytes)
+[17.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-page-internals.json (2098 bytes)
+[17.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-console-events.json (9550 bytes)
+[17.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-smoke.json (101 bytes)
+[17.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-final-body.txt (404 bytes)
+[37.8s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+
+体检失败快照:
+（没有）
+
+=== smoke results ===
+desktop-win11-smoke.json:
+{
+  "market": "https://github.com/novaeth/dsh-workbench-market.git",
+  "module": "@dsh-workbench/module-hello",
+  "listed": true,
+  "installed": true,
+  "restartHint": false,
+  "phase": "ready",
+  "bridge": "ok"
+}
+desktop-win11-after-restart-smoke.json:
+{
+  "card": true,
+  "units": [
+    "panels",
+    "hello"
+  ],
+  "phase": "ready",
+  "bridge": "ok"
+}
+
+=== checklist ===
+profile 里有 @dsh-workbench/core: 是（link:../../workbench/versions/1.2.3-beta.12/node_modules/@dsh-workbench/core）
+profile 里有 @dsh-workbench/module-hello: 是（github:novaeth/dsh-workbench-market#7135bc722ef4678d5636c84de29a7bf2af739263&path:/packages/module-hello）
+opencli 装上了: 是（C:\Users\runneradmin\.dsh\workbench\opencli\toolchain\node_modules\@jackwener\opencli\package.json）
+市场索引列出模块: 是
+市场装上了模块: 是
+重启后看到了模块卡片: 是
+截图: desktop-win11-add-plugin.png (56734) · desktop-win11-after-self-update-fatal.png (42075) · desktop-win11-gate.png (12903) · desktop-win11.png (58422)
+
+=== probe log ===
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-probe.log（10870 字节，末尾 81 行）
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.3s] MILESTONE cdp-connected @ 0.3s
+[0.3s] app-shell: HARNESS | Loading plugins…
+[2.3s] app-shell: HARNESS | Loading plugins…
+[4.3s] app-shell: HARNESS | Loading plugins…
+[6.5s] app-shell: New Session | Ctrl | + | N | Plugins | Automation tasks | More | Workspaces | No sessions yet | More | Into the Unknown | Preview | Choose workspace | Standard mode | Choose a workspace to start
+[6.7s] STEP click ["Plugins"]: "Plugins"
+[8.0s] plugins-page: New Session | Ctrl | + | N | Plugins | Automation tasks | More | Workspaces | Default workspace | More | Plugins | Install, enable, and configure plugins | Refresh | Add plugin
+[8.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-plugins-body.txt (150 bytes)
+[8.0s] STEP click ["Add plugin"]: "missing"
+[8.8s] add-plugin wait: {"ok":false,"dialog":false,"body":"ack to the agent. Review local changes and use a separate worktree to isolate each task. GitHub features require the gh CLI installed and signed in on the host."}
+[10.4s] STEP click ["Add plugin"]: "Add plugin"
+[11.2s] add-plugin wait: {"ok":true}
+[11.2s] FIELDS: [{"index":0,"tag":"INPUT","type":"text","placeholder":"Search session names","aria":null,"visible":true},{"index":1,"tag":"INPUT","type":"text","placeholder":"for example dsh-plugin-whale-pet","aria":"Package name or address","visible":true}]
+[11.7s] filled: "D:\\a\\dsh-workbench\\dsh-workbench\\packages\\core"
+[11.7s] STEP click ["Install"]: "Install"
+[12.9s] MILESTONE install-clicked @ 12.9s
+[14.9s] install wait: rkbench/core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Installed |  | @dsh-workbench/core |  | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 |  | Version 1.2.3-beta.12 |  | Show install details | Enable now
+[14.9s] MILESTONE installed @ 14.9s
+[14.9s] STEP click ["Enable now"]: "Enable now"
+[20.9s] health wait [installing] toolchain:ok cli:running(安装 opencli) bridge:pending diy:running :: o the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[24.0s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win11-gate.png (12903 bytes)
+[24.0s] MILESTONE gate-seen @ 24.0s
+[24.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-gate-body.txt (1743 bytes)
+[24.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-gate-preflight.json (5170 bytes)
+[24.0s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[26.0s] health wait [installing] toolchain:ok cli:running(安装 opencli) bridge:pending diy:running :: o the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[26.0s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[28.0s] health wait [installing] toolchain:ok cli:running(安装 opencli) bridge:pending diy:running :: o the panel”. | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[28.0s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[30.1s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[30.1s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[32.1s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[32.1s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[34.1s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[34.1s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[36.1s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[36.1s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[38.2s] health wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[38.2s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[40.2s] health wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: packages\core\vendor\browser-extension; (2) use the link below to install it from the Chrome Web Store. Then hit Retry here. | Get the extension in the Chrome Web Store | Open browser | Retry | Enter the workbench anyway
+[40.2s] 模拟用户装扩展：起浏览器 D:\a\_temp\cft\chrome-win64\chrome.exe（--load-extension=D:\a\_temp\opencli-ext，日志 D:\a\dsh-workbench\dsh-workbench\desktop-win11-chrome.log）
+[40.2s] MILESTONE browser-launched @ 40.2s
+[42.9s] extension wait: connected :: [OK] Extension: connected (v1.0.27)
+[42.9s] chrome targets: browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://webui-toolbar.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/ | service_worker:chrome-extension://admccjkmockfdflocgggjfgdacdodkdf/background.js | service_worker:chrome-extension://glbjnfimcajjenihimblfaponejbkoph/background.js | service_worker:chrome-extension://eghmcigglheggjiadbmpddohagagpnca/dist/background.js
+[42.9s] STEP click ["Retry","重试"]: "Retry"
+[46.1s] health wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: /core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[46.1s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: /core | 个人工作台：Agent 工作台（左栏 + 常驻对话 + 自研右侧数据面板）。 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[46.1s] MILESTONE ready @ 46.1s
+[46.2s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Browse the module market"
+[49.2s] market-page: al | Installed modules | 0 | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[49.2s] MILESTONE market-open @ 49.2s
+[49.2s] STEP click ["Discover"]: "Discover"
+[51.2s] STEP click ["Add index source","Manage index sources…"]: "Add index source"
+[52.7s] source field: ""
+[53.0s] STEP click ["Add"]: "Add"
+[56.1s] MILESTONE market-source-added @ 56.1s
+[58.1s] market-listing: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[58.1s] MILESTONE market-listed @ 58.1s
+[58.1s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-market-body.txt (585 bytes)
+[58.1s] STEP row install: "Install Sample module"
+[58.1s] confirm install: {"clicked":false,"labels":["Change address","Cancel","Checking…"]}
+[58.6s] confirm install: {"clicked":false,"labels":["Change address","Cancel","Checking…"]}
+[59.1s] confirm install: {"clicked":false,"labels":["Change address","Cancel","Checking…"]}
+[59.7s] confirm install: {"clicked":true}
+[59.7s] MILESTONE market-install-clicked @ 59.7s
+[59.7s] market-install: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[61.7s] market-install: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[63.7s] market-install: .2 · Nov 1, 2026 | Install | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[63.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-market-installed.txt (631 bytes)
+[63.7s] MILESTONE market-installed @ 63.7s
+[63.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-smoke.json (214 bytes)
+[63.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-final-body.txt (631 bytes)
+[63.7s] TITLE: DeepSeek Harness
+[64.3s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win11.png (58422 bytes)
+[64.3s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"64.3s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.3s","install-clicked":"12.9s","installed":"14.9s","gate-seen":"24.0s","browser-launched":"40.2s","ready":"46.1s","market-open":"49.2s","market-source-added":"56.1s","market-listed":"58.1s","market-install-clicked":"59.7s","market-installed":"63.7s"},"market":"https://github.com/novaeth/dsh-workbench-market.git","module":"@dsh-workbench/module-hello","listed":true,"installed":true,"restartHint":false}
+
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-probe.log（3400 字节，末尾 33 行）
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [] none :: HARNESS | Loading plugins…
+[4.2s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[4.2s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[8.1s] ready wait [checking] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: HARNESS | Loading plugins… | Preparing the workbench |  | Getting the runtime ready…
+[8.1s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[11.2s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: / commands, @ files or sessions | Select model | Workbench panel | Reading the panel setup… | Preparing the workbench | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode
+[11.2s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[13.2s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: / commands, @ files or sessions | Select model | Workbench panel | No modules on the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[13.2s] MILESTONE ready @ 13.2s
+[13.2s] verify wait :: host units panels,hello :: cards （无） ::  the panel yet | You can also just tell the agent: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[13.2s] STEP click ["选择模块","Choose modules"]: "Choose modules"
+[14.7s] STEP panel module hello [示例模块/Sample module/hello] dialogs=1 rows=["Sample module"] -> "clicked:hello"
+[17.8s] verify wait :: host units panels,hello :: cards wb-card-hello :: ample module | Restore the default everywhere | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[17.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-verify-body.txt (404 bytes)
+[17.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-units.json (5854 bytes)
+[17.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-client-bundles.json (25 bytes)
+[17.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-page-internals.json (2098 bytes)
+[17.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-console-events.json (9550 bytes)
+[17.8s] MILESTONE module-card @ 17.8s
+[17.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-smoke.json (101 bytes)
+[17.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-final-body.txt (404 bytes)
+[17.8s] TITLE: DeepSeek Harness
+[37.8s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+[37.8s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"37.8s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.1s","ready":"13.2s","module-card":"17.8s"},"card":true,"units":["panels","hello"]}
+
+
+=== app stdout/stderr ===
+DESKTOP_SMOKE_APP_LOG: D:\a\_temp\desktop-win11-app.log
+D:\a\_temp\desktop-win11-app.log（379 字节，末尾 7 行）
+
+Checking for update
+Generated new staging user ID: 4fbeb90f-1035-511f-bfa1-8591fd30d08e
+Staging percentage: 0.15, percentage: 0.9890261029333403, user id: 4fbeb90f-1035-511f-bfa1-8591fd30d08e
+Update for version 0.2.2-rc.1 is not available (latest version: 0.2.2-rc.2, downgrade is disallowed).
+dsh web: http://127.0.0.1:49647/?token=260_BCoW-aLrhrbl5Zs5BOvtXIGkk_5wzVGk0vzwKJ0
+
+DESKTOP_SMOKE_APP_ERR: D:\a\_temp\desktop-win11-app.err.log
+D:\a\_temp\desktop-win11-app.err.log（99 字节，末尾 3 行）
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/06646bc7-f406-4c1d-82e2-c02f0e915d0f
+
+DESKTOP_SMOKE_APP_LOG_2: D:\a\_temp\desktop-win11-app2.log
+D:\a\_temp\desktop-win11-app2.log（311 字节，末尾 6 行）
+
+Checking for update
+Staging percentage: 0.15, percentage: 0.9890261029333403, user id: 4fbeb90f-1035-511f-bfa1-8591fd30d08e
+Update for version 0.2.2-rc.1 is not available (latest version: 0.2.2-rc.2, downgrade is disallowed).
+dsh web: http://127.0.0.1:52555/?token=dc3dbosEN7qsnShGdhkaw2t_qlXOWQYZKC6ZtEqv_nw
+
+DESKTOP_SMOKE_APP_ERR_2: D:\a\_temp\desktop-win11-app2.err.log
+D:\a\_temp\desktop-win11-app2.err.log（99 字节，末尾 3 行）
+
+DevTools listening on ws://127.0.0.1:9223/devtools/browser/d4e5f561-536f-445c-bb22-a7a665215f7d
+
+
+=== market artifacts ===
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-market-body.txt（596 字节，末尾 34 行）
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Installed
+Discover
+dsh-workbench-market
+Labels
+Sort: Default order
+All
+workbench
+Sample module
+workbench
+Smallest sample module: one extra card on the panel, for trying installs and uninstalls.
+1.1.14-beta.2 · Nov 1, 2026
+Install
+Workbench panel
+No modules on the panel yet
+You can also just tell the agent: “add a module to the panel”.
+Build a module
+Choose modules
+Browse the module market
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-market-installed.txt（642 字节，末尾 39 行）
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Installed
+Discover
+dsh-workbench-market
+Labels
+Sort: Default order
+All
+workbench
+
+Reading the index
+
+Installed: Sample module
+
+Sample module
+workbench
+Smallest sample module: one extra card on the panel, for trying installs and uninstalls.
+1.1.14-beta.2 · Nov 1, 2026
+Install
+Workbench panel
+No modules on the panel yet
+You can also just tell the agent: “add a module to the panel”.
+Build a module
+Choose modules
+Browse the module market
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-verify-body.txt（不存在）
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-verify-body.txt（412 字节，末尾 28 行）
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+New Session
+Default workspace
+More
+Into the Unknown
+Preview
+Standard mode
+Describe what you want to build, / commands, @ files or sessions
+Select model
+Workbench panel
+Panel setup
+⠿
+Sample module
+Restore the default everywhere
+Sample module
+
+hello, workbench
+
+This card comes from a standalone workbench module.
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-final-body.txt（642 字节，末尾 39 行）
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Installed
+Discover
+dsh-workbench-market
+Labels
+Sort: Default order
+All
+workbench
+
+Reading the index
+
+Installed: Sample module
+
+Sample module
+workbench
+Smallest sample module: one extra card on the panel, for trying installs and uninstalls.
+1.1.14-beta.2 · Nov 1, 2026
+Install
+Workbench panel
+No modules on the panel yet
+You can also just tell the agent: “add a module to the panel”.
+Build a module
+Choose modules
+Browse the module market
+
+=== desktop install tree ===
+resources: C:\Users\runneradmin\AppData\Local\Programs\DeepSeek Harness\resources（在）
+  dir app.asar.unpacked\dsh\node_modules
+  file app.asar.unpacked\dsh\node_modules\clone\.npmignore
+  dir app.asar.unpacked\dsh\node_modules\node-addon-require-builtin-win32-x64-msvc
+  dir app.asar.unpacked\dsh\node_modules\node-pty
+  dir runtime
+  dir runtime\primary-runtime
+  dir runtime\primary-runtime\dependencies\node
+  dir runtime\primary-runtime\dependencies\node\bin
+  dir runtime\primary-runtime\dependencies\node\node_modules
+  dir runtime\primary-runtime\dependencies\pnpm
+  dir runtime\primary-runtime\dependencies\pnpm\bin
+  dir runtime\primary-runtime\dependencies\pnpm\dist
+  dir runtime\primary-runtime\dependencies\python
+  dir runtime\primary-runtime\dependencies\python\DLLs
+  dir runtime\primary-runtime\dependencies\python\include
+  dir runtime\primary-runtime\dependencies\python\Lib
+  dir runtime\primary-runtime\dependencies\python\libs
+  dir runtime\primary-runtime\dependencies\python\Scripts
+  dir runtime\primary-runtime\dependencies\python\tcl
+
+=== opencli doctor ===
+bin: C:\Users\runneradmin\.dsh\workbench\opencli\bin\opencli.cmd（在）
+exit: 1
+
+node:internal/modules/cjs/loader:1568
+  throw err;
+  ^
+
+Error: Cannot find module 'C:\Users\runneradmin\.dsh\workbench\versions\1.2.3-beta.4\node_modules\@dsh-workbench\adapter-runtime\bin\opencli-isolated.mjs'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+    at Module._load (node:internal/modules/cjs/loader:1341:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v24.22.2
+
+=== runner os ===
+platform: win32 · release: 10.0.26100 · version: Windows Server 2025 Datacenter
+OS env: Windows_NT
+Microsoft Windows [Version 10.0.26100.33674]
+
+=== extension prep ===
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-prep.log（666 字节，末尾 8 行）
+cft: https://storage.googleapis.com/chrome-for-testing-public/157.0.8103.78/win64/chrome-win64.zip
+chrome: 157.0.8103.78
+opencli pin: 1.8.8
+latest release: v2.0.3
+extension: https://github.com/jackwener/opencli/releases/download/v2.0.3/opencli-extension-v1.0.27.zip
+extension version: 1.0.27 · dir: D:\a\_temp\opencli-ext
+env: DESKTOP_SMOKE_CHROME=D:\a\_temp\cft\chrome-win64\chrome.exe · DESKTOP_SMOKE_EXTENSION=D:\a\_temp\opencli-ext · DESKTOP_SMOKE_OPENCLI=C:\Users\runneradmin\.dsh\workbench\opencli\bin\opencli.cmd · DESKTOP_SMOKE_NODE_BIN=C:\Users\runneradmin\AppData\Local\Programs\DeepSeek Harness\resources\runtime\primary-runtime\dependencies\node\bin
+
+
+=== smoke browser ===
+chrome: D:\a\_temp\cft\chrome-win64\chrome.exe
+extension: D:\a\_temp\opencli-ext
+opencli bin: C:\Users\runneradmin\.dsh\workbench\opencli\bin\opencli.cmd
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-chrome.log（99 字节，末尾 3 行）
+
+DevTools listening on ws://127.0.0.1:9333/devtools/browser/70264eeb-f15f-4997-a48b-f0a6cb7a1043
+
+
+=== units and client injection ===
+desktop-win11-units.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-units.json（不存在）
+desktop-win11-after-restart-units.json:
+{
+  "ok": true,
+  "manifests": [
+    {
+      "id": "panels",
+      "titleKey": "panels.title",
+      "card": null,
+      "tools": [
+        {
+          "name": "workbench_toolbox_list",
+          "writes": false
+        },
+        {
+          "name": "workbench_toolbox_open",
+          "writes": false,
+          "elevates": true
+        },
+        {
+          "name": "workbench_toolbox_close",
+          "writes": false
+        },
+        {
+          "name": "workbench_panels_list",
+          "writes": false
+        },
+        {
+          "name": "workbench_modules_list",
+          "writes": false
+        },
+        {
+          "name": "workbench_market_sources",
+          "writes": false
+        },
+        {
+          "name": "workbench_market_categories",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_status",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_panel",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_components",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_recon",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_spec",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_state",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_html",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_find",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_click",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_hover",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_type",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_fill",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_keys",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_scroll",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_wait",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_eval",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_screenshot",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_network",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_dialog",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_logs_watch",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_logs_read",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_logs_stop",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_record_read",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_record_detail",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_record_stop",
+          "writes": false
+        },
+        {
+          "name": "workbench_long_tasks_list",
+          "writes": false
+        },
+        {
+          "name": "workbench_panels_show",
+          "writes": true
+        },
+        {
+          "name": "workbench_panels_hide",
+          "writes": true
+        },
+        {
+          "name": "workbench_panels_move",
+          "writes": true
+        },
+        {
+          "name": "workbench_panels_reset",
+          "writes": true
+        },
+        {
+          "name": "workbench_panels_follow",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_install",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_update",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_uninstall",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_install_bundle",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_update_dependency",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_update_plugin",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_uninstall_plugin",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_update_workbench",
+          "writes": true
+        },
+        {
+          "name": "workbench_market_enable",
+          "writes": true
+        },
+        {
+          "name": "workbench_market_disable",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_install",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_publish",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_show",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_record_prepare",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_debug_start",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_debug_pause",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_debug_resume",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_debug_stop",
+          "writes": true
+        },
+        {
+          "name": "workbench_long_tasks_stop",
+          "writes": true
+        }
+      ],
+      "host": {
+        "inject": [],
+        "optional": [
+          "tools",
+          "workbenchSeam"
+        ]
+      }
+    },
+    {
+      "id": "hello",
+      "title": {
+        "zh": "示例模块",
+        "en": "Sample module"
+      },
+      "titleKey": "dsh-workbench.unit.hello.title",
+      "card": {
+        "order": 90
+      },
+      "tools": [],
+      "host": {
+        "inject": [],
+        "writes": []
+      }
+    }
+  ],
+  "installable": [
+    "hello"
+  ]
+}
+
+desktop-win11-client-bundles.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-client-bundles.json（不存在）
+desktop-win11-after-restart-client-bundles.json:
+{"names":[],"reports":[]}
+desktop-win11-page-internals.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-page-internals.json（不存在）
+desktop-win11-after-restart-page-internals.json:
+{"href":"dsh-app://app/","scripts":["inline:globalThis.__DSH_BOOT_READY__ = Promise.withResolvers()","dsh-app://app/assets/index-BgUyXZcc.js","inline:(()=>{\nconst pendingQueue=[]\nwindow.__ModuleLoader__={\n  mod","dsh-app://app/plugins/??@deepseek-ai/dsh-client-modules/client.js&rev=10d99ce70cef","inline:(() => {\n  const preference = \"system\"\n  const systemDark = ","inline:(() => {\n  const boot = () => {\n    const root = document.do"],"loader":"object","bootKeys":["rev","release","entries","batches"],"entries":["{\"id\":\"@deepseek-ai/dsh-api-gateway\",\"url\":\"plugins/??@deepseek-ai/dsh-api-gateway/client.js&rev=b53e49743b30\",\"rev\":\"b5","{\"id\":\"@deepseek-ai/dsh-client-ui-file-actions\",\"url\":\"plugins/??@deepseek-ai/dsh-client-ui-file-actions/client.js&rev=c","{\"id\":\"@deepseek-ai/dsh-client-ui-context-menu\",\"url\":\"plugins/??@deepseek-ai/dsh-client-ui-context-menu/client.js&rev=b","{\"id\":\"@deepseek-ai/dsh-client-ui-open-in-app\",\"url\":\"plugins/??@deepseek-ai/dsh-client-ui-open-in-app/client.js&rev=268","{\"id\":\"@deepseek-ai/dsh-api-job-controller\",\"url\":\"plugins/??@deepseek-ai/dsh-api-job-controller/client.js&rev=4571e87e4","{\"id\":\"@deepseek-ai/dsh-api-terminal-controller\",\"url\":\"plugins/??@deepseek-ai/dsh-api-terminal-controller/client.js&rev","{\"id\":\"@deepseek-ai/dsh-api-workspace-files\",\"url\":\"plugins/??@deepseek-ai/dsh-api-workspace-files/client.js&rev=3286626","{\"id\":\"@deepseek-ai/dsh-client-ui-settings-account\",\"url\":\"plugins/??@deepseek-ai/dsh-client-ui-settings-account/client.","{\"id\":\"@deepseek-ai/dsh-client-hmr\",\"url\":\"plugins/??@deepseek-ai/dsh-client-hmr/client.js&rev=e139acde27e1\",\"rev\":\"e139","{\"id\":\"@deepseek-ai/dsh-client-modules\",\"url\":\"plugins/??@deepseek-ai/dsh-client-modules/client.js&rev=c3851b5e5ae6\",\"re","{\"id\":\"@deepseek-ai/dsh-cordis-client-runner\",\"url\":\"plugins/??@deepseek-ai/dsh-cordis-client-runner/client.js&rev=d19d5","{\"id\":\"@deepseek-ai/dsh-client-ui-theme\",\"url\":\"plugins/??@deepseek-ai/dsh-client-ui-theme/client.js&rev=6ecd20a41be9\",\""]}
+desktop-win11-scripts.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-scripts.json（不存在）
+desktop-win11-after-restart-scripts.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-restart-scripts.json（不存在）
+desktop-win11-console-events.json:
+D:\a\dsh-workbench\dsh-workbench\desktop-win11-console-events.json（不存在）
+desktop-win11-after-restart-console-events.json:
+[
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "timestamp": 1794444860764.561,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "5524.33"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "timestamp": 1794444860769.427,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "5524.34"
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "timestamp": 1794444862775.767,
+        "url": "dsh-app://app/workbench/api/preflight",
+        "networkRequestId": "5524.35"
+      }
+    }
+  },
+  {
+    "method": "Runtime.consoleAPICalled",
+    "params": {
+      "type": "warning",
+      "args": [
+        {
+          "type": "string",
+          "value": "[dsh-workbench] hello 的卡片没挂上：宿主没有担保 unit「hello」的清单 —— 这个包要么没装进这份 profile，要么它的 dsh.workbench 没通过校验。卡片先不挂：清单只有一处真相"
+        }
+      ],
+      "executionContextId": 1,
+      "timestamp": 1794444867288.883,
+      "stackTrace": {
+        "callFrames": [
+          {
+            "functionName": "warnRefusal",
+            "scriptId": "21",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=39c6278f00be",
+            "lineNumber": 22236,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "register",
+            "scriptId": "21",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=39c6278f00be",
+            "lineNumber": 22273,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "registerUnit",
+            "scriptId": "21",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=39c6278f00be",
+            "lineNumber": 38291,
+            "columnNumber": 38
+          },
+          {
+            "functionName": "",
+            "scriptId": "21",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=39c6278f00be",
+            "lineNumber": 38666,
+            "columnNumber": 29
+          },
+          {
+            "functionName": "",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2806
+          },
+          {
+            "functionName": "R1",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 6,
+            "columnNumber": 74
+          },
+          {
+            "functionName": "_execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2684
+          },
+          {
+            "functionName": "effect",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 4228
+          },
+          {
+            "functionName": "apply",
+            "scriptId": "21",
+            "url": "dsh-app://app/plugins/??@deepseek-ai/dsh-client-ui-settings-agent-loop/client.js,@deepseek-ai/dsh-client-ui-settings-subagent/client.js,@deepseek-ai/dsh-client-ui-settings-web-search/client.js,@deepseek-ai/dsh-client-ui-plan/client.js,@deepseek-ai/dsh-client-ui-user-questions/client.js,@deepseek-ai/dsh-client-ui-trajectory/client.js,@dsh-workbench/core/client.js,@dsh-workbench/module-hello/client.js,@deepseek-ai/dsh-api-remote-access/client.js,@deepseek-ai/dsh-session-log-export/client.js,@deepseek-ai/dsh-client-file-upload/client.js,@deepseek-ai/dsh-api-remotes/client.js,@deepseek-ai/dsh-client-ui-deliverables/client.js,@deepseek-ai/dsh-typert-registry/client.js,@deepseek-ai/dsh-client-product-analytics/client.js,@deepseek-ai/dsh-client-connection/client.js,@deepseek-ai/dsh-api-session-controller/client.js,@deepseek-ai/dsh-api-workspace-controller/client.js,@deepseek-ai/dsh-client-ui-directory-picker-native/client.js&rev=39c6278f00be",
+            "lineNumber": 38666,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 1539
+          },
+          {
+            "functionName": "",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2806
+          },
+          {
+            "functionName": "R1",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 6,
+            "columnNumber": 74
+          },
+          {
+            "functionName": "_execute",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 2684
+          },
+          {
+            "functionName": "_reload",
+            "scriptId": "9",
+            "url": "dsh-app://app/assets/index-BgUyXZcc.js",
+            "lineNumber": 9,
+            "columnNumber": 6172
+          }
+        ]
+      }
+    }
+  },
+  {
+    "method": "Log.entryAdded",
+    "params": {
+      "entry": {
+        "source": "network",
+        "level": "error",
+        "text": "Failed to load resource: the server responded with a status of 405 (Method Not Allowed)",
+        "timestamp": 1794444868270.305,
+        "url": "dsh-app://app/workbench/api/workbench-boot-ok",
+        "networkRequestId": "5524.52"
+      }
+    }
+  }
+]
+
+
+=== dsh startup logs ===
+C:\Users\runneradmin\.dsh\logs（不存在）
+
+=== desktop app logs ===
+（没找到 Desktop 自己的日志文件）
+
+=== workbench home tree（C:\Users\runneradmin\.dsh\workbench） ===
+[D] bin
+  [D] desktop
+    [F] node.cmd (143)
+    [F] pnpm.cmd (271)
+[D] diy
+  [D] .agents
+    [D] skills
+      [F] workbench-module-diy
+  [D] .npm-cache
+    [D] metadata-full-v1.3
+      [D] registry.npmjs.org
+    [D] metadata-v1.3
+      [D] registry.npmjs.org
+  [F] .npmrc (123)
+  [D] .pnpm-store
+    [D] v10
+      [D] files
+      [D] index
+  [F] .sync.json (72)
+  [F] .sync.lock (44)
+  [D] node_modules
+    [D] .bin
+      [F] acorn (1078)
+      [F] acorn.CMD (858)
+      [F] acorn.ps1 (1727)
+      [F] browserslist (1142)
+      [F] browserslist.CMD (922)
+      [F] browserslist.ps1 (1813)
+      [F] cordis (1416)
+      [F] cordis.CMD (1196)
+      [F] cordis.ps1 (2183)
+      [F] dsh-wb-module (1318)
+      [F] dsh-wb-module.CMD (1098)
+      [F] dsh-wb-module.ps1 (1971)
+      [F] dsh-workbench (1278)
+      [F] dsh-workbench.CMD (1058)
+      [F] dsh-workbench.ps1 (1907)
+      [F] esbuild (1034)
+      [F] esbuild.CMD (814)
+      [F] esbuild.ps1 (1627)
+      [F] eslint (1102)
+      [F] eslint.CMD (882)
+      [F] eslint.ps1 (1765)
+      [F] tsc (1046)
+      [F] tsc.CMD (826)
+      [F] tsc.ps1 (1637)
+      [F] tsserver (1056)
+      [F] tsserver.CMD (836)
+      [F] tsserver.ps1 (1657)
+      [F] vite (1342)
+      [F] vite.CMD (1122)
+      [F] vite.ps1 (2081)
+      [F] vitest (1212)
+      [F] vitest.CMD (992)
+      [F] vitest.ps1 (1801)
+      [F] yaml (1058)
+      [F] yaml.CMD (838)
+      [F] yaml.ps1 (1697)
+    [F] .modules.yaml (52023)
+    [D] .pnpm
+      [D] @arch-guard+core@0.11.3_typescript@5.9.3
+      [D] @babel+code-frame@7.29.7
+      [D] @babel+compat-data@7.29.7
+      [D] @babel+core@7.29.13
+      [D] @babel+generator@7.29.14
+      [D] @babel+helper-compilation-targets@7.29.13
+      [D] @babel+helper-globals@7.29.7
+      [D] @babel+helper-module-imports@7.29.7
+      [D] @babel+helper-module-transforms@7.29.14_@babel+core@7.29.13
+      [D] @babel+helper-string-parser@7.29.14
+      [D] @babel+helper-validator-identifier@7.29.7
+      [D] @babel+helper-validator-option@7.29.7
+      [D] @babel+helpers@7.29.14
+      [D] @babel+parser@7.29.14
+      [D] @babel+template@7.29.7
+      [D] @babel+traverse@7.29.14
+      [D] @babel+types@7.29.14
+      [D] @cacheable+memory@2.2.0
+      [D] @cacheable+utils@2.5.0
+      [D] @deepseek-ai+cordis-plugin-_06a2805e39ccdeeac3b60b05215f02d4
+      [D] @deepseek-ai+cordis-plugin-_5b3551fe3f9c5cbf7ab5066c2518aece
+      [D] @deepseek-ai+cordis-plugin-_af87ab01aa9bbabe828e99f07fde01c9
+      [D] @deepseek-ai+cordis-plugin-_c8a20ad10faf816d42618e9ebb8214ae
+      [D] @deepseek-ai+cordis@4.1.0_@_21d63b4d8d451ad2a3b177004fe67960
+      [D] @deepseek-ai+cosmokit@1.9.0
+      [D] @deepseek-ai+dsh-agent-defa_9bfe072f7f68a9d9df991cdb7cb0f0d3
+      [D] @deepseek-ai+dsh-agent-pres_1cfa8b1fea342dc59972f394e6bf4fad
+      [D] @deepseek-ai+dsh-agent-pres_899a6bba0f27bc519b95afbb3bf1ee41
+      [D] @deepseek-ai+dsh-agent@0.2._7b0754fb862edbb00756dda04606cf40
+      [D] @deepseek-ai+dsh-api-gatewa_9ffa8473db6e61f76ec867a331c5ed95
+      [D] @deepseek-ai+dsh-api-remote_038ae2e4460facefa6fe623eeff5fc67
+      [D] @deepseek-ai+dsh-api-remote_47b1ce29c0036212f93d2327a32f208e
+      [D] @deepseek-ai+dsh-api-sessio_5026cf9b8538929df1a8c2731a76b1b7
+      [D] @deepseek-ai+dsh-api-worksp_2b3e353de71a652ef86cdfd36f03c751
+      [D] @deepseek-ai+dsh-app-boot@0_79821240b6dbbf44495cf93f3cb4affe
+      [D] @deepseek-ai+dsh-atomic-wri_bb79cb9671d69b9da3a3217581c4c351
+      [D] @deepseek-ai+dsh-attachment_a16761552f03008cbfddc193e70995fe
+      [D] @deepseek-ai+dsh-brand@0.2.2-rc.1_@deepseek-ai+cordis@4.1.0
+      [D] @deepseek-ai+dsh-chunked-li_d2f3d2083a04f81b6b73fb7b2f06cd35
+      [D] @deepseek-ai+dsh-client-con_4a3f814cf1661b340f141c810789eb2e
+      [D] @deepseek-ai+dsh-client-fil_70fbadff552adb0be319ea2baeeb9692
+      [D] @deepseek-ai+dsh-client-loc_4c6c3af83c1c06712cab2e8373d0c890
+      [D] @deepseek-ai+dsh-client-sho_6db722dfd79542a3830587ab0c381f92
+      [D] @deepseek-ai+dsh-client-sto_9abec41862eb9bf442e3744614036191
+      [D] @deepseek-ai+dsh-client-ui-_0f5ed34c341484caa8bf69c7c215f215
+      [D] @deepseek-ai+dsh-client-ui-_2725712a175854cdcb66a89eefd30af4
+      [D] @deepseek-ai+dsh-client-ui-_48a247f8378e07873d303be60d71dd26
+      [D] @deepseek-ai+dsh-client-ui-_67867d82e2bc1353d22afdff80aa2bf1
+      [D] @deepseek-ai+dsh-client-ui-_825efa461085313c9e18851c00f51409
+      [D] @deepseek-ai+dsh-client-ui-_82d84030b80cd0560ca8f51c94389f0d
+      [D] @deepseek-ai+dsh-client-ui-_9b0a91ef75feef05da95f55b5865d4cc
+      [D] @deepseek-ai+dsh-client-ui-_9f38ec40fa16d0525b6a284aade085fc
+      [D] @deepseek-ai+dsh-client-ui-_a86802e62b9903c589348f4b2fac86b7
+      [D] @deepseek-ai+dsh-client-ui-_bee303ae6665e119ec93cfc902deb055
+      [D] @deepseek-ai+dsh-client-ui-_cec4e4b2b482eb68ddaf1b0412554c0a
+      [D] @deepseek-ai+dsh-client-ui-_fea10ba7137208a0108bdabbf6650f4a
+      [D] @deepseek-ai+dsh-cmdline@0._99f0131292f1ce6200ac0845709cbff0
+      [D] @deepseek-ai+dsh-commands@0_dc3e586d80b47dddf5c7e7d8963090e7
+      [D] @deepseek-ai+dsh-compaction_44fcb96afd98feb4121f4dfb2a940f33
+      [D] @deepseek-ai+dsh-compaction_67bcb49aae1858f343c8c84f3411588e
+      [D] @deepseek-ai+dsh-config-edi_8e2e4be2062e5a9a331e9ad1cc54370d
+      [D] @deepseek-ai+dsh-credential_cb4904d5f5ea0e5c919a0b498b20243c
+      [D] @deepseek-ai+dsh-deque@0.2.2-rc.1_@deepseek-ai+cordis@4.1.0
+      [D] @deepseek-ai+dsh-file-refer_52e17469bbc43e10648e227103ea1c39
+      [D] @deepseek-ai+dsh-fs-patch@0_fe94298b7f82885437f1d4a7107ba2be
+      [D] @deepseek-ai+dsh-fs@0.2.2-r_2a00ebd685710d7a9edc5e285e50edc5
+      [D] @deepseek-ai+dsh-hmr@0.2.2-_a29a3b58fce1e3c98a51e076dc9c2d26
+      [D] @deepseek-ai+dsh-home-paths_2ea830fc8b6f928d66a0ec4e4caf45af
+      [D] @deepseek-ai+dsh-host-direc_c4bd50d1b76a462a50c3bdff3ddd380a
+      [D] @deepseek-ai+dsh-host-plugi_c1e3c41e0dfd000d59a1dbdb405f3164
+      [D] @deepseek-ai+dsh-host-webse_56a679d8a0527bd8c885b68b954e5fef
+      [D] @deepseek-ai+dsh-http-proxy_df4e25bb546e0b3925a0fb42966e7dd7
+      [D] @deepseek-ai+dsh-launch-env_e62b727da2c11e8d1632213e1d948e18
+      [D] @deepseek-ai+dsh-llm@0.2.2-rc.1_@deepseek-ai+cordis@4.1.0
+      [D] @deepseek-ai+dsh-mcp-client_83ae887cdebe2c56b30c8faf2c89d484
+      [D] @deepseek-ai+dsh-native-com_a5e781a6122d8c3127dff8017a9327d1
+      [D] @deepseek-ai+dsh-official-b_851837fabf81744f2d8718cd348611e6
+      [D] @deepseek-ai+dsh-package-ma_52a13322f382676617db5f9d8342d3ee
+      [D] @deepseek-ai+dsh-plugin-det_d1da5939e88f8f02b1728b5a531d9069
+      [D] @deepseek-ai+dsh-plugin-man_232a603591ec9ca447296f777781c6a0
+      [D] @deepseek-ai+dsh-sandbox-po_38aa2b720c82525b61b2b6dfe7ebcec8
+      [D] @deepseek-ai+dsh-sandbox@0._dc4611228d781ce7b9c5a7bd01593f19
+      [D] @deepseek-ai+dsh-scope@0.2.2-rc.1_@deepseek-ai+cordis@4.1.0
+      [D] @deepseek-ai+dsh-session-fo_061a607f5d3882550f02b5217ebe2997
+      [D] @deepseek-ai+dsh-session-fo_51a4f3b8db8ccf88166c7f219a44015f
+      [D] @deepseek-ai+dsh-session-fo_6a8b6ac8db1b291d5bc05f6928bc2734
+      [D] @deepseek-ai+dsh-session-fo_9a6496b424ac8b52c98b16dbdec2e0ca
+      [D] @deepseek-ai+dsh-session-fo_ed190a4b520340b6103412fb0b07765c
+      [D] @deepseek-ai+dsh-session-fo_f93301f390d63d4bf296f12ace4c3717
+      [D] @deepseek-ai+dsh-session-pe_a7972e108251ce54ef0c61ad8e9cc731
+      [D] @deepseek-ai+dsh-session-pr_9354c3c11351724b0ef3eaefc797e50e
+      [D] @deepseek-ai+dsh-session-qu_29de62dd800b8736f6a0da1900eb58cb
+      [D] @deepseek-ai+dsh-session-ti_7156c31844bfb01e2fa2f0bffbccbb3f
+      [D] @deepseek-ai+dsh-session@0._2c1eb9e8f9f716fa5ffcff871cbb2b70
+      [D] @deepseek-ai+dsh-settings@0_92516d63c9d253d208c6b7efcec5fd65
+      [D] @deepseek-ai+dsh-shell@0.2._e4e17f6b444f6734ca9c53550f601670
+      [D] @deepseek-ai+dsh-skill@0.2._9ddb4b53bdc71b3b73a426ef74309354
+      [D] @deepseek-ai+dsh-storage-do_f23810a711994eef22dab69122386659
+      [D] @deepseek-ai+dsh-storage@0._2a9b39ccd744f04d656527084f0ae435
+      [D] @deepseek-ai+dsh-subagent@0_5db17ad54e059621ef819d7968e6f0ec
+      [D] @deepseek-ai+dsh-subprocess_a7d23ea450a0e043d8466a47bb8803b8
+      [D] @deepseek-ai+dsh-system-pro_fa06e1bbf047b6f0c55c453e3a409cd3
+      [D] @deepseek-ai+dsh-timeout@0._832cb3017ef797f8856341868a95e86e
+      [D] @deepseek-ai+dsh-tool-todo@_d33666d74121970fc0f09e6aca256f5f
+      [D] @deepseek-ai+dsh-tools@0.2._ce93d8815c01c625bef2ed5cbdca65f7
+      [D] @deepseek-ai+dsh-typert-pro_333a1d9eab58194263665daac5bf4786
+      [D] @deepseek-ai+dsh-typert-reg_2c6eb2ceb099b145a094758c66d6afe7
+      [D] @deepseek-ai+dsh-user-appro_f2fbaad9354ff974811fb5080a6328f6
+      [D] @deepseek-ai+dsh-util-crypt_c309d353e0df7ac7e0187bd2f701f697
+      [D] @deepseek-ai+dsh-util-time@_f0c94d2b997cf37d6b3ae84d8eae5b8c
+      [D] @deepseek-ai+dsh-util-value_2ddf7295b3e4c4286e662d34785c8bcb
+      [D] @deepseek-ai+dsh-util-works_2a19375c4e4b3233363b48d35009b4b0
+      [D] @deepseek-ai+dsh-working-di_ed14e0fd8a5a9923bf83096d2fe117bf
+      [D] @deepseek-ai+dsh-workspace@_725b13665b34d922c6518c42e4b46fc2
+      [D] @deepseek-ai+schemastery@3.19.0
+      [D] @dsh-workbench+adapter-prob_5d96d7c56310cda08eb645458d21829b
+      [D] @dsh-workbench+adapter-prof_ad4dc90f7c55147668dbcbf071253cb2
+      [D] @dsh-workbench+adapter-runt_6abe9dffd15cc322bf8e8f17bfe33069
+      [D] @dsh-workbench+adapter-supp_3b19505bf26d745a12cb120743b5816e
+      [D] @dsh-workbench+adapters-def_289cb9bc9e8c1a1bd1176672d8195ebb
+      [D] @dsh-workbench+core@1.2.3-b_43b69e948a8455ddec065e7bf07a40e3
+      [D] @dsh-workbench+module-tools_d99f26b5b388bd7eb81601e272c2fc58
+      [D] @dsh-workbench+shared@1.2.3_53a805d171936b2c47075298da7abc26
+      [D] @esbuild+win32-x64@0.28.2
+      [D] @eslint+config-array@0.23.5
+      [D] @eslint+config-helpers@0.7.0
+      [D] @eslint+core@1.2.1
+      [D] @eslint+js@10.0.1_eslint@10.14.0
+      [D] @eslint+object-schema@3.0.5
+      [D] @eslint+plugin-kit@0.7.3
+      [D] @eslint-community+eslint-utils@4.10.1_eslint@10.14.0
+      [D] @eslint-community+regexpp@4.12.3
+      [D] @humanfs+core@0.19.2
+      [D] @humanfs+node@0.16.8
+      [D] @humanfs+types@0.15.0
+      [D] @humanwhocodes+module-importer@1.0.1
+      [D] @humanwhocodes+retry@0.4.3
+      [D] @jridgewell+gen-mapping@0.3.13
+      [D] @jridgewell+remapping@2.3.5
+      [D] @jridgewell+resolve-uri@3.1.2
+      [D] @jridgewell+sourcemap-codec@1.6.0
+      [D] @jridgewell+trace-mapping@0.3.31
+      [D] @js-temporal+polyfill@0.5.1
+      [D] @keyv+bigmap@1.3.1_keyv@5.6.0
+      [D] @keyv+serialize@1.1.1
+      [D] @modelcontextprotocol+client@2.2.0
+      [D] @modelcontextprotocol+core@2.2.0
+      [D] @oxc-project+types@0.156.0
+      [D] @rolldown+binding-win32-x64-msvc@1.2.19
+      [D] @rolldown+pluginutils@1.1.0
+      [D] @sec-ant+readable-stream@0.4.1
+      [D] @sindresorhus+merge-streams@4.0.0
+      [D] @standard-schema+spec@1.1.0
+      [D] @types+chai@5.2.3
+      [D] @types+deep-eql@4.0.2
+      [D] @types+esrecurse@4.3.1
+      [D] @types+estree@1.0.10
+      [D] @types+json-schema@7.0.15
+      [D] @types+node@24.19.2
+      [D] @types+react@19.3.0
+      [D] @typescript-eslint+eslint-p_d30a404dc584a0b50f02ac68a1cdb3f2
+      [D] @typescript-eslint+parser@8_584ea5ffe859085a96d99f23f29f6ab7
+      [D] @typescript-eslint+project-service@8.72.2_typescript@5.9.3
+      [D] @typescript-eslint+scope-manager@8.72.2
+      [D] @typescript-eslint+tsconfig-utils@8.72.2_typescript@5.9.3
+      [D] @typescript-eslint+type-uti_a745a2b32323e1271bf5791fbf2848ff
+      [D] @typescript-eslint+types@8.72.2
+      [D] @typescript-eslint+typescript-estree@8.72.2_typescript@5.9.3
+      [D] @typescript-eslint+utils@8._fb41d9158fc5112b736e80da44355b72
+      [D] @typescript-eslint+visitor-keys@8.72.2
+      [D] @vitest+mocker@5.1.0_vite@8_40195dca276c3a70fad6925378d4c2ed
+      [D] @vitest+spy@5.1.0
+      [D] acorn-jsx@5.3.2_acorn@8.19.0
+      [D] acorn@8.19.0
+      [D] ajv@6.15.0
+      [D] ajv@8.20.0
+      [D] argparse@2.0.1
+      [D] array-buffer-byte-length@1.0.2
+      [D] array-includes@3.2.0
+      [D] array.prototype.findlast@1.2.5
+      [D] array.prototype.flat@1.3.3
+      [D] array.prototype.flatmap@1.3.3
+      [D] array.prototype.tosorted@1.1.4
+      [D] arraybuffer.prototype.slice@1.0.4
+      [D] assertion-error@2.0.1
+      [D] async-function@1.0.0
+      [D] available-typed-arrays@1.0.7
+      [D] balanced-match@1.0.2
+      [D] balanced-match@4.0.4
+      [D] baseline-browser-mapping@2.11.36
+      [D] brace-expansion@1.1.22
+      [D] brace-expansion@5.0.13
+      [D] browserslist@4.29.5
+      [D] bytes@3.1.2
+      [D] cacheable@2.5.0
+      [D] call-bind-apply-helpers@1.0.2
+      [D] call-bind@1.0.9
+      [D] call-bound@1.0.4
+      [D] caniuse-lite@1.0.30001826
+      [D] chai@6.3.0
+      [D] chokidar@5.0.0
+      [D] commander@15.1.0
+      [D] compressible@2.0.18
+      [D] compression@1.8.2
+      [D] concat-map@0.0.1
+      [D] content-type@2.1.0
+      [D] convert-source-map@2.0.0
+      [D] cross-spawn@7.0.6
+      [D] csstype@3.2.3
+      [D] culori@4.0.2
+      [D] data-view-buffer@1.0.2
+      [D] data-view-byte-length@1.0.2
+      [D] data-view-byte-offset@1.0.1
+      [D] dayjs@1.11.23
+      [D] debug@2.6.9
+      [D] debug@4.4.3
+      [D] deep-is@0.1.4
+      [D] define-data-property@1.1.4
+      [D] define-properties@1.2.1
+      [D] destroy@1.2.0
+      [D] detect-libc@2.1.2
+      [D] doctrine@2.1.0
+      [D] dunder-proto@1.0.1
+      [D] electron-to-chromium@1.5.481
+      [D] es-abstract-get@1.0.0
+      [D] es-abstract@1.24.2
+      [D] es-define-property@1.0.1
+      [D] es-errors@1.3.0
+      [D] es-iterator-helpers@1.4.0
+      [D] es-module-lexer@2.3.2
+      [D] es-object-atoms@1.1.2
+      [D] es-set-tostringtag@2.1.0
+      [D] es-shim-unscopables@1.1.0
+      [D] es-to-primitive@1.3.4
+      [D] esbuild@0.28.2
+      [D] escalade@3.2.0
+      [D] escape-string-regexp@4.0.0
+      [D] eslint-plugin-react-hooks@7.1.1_eslint@10.14.0
+      [D] eslint-plugin-react@7.37.5_eslint@10.14.0
+      [D] eslint-scope@9.1.2
+      [D] eslint-visitor-keys@3.4.3
+      [D] eslint-visitor-keys@5.0.1
+      [D] eslint@10.14.0
+      [D] espree@11.2.0
+      [D] esquery@1.7.0
+      [D] esrecurse@4.3.0
+      [D] estraverse@5.3.0
+      [D] estree-walker@3.0.3
+      [D] esutils@2.0.3
+      [D] eventsource-parser@3.1.1
+      [D] eventsource@3.0.7
+      [D] execa@10.2.1
+      [D] expect-type@1.4.0
+      [D] fast-deep-equal@3.1.3
+      [D] fast-json-stable-stringify@2.1.0
+      [D] fast-levenshtein@2.0.6
+      [D] fast-uri@3.1.9
+      [D] fdir@6.5.0_picomatch@4.0.7
+      [D] figures@6.1.0
+      [D] file-entry-cache@11.1.5
+      [D] find-up@5.0.0
+      [D] flat-cache@6.1.23
+      [D] flatted@3.4.4
+      [D] for-each@0.3.5
+      [D] function-bind@1.1.2
+      [D] function.prototype.name@1.2.0
+      [D] functions-have-names@1.2.3
+      [D] generator-function@2.0.1
+      [D] gensync@1.0.0-beta.2
+      [D] get-intrinsic@1.3.0
+      [D] get-proto@1.0.1
+      [D] get-stream@9.0.1
+      [D] get-symbol-description@1.1.0
+      [D] glob-parent@6.0.2
+      [D] globals@17.14.0
+      [D] globalthis@1.0.4
+      [D] gopd@1.2.0
+      [D] graceful-fs@4.2.11
+      [D] has-bigints@1.1.0
+      [D] has-property-descriptors@1.0.2
+      [D] has-proto@1.2.0
+      [D] has-symbols@1.1.0
+      [D] has-tostringtag@1.0.2
+      [D] hashery@1.5.1
+      [D] hasown@2.0.4
+      [D] hermes-estree@0.25.1
+      [D] hermes-parser@0.25.1
+      [D] hookified@1.15.1
+      [D] hookified@2.2.0
+      [D] hosted-git-info@9.0.3
+      [D] human-signals@8.0.1
+      [D] ignore@5.3.2
+      [D] ignore@7.0.14
+      [D] imurmurhash@0.1.4
+      [D] internal-slot@1.1.0
+      [D] ipaddr.js@2.5.0
+      [D] is-array-buffer@3.0.5
+      [D] is-async-function@2.1.1
+      [D] is-bigint@1.1.0
+      [D] is-boolean-object@1.2.2
+      [D] is-callable@1.2.7
+      [D] is-core-module@2.18.0
+      [D] is-data-view@1.0.2
+      [D] is-date-object@1.1.0
+      [D] is-document.all@1.0.0
+      [D] is-extglob@2.1.1
+      [D] is-finalizationregistry@1.1.1
+      [D] is-generator-function@1.1.2
+      [D] is-glob@4.0.3
+      [D] is-map@2.0.3
+      [D] is-negative-zero@2.0.3
+      [D] is-number-object@1.1.1
+      [D] is-plain-obj@4.1.0
+      [D] is-regex@1.2.1
+      [D] is-set@2.0.3
+      [D] is-shared-array-buffer@1.0.4
+      [D] is-stream@4.0.1
+      [D] is-string@1.1.1
+      [D] is-symbol@1.1.1
+      [D] is-typed-array@1.1.15
+      [D] is-unicode-supported@2.1.0
+      [D] is-weakmap@2.0.2
+      [D] is-weakref@1.1.1
+      [D] is-weakset@2.0.4
+      [D] isarray@2.0.5
+      [D] isexe@2.0.0
+      [D] isexe@4.0.0
+      [D] iterator.prototype@1.1.5
+      [D] jose@6.2.17
+      [D] js-tokens@4.0.0
+      [D] js-yaml@4.3.2
+      [D] jsbi@4.3.2
+      [D] jsesc@3.1.0
+      [D] json-schema-traverse@0.4.1
+      [D] json-schema-traverse@1.0.0
+      [D] json-stable-stringify-without-jsonify@1.0.1
+      [D] json5@2.2.3
+      [D] jsx-ast-utils@3.3.5
+      [D] keyv@5.6.0
+      [D] kleur@3.0.3
+…（只列了前 400 项）
+
+=== seed.log ===
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 建 DIY 工坊 C:\Users\runneradmin\.dsh\workbench\diy
+[dsh-workbench] 工坊指引已链上：C:\Users\runneradmin\.dsh\workbench\diy\.agents\skills\workbench-module-diy
+[dsh-workbench] 工坊工具链对齐到 1.2.3-beta.4
+[dsh-workbench] 装工坊依赖（第一次会下载 react / typescript / vitest）...
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Progress: resolved 37, reused 0, downloaded 4, added 0
+Progress: resolved 63, reused 0, downloaded 6, added 0
+Progress: resolved 63, reused 0, downloaded 17, added 0
+Progress: resolved 63, reused 0, downloaded 30, added 0
+Progress: resolved 66, reused 0, downloaded 49, added 0
+Progress: resolved 117, reused 0, downloaded 60, added 0
+Progress: resolved 174, reused 0, downloaded 93, added 0
+Progress: resolved 174, reused 0, downloaded 106, added 0
+Progress: resolved 177, reused 0, downloaded 134, added 0
+Progress: resolved 208, reused 0, downloaded 158, added 0
+Progress: resolved 240, reused 0, downloaded 163, added 0
+Progress: resolved 336, reused 0, downloaded 163, added 0
+Progress: resolved 352, reused 0, downloaded 187, added 0
+Progress: resolved 352, reused 0, downloaded 209, added 0
+Progress: resolved 352, reused 0, downloaded 233, added 0
+Progress: resolved 352, reused 0, downloaded 261, added 0
+Progress: resolved 352, reused 0, downloaded 265, added 0
+Progress: resolved 397, reused 0, downloaded 312, added 0
+Progress: resolved 414, reused 0, downloaded 342, added 0
+Progress: resolved 456, reused 0, downloaded 367, added 0
+Progress: resolved 457, reused 0, downloaded 394, added 0
+Progress: resolved 487, reused 0, downloaded 413, added 0
+Progress: resolved 487, reused 0, downloaded 433, added 0
+Progress: resolved 528, reused 0, downloaded 450, added 0
+Packages: +477
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 541, reused 0, downloaded 472, added 0
+Progress: resolved 541, reused 0, downloaded 481, added 0
+Progress: resolved 541, reused 0, downloaded 482, added 2
+Progress: resolved 541, reused 0, downloaded 482, added 11
+Progress: resolved 541, reused 0, downloaded 482, added 16
+Progress: resolved 541, reused 0, downloaded 482, added 18
+Progress: resolved 541, reused 0, downloaded 482, added 34
+Progress: resolved 541, reused 0, downloaded 482, added 43
+Progress: resolved 541, reused 0, downloaded 482, added 60
+Progress: resolved 541, reused 0, downloaded 482, added 86
+Progress: resolved 541, reused 0, downloaded 482, added 111
+Progress: resolved 541, reused 0, downloaded 482, added 132
+Progress: resolved 541, reused 0, downloaded 482, added 152
+Progress: resolved 541, reused 0, downloaded 482, added 167
+Progress: resolved 541, reused 0, downloaded 482, added 175
+Progress: resolved 541, reused 0, downloaded 482, added 197
+Progress: resolved 541, reused 0, downloaded 482, added 229
+Progress: resolved 541, reused 0, downloaded 482, added 254
+Progress: resolved 541, reused 0, downloaded 482, added 267
+Progress: resolved 541, reused 0, downloaded 482, added 274
+Progress: resolved 541, reused 0, downloaded 482, added 287
+Progress: resolved 541, reused 0, downloaded 482, added 301
+Progress: resolved 541, reused 0, downloaded 482, added 302
+Progress: resolved 541, reused 0, downloaded 482, added 303
+Progress: resolved 541, reused 0, downloaded 482, added 320
+Progress: resolved 541, reused 0, downloaded 482, added 328
+Progress: resolved 541, reused 0, downloaded 482, added 347
+Progress: resolved 541, reused 0, downloaded 482, added 359
+Progress: resolved 541, reused 0, downloaded 482, added 384
+Progress: resolved 541, reused 0, downloaded 482, added 409
+Progress: resolved 541, reused 0, downloaded 482, added 472
+Progress: resolved 541, reused 0, downloaded 482, added 477, done
+.../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+.../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+ WARN  Issues with peer dependencies found
+.
+└─┬ @dsh-workbench/module-tools 1.2.3-beta.12
+  └─┬ eslint-plugin-react 7.37.5
+    └── ✕ unmet peer eslint@"^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7": found 10.14.0
+
+devDependencies:
++ @deepseek-ai/dsh-client-ui-primitives 0.2.2-rc.1
++ @dsh-workbench/core 1.2.3-beta.12
++ @dsh-workbench/module-tools 1.2.3-beta.12
++ @dsh-workbench/shared 1.2.3-beta.12
++ @types/node 24.19.2 (26.6.6 is available)
++ @types/react 19.3.0
++ esbuild 0.28.2
++ react 19.3.1
++ typescript 5.9.3 (7.0.2 is available)
++ vitest 5.1.0
+
+Done in 59.2s using pnpm v10.32.1
+
+
+=== diy/.sync.json ===
+{"state":"ok","version":"1.2.3-beta.4","at":"2026-11-12T00:57:30.037Z"}
+
+
+=== profile package.json ===
+{
+  "name": "dsh-profile-desktop",
+  "private": true,
+  "dependencies": {
+    "@dsh-workbench/core": "link:../../workbench/versions/1.2.3-beta.12/node_modules/@dsh-workbench/core",
+    "@dsh-workbench/module-hello": "github:novaeth/dsh-workbench-market#7135bc722ef4678d5636c84de29a7bf2af739263&path:/packages/module-hello",
+    "@dsh-workbench/adapter-probe": "link:../../workbench/versions/1.2.3-beta.12/node_modules/@dsh-workbench/adapter-probe",
+    "@dsh-workbench/adapter-profile": "link:../../workbench/versions/1.2.3-beta.12/node_modules/@dsh-workbench/adapter-profile",
+    "@dsh-workbench/adapter-runtime": "link:../../workbench/versions/1.2.3-beta.12/node_modules/@dsh-workbench/adapter-runtime",
+    "@dsh-workbench/adapter-supply": "link:../../workbench/versions/1.2.3-beta.12/node_modules/@dsh-workbench/adapter-supply",
+    "@dsh-workbench/adapters-default": "link:../../workbench/versions/1.2.3-beta.12/node_modules/@dsh-workbench/adapters-default",
+    "@dsh-workbench/shared": "link:../../workbench/versions/1.2.3-beta.12/node_modules/@dsh-workbench/shared"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "@dsh-workbench/core",
+        "@dsh-workbench/module-hello"
+      ]
+    }
+  }
+}
+
+
+=== profile cordis.patch.yml ===
+# Your patch layer for this dsh profile, applied after every bundle layer:
+# a top-level YAML array of loader patch entries (id-targeted config
+# overrides, disables, and insert lists; `!!js` expressions allowed).
+[]
+
+
+=== profile cordis.yml ===
+# dsh profile root — an empty entry list. The tree is composed as patches:
+# each bundle in package.json's dsh.profile.bundles, then cordis.patch.yml, then any
+# --patch overlays. Edit cordis.patch.yml, not this file.
+[]
+
+
+=== workbench browser.json ===
+C:\Users\runneradmin\.dsh\workbench\browser.json（不存在）
+
+=== dsh home tree（C:\Users\runneradmin\.dsh） ===
+[F] .anonymous-user-id (37)
+[F] .credentials.yaml (161)
+[D] profiles
+  [D] desktop
+    [F] .dsh-workbench-sources.json (165)
+    [D] .plugin-manager
+    [F] cordis.patch.yml (217)
+    [F] cordis.yml (223)
+    [D] node_modules
+    [F] package.json (1285)
+    [F] pnpm-lock.yaml (1421)
+    [F] pnpm-workspace.yaml (61)
+[D] sessions
+  [D] --C-Users-runneradmin-.dsh-workbench-diy--
+    [D] session-8153863b-01ab-498e-9b15-9bb5bcaf1406
+[D] storages
+  [D] session_projcache
+    [D] sessions
+  [F] workspace.json (1044)
+[D] workbench
+  [D] bin
+    [D] desktop
+  [D] diy
+    [D] .agents
+    [D] .npm-cache
+    [F] .npmrc (123)
+    [D] .pnpm-store
+    [F] .sync.json (72)
+    [F] .sync.lock (44)
+    [D] node_modules
+    [F] package.json (792)
+    [D] packages
+    [F] pnpm-lock.yaml (266901)
+    [F] pnpm-workspace.yaml (63)
+    [F] README.md (267)
+  [D] home
+    [D] AppData
+  [F] host.lock (54)
+  [D] market-index
+    [D] 29f96bb3c21eef32
+    [F] sources.json (331)
+  [D] npm-cache
+    [D] _cacache
+  [D] npm-logs
+    [F] 2026-11-12T00_57_35_597Z-debug-0.log (1728)
+    [F] 2026-11-12T00_57_35_637Z-debug-0.log (1734)
+    [F] 2026-11-12T00_57_35_690Z-debug-0.log (1707)
+    [F] 2026-11-12T00_57_35_874Z-debug-0.log (1737)
+    [F] 2026-11-12T00_57_35_927Z-debug-0.log (1731)
+    [F] 2026-11-12T00_57_35_929Z-debug-0.log (1725)
+    [F] 2026-11-12T00_57_48_448Z-debug-0.log (1748)
+    [F] 2026-11-12T00_57_48_469Z-debug-0.log (1748)
+    [F] 2026-11-12T00_57_58_780Z-debug-0.log (1748)
+    [F] 2026-11-12T00_58_07_261Z-debug-0.log (1748)
+    [F] 2026-11-12T00_58_12_248Z-debug-0.log (1748)
+  [D] opencli
+    [D] bin
+    [D] home
+    [D] libs
+    [D] npm-cache
+    [D] plugins-npm
+    [D] pnpm-cache
+    [D] pnpm-store
+    [D] toolchain
+  [F] seed.log (4934)
+  [F] self-update-boot.json (83)
+  [F] self-update-plan.json (7205)
+  [F] self-update.json (269)
+  [F] self-update.log (366)
+  [F] settings.json (32)
+  [D] tmp
+  [D] versions
+    [D] 1.2.3-beta.12
+    [D] 1.2.3-beta.4
+  [D] workspaces
+    [D] diy-c81081ba
+    [D] _machine
+
+=== processes ===
+
