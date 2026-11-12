@@ -43,7 +43,6 @@ export function workbenchRow(
   if (version.broken === true) return brokenRow(version);
   if (version.installed === '') return undefined;
   const mark = selfUpdateMark({ update: selfUpdate, toldAt });
-  const note = mark === undefined ? undefined : selfUpdateNote(mark);
   const local = version.local === true;
   const retry = !local && mark !== undefined && RESULT_KINDS.has(mark.kind);
   const swapping = selfUpdateSwapping(selfUpdate);
@@ -52,6 +51,8 @@ export function workbenchRow(
     latest !== undefined && latest !== version.installed
       ? { installed: version.installed, latest }
       : undefined;
+  const staleNote = mark !== undefined && mark.kind === 'pending-restart' && update !== undefined;
+  const note = mark === undefined || staleNote ? undefined : selfUpdateNote(mark);
   const blocked = update === undefined ? undefined : version.latestBlocked;
   const blockedHint: MarketHintKey | undefined =
     blocked === undefined ? undefined : 'panels.market.workbenchUpdateNeedsDsh';

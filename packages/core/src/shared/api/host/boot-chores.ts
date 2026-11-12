@@ -2,6 +2,7 @@ import type { DshHostContext } from '@dsh-workbench/shared';
 import type { ModulePort } from '@dsh-workbench/shared/host';
 import { nowIso, runningVersionOf, workbenchBootFile, writeBootRecord } from '@dsh-workbench/shared/host';
 import { resumeQueuedSelfUpdate } from './self-update-resume';
+import { settlePendingSelfUpdate } from './self-update-settle';
 
 export interface BootChoresInput {
   readonly ctx: DshHostContext;
@@ -15,6 +16,9 @@ export function bootChores(input: BootChoresInput): string | undefined {
   const version = input.version ?? runningVersionOf(import.meta.url);
   if (version !== undefined) {
     writeBootRecord({ version, at: nowIso(), pid: process.pid }, workbenchBootFile());
+  }
+  if (settlePendingSelfUpdate(version)) {
+    input.ctx.logger?.info?.('[dsh-workbench] 自更新已生效：marker 落 ok');
   }
   resumeQueuedSelfUpdate(input.ctx, { supply: input.supply, home: input.home, profileDir: input.profileDir });
   return version;

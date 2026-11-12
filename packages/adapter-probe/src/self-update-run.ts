@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   ensureProfileBundle,
@@ -158,11 +159,14 @@ async function applyStep(
     );
     if (!flipped.ok) return { ok: false, detail: flipped.detail };
     writeProfileLinks({ profileDir: step.profileDir, links: step.links });
+    const lockNote = await refreshProfileLock(plan, deps, log);
     return {
       ok: true,
-      detail: flipped.waited
-        ? `已经指到 ${plan.versionDir}（等你退出后换上的，重启生效）`
-        : `已经指到 ${plan.versionDir}（重启后生效）`,
+      detail: `${
+        flipped.waited
+          ? `已经指到 ${plan.versionDir}（等你退出后换上的，重启生效）`
+          : `已经指到 ${plan.versionDir}（重启后生效）`
+      }${lockNote}`,
       marks: 'flip',
     };
   }
@@ -213,6 +217,29 @@ function runCommand(step: SelfUpdateInstallStep, deps: SelfUpdateRunDeps): Promi
       done(event.code);
     });
   });
+}
+
+async function refreshProfileLock(
+  plan: SelfUpdateSteps,
+  deps: SelfUpdateRunDeps,
+  log: (message: string) => void,
+): Promise<string> {
+  const lock = join(plan.profileDir, 'pnpm-lock.yaml');
+  if (!existsSync(lock)) return '';
+  const install = plan.steps.find((step) => step.kind === 'install');
+  if (install === undefined) return '';
+  const head = install.args[0];
+  const args =
+    head !== undefined && head.endsWith('.cjs')
+      ? [head, 'install', '--lockfile-only', '--dir', plan.profileDir]
+      : ['install', '--lockfile-only', '--dir', plan.profileDir];
+  const outcome = await runCommand({ ...install, args, cwd: plan.profileDir }, deps);
+  if (outcome.code === 0) {
+    log('profile 的 lockfile 已同步到新的 link: 规格');
+    return '；profile 的 lockfile 已同步';
+  }
+  log(`profile 的 lockfile 没同步上（退出码 ${String(outcome.code)}）：${tailLines(outcome.output, 4)}`);
+  return '；profile 的 lockfile 没同步（重启前先别在 profile 里装东西）';
 }
 
 async function expectBoot(
