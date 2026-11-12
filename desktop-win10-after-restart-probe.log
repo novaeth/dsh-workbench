@@ -1,0 +1,30 @@
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [] none :: HARNESS | Loading plugins…
+[4.2s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[4.2s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[10.4s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: HARNESS | Loading plugins… | Preparing the workbench |  | Getting the runtime ready…
+[10.4s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[12.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: mmands, @ files or sessions | Select model | Workbench panel | No modules on the panel yet | You can also tell the agent directly: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[12.4s] MILESTONE ready @ 12.4s
+[12.4s] verify wait :: host units panels,hello :: cards （无） ::  panel yet | You can also tell the agent directly: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[12.5s] STEP click ["选择模块","Choose modules"]: "Choose modules"
+[14.0s] STEP panel module hello [示例模块/Sample module/hello] dialogs=1 rows=["Sample module"] -> "clicked:hello"
+[17.0s] verify wait :: host units panels,hello :: cards wb-card-hello :: ample module | Restore the default everywhere | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[17.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart-verify-body.txt (404 bytes)
+[17.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart-units.json (5854 bytes)
+[17.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart-client-bundles.json (25 bytes)
+[17.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart-page-internals.json (2096 bytes)
+[17.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart-console-events.json (9686 bytes)
+[17.0s] MILESTONE module-card @ 17.0s
+[17.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart-smoke.json (101 bytes)
+[17.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart-final-body.txt (404 bytes)
+[17.0s] TITLE: DeepSeek Harness
+[20.0s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-restart.png (49575 bytes)
+[20.0s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"20.0s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.1s","ready":"12.4s","module-card":"17.0s"},"card":true,"units":["panels","hello"]}
