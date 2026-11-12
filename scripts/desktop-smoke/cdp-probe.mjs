@@ -703,6 +703,18 @@ async function openMarket(cdp) {
   mark('market-open');
 }
 
+/** 「添加模块」只在「已安装」那一页出现；发现页上有个同前缀的「添加模块来源」，切不过去就会点错。 */
+async function openInstalledTab(cdp) {
+  const tabs = ['已安装', 'Installed'];
+  const until = Date.now() + remaining('切到已安装', 30_000);
+  while (Date.now() < until) {
+    const hit = await click(cdp, tabs, 800);
+    if (hit !== 'missing') return;
+    await sleep(1000);
+  }
+  log('没找到「已安装」页签：接着按原样点「添加模块」（老版本没有页签）');
+}
+
 async function clickStep(cdp, texts, budgetMs, scope, step) {
   const until = Date.now() + remaining(step, budgetMs);
   let last;
@@ -801,6 +813,7 @@ async function addPluginViaMarket(cdp, spec) {
   await openMarket(cdp);
   result.market = true;
   mark('add-plugin-market');
+  await openInstalledTab(cdp);
   await clickStep(cdp, addOpenTexts, 60_000, 'document', '点开添加模块');
   await waitForAddDialog(cdp);
   await fillAddSpec(cdp, spec);

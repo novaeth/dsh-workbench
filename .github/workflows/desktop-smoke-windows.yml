@@ -278,6 +278,9 @@ jobs:
           for log in "$RUNNER_TEMP"/desktop-${{ inputs.label }}*.log; do
             cp "$log" "./$(basename "$log")" 2>/dev/null || true
           done
+          for log in "$RUNNER_TEMP"/*.log; do
+            cp "$log" "./desktop-${{ inputs.label }}-runner-$(basename "$log")" 2>/dev/null || true
+          done
           for log in "$USERPROFILE"/.dsh/*.log "$USERPROFILE"/.dsh/logs/*.log \
                      "$USERPROFILE"/.dsh/workbench/*.log "$USERPROFILE"/.dsh/workbench/logs/*.log \
                      "$APPDATA/DeepSeek Harness/logs"/*.log "$LOCALAPPDATA/DeepSeek Harness/logs"/*.log; do
