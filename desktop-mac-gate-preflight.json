@@ -1,0 +1,73 @@
+{
+  "ok": true,
+  "phase": "installing",
+  "steps": [
+    {
+      "id": "toolchain",
+      "status": "ok",
+      "log": [
+        "node v24.21.0（Desktop 自带） · npm 缺（已改用 pnpm） · pnpm 11.28.5（Desktop 自带）",
+        "deployment=desktop · resources=/Applications/DeepSeek Harness.app/Contents/Resources · execPath=/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness",
+        "bundled node=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node · bundled pnpm=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs · bins=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin|/Applications/DeepSeek Harness.app/Contents/Resourc…",
+        "PATH 前两段=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin|/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin",
+        "node: exit=0 sandbox=mode=workspace-write root=/Users/runner/.dsh/workbench out=v24.21.0 cmd='/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node'",
+        "pnpm: exit=0 sandbox=mode=workspace-write root=/Users/runner/.dsh/workbench out=11.28.5 cmd='/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node' '/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs' --config.manage-package-manager-versions=false --version",
+        "npm: exit=127 sandbox=（跳过探测） out=Desktop 自带的 node 不带 npm"
+      ],
+      "detail": "node v24.21.0（Desktop 自带） · npm 缺（已改用 pnpm） · pnpm 11.28.5（Desktop 自带）"
+    },
+    {
+      "id": "cli",
+      "status": "ok",
+      "log": [
+        "> 盘上自检：隔离运行时不在（探测前）",
+        "> '/Users/runner/.dsh/workbench/opencli/bin/opencli' --version",
+        "dsh-workbench: opencli 的隔离运行时还没装好（/Users/runner/.dsh/workbench/opencli/toolchain）。",
+        "  在工作台里打开「启动体检」，在 cli 那一步点重试，装好再回来重试这一下。",
+        "> 体检为何要装：dsh-workbench: opencli 的隔离运行时还没装好（/Users/runner/.dsh/workbench/opencli/toolchain）。",
+        "  在工作台里打开「启动体检」，在 cli 那一步点重试，装好再回来重试这一下。",
+        "> 安装 opencli",
+        "Done in 1.6s using pnpm v11.28.5",
+        "> '/Users/runner/.dsh/workbench/opencli/bin/opencli' --version",
+        "1.8.8"
+      ],
+      "command": "'/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node' '/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs' add --dir '/Users/runner/.dsh/workbench/opencli/toolchain' @jackwener/opencli@1.8.8 --store-dir '/Users/runner/.dsh/workbench/opencli/pnpm-store' --config.cache-dir='/Users/runner/.dsh/workbench/opencli/pnpm-cache' --config.state-dir='/Users/runner/.dsh/workbench/opencli/pnpm-state' --allow-build=@jackwener/opencli",
+      "detail": "1.8.8"
+    },
+    {
+      "id": "bridge",
+      "status": "running",
+      "action": "检查浏览器通道",
+      "log": [
+        "> '/Users/runner/.dsh/workbench/opencli/bin/opencli' doctor"
+      ]
+    },
+    {
+      "id": "diy",
+      "status": "running"
+    }
+  ],
+  "at": 1794486701605,
+  "log": [
+    "node v24.21.0（Desktop 自带） · npm 缺（已改用 pnpm） · pnpm 11.28.5（Desktop 自带）",
+    "deployment=desktop · resources=/Applications/DeepSeek Harness.app/Contents/Resources · execPath=/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness",
+    "bundled node=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node · bundled pnpm=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs · bins=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin|/Applications/DeepSeek Harness.app/Contents/Resourc…",
+    "PATH 前两段=/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin|/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin",
+    "node: exit=0 sandbox=mode=workspace-write root=/Users/runner/.dsh/workbench out=v24.21.0 cmd='/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node'",
+    "pnpm: exit=0 sandbox=mode=workspace-write root=/Users/runner/.dsh/workbench out=11.28.5 cmd='/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/node/bin/node' '/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/bin/pnpm.cjs' --config.manage-package-manager-versions=false --version",
+    "npm: exit=127 sandbox=（跳过探测） out=Desktop 自带的 node 不带 npm",
+    "> 盘上自检：隔离运行时不在（探测前）",
+    "> '/Users/runner/.dsh/workbench/opencli/bin/opencli' --version",
+    "dsh-workbench: opencli 的隔离运行时还没装好（/Users/runner/.dsh/workbench/opencli/toolchain）。",
+    "  在工作台里打开「启动体检」，在 cli 那一步点重试，装好再回来重试这一下。",
+    "> 体检为何要装：dsh-workbench: opencli 的隔离运行时还没装好（/Users/runner/.dsh/workbench/opencli/toolchain）。",
+    "  在工作台里打开「启动体检」，在 cli 那一步点重试，装好再回来重试这一下。",
+    "> 安装 opencli",
+    "Done in 1.6s using pnpm v11.28.5",
+    "> '/Users/runner/.dsh/workbench/opencli/bin/opencli' --version",
+    "1.8.8",
+    "> '/Users/runner/.dsh/workbench/opencli/bin/opencli' doctor"
+  ],
+  "canWakeBrowser": true,
+  "extensionDir": "/Users/runner/work/dsh-workbench/dsh-workbench/packages/core/vendor/browser-extension"
+}

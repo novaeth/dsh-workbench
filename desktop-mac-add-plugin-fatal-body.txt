@@ -1,0 +1,18 @@
+New Session
+⌘
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Workbench panel
+Sample module
+
+hello, workbench
+
+This card comes from a standalone workbench module.
