@@ -77,12 +77,6 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
     expect(MARKET_DOT['pending-restart']).toBe('warning');
     expect(MARKET_STATE_KEY['pending-restart']).toBe('panels.market.pendingRestart');
     expect(marketActions(row as MarketRow)).toEqual([]);
-    expect(
-      marketActions({ ...(row as MarketRow), canRestart: true }),
-    ).toEqual(['restart-workbench', 'later-restart']);
-    expect(
-      marketActions({ ...(row as MarketRow), canRestart: true, restartDismissed: true }),
-    ).toEqual([]);
   });
 
   it('④ 已经重启过（运行中 = 盘上）→ 就是绿的「已安装」，那半句不再挂', () => {

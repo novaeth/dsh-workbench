@@ -136,14 +136,6 @@ export interface ModulePort {
   }): Promise<SupplyPackageRoute | undefined>;
   isNewerVersion(left: string, right: string): boolean;
   startSelfUpdate(request: SelfUpdateRequest, onError: (message: string) => void): SelfUpdateStart;
-  restartWorkbench?(onError: (message: string) => void): RestartWorkbenchStart;
-}
-
-export type RestartRefusal = 'update-running' | 'desktop-manual' | 'no-entry' | 'no-seam';
-
-export interface RestartWorkbenchStart {
-  readonly started: boolean;
-  readonly refusal?: RestartRefusal | undefined;
 }
 
 export interface SupplyPort extends EnvSupplyPort, ModulePort {

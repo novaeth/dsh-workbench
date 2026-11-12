@@ -16,22 +16,6 @@ describe('组合出给外壳的 supply 端口', () => {
     expect(port.runtimeInstallCommand?.()).toBeTruthy();
   });
 
-  it('★ 自更新的重启 / 回滚也转发（漏了的话界面只会说 no-seam）', () => {
-    const set = fakeAdapterSet();
-    const seen: string[] = [];
-    const modules = {
-      ...set.modules,
-      restartWorkbench: (onError: (message: string) => void) => {
-        onError('restart-asked');
-        return { started: true };
-      },
-    };
-    const port = supplyPortOf(ctxOf({ ...set, modules } as never));
-
-    expect(port.restartWorkbench?.((message) => seen.push(message))).toEqual({ started: true });
-    expect(seen).toEqual(['restart-asked']);
-  });
-
   it('★ 没给就整条不挂（纯 API 的运行时不用瞎编目录）', () => {
     const set = fakeAdapterSet();
     const modules = { ...set.modules } as Record<string, unknown>;

@@ -87,7 +87,7 @@ describe('MARKET_MOCKS', () => {
         );
       }
       if (mock.expect.workbenchState !== undefined) {
-        const self = workbenchRow(mock.workbench, undefined, undefined, true);
+        const self = workbenchRow(mock.workbench);
         expect(self?.state, mock.id).toBe(mock.expect.workbenchState);
         expect(marketActions(self as never), mock.id).toEqual(mock.expect.workbenchActions);
         if (mock.expect.workbenchLocal !== undefined) {
@@ -147,7 +147,6 @@ describe('MARKET_MOCKS', () => {
     expect(new Set(actionSets)).toEqual(
       new Set([
         'update-workbench',
-        'restart-workbench,later-restart',
         'migrate-workbench',
         'migrate-workbench,dismiss-followup',
         '',

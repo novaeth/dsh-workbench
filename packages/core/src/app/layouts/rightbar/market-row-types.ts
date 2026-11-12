@@ -21,8 +21,6 @@ export type MarketRowAction =
   | 'update-plugin'
   | 'uninstall-plugin'
   | 'update-workbench'
-  | 'restart-workbench'
-  | 'later-restart'
   | 'migrate-workbench'
   | 'dismiss-followup';
 
@@ -106,8 +104,6 @@ export interface MarketRow {
   readonly market?: MarketInstalledModule;
   readonly pkg?: string;
   readonly local?: boolean;
-  readonly canRestart?: boolean;
-  readonly restartDismissed?: boolean;
   readonly versionLabel?: string;
   readonly defaultShown?: boolean;
   readonly defaultChanged?: number;

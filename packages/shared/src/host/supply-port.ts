@@ -13,7 +13,6 @@ export function supplyPortOf(ctx: DshHostContext): SupplyPort {
   const cliCatalogPath = modules.cliCatalogPath;
   const vendorPluginsDir = modules.vendorPluginsDir;
   const runtimeInstallCommand = modules.runtimeInstallCommand;
-  const restartWorkbench = modules.restartWorkbench;
   return {
     env,
     modules,
@@ -49,7 +48,6 @@ export function supplyPortOf(ctx: DshHostContext): SupplyPort {
     packageRouteOf: (options) => modules.packageRouteOf(options),
     isNewerVersion: (left, right) => modules.isNewerVersion(left, right),
     startSelfUpdate: (request, onError) => modules.startSelfUpdate(request, onError),
-    ...(restartWorkbench === undefined ? {} : { restartWorkbench: (onError) => restartWorkbench(onError) }),
   };
 }
 

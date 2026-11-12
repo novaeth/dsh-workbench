@@ -9,7 +9,6 @@ export * from './probe-libs.js';
 export * from './probe-units.js';
 export * from './probe-verdict.js';
 export * from './runtime-seed.js';
-export * from './restart-workbench.js';
 export * from './version-migrate.js';
 export * from './desktop-runtime.js';
 export * from './toolchain.js';

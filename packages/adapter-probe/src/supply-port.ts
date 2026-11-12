@@ -6,7 +6,6 @@ import { createRegistryNotebook, isNewerVersion } from '@dsh-workbench/adapter-p
 import { latestVersion, missingReleaseParts, probeRelease } from './release-port.js';
 import { opencliInstallCommand } from './install.js';
 import { recoveryCommand, selfUpdateCliFor, startSelfUpdate, type SelfUpdateRequest } from './self-update.js';
-import { restartWorkbench } from './restart-workbench.js';
 import {
   declarationGaps,
   declarationRefusalOf,
@@ -69,7 +68,6 @@ export function createSupplyPort(options: ProbeSupplyOptions = {}): SupplyPort {
       recoveryCommand({ profile: options.profile, pkg: PLUGIN_ID, version: options.version, cli: selfUpdateCliFor(options.profile) }),
     startSelfUpdate: (request: SelfUpdateRequest, onError: (message: string) => void) =>
       startSelfUpdate(request, onError, seam),
-    restartWorkbench: (onError: (message: string) => void) => restartWorkbench({ seam, onError }),
   };
   return { ...port, env: port, modules: port };
 }

@@ -13,8 +13,6 @@ export interface MarketTransient {
   readonly setFailed: (next: MarketFailure | null) => void;
   readonly notice: string | null;
   readonly setNotice: (next: string | null) => void;
-  readonly restartLater: string | null;
-  readonly setRestartLater: (next: string | null) => void;
 }
 
 export function useMarketTransient(input: {
@@ -26,12 +24,11 @@ export function useMarketTransient(input: {
   const [confirming, setConfirming] = useState<string | null>(mock?.confirming ?? null);
   const [failed, setFailed] = useState<MarketFailure | null>(mock?.failure ?? null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [restartLater, setRestartLater] = useState<string | null>(null);
 
   useEffect(() => {
     onPending?.(pending !== null);
     return () => onPending?.(false);
   }, [pending, onPending]);
 
-  return { pending, setPending, confirming, setConfirming, failed, setFailed, notice, setNotice, restartLater, setRestartLater };
+  return { pending, setPending, confirming, setConfirming, failed, setFailed, notice, setNotice };
 }

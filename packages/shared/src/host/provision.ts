@@ -15,7 +15,6 @@ export const PROVISION_ACTIONS = [
   'update-plugin',
   'uninstall-plugin',
   'update-workbench',
-  'restart-workbench',
   'migrate-workbench',
   'dismiss-followup',
 ] as const satisfies readonly ProvisionAction[];
@@ -40,7 +39,7 @@ export function provisionTargetOf(action: ProvisionAction): ProvisionTarget {
   if (action === 'install-bundle' || action === 'install-version') return 'spec';
   if (action === 'remove-bundle') return 'name';
   if (action === 'update-plugin' || action === 'uninstall-plugin') return 'name';
-  if (action === 'update-workbench' || action === 'restart-workbench' || action === 'migrate-workbench') return 'name';
+  if (action === 'update-workbench' || action === 'migrate-workbench') return 'name';
   if (action === 'dismiss-followup') return 'id';
   if (action === 'cancel-install') return 'requestId';
   return 'unit';

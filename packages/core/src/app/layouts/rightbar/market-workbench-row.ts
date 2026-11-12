@@ -37,7 +37,6 @@ export function workbenchRow(
   version: WorkbenchVersion | null | undefined,
   selfUpdate?: WorkbenchSelfUpdate | null,
   toldAt?: string | null,
-  canRestart?: boolean,
 ): MarketRow | undefined {
   if (version === null || version === undefined) return undefined;
   if (version.broken === true) return brokenRow(version);
@@ -75,7 +74,6 @@ export function workbenchRow(
     canUpdate: !swapping && blocked === undefined && (update !== undefined || retry),
     canUninstall: false,
     ...(local ? { local: true } : {}),
-    ...(canRestart === true ? { canRestart: true } : {}),
     ...(stale || followUpState || blockedHint === undefined ? {} : { hint: blockedHint }),
     ...(selfUpdate?.migration === true && selfUpdate.state === 'running'
       ? { hint: 'panels.market.selfUpdateMigration' as const }
@@ -100,9 +98,5 @@ export function workbenchActionsOf(row: MarketRow): MarketRowAction[] {
   if (row.followUp !== undefined && row.state === 'pending-followup') {
     return row.followUp.hard ? ['migrate-workbench'] : ['migrate-workbench', 'dismiss-followup'];
   }
-  const ready = row.state === 'pending-restart' && row.restartDismissed !== true && row.canRestart === true;
-  return [
-    ...(ready ? (['restart-workbench', 'later-restart'] as const) : []),
-    ...(row.canUpdate ? (['update-workbench'] as const) : []),
-  ];
+  return row.canUpdate ? ['update-workbench'] : [];
 }

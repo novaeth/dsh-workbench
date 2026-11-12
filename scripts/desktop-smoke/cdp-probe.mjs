@@ -51,8 +51,6 @@ const pluginPreviewRe = /这是一份[^\n]*插件|插件名：|This is [^\n]*plu
 const pluginInstalledRe = /装上了：|Installed:/u;
 const workbenchTitles = ['工作台', 'Workbench'];
 const workbenchUpdateTexts = ['更新', 'Update'];
-const workbenchLaterTexts = ['稍后', 'Later'];
-const workbenchRestartNowTexts = ['立即重启', 'Restart now'];
 const selfUpdateReadyRe = /新版本已就绪|new version is ready|restart to pick it up|restart required/iu;
 const selfUpdateFailedRe =
   /工作台更新失败|工作台更新未成功|The workbench update failed|did not go through|rolled back|已回滚|已用本地备份还原/iu;
@@ -1097,24 +1095,7 @@ async function smokeSelfUpdate(cdp) {
   mark('self-update-ready');
 
   const afterRow = await workbenchRowOf(cdp);
-  const texts = buttonTextsOf(afterRow);
   writeText(`${prefix}-row-after.json`, `${JSON.stringify(afterRow, null, 2)}\n`);
-  const restartNow = texts.find((one) => workbenchRestartNowTexts.includes(one));
-  const later = texts.find((one) => workbenchLaterTexts.includes(one));
-  if (restartNow !== undefined) {
-    await fail(
-      cdp,
-      `Desktop 上出现了「立即重启」钮（${JSON.stringify(restartNow)}）：Desktop 的 canRestart 应该是 false`,
-      await bodyOf(cdp),
-    );
-  }
-  if (later !== undefined) {
-    await fail(
-      cdp,
-      `Desktop 上出现了「稍后」钮（${JSON.stringify(later)}）：没有「立即重启」时它没有下一步，不该出现`,
-      await bodyOf(cdp),
-    );
-  }
 
   const after = await workbenchVersionOf(cdp, false);
   const afterWorkbench = after?.workbench ?? null;

@@ -55,7 +55,6 @@ export interface MarketActSeats {
   readonly setConfirming: (next: string | null) => void;
   readonly setFailed: (next: MarketFailure | null) => void;
   readonly setNotice: (next: string | null) => void;
-  readonly setLaterRestart: (id: string | null) => void;
 }
 
 export interface MarketActOptions {
@@ -70,10 +69,6 @@ export interface MarketActOptions {
 export function marketActOf(options: MarketActOptions): (id: string, action: MarketRowAction) => Promise<void> {
   const { t, mocked, rowOf, seats, send, onChanged } = options;
   return async (id, action) => {
-    if (action === 'later-restart') {
-      seats.setLaterRestart(id);
-      return;
-    }
     if (mocked) return;
     const row = rowOf(id);
     const label = row === undefined ? undefined : marketRowTitle(row, t);
@@ -100,7 +95,6 @@ export function marketActOf(options: MarketActOptions): (id: string, action: Mar
       action === 'update-plugin' ||
       action === 'uninstall-plugin' ||
       action === 'update-workbench' ||
-      action === 'restart-workbench' ||
       action === 'migrate-workbench';
     const market = action === 'install-version' ? row?.market : undefined;
     const marketSpec =
@@ -143,14 +137,6 @@ export function marketActOf(options: MarketActOptions): (id: string, action: Mar
       seats.setPending(null);
       seats.setHeld(undefined);
       seats.setNotice(t('panels.market.dismissed'));
-      return;
-    }
-    if (action === 'restart-workbench') {
-      if (recordOf(recordOf(value)?.restart)?.started !== true) {
-        seats.setPending(null);
-        seats.setHeld(undefined);
-        seats.setNotice(t('panels.market.restartRefused'));
-      }
       return;
     }
     if (action === 'migrate-workbench') {

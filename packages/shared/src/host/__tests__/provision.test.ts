@@ -16,7 +16,6 @@ describe('provision 请求体：每类动作各有各的目标字段', () => {
       ['update-plugin', 'name'],
       ['uninstall-plugin', 'name'],
       ['update-workbench', 'name'],
-      ['restart-workbench', 'name'],
       ['migrate-workbench', 'name'],
       ['dismiss-followup', 'id'],
     ]);

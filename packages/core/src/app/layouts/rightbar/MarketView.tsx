@@ -1,5 +1,4 @@
 import { createElement as h } from 'react';
-import { clientSurface } from '@/shared/api/platform/client';
 import type { ReactNode, Translate } from '@dsh-workbench/shared';
 import type { UnitManifest } from '@dsh-workbench/shared';
 import { useHostWrite } from '@/shared/hooks/use-host-write';
@@ -187,16 +186,8 @@ function workbenchSelfOf(input: {
   readonly workbench: WorkbenchVersion | null | undefined;
   readonly selfUpdate?: WorkbenchSelfUpdate | null | undefined;
   readonly toldAt?: string | null | undefined;
-  readonly canRestart: boolean;
-  readonly dismissedId: string | null;
 }): MarketRow | undefined {
-  const row: MarketRow | undefined = workbenchRow(
-    input.workbench,
-    input.selfUpdate,
-    input.toldAt,
-    input.canRestart,
-  );
-  return row === undefined || input.dismissedId !== row.id ? row : { ...row, restartDismissed: true };
+  return workbenchRow(input.workbench, input.selfUpdate, input.toldAt);
 }
 
 export function MarketView({
@@ -225,7 +216,7 @@ export function MarketView({
   changed = {},
   onDetailChange,
 }: MarketViewProps) {
-  const { pending, setPending, confirming, setConfirming, failed, setFailed, notice, setNotice, restartLater, setRestartLater } =
+  const { pending, setPending, confirming, setConfirming, failed, setFailed, notice, setNotice } =
     useMarketTransient({ mock, onPending });
   const { names, effective, updateMap, rows, shared, installedList, byDefault, steady, pinned, removing, busyId } =
     useMarketScene({
@@ -261,8 +252,6 @@ export function MarketView({
     workbench: mock === undefined ? workbench : mock.workbench,
     selfUpdate: effectiveSelfUpdate,
     toldAt: mock === undefined ? selfUpdateTold : undefined,
-    canRestart: clientSurface().deployment !== 'desktop',
-    dismissedId: restartLater,
   });
   const shown = withPinnedRow(pendingRow === undefined ? rows : [...rows, pendingRow], pinned);
   const pluginSource = mock?.plugins ?? plugins ?? null;
@@ -275,7 +264,7 @@ export function MarketView({
     onDetailChange,
   );
 
-  const seats = { setPending, setHeld: steady.hold, setConfirming, setFailed, setNotice, setLaterRestart: setRestartLater };
+  const seats = { setPending, setHeld: steady.hold, setConfirming, setFailed, setNotice };
   const act = marketActOf({
     t,
     mocked: mock !== undefined,

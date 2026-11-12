@@ -425,11 +425,6 @@ export function createMarketService(options: {
         ...(logger === undefined ? {} : { logger }),
       });
     },
-    async restartWorkbench() {
-      const restart = supply.restartWorkbench;
-      if (restart === undefined) return { started: false, refusal: 'no-seam' as const };
-      return restart(() => undefined);
-    },
     async updateWorkbench(pkg) {
       return updateWorkbenchOnce({
         supply,
