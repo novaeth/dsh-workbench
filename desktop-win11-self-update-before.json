@@ -1,0 +1,32 @@
+{
+  "ok": true,
+  "modules": [
+    {
+      "unit": "hello",
+      "pkg": "@dsh-workbench/module-hello",
+      "installed": "1.1.14-beta.2",
+      "title": {
+        "zh": "示例模块",
+        "en": "Sample module"
+      },
+      "latestUnavailable": "not-registry",
+      "spec": "github:novaeth/dsh-workbench-market#7135bc722ef4678d5636c84de29a7bf2af739263&path:/packages/module-hello"
+    }
+  ],
+  "workbench": {
+    "pkg": "@dsh-workbench/core",
+    "installed": "1.2.3-beta.4",
+    "latest": "1.2.3",
+    "running": "1.2.3-beta.4",
+    "spec": "link:../../workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/core",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "selfUpdate": {
+    "state": "ok",
+    "profile": "desktop",
+    "from": "1.2.3-beta.4",
+    "to": "1.2.3-beta.4",
+    "version": "1.2.3-beta.4",
+    "at": "2026-11-12T04:26:16.636Z"
+  }
+}

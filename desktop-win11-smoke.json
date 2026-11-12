@@ -1,0 +1,9 @@
+{
+  "market": "https://github.com/novaeth/dsh-workbench-market.git",
+  "module": "@dsh-workbench/module-hello",
+  "listed": true,
+  "installed": true,
+  "restartHint": false,
+  "phase": "ready",
+  "bridge": "ok"
+}
