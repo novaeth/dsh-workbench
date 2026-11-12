@@ -353,6 +353,7 @@ export function createPreflight(options: {
     const diyStarted = skip('diy') ? undefined : options.probeDiy?.();
     if (withConsole && !skip('cli')) {
       patchStep('cli', { status: 'running', action: '检查 opencli 版本' });
+      appendLog('cli', `> 盘上自检：隔离运行时${options.installed?.() === true ? '在' : '不在'}（探测前）`);
       if (diyStarted !== undefined) patchStep('diy', { status: 'running' });
 
       let version = await probeVersion();
