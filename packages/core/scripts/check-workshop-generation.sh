@@ -240,7 +240,13 @@ c12() {
   rm -rf "$lock"
   mkdir -p "$lock"; printf 'other-target\n' >"$lock/target"; printf 'someone-else\n' >"$lock/owner"; touch "$lock/heartbeat"
   wait_state "$m" failed || fail "⑫ 原持锁者没跑完"
-  sleep 1
+  # 原持锁者是后台子进程：状态落盘之后它还要走到 EXIT trap。给它一段时间观察，
+  # 期间锁一旦消失就是真错（原来只 sleep 1 秒，慢机器上会误判成"trap 删了别人的锁"）。
+  k=0
+  while [ "$k" -lt 50 ]; do
+    [ -d "$lock" ] || break
+    sleep 0.1; k=$((k + 1))
+  done
   [ -d "$lock" ] || fail "⑫ 原持锁者的 trap 把别人的锁删了"
   [ "$(head -n 1 "$lock/owner")" = "someone-else" ] || fail "⑫ 别人的锁被人动过"
   echo "⑫ 被抢锁之后，原持锁者不碰别人的锁 ✅"
