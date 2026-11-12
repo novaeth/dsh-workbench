@@ -1,0 +1,24 @@
+== self-update.json
+== profile package.json
+{
+  "name": "dsh-profile-desktop",
+  "private": true,
+  "dependencies": {
+    "@dsh-workbench/core": "link:/Users/runner/work/dsh-workbench/dsh-workbench/packages/core",
+    "@dsh-workbench/module-hello": "github:novaeth/dsh-workbench-market#7135bc722ef4678d5636c84de29a7bf2af739263&path:/packages/module-hello"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "@dsh-workbench/core",
+        "@dsh-workbench/module-hello"
+      ]
+    }
+  }
+}
+== profile links
+/Users/runner/.dsh/profiles/desktop/node_modules/@dsh-workbench/core -> ../../../../../work/dsh-workbench/dsh-workbench/packages/core
+/Users/runner/.dsh/profiles/desktop/node_modules/@dsh-workbench/module-hello -> (真目录)
+== versions
