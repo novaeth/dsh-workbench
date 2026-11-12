@@ -1055,14 +1055,8 @@ async function smokeSelfUpdate(cdp) {
   writeText(`${prefix}-ready.txt`, readyBody);
   mark('self-update-ready');
 
-  const laterUntil = Date.now() + 30_000;
-  let afterRow = await workbenchRowOf(cdp);
-  let texts = buttonTextsOf(afterRow);
-  while (!workbenchLaterTexts.some((text) => texts.includes(text)) && Date.now() < laterUntil) {
-    await sleep(500);
-    afterRow = await workbenchRowOf(cdp);
-    texts = buttonTextsOf(afterRow);
-  }
+  const afterRow = await workbenchRowOf(cdp);
+  const texts = buttonTextsOf(afterRow);
   writeText(`${prefix}-row-after.json`, `${JSON.stringify(afterRow, null, 2)}\n`);
   const restartNow = texts.find((one) => workbenchRestartNowTexts.includes(one));
   const later = texts.find((one) => workbenchLaterTexts.includes(one));
@@ -1073,8 +1067,12 @@ async function smokeSelfUpdate(cdp) {
       await bodyOf(cdp),
     );
   }
-  if (later === undefined) {
-    await fail(cdp, '就绪之后工作台那一行没有「稍后」钮（重启提示没落到行上？）', await bodyOf(cdp));
+  if (later !== undefined) {
+    await fail(
+      cdp,
+      `Desktop 上出现了「稍后」钮（${JSON.stringify(later)}）：没有「立即重启」时它没有下一步，不该出现`,
+      await bodyOf(cdp),
+    );
   }
 
   const after = await workbenchVersionOf(cdp, false);
