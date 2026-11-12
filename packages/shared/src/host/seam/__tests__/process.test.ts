@@ -82,6 +82,7 @@ describe.skipIf(process.platform === 'win32')('POSIX 进程组', () => {
     const exited = new Promise<void>((resolve) => child.onExit(() => resolve()));
     child.killTree?.('SIGKILL');
     await exited;
+    await delay(2_000);
     const stopped = statSync(beat).size;
     await delay(500);
     expect(statSync(beat).size).toBe(stopped);
