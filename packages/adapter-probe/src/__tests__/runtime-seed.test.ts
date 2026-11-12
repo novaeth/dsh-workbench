@@ -96,11 +96,20 @@ describePosix('opencliWrapperScript', () => {
     const expected = fileURLToPath(new URL('../../../adapter-runtime/bin/opencli-isolated.mjs', import.meta.url));
     expect(script.startsWith('#!/bin/sh\n')).toBe(true);
     expect(script).toContain("export DSH_HOME='/home/.dsh'");
-    expect(script).toContain(`exec node '${expected}' "$@"`);
+    expect(script).toContain(`exec 'node' '${expected}' "$@"`);
   });
 
   it('把 DSH_HOME 钉在命令里：执行缝不继承它，不钉就会去写用户真正的 ~/.dsh（实测踩过）', () => {
     expect(opencliWrapperScript('/pkg', '/custom/home')).toContain("DSH_HOME='/custom/home'");
+  });
+
+  it('★ 给了绝对 node 就用它：启动早期 PATH 上可能还没有 Desktop 自带的 node', () => {
+    const script = opencliWrapperScript('/pkg', '/home/.dsh', 'darwin', '/home/.dsh/workbench/opencli/bin/desktop/node');
+    expect(script).toContain("exec '/home/.dsh/workbench/opencli/bin/desktop/node'");
+
+    const win = opencliWrapperScript('/pkg', 'C:\\Users\\me\\.dsh', 'win32', 'C:\\Users\\me\\.dsh\\workbench\\opencli\\bin\\desktop\\node.cmd');
+    expect(win).toContain('"C:\\Users\\me\\.dsh\\workbench\\opencli\\bin\\desktop\\node.cmd"');
+    expect(win).not.toContain('\r\nnode "');
   });
 
   it('路径里有空格也不散架（单引号包住，执行缝里不会被拆成两个词）', () => {

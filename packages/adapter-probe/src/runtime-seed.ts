@@ -1,7 +1,7 @@
 import { toolchainManifestOf, toolchainNpmrcOf } from '@dsh-workbench/adapter-runtime';
 import { createRequire } from 'node:module';
 
-import { mkdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { delimiter, dirname, join, sep } from 'node:path';
 import type { DshHostContext } from '@dsh-workbench/shared';
 import { pathWithBinsOf, quoteShellArg, quoteShellArgFor, workbenchRoot, writeTextFile } from '@dsh-workbench/shared/host';
@@ -80,12 +80,14 @@ export function opencliWrapperScript(
   packageRoot: string,
   home: string,
   platform: NodeJS.Platform = process.platform,
+  nodeExecutable?: string | undefined,
 ): string {
   const script = join(wrapperRootOf(packageRoot), 'bin', 'opencli-isolated.mjs');
+  const node = nodeExecutable === undefined || nodeExecutable === '' ? 'node' : nodeExecutable;
   if (platform === 'win32') {
-    return `@echo off\r\nset "DSH_HOME=${home}"\r\nnode "${script}" %*\r\n`;
+    return `@echo off\r\nset "DSH_HOME=${home}"\r\n"${node}" "${script}" %*\r\n`;
   }
-  return `#!/bin/sh\nexport DSH_HOME=${quoteShellArg(home)}\nexec node ${quoteShellArg(script)} "$@"\n`;
+  return `#!/bin/sh\nexport DSH_HOME=${quoteShellArg(home)}\nexec ${quoteShellArg(node)} ${quoteShellArg(script)} "$@"\n`;
 }
 
 export const runtimeWrapperScript = opencliWrapperScript;
@@ -226,7 +228,13 @@ export function seedRuntimeFiles(options: RuntimeSeedOptions): readonly string[]
       writeTextFile(npmrc, toolchainNpmrcOf());
       done.push(npmrc);
     }
-    const wanted = opencliWrapperScript(options.packageRoot, options.home, platform);
+    const nodeShim = join(paths.opencliRoot, 'bin', 'desktop', platform === 'win32' ? 'node.cmd' : 'node');
+    const wanted = opencliWrapperScript(
+      options.packageRoot,
+      options.home,
+      platform,
+      existsSync(nodeShim) ? nodeShim : undefined,
+    );
     if (readText(paths.opencliBin) !== wanted) {
       rmSync(paths.opencliBin, { force: true });
       writeTextFile(paths.opencliBin, wanted, { mode: 0o755 });
