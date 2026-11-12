@@ -2,34 +2,388 @@
 
 仓库从这一版开始记录：`v1.1.1` 是这份历史的第一个版本。
 
-## 未发布
+## v1.2.3
+
+`2026-11-12`
 
 ### core
 
+#### ✨ 新增
+
+- **工具包能力索引**：三个控制工具（`workbench_toolbox_list` / `workbench_toolbox_open` /
+  `workbench_toolbox_close`）的说明里补一张能力地图：面板 / 模块 / 市场 / 长任务 → `manage`，调试 /
+  录制 / 日志 / 页面 → `diy`，MCP server → `mcp:<server>`，模块或插件自身 → `unit:<id>`，并补上原先
+  没有的 MCP 一类；说明总字数不增加。模型调用已收起的工具时，返回它属于哪个工具包，并提示下一步调用
+  `workbench_toolbox_open`，不再只得到 `unknown tool`；同一判断在审批之前生效，被收起的写工具不再弹
+  出一张通过后仍然失败的审批。agent 创建时注册运行期 skill `workbench-capabilities`，描述按当前可开
+  包生成；没有 skills 服务或注册失败时，只保留工具说明里的能力地图。模块的工具闸增加可选
+  `denyReason(name, context)`
+- **浏览器扩展离线可用**：浏览器扩展随包自带一份（opencli 扩展 v1.0.27，Apache-2.0，允许再分发），
+  启动检查不再只说「确认扩展已启用」，而是给出两种安装方式：使用工作台自带的副本
+  （选择 `vendor/browser-extension` 目录），或从 Chrome 应用商店安装，商店链接仍可点。目录优先级为
+  `DSH_WB_OPENCLI_EXTENSION` > `<workbench>/opencli/extension` > 包内自带。没有外网时给出三步操作：
+  打开 `chrome://extensions`、开启开发者模式、加载已解压的扩展程序。升级扩展时由
+  `scripts/sync-opencli-extension.mjs` 按 sha256 校验并替换，第三方声明记入 `THIRD-PARTY-NOTICES`
+
 #### ⚡ 改进
 
-- **dsh 类型改成直接引官方包**：外壳与共享包里的 dsh 契约不再手写，改成从官方 `@deepseek-ai/*`
-  包按类型引入，钉在 `0.2.2-rc.1`；dsh 的服务与事件少抄一份，dsh 改版时也不会跟真 API 漂
-- **契约包带上自己引的官方类型**：这些官方包进共享包的 `dependencies`，发布的类型面能被解析到，
-  模块作者不用自己补一长串包；运行时仍由 dsh 提供，产物里没有它们的运行时导入
-- **支持下限抬到 dsh 0.2.2-rc.1**：`engines.dsh` 从 `>=0.2.1-rc.5` 改成 `>=0.2.2-rc.1`。官方
-  Desktop 的 latest 通道已经是 0.2.2-rc.1，新用户照旧装得上；还停在 0.2.1-rc.5 的那批先把 dsh
-  升上去，启动器会阻止并给出升级命令
+- **设置页按官方行重排**：会话列表、MCP 按需加载、检查预发布版本改成官方一行式：标题、一句说明与右侧
+  控件（`SegmentedControl` / `Switch`），删掉与控件重复的「已开启」文案。配置同步与新建工作台收进
+  「高级」折叠区：摘要行给可同步项数与一句说明，展开后是内嵌面板；配置同步的 YAML 与差异经
+  「查看内容」才展开，没有勾选时补一句下一步提示。新建工作台改成折叠表单，创建结果给出可复制的启动命
+  令。后台适配组件不再常驻，只在显式配置或读取异常时显示状态行
+- **自更新改用版本目录**：新版装进 `$DSH_HOME/workbench/versions/<版本>`，profile 里的七个包改为指向
+  它的 `link:`，换版本只切换链接，profile 的 `node_modules` 只翻转七个包的链接、不再重装，也不再需要
+  等宿主退出或重新拉起宿主（首次迁移到版本目录那一次除外）。首次从真目录迁移到链接只发生一次，
+  旧版先搬进版本目录，避免迁移后留下悬空链接。装完核对七个包的 `package.json` 与客户端产物；
+  版本目录不完整时清掉 `node_modules` 重装一遍，仍不完整则判定失败；切链接前再核一次，不全就不切。
+  目录被占用时等待其退出（最长 15 分钟）再切换链接，其他错误立即报出。更新完成标记待重启，重启后
+  按启动记录确认（等待 15 分钟）；确认不了只保持待重启，不算失败。`supplyPortOf` 补上
+  `restartWorkbench` 转发，独立实例更新后的「立即重启」不再因缺少转发而失效；旧版本留下的排队记录
+  在工作台启动时继续执行，排队超过 12 小时后「更新」按钮恢复可点
+- **自更新状态收口**：工作台那一行只保留三种状态：正在更新、重启后生效、更新失败
+  （再点一次「更新」重试）；行上不再展示原因分类（`occupied` / `incomplete`）、恢复方法原文与
+  还原版本提示。没有「立即重启」的场合（Desktop）不再单独给「稍后」，只留状态说明。runner 已经结束
+  但 marker 仍是 `running` 时读作 `failed`，界面不会一直停在「正在更新」
+- **启动页只重试失败步骤**：启动页的三个「重试」（失败屏 / 桥接 / DIY）原来都发 `hard=1`，整条启动检
+  查从头执行，工具链三项探测、opencli 版本探测、`opencli doctor`、DIY 预置与预热读取全部重来。预检接
+  口增加 `only=<stepId>`，从该步骤开始执行，前面的步骤沿用上一次结果；启动页按桥接、DIY 或第一个失败
+  步骤决定重试目标，说不出具体步骤时才退回 `hard=1`
+- **dsh 契约改引官方类型**：外壳与共享包里的 dsh 契约不再手写，改成从官方 `@deepseek-ai/*` 包按类型
+  引入，钉在 `0.2.2-rc.1`；宿主与浏览器两侧的服务、事件和插槽类型少抄一份，dsh 改版时不会与真实 API
+  漂移。官方类型包（primitives 除外）进共享包的 `dependencies`，发布的类型面能被解析到，模块作者不用
+  自己补一长串包；运行时仍由 dsh 提供，产物里没有它们的运行时导入
+- **支持下限抬到 dsh 0.2.2-rc.1**：`engines.dsh` 从 `>=0.2.1-rc.5` 改成 `>=0.2.2-rc.1`。官方 Desktop
+  的 latest 通道已经是 0.2.2-rc.1，新用户照旧可以安装；仍停留在 0.2.1-rc.5 的实例需先升级 dsh，启动
+  器会阻止启动并给出升级命令
+- **界面与工具文案统一**：界面文案中英双语按句级重写，配置同步空态改用说明色；agent 工具面 65
+  个文件整句重写，日志与 CLI 术语同源；审批界面的截图基线、测试期望与重复代码基线同步
+- **文案闸接入门禁**：新增 `scripts/check-copy.mjs` 与允许清单：界面与工具面按 error 报告，文档按
+  warn 报告，跳过 logger、占位符与测试；`package.json` 增加 `check:copy` 与 `check:copy:strict`，串
+  在 `check:docs` 之后；AGENTS、ARCHITECTURE、CONTRIBUTING 与文档站的门禁链同步
+- **E2E 覆盖自更新与插件安装**：新增工作台自更新的用户视角 E2E：真实安装最新 beta 版，再改写
+  版本号作为起点，点「更新」后断言界面仍在、提示「重启后生效」，重启后运行版本为新版；自更新三项断言
+  从告警改为硬判据。新增 opencli 插件安装 E2E：mac、win11、win10 各起一个实例，断言插件目录在位、
+  `opencli plugin list` 含目标插件。市场入口的匹配同时修正：真实入口文案取自 `panels.tab.market` 且
+  只挂在按钮的 `aria-label` 上，窄栏 `innerText` 为空，点击表达式改为同时匹配 `aria-label` 并跳过
+  `disabled`
+- **CI 失败时带出现场**：desktop-smoke 失败时写入 `host-probe.json`
+  （`/workbench/api/{health,preflight,unit-manifests}` 的状态与正文开头、`__DSH_BOOT__` 的键、页面脚
+  本列表），并把 `$DSH_HOME/*.log`、`$DSH_HOME/logs/*.log` 与主进程 `stdout` / `stderr` 一起收进工作
+  区；重启后那一步给一次重试，仍失败才判红。各步骤的告警不再影响整体退出码
+  （`$LASTEXITCODE` 的判定统一），platform-smoke 与 desktop-smoke 失败时用 `::error` 带出用例名
+  与日志尾部，证据文件名去掉重复前缀。
+  夹具拒收相对路径的 `DSH_HOME`，profile 参数为空串时按自动发现处理，链接规范的断言统一先规范化再比
+  较
+- **维护者可直接发布**：新增 `pnpm run release:fast -- --target <版本> --yes`，等价于
+  `node scripts/release.mjs --skip-gate --skip-rehearsal`：只跳过门禁与 dry-run 彩排，改版本号、构
+  建、`pnpm -r publish`、提交并推送照旧执行，发布产物仍在发布时构建；用法写进 `--help`
 
 #### 🐛 修复
 
-- **一启动就「Failed to load plugins」**：服务访问改成 `ctx.<服务名>` 之后，右栏借位
-  （`sidebarRight`）、会话（`sessions`）、共享上下文菜单（`contextMenus`）与对话（`conversation`）
-  这几位没写进 `inject`，cordis 当场抛 `cannot get property … without inject`，整个外壳连同全部
-  模块都不激活。这几处仍按「有就用、没有就退」的读法取服务：外壳不把自己钉死在某一份 dsh 组合上
-- **自检按 cordis 的 inject 规则卡客户端 apply**：替身不再无条件交出全部服务，读到没声明的服务
-  就抛，跟真运行期一样 —— 这一回就是这类读取漏过了自检
+- **启动即插件加载失败**：服务访问改成 `ctx.<服务名>` 之后，`inputTriggers`、`conversation`、
+  `contextMenus`、`sidebarRight`、`sessions` 没有写进 `inject`；dsh 0.2.2-rc.1 的 typed ctx
+  （包括 `ctx.get`）对未声明的服务直接抛错，`apply` 失败，界面停在插件页。`client.tsx` 的 `inject`
+  补齐这五个服务，相关访问统一走 `ctx.get(...)`；读取仍按「有就用、没有就退」处理，外壳不绑定到某一
+  份 dsh 组合
+- **自检按 inject 规则校验客户端**：自检的 client 判据给 `ctx` 套严格代理，读取未写进 `inject` 的服
+  务（属性访问与 `ctx.get`）都会抛错，与真实 dsh 一致；`injectedServices` 直接从
+  `src/app/client.tsx` 的 `inject` 解析，避免手抄漂移。上一版只拦属性访问，漏掉了
+  `ctx.get('sidebarRight')` 这一类读取
+- **已安装的工具不再重装**：`probeVersion` 原来把 `--version` 非零一律判为 `missing`，opencli 已安装
+  但自身无法启动时每次启动都会被重装；现在包在盘上时不再判缺失，把真实报错显示到面板。opencli 包装脚
+  本优先使用 `bin/desktop` 的 node 垫片（Windows 为 `node.cmd` 的绝对路径），web 部署才退回裸
+  `node`。cli 步骤在探测前记录 `installed()` 的结论；决定重装前把 `--version` 的失败原文写进步骤日
+  志；安装完仍读不到时，把 toolchain 与包目录的真实内容写入日志
+- **Desktop 上补 pnpm 来源**：官方 Desktop 只提供 `pnpm.cjs`，PATH 上既没有 pnpm 也没有 npm；自举脚
+  本先认宿主铺好的 `DSH_WB_PNPM`，没有再退回 PATH 上的 pnpm，Windows 分支按引号拆分命令串。
+  `ensureToolchain` 补一个 pnpm 包装脚本指向 Desktop 自带的 `pnpm.cjs`；Windows 分支用双引号生成
+  `.cmd`，单引号不是 cmd.exe 的引号，包装脚本会不可用。工具链三项探测恢复并行，本地命令 10 秒超时
+  （45 秒只留给 registry 查询）；Desktop 自带的 node 旁边没有 npm 时不再启动进程，直接记为
+  `npmMissing`
+- **更新检查不再退化成 latest**：官方 Desktop 的 node 不带 npm，而版本探测固定使用 `npm view`，
+  `latestVersion` 永远是 `undefined`，更新于是退化成 `pkg@latest`，pnpm 解析到同一版后显示已是最新。
+  探测命令改为两条探测路径：先 `npm view`，失败再试宿主铺好的 `DSH_WB_PNPM view`；两条都读不到时不再
+  回落到稳定版 `latest`，按频道取 `@beta` / `@latest`；版本是否存在的判断同样依次尝试
+- **Windows 上可以安装插件**：插件装卸在 `plan-run` 里增加步骤级 host 标记，只对带标记的步骤走宿主通
+  道：第三方 `npm install` 的嵌套子进程在 Windows 受限令牌下会被拒绝；未提供宿主能力时按失败处理，不
+  静默降级。干净机器上先建 `plugins-npm` 目录；`npm pack` 的落点从宿主临时目录改回执行缝授予的产品
+  根。隔离 launcher 在 Windows 上同时替换 `USERPROFILE` / `HOMEDRIVE` / `HOMEPATH`，让
+  `os.homedir()` 指向隔离 home，不再读到真实的 `.opencli` 目录
+- **隔离运行时按官方源安装**：隔离运行时的 `pnpm add` 没有带 `--registry`，会跟随 profile 的私有源；
+  该源没有代理 `@jackwener` 时这一步返回 404，界面只提示隔离运行时尚未安装完成。现在生成隔离运行时
+  时，给 toolchain 目录写一份 `.npmrc`，把 `@jackwener` 钉到官方源
+  （可用 `DSH_WB_OPENCLI_REGISTRY` 换源），其余包照旧走用户的私有源；提示改为在启动检查的 cli 步骤重
+  试
+- **安装失败给出原因**：opencli 插件的安装路由原来只有抛错或成功两个出口；现在与 dsh-bundle 同形，返
+  回 `application:'failed'`、`stage:'install'`、`changed:false`、`target`、
+  `errorCode:'operation-error'` 与 `errorDetail`，按行带上 `message`（含 `stderr` 尾部）、失败那一步
+  的完整命令行与完整输出。「添加模块」弹窗的失败屏画出标题、原因与失败那一步的完整命令行
+  （原文进「安装详情」），底部给出「更换安装源」与「重试」。供给通道在异常时写一条 warn 日志，包含动
+  作、目标与未截断的原始错误
+- **市场行先报新版**：行状态原来只要 `running != installed` 就显示「重启后生效」，与
+  「有新版 → 给更新按钮」可以同时成立，用户还没更新却看到两句互相矛盾的话。现在只有安装版已是该版
+  本、只是未载入时才说「重启后生效」；源上还有更新时先报新版
+- **link: 安装的工作台可更新**：runner 把 profile 依赖写成 `link:` 后，`readProfilePackage` 一律判为
+  本地副本，市场行不再给「更新」；把 `isManagedLinkSpec` 迁进共享包成为唯一实现，只把
+  `workbench/versions` 根下的链接视为受管链接，模块行与工作台行用同一套豁免，补三条用例
+- **遮罩不再自动关闭**：启动遮罩原来只有一个 5 分钟硬超时，用户正停在启动页读失败原因、复制安装命令
+  或点重试时，时间一到遮罩自动关闭。现在「等用户决定」的帧（预检失败 / 桥接未连接 / DIY 缺失）不自动
+  关闭，由屏幕上的「先进入工作台」与重试按钮决定；检查与安装中的帧保留 5 分钟，但用户一有点击、键盘
+  或滚轮操作就重新计时
+- **检查更新不再被慢速来源拖慢**：registry 查询超时原来固定 10 秒，慢的私有源常在答案到达前被切断；
+  「查不到」的结果又按 10 分钟缓存，一次超时会把后续查询一起锁死。现在查询超时改为 45 秒，失败结果只
+  缓存 60 秒；读本地账本的 `npm ls` 单独按 10 秒；请求被后续请求替代或没有结果时，检查状态也会收尾，
+  不再一直停在检查中
+- **自更新中断不再停在更新中**：runner 的 `main` 原来没有异常处理，写 marker 失败、解析计划失败或任
+  何一步之外的抛出都会变成未处理异常，进程结束后 marker 停在 `running`，用户要等到 TTL 到期；现在全
+  程捕获异常，崩溃时写入 `failed` 并打印恢复方法，启动时先写入自己的 pid。`selfUpdateBusy` 对
+  `running` 也按 pid 判断是否仍在运行；`startSelfUpdate` 未能启动时如实返回 `started:false` 并写入
+  `failed`
+
+#### 🗑️ 移除
+
+- **移除版本回退**：市场行不再提供「切回上一版」动作、二次确认与相关文案；动作路由不再接受
+  `rollback-workbench`，契约、市场分发与宿主端口一起删除。自更新不再自动回滚：`expect-boot` 不再带
+  profile 目录与链接，marker 去掉 `rolled-back` 状态与 `boot-failed` / `rollback-failed` 原因；确认
+  失败只保持待重启，不再把链接切回旧版。原因是实际使用中误判多于补救：用户点击「更新」后停在插件页、
+  客户端尚未挂载时被判为未启动，超过宽限期就把已安装的新版切回旧版
 
 ### docs
 
 #### ⚡ 改进
 
-- **版本口径**：README、快速开始与常见问题里的 dsh 版本号跟着 `engines.dsh` 改
+- **文案规范成文**：新增 `.agents/skills/wording/VOICE.md`（六条语域规则、三档读者、先写句再查词与机
+  械替换的五个信号）与 `TERMS.md`（名词、动词、状态三张表与双向禁词）；重写 `SKILL.md`、
+  `FOR-USER.md`、`FOR-AGENT.md`、`FOR-DEV.md` 的流程与例子，`COPY.md` 与词表对齐
+- **文档按句级重写**：README、core README、文档站的安装 / 快速开始 / 常见问题 / 数据 / 模块 / 架构页
+  与模块 DIY 技能约 150 句按新规范重写，日志与 CLI 术语统一
+- **版本与门禁口径同步**：README 与快速开始里的 dsh 版本号跟着 `engines.dsh` 改为
+  0.2.2-rc.1；README 的升级说明改为「装进独立版本目录、重启后生效」，并注明第一次更新（迁移到
+  版本目录）前 Desktop 需要先退出工作台；AGENTS、ARCHITECTURE、CONTRIBUTING 与文档站的门禁链
+  补上 `check:copy`；ARCHITECTURE 记下工具包的 gate 契约与发现性两节；CONTRIBUTING 的 E2E
+  说明去掉回退段
+
+### 📦 产物
+
+- [@dsh-workbench/core@1.2.3](https://www.npmjs.com/package/@dsh-workbench/core/v/1.2.3)
+
+## v1.2.2
+
+`2026-11-10`
+
+### core
+
+#### ✨ 新增
+
+- **工作区行的更多菜单**：行尾原来只有一枚铅笔按钮，打开后只能改名；现在改为三点菜单：设置别名、
+  在 Finder 中显示（非 macOS 写「在文件夹中」）、删除工作区；删除为危险色，与上面两项之间
+  有分隔线。右键工作区项打开同一份菜单，位置在指针处；删除要二次确认，确认之前不发 `delete`，
+  只把工作区从列表里移除，文件夹与会话记录保留。别名只改显示名、不改文件夹名，
+  搜索框提示与相关文案从「中文名」改成「别名」。三点按钮照 dsh 官方补上
+  `aria-expanded`，由按钮报告菜单开合状态
+
+#### ⚡ 改进
+
+- **门禁不依赖开发机环境**：`module-tools` 的字号判据原来以 13px 为样本（刻度来自 dsh 主题
+  的 `--dsw-font-*`），全新机器上读不到 dsh 主题就误报；现在改用外壳自带的 `--wb-font-*`
+  刻度（18px）。`style-shape.mjs` 里 9 处探针样板抽成 `styleCheckOf(probe)`，
+  `.jscpd-baseline.json` 按干净检出重算。整链之后再以空的 `DSH_HOME` 运行一遍
+  `selfcheck`，判据不许依赖机器上的 dsh 现场；工作区菜单那条判据把菜单卡片依赖的
+  `.list` 类也一并固定
+- **CI 的失败定位与覆盖**：新增 `gate.yml`，push 到 `main` 与每周在 linux、mac 上运行整条
+  `pnpm run check`；`platform-smoke` 补上「升级现场自动修复」冒烟与自更新、taskkill 相关判据，
+  PR 触发面扩到 `packages/*/scripts`、`packages/*/bin`、`package.json`、`.husky` 与
+  `scripts/**`。整链失败时把关键错行连同判据明细做成注解：
+  公开仓日志需要管理员权限，注解不需要
+
+#### 🐛 修复
+
+- **Windows 升级后 opencli 不可用**：升级到 1.2.1 后，预检提示隔离运行时尚未安装完成，浏览器
+  取数、插件与依赖浏览器读数的面板全部不可用。原因是安装命令钉的下载缓存与既有
+  `toolchain/node_modules` 记录的位置不一致，pnpm 报 `ERR_PNPM_UNEXPECTED_STORE`，安装时把
+  `node_modules` 清到一半。现在隔离运行时的 pnpm 缓存只有一个来源：读
+  `node_modules/.modules.yaml` 记录的值，读不到才回落到运行时的 `pnpm-store`，toolchain、
+  插件 vendor 与共用依赖三处同源。安装失败且属于缓存位置不一致，或装完仍读不到 opencli 时，
+  清掉 `toolchain/node_modules` 重装一次，错误原文保留首行；Windows 上只有
+  `powershell.exe` 时也能启动安装，不再因找不到 `pwsh` 而失败
+- **独立实例的端口写进 profile**：端口原来只由启动器传入的 `--port` 决定，直接运行
+  `dsh workbench` 起的是同一个实例却没有 `--port`，会回落到 dsh 默认的 3080，与 `dsh web`
+  冲突。现在 `setup` 把 webserver 行写进该 profile 自己的 `cordis.patch.yml`（整份 config
+  重述，dsh 的 patch 是整键替换），优先级仍为 `--port` > `WORKBENCH_PORT` > `3081`；
+  profile 里已有这一行就一个字节不动。`seed-profile.sh pin-port` 可单独运行，重复执行幂等
+- **Windows 上自更新与内置命令**：自更新生成的子脚本改成按生成时的平台走
+  `$ComSpec /d /s /c`（Node 直接执行不了 `.cmd`）；bin 探测改用 `where.exe`，不再受
+  PowerShell 里 `where` 别名影响；`dev`、`create` 与 `verify` 在 Windows 上不再 ENOENT，
+  改成给出明确的未移植说明与替代做法；工坊工具链的 `.mjs` 入口改由 `node` 启动，不再把
+  脚本当命令发
+- **Windows 上的路径与配置文件**：8 处绝对路径直接拼接进命令行改成经 `quoteShellArgFor`（根路径
+  带空格时 pwsh 会截断），PATH 的段带引号时仍找得到 `pwsh.exe`；模块来源的 `source.path`
+  与索引路径的反斜杠按正斜杠归一，git pathspec 用反斜杠返回零输出时不再误报「索引不在仓库
+  里」；cordis 补丁分块按 `/\r?\n/` 归一，CRLF 下侧栏档位不再读反，也不再追加重复块；
+  给用户的命令不再带 `cd "$DSH_HOME/…" &&`（PowerShell 里 `$DSH_HOME` 为空，`&&` 在 5.1
+  下解析失败）
+- **写域按真实路径判定**：判定前先 realpath，`/tmp` 与 `/private/tmp` 这类别名、macOS 与
+  Windows 的大小写差异不再把域内路径判成域外；多路径求共同根时也不再向上追溯到上级目录。产品域
+  环境变量一并钉 `USERPROFILE`、`HOMEDRIVE` 与 `HOMEPATH`（Windows 上 npm 与 pnpm 读的是
+  它）；`EPERM` 与 `EACCES` 同口径算「写不了」，安装到不可写目录会在运行前被拒绝并说清权限
+- **超时与取消终止进程树**：执行缝 host 域的超时与 abort 现在终止整棵树：win32 走
+  `taskkill /pid <pid> /T /F`，POSIX 走进程组；`request.signal` 不再被丢弃，`aborted`
+  返回真值，超时返回后孙进程不再继续写同一个 prefix
+- **会话「更多」不再打开空菜单**：dsh 0.2.2 起会话菜单项由 `ui-workspace` 注册进共享
+  上下文菜单；此前只摘掉了槽位渲染，⋯ 处留下一个空的 `Menu`，自定义左栏打开后是空菜单。现在
+  ⋯ 只报告目标与位置，开合态由共享菜单派生，右键与 Shift+F10 打开同一份菜单，Enter 与
+  Space 打开会话
+- **工作区菜单的开合与关闭**：点三点或右键打开菜单时不再收起选择器（原来菜单一打开，刚才
+  展开的工作区列表就消失），选中一项之后才收起；三点按钮改为切换，菜单打开时再点同一项即关闭，不再
+  出现菜单先关闭再重开的闪烁。关闭菜单改由菜单自身处理：菜单打开时自己监听 window 捕获的
+  pointerdown 与 Escape，不再受其他弹层的 `stopPropagation` 影响，选择器收起后也不再残留
+  菜单；Escape 只关闭菜单，不再把选择器一起关
+- **工作区菜单不再多出间距**：dsh 的 `Menu` 在 portal 模式下仍渲染一个空 `<span>`，其
+  `.root` 是 `display: inline-flex`，空的 inline 级盒仍会生成行盒，于是选择器与「工作区」
+  之间多出一条行距。现在给 wrapper 挂 `.anchor.anchor { display: none }` 从布局里去掉，定位
+  继续走 `getAnchorRect`；菜单卡片的 `.list` 从与 `dsh-client-ui-primitives` 重复的
+  `min-width` 换成 `max-width`
+- **写入失败时对话框仍可关闭**：`useWorkspaceWrite` 的 `write()` 补了 reject 分支，
+  原来写入抛错时 `busy` 一直为 true，删除对话框的确认、取消、Escape 与遮罩四个出口全部失效；现在失败
+  落到 `failed`，对话框可以关闭并重试
+- **共用依赖行与模块行对齐**：模块市场的「共用依赖」行原来只在检查时显示加载指示，检查完
+  没有状态点，更新按钮也没有更新色；现在与模块行一致：状态点分进行中、已完成、警告与空闲，
+  更新按钮使用更新色
+
+### docs
+
+#### ⚡ 改进
+
+- **安装说明补上端口与 Windows 限制**：快速开始、三种装法与常见问题说明独立实例的端口写在
+  它自己的 profile 里，`npx @dsh-workbench/core` 与直接 `dsh workbench` 起的是同一个实例、
+  同一个端口，`WORKBENCH_PORT` 在两种启动方式下都生效；另注明 Windows 上独立实例的启动器
+  还需要 bash，`create` 与 `setup` 会报找不到 `bash`，改用 `dsh web` 或 Desktop 的插件页
+  安装。根 README 与包 README 同口径
+
+### 📦 产物
+
+- [@dsh-workbench/core@1.2.2](https://www.npmjs.com/package/@dsh-workbench/core/v/1.2.2)
+
+## v1.2.1
+
+`2026-11-09`
+
+### core
+
+#### ✨ 新增
+
+- **人工干预节点**：长任务新增 `needs-human` 状态与 `LongTaskIntervention` 载荷（`title` / `hint` /
+  `open-url` 或 `copy`），任务行上出现对应动作；左栏与项目下拉把需要人处理的任务升到 warning 档，
+  agent 读口写「等人处理」「要人做」；`needs-login` 旧链路原样保留，不新增 kit 成员、不跨主版本
+- **「我处理完了」**：注册表加 `resumable` 与 `recheck(id)`，外壳自动挂 `<单元>/runs/recheck`；
+  `useLongTask` 的 feed 加 `recheck` / `rechecking` / `recheckFailed`，`needs-human` 行上出现
+  「我处理完了」按钮，点击后自动刷新；模块没有提供 `recheck` 处理函数时就没有这个按钮，恢复仍靠
+  模块轮询
+- **干预回执与等待通知**：干预节点可带 `fields`（`text` / `secret`、`required`、`submitLabel`），
+  行上出表单，`<单元>/runs/answer` 把回执交给模块；注册表按声明字段收值并校验必填，值只回模块、
+  不进快照 / 不进 facts / 不进通知；`PostResource.redact` 让回执那条动作路由的 `wrote` 不记
+  `args`。进入 `needs-human` 时向发起该任务的会话发「在等你处理」notice（`hold`、按 run 去重、
+  不唤醒）；另加 `withInterventionRetry`，第一轮立即试、之后有界退避、单飞、永不抛错
+
+#### 🐛 修复
+
+- **安装计划改有序步骤**：Windows 上从界面安装插件原来会「检查到并安装中」，然后弹窗复位、实际
+  什么都没装：安装计划被拼成一条 POSIX shell 串交给执行缝，win32 上执行缝走
+  `pwsh -Command '& <line>'`，`pnpm add` 之后紧跟的 `rm -rf … && mkdir -p … && ln -s …` 在
+  PowerShell 里第一个词不是命令，`&&` 链断掉，后续步骤一步未执行。现在计划是一组有序步骤
+  （`run` / `remove` / `mkdir` / `link` / `copy`），文件操作走 `node:fs`、Windows 目录链接用
+  junction，展示行在 win32 上渲染成可直接执行的命令；新增「安装计划里没有 POSIX-only 编排」判据
+  与真 shell 冒烟，接进 CI 的四个 runner
+- **新建工作台的启动提示**：启动提示不再手拼 `WORKBENCH_PROFILE=` 前缀，改用 `--profile`
+  传参，命令行里只有命令本身；win32 上 `bin/dsh-workbench.cmd` 仍是「Windows 启动器还没移植」的
+  占位脚本（`exit /b 1`），给出的命令无法执行，契约里 `command` 改成可选，界面改为一句说明
+  （中英各一条词条）
+- **绝对路径的包管理器也能识别**：安装前的前置权限检查原来要求命令以 `npm` / `pnpm` 开头，
+  `DSH_WB_PNPM` 指向具体文件时（如 `/path/node /path/pnpm.cjs add …`）整段检查被跳过，要等真正
+  执行才报错；现在按 token 找包管理器，`/` 与 `\` 分隔都认，`pnpm` / `npm` 加 `.js` / `.cjs` /
+  `.mjs` / `.cmd` / `.exe` 都算，最多容忍两个启动器前缀 token
+
+### 📦 产物
+
+- [@dsh-workbench/core@1.2.1](https://www.npmjs.com/package/@dsh-workbench/core/v/1.2.1)
+
+## v1.2.0
+
+`2026-11-09`
+
+### core
+
+#### ✨ 新增
+
+- **工具包按需加载**：默认工具面只保留 `workbench_toolbox_list`、`workbench_toolbox_open` 与
+  `workbench_toolbox_close` 三个控制工具；`manage`、`diy` 以及每个挂在看板上的模块或插件各成一个
+  `unit:<id>` 工具包，按会话开启，开启需要用户审批。清单工具可声明 `elevates`，这类调用按抬高
+  工具面走审批，未认领、非法或没有挂到看板上的目标在审批前就拒绝；关闭时机由 agent 判断，开启后
+  下一步即可调用。宿主侧改从 `ctx.get` 读工具面，界面文案统一为「开启工具包」「关闭工具包」
+- **卡片改由外壳绘制**：模块可以把 `card` 换成 `view`（`CardView` v1，契约在
+  `@dsh-workbench/core/contract`），只交读口、归一化模型与文案键，卡头、五态、阻断、刷新、
+  状态点、动作排法与通用 section 由外壳绘制；
+  `metrics`、`rows`、`activity`、`longTask`、`settings`、`custom` 可组合，内容塞不进 section 时用
+  `customBody` 把正文整块交回模块。`apiVersion` 仍是 3，`card` 原样保留；未知版本或拼错的
+  section 会被外壳拒绝并回退 `card`，schema-only 模块要在 peer 里抬到认识 `view` 的外壳版本。
+  模块工具的卡片判据同步渲染 `view` 探针
+- **流程与登录重试收进共享包**：`@dsh-workbench/shared/host` 新增 `createFlowTask`，把工具、长任务
+  与动作通道收成一份实现，自动做 `flow.check`，`runId` 参数支持只看那一条；新增
+  `withLoginRetry`，认证失败时自动调用 `ctx.login(url)` 并在原地重试
+- **MCP 收成外部工具包**：初始化时从 `mcp__<server>__*` 认出 server，收成 `mcp:<server>` 外部包；
+  工作台设置新增「MCP 按需加载」，默认关闭，关闭时 MCP 工具照旧全量进入上下文，打开后按需开启
+  工具包并走审批，开关存在本机工作台的 `settings.json`，变化后立即重算工具面与限制。模块清单里
+  的工具可写 `onDemand: false` 表示常驻、不随工具包收起。另修好开关读取缺少 `ok: true`、
+  复选框一直禁用的问题
+- **更新判断接官方版本表**：工作台那一行的「检查更新」改用 `pluginManager.listVersions`，版本选取与
+  blocked 口径和模块行一致；官方版本表判定这一版与当前 dsh 不兼容时，行上不给更新入口，起外部
+  脚本前也先拒绝。设置新增「非正式版本」开关（v1.2.3 起改名为「检查预发布版本」），默认关闭；
+  打开后检查更新取整张版本表里最高的版本（含 beta / rc），工作台、模块与插件按同一开关选目标版本
+- **市场发现页按分类筛选**：发现页原来的标签行换成分类（全部 + 单选），标签回到筛选菜单，卡片保留
+  标签；发布审批要求填分类、标签可选，新分类在审批屏列出索引现有词表。新增
+  `workbench_market_categories` 读工具，`release` 支持 `--category`，`refresh` 不丢已有分类；
+  市场页布局对齐一并调整
+- **kit 补三件模板**：新增 `UnitBlocker`（读口错误或能力读数 → 统一阻断屏）、`useUnitSetup` +
+  `SetupShell`（初始化与配置的流程壳，setup / edit 两模式）与 `createUnitConfig`
+  （`@dsh-workbench/shared/host`，单元配置读写）；`template-diy` 加 `SetupFlow` 示例。`kit.lib`
+  暴露 `blockerOf`，模块可先判有没有阻断再决定整块换屏；`useUnitSetup` 支持 `initialValues`
+  与免 `read` 的编辑模式
+
+#### ⚡ 改进
+
+- **空态统一用插画**：看板、模块页与模块市场的空态改用 dsh 的空态插画（四宫格替掉时钟），
+  `EmptyIllustration` 搬进 `@dsh-workbench/shared` 并导出；`EmptyState` 不给 `icon` 时默认带插画
+  （边长 72），要纯文字给 `null`，自定义图标原样透传
+- **品牌标重画并改纯色**：新标在显示器里放 dsh 鲸鱼，插件图标改透明底；随后去掉 #54ECE7 →
+  #658EFF 的渐变，整枚标统一 #658EFF，鲸鱼不再单独压深。`logo-color`、`logo-color-dark`、
+  `logo-app` 与 `icon.svg` 同步，组件预览同步重出；`BRAND_MARK_COLORS` 收成 `{ mark }`，
+  `IconBrandMarkColor` 直接铺实心色
+- **审批详情列出要装的依赖**：模块安装或升级的审批详情里列出这次要装的插件与库；读不到声明时
+  说「读不到这个模块要装什么」，没有依赖时说「这个模块没有声明插件与库」
+
+#### 🐛 修复
+
+- **卡片动作与阻断重排**：卡片动作统一排到右下角，错误重试降为 outline；阻断详情排在动作之前，
+  避免左-右-左的排法；未知错误改成看得懂的说法，原文收进详情
+- **启动页不再闪黑**：启动页补上品牌标；启动时先按已保存的主题铺好深浅色，等 dsh 的主题判定落定
+  再交回，消除先按 system 猜测导致的闪黑
+- **移动面板行审批标题**：审批标题按 `index` 参数写出面板移动到的实际位置，为 0 时写「最前面」，
+  其余按 0 基换算成「第 N 位」，不再一律写「最前面」
+- **契约与校验收敛到单一来源**：`fact` / `route` / `panels` 的 payload、`release` 目标、OpenCLI 与
+  registry 等词表收进 `@dsh-workbench/shared` 的契约；适配器集合校验补上 `libUninstallCommand`，
+  并加类型覆盖锁；门禁层表从 arch 配置派生，运行时边界与适配器包清单收敛；文档里的计数、不存在的
+  方法、协议版本与字号刻度的漂移一并修正
+
+### docs
+
+#### ⚡ 改进
+
+- **品牌标同步**：文档站首页的 logo（`site/static/logo.svg`）换成新品牌标
+
+### 📦 产物
+
+- [@dsh-workbench/core@1.2.0](https://www.npmjs.com/package/@dsh-workbench/core/v/1.2.0)
 
 ## v1.1.18
 
