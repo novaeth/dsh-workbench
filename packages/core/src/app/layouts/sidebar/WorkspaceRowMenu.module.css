@@ -1,7 +1,3 @@
 .list {
   max-width: var(--wb-len-320);
 }
-
-.anchor.anchor {
-  display: none;
-}

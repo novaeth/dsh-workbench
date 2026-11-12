@@ -63,8 +63,9 @@ describe('工作区行的三点菜单：悬停换图标、点开是菜单', () =
     expect(SWITCHER).toContain('<WorkspaceRowMenu');
     expect(MENU).toContain('<Menu');
     expect(MENU).toContain('portal');
-    expect(MENU).toContain('anchorRef={anchorRef}');
-    expect(MENU).not.toContain('anchorPoint=');
+    expect(MENU).toContain('anchorRef');
+    expect(MENU).toContain('anchorPoint: point');
+    expect(MENU).toContain('createPortal(menu, document.body)');
     expect(MENU).not.toContain('getBoundingClientRect');
   });
 
@@ -82,12 +83,9 @@ describe('工作区行的三点菜单：悬停换图标、点开是菜单', () =
     expect(MENU).toContain('listClassName={styles.list}');
   });
 
-  it('★ Menu 自己那个空 span 不占一行：primitives 的 .root 是 inline-flex，留在流里就多出一条行盒（行距看着变大）', () => {
-    const css = read('WorkspaceRowMenu.module.css');
-
-    expect(MENU).toContain('className={styles.anchor}');
-    expect(css).toContain('.anchor.anchor {');
-    expect(css).toContain('display: none');
+  it('★ 菜单根节点不挂在行里：portal 到 body 之后没有行盒问题，右键那种模式它自己就是锚点（不能 display:none）', () => {
+    expect(MENU).toContain('createPortal(menu, document.body)');
+    expect(MENU).not.toContain('className={styles.anchor}');
   });
 });
 
@@ -96,20 +94,19 @@ describe('右键工作区那一项：跟 dsh 官方同一套（指针位置开�
     expect(ROW_LABEL).toContain("row.addEventListener('contextmenu', context)");
     expect(ROW_LABEL).toContain('event.preventDefault()');
     expect(ROW_LABEL).toContain('event.stopPropagation()');
-    expect(ROW_LABEL).toContain("menuRef.current?.({ element: row, align: 'start', mode: 'open' })");
+    expect(ROW_LABEL).toContain("menuRef.current?.({ point, align: 'start', mode: 'open' })");
     expect(MENU).toContain("align={target?.align ?? 'end'}");
   });
 
-  it('★ 键盘那次：ContextMenu 键与 Shift+F10（跟官方同一个判据），锚在那一行上', () => {
+  it('★ 键盘那次：ContextMenu 键与 Shift+F10（跟官方同一个判据），开在行的左下', () => {
     expect(ROW_LABEL).toContain("event.key !== 'ContextMenu'");
     expect(ROW_LABEL).toContain("event.key === 'F10' && event.shiftKey");
-    expect(ROW_LABEL).toContain('show(event)');
-    expect(ROW_LABEL).toContain('element: row');
+    expect(ROW_LABEL).toContain("show(event, { x: rect.left, y: rect.bottom })");
   });
 
-  it('★ 右键落点：菜单挂在那一行（不自己算指针坐标，交给 CSS anchor）', () => {
-    expect(ROW_LABEL).not.toContain('event.clientX');
-    expect(ROW_LABEL).not.toContain('new DOMRect');
+  it('★ 右键落点：指针在哪就开在哪（键盘触发时客户端坐标是 0，才退回行的 rect）', () => {
+    expect(ROW_LABEL).toContain('const keyboard = event.clientX === 0 && event.clientY === 0');
+    expect(ROW_LABEL).toContain('x: rect?.left ?? event.clientX, y: rect?.bottom ?? event.clientY');
     expect(ROW_LABEL).toContain('row.focus({ preventScroll: true })');
   });
 });

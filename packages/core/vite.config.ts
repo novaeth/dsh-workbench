@@ -167,7 +167,7 @@ function clientConfig() {
       },
       rollupOptions: {
 
-        external: ['react', '@deepseek-ai/dsh-client-ui-primitives'],
+        external: ['react', 'react-dom', '@deepseek-ai/dsh-client-ui-primitives'],
         output: {
           exports: 'named' as const,
 

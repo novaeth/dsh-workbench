@@ -1,4 +1,5 @@
 import { createElement as h, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import type { Translate, WorkspaceView } from '@dsh-workbench/shared';
 import type { MenuEntry } from '@deepseek-ai/dsh-client-ui-primitives';
 import {
@@ -14,7 +15,8 @@ import styles from './WorkspaceRowMenu.module.css';
 export const WORKSPACE_MENU_TRIGGER = 'data-workspace-menu-trigger';
 
 export interface WorkspaceMenuAnchor {
-  readonly element: HTMLElement;
+  readonly element?: HTMLElement;
+  readonly point?: { readonly x: number; readonly y: number };
   readonly align: 'start' | 'end';
 }
 
@@ -33,7 +35,7 @@ export function nextWorkspaceMenu(
 ): WorkspaceMenuTarget | null {
   const openFor = current?.workspace.workspaceId ?? null;
   if (shouldToggleWorkspaceMenu(open.mode, openFor, workspace.workspaceId)) return null;
-  return { workspace, element: open.element, align: open.align };
+  return { workspace, ...(open.element === undefined ? {} : { element: open.element }), ...(open.point === undefined ? {} : { point: open.point }), align: open.align };
 }
 
 export interface WorkspaceRowMenuProps {
@@ -72,6 +74,7 @@ export function WorkspaceRowMenu({ target, t, onClose, onAlias, onDelete, onReve
   }, [target, t]);
   const open = target !== null;
   const anchorRef = useMemo(() => ({ current: target?.element ?? null }), [target]);
+  const point = target?.point;
 
   useEffect(() => {
     if (!open) return;
@@ -98,7 +101,7 @@ export function WorkspaceRowMenu({ target, t, onClose, onAlias, onDelete, onReve
     };
   }, [open, onClose]);
 
-  return (
+  const menu = (
     <Menu
       open={open}
       onClose={onClose}
@@ -121,9 +124,11 @@ export function WorkspaceRowMenu({ target, t, onClose, onAlias, onDelete, onReve
       portal
       autoFocus
       align={target?.align ?? 'end'}
-      anchorRef={anchorRef}
-      className={styles.anchor}
+      {...(point === undefined
+        ? { anchorRef }
+        : { contextual: true, anchorPoint: point })}
       listClassName={styles.list}
     />
   );
+  return createPortal(menu, document.body);
 }

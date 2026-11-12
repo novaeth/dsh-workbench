@@ -30,20 +30,23 @@ export function WorkspaceRowLabel({ workspace, current, action, onHover, onMenu 
     if (row === null || row === undefined) return;
     const enter = (): void => hoverRef.current?.(true);
     const leave = (): void => hoverRef.current?.(false);
-    const show = (event: Event): void => {
+    const show = (event: Event, point: { x: number; y: number }): void => {
       if (event.defaultPrevented) return;
       event.preventDefault();
       event.stopPropagation();
       row.focus({ preventScroll: true });
-      menuRef.current?.({ element: row, align: 'start', mode: 'open' });
+      menuRef.current?.({ point, align: 'start', mode: 'open' });
     };
     const context = (event: MouseEvent): void => {
-      show(event);
+      const keyboard = event.clientX === 0 && event.clientY === 0;
+      const rect = keyboard ? row.getBoundingClientRect() : null;
+      show(event, { x: rect?.left ?? event.clientX, y: rect?.bottom ?? event.clientY });
     };
     const keys = (event: KeyboardEvent): void => {
       if (event.repeat || event.isComposing || event.ctrlKey || event.altKey || event.metaKey) return;
       if (event.key !== 'ContextMenu' && !(event.key === 'F10' && event.shiftKey)) return;
-      show(event);
+      const rect = row.getBoundingClientRect();
+      show(event, { x: rect.left, y: rect.bottom });
     };
     row.addEventListener('mouseenter', enter);
     row.addEventListener('mouseleave', leave);
