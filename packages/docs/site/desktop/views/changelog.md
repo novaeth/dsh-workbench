@@ -2,6 +2,25 @@
 
 仓库从这一版开始记录：`v1.1.1` 是这份历史的第一个版本。
 
+## v1.2.6
+
+`2026-11-12`
+
+### core
+
+#### 🗑️ 移除
+
+- **撤掉「立即重启」与「稍后」**：工作台更新完成后那一行不再给两颗钮，只留「重启后生效」与
+  「新版本已就绪，重启后生效。」；重启由用户自己退出应用（独立实例结束进程）再打开。那颗钮做的是
+  "照当前命令启动一份新的自己，成功后再 `process.exit(0)`" —— 新进程启动失败时用户手上什么都不剩；
+  「稍后」只是把那颗钮收起来，没有它就没有下一步。`restart-workbench` 供给动作、目标字段映射、
+  `ModulePort.restartWorkbench`、`RestartRefusal` / `RestartWorkbenchStart` 与 adapter-probe 里
+  那段实现一并删除，Desktop smoke 不再断言"那颗钮不该出现"（恒真）
+
+### 📦 产物
+
+- [@dsh-workbench/core@1.2.6](https://www.npmjs.com/package/@dsh-workbench/core/v/1.2.6)
+
 ## v1.2.3
 
 `2026-11-12`
