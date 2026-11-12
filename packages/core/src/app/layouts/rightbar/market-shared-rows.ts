@@ -1,4 +1,4 @@
-import type { SupplySource, UnitManifest } from '@dsh-workbench/shared';
+import type { ExtensionNeed, LibNeed, SupplySource, UnitManifest } from '@dsh-workbench/shared';
 import { needIdOf, needsOf } from '@dsh-workbench/shared';
 import type { CapabilityMap } from '@/shared/hooks/use-capabilities';
 import type { MarketRowAction } from './market-row-types';
@@ -31,6 +31,13 @@ export const SHARED_DOT: Readonly<
   unchecked: 'idle',
 };
 
+export interface SharedSource {
+  readonly kind: 'npm' | 'git' | 'local';
+  readonly text: string;
+  readonly code: boolean;
+  readonly registry?: string;
+}
+
 export interface SharedRow {
   readonly id: string;
   readonly kind: 'extension' | 'lib';
@@ -39,6 +46,24 @@ export interface SharedRow {
   readonly state: SharedState;
   readonly canUpdate: boolean;
   readonly version?: { readonly installed?: string; readonly latest?: string };
+  readonly source?: SharedSource;
+}
+
+function sharedSourceOf(need: ExtensionNeed | LibNeed): SharedSource | undefined {
+  const source = need.sources?.[0];
+  if (source === undefined) return undefined;
+  if (source.kind === 'npm') {
+    const text = source.package?.trim() || need.name;
+    const registry = source.registryDefault?.trim() ?? '';
+    return { kind: 'npm', text, code: true, ...(registry === '' ? {} : { registry }) };
+  }
+  if (source.kind === 'git') {
+    const text = source.ref === undefined ? source.url : `${source.url}#${source.ref}`;
+    return { kind: 'git', text, code: true };
+  }
+  const text = source.path?.trim() ?? (source.env === undefined ? '' : `$${source.env}`);
+  if (text === '') return undefined;
+  return { kind: 'local', text, code: false };
 }
 
 export function sharedActions(row: SharedRow): MarketRowAction[] {
@@ -60,6 +85,7 @@ interface SharedBucket {
   readonly label: string;
   readonly users: string[];
   readonly states: SharedState[];
+  readonly sources: Map<string, SharedSource>;
   installed?: string;
   latest?: string;
   command?: string;
@@ -78,7 +104,7 @@ export function sharedRows(
     if (found !== undefined) {
       return found;
     }
-    const created: SharedBucket = { kind, name, label, users: [], states: [] };
+    const created: SharedBucket = { kind, name, label, users: [], states: [], sources: new Map() };
     buckets.set(id, created);
     return created;
   };
@@ -96,6 +122,13 @@ export function sharedRows(
       const bucket = bucketOf(need.kind, need.name, label);
       if (released) continue;
       bucket.users.push(manifest.id);
+      const sharedSource = sharedSourceOf(need);
+      if (sharedSource !== undefined) {
+        bucket.sources.set(
+          `${sharedSource.kind}:${sharedSource.text}:${sharedSource.registry ?? ''}`,
+          sharedSource,
+        );
+      }
       const id = needIdOf(need);
       const state = capability?.needs.find((item) => item.id === id);
       bucket.states.push(
@@ -121,6 +154,7 @@ export function sharedRows(
       bucket.installed === undefined && bucket.latest === undefined
         ? undefined
         : { ...(bucket.installed === undefined ? {} : { installed: bucket.installed }), ...(bucket.latest === undefined ? {} : { latest: bucket.latest }) };
+    const source = [...bucket.sources.values()][0];
     rows.push({
       id: `${bucket.kind}:${bucket.name}`,
       kind: bucket.kind,
@@ -133,6 +167,7 @@ export function sharedRows(
       state,
       canUpdate: state === 'outdated' || state === 'unsatisfied',
       ...(version === undefined ? {} : { version }),
+      ...(source === undefined ? {} : { source }),
     });
   }
   return rows;

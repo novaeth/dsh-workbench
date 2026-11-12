@@ -101,6 +101,17 @@ describe('sharedRows：聚合', () => {
     expect(sharedActions(rows[0] as never)).toEqual([]);
   });
 
+  it('★ 每行带着安装源：包名与注册表（详情页要摆得出来）', () => {
+    const rows = sharedRows([unit('a', { plugin: 'demo' })], { a: capability('a') });
+
+    expect(rows[0]?.source).toEqual({
+      kind: 'npm',
+      text: 'demo',
+      code: true,
+      registry: 'https://r.invalid/',
+    });
+  });
+
   it('插件与库各占一行，id 前缀区分（`extension:` / `lib:`）', () => {
     const rows = sharedRows(
       [unit('a', { plugin: 'demo', lib: 'opencli-workflow' })],

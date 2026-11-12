@@ -268,9 +268,11 @@ export function MarketView({
   const pluginSource = mock?.plugins ?? plugins ?? null;
   const pluginList = installedPluginRows(pluginSource ?? [], byDefault, changed);
   const rowById = marketRowMap(shown, self, installedList, pluginList);
+  const sharedById = new Map(shared.map((row) => [row.id, row] as const));
   const confirmingRow = confirming === null ? undefined : rowById.get(confirming);
   const detailRow = detailId === null ? undefined : rowById.get(detailId);
-  const detailOpen = detailRow !== undefined;
+  const detailShared = detailId === null ? undefined : sharedById.get(detailId);
+  const detailOpen = detailRow !== undefined || detailShared !== undefined;
   useLayoutEffect(() => {
     onDetailChange?.(detailOpen);
   }, [detailOpen, onDetailChange]);
@@ -337,6 +339,7 @@ export function MarketView({
       rechecking={checkingShown}
       onOpenDetail={setDetailId}
       detailRow={detailRow}
+      detailShared={detailShared}
       confirming={confirming}
       confirmingRow={confirmingRow}
       rowById={rowById}

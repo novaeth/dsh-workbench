@@ -268,9 +268,8 @@
   flex-direction: column;
   align-items: center;
   gap: var(--wb-len-32);
-  padding: 0 clamp(var(--wb-len-24), 4vw, var(--wb-len-48)) var(--wb-len-48);
-  overflow-x: hidden;
-  overflow-y: auto;
+  padding: 0 clamp(var(--wb-len-24), 4vw, var(--wb-len-48));
+  overflow: hidden;
   color: var(--dsw-alias-label-primary);
 }
 
@@ -279,6 +278,7 @@
 }
 
 .marketPage > * {
+  flex: none;
   width: 100%;
   max-width: var(--wb-len-960);
 }
@@ -312,9 +312,29 @@
 }
 
 .marketPanel {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: var(--wb-len-32);
+  min-height: 0;
+  width: calc(
+    100% + clamp(var(--wb-len-24), 4vw, var(--wb-len-48)) +
+      clamp(var(--wb-len-24), 4vw, var(--wb-len-48))
+  );
+  max-width: none;
+  margin: 0;
+  padding: 0 clamp(var(--wb-len-24), 4vw, var(--wb-len-48)) var(--wb-len-48);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.marketPanel > * {
+  box-sizing: border-box;
+  flex: none;
+  align-self: center;
+  width: 100%;
+  max-width: var(--wb-len-960);
 }
 
 .marketPanel[hidden] {
@@ -361,9 +381,16 @@
 }
 
 .discoverBar {
+  position: sticky;
+  top: 0;
+  z-index: var(--wb-z-30);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: var(--wb-len-8);
+  margin-inline: calc(0px - var(--wb-len-8));
+  padding-inline: var(--wb-len-8);
+  background: var(--dsw-alias-bg-base);
   container-type: inline-size;
 }
 
@@ -641,6 +668,16 @@
   display: flex;
   flex-direction: column;
   gap: var(--wb-len-16);
+}
+
+.discoverDetailTop {
+  position: sticky;
+  top: 0;
+  z-index: var(--wb-z-30);
+  display: flex;
+  flex-direction: column;
+  gap: var(--wb-len-16);
+  background: var(--dsw-alias-bg-base);
 }
 
 .discoverCrumb {

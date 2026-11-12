@@ -51,7 +51,6 @@ describe('模块 / 插件详情页：dsh 插件详情页那套（面包屑 · �
     });
     const shown = texts(tree);
 
-    expect(shown).toContain('panels.market.detailBack');
     expect(shown).toContain('hello.title');
     expect(shown).toContain('@a/hello');
     expect(shown).not.toContain('panels.market.installed');

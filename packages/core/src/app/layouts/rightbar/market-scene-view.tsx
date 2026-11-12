@@ -7,6 +7,7 @@ import type { Pending } from './market-view-text';
 import { MarketBody } from './market-body';
 import { MarketChecking, MarketEmpty } from './MarketStates';
 import { MarketDetailPage } from './market-detail-page';
+import { SharedDetail } from './market-shared-detail';
 import { UninstallConfirm } from './market-uninstall';
 
 export function MarketSceneView({
@@ -29,6 +30,7 @@ export function MarketSceneView({
   rechecking,
   onOpenDetail,
   detailRow,
+  detailShared,
   confirming,
   confirmingRow,
   rowById,
@@ -56,6 +58,7 @@ export function MarketSceneView({
   readonly rechecking: boolean;
   readonly onOpenDetail: (id: string) => void;
   readonly detailRow: MarketRow | undefined;
+  readonly detailShared: SharedRow | undefined;
   readonly confirming: string | null;
   readonly confirmingRow: MarketRow | undefined;
   readonly rowById: ReadonlyMap<string, MarketRow>;
@@ -64,6 +67,20 @@ export function MarketSceneView({
   readonly settlingSize: number;
   readonly onBack: () => void;
 }) {
+  if (detailShared !== undefined) {
+    return (
+      <SharedDetail
+        t={t}
+        row={detailShared}
+        pending={pending}
+        failure={failed?.id === detailShared.id ? failed : null}
+        onBack={onBack}
+        onAct={(action) => void act(detailShared.id, action)}
+        onRecheck={onRecheck}
+        rechecking={rechecking}
+      />
+    );
+  }
   if (detailRow !== undefined) {
     return (
       <MarketDetailPage

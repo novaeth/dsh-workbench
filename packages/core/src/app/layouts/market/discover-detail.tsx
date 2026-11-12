@@ -227,33 +227,35 @@ export function DiscoverDetail(props: DiscoverDetailProps) {
   );
   return (
     <div className={styles.discoverDetail} data-market-detail={entry.name}>
-      <button type="button" className={styles.discoverCrumb} onClick={props.onBack}>
-        <IconChevronDownOutlineRegular className={styles.discoverCrumbIcon} aria-hidden="true" />
-        <span>{t('panels.discover.detailBack')}</span>
-      </button>
-      <div className={styles.discoverDetailHead}>
-        <span className={styles.discoverArtwork} aria-hidden="true">
-          <MarketIcon src={entry.icon} />
-        </span>
-        <div className={styles.discoverMain}>
-          <div className={styles.discoverTitleRow}>
-            <h3 className={styles.discoverDetailTitle}>{title}</h3>
-            {latest === undefined ? null : <Tag tone="neutral">{latest.version}</Tag>}
+      <div className={styles.discoverDetailTop}>
+        <button type="button" className={styles.discoverCrumb} onClick={props.onBack}>
+          <IconChevronDownOutlineRegular className={styles.discoverCrumbIcon} aria-hidden="true" />
+          <span>{t('panels.discover.detailBack')}</span>
+        </button>
+        <div className={styles.discoverDetailHead}>
+          <span className={styles.discoverArtwork} aria-hidden="true">
+            <MarketIcon src={entry.icon} />
+          </span>
+          <div className={styles.discoverMain}>
+            <div className={styles.discoverTitleRow}>
+              <h3 className={styles.discoverDetailTitle}>{title}</h3>
+              {latest === undefined ? null : <Tag tone="neutral">{latest.version}</Tag>}
+            </div>
+            {title === entry.name ? null : <span className={styles.discoverMeta}>{entry.name}</span>}
           </div>
-          {title === entry.name ? null : <span className={styles.discoverMeta}>{entry.name}</span>}
+          {latest === undefined ? null : (
+            <EntryAction
+              t={t}
+              entry={entry}
+              title={title}
+              onInstall={props.onInstall}
+              onShowInstalled={props.onShowInstalled}
+              installDisabled={props.installDisabled === true}
+            />
+          )}
         </div>
-        {latest === undefined ? null : (
-          <EntryAction
-            t={t}
-            entry={entry}
-            title={title}
-            onInstall={props.onInstall}
-            onShowInstalled={props.onShowInstalled}
-            installDisabled={props.installDisabled === true}
-          />
-        )}
+        <DetailTabs items={tabItems} value={tab} onChange={setTab} label={t('panels.discover.detailTabs')} />
       </div>
-      <DetailTabs items={tabItems} value={tab} onChange={setTab} label={t('panels.discover.detailTabs')} />
       {tab === 'overview' ? (
         <div
           className={styles.discoverDetailPanel}

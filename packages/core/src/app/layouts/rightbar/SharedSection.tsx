@@ -12,12 +12,50 @@ import { ACTION_LABEL_KEY, PROGRESS_KEY, UPDATE_ACTIONS, type Pending } from './
 import styles from '../market/MarketPage.module.css';
 import type { MarketRowAction } from './market-rows';
 
+export function SharedActions({
+  t,
+  actions,
+  running,
+  locked,
+  onAct,
+}: {
+  readonly t: Translate;
+  readonly actions: readonly MarketRowAction[];
+  readonly running: Pending | null;
+  readonly locked: boolean;
+  readonly onAct: (action: MarketRowAction) => void;
+}) {
+  return running !== null ? (
+    <span className={styles.marketProgress}>
+      <Spinner size={14} />
+      {t(PROGRESS_KEY[running.action])}
+    </span>
+  ) : actions.length === 0 ? null : (
+    <span className={styles.marketActions}>
+      {actions.map((action) => (
+        <Button
+          key={action}
+          type="button"
+          size="sm"
+          variant="outline"
+          className={UPDATE_ACTIONS.includes(action) ? styles.marketUpdateAction : undefined}
+          disabled={locked}
+          onClick={() => onAct(action)}
+        >
+          {t(ACTION_LABEL_KEY[action])}
+        </Button>
+      ))}
+    </span>
+  );
+}
+
 function SharedLine({
   t,
   row,
   pending,
   failure,
   onAct,
+  onOpenDetail,
   onRecheck,
   rechecking,
 }: {
@@ -26,6 +64,7 @@ function SharedLine({
   pending: Pending | null;
   failure: MarketFailure | null;
   onAct: (action: MarketRowAction) => void;
+  onOpenDetail?: ((id: string) => void) | undefined;
   onRecheck: () => void;
   rechecking: boolean;
 }) {
@@ -34,9 +73,21 @@ function SharedLine({
   const actions = sharedActions(row);
   const stateText = t(SHARED_STATE_KEY[row.state]);
   const version = row.version;
+  const clickable = onOpenDetail !== undefined;
   const name = (
     <span className={styles.marketName}>
-      {row.label}
+      {clickable ? (
+        <button
+          type="button"
+          className={styles.marketNameOpen}
+          aria-label={t('panels.market.openDetail', { name: row.label })}
+          onClick={() => onOpenDetail?.(row.id)}
+        >
+          {row.label}
+        </button>
+      ) : (
+        row.label
+      )}
       {version === undefined ? null : (
         <span className={styles.marketVersion}>
           {version.installed !== undefined &&
@@ -50,7 +101,7 @@ function SharedLine({
   );
 
   return (
-    <li className={styles.marketRow}>
+    <li className={styles.marketRow} data-open={clickable ? 'true' : undefined}>
       <span className={styles.marketIcon} aria-hidden="true">
         {packageIcon(sharedRowKind(row))}
       </span>
@@ -74,30 +125,7 @@ function SharedLine({
       </div>
 
       <div className={styles.marketEnd}>
-        {running !== null ? (
-          <span className={styles.marketProgress}>
-            <Spinner size={14} />
-            {t(PROGRESS_KEY[running.action])}
-          </span>
-        ) : actions.length === 0 ? null : (
-          <span className={styles.marketActions}>
-            {actions.map((action) => (
-              <Button
-                key={action}
-                type="button"
-                size="sm"
-                variant="outline"
-                className={
-                  UPDATE_ACTIONS.includes(action) ? styles.marketUpdateAction : undefined
-                }
-                disabled={locked}
-                onClick={() => onAct(action)}
-              >
-                {t(ACTION_LABEL_KEY[action])}
-              </Button>
-            ))}
-          </span>
-        )}
+        <SharedActions t={t} actions={actions} running={running} locked={locked} onAct={onAct} />
       </div>
 
       {failure === null ? null : failure.failure === undefined ? (
@@ -117,6 +145,7 @@ export function SharedSection({
   pending,
   failureOf,
   act,
+  onOpenDetail,
   onRecheck,
   rechecking,
 }: {
@@ -125,6 +154,7 @@ export function SharedSection({
   readonly pending: Pending | null;
   readonly failureOf: (id: string) => MarketFailure | null;
   readonly act: (id: string, action: MarketRowAction) => Promise<void>;
+  readonly onOpenDetail?: ((id: string) => void) | undefined;
   readonly onRecheck: () => void;
   readonly rechecking: boolean;
 }) {
@@ -147,6 +177,7 @@ export function SharedSection({
             pending={pending}
             failure={failureOf(row.id)}
             onAct={(action) => void act(row.id, action)}
+            onOpenDetail={onOpenDetail}
             onRecheck={onRecheck}
             rechecking={rechecking}
           />

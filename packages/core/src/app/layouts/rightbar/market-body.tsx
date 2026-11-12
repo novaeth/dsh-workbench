@@ -115,6 +115,7 @@ export function MarketBody({
         pending={pending}
         failureOf={failureOf}
         act={act}
+        onOpenDetail={onOpenDetail}
         onRecheck={onRecheck}
         rechecking={rechecking}
       />

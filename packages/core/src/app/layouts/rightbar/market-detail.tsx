@@ -1,11 +1,12 @@
 import { createElement as h } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
-import { IconChevronDownOutlineRegular, Tag } from '@deepseek-ai/dsh-client-ui-primitives';
+import { Tag } from '@deepseek-ai/dsh-client-ui-primitives';
 import type { MarketFailure, MarketRow, MarketRowAction, MarketState } from './market-row-types';
 import { MARKET_STATE_KEY, marketRowTitle } from './market-rows';
 import { marketRowKind, packageIcon } from './market-row-icon';
 import type { Pending } from './market-view-text';
 import { MarketRowControls, MarketRowFailure } from './market-section';
+import { MarketDetailTop } from './market-detail-top';
 import { marketDetailFacts } from './market-detail-facts';
 import styles from '../market/MarketPage.module.css';
 
@@ -56,14 +57,23 @@ export function MarketDetail({
   const noteText = row.note === undefined ? null : t(row.note.key, row.note.params);
   return (
     <div className={styles.discoverDetail} data-market-detail={row.id}>
-      <button type="button" className={styles.discoverCrumb} onClick={onBack}>
-        <IconChevronDownOutlineRegular className={styles.discoverCrumbIcon} aria-hidden="true" />
-        <span>{t('panels.market.detailBack')}</span>
-      </button>
-      <div className={`${styles.discoverDetailHead} ${styles.marketDetailHead}`}>
-        <span className={styles.discoverArtwork} aria-hidden="true">
-          {packageIcon(marketRowKind(row))}
-        </span>
+      <MarketDetailTop
+        t={t}
+        onBack={onBack}
+        icon={packageIcon(marketRowKind(row))}
+        end={
+          <div className={styles.marketDetailEnd}>
+            <MarketRowControls
+              t={t}
+              row={row}
+              pending={pending}
+              boardBusy={boardBusy}
+              onRequest={onRequest}
+              onDefault={onDefault}
+            />
+          </div>
+        }
+      >
         <div className={styles.discoverMain}>
           <div className={styles.discoverTitleRow}>
             <h3 className={styles.discoverDetailTitle}>{title}</h3>
@@ -79,17 +89,7 @@ export function MarketDetail({
             </p>
           )}
         </div>
-        <div className={styles.marketDetailEnd}>
-          <MarketRowControls
-            t={t}
-            row={row}
-            pending={pending}
-            boardBusy={boardBusy}
-            onRequest={onRequest}
-            onDefault={onDefault}
-          />
-        </div>
-      </div>
+      </MarketDetailTop>
       {notice === null ? null : <p className={styles.discoverDetailText}>{notice}</p>}
       <MarketRowFailure t={t} failure={failure} onRecheck={onRecheck} rechecking={rechecking} />
       {row.hint === undefined ? null : <p className={styles.discoverMuted}>{t(row.hint)}</p>}
