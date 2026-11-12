@@ -17,7 +17,7 @@ const ROW: SharedRow = {
     kind: 'npm',
     text: 'opencli-plugin-coding',
     code: true,
-    registry: 'https://baiguokeji-npm.pkg.coding.net/UEDYHSJ/pagoda-npm/',
+    registry: 'https://registry.invalid/team/',
   },
 };
 
@@ -73,7 +73,7 @@ describe('共用依赖详情页：面包屑 · 名称 · 版本 · 依赖信息'
     expect(shown).toContain('panels.market.detailLatest');
     expect(shown).toContain('1.0.53');
     expect(shown).toContain('panels.market.detailSource');
-    expect(shown).toContain('https://baiguokeji-npm.pkg.coding.net/UEDYHSJ/pagoda-npm/');
+    expect(shown).toContain('https://registry.invalid/team/');
     expect(shown).not.toContain('panels.market.detailRegistry');
     expect(shown).toContain('opencli-plugin-coding');
     expect(shown).toContain('panels.market.detailSharedUsedBy');
