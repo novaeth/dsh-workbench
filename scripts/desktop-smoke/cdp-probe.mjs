@@ -703,7 +703,6 @@ async function openMarket(cdp) {
   mark('market-open');
 }
 
-/** 「添加模块」只在「已安装」那一页出现；发现页上有个同前缀的「添加模块来源」，切不过去就会点错。 */
 async function openInstalledTab(cdp) {
   const tabs = ['已安装', 'Installed'];
   const until = Date.now() + remaining('切到已安装', 30_000);
