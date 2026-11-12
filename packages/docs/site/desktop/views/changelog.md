@@ -8,6 +8,22 @@
 
 ### core
 
+#### ⚡ 改进
+
+- **dsh 依赖升到 0.2.2-rc.2**：`@deepseek-ai/*` 全部跟到 rc.2，`engines.dsh`、README、包 README 与
+  快速开始里的最低版本一起改成 `>=0.2.2-rc.2`，`dsh-client-ui-primitives` 与 `engines.dsh` 同代
+  （自检要求这两处一致）。rc.2 撤了两个旧用法，先按新 API 改过来：工作区三点菜单改用 `Menu` 的
+  `anchorPoint`（CSS anchor 定位），不再传 `getAnchorRect`；「添加模块」里的安装源浮层在触发钮上挂
+  `anchor-name`，用 `position-anchor` 与 `anchor(bottom / right)` 对齐，放不下时由
+  `position-try-fallbacks` 翻到上方，高度夹在视口内。升 rc.2 时还加过一个自己算坐标的兼容 hook
+  （量锚点、面板与视口，再算 `top` / `left`），这里连同测试一并删掉
+- **冒烟探针跟着市场页改版**：市场页重排后「添加模块」只在「已安装」页出现，发现页的
+  「添加模块来源」会被宽松匹配选中，浮层永远不出现；探针先切到「已安装」页（老版本没有
+  页签就照旧），失败时补写 `-add-plugin-dom.json`：市场根节点在不在、锚点数量、前 120 个
+  可点节点的标签 / 文案 / aria / 选中态；失败分支还补收 `$RUNNER_TEMP/*.log`
+- **慢机器上的进程组测试**：killTree 的测试在子进程退出后多等 2 秒再取基准，孙进程晚到的
+  写入不再被当成没停
+
 #### 🐛 修复
 
 - **升级 dsh 之后启动失败：profile 里的 dsh 插件层和运行时不是同一代**。`@dsh-workbench/shared` 的
@@ -45,6 +61,74 @@
 ### 📦 产物
 
 - [@dsh-workbench/core@1.2.6](https://www.npmjs.com/package/@dsh-workbench/core/v/1.2.6)
+
+## v1.2.5
+
+`2026-11-12`
+
+### core
+
+#### ⚡ 改进
+
+- **dsh 依赖改成范围版本**：共享包的 `@deepseek-ai/*` 从精确钉住的 `0.2.2-rc.1` 改成
+  `^0.2.2-rc.1`。安装时取同一 `0.2.2` 下最新的预发布（rc.2、rc.3…），不再固定在一份
+  `rc.1` 副本上；`0.2.3` 及以后的版本仍不会被带进来
+
+### 📦 产物
+
+- [@dsh-workbench/core@1.2.5](https://www.npmjs.com/package/@dsh-workbench/core/v/1.2.5)
+
+## v1.2.4
+
+`2026-11-12`
+
+### core
+
+#### ✨ 新增
+
+- **共用依赖也有详情页**：模块市场的「共用依赖」行名称变成可以打开的入口（`aria-label` 带依赖名），
+  详情页给安装源（npm 取注册表、git 取 `url#ref`、local 取本机目录）、类型（插件 / 库）、
+  当前版本、可用版本与使用它的模块；已就绪的行不挂状态标签。详情头部的动作位与列表行共用
+  同一个组件，检查失败时照旧给出重试
+
+#### ⚡ 改进
+
+- **市场页只滚内容区**：标题与页签钉住，已安装 / 发现两个页签的内容区各自滚，发现的筛选栏
+  `sticky` 在内容区顶部。模块与共用依赖的详情页也只滚内容区，详情头部钉住；打开详情回到顶部，
+  返回列表恢复原来的滚动位置。加载骨架与内容列重新对齐：骨架自带的 `margin: 0` 会把子项的
+  居中压掉
+- **冒烟失败时带出现场**：desktop-smoke 的 `state.txt` 逐个版本目录列出七个包的 `package.json`、
+  `dist/host` 与 `client.js` 在不在，日志分支额外收 `$DSH_HOME/workbench/*.log` 与
+  DeepSeek Harness 自己的日志目录；市场那一步的探针跟上发现页的新入口文案「添加模块来源」，
+  输入框先按 aria-label（`Index URL` / `索引 URL`）找，找不到退回弹窗里的第一个输入框
+- **抢锁判据改成观察窗**：gate 在只改 changelog 的提交上偶发红，linux 腿的 selfcheck ⑫ 报「原持锁者
+  的 trap 把别人的锁删了」——持锁者是后台子进程，状态落盘后还要走到 `EXIT` trap，原来只等 1 秒就
+  断言。现在最多观察 5 秒：这段时间里锁消失仍是真失败，慢机器不再误报
+
+#### 🐛 修复
+
+- **「新版本已就绪，重启后生效」一直不消**：客户端确认启动的请求打的是
+  `POST /workbench/api/workbench-boot-ok`，而宿主把这份动作资源注册在 `actions/workbenchBootOk`，
+  请求 404 又被 `reportBootOk` 的 `.catch` 吞掉，确认从来没送达；marker 一直挂着 `pending-restart`，
+  已经跑上新版还停在待重启。现在 `BOOT_OK_ROUTE` 改成 `actions/workbenchBootOk`，并用测试钉住它
+  必须等于注册前缀拼资源名；视图侧再补一道自愈——marker 是 `pending-restart`、而启动记录里正是
+  这个版本时直接读作 `ok`，老版本留下的悬挂 marker 不用等下一次更新就能收掉
+- **换链之后 profile 的 lockfile 没跟上**：`package.json` 换成了 `link:`，`pnpm-lock.yaml` 的
+  specifier 还是旧版本，profile 里任何一次 `pnpm install`（dsh 自己对账就会跑）都按旧 lock 把
+  `node_modules` 装回上一版，界面于是显示「装在旧版、源上有新版」，同时还挂着上次的
+  `pending-restart`。现在换链后用安装那一步同一个 pnpm 跑一次 `pnpm install --lockfile-only`，
+  把 `link:` 规格写进 lockfile，失败只记日志、不挡流程；宿主启动时若 marker 仍是 `pending-restart`
+  且正在运行的正是它说的新版，直接把 marker 落 `ok`，不再依赖客户端那次请求。工作台行上有更新可装时
+  也不再叠「新版本已就绪，重启后生效」
+- **落 marker 之前再验一遍版本目录**：win11 重启那条腿的现场是 `versions/<版本>` 里七个包只剩两个
+  有 `package.json`，其余都是空目录，宿主半侧启动失败、`/workbench/api/*` 全 404，而 runner 的日志
+  写的是「装完自检过了」——空目录出现在装完自检之后、翻链之前，中间没人再看一眼。现在写
+  `pending-restart` 之前再验一次，不全就报出是哪几个包；失败现场的 `state.txt` 补上每个包目录的
+  内容个数、链接类型与 `.pnpm` 条目数
+
+### 📦 产物
+
+- [@dsh-workbench/core@1.2.4](https://www.npmjs.com/package/@dsh-workbench/core/v/1.2.4)
 
 ## v1.2.3
 
