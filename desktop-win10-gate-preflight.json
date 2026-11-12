@@ -1,0 +1,51 @@
+{
+  "ok": true,
+  "phase": "checking",
+  "steps": [
+    {
+      "id": "toolchain",
+      "status": "ok",
+      "log": [
+        "node v24.21.0（Desktop 自带） · npm 缺（已改用 pnpm） · pnpm 11.28.5（Desktop 自带）",
+        "deployment=desktop · resources=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources · execPath=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\DeepSeek Harness.exe",
+        "bundled node=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe · bundled pnpm=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin\\pnpm.cjs · bins=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\…",
+        "PATH 前两段=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin|C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin",
+        "node: exit=0 sandbox=（无） out=v24.21.0 cmd='C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe'",
+        "pnpm: exit=0 sandbox=（无） out=11.28.5 cmd='C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe' 'C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin\\pnpm.cjs' --config.manage-package-manager-versions=false --version",
+        "npm: exit=127 sandbox=（跳过探测） out=Desktop 自带的 node 不带 npm"
+      ],
+      "detail": "node v24.21.0（Desktop 自带） · npm 缺（已改用 pnpm） · pnpm 11.28.5（Desktop 自带）"
+    },
+    {
+      "id": "cli",
+      "status": "running",
+      "action": "检查 opencli 版本",
+      "log": [
+        "> 盘上自检：隔离运行时不在（探测前）",
+        "> 'C:\\Users\\runneradmin\\.dsh\\workbench\\opencli\\bin\\opencli.cmd' --version"
+      ]
+    },
+    {
+      "id": "bridge",
+      "status": "pending"
+    },
+    {
+      "id": "diy",
+      "status": "running"
+    }
+  ],
+  "at": 1794448376311,
+  "log": [
+    "node v24.21.0（Desktop 自带） · npm 缺（已改用 pnpm） · pnpm 11.28.5（Desktop 自带）",
+    "deployment=desktop · resources=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources · execPath=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\DeepSeek Harness.exe",
+    "bundled node=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe · bundled pnpm=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin\\pnpm.cjs · bins=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\…",
+    "PATH 前两段=C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin|C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin",
+    "node: exit=0 sandbox=（无） out=v24.21.0 cmd='C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe'",
+    "pnpm: exit=0 sandbox=（无） out=11.28.5 cmd='C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\node\\bin\\node.exe' 'C:\\Users\\runneradmin\\AppData\\Local\\Programs\\DeepSeek Harness\\resources\\runtime\\primary-runtime\\dependencies\\pnpm\\bin\\pnpm.cjs' --config.manage-package-manager-versions=false --version",
+    "npm: exit=127 sandbox=（跳过探测） out=Desktop 自带的 node 不带 npm",
+    "> 盘上自检：隔离运行时不在（探测前）",
+    "> 'C:\\Users\\runneradmin\\.dsh\\workbench\\opencli\\bin\\opencli.cmd' --version"
+  ],
+  "canWakeBrowser": true,
+  "extensionDir": "D:\\a\\dsh-workbench\\dsh-workbench\\packages\\core\\vendor\\browser-extension"
+}
