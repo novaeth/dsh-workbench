@@ -1,0 +1,44 @@
+[0.0s] MILESTONE cdp-ready @ 0.0s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [] none :: HARNESS | Loading plugins…
+[5.5s] ready wait [checking] toolchain:running(node --version · npm --version · pnpm --version) cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[5.5s] 体检还在跑，先等它：toolchain:running · cli:pending · bridge:pending · diy:pending
+[7.6s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[7.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[9.6s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[9.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[11.7s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[11.7s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[13.7s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[13.7s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[15.7s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[15.7s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[17.7s] ready wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: r/browser-extension; (2) click the link below to install it from the Chrome Web Store. When done, come back and click Retry. | Get the extension in the Chrome Web Store | Open browser | Retry | Enter the workbench anyway
+[17.7s] 模拟用户装扩展：起浏览器 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing（--load-extension=/Users/runner/work/_temp/opencli-ext，日志 /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-chrome.log）
+[17.8s] MILESTONE browser-launched @ 17.8s
+[21.0s] extension wait: connected :: [OK] Extension: connected (v1.0.27)
+[21.0s] chrome targets: page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | browser_ui:chrome://webui-toolbar.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://webui-toolbar.top-chrome/ | service_worker:chrome-extension://kmogdbfhcachbdcbjajeghpiogegbbnh/dist/background.js
+[21.0s] STEP click ["Retry","重试"]: "Retry"
+[24.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok ::  sessions | Workspace Write | Select model | Workbench panel | No modules on the panel yet | You can also tell the agent directly: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[24.3s] MILESTONE ready @ 24.3s
+[24.3s] verify wait :: host units panels,hello :: cards （无） ::  panel yet | You can also tell the agent directly: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[24.3s] STEP click ["选择模块","Choose modules"]: "Choose modules"
+[25.8s] STEP panel module hello [示例模块/Sample module/hello] dialogs=1 rows=["Sample module"] -> "clicked:hello"
+[28.9s] verify wait :: host units panels,hello :: cards wb-card-hello :: ample module | Restore the default everywhere | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[28.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-verify-body.txt (415 bytes)
+[28.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-units.json (5854 bytes)
+[28.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-client-bundles.json (25 bytes)
+[28.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-page-internals.json (2096 bytes)
+[28.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-console-events.json (9686 bytes)
+[28.9s] MILESTONE module-card @ 28.9s
+[28.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-smoke.json (101 bytes)
+[28.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-final-body.txt (415 bytes)
+[28.9s] TITLE: DeepSeek Harness
+[29.0s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart.png (71443 bytes)
+[29.0s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"29.0s","milestones":{"cdp-ready":"0.0s","app-page":"0.1s","cdp-connected":"0.1s","browser-launched":"17.8s","ready":"24.3s","module-card":"28.9s"},"card":true,"units":["panels","hello"]}
