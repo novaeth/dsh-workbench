@@ -1,0 +1,5 @@
+Checking for update
+Generated new staging user ID: 6b0c54ca-3051-5712-ae8d-b709c9f56065
+Staging percentage: 0.16, percentage: 0.7889003990657861, user id: 6b0c54ca-3051-5712-ae8d-b709c9f56065
+Update for version 0.2.2-rc.1 is not available (latest version: 0.2.2-rc.2, downgrade is disallowed).
+dsh web: http://127.0.0.1:49194/?token=bVpBOW966qyu9J7_J-L07FFkyAasClqUlgUGFMvGv7o
