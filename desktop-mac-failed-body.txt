@@ -1,0 +1,30 @@
+New Session
+⌘
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+Default workspace
+New Session
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Installed
+Discover
+
+No module market yet
+
+Add a module market index (an http address or git repository) to browse and install its modules here.
+
+Add module source
+Workbench panel
+No modules on the panel yet
+You can also tell the agent directly: “add a module to the panel”.
+Build a module
+Choose modules
+Browse the module market
