@@ -838,12 +838,19 @@ async function smokeMarket(cdp) {
 
   let body = await bodyOf(cdp);
   if (!/dsh-workbench-market|github\.com/u.test(body)) {
-    const add = await click(cdp, ['Add index source', 'Manage index sources…'], 1500);
+    const add = await click(
+      cdp,
+      ['Add module source', '添加模块来源', 'Add index source', 'Manage index sources…', '管理索引源…'],
+      1500,
+    );
     if (add === 'missing') await fail(cdp, '发现页上没有添加索引源的入口', body);
     const focused = await cdp.send('Runtime.evaluate', {
       expression: `(() => {
-        const field = document.querySelector('input[aria-label="Index URL"]');
-        if (field === null) return 'missing';
+        const labels = ['Index URL', '索引 URL'];
+        const byLabel = [...document.querySelectorAll('input[aria-label]')].find((node) =>
+          labels.includes(node.getAttribute('aria-label') ?? ''));
+        const field = byLabel ?? document.querySelector('[role="dialog"] input, [data-modal-autofocus]');
+        if (field === null || field === undefined) return 'missing';
         field.focus();
         return field.value;
       })()`,
