@@ -1,5 +1,6 @@
 import { closeSync, openSync, readFileSync, readSync, statSync } from 'node:fs';
-import { selfUpdatePaths } from './self-update-plan.js';
+import { readBootRecord } from '@dsh-workbench/shared/host';
+import { selfUpdatePaths, selfUpdateUpFile } from './self-update-plan.js';
 import { pidAlive } from './self-update-alive.js';
 import {
   SELF_UPDATE_REASONS,
@@ -58,9 +59,13 @@ export function readSelfUpdateView(profile?: string): WorkbenchSelfUpdate | unde
   const at = asText(record.at);
   const reason = asText(record.reason);
   const tail = readTail(paths.log);
+  const confirmed =
+    state === 'pending-restart' &&
+    version !== undefined &&
+    readBootRecord(selfUpdateUpFile())?.version === version;
   const runnerGone = state === 'running' && typeof record.pid === 'number' && !pidAlive(record.pid);
   return {
-    state: (runnerGone ? 'failed' : state) as SelfUpdateState,
+    state: (runnerGone ? 'failed' : confirmed ? 'ok' : state) as SelfUpdateState,
     ...(record.migration === true ? { migration: true } : {}),
     ...(owner === undefined ? {} : { profile: owner }),
     ...(from === undefined ? {} : { from }),

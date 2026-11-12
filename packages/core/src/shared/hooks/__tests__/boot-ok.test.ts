@@ -2,19 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { BOOT_OK_ROUTE } from '@/kernel/contract/boot-ok';
 import { reportBootOk } from '../boot-ok';
 
-describe('客户端这一次报"我起来了"', () => {
-  it('★ 只报一次（重挂 / 重渲染不刷屏）', async () => {
+describe('reportBootOk', () => {
+  it('★ 打的是动作通道那条路（资源的注册前缀就是 actions/）', () => {
     const sent: Array<{ route: string; body: Record<string, unknown> }> = [];
-    const post = async (route: string, body: Record<string, unknown>) => {
+    reportBootOk((route, body) => {
       sent.push({ route, body });
-      return { ok: true };
-    };
-
-    reportBootOk(post);
-    reportBootOk(post);
-    await Promise.resolve();
-
+      return Promise.resolve({ ok: true });
+    });
     expect(sent).toHaveLength(1);
     expect(sent[0]?.route).toBe(BOOT_OK_ROUTE);
+    expect(BOOT_OK_ROUTE).toBe('actions/workbenchBootOk');
   });
 });

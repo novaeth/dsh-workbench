@@ -249,6 +249,24 @@ describe('自更新现场：界面要知道外面那个进程跑成什么样', (
     expect(readSelfUpdateView()).toMatchObject({ state: 'running' });
   });
 
+  it('★ 重启后已经确认过启动（up 记录里正是这个新版）→ 落成 ok，那句「重启后生效」不该再挂着', () => {
+    const dshHome = home();
+    pathsOf(dshHome);
+    mkdirSync(join(dshHome, 'workbench'), { recursive: true });
+    writeFileSync(join(dshHome, 'workbench', 'self-update.json'), JSON.stringify({ state: 'pending-restart', profile: 'desktop', version: '1.2.3' }));
+    writeFileSync(join(dshHome, 'workbench', 'self-update-up.json'), JSON.stringify({ version: '1.2.3', at: '2026-11-12T06:17:00.000Z' }));
+    expect(readSelfUpdateView('desktop')?.state).toBe('ok');
+  });
+
+  it('★ up 记录是别的版本（没确认过这一版）→ 仍然算等重启', () => {
+    const dshHome = home();
+    pathsOf(dshHome);
+    mkdirSync(join(dshHome, 'workbench'), { recursive: true });
+    writeFileSync(join(dshHome, 'workbench', 'self-update.json'), JSON.stringify({ state: 'pending-restart', profile: 'desktop', version: '1.2.3' }));
+    writeFileSync(join(dshHome, 'workbench', 'self-update-up.json'), JSON.stringify({ version: '1.2.3-beta.10', at: '2026-11-12T06:17:00.000Z' }));
+    expect(readSelfUpdateView('desktop')?.state).toBe('pending-restart');
+  });
+
   it('★ 不认识的状态/原因不带出来；没跑过就是 undefined', () => {
     const dshHome = home();
     pathsOf(dshHome);
