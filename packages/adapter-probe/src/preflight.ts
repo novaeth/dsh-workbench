@@ -370,6 +370,7 @@ export function createPreflight(options: {
         });
       }
       if (!version.ok) {
+        appendLog('cli', `> 体检为何要装：${version.detail}`);
         if (toolchain?.npmMissing === true && installCommand.trim().startsWith('npm ')) {
           patchStep('cli', { status: 'failed', detail: '没有 npm：装不了 opencli（只影响 opencli 安装）' });
           return set({
