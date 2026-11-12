@@ -1,0 +1,22 @@
+== self-update.json
+== profile package.json
+{
+  "name": "dsh-profile-desktop",
+  "private": true,
+  "dependencies": {
+    "@dsh-workbench/core": "link:D:/a/dsh-workbench/dsh-workbench/packages/core"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "@dsh-workbench/core"
+      ]
+    }
+  }
+}
+== profile links
+total 0
+lrwxrwxrwx 1 runneradmin 197121 46 Nov 12 01:47 core -> /d/a/dsh-workbench/dsh-workbench/packages/core
+== versions
