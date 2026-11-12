@@ -241,6 +241,9 @@ jobs:
           for log in "$RUNNER_TEMP"/desktop-mac*.log; do
             cp "$log" "./$(basename "$log")" 2>/dev/null || true
           done
+          for log in "$HOME"/.dsh/*.log "$HOME"/.dsh/logs/*.log; do
+            cp "$log" "./desktop-mac-dsh-$(basename "$log")" 2>/dev/null || true
+          done
           files=(desktop-mac*.png desktop-mac*.txt desktop-mac*.json desktop-mac*.log)
           if [ ${#files[@]} -gt 0 ]; then
             git add -f "${files[@]}"

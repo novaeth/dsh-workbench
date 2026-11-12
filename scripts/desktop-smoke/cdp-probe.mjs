@@ -575,6 +575,39 @@ async function bridgeGate(cdp, snapshot, body, state) {
   return false;
 }
 
+async function hostProbe(cdp) {
+  const result = await cdp.send('Runtime.evaluate', {
+    expression: `(async () => {
+      const statusOf = async (path) => {
+        try {
+          const r = await fetch(path);
+          const body = await r.text();
+          return { status: r.status, body: body.slice(0, 400) };
+        } catch (error) {
+          return { status: 0, body: String(error) };
+        }
+      };
+      const boot = window.__DSH_BOOT__;
+      return JSON.stringify({
+        href: location.href,
+        health: await statusOf('/workbench/api/health'),
+        preflight: await statusOf('/workbench/api/preflight'),
+        units: await statusOf('/workbench/api/unit-manifests'),
+        bootKeys: boot === undefined || boot === null ? null : Object.keys(boot),
+        plugins: (boot?.entries ?? boot?.modules ?? boot?.plugins ?? []).slice(0, 20),
+        scripts: [...document.querySelectorAll('script')].map((node) => node.src).filter((src) => src !== '').slice(0, 20),
+      });
+    })()`,
+    awaitPromise: true,
+    returnByValue: true,
+  });
+  try {
+    return JSON.parse(result.result?.value ?? '{}');
+  } catch {
+    return { raw: String(result.result?.value ?? '') };
+  }
+}
+
 async function waitForGateAndReady(cdp) {
   const gateShot = `${prefix}-gate.png`;
   const gateOpenShot = `${prefix}-gate-open.png`;
@@ -643,6 +676,7 @@ async function waitForGateAndReady(cdp) {
     await sleep(POLL_MS);
   }
   writeText(`${prefix}-not-ready-body.txt`, readyBody);
+  writeText(`${prefix}-host-probe.json`, `${JSON.stringify(await hostProbe(cdp), null, 2)}\n`);
   await fail(cdp, 'preflight not ready', readyBody, snapshot);
 }
 
