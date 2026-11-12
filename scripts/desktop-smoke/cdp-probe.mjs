@@ -738,6 +738,31 @@ async function alertTextOf(cdp) {
   return result.result?.value ?? '';
 }
 
+async function domSnapshot(cdp) {
+  const result = await cdp.send('Runtime.evaluate', {
+    expression: `(() => {
+  const all = [...document.querySelectorAll('button, [role="button"], [role="tab"], [role="dialog"], [aria-modal="true"], input, [role="tabpanel"]')];
+  return JSON.stringify({
+    marketRoot: [...document.querySelectorAll('[id^="workbench-market"]')].map((node) => ({ id: node.id, hidden: node.hidden === true })),
+    dialogs: document.querySelectorAll('[role="dialog"], [aria-modal="true"], dialog[open]').length,
+    nodes: all.slice(0, 120).map((node) => ({
+      tag: node.tagName,
+      text: (node.innerText ?? '').trim().slice(0, 40),
+      aria: node.getAttribute('aria-label'),
+      role: node.getAttribute('role'),
+      id: node.id || null,
+      hidden: node.hidden === true,
+      selected: node.getAttribute('aria-selected'),
+      disabled: node.disabled === true || node.getAttribute('aria-disabled') === 'true',
+      inPanel: node.closest('[id^="workbench-market"]') !== null,
+    })),
+  });
+})()`,
+    returnByValue: true,
+  });
+  return String(result.result?.value ?? '');
+}
+
 async function waitForAddDialog(cdp) {
   const until = Date.now() + remaining('等添加模块浮层', MODULE_WAIT_MS);
   let last = '';
@@ -756,6 +781,7 @@ async function waitForAddDialog(cdp) {
     if (last.includes('"field":true')) return;
     await sleep(1500);
   }
+  writeText(`${prefix}-add-plugin-dom.json`, `${await domSnapshot(cdp)}\n`);
   await fail(
     cdp,
     `添加模块浮层没出来（等不到 ${SPEC_FIELD_SELECTOR}，浮层选择器 ${DIALOG_SELECTOR}；最后看到 ${last}）`,
