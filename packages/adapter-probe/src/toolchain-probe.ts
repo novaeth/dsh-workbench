@@ -1,5 +1,6 @@
-import { productWrite, quoteShellArg, VERSION_CHECK_TIMEOUT_MS, type Seam } from '@dsh-workbench/shared/host';
-import { delimiter } from 'node:path';
+import { productWrite, quoteShellArg, type Seam } from '@dsh-workbench/shared/host';
+import { existsSync } from 'node:fs';
+import { delimiter, dirname, join } from 'node:path';
 import { homedir } from 'node:os';
 import {
   desktopBundledBins,
@@ -10,6 +11,20 @@ import {
   desktopRuntimeEnv,
 } from './desktop-runtime.js';
 import { hostSurface } from './platform.js';
+
+const LOCAL_PROBE_TIMEOUT_MS = 10_000;
+
+export function skippableNpmProbe(input: {
+  readonly desktop: boolean;
+  readonly bundledNode: string | undefined;
+  readonly exists?: ((path: string) => boolean) | undefined;
+}): boolean {
+  if (!input.desktop || input.bundledNode === undefined) return false;
+  const exists = input.exists ?? existsSync;
+  return !['npm.cmd', 'npm.exe', 'npm']
+    .map((name) => join(dirname(input.bundledNode as string), name))
+    .some((path) => exists(path));
+}
 
 export interface ToolchainReport {
   readonly ok: boolean;
@@ -39,7 +54,7 @@ async function toolVersion(
       command: line,
       intent: productWrite(),
       retry: 'safe',
-      timeoutMs: VERSION_CHECK_TIMEOUT_MS,
+      timeoutMs: LOCAL_PROBE_TIMEOUT_MS,
       ...(extra?.workdir === undefined ? {} : { workdir: extra.workdir }),
     });
     const text = (result.stdout || result.stderr).trim().split('\n')[0] ?? '';
@@ -71,9 +86,15 @@ export async function probeDesktopToolchain(seam: Seam): Promise<ToolchainReport
     ? `${nodeCommand} ${quoteShellArg(bundledPnpm ?? '')} --config.manage-package-manager-versions=false --version`
     : 'pnpm --config.manage-package-manager-versions=false --version';
   const path = desktopRuntimeEnv().PATH;
-  const node = await toolVersion(seam, `${nodeCommand} --version`);
-  const npm = await toolVersion(seam, 'npm --version');
-  const pnpm = await toolVersion(seam, pnpmLine);
+  const desktop = hostSurface({ proc: process }).deployment === 'desktop';
+  const skipNpmProbe = skippableNpmProbe({ desktop, bundledNode });
+  const [node, npm, pnpm] = await Promise.all([
+    toolVersion(seam, `${nodeCommand} --version`),
+    skipNpmProbe
+      ? Promise.resolve({ ok: false, text: '', stalled: false, code: 127, raw: 'Desktop 自带的 node 不带 npm', sandbox: '（跳过探测）' })
+      : toolVersion(seam, 'npm --version'),
+    toolVersion(seam, pnpmLine),
+  ]);
   if (node.stalled || npm.stalled || pnpm.stalled) {
     return {
       ok: false,
@@ -88,7 +109,6 @@ export async function probeDesktopToolchain(seam: Seam): Promise<ToolchainReport
   const npmMissing = !npm.ok;
   const pnpmMajor = Number(/^v?(\d+)/.exec(pnpm.text)?.[1] ?? '0');
   const pnpmProblem = !pnpm.ok || pnpmMajor < 10;
-  const desktop = hostSurface({ proc: process }).deployment === 'desktop';
   const parts = [
     nodeMissing
       ? `node 跑不起来（exit=${node.code === null ? '没返回' : String(node.code)}${node.raw === '' ? '' : `：${node.raw}`}）`

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { DshShell, DshShellExecution } from '@dsh-workbench/shared';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
-import { createSeam, VERSION_CHECK_TIMEOUT_MS } from '@dsh-workbench/shared/host';
-import { createPreflight, probeDesktopToolchain } from '../index.js';
+import { createSeam } from '@dsh-workbench/shared/host';
+import { createPreflight, probeDesktopToolchain, skippableNpmProbe } from '../index.js';
 import { ALL_OK } from './preflight-fixtures';
 
 function seamFor(shell: Parameters<typeof createSeam>[0]['shell']) {
@@ -22,7 +22,7 @@ describe('Desktop 工具链步骤', () => {
     vi.useFakeTimers();
     try {
       const pending = probeDesktopToolchain(seamFor(hangingShell()));
-      await vi.advanceTimersByTimeAsync((VERSION_CHECK_TIMEOUT_MS + 1_000) * 3);
+      await vi.advanceTimersByTimeAsync(11_000);
       const report = await pending;
 
       expect(report.stalled).toBe(true);
@@ -220,5 +220,25 @@ describe('Desktop 工具链步骤', () => {
     await preflight.run();
 
     expect(provision).not.toHaveBeenCalled();
+  });
+});
+
+describe('npm 探测要不要跳过', () => {
+  it('★ Desktop 自带的 node 旁边没有 npm → 不必为它多起一次 shell', () => {
+    expect(
+      skippableNpmProbe({ desktop: true, bundledNode: '/deps/node/bin/node', exists: () => false }),
+    ).toBe(true);
+  });
+
+  it('★ 旁边有 npm、或者不是 Desktop（PATH 上可能有）→ 照常探', () => {
+    expect(
+      skippableNpmProbe({
+        desktop: true,
+        bundledNode: '/deps/node/bin/node',
+        exists: (path) => path.endsWith('npm'),
+      }),
+    ).toBe(false);
+    expect(skippableNpmProbe({ desktop: false, bundledNode: '/deps/node/bin/node' })).toBe(false);
+    expect(skippableNpmProbe({ desktop: true, bundledNode: undefined })).toBe(false);
   });
 });
