@@ -3,7 +3,6 @@ import type { Translate } from '@dsh-workbench/shared';
 import styles from './AddModule.module.css';
 import { TextField } from '@dsh-workbench/shared';
 import { IconChevronDownOutlineRegular, useDismissOnOutsidePointer } from '@deepseek-ai/dsh-client-ui-primitives';
-import { useAnchoredPosition } from '@/shared/hooks/use-anchored-position';
 import { customRegistryAllowed, optionLabel, registryName } from './add-module-text';
 import type { AddModuleState } from './use-add-module';
 
@@ -17,16 +16,6 @@ export function AddModuleRegistry({ t, state }: { t: Translate; state: AddModule
     state.choice.kind === 'custom' && state.custom.trim() !== '' && !customRegistryAllowed(state.custom);
 
   const registryRoot = useRef<HTMLDivElement | null>(null);
-  const registryAnchor = useRef<HTMLButtonElement | null>(null);
-  const registryPanel = useRef<HTMLDivElement | null>(null);
-  const registryPosition = useAnchoredPosition({
-    open: state.registryOpen,
-    anchorRef: registryAnchor,
-    panelRef: registryPanel,
-    align: 'end',
-    gap: 6,
-    margin: 12,
-  });
   useDismissOnOutsidePointer(registryRoot, state.registryOpen, (next) => {
     if (!next) state.closeRegistry();
   });
@@ -43,7 +32,6 @@ export function AddModuleRegistry({ t, state }: { t: Translate; state: AddModule
     >
       <button
         type="button"
-        ref={registryAnchor}
         className={styles.registryToggle}
         aria-expanded={state.registryOpen}
         aria-haspopup="dialog"
@@ -62,10 +50,8 @@ export function AddModuleRegistry({ t, state }: { t: Translate; state: AddModule
         <div
           id={REGISTRY_ID}
           className={styles.registry}
-          ref={registryPanel}
           role="dialog"
           aria-label={t('panels.market.add.registryLegend')}
-          style={registryPosition ?? undefined}
         >
           {state.choices.map((option) => {
             const active =

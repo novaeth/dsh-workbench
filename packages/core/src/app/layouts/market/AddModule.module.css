@@ -90,6 +90,7 @@
 }
 
 .registryToggle {
+  anchor-name: --wb-registry-anchor;
   display: inline-flex;
   align-items: center;
   gap: var(--wb-len-6);
@@ -123,8 +124,19 @@
   font-weight: 500;
 }
 
+@position-try --wb-registry-above {
+  top: auto;
+  bottom: max(var(--wb-len-12), calc(anchor(top) - var(--wb-len-6)));
+}
+
 .registry {
   position: fixed;
+  position-anchor: --wb-registry-anchor;
+  top: max(var(--wb-len-12), calc(anchor(bottom) + var(--wb-len-6)));
+  right: max(var(--wb-len-12), anchor(right));
+  max-height: max(var(--wb-len-240), calc(100dvh - anchor(bottom) - var(--wb-len-18)));
+  overflow: auto;
+  position-try-fallbacks: --wb-registry-above;
   z-index: var(--wb-z-1100);
   box-sizing: border-box;
   width: min(var(--wb-len-440), 100vw - var(--wb-len-24));
