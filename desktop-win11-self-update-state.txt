@@ -1,0 +1,87 @@
+== self-update.json
+{
+  "dshHome": "C:\\Users\\runneradmin\\.dsh",
+  "profile": "desktop",
+  "pkg": "@dsh-workbench/core",
+  "from": "1.2.3-beta.4",
+  "to": "1.2.8-beta.2",
+  "pinned": true,
+  "state": "failed",
+  "version": "1.2.3-beta.4",
+  "at": "2026-11-13T02:42:37.317Z",
+  "reason": "incomplete"
+}
+== profile package.json
+{
+  "name": "dsh-profile-desktop",
+  "private": true,
+  "dependencies": {
+    "@dsh-workbench/core": "link:../../workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/core",
+    "@dsh-workbench/module-hello": "github:novaeth/dsh-workbench-market#7135bc722ef4678d5636c84de29a7bf2af739263&path:/packages/module-hello",
+    "@dsh-workbench/adapter-probe": "link:../../workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/adapter-probe",
+    "@dsh-workbench/adapter-profile": "link:../../workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/adapter-profile",
+    "@dsh-workbench/adapter-runtime": "link:../../workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/adapter-runtime",
+    "@dsh-workbench/adapter-supply": "link:../../workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/adapter-supply",
+    "@dsh-workbench/adapters-default": "link:../../workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/adapters-default",
+    "@dsh-workbench/shared": "link:../../workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/shared"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "@dsh-workbench/core",
+        "@dsh-workbench/module-hello"
+      ]
+    }
+  }
+}
+== profile links
+total 0
+lrwxrwxrwx 1 runneradmin 197121  99 Nov 13 02:40 adapter-probe -> /c/Users/runneradmin/.dsh/workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/adapter-probe
+lrwxrwxrwx 1 runneradmin 197121 101 Nov 13 02:40 adapter-profile -> /c/Users/runneradmin/.dsh/workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/adapter-profile
+lrwxrwxrwx 1 runneradmin 197121 101 Nov 13 02:40 adapter-runtime -> /c/Users/runneradmin/.dsh/workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/adapter-runtime
+lrwxrwxrwx 1 runneradmin 197121 100 Nov 13 02:40 adapter-supply -> /c/Users/runneradmin/.dsh/workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/adapter-supply
+lrwxrwxrwx 1 runneradmin 197121 102 Nov 13 02:40 adapters-default -> /c/Users/runneradmin/.dsh/workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/adapters-default
+lrwxrwxrwx 1 runneradmin 197121  90 Nov 13 02:40 core -> /c/Users/runneradmin/.dsh/workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/core
+drwxr-xr-x 1 runneradmin 197121   0 Nov 13 02:38 module-hello
+lrwxrwxrwx 1 runneradmin 197121  92 Nov 13 02:40 shared -> /c/Users/runneradmin/.dsh/workbench/versions/1.2.3-beta.4/node_modules/@dsh-workbench/shared
+== versions
+1.2.3-beta.4
+1.2.8-beta.2
+== 版本目录 C:\Users\runneradmin/.dsh/workbench/versions/1.2.3-beta.4
+total 8
+drwxr-xr-x 1 runneradmin 197121 0 Nov 13 02:40 adapter-probe
+drwxr-xr-x 1 runneradmin 197121 0 Nov 13 02:40 adapter-profile
+drwxr-xr-x 1 runneradmin 197121 0 Nov 13 02:40 adapter-runtime
+drwxr-xr-x 1 runneradmin 197121 0 Nov 13 02:40 adapter-supply
+drwxr-xr-x 1 runneradmin 197121 0 Nov 13 02:40 adapters-default
+drwxr-xr-x 1 runneradmin 197121 0 Nov 13 02:40 core
+drwxr-xr-x 1 runneradmin 197121 0 Nov 13 02:40 shared
+  .pnpm 条目数: 1
+  adapter-probe: pkg=yes host=no client=no 内容=4 个
+  adapter-profile: pkg=yes host=no client=no 内容=4 个
+  adapter-runtime: pkg=yes host=no client=no 内容=6 个
+  adapter-supply: pkg=yes host=no client=no 内容=4 个
+  adapters-default: pkg=yes host=no client=no 内容=4 个
+  core: pkg=yes host=yes client=yes 内容=11 个
+  shared: pkg=yes host=yes client=no 内容=5 个
+  目录时间: Nov 13 02:40
+== 版本目录 C:\Users\runneradmin/.dsh/workbench/versions/1.2.8-beta.2
+total 8
+drwxr-xr-x 1 runneradmin 197121 0 Nov 13 02:42 adapter-probe
+drwxr-xr-x 1 runneradmin 197121 0 Nov 13 02:42 adapter-profile
+drwxr-xr-x 1 runneradmin 197121 0 Nov 13 02:42 adapter-runtime
+drwxr-xr-x 1 runneradmin 197121 0 Nov 13 02:42 adapter-supply
+drwxr-xr-x 1 runneradmin 197121 0 Nov 13 02:42 adapters-default
+drwxr-xr-x 1 runneradmin 197121 0 Nov 13 02:42 core
+drwxr-xr-x 1 runneradmin 197121 0 Nov 13 02:42 shared
+  .pnpm 条目数: 0
+  adapter-probe: pkg=yes host=no client=no 内容=4 个
+  adapter-profile: pkg=yes host=no client=no 内容=4 个
+  adapter-runtime: pkg=yes host=no client=no 内容=6 个
+  adapter-supply: pkg=yes host=no client=no 内容=4 个
+  adapters-default: pkg=yes host=no client=no 内容=4 个
+  core: pkg=yes host=yes client=yes 内容=11 个
+  shared: pkg=yes host=yes client=no 内容=5 个
+  目录时间: Nov 13 02:42
