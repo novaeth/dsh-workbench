@@ -72,6 +72,7 @@ describe('opencli 隔离运行时', () => {
     expect(command).not.toContain(' -g');
     expect(command).toContain(`--store-dir '${join(root, 'pnpm-store')}'`);
     expect(command).toContain('--allow-build=@jackwener/opencli');
+    expect(command).toContain('--save-exact');
   });
 
   it('DSH_WORKBENCH_HOME 优先（新 profile 用自己那份隔离运行时）', async () => {
@@ -131,6 +132,7 @@ describe('Desktop 无 npm 时的 pnpm 安装命令', () => {
     expect(command).toContain(`@jackwener/opencli@${OPENCLI_PIN}`);
     expect(command).toContain(`--store-dir '${join(root, 'pnpm-store')}'`);
     expect(command).toContain('--allow-build=@jackwener/opencli');
+    expect(command).toContain('--save-exact');
     expect(command).not.toContain('npm i');
   });
 });

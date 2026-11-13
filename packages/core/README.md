@@ -201,7 +201,10 @@ HMR 热换插件（不刷新页面），宿主半侧按模块路径热重载。
 要重启的是改 `vite.config.ts`。
 
 `pnpm run check` 与 `pnpm release` 的闸是同一条链，别在包内另串一份短的 —— 会漏 lint、
-文档与模块判据。环境、提交与门禁纪律见 [CONTRIBUTING.md](../../CONTRIBUTING.md)。
+文档与模块判据。发版还要求目标版本已经在
+`packages/docs/site/desktop/views/changelog.md` 里有一节，这道闸 `--skip-gate` 无法跳过；
+单独检查用 `pnpm run check:changelog -- --version <版本>`。环境、提交与门禁纪律见
+[CONTRIBUTING.md](../../CONTRIBUTING.md)。
 
 ## 相关文档
 

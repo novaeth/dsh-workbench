@@ -50,6 +50,7 @@
     "check:arch": "node packages/module-tools/bin/dsh-wb-module.mjs check --only arch",
     "check:lint": "node packages/module-tools/bin/dsh-wb-module.mjs check --only lint",
     "check:release-artifacts": "pnpm --filter @dsh-workbench/core run check:release-artifacts",
+    "check:changelog": "node scripts/check-changelog.mjs",
     "lint": "eslint . --cache --cache-location node_modules/.cache/eslint --cache-strategy content",
     "lint:fix": "eslint . --fix --cache --cache-location node_modules/.cache/eslint --cache-strategy content",
     "release:resume": "node scripts/release.mjs --resume",

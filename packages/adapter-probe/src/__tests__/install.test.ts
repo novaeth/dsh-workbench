@@ -18,6 +18,7 @@ describe('Desktop opencli 安装命令', () => {
     expect(command).toContain(pnpm);
     expect(command).toContain('add --dir');
     expect(command).toContain('--allow-build=@jackwener/opencli');
+    expect(command).toContain('--save-exact');
     expect(command).not.toContain('npm i --prefix');
   });
 

@@ -1,6 +1,9 @@
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import type { DshShell } from '@dsh-workbench/shared/host';
-import { classifyFailure, createPreflight, opencliInstallCommandDefault } from '../index.js';
+import { classifyFailure, createPreflight, holdToolchainLock, opencliInstallCommandDefault } from '../index.js';
 import { createFakeShell } from '@dsh-workbench/shared/testing';
 import { createSeam } from '@dsh-workbench/shared/host';
 import { ALL_OK, BROKEN_BRIDGE, EXTENSION_ONLY_BRIDGE, GOOD_BRIDGE_REPORT, build } from './preflight-fixtures';
@@ -281,6 +284,109 @@ describe('createPreflight', () => {
     expect(install).not.toHaveBeenCalled();
     expect(snapshot.phase).toBe('failed');
     expect(snapshot.error).toContain('TypeError');
+  });
+
+  it('★ 盘上跑的是旧版本 → 按未就绪重装，不把旧副本当通过', async () => {
+    const install = vi.fn(async () => ({ ok: true, detail: 'installed' }));
+    const { fake, preflight } = build(
+      [{ stdout: '1.8.7\n' }, { stdout: '1.8.8\n' }, { stdout: 'ok\n' }],
+      install,
+    );
+
+    const snapshot = await preflight.run();
+
+    expect(install).toHaveBeenCalledTimes(1);
+    expect(snapshot.phase).toBe('ready');
+    expect(snapshot.steps[0]?.detail).toBe('1.8.8');
+    expect(fake.calls.map((call) => call.command)).toEqual([
+      "'opencli' --version",
+      "'opencli' --version",
+      "'opencli' doctor",
+    ]);
+  });
+
+  it('★ 版本命令第一次非零、第二次成功 → 短重试就返回，不惊动安装', async () => {
+    const install = vi.fn(async () => ({ ok: true, detail: '不该被调到' }));
+    const fake = createFakeShell([
+      { exitCode: 1, stderr: 'busy' },
+      { stdout: '1.8.8\n' },
+      { stdout: 'ok\n' },
+    ]);
+    const preflight = createPreflight({ seam: seamFor(fake.shell), install, versionAttempts: 3 });
+
+    const snapshot = await preflight.run();
+
+    expect(install).not.toHaveBeenCalled();
+    expect(snapshot.phase).toBe('ready');
+    expect(fake.calls.map((call) => call.command)).toEqual([
+      "'opencli' --version",
+      "'opencli' --version",
+      "'opencli' doctor",
+    ]);
+  });
+
+  it('★ stalled 不跟着重试（重试也等不到，还会白等 30 秒）', async () => {
+    vi.useFakeTimers();
+    try {
+      const fake = scriptedShell((command) => command === "'opencli' --version");
+      const preflight = createPreflight({
+        seam: seamFor(fake.shell),
+        probeToolchain: async () => TOOLCHAIN_OK,
+        versionAttempts: 3,
+      });
+
+      const pending = preflight.run();
+      await vi.advanceTimersByTimeAsync(40_000);
+      const snapshot = await pending;
+
+      expect(fake.calls).toEqual(["'opencli' --version"]);
+      expect(snapshot.guidance).toBe('host');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('★ 另一处在装（锁被占）→ 探测等锁，不提前判失败', async () => {
+    const order: string[] = [];
+    const dir = join(mkdtempSync(join(tmpdir(), 'preflight-lock-')), 'toolchain');
+    const held = holdToolchainLock(dir, async () => {
+      order.push('install-start');
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      order.push('install-end');
+    });
+    const fake = createFakeShell([{ stdout: '1.8.8\n' }, { stdout: 'ok\n' }]);
+    const preflight = createPreflight({
+      seam: seamFor(fake.shell),
+      withToolchainLock: (run) =>
+        holdToolchainLock(dir, async () => {
+          order.push('probe');
+          return run();
+        }),
+    });
+
+    const snapshot = await preflight.run();
+    await held;
+
+    expect(snapshot.phase).toBe('ready');
+    expect(order).toEqual(['install-start', 'install-end', 'probe']);
+  });
+
+  it('探测在工具链锁里跑：有另一处在装时会先等它', async () => {
+    const order: string[] = [];
+    const fake = createFakeShell([{ stdout: '1.8.8\n' }, { stdout: 'ok\n' }]);
+    const preflight = createPreflight({
+      seam: seamFor(fake.shell),
+      withToolchainLock: async (run) => {
+        order.push('lock-in');
+        const value = await run();
+        order.push('lock-out');
+        return value;
+      },
+    });
+
+    await preflight.run();
+
+    expect(order).toEqual(['lock-in', 'lock-out']);
   });
 
   it('装完还找不到 → guidance: path（别再让用户装一遍）', async () => {

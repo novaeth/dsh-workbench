@@ -273,6 +273,10 @@ function printUsage() {
 发布走 pnpm -r publish --ignore-scripts —— 各包的 prepublishOnly / prepack 只拦手敲的
 pnpm publish，彩排与真发都不会再触发它们。
 
+更新日志闸不受 --skip-gate 影响：packages/docs/site/desktop/views/changelog.md 必须已经有
+目标版本的一节；构建后还会核对 packages/core/CHANGELOG.md（随 @dsh-workbench/core 发布）也含这一版。
+单独检查：pnpm run check:changelog -- --version 1.2.10
+
 选项：
   --resume          读取 ${STATE_NAME} 续跑，不重新选择版本号（门禁照跑一遍）
   --target <ver>    直接指定目标版本号（跳出版本选择）
@@ -280,7 +284,7 @@ pnpm publish，彩排与真发都不会再触发它们。
   --dry-run         只彩排不发布，结束后回滚本地版本号
   --skip-build      跳过构建：发磁盘上现有产物（prepack 已关，不再兜底重建）
   --skip-rehearsal  跳过 dry-run 彩排（不推荐）
-  --skip-gate       跳过门禁（真的跳过：发布不会再补跑；不推荐）
+  --skip-gate       跳过门禁（真的跳过：发布不会再补跑；更新日志闸仍然生效；不推荐）
                     项目里的 release:fast 就是「--skip-gate --skip-rehearsal」那条捷径
   --allow-dirty     允许工作区有未提交的改动
 `);
@@ -310,7 +314,38 @@ function checkNpmLogin() {
   console.log("\n✅ 登录成功\n");
 }
 
-function preflight(options, { checkDirty }) {
+function changelogStatus(targetVersion, file) {
+  const args = ["scripts/check-changelog.mjs", "--version", targetVersion];
+  if (file !== undefined) args.push("--file", file);
+  return sh("node", args, { allowFailure: true }).status;
+}
+
+function assertChangelog(targetVersion) {
+  console.log(
+    `\n📓 更新日志闸（强制）：v${targetVersion} 必须已经有更新日志 —— --skip-gate 无法跳过`,
+  );
+  if (changelogStatus(targetVersion) !== 0) {
+    throw new ReleaseError(
+      `v${targetVersion} 没有更新日志。先写 packages/docs/site/desktop/views/changelog.md，再重新发布。`,
+    );
+  }
+  console.log(`   ✅ 更新日志已有 v${targetVersion}`);
+}
+
+function assertShippedChangelog(targetVersion, options) {
+  const file = path.join(rootDir, "packages", "core", "CHANGELOG.md");
+  console.log(`\n📓 更新日志随包闸：packages/core/CHANGELOG.md 必须含 v${targetVersion}`);
+  if (changelogStatus(targetVersion, file) !== 0) {
+    throw new ReleaseError(
+      options.skipBuild
+        ? `磁盘上的 packages/core/CHANGELOG.md 没有 v${targetVersion}：--skip-build 发的是现有产物，先重新构建。`
+        : `构建出的 packages/core/CHANGELOG.md 没有 v${targetVersion}：更新日志源里补上这一版，再重新构建。`,
+    );
+  }
+  console.log(`   ✅ 随包更新日志含 v${targetVersion}`);
+}
+
+function preflight(options, { checkDirty, targetVersion }) {
   if (checkDirty && !options.allowDirty) {
     const status = sh("git", ["status", "--porcelain"], { capture: true, quiet: true });
     const dirty = status.output.trim();
@@ -320,6 +355,8 @@ function preflight(options, { checkDirty }) {
       );
     }
   }
+  assertChangelog(targetVersion);
+  if (options.skipBuild) assertShippedChangelog(targetVersion, options);
   checkNpmLogin();
   if (options.skipGate) {
 
@@ -681,6 +718,7 @@ async function execute(options, targetVersion, fromVersion, inspect) {
   } else {
     releaseRun.stage = Stage.BUILD;
     build();
+    assertShippedChangelog(targetVersion, options);
   }
 
   const progress = inspect ?? (await inspectTarget(targetVersion));
@@ -724,7 +762,7 @@ async function startRelease(options) {
     );
   }
 
-  preflight(options, { checkDirty: true });
+  preflight(options, { checkDirty: true, targetVersion });
 
   let inspect;
   try {
@@ -772,7 +810,7 @@ async function resumeRelease(options, state) {
     );
   }
 
-  preflight(options, { checkDirty: false });
+  preflight(options, { checkDirty: false, targetVersion });
 
   let inspect;
   try {

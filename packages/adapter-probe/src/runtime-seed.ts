@@ -1,7 +1,7 @@
 import { toolchainManifestOf, toolchainNpmrcOf } from '@dsh-workbench/adapter-runtime';
 import { createRequire } from 'node:module';
 
-import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { delimiter, dirname, join, sep } from 'node:path';
 import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { pathWithBinsOf, quoteShellArg, quoteShellArgFor, workbenchRoot, writeTextFile } from '@dsh-workbench/shared/host';
@@ -222,7 +222,6 @@ export function seedRuntimeFiles(options: RuntimeSeedOptions): readonly string[]
       writeTextFile(manifest, toolchainManifestOf());
       done.push(manifest);
     }
-    rmSync(join(paths.opencliRoot, 'toolchain', 'pnpm-workspace.yaml'), { force: true });
     const npmrc = join(paths.opencliRoot, 'toolchain', '.npmrc');
     if (readText(npmrc) !== toolchainNpmrcOf()) {
       writeTextFile(npmrc, toolchainNpmrcOf());
@@ -236,7 +235,6 @@ export function seedRuntimeFiles(options: RuntimeSeedOptions): readonly string[]
       existsSync(nodeShim) ? nodeShim : undefined,
     );
     if (readText(paths.opencliBin) !== wanted) {
-      rmSync(paths.opencliBin, { force: true });
       writeTextFile(paths.opencliBin, wanted, { mode: 0o755 });
       done.push(paths.opencliBin);
     }

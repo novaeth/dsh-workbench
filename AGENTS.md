@@ -54,6 +54,9 @@ pnpm run check                        # 门禁：整仓那一套（= `pnpm -w ru
 <!-- doc-facts:end gate-chain-inline -->
 
 `pnpm release` 的闸也是它。
+发版另有一道无法跳过的更新日志闸：目标版本必须已经在
+`packages/docs/site/desktop/views/changelog.md` 里有一节；构建后还会核对随 `@dsh-workbench/core`
+发布的 `packages/core/CHANGELOG.md` 也含这一版。`--skip-gate` 与 `release:fast` 也无法跳过它。
 **别在包内另串一份短的**（会漏 lint / 文档 / 模块判据）。
 链首的 `build` 不是可有可无：`module-hello` 从 `@dsh-workbench/core/client` 取 kit，而那是构建产物
 （`client.js` + `dist/types`，都不入库）—— 不先建，干净 clone 上 `typecheck` / `test` 就找不到包。

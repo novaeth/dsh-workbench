@@ -11,6 +11,7 @@ import { LOCAL_PNPM_VERSION, type LocalNpmProvision, type LocalPnpmProvision } f
 import type { ToolchainReport } from './toolchain-probe.js';
 import type { DesktopBrowser } from './browser-wake.js';
 import { bridgeFixCommand } from './browser-wake.js';
+import { probeOpencliVersion, type OpencliVersionRun, type OpencliVersionVerdict } from './version-probe.js';
 
 export type PreflightFailure = 'permission' | 'network' | 'missing' | 'host' | 'unknown';
 
@@ -72,6 +73,8 @@ export function createPreflight(options: {
   logger?: { warn?(message: string): void } | undefined;
   install?: (() => Promise<{ ok: boolean; detail: string }>) | undefined;
   installed?: (() => boolean) | undefined;
+  versionAttempts?: number | undefined;
+  withToolchainLock?: (<T>(run: () => Promise<T>) => Promise<T>) | undefined;
   warmReads?: (() => readonly (readonly string[])[]) | undefined;
   probeDiy?: (() => Promise<DiyPresetVerdict | undefined>) | undefined;
   probeToolchain?: (() => Promise<ToolchainReport>) | undefined;
@@ -182,18 +185,23 @@ export function createPreflight(options: {
     }
   }
 
-  async function probeVersion(): Promise<{ ok: boolean; missing: boolean; detail: string; stalled: boolean }> {
-    const result = await exec('cli', `${commandToken} --version`, PREFLIGHT_VERSION_TIMEOUT_MS);
-    if (result.kind === 'ok') {
-      return { ok: true, missing: false, detail: result.stdout.trim().split('\n')[0] ?? '', stalled: false };
+  async function probeVersionOnce(): Promise<OpencliVersionRun> {
+    const run = () => exec('cli', `${commandToken} --version`, PREFLIGHT_VERSION_TIMEOUT_MS);
+    if (options.withToolchainLock === undefined) return run();
+    try {
+      return await options.withToolchainLock(run);
+    } catch (error) {
+      return { kind: 'error', detail: `等隔离运行时准备好时出错：${String(error)}` };
     }
-    const onDisk = options.installed?.() === true;
-    return {
-      ok: false,
-      missing: result.kind === 'nonzero' && !onDisk,
-      detail: result.detail,
-      stalled: result.kind === 'stalled',
-    };
+  }
+
+  async function probeVersion(): Promise<OpencliVersionVerdict> {
+    return probeOpencliVersion({
+      run: probeVersionOnce,
+      attempts: options.versionAttempts ?? 1,
+      installed: options.installed,
+      log: (line) => appendLog('cli', line),
+    });
   }
 
   async function probeBridge(): Promise<BridgeVerdict> {

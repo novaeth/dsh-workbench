@@ -84,7 +84,7 @@ describe('启动预热站点登录态（ADR-0024）', () => {
 
   it('★ doctor 说 daemon 没起来、可预热那条命令自己把通道跑通了 → 结论留到自愈之后再给：中途不闪「没连上」，复检后桥接翻成 ok', async () => {
     const replies = [
-      { stdout: '1.8.7\n' },
+      { stdout: '1.8.8\n' },
       { stdout: STALE_DAEMON_BRIDGE },
       { stdout: '{}' },
       { stdout: GOOD_BRIDGE_REPORT },
@@ -120,7 +120,7 @@ describe('启动预热站点登录态（ADR-0024）', () => {
   it('★ 同一形状但预热也没跑通、复检还是没连上 → 桥接 warn + 给那条命令（这时候真需要人动手）', async () => {
     const { fake, preflight } = build(
       [
-        { stdout: '1.8.7\n' },
+        { stdout: '1.8.8\n' },
         { stdout: STALE_DAEMON_BRIDGE },
         { exitCode: 1, stderr: 'nope' },
         { stdout: STALE_DAEMON_BRIDGE },
@@ -147,7 +147,7 @@ describe('启动预热站点登录态（ADR-0024）', () => {
   it('★ 预热没跑通但复检说通道是好的 → 分开说：桥接 ok，预热只 warn（这次没热上，不影响用）', async () => {
     const { preflight } = build(
       [
-        { stdout: '1.8.7\n' },
+        { stdout: '1.8.8\n' },
         { stdout: STALE_DAEMON_BRIDGE },
         { exitCode: 1, stderr: 'nope' },
         { stdout: GOOD_BRIDGE_REPORT },

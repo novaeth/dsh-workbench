@@ -909,6 +909,8 @@ module 包 ──dsh plugin add──► profile
 - profile 的 `dsh.profile.bundles` 只需要 `@dsh-workbench/core`；适配器是它的依赖，不需要额外 enable。
 - 模块走 `dsh plugin add`；模块清单决定装不装、挂不挂。
 - `pnpm release` 前必须过完整 `pnpm run check`。
+- 发版另有强制更新日志闸：目标版本必须已在 `packages/docs/site/desktop/views/changelog.md` 里有一节，
+  随 `@dsh-workbench/core` 发布的 `packages/core/CHANGELOG.md` 也要含这一版；`--skip-gate` 无法跳过。
 - 发布产物零夹具：`check:release-artifacts` 扫 `WB_RELEASE=1` 的临时产物。
 
 ## 10. 门禁
