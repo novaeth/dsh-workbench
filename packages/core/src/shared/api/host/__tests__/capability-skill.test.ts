@@ -29,7 +29,15 @@ describe('能力索引：注册到 agent 作用域的 skill 服务', () => {
 
     registerCapabilitySkill(ctx, agentOf({ register }));
 
-    expect(register).toHaveBeenCalledWith(brief);
+    expect(register).toHaveBeenCalledWith({ ...brief, source: 'runtime' });
+  });
+
+  it('★ 带上 source：缺了它，dsh 会在加载时报 source must be a string', () => {
+    const register = vi.fn((_skill: { source?: unknown }) => () => {});
+
+    registerCapabilitySkill(ctxOf({ brief }), agentOf({ register }));
+
+    expect(register.mock.calls[0]?.[0]?.source).toBe('runtime');
   });
 
   it('这个 dsh 没有 skills 服务 ⇒ 只记一句，不抛', () => {
