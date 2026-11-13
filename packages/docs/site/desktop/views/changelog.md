@@ -23,6 +23,68 @@
 - **启动时不再删除 pnpm 授权文件**：`pnpm-workspace.yaml` 交给 pnpm 维护；安装命令带
   `--save-exact`，清单不再在 pnpm 与启动写入之间来回改写。
 
+## v1.2.9
+
+`2026-11-13`
+
+### core
+
+#### ⚡ 改进
+
+- **流程里加 agent 节点**：流程可以带一个只读判断的 agent 步骤，默认一条流程执行 16 次；
+  子 agent 挂在当前会话下，没有会话时自动创建 owner，结束后一并清理。流程子会话的工具面
+  同步收窄：不提供工具包、询问用户、再次委派与面板写入；需要审批的工具直接拒绝并说明原因。
+- **按钮带来的会话继续使用**：卡片按钮的 POST 已经带 session，模板的 `startFromPayload`
+  现在把它传给流程，不再另起临时会话作为父会话。
+
+#### 🐛 修复
+
+- **流程子会话的写操作带上会话**：停止、回执这类长任务写也带 session；会话注入从 kit 的
+  `useHostWrite` 挪进 `useHostWrite` 本身。
+- **真机上的 agent 节点**：动作写自动带当前会话；兜底 owner 修正三种失败（`agentPresets.list`
+  异步、origin 不能是 subagent、必须带默认模型）。
+- **kit 面不再悄悄变大**：`setWriteSessionSource` / `writeBodyWithSession` 挪出 kit 文件，
+  `kit.hooks` 回到原来的成员；文档检查跳过断链。
+
+### 📦 产物
+
+- [@dsh-workbench/core@1.2.9](https://www.npmjs.com/package/@dsh-workbench/core/v/1.2.9)
+
+## v1.2.8
+
+`2026-11-13`
+
+### core
+
+#### ⚡ 改进
+
+- **模块 README 改成面向用户的 `readme.json`**：README 只从 `readme.json` 生成（标题、摘要、
+  见 / 做 / agent / 数据 / 安装 / 排障 / FAQ），`design.json` 只负责 DEVELOPING 与验收；
+  新增 `shots[]` 卡片草图（ASCII + caption，至少一张），单条超过 70 字或没有画图都不通过；
+  `shotsTitle` 可以换标题，图用无语言代码块，市场详情页不再显示 `text` 标签。模板、`init`、
+  `migrate` 与模块指引同步更新。
+- **已安装详情页与发现页对齐**：已安装模块、插件、工作台自身与共用依赖都有概览 / 说明 /
+  更新日志；宿主按已安装包读取 `package.json` 元数据与 README / CHANGELOG。
+- **更新日志随 core 包发布**：构建时把文档站的更新日志复制到 `packages/core/CHANGELOG.md`，
+  并补上 v1.2.7 的发布记录。
+- **设置页对齐 dsh**：标题、行高、三级色与高级分割线按 dsh 设置页；设置 nav 换成工作台 logo，
+  补读取失败提示与重试；设置注册拆到 `register.ts`。
+
+#### 🐛 修复
+
+- **工作区三点菜单不再产生滚动条**：菜单关闭时 portal 根节点改用 `display: contents`，
+  不再在 `body` 末尾留下 19px 行盒；打开时也不占行盒，右键菜单的定位不受影响。
+- **`link:` 安装的包也能读 README**：只校验包名不穿越，包目录按 profile 声明的安装位置读取，
+  工作台自己的 README 与 `package.json` 不再被当成缺失。
+- **旧数据迁移的文案与未知数量**：提示改成「会话和项目仍在旧目录」，迁移确认框写全对象与
+  影响；读不到项目数时不再写成 0。
+- **模块客户端测试缺 `react-dom`**：`react-dom` 补进 core 的 peer，安装出来的模块运行客户端
+  测试时不再报 `Cannot find package react-dom`。
+
+### 📦 产物
+
+- [@dsh-workbench/core@1.2.8](https://www.npmjs.com/package/@dsh-workbench/core/v/1.2.8)
+
 ## v1.2.7
 
 `2026-11-12`
