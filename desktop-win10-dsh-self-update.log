@@ -1,0 +1,11 @@
+版本目录已铺好：C:\Users\runneradmin\.dsh\workbench\versions\1.2.10
+装好了：1.2.10
+装完自检过了
+profile 重装没成（退出码 1）：  requireStack: []
+}
+
+Node.js v24.21.0
+已经指到 C:\Users\runneradmin\.dsh\workbench\versions\1.2.10（等你退出后换上的，重启生效）；profile 没重装（启动器会拦下旧的 dsh 层，重启前先别在 profile 里装东西）
+清单里 @dsh-workbench/core 那一行一直都在
+切过去之前又不对了（@dsh-workbench/adapter-probe、@dsh-workbench/adapter-profile、@dsh-workbench/adapter-runtime、@dsh-workbench/adapter-supply、@dsh-workbench/adapters-default）：C:\Users\runneradmin\.dsh\workbench\versions\1.2.10；清单里 @dsh-workbench/core 那一行还在
+救法：env ELECTRON_RUN_AS_NODE='1' 'C:\Users\runneradmin\AppData\Local\Programs\DeepSeek Harness\DeepSeek Harness.exe' '--expose-internals' 'C:\Users\runneradmin\AppData\Local\Programs\DeepSeek Harness\resources\app.asar\dsh\node_modules\@deepseek-ai\dsh-desktop-host\lib\cli.js' plugin --profile desktop add @dsh-workbench/core@1.2.10

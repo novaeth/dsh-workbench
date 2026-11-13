@@ -1,0 +1,45 @@
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+Workbench module market
+More
+Workspaces
+工作台DIY
+New Session
+Default workspace
+More
+Workbench module market
+
+Installed on this machine, shared by every project.
+
+Add module
+Installed
+Discover
+Workbench1.2.10local
+Installed modules
+1
+Sample module1.1.14-beta.2
+installed
+Uninstall
+After installation, select it on that project’s panel page before the module appears.
+Workbench panel
+Sample module
+
+hello, workbench
+
+This card comes from a standalone workbench module.
+
+Add module
+
+Enter a package name for a module or opencli plugin, a Git repository URL, or a local directory path.
+
+Installed
+
+opencli-plugin-hello
+
+Installed: opencli plugin hello
+
+Close

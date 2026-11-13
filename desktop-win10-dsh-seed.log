@@ -1,0 +1,104 @@
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 建 DIY 工坊 C:\Users\runneradmin\.dsh\workbench\diy
+[dsh-workbench] 工坊指引已链上：C:\Users\runneradmin\.dsh\workbench\diy\.agents\skills\workbench-module-diy
+[dsh-workbench] 工坊工具链对齐到 1.2.3-beta.4
+[dsh-workbench] 装工坊依赖（第一次会下载 react / typescript / vitest）...
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Progress: resolved 37, reused 0, downloaded 2, added 0
+Progress: resolved 131, reused 0, downloaded 4, added 0
+Progress: resolved 131, reused 0, downloaded 5, added 0
+Progress: resolved 132, reused 0, downloaded 7, added 0
+Progress: resolved 132, reused 0, downloaded 14, added 0
+Progress: resolved 132, reused 0, downloaded 16, added 0
+Progress: resolved 132, reused 0, downloaded 17, added 0
+Progress: resolved 132, reused 0, downloaded 23, added 0
+Progress: resolved 132, reused 0, downloaded 38, added 0
+Progress: resolved 132, reused 0, downloaded 49, added 0
+Progress: resolved 132, reused 0, downloaded 64, added 0
+Progress: resolved 132, reused 0, downloaded 77, added 0
+Progress: resolved 132, reused 0, downloaded 88, added 0
+Progress: resolved 164, reused 0, downloaded 110, added 0
+Progress: resolved 176, reused 0, downloaded 116, added 0
+Progress: resolved 183, reused 0, downloaded 116, added 0
+Progress: resolved 196, reused 0, downloaded 118, added 0
+Progress: resolved 236, reused 0, downloaded 122, added 0
+Progress: resolved 262, reused 0, downloaded 126, added 0
+Progress: resolved 273, reused 0, downloaded 126, added 0
+Progress: resolved 281, reused 0, downloaded 127, added 0
+Progress: resolved 296, reused 0, downloaded 138, added 0
+Progress: resolved 296, reused 0, downloaded 156, added 0
+Progress: resolved 296, reused 0, downloaded 167, added 0
+Progress: resolved 296, reused 0, downloaded 178, added 0
+Progress: resolved 296, reused 0, downloaded 183, added 0
+Progress: resolved 296, reused 0, downloaded 184, added 0
+Progress: resolved 296, reused 0, downloaded 197, added 0
+Progress: resolved 296, reused 0, downloaded 198, added 0
+Progress: resolved 296, reused 0, downloaded 201, added 0
+Progress: resolved 296, reused 0, downloaded 209, added 0
+Progress: resolved 296, reused 0, downloaded 210, added 0
+Progress: resolved 296, reused 0, downloaded 216, added 0
+Progress: resolved 296, reused 0, downloaded 217, added 0
+Progress: resolved 296, reused 0, downloaded 219, added 0
+Progress: resolved 296, reused 0, downloaded 220, added 0
+Progress: resolved 296, reused 0, downloaded 224, added 0
+Progress: resolved 296, reused 0, downloaded 233, added 0
+Progress: resolved 296, reused 0, downloaded 238, added 0
+Progress: resolved 339, reused 0, downloaded 254, added 0
+Progress: resolved 341, reused 0, downloaded 258, added 0
+Progress: resolved 341, reused 0, downloaded 282, added 0
+Progress: resolved 356, reused 0, downloaded 299, added 0
+Progress: resolved 357, reused 0, downloaded 299, added 0
+Progress: resolved 365, reused 0, downloaded 320, added 0
+Progress: resolved 402, reused 0, downloaded 344, added 0
+Packages: +345
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 402, reused 0, downloaded 350, added 0
+Progress: resolved 402, reused 0, downloaded 350, added 9
+Progress: resolved 402, reused 0, downloaded 350, added 15
+Progress: resolved 402, reused 0, downloaded 350, added 16
+Progress: resolved 402, reused 0, downloaded 351, added 19
+Progress: resolved 402, reused 0, downloaded 351, added 102
+Progress: resolved 402, reused 0, downloaded 351, added 103
+Progress: resolved 402, reused 0, downloaded 351, added 162
+Progress: resolved 402, reused 0, downloaded 351, added 202
+Progress: resolved 402, reused 0, downloaded 351, added 241
+Progress: resolved 402, reused 0, downloaded 351, added 242
+Progress: resolved 402, reused 0, downloaded 351, added 244
+Progress: resolved 402, reused 0, downloaded 351, added 267
+Progress: resolved 402, reused 0, downloaded 351, added 283
+Progress: resolved 402, reused 0, downloaded 351, added 284
+Progress: resolved 402, reused 0, downloaded 351, added 305
+Progress: resolved 402, reused 0, downloaded 351, added 311
+Progress: resolved 402, reused 0, downloaded 351, added 312
+Progress: resolved 402, reused 0, downloaded 351, added 313
+Progress: resolved 402, reused 0, downloaded 351, added 314
+Progress: resolved 402, reused 0, downloaded 351, added 317
+Progress: resolved 402, reused 0, downloaded 351, added 343
+Progress: resolved 402, reused 0, downloaded 351, added 344
+Progress: resolved 402, reused 0, downloaded 351, added 345
+Progress: resolved 402, reused 0, downloaded 351, added 345, done
+.../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+.../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+ WARN  Issues with peer dependencies found
+.
+└─┬ @dsh-workbench/module-tools 1.2.10
+  └─┬ eslint-plugin-react 7.37.5
+    └── ✕ unmet peer eslint@"^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7": found 10.14.0
+
+devDependencies:
++ @deepseek-ai/dsh-client-ui-primitives 0.2.2-rc.2
++ @dsh-workbench/core 1.2.10
++ @dsh-workbench/module-tools 1.2.10
++ @dsh-workbench/shared 1.2.10
++ @types/node 24.19.2 (26.6.6 is available)
++ @types/react 19.3.0
++ esbuild 0.28.2
++ react 19.3.1
++ typescript 5.9.3 (7.0.2 is available)
++ vitest 5.1.0
+
+Done in 1m 33s using pnpm v10.32.1
