@@ -101,8 +101,6 @@ export function WorkspaceRowMenu({ target, t, onClose, onAlias, onDelete, onReve
     };
   }, [open, onClose]);
 
-  if (target === null) return null;
-
   const menu = (
     <Menu
       open={open}
@@ -124,6 +122,7 @@ export function WorkspaceRowMenu({ target, t, onClose, onAlias, onDelete, onReve
       items={items}
       anchor={null}
       portal
+      className={open ? undefined : styles.portalRoot}
       autoFocus
       align={target?.align ?? 'end'}
       {...(point === undefined

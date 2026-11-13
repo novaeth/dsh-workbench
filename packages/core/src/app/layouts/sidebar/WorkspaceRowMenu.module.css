@@ -1,3 +1,7 @@
 .list {
   max-width: var(--wb-len-320);
 }
+
+.portalRoot {
+  display: contents;
+}

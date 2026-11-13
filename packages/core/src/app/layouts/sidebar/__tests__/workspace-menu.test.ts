@@ -80,11 +80,12 @@ describe('工作区行的三点菜单：悬停换图标、点开是菜单', () =
 
   it('★ 那张卡上的 .list 是承重的：类没了 styles.list 就是 undefined，点自己那一项也会先关菜单（click 不再产生）', () => {
     expect(read('WorkspaceRowMenu.module.css')).toContain('.list {');
+    expect(read('WorkspaceRowMenu.module.css')).toContain('.portalRoot {');
     expect(MENU).toContain('listClassName={styles.list}');
   });
 
-  it('★ 菜单根节点不挂在行里：关着时连 portal 都不留（空 inline-flex 会在 body 末尾留一行盒），右键那种模式它自己就是锚点', () => {
-    expect(MENU).toContain('if (target === null) return null;');
+  it('★ 菜单根节点不挂在行里：关着时 display: contents（不占行盒），portal 始终挂载（CSS anchor 不重建）', () => {
+    expect(MENU).toContain('className={open ? undefined : styles.portalRoot}');
     expect(MENU).toContain('createPortal(menu, document.body)');
     expect(MENU).not.toContain('className={styles.anchor}');
   });
