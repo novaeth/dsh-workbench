@@ -1,0 +1,25 @@
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/50f71698-4a06-4b9b-b2cc-8bd1cb146751
+[3108:1113/091557.285185:ERROR:content/browser/gpu/gpu_process_host.cc:1035] GPU process exited unexpectedly: exit_code=15
+[3108:1113/091557.321144:ERROR:content/browser/network_service_instance_impl.cc:650] Network service crashed or was terminated, restarting service.
+
+DevTools listening on ws://127.0.0.1:9223/devtools/browser/a0de9b9f-38a9-414c-ad09-7dc268096618
+[4982:1113/091610.579644:ERROR:content/browser/network_service_instance_impl.cc:650] Network service crashed or was terminated, restarting service.
+[4982:1113/091610.580335:ERROR:content/browser/gpu/gpu_process_host.cc:1035] GPU process exited unexpectedly: exit_code=15
+Error: Desktop renderer exited: killed
+    at WebContents.<anonymous> (file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/lib/main.js:21509:107)
+    at WebContents.emit (node:events:526:24)
+
+DevTools listening on ws://127.0.0.1:9226/devtools/browser/db77afb9-21f4-4f05-b213-929a51623ed4
+[6274:1113/091710.735801:ERROR:content/browser/network_service_instance_impl.cc:650] Network service crashed or was terminated, restarting service.
+[6274:1113/091710.737361:ERROR:content/browser/gpu/gpu_process_host.cc:1035] GPU process exited unexpectedly: exit_code=15
+Error: Desktop renderer exited: killed
+    at WebContents.<anonymous> (file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/lib/main.js:21509:107)
+    at WebContents.emit (node:events:526:24)
+
+DevTools listening on ws://127.0.0.1:9227/devtools/browser/4e3a3a27-9862-443e-9df3-1b4dacaf93cf
+[8498:1113/091934.383293:ERROR:content/browser/gpu/gpu_process_host.cc:1035] GPU process exited unexpectedly: exit_code=15
+[8498:1113/091934.389149:ERROR:content/browser/network_service_instance_impl.cc:650] Network service crashed or was terminated, restarting service.
+Error: Desktop renderer exited: killed
+    at WebContents.<anonymous> (file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/lib/main.js:21509:107)
+    at WebContents.emit (node:events:526:24)
