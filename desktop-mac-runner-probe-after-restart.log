@@ -1,0 +1,30 @@
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.2s] MILESTONE cdp-connected @ 0.2s
+[0.2s] health wait [] none :: HARNESS | Loading plugins…
+[0.2s] ready wait [] none :: HARNESS | Loading plugins…
+[2.3s] ready wait [] none :: HARNESS | Loading plugins…
+[4.4s] ready wait [checking] toolchain:running(node --version · npm --version · pnpm --version) cli:pending bridge:pending diy:pending :: wn | Preview | Choose a workspace to start | Workbench panel | Reading the panel setup… | Preparing the workbench | - | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode
+[4.4s] 体检还在跑，先等它：toolchain:running · cli:pending · bridge:pending · diy:pending
+[6.4s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: . | Build a module | Choose modules | Browse the module market | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[6.4s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[8.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok ::  sessions | Workspace Write | Select model | Workbench panel | No modules on the panel yet | You can also tell the agent directly: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[8.4s] MILESTONE ready @ 8.4s
+[8.5s] verify wait :: host units panels,hello :: cards （无） ::  panel yet | You can also tell the agent directly: “add a module to the panel”. | Build a module | Choose modules | Browse the module market
+[8.5s] STEP click ["选择模块","Choose modules"]: "Choose modules"
+[10.0s] STEP panel module hello [示例模块/Sample module/hello] dialogs=1 rows=["Sample module"] -> "clicked:hello"
+[13.0s] verify wait :: host units panels,hello :: cards wb-card-hello :: ample module | Restore the default everywhere | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[13.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-verify-body.txt (415 bytes)
+[13.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-units.json (5854 bytes)
+[13.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-client-bundles.json (25 bytes)
+[13.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-page-internals.json (2096 bytes)
+[13.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-console-events.json (9698 bytes)
+[13.0s] MILESTONE module-card @ 13.0s
+[13.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-smoke.json (101 bytes)
+[13.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart-final-body.txt (415 bytes)
+[13.0s] TITLE: DeepSeek Harness
+[13.1s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-restart.png (71737 bytes)
+[13.1s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"13.1s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.2s","ready":"8.4s","module-card":"13.0s"},"card":true,"units":["panels","hello"]}
