@@ -1,0 +1,40 @@
+平台冒烟：win32 · shell=pwsh · node=v24.22.2
+✅ argv 往返 ["plain"]
+✅ argv 往返 ["two words"]
+✅ argv 往返 ["it's"]
+✅ argv 往返 ["say \"hi\""]
+✅ argv 往返 ["$HOME","$PATH","${X}"]
+✅ argv 往返 ["%PATH%","%USERPROFILE%"]
+✅ argv 往返 ["C:\\tmp\\a b\\c.txt"]
+✅ argv 往返 ["a&b|c>d<e;f"]
+✅ argv 往返 ["(paren)","back\\slash"]
+✅ argv 往返 ["*","?","~"]
+✅ argv 往返 ["#hash","-flag","--x=y"]
+✅ argv 往返 ["中文·汉字","emoji😀"]
+✅ argv 往返 ["","  ","\t"]
+✅ argv 往返 ["{a}","[b]","$()","`cmd`"]
+✅ pwsh 的行以引号开头时补 &
+✅ bash 的行不加 &
+✅ pwsh 的启动参数由渲染层给 —— ["-NoProfile","-NonInteractive","-Command","& 'C:/a b/tool' 'x y'"]
+✅ 渲染出来的行以 pwsh 开头
+✅ bash 的启动参数是 -c
+✅ win32 引号往返 ["plain"]
+✅ win32 引号往返 ["two words"]
+✅ win32 引号往返 ["it's"]
+✅ win32 引号往返 ["say \"hi\""]
+✅ win32 引号往返 ["$HOME","$PATH","${X}"]
+✅ win32 引号往返 ["%PATH%","%USERPROFILE%"]
+✅ win32 引号往返 ["C:\\tmp\\a b\\c.txt"]
+✅ win32 引号往返 ["a&b|c>d<e;f"]
+✅ win32 引号往返 ["(paren)","back\\slash"]
+✅ win32 引号往返 ["*","?","~"]
+✅ win32 引号往返 ["#hash","-flag","--x=y"]
+✅ win32 引号往返 ["中文·汉字","emoji😀"]
+✅ win32 引号往返 ["","  ","\t"]
+✅ win32 引号往返 ["{a}","[b]","$()","`cmd`"]
+✅ 带空格的路径当参数
+✅ 超时会被收掉 —— timedOut=true，用了 1915ms
+✅ 追加写：两次都在、换行与中文都对 —— "{\"entries\":[{\"url\":\"https://a.test/接口\"}]}\n{\"entries\":[{\"url\":\"https://a.test/b\"}]}\n"
+✅ 读回最后一行 —— ["{\"entries\":[{\"url\":\"https://a.test/b\"}]}"]
+
+全部通过。

@@ -1,0 +1,16 @@
+安装计划冒烟：win32 · shell=pwsh · node=v24.22.2
+✅ 整条计划在当前平台（真 shell）跑完
+✅ run 把 argv 原样交给子进程（假 pnpm） —— ["install","--prefix","C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\dsh-install-plan-NtAEuZ\\root\\plugins\\demo\\opencli"]
+✅ 假 pnpm 的 install 真的在 --prefix 落过盘（remove 之前） —— {"kind":"remove","marker":true}
+✅ remove 清掉了它、mkdir 又把目录立起来了（copy 之前） —— {"kind":"copy","marker":false,"dir":true}
+✅ copy 把渠道内容倒进目标 —— "channel-v1\n"
+✅ link 能读回目标内容 —— "channel-v1\n"
+✅ link 是链接且指向目标（win32 上是 junction） —— linked=true points=true
+✅ optional 的失败 run 真失败了，也没把后面的步骤停下 —— {"tool":"pnpm","argv":["fail"],"registry":null,"failed":true}
+✅ 带 env 的 run 把 NPM_CONFIG_REGISTRY 交给子进程 —— "https://registry.test.invalid/"
+✅ 带 env 的 run argv 里没有 registry —— ["plugin","install","C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\dsh-install-plan-NtAEuZ\\root\\plugins\\demo\\opencli"]
+✅ 命令行里搜不到 NPM_CONFIG_REGISTRY=
+✅ 旧写法（rm -rf && mkdir -p && ln -s）经 pwsh 必然非零退出 —— 退出码 1；stderr=[31;1mRemove-Item: [31;1mA parameter cannot be found that matches parameter name 'rf'.[0m
+✅ 旧写法一个文件都没装出来（链接没落地） —— legacyTarget=C:\Users\RUNNER~1\AppData\Local\Temp\dsh-install-plan-NtAEuZ\legacy\opencli
+
+全部通过。
