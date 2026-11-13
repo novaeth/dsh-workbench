@@ -67,7 +67,7 @@ import * as apiResourceModule from '@/shared/hooks/use-api-resource';
 import * as cardSummaryModule from '@/shared/hooks/use-card-summary';
 import * as factsModule from '@/shared/hooks/use-facts';
 import * as hostWriteModule from '@/shared/hooks/use-host-write';
-import { setWriteSessionSource, useKitHostWrite } from '@/shared/hooks/use-kit-write';
+import { setWriteSessionSource } from '@/shared/hooks/use-host-write';
 import * as longTaskModule from '@/shared/hooks/use-long-task';
 import * as capabilityGateModule from '@/shared/hooks/use-capability-gate';
 import * as unitBoardModule from '@/shared/hooks/use-unit-board';
@@ -97,7 +97,6 @@ export const kit = {
     ...cardSummaryModule,
     ...factsModule,
     ...hostWriteModule,
-    useHostWrite: useKitHostWrite,
     ...longTaskModule,
     ...capabilityGateModule,
     ...unitBoardModule,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DshHostContext, FlowAgentRequest } from '@dsh-workbench/shared/host';
 import { createApprovalGate } from '../approval-gate';
-import { createFlowAgentGateway, flowChildDenial } from '../flow/agent';
+import { FLOW_CHILD_HIDDEN_TOOLS, createFlowAgentGateway, flowChildDenial } from '../flow/agent';
 
 interface SubagentRecorder {
   readonly runtime: {
@@ -334,8 +334,11 @@ describe('createFlowAgentGateway：把一步 agent 接到 dsh 的 subagents', ()
 describe('流程子会话的工具边界', () => {
   const gate = createApprovalGate({
     ctx: contextOf({}),
-    toolOf: (name) =>
-      name === 'workbench_gitops_set' ? { unit: 'gitops', writes: true } : undefined,
+    toolOf: (name) => {
+      if (name === 'workbench_gitops_set') return { unit: 'gitops', writes: true };
+      if (name === 'workbench_ask_the_boss') return { unit: 'panels', writes: false, elevates: true };
+      return undefined;
+    },
     faceOf: () => undefined,
     declaredNotes: () => new Set<string>(),
     isFlowChild: (sessionId) => sessionId === 'child-1',
@@ -347,6 +350,8 @@ describe('流程子会话的工具边界', () => {
     expect(flowChildDenial('workflow')).toContain('编排归流程');
     expect(flowChildDenial('schedule_create')).toContain('排日程');
     expect(flowChildDenial('workbench_diy_install')).toContain('工作台本身');
+    expect(flowChildDenial('workbench_toolbox_open')).toContain('不能自己开工具包');
+    expect(FLOW_CHILD_HIDDEN_TOOLS).toEqual(expect.arrayContaining(['workbench_toolbox_open', 'workbench_toolbox_close']));
     expect(flowChildDenial('workbench_gitops_list')).toBeUndefined();
     expect(flowChildDenial('bash')).toBeUndefined();
   });
@@ -365,6 +370,14 @@ describe('流程子会话的工具边界', () => {
       },
     );
     expect(asked).toEqual({ kind: 'deny', reason: expect.stringContaining('不能问人') });
+
+    const elevating = await gate(
+      { name: 'workbench_ask_the_boss', agent: { session: { id: 'child-1' } } },
+      async () => {
+        throw new Error('要审批的工具不该走到问人的那一步');
+      },
+    );
+    expect(elevating).toEqual({ kind: 'deny', reason: expect.stringContaining('没人能替它点头') });
 
     let called = false;
     const normal = await gate(

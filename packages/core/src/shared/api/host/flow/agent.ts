@@ -66,6 +66,10 @@ const CHILD_DENIALS: readonly ChildDenial[] = [
     reason: '流程里的 agent 节点不能动工作台本身。',
   },
   {
+    matches: (name) => name.startsWith('workbench_toolbox_'),
+    reason: '流程里的 agent 节点不能自己开工具包：工具面由这一步的 preset 定。',
+  },
+  {
     matches: (name) => name === 'workbench_long_tasks_stop',
     reason: '流程里的 agent 节点不能停别的长任务。',
   },
@@ -81,6 +85,9 @@ export const FLOW_CHILD_HIDDEN_TOOLS: readonly string[] = [
   'create_goal',
   'update_goal',
   'exit_plan_mode',
+  'workbench_toolbox_list',
+  'workbench_toolbox_open',
+  'workbench_toolbox_close',
 ];
 
 export function flowChildDenial(name: string): string | undefined {

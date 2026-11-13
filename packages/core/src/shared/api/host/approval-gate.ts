@@ -50,6 +50,12 @@ export function createApprovalGate(
           reason: `流程里的 agent 节点不能调写工具 ${name}：把写平台那一步做成动作步骤。`,
         };
       }
+      if (tool?.elevates === true) {
+        return {
+          kind: 'deny',
+          reason: `流程里的 agent 节点不能调要审批的工具 ${name}：这一趟没人能替它点头。`,
+        };
+      }
     }
     const decision = await next();
     if (decision.kind !== 'allow') return decision;

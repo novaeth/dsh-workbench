@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { writeBodyWithSession } from '../use-kit-write';
+import { writeBodyWithSession } from '../use-host-write';
 
 describe('动作写带上当前会话', () => {
   it('动作通道：会话附在请求体里，原来的字段一个不少', () => {
