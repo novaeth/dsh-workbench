@@ -1,0 +1,45 @@
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 建 DIY 工坊 C:\Users\runneradmin\.dsh\workbench\diy
+[dsh-workbench] 工坊指引已链上：C:\Users\runneradmin\.dsh\workbench\diy\.agents\skills\workbench-module-diy
+[dsh-workbench] 工坊工具链对齐到 1.2.3-beta.4
+[dsh-workbench] 装工坊依赖（第一次会下载 react / typescript / vitest）...
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Progress: resolved 96, reused 0, downloaded 3, added 0
+Progress: resolved 290, reused 0, downloaded 4, added 0
+Progress: resolved 327, reused 0, downloaded 7, added 0
+Progress: resolved 327, reused 0, downloaded 15, added 0
+Progress: resolved 327, reused 0, downloaded 18, added 0
+Progress: resolved 327, reused 0, downloaded 20, added 0
+Progress: resolved 327, reused 0, downloaded 21, added 0
+Progress: resolved 327, reused 0, downloaded 37, added 0
+Progress: resolved 327, reused 0, downloaded 84, added 0
+Progress: resolved 327, reused 0, downloaded 108, added 0
+Progress: resolved 327, reused 0, downloaded 140, added 0
+Progress: resolved 327, reused 0, downloaded 156, added 0
+Progress: resolved 327, reused 0, downloaded 171, added 0
+Progress: resolved 327, reused 0, downloaded 186, added 0
+Progress: resolved 327, reused 0, downloaded 196, added 0
+Progress: resolved 327, reused 0, downloaded 238, added 0
+Progress: resolved 356, reused 0, downloaded 284, added 0
+Progress: resolved 359, reused 0, downloaded 310, added 0
+Progress: resolved 359, reused 0, downloaded 313, added 0
+Progress: resolved 359, reused 0, downloaded 317, added 0
+Progress: resolved 359, reused 0, downloaded 321, added 0
+Progress: resolved 359, reused 0, downloaded 323, added 0
+Progress: resolved 359, reused 0, downloaded 333, added 0
+Progress: resolved 359, reused 0, downloaded 334, added 0
+ ERR_PNPM_NO_MATCHING_VERSION  No matching version found for @dsh-workbench/adapter-runtime@1.2.12 while fetching it from https://registry.npmjs.org/
+
+This error happened while installing the dependencies of @dsh-workbench/core@1.2.12
+ at @dsh-workbench/adapters-default@1.2.12
+
+The latest release of @dsh-workbench/adapter-runtime is "1.2.11".
+
+Other releases are:
+  * beta: 1.2.8-beta.2
+
+If you need the full list of all 57 published versions run "pnpm view @dsh-workbench/adapter-runtime versions".

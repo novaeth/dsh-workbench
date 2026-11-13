@@ -1,0 +1,76 @@
+[0.0s] MILESTONE cdp-ready @ 0.0s
+[0.0s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.0s] pages: dsh-app://app/
+[0.0s] MILESTONE app-page @ 0.0s
+[0.0s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.2s] ready wait [] none :: HARNESS | Loading plugins…
+[9.8s] ready wait [checking] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: HARNESS | Loading plugins… | Preparing the workbench |  | Getting the runtime ready…
+[9.8s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[11.8s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[11.8s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[13.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: | Preview | Standard mode | Describe what you want to build, / commands, @ files or sessions | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[13.8s] MILESTONE ready @ 13.8s
+[14.3s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Workbench module market"
+[17.4s] market-page: | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[17.4s] MILESTONE market-open @ 17.4s
+[17.4s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-body.txt (606 bytes)
+[17.4s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[19.4s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[21.4s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[26.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[28.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[30.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[32.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[34.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[36.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[38.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[40.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[42.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[44.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[46.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[48.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[50.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[52.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[54.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[56.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[58.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[60.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[62.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[64.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[66.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[68.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[70.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[72.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[74.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[76.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[78.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[80.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[82.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[84.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[86.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[88.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[90.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[92.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[94.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[96.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[98.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[100.8s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[102.8s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[104.8s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[106.8s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[108.8s] STEP workbench row: found=true buttons=["Workbench","View details for Workbench"]
+[108.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-row.json (3889 bytes)
+[108.8s] FAIL 工作台那一行没有「更新」钮（盘上/源上版本没读到？）
+[108.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-console-events.json (11308 bytes)
+[108.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-failed-body.txt (609 bytes)
+[128.8s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+[128.8s] FATAL Error: 工作台那一行没有「更新」钮（盘上/源上版本没读到？）（现场：desktop-win10-self-update-failed-body.txt / desktop-win10-self-update-failed-preflight.json）
+    at fail (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:267:9)
+    at async smokeSelfUpdate (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:1037:5)
+    at async main (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:1416:11)
+[128.8s] SMOKE_SUMMARY {"outcome":"failed","elapsed":"128.8s","milestones":{"cdp-ready":"0.0s","app-page":"0.0s","cdp-connected":"0.1s","ready":"13.8s","market-open":"17.4s"},"reason":"工作台那一行没有「更新」钮（盘上/源上版本没读到？）（现场：desktop-win10-self-update-failed-body.txt / desktop-win10-self-update-failed-preflight.json）"}
+[128.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-fatal-body.txt (609 bytes)
+[129.8s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-fatal.png (58605 bytes)
