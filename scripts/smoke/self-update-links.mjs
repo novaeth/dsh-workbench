@@ -220,7 +220,12 @@ writeFileSync(
 await update(NEWER, BAD, { bootWindowMs: 30_000 });
 check('④ 起来了但不是新版 → 不自动回滚，链接留在装好的那一版', linkedTo(BAD), `现在指到 ${realpathSync(join(PROFILE_DIR, 'node_modules', CORE))}`);
 check('④ marker 留 pending-restart（等下一次确认，不自己翻回去）', marker().state === 'pending-restart', JSON.stringify(marker()));
-check('④ 不为回滚额外装一遍（就这一版的安装，没有第二次）', installCalls().length === 1, `装了 ${String(installCalls().length)} 次`);
+const versionInstalls = installCalls().filter((call) => String(call.dir).startsWith(paths.versionsDir));
+check(
+  '④ 不为回滚额外装一遍（就这一版的安装，没有第二次）',
+  versionInstalls.length === 1,
+  `装了 ${String(versionInstalls.length)} 次（另有 ${String(installCalls().length - versionInstalls.length)} 次是换链后的 profile 清单同步）`,
+);
 check('④ 那一版目录还在', existsSync(superseded));
 
 check(

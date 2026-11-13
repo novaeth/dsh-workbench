@@ -1,7 +1,7 @@
 import { execa } from 'execa';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { SHELL_KIND, createRealShell, createReporter, loadHost } from './harness.mjs';
 
@@ -100,7 +100,19 @@ async function danglingRound(runtime) {
   );
 }
 
+function pinPnpmForWork() {
+  const root = JSON.parse(readFileSync(join(REPO, 'package.json'), 'utf8'));
+  const pinned = String(root.packageManager ?? '').replace(/^pnpm@/u, '');
+  if (pinned === '') return;
+  writeFileSync(
+    join(WORK, 'package.json'),
+    `${JSON.stringify({ name: 'runtime-heal-work', private: true, packageManager: `pnpm@${pinned}` }, null, 2)}\n`,
+    'utf8',
+  );
+}
+
 async function reachabilityRound() {
+  pinPnpmForWork();
   const version = await pnpm(['--version'], { cwd: WORK });
   const major = Number(String(version.stdout).trim().split('.')[0] ?? '0');
   process.stdout.write(`pnpm=${String(version.stdout).trim()} · platform=${process.platform}\n`);
@@ -141,39 +153,73 @@ async function productHealRound(runtime, probe, sharedHost) {
 
   const run = await realRun();
   const details = [];
-  const line = `pnpm add --dir ${sharedHost.quoteShellArg(toolchain)} ${sharedHost.quoteShellArg(FIXTURE_TGZ)} --store-dir ${sharedHost.quoteShellArg(storeB)}`;
-  let drops = 0;
-  const outcome = await probe.installIsolatedRuntime(
-    {
-      run: async (command) => {
-        const result = await run(command);
-        details.push(result.detail);
-        return result;
-      },
-      resolves: () => existsSync(join(runtime.toolchainOpencliDir(), 'package.json')),
-      drop: () => {
-        drops += 1;
-        sharedHost.removePath(join(toolchain, 'node_modules'));
-      },
-      log: (message) => process.stdout.write(`${message}\n`),
+  const installCommand = (dir) =>
+    `pnpm add --dir ${sharedHost.quoteShellArg(dir)} ${sharedHost.quoteShellArg(FIXTURE_TGZ)} --store-dir ${sharedHost.quoteShellArg(storeB)}`;
+  let attempts = 0;
+  const deps = {
+    liveDir: toolchain,
+    command: installCommand,
+    run: async (command) => {
+      attempts += 1;
+      const result = await run(command);
+      details.push(result.detail);
+      return result;
     },
-    line,
-  );
+    ready: (dir) => existsSync(join(dir, 'node_modules', '@jackwener', 'opencli', 'package.json')),
+    describe: (dir) => dir,
+    log: (message) => process.stdout.write(`${message}\n`),
+  };
+
+  const storeAfter = () => {
+    const recorded = join(toolchain, 'node_modules', '.modules.yaml');
+    return existsSync(recorded) ? readFileSync(recorded, 'utf8') : '';
+  };
+  const prevSiblings = () =>
+    existsSync(dirname(toolchain))
+      ? readdirSync(dirname(toolchain)).filter((entry) => entry.startsWith(`${basename(toolchain)}.prev-`)).length
+      : 0;
+
+  const outcome = await probe.installIsolatedRuntime(deps);
 
   check(
-    '★ 真 pnpm 复现升级现场：换一个 store 就 ERR_PNPM_UNEXPECTED_STORE',
-    details.length >= 2 && details[0].includes('ERR_PNPM_UNEXPECTED_STORE'),
-    `第一遍输出首行=${details[0]?.split('\n')[0]?.slice(0, 60)}`,
+    '★ 就地升级不会被旧 store 卡住：装到暂存目录再换进来，真 pnpm 跑通',
+    outcome.ok === true && attempts === 1 && details[0] !== undefined && !details[0].includes('ERR_PNPM_UNEXPECTED_STORE'),
+    `ok=${String(outcome.ok)} · 尝试=${String(attempts)} · 首遍首行=${details[0]?.split('\n')[0]?.slice(0, 60)}`,
   );
   check(
-    '★ 产品自己清一次重装（走 installIsolatedRuntime，不是脚本演）',
-    outcome.ok === true && outcome.reinstalled === true && drops === 1,
-    `ok=${String(outcome.ok)} · reinstalled=${String(outcome.reinstalled)} · drop 次数=${String(drops)}`,
+    '★ 旧的 live 树没被就地覆盖：留了一份 prev 在旁边',
+    prevSiblings() >= 1,
+    `prev 个数=${String(prevSiblings())}`,
+  );
+  check(
+    '换进来的是新 store 装的那份：node_modules 记录里 storeDir 已经是 store B',
+    storeAfter().includes(storeB),
+    `modules.yaml 里 store B=${String(storeAfter().includes(storeB))}`,
   );
   check(
     '重装后那份 opencli 真的在点名的位置',
     existsSync(join(runtime.toolchainOpencliDir(), 'package.json')),
     `toolchainOpencliDir=${runtime.toolchainOpencliDir()}`,
+  );
+
+  let failFirst = true;
+  let retried = 0;
+  const retryOutcome = await probe.installIsolatedRuntime({
+    ...deps,
+    run: async (command) => {
+      retried += 1;
+      if (failFirst) {
+        failFirst = false;
+        return { ok: false, detail: 'ERR_PNPM_UNEXPECTED_STORE Expected store-dir /old, got /new', stdout: '', stderr: '' };
+      }
+      return run(command);
+    },
+  });
+
+  check(
+    '★ 第一遍没装上就清一次再装（同一条命令，第二遍真 pnpm 装好）',
+    retryOutcome.ok === true && retryOutcome.reinstalled === true && retried === 2,
+    `ok=${String(retryOutcome.ok)} · reinstalled=${String(retryOutcome.reinstalled)} · 尝试=${String(retried)}`,
   );
 }
 

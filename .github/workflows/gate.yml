@@ -53,4 +53,12 @@ jobs:
           tail -n 3 gate.log
       - name: 判据要在全新机器上也绿（dsh 现场指到空目录再跑一遍 selfcheck）
         shell: bash
-        run: DSH_HOME="$(mktemp -d)" pnpm -w run selfcheck
+        run: |
+          set -o pipefail
+          if ! DSH_HOME="$(mktemp -d)" pnpm -w run selfcheck > selfcheck.log 2>&1; then
+            tail -n 40 selfcheck.log
+            body=$(grep -aE '❌|通过 —— 失败' selfcheck.log | head -n 12 | sed -e 's/%/%25/g' | awk 'NF { printf "%s%%0A", $0 }')
+            echo "::error title=fresh-home selfcheck failed::${body:0:1800}"
+            exit 1
+          fi
+          tail -n 3 selfcheck.log
