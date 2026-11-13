@@ -72,7 +72,7 @@
 }
 
 .head[aria-expanded='true'] .chevron {
-  transform: rotate(180deg);
+  transform: rotate(90deg);
 }
 
 @media (prefers-reduced-motion: reduce) {

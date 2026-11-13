@@ -1,6 +1,6 @@
 import { createElement as h } from 'react';
 import type { ReactNode } from 'react';
-import { IconChevronDownOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives';
+import { IconChevronRightOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives';
 import styles from './SettingsDisclosure.module.css';
 
 export interface SettingsDisclosureProps {
@@ -35,7 +35,7 @@ export function SettingsDisclosure({
         <span className={styles.tail}>
           {meta === undefined || meta === '' ? null : <span className={styles.meta}>{meta}</span>}
           <span className={styles.chevron} aria-hidden="true">
-            <IconChevronDownOutlineRegular size={16} />
+            <IconChevronRightOutlineRegular size={16} />
           </span>
         </span>
       </button>
