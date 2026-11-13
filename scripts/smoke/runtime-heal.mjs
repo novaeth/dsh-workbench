@@ -170,6 +170,10 @@ async function productHealRound(runtime, probe, sharedHost) {
     log: (message) => process.stdout.write(`${message}\n`),
   };
 
+  const samePath = (value, expected) => {
+    const flat = (input) => input.replaceAll('\\', '/').toLowerCase();
+    return flat(value).includes(flat(expected));
+  };
   const storeAfter = () => {
     const recorded = join(toolchain, 'node_modules', '.modules.yaml');
     return existsSync(recorded) ? readFileSync(recorded, 'utf8') : '';
@@ -193,8 +197,8 @@ async function productHealRound(runtime, probe, sharedHost) {
   );
   check(
     '换进来的是新 store 装的那份：node_modules 记录里 storeDir 已经是 store B',
-    storeAfter().includes(storeB),
-    `modules.yaml 里 store B=${String(storeAfter().includes(storeB))}`,
+    samePath(storeAfter(), storeB),
+    `modules.yaml 里 store B=${String(samePath(storeAfter(), storeB))}`,
   );
   check(
     '重装后那份 opencli 真的在点名的位置',

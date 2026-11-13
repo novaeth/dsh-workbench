@@ -77,7 +77,15 @@ jobs:
         run: node scripts/smoke/install-plan.mjs
       - name: Runtime heal smoke (升级现场：既有 store 记录 + 断链 → store 不合 → 清一次重装)
         shell: bash
-        run: node scripts/smoke/runtime-heal.mjs
+        run: |
+          set -o pipefail
+          if ! node scripts/smoke/runtime-heal.mjs > heal.log 2>&1; then
+            tail -n 30 heal.log
+            body=$(grep -aE '❌|没过' heal.log | head -n 10 | sed -e 's/%/%25/g' | awk 'NF { printf "%s%%0A", $0 }')
+            echo "::error title=runtime heal smoke failed::${body:0:1800}"
+            exit 1
+          fi
+          tail -n 3 heal.log
       - name: 自更新与自愈的判据（win32 的 $ComSpec / taskkill 分支在各腿上真跑）
         shell: bash
         run: |
