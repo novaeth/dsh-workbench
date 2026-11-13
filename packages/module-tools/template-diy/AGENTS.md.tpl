@@ -1,6 +1,6 @@
 # __NAME__ · agent 工作说明
 
-工作台模块（单元 `__UNIT__`）。模块行为与数据看 `README.md`；这份只说工具链怎么用。
+工作台模块（单元 `__UNIT__`）。终端用户说明在 `README.md`；实现、数据源、设计底稿在 `DEVELOPING.md`；这份只说工具链怎么用。
 
 ## 干活循环
 
@@ -21,5 +21,6 @@
 
 ## 先读
 
-- `README.md`：模块行为、数据源、三张表。
+- `README.md`：终端用户看的那份（做什么、会看到什么、agent 能做什么、数据从哪来）。
+- `DEVELOPING.md`：实现、路由、判据、数据源与三张表。
 - `@dsh-workbench/core/skills/workbench-module-diy/`：路由 / 工具 / 卡片 / 文案的写法与约定（随外壳出货）。

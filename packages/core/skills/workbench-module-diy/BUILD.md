@@ -56,7 +56,7 @@ pnpm exec dsh-wb-module init <unit> --dir <目录> --template diy --description 
 | `arch.config.mjs` | `moduleArch()`（`@dsh-workbench/module-tools/arch`）；层序、运行时、阈值随工具链 |
 | `eslint.config.mjs` | 两行 `moduleLint({ rootDir: import.meta.dirname })`；`rootDir` 钉 tsconfig 根 |
 | `types/styles.d.ts` | 用 `X.module.css` 必须有；`globals.d.ts` 是模块，其 `declare module` 不算环境声明 |
-| `design.json` | 三张表 / 矩阵 / 数据源 / 验收；README 段由它生成 |
+| `design.json` | 三张表 / 矩阵 / 数据源 / 验收；DEVELOPING.md 段由它生成 |
 
 修改位置：视图改 `src/components/*.tsx` + 同目录 `*.module.css`；逻辑改 `src/model/**`；文案改 `src/messages.ts`；
 `src/client.tsx` 只留注册。宿主侧不 import `src/components/**`（跨运行时，`arch` 判红）。

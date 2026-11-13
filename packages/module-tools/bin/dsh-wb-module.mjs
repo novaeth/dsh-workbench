@@ -105,7 +105,7 @@ const COMMANDS = {
   check: '十四条判据；--only 单跑，也当查询口用；--list 只列判据元数据',
   init: '建模块骨架（--dir / --template diy / --description；只有 diy 一个模板）',
   'market-init': '初始化市场索引仓库（写 market/ 与 README，推首个 commit）',
-  design: '设计底稿：init 填 / check 查空格 / render 生成 README / accept 打勾',
+  design: '设计底稿：init 填 / migrate 拆旧 README / check 查空格 / render 生成 README 与 DEVELOPING / accept 打勾',
   migrate: '把模块清单迁到当前代（apiVersion / workbenchFaces）；源码类问题只给提示',
   publish: '发货前清单：门禁 + files + npm pack（只 dry run）',
   release: '真发布：全门禁 + 验收闸 + 预检接管 + 发到出口 + 发后核包 + 更新市场索引（中断可 --resume）',

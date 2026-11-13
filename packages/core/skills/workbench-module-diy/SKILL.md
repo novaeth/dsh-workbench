@@ -92,4 +92,4 @@ description: 在工作台里查清当前面板的问题，或为它新增一块�
 
 - dsh 已有的能力从 `kit` 获取（`@dsh-workbench/core/client`）；不要手写 DOM 与 CSS，也不要直接 import dsh 的包。
 - DIY 模块默认 `private: true`，不发布到任何来源；用户确认后走 `workbench_diy_publish`。
-- 源码零注释（`//`、块注释、`.css` 注释都不许）；说明写模块 `README.md` 或 spec。
+- 源码零注释（`//`、块注释、`.css` 注释都不许）；用户说明写模块 `README.md`，作者说明写 `DEVELOPING.md` 或 spec。

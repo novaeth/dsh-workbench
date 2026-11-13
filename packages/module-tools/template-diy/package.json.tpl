@@ -8,7 +8,7 @@
     ".": "./dist/host.js",
     "./client": "./client.js"
   },
-  "files": ["dist", "client.js", "cordis.patch.yml", "CHANGELOG.md"],
+  "files": ["dist", "client.js", "cordis.patch.yml", "DEVELOPING.md", "CHANGELOG.md"],
   "scripts": {
     "build": "dsh-wb-module build",
     "typecheck": "tsc --noEmit",

@@ -27,6 +27,7 @@ import * as meta from './checks/meta.mjs';
 import * as commentGate from './checks/comment-gate.mjs';
 import * as seamGate from './checks/seam-gate.mjs';
 import * as recipes from './checks/recipes.mjs';
+import * as docs from './checks/docs.mjs';
 import * as migrate from './checks/migrate.mjs';
 import * as marketIndex from './checks/market-index.mjs';
 
@@ -56,6 +57,7 @@ const MODULES = [
   commentGate,
   seamGate,
   recipes,
+  docs,
   migrate,
   marketIndex,
 ];

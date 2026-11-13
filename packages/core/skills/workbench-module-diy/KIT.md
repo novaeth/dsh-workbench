@@ -207,7 +207,7 @@ h(FormRows, null,
 1. 调用点只给数据与语义；外观类名只允许布局槽（通栏、外边距、网格位置）。
 2. 字号与颜色走 kit 与令牌。重点数字用 `--dsw-font-xl-24` + `tabular-nums`；
    令牌名现查不猜：`workbench_diy_components` 给 `scope: 'tokens'`（现读装着的 dsh 与外壳；`name=--dsw-…` 连浅/深值）。
-   刻度外字面值在模块 `README.md` 说明（[PANEL.md](PANEL.md) §6）。
+   刻度外字面值在模块 `DEVELOPING.md` 说明（[PANEL.md](PANEL.md) §6）。
 3. 自写 CSS 只写布局（flex / grid / gap / 对齐）。
 
 ## 8 需要 kit 没有的标准控件

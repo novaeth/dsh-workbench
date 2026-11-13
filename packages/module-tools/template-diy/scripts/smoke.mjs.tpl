@@ -337,13 +337,13 @@ check('另一个工作区没被带上（还是默认 5）', otherPrefs?.prefs?.l
 const { assertModule } = await import('./smoke.assert.mjs');
 await assertModule({ check, routes, mounted, UNIT_ID });
 
-// ── 需求底稿在不在：这份骨架的"设计记录"住 README，别只留在对话里 ──────────
+// ── 需求底稿在不在：这份骨架的"设计记录"住 DEVELOPING.md，别只留在对话里 ─────
 //
 // 只查**形状在不在**（那几节有没有被删掉），不查内容填得好不好 —— 内容由指引守，
 // 判据硬管内容只会逼出"把占位符原样留着"这种应付。
-const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+const developing = readFileSync(new URL('../DEVELOPING.md', import.meta.url), 'utf8');
 for (const section of ['## 需求底稿', '### 表 1 面板', '### 表 2 agent', '### 表 3 联动', '### 数据源探明记录']) {
-  check(`README 里有「${section}」（需求与验收的落点）`, readme.includes(section));
+  check(`DEVELOPING.md 里有「${section}」（需求与验收的落点）`, developing.includes(section));
 }
 
 console.log(`\n${failures.length === 0 ? '模块自检通过' : `${failures.length} 条没过`}`);

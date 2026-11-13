@@ -17,18 +17,30 @@ const WRITES_SHAPE =
   '/ params 写了"必填"必须带来源（无来源点名叫 write.params.source、补一个来源括号即绿；' +
   '不带"必填"二字的行不触发；"非必填" / "不必填"每处"必填"都被否掉才豁免，有一处裸的照旧咬）';
 
+function designProbe(prefix) {
+  const probe = mkdtempSync(join(PACKAGES_DIR, prefix));
+  try {
+    execFileSync(process.execPath, [BIN, 'init', 'demo', '--dir', probe, '--template', 'diy'], { stdio: 'pipe' });
+    fillPendingDesign(probe);
+    return {
+      probe,
+      design: join(probe, 'design.json'),
+      run: (action) => execFileSync(process.execPath, [BIN, 'design', action, '--cwd', probe], { stdio: 'pipe' }),
+    };
+  } catch (error) {
+    rmSync(probe, { recursive: true, force: true });
+    throw error;
+  }
+}
+
 export const checks = [
   {
     title: DESIGN_SHAPE,
     run(_ctx, report) {
 
       const problems = [];
-      const probe = mkdtempSync(join(PACKAGES_DIR, '.design-'));
+      const { probe, design, run } = designProbe('.design-');
       try {
-        execFileSync(process.execPath, [BIN, 'init', 'demo', '--dir', probe, '--template', 'diy'], { stdio: 'pipe' });
-        fillPendingDesign(probe);
-        const design = join(probe, 'design.json');
-        const run = (action) => execFileSync(process.execPath, [BIN, 'design', action, '--cwd', probe], { stdio: 'pipe' });
 
         run('render');
         run('check');
@@ -195,13 +207,10 @@ export function apply(ctx) {
     title: WRITES_SHAPE,
     run(_ctx, report) {
       const problems = [];
-      const probe = mkdtempSync(join(PACKAGES_DIR, '.writes-'));
+      const { probe, design } = designProbe('.writes-');
+      const developingFile = join(probe, 'DEVELOPING.md');
+      const run = (action) => execFileSync(process.execPath, [BIN, 'design', action, '--cwd', probe], { stdio: 'pipe' });
       try {
-        execFileSync(process.execPath, [BIN, 'init', 'demo', '--dir', probe, '--template', 'diy'], { stdio: 'pipe' });
-        fillPendingDesign(probe);
-        const design = join(probe, 'design.json');
-        const readmeFile = join(probe, 'README.md');
-        const run = (action) => execFileSync(process.execPath, [BIN, 'design', action, '--cwd', probe], { stdio: 'pipe' });
         const parsed = () => JSON.parse(readFileSync(design, 'utf8'));
         const save = (value) => writeFileSync(design, JSON.stringify(value, null, 2));
         const fails = (action) => {
@@ -227,16 +236,16 @@ export function apply(ctx) {
 
         run('render');
         run('check');
-        if (readFileSync(readmeFile, 'utf8').includes('### 写通道探明记录')) {
-          throw new Error('没有 writes 的骨架，README 里却长出了写通道那一节');
+        if (readFileSync(developingFile, 'utf8').includes('### 写通道探明记录')) {
+          throw new Error('没有 writes 的骨架，DEVELOPING.md 里却长出了写通道那一节');
         }
         const one = parsed();
         one.writes = [write()];
         save(one);
         run('render');
         run('check');
-        const single = readFileSync(readmeFile, 'utf8');
-        if (!single.includes('### 写通道探明记录')) throw new Error('填了 writes，README 里却没有写通道那一节');
+        const single = readFileSync(developingFile, 'utf8');
+        if (!single.includes('### 写通道探明记录')) throw new Error('填了 writes，DEVELOPING.md 里却没有写通道那一节');
         if (single.indexOf('### 写通道探明记录') > single.indexOf('### 验收')) {
           throw new Error('写表没排在验收之前');
         }
@@ -263,7 +272,7 @@ export function apply(ctx) {
         save(undoNone);
         run('render');
         run('check');
-        if (!readFileSync(readmeFile, 'utf8').includes('配对的那个撤销 / 删除')) {
+        if (!readFileSync(developingFile, 'utf8').includes('配对的那个撤销 / 删除')) {
           throw new Error('写了 undo，README 的写表里却没有那一行');
         }
 
@@ -279,7 +288,7 @@ export function apply(ctx) {
         save(sourced);
         run('render');
         run('check');
-        if (!readFileSync(readmeFile, 'utf8').includes('| 参数（必填 / 取值枚举 / 上限） |')) {
+        if (!readFileSync(developingFile, 'utf8').includes('| 参数（必填 / 取值枚举 / 上限） |')) {
           throw new Error('写表里没有「参数（必填 / 取值枚举 / 上限）」那一行');
         }
         const undetermined = parsed();
@@ -319,9 +328,9 @@ export function apply(ctx) {
         save(many);
         run('render');
         run('check');
-        const multi = readFileSync(readmeFile, 'utf8');
+        const multi = readFileSync(developingFile, 'utf8');
         if (!multi.includes('#### 写 1') || !multi.includes('#### 写 2')) {
-          throw new Error('两条写没在 README 里各占一节');
+          throw new Error('两条写没在 DEVELOPING.md 里各占一节');
         }
         const manyBlank = parsed();
         manyBlank.writes[1].readback = '';

@@ -92,7 +92,7 @@ write.send({ ignored, timeoutSeconds, workspace });   // 控件：Field + TextFi
 - 组件选型照 [KIT.md](KIT.md)。
 - **字号与重点**：走刻度，不整卡同字号 —— 刻度以 `--dsw-font-*` 的定义为准，别背数字
   （`workbench_diy_components` `scope: 'tokens'`、`bucket=font` 现查）。
-  最重点的数字用最大一档（`--dsw-font-xl-24`），旁注用最小一档；刻度外字面值需在模块 `README.md` 说明。
+  最重点的数字用最大一档（`--dsw-font-xl-24`），旁注用最小一档；刻度外字面值需在模块 `DEVELOPING.md` 说明。
   成列数字加 `font-variant-numeric: tabular-nums`。
 - 颜色与间距走令牌；名字现查不猜：`workbench_diy_components` 给 `scope: 'tokens'`（`bucket` 按族、`name` 连浅/深值）。
   写进 CSS 的令牌名由 `check --only style` 对着现读的清单验，拼错判红。自写 CSS 只写布局（flex / grid / gap / 对齐）。

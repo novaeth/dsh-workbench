@@ -218,7 +218,7 @@ export async function run() {
       const text = readFileSync(file, 'utf8');
       for (const line of commentViolationsOf(text, { css: file.endsWith('.css') })) {
         problems.push(
-          `${name}: ${rel}:${line} 有注释 —— 模块源码零注释（说明写 README.md 或 spec；eslint / ts / vitest 指令注释除外）`,
+          `${name}: ${rel}:${line} 有注释 —— 模块源码零注释（用户说明写 README.md，作者说明写 DEVELOPING.md 或 spec；eslint / ts / vitest 指令注释除外）`,
         );
       }
     }

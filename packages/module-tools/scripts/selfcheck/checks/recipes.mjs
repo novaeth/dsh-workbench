@@ -56,7 +56,7 @@ export const checks = [
         render();
         const green = check();
         if (green.failed) problems.push(`带 key + recipe 的读没判绿：${green.out.trim().split('\n').slice(-3).join(' | ')}`);
-        if (!read('README.md').includes('调用形状（配方）')) problems.push('README 里没有「调用形状（配方）」那一行');
+        if (!read('DEVELOPING.md').includes('调用形状（配方）')) problems.push('DEVELOPING.md 里没有「调用形状（配方）」那一行');
 
         edit((design) => {
           design.datasource.calls = { wallet: { path: '/api/wallet' } };
@@ -66,7 +66,7 @@ export const checks = [
         if (withCalls.failed) {
           problems.push(`key + recipe + calls 没判绿：${withCalls.out.trim().split('\n').slice(-3).join(' | ')}`);
         }
-        if (!read('README.md').includes('一次打几条（批量）')) problems.push('README 里没有「一次打几条（批量）」那一行');
+        if (!read('DEVELOPING.md').includes('一次打几条（批量）')) problems.push('DEVELOPING.md 里没有「一次打几条（批量）」那一行');
 
         edit((design) => {
           design.datasource.calls = { wallet: { path: '/api/wallet?x=1' } };
@@ -104,7 +104,7 @@ export const checks = [
         if (withWrite.failed) {
           problems.push(`写配方没判绿：${withWrite.out.trim().split('\n').slice(-3).join(' | ')}`);
         }
-        if (!read('README.md').includes('POST https://x.example.com/api/comment')) {
+        if (!read('DEVELOPING.md').includes('POST https://x.example.com/api/comment')) {
           problems.push('写通道没有「调用形状（配方）」那一行');
         }
 

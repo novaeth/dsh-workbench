@@ -1,8 +1,9 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { callsProblemOf, describeRecipe, recipeProblemOf } from '@dsh-workbench/shared/host';
 
 export const DESIGN_FILE = 'design.json';
+export const DEVELOPING_FILE = 'DEVELOPING.md';
 export const START_MARK = '<!-- dsh-wb:design:start -->';
 export const END_MARK = '<!-- dsh-wb:design:end -->';
 
@@ -430,6 +431,110 @@ export function renderDesign(design) {
   ].join('\n');
 }
 
+function uniqueTexts(values) {
+  return [...new Set(values.map((one) => text(one)).filter((one) => one !== ''))];
+}
+
+function userStateRowsOf(states) {
+  return STATE_KEYS.map((key) => {
+    const row = states.find((one) => text(one?.key) === key) ?? {};
+    const na = text(row.na);
+    if (na !== '') return [STATE_LABELS[key], `（这份模块不适用）${na}`, '—'];
+    return [STATE_LABELS[key], cell(row.sees), cell(row.canDo)];
+  });
+}
+
+export function renderUserReadme(design) {
+  const name = text(design?.name) || '模块';
+  const oneLine = text(design?.oneLine);
+  const panel = asRows(design?.panel);
+  const config = asRows(design?.config);
+  const capabilities = asRows(design?.capabilities);
+  const states = asRows(design?.states);
+  const reads = readsOf(design);
+  const writes = writesOf(design);
+  const stateRows = userStateRowsOf(states);
+  const panelRows = panel.length === 0
+    ? [['（待填）', '（待填）', '—']]
+    : panel.map((one) => [cell(one?.cell), cell(one?.conclusion), soft(one?.link)]);
+  const configRows = config.length === 0
+    ? [['没有可配置项', '—', '—', '—']]
+    : config.map((one) => [
+        cell(one?.key),
+        cell(one?.default),
+        cell(one?.valuesFrom),
+        persistenceLabel(one?.persistence),
+      ]);
+  const capabilityRows = capabilities.length === 0
+    ? [['这个模块没有给 agent 开放工具', '—', '—']]
+    : capabilities.map((one) => [cell(one?.oneLine), cell(one?.approval), soft(one?.approvalText)]);
+  const credentials = uniqueTexts(reads.map((one) => one?.credentials));
+  const notLoggedIn = uniqueTexts(reads.map((one) => one?.notLoggedIn));
+  const timeout = uniqueTexts(reads.map((one) => one?.timeout));
+  const unreadable = states.find((one) => text(one?.key) === 'unreadable') ?? {};
+  const dataLines = [
+    ...(credentials.length === 0 ? [] : [`- 用谁的登录：${credentials.join('；')}`]),
+    ...(notLoggedIn.length === 0 ? [] : [`- 没登录或登录过期：${notLoggedIn.join('；')}`]),
+    ...(timeout.length === 0 ? [] : [`- 连不上或超时：${timeout.join('；')}`]),
+  ];
+  const writeLines = writes.length === 0
+    ? []
+    : [
+        '## 这个模块会不会写东西',
+        '',
+        ...writes.flatMap((one) => [
+          `- 写入前：${cell(one?.preview)}`,
+          `- 写完之后：${cell(one?.readback)}`,
+          `- 撤销：${cell(one?.undo)}`,
+          `- 失败时：${cell(one?.failure)}`,
+        ]),
+        '',
+      ];
+  const trouble = text(unreadable.sees) === ''
+    ? ['- 卡片读不到时会写原因和下一步；先按卡片上的按钮重试或登录。']
+    : [
+        `- ${cell(unreadable.sees)}`,
+        ...(text(unreadable.canDo) === '' ? [] : [`- 你能做的：${cell(unreadable.canDo)}`]),
+      ];
+
+  return [
+    `# ${name}`,
+    '',
+    oneLine,
+    '',
+    '## 卡片上有什么',
+    '',
+    tableOf('你能看到 | 一眼能得出什么 | 点一下可以去哪', panelRows),
+    '',
+    '## 五种状态',
+    '',
+    tableOf('状态 | 你会看到什么 | 你能做什么', stateRows),
+    '',
+    '## 你能自己调什么',
+    '',
+    tableOf('能配的 | 默认 | 可选值从哪来 | 刷新后还在吗', configRows),
+    '',
+    '## agent 能替你做什么',
+    '',
+    tableOf('它能做什么 | 要不要你点头 | 点头后会发生什么', capabilityRows),
+    '',
+    '## 数据从哪来',
+    '',
+    ...(dataLines.length === 0 ? ['- 这一版没有记录数据来源。'] : dataLines),
+    '',
+    ...writeLines,
+    '## 装和卸',
+    '',
+    '- 在市场「已安装」里装或卸。',
+    '- 装完在当前项目的面板里勾选这个模块，卡片才会出现；卸掉后卡片消失。',
+    '',
+    '## 出问题先看',
+    '',
+    ...trouble,
+    '',
+  ].join('\n');
+}
+
 function regionOf(readme) {
   const start = readme.indexOf(START_MARK);
   const end = readme.indexOf(END_MARK);
@@ -437,11 +542,11 @@ function regionOf(readme) {
   return { start, end };
 }
 
-export function applyToReadme(root, markdown) {
-  const file = join(root, 'README.md');
+export function applyToDeveloping(root, markdown) {
+  const file = join(root, DEVELOPING_FILE);
   const block = `${START_MARK}\n${markdown}\n${END_MARK}`;
   if (!existsSync(file)) {
-    writeFileSync(file, `# ${text(manifestOf(root).name) || '模块'}\n\n${block}\n`);
+    writeFileSync(file, `# ${text(manifestOf(root).name) || '模块'} · 作者文档\n\n${block}\n`);
     return 'created';
   }
   const text0 = readFileSync(file, 'utf8');
@@ -464,6 +569,15 @@ export function applyToReadme(root, markdown) {
   return 'inserted';
 }
 
+export function writeUserReadme(root, design) {
+  const file = join(root, 'README.md');
+  const next = renderUserReadme(design);
+  const before = existsSync(file) ? readFileSync(file, 'utf8') : '';
+  if (before === next) return 'same';
+  writeFileSync(file, next);
+  return before === '' ? 'created' : 'updated';
+}
+
 function manifestOf(root) {
   try {
     return JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
@@ -484,9 +598,11 @@ function checkDesign(root) {
   const acceptance = asRows(design.acceptance);
   const accepted = acceptance.filter((one) => one?.checked === true).length;
 
-  const readme = existsSync(join(root, 'README.md')) ? readFileSync(join(root, 'README.md'), 'utf8') : '';
-  const at = regionOf(readme);
-  const fresh = at === undefined ? false : readme.slice(at.start, at.end) === `${START_MARK}\n${renderDesign(design)}\n`;
+  const developing = existsSync(join(root, DEVELOPING_FILE)) ? readFileSync(join(root, DEVELOPING_FILE), 'utf8') : '';
+  const at = regionOf(developing);
+  const fresh = at === undefined ? false : developing.slice(at.start, at.end) === `${START_MARK}\n${renderDesign(design)}\n`;
+  const user = existsSync(join(root, 'README.md')) ? readFileSync(join(root, 'README.md'), 'utf8') : '';
+  const userFresh = user === renderUserReadme(design);
 
   console.log(`design.json：面板 ${rows('panel')} 行 · 状态 ${STATE_KEYS.length} 态 · 配置 ${rows('config')} 项 · 能力 ${rows('capabilities')} 条 · 联动 ${rows('linkage')} 行 · 验收 ${accepted}/${acceptance.length}`);
   for (const one of warnings) console.log(`⚠ ${one}`);
@@ -494,13 +610,18 @@ function checkDesign(root) {
     console.error(`✖ 还空着 ${cells.length} 格（"空着的格就是还没定的事"，别带着空格往下做）：`);
     for (const one of cells) console.error(`  · ${one}`);
   }
-  if (!fresh) {
-    console.error('✖ README 里那一段落后于 design.json（或者没有标记）—— 跑 dsh-wb-module design render');
+  if (developing === '') {
+    console.error(`✖ 没有 ${DEVELOPING_FILE} —— 旧模块先跑 dsh-wb-module design migrate；新模块跑 design init`);
+  } else if (!fresh) {
+    console.error(`✖ ${DEVELOPING_FILE} 里那一段落后于 design.json（或者没有标记）—— 跑 dsh-wb-module design render`);
   }
-  if (cells.length === 0 && fresh) {
-    console.log(`✔ 三张表填全了，README 也是最新的${accepted === acceptance.length ? '，验收也打完了' : `；验收还差 ${acceptance.length - accepted} 条（自己在真卡片上逐条走通后跑 design accept）`}`);
+  if (!userFresh) {
+    console.error('✖ README.md 落后于 design.json（或还没生成用户说明）—— 跑 dsh-wb-module design render');
   }
-  process.exit(cells.length === 0 && fresh ? 0 : 1);
+  if (cells.length === 0 && fresh && userFresh) {
+    console.log(`✔ 三张表填全了，README 与 ${DEVELOPING_FILE} 都是最新的${accepted === acceptance.length ? '，验收也打完了' : `；验收还差 ${acceptance.length - accepted} 条（自己在真卡片上逐条走通后跑 design accept）`}`);
+  }
+  process.exit(cells.length === 0 && fresh && userFresh ? 0 : 1);
 }
 
 export async function design({ root, args = [] }) {
@@ -513,9 +634,10 @@ export async function design({ root, args = [] }) {
     }
     const design0 = skeleton(manifestOf(root));
     writeDesign(root, design0);
-    const how = applyToReadme(root, renderDesign(design0));
+    const how = applyToDeveloping(root, renderDesign(design0));
+    writeUserReadme(root, design0);
     console.log(`✔ 写好 ${DESIGN_FILE}（三张表 + 状态矩阵 + 数据源记录 + 验收清单的空骨架）`);
-    console.log(`  README 的那一段：${how === 'created' ? '新建' : how === 'inserted' ? '插进「需求底稿」那一节' : '已更新'}`);
+    console.log(`  ${DEVELOPING_FILE} 的那一段：${how === 'created' ? '新建' : how === 'inserted' ? '插进「需求底稿」那一节' : '已更新'}`);
     console.log('  接着把每一格填成"用户看得见的东西"，然后 dsh-wb-module design check');
     return;
   }
@@ -526,8 +648,14 @@ export async function design({ root, args = [] }) {
       console.error(`✖ 没有 ${DESIGN_FILE} —— 先跑 dsh-wb-module design init`);
       process.exit(1);
     }
-    const how = applyToReadme(root, renderDesign(design0));
-    console.log(`✔ README 的那一段：${how === 'same' ? '本来就是最新的' : how === 'updated' ? '更新了' : how === 'inserted' ? '插进「需求底稿」那一节' : '建了 README'}`);
+    if (!existsSync(join(root, DEVELOPING_FILE))) {
+      console.error(`✖ 没有 ${DEVELOPING_FILE} —— 旧模块先跑 dsh-wb-module design migrate；新模块跑 design init`);
+      process.exit(1);
+    }
+    const how = applyToDeveloping(root, renderDesign(design0));
+    const user = writeUserReadme(root, design0);
+    console.log(`✔ ${DEVELOPING_FILE} 的那一段：${how === 'same' ? '本来就是最新的' : how === 'updated' ? '更新了' : how === 'inserted' ? '插进「需求底稿」那一节' : '已更新'}`);
+    console.log(`  README.md：${user === 'same' ? '本来就是最新的' : user === 'created' ? '新建' : '重生成'}`);
     return;
   }
 
@@ -545,8 +673,32 @@ export async function design({ root, args = [] }) {
     design0.acceptance = acceptance.map((one) => ({ ...one, checked: true }));
     design0.acceptedAt = new Date().toISOString();
     writeDesign(root, design0);
-    applyToReadme(root, renderDesign(design0));
+    applyToDeveloping(root, renderDesign(design0));
+    writeUserReadme(root, design0);
     console.log(`✔ ${acceptance.length} 条验收全部打勾（只在真的在真卡片上逐条走通过之后再跑这条）`);
+    return;
+  }
+
+  if (action === 'migrate') {
+    const design0 = readDesign(root);
+    if (design0 === undefined) {
+      console.error(`✖ 没有 ${DESIGN_FILE} —— 先跑 dsh-wb-module design init`);
+      process.exit(1);
+    }
+    if (existsSync(join(root, DEVELOPING_FILE))) {
+      console.error(`✖ ${DEVELOPING_FILE} 已经在了；拆过的模块不用再 migrate`);
+      process.exit(1);
+    }
+    const readmeFile = join(root, 'README.md');
+    if (existsSync(readmeFile)) {
+      copyFileSync(readmeFile, join(root, DEVELOPING_FILE));
+      console.log(`✔ 旧 README 已保存为 ${DEVELOPING_FILE}`);
+    }
+    const how = applyToDeveloping(root, renderDesign(design0));
+    const user = writeUserReadme(root, design0);
+    console.log(`✔ ${DEVELOPING_FILE} 的那一段：${how === 'same' ? '本来就是最新的' : how === 'updated' ? '更新了' : '已更新'}`);
+    console.log(`✔ README.md 已按 design.json 生成用户说明（${user === 'created' ? '新建' : '重生成'}）`);
+    console.log('  接着把 README.md 里的（待填）按 design.json 填完，再 dsh-wb-module design check');
     return;
   }
 
@@ -555,6 +707,6 @@ export async function design({ root, args = [] }) {
     return;
   }
 
-  console.error(`不认识的 design 动作：${action}（可用：init / check / render / accept）`);
+  console.error(`不认识的 design 动作：${action}（可用：init / migrate / check / render / accept）`);
   process.exit(2);
 }

@@ -727,7 +727,7 @@ export async function run() {
       for (const name0 of inDeclaration.filter((one) => !inDesign.includes(one))) {
         problems.push(
           `${name}: 清单的 tools[] 里声明了「${name0}」，design.json 的能力行里却没有它 —— ` +
-            '底稿是给人读的那半（它干嘛、要不要点头，`design render` 拿它出 README）：' +
+            '底稿是给人读的那半（它干嘛、要不要点头，`design render` 拿它出 DEVELOPING.md）：' +
             `要么在 design.json 的 capabilities[] 里为「${name0}」补一行，要么把它从清单里删掉`,
         );
       }

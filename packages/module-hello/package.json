@@ -11,6 +11,7 @@
     "dist",
     "client.js",
     "cordis.patch.yml",
+    "DEVELOPING.md",
     "CHANGELOG.md"
   ],
   "scripts": {

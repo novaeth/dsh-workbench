@@ -1,5 +1,5 @@
 import { cpSync, existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { DESIGN_FILE, applyToReadme, readDesign, renderDesign } from './design.mjs';
+import { DESIGN_FILE, applyToDeveloping, readDesign, renderDesign, writeUserReadme } from './design.mjs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -109,10 +109,13 @@ export async function init({ root, args = [] }) {
   };
   walk(target);
   const declared = readDesign(target);
-  if (declared !== undefined) applyToReadme(target, renderDesign(declared));
+  if (declared !== undefined) {
+    applyToDeveloping(target, renderDesign(declared));
+    writeUserReadme(target, declared);
+  }
   const tables = existsSync(join(target, DESIGN_FILE)) ? `${DESIGN_FILE} 里那份三张表` : '还没有三张表（dsh-wb-module design init 生成）';
   console.log(`${target} 建好了：${unit} 模块骨架（模板 ${which}；build / check / design / selfcheck 已接工具）`);
-  console.log(`  需求底稿在 ${tables}；空格用 dsh-wb-module design check 查，README 由它生成`);
+  console.log(`  需求底稿在 ${tables}；空格用 dsh-wb-module design check 查，README 与 DEVELOPING.md 由它生成`);
   console.log(`  模板默认带了 ${DSH_UI}@${dshUi.version}（${dshUi.source}）—— 这是 dsh 原语的类型面 + external 声明两处；`);
   console.log('  确实用不到就连 devDependencies 与 dsh.client.external 两处一起删，判据不拦。');
 }

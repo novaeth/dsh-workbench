@@ -11,6 +11,7 @@ const FINGERPRINT_FILES = [
   'client.js',
   'cordis.patch.yml',
   'README.md',
+  'DEVELOPING.md',
   'CHANGELOG.md',
 ];
 

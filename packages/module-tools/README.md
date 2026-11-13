@@ -9,7 +9,7 @@
 pnpm exec dsh-wb-module init my-unit                    # 建骨架（唯一模板，已默认）
 pnpm build        # dist/host.js + 套了 loader 壳的 client.js
 pnpm check        # 十四条判据
-pnpm design check # 设计底稿有没有空格、README 有没有落后
+pnpm design check # 设计底稿有没有空格、README / DEVELOPING.md 有没有落后
 ```
 
 要发货再加一步 `pnpm exec dsh-wb-module publish`：跑门禁、核 `files` 与 `npm pack` 清单，默认 **只 dry run，不真发**。
@@ -55,7 +55,7 @@ pnpm design check # 设计底稿有没有空格、README 有没有落后
 | `dsh-wb-module check [--only <判据>] [--package <包名或 unit>]` | 十四条判据；`--only` 单跑，也当查询口用；`--package` 只报这个模块的问题（见下）；`--list [--json\|--markdown]` 只列判据元数据 |
 | `dsh-wb-module lint [--fix]` | 用模块自己那份 `eslint.config.mjs`；`--fix` 写回文件 |
 | `dsh-wb-module sync` | 按清单生成 `src/declared-tools.ts`，按 `design.json` 的 `key + recipe` 生成 `src/datasource.ts` |
-| `dsh-wb-module design <init\|check\|render\|accept>` | 设计底稿：填、查空格、生成 README、验收打勾 |
+| `dsh-wb-module design <init\|migrate\|check\|render\|accept>` | 设计底稿：填、拆旧 README、查空格、生成 README 与 DEVELOPING、验收打勾 |
 | `dsh-wb-module migrate [--dry-run]` | 把模块清单迁到当前代：`apiVersion` → 3、缺/空的 `workbenchFaces` 补默认；源码类问题只给提示（check 会点名） |
 | `dsh-wb-module changelog check [版本]` | 查这一版有没有记录；发布时用 `release --changelog-note` 写进去 |
 | `dsh-wb-module publish` | 发货前清单：门禁 + `files` + `npm pack`（只 dry run） |
@@ -196,10 +196,12 @@ export default [
 `dsh-wb-module lint --fix` 先写回再跑一遍看还剩什么。**`check` 永远不动手改文件** ——
 门禁是判据，不是修复器。
 
+模板生成两份文档：`README.md` 是终端用户看的说明（卡片上有什么、五种状态、agent 能做什么、数据从哪来、怎么装卸、出问题先看），`DEVELOPING.md` 是作者文档（实现、路由、判据、数据源与三张表）。`design render` 两份都刷新；旧模块先跑 `design migrate`，它把旧 `README.md` 原样保存为 `DEVELOPING.md`，再按 `design.json` 重生成用户 README。
+
 ## `design.json`：三张表
 
 面板 / 能力 / 联动三张表、状态矩阵、数据源记录、写通道记录、验收清单都住在模块根目录的
-`design.json`，README 里那一段由它生成（夹在 `<!-- dsh-wb:design:start/end -->` 之间）。
+`design.json`，DEVELOPING.md 里那一段由它生成（夹在 `<!-- dsh-wb:design:start/end -->` 之间）；README.md 是由它生成的终端用户说明。
 
 它是**设计底稿**：三张表与探明记录装人话（`oneLine` / `shape` / `approvalText` / 三张表的文字）；
 读源那一条可以多带 `key` 与 `recipe` 两个机器字段 —— 它们只用于生成 `src/datasource.ts`，
@@ -208,7 +210,7 @@ export default [
 `design.json` 的模块不查。
 
 有写能力的模块另在 `writes[]` 里落命令 / 入参 / 出参 / 预览档 / 回读 / 失败形状，
-渲染成 README 里的「写通道探明记录」。没有写通道就不用写，不会因此变红。
+渲染成 DEVELOPING.md 里的「写通道探明记录」。没有写通道就不用写，不会因此变红。
 写也能落配方：`writes[]` 里加一对 `key` + `recipe`，`sync` 把它和读一起生成进
 `DATASOURCE`（`data.submit(DATASOURCE.<key>)`）；配方盖不住的写写 `custom: { why }`（warn）。
 
@@ -262,8 +264,8 @@ export default [
 - 形状与六种配方见模块 DIY 的 [`DATASOURCE.md`](../core/skills/workbench-module-diy/DATASOURCE.md)。
 
 ```bash
-dsh-wb-module design check    # 空着的格一格格点名叫出来 + README 有没有落后
-dsh-wb-module design render   # 用 design.json 重新生成 README 那一段
+dsh-wb-module design check    # 空着的格一格格点名叫出来 + README / DEVELOPING 有没有落后
+dsh-wb-module design render   # 用 design.json 重新生成 README 与 DEVELOPING 那一段
 dsh-wb-module design accept   # 在真卡片上逐条走通后打勾
 ```
 
@@ -325,7 +327,7 @@ dsh-wb-module design accept   # 在真卡片上逐条走通后打勾
 `eslint.config.mjs`。
 
 `init` 连模板里的 `*.tpl` 一起拷、按已知 token 名逐个盖章（`__UNIT__` / `__NAME__` / `__DESC__` /
-`__SHELL_RANGE__` / `__DSH_UI_VERSION__`）、剥掉后缀，再用 `design.json` 生成 README 那一段。
+`__SHELL_RANGE__` / `__DSH_UI_VERSION__`）、剥掉后缀，再用 `design.json` 生成 README 与 DEVELOPING 那一段。
 `__SHELL_RANGE__` 取 init 所在工程实装的那份外壳版本；读不到就退回 module-tools 自己的版本；
 两者都读不到才保持 `^0.1.0` 并在 stderr 上说一句。
 
@@ -336,7 +338,7 @@ node scripts/selfcheck/index.mjs
 ```
 
 工具箱的回归网：模板 `init` 一遍、跑全套；判据的正例与负例都要对；打包清单不含
-`.tpl` 残留；`design` 的空格、README 同步、`accept`；`publish` 的清单；`release` 的验收闸、
+`.tpl` 残留；`design` 的空格、README / DEVELOPING 同步、`accept`；`publish` 的清单；`release` 的验收闸、
 dry-run、真发后的元数据与发布失败回滚。
 
 ## 相关文档

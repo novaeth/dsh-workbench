@@ -113,7 +113,7 @@
 写了 `key + recipe` 的写，预览用 `describeRecipe(DATASOURCE.<key>)`，执行用
 `data.submit(DATASOURCE.<key>, overrides)`；不再把 origin / path 写进代码。
 
-`design render` 写入 README 的 `### 写通道探明记录`（位于「数据源探明记录」与「验收」之间）。
+`design render` 写入 DEVELOPING.md 的 `### 写通道探明记录`（位于「数据源探明记录」与「验收」之间）。
 `design check` 点名空格；无写通道的模块不写。
 
 `params` 来源：依据 `workbench_diy_record_read` 的截图（必填红星）或契约（`--help -f json` 的 `required`）。

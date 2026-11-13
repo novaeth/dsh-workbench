@@ -537,9 +537,9 @@ export function apply(ctx) {
         try {
           run('render');
           run('check');
-          const readme = read(join(probe, 'README.md'));
+          const readme = read(join(probe, 'DEVELOPING.md'));
           if (!readme.includes('#### 读 1') || !readme.includes('#### 读 2')) {
-            problems.push('两条读没在 README 里各占一节');
+            problems.push('两条读没在 DEVELOPING.md 里各占一节');
           }
         } catch (error) {
           const out = `${error.stdout ?? ''}${error.stderr ?? ''}`;

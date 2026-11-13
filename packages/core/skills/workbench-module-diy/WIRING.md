@@ -36,7 +36,7 @@
 | 公开包写内网地址 / 域名 / 企业名 | `markers` 红 |
 
 纪律：样式走 `*.module.css`，类名不带 `wb-` 前缀（外壳全局类；借契约类写 `:global(.wb-…)`）；
-`src/**` 零注释；说明写 `README.md` 或 spec。
+`src/**` 零注释；用户说明写 `README.md`，作者说明写 `DEVELOPING.md` 或 spec。
 
 ## 3 安装、添加到看板
 

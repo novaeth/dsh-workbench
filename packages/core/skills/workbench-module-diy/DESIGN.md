@@ -91,12 +91,13 @@
 
 ## 5 design.json
 
-三张表 + 状态矩阵 + 数据源 + 验收存模块根的 `design.json`；README 对应段由它生成
+三张表 + 状态矩阵 + 数据源 + 验收存模块根的 `design.json`；DEVELOPING.md 对应段由它生成
 （`<!-- dsh-wb:design:start/end -->`，手改判红）。
 
 ```bash
-pnpm exec dsh-wb-module design check     # 空格 / README 落后
-pnpm exec dsh-wb-module design render    # 重生成 README 段
+pnpm exec dsh-wb-module design migrate   # 旧模块：旧 README 保存为 DEVELOPING.md，再生成用户 README
+pnpm exec dsh-wb-module design check     # 空格 / DEVELOPING.md 或 README 落后
+pnpm exec dsh-wb-module design render    # 重生成 README 与 DEVELOPING.md
 pnpm exec dsh-wb-module design accept    # 逐条走通后打勾
 ```
 
