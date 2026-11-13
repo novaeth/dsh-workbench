@@ -1,6 +1,6 @@
 import { cpSync, existsSync, lstatSync, readFileSync, readlinkSync, renameSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
-import { ensureDir, isManagedLinkSpec, linkDir, removePath, writeJsonFile, writeTextFile } from '@dsh-workbench/shared/host';
+import { ensureDir, isManagedLinkSpec, linkDir, removePath, withReleaseAge, writeJsonFile, writeTextFile } from '@dsh-workbench/shared/host';
 import { installWithRetry, type InstallAttempt, type InstallRetryResult } from './install-retry.js';
 import { CORE_ARTIFACTS, SELF_UPDATE_PACKAGES } from './self-update-plan.js';
 import { isRealDir } from './version-migrate.js';
@@ -226,35 +226,3 @@ function manifestOf(packages: readonly string[], version: string): Record<string
   return { name: `dsh-workbench-versions-${version}`, private: true, dependencies };
 }
 
-function releaseAgeNameOf(line: string): string | undefined {
-  return /^\s*-\s*'(\S+?)@(?=\d)/.exec(line)?.[1];
-}
-
-function listsVersion(line: string, version: string): boolean {
-  return line
-    .split('||')
-    .some((part) => part.trim().replace(/^.*@/, '').replace(/'$/, '') === version);
-}
-
-function withReleaseAge(version: string, packages: readonly string[], workspace: string): string {
-  const lines = workspace.replace(/\n+$/, '').split('\n');
-  const missing: string[] = [];
-  for (const name of packages) {
-    const at = lines.findIndex((line) => releaseAgeNameOf(line) === name);
-    if (at < 0) {
-      missing.push(`  - '${name}@${version}'`);
-      continue;
-    }
-    const line = lines[at] ?? '';
-    if (!listsVersion(line, version)) {
-      lines[at] = line.endsWith("'") ? `${line.slice(0, -1)} || ${version}'` : `${line} || ${version}`;
-    }
-  }
-  if (missing.length === 0) return `${lines.join('\n')}\n`;
-  const key = lines.findIndex((line) => line.startsWith('minimumReleaseAgeExclude:'));
-  if (key < 0) return `${lines.join('\n')}\n\nminimumReleaseAgeExclude:\n${missing.join('\n')}\n`;
-  let end = key + 1;
-  while (end < lines.length && /^\s+\S/.test(lines[end] ?? '')) end += 1;
-  lines.splice(end, 0, ...missing);
-  return `${lines.join('\n')}\n`;
-}
