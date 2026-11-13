@@ -18,12 +18,6 @@ function listsVersion(line: string, version: string): boolean {
     .some((part) => part.trim().replace(/^.*@/, '').replace(/'$/, '') === version);
 }
 
-/**
- * 把版本补进 `minimumReleaseAgeExclude` 名单：缺哪个包补哪个包，已有的条目不动，别的键原样保留。
- * @param version 要放行的版本号。
- * @param packages 要放行的包名。
- * @param workspace 现有的 pnpm-workspace.yaml 文本。
- */
 function withAppended(workspace: string, missing: readonly string[]): string {
   const lines = workspace.replace(/\n+$/, '').split('\n');
   if (missing.length === 0) return `${lines.join('\n')}\n`;
