@@ -118,7 +118,7 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
     cleanup();
   });
 
-  it('★ 官方版本表说这一版跟当前 dsh 不兼容 → 照给 latest，但标 latestBlocked', async () => {
+  it('★ 官方版本表说这一版跟当前 dsh 不兼容 → 照给 latest，latestBlocked 带要求', async () => {
     const { dir, cleanup } = coreProfile({});
     const { seam } = shellWith(released('0.1.19'));
     const manager = {
@@ -147,14 +147,18 @@ describe('工作台自己那份的新版（与模块同一条探针里一起回�
     };
 
     const result = (await moduleVersionsHandler(fakeContext(manager, dir), seam)(
-      new URLSearchParams('force=1'),
+      new URLSearchParams(),
     )) as { workbench?: Record<string, unknown> };
 
     expect(result.workbench).toEqual({
       pkg: CORE,
       installed: '0.1.18',
       latest: '0.1.19',
-      latestBlocked: 'incompatible',
+      latestBlocked: {
+        kind: 'incompatible',
+        requirements: { '@deepseek-ai/dsh-web': '9.9.9' },
+        runtimeVersion: '0.2.2-rc.1',
+      },
       spec: '^0.1.18',
       registry: 'https://self.example/',
     });

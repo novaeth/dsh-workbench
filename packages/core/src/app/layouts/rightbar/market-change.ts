@@ -11,7 +11,7 @@ export function changeOf(value: unknown): BundleChange | undefined {
 
 export function changeFailure(change: BundleChange | undefined, t: Translate): string | undefined {
   if (change === undefined || isShippedApplication(change.application)) return undefined;
-  return failureReason(failureCode(change), change.application, t);
+  return failureReason(failureCode(change), change.application, t, change);
 }
 
 export function appliedUnitsOf(value: unknown): readonly string[] {

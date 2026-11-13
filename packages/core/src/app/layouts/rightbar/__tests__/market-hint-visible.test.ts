@@ -99,12 +99,12 @@ describe('左栏入口那枚标签：与市场页读同一份模块版本', () =
         pkg: 'pkg-hello',
         installed: '0.1.8',
         latest: '0.2.0',
-        latestBlocked: 'needs-workbench',
+        latestBlocked: { kind: 'needs-workbench' },
       },
     ] as const;
 
     expect(marketUpdatesOf(modules)).toEqual({
-      hello: { installed: '0.1.8', latest: '0.2.0', blocked: 'needs-workbench', pkg: 'pkg-hello' },
+      hello: { installed: '0.1.8', latest: '0.2.0', blocked: { kind: 'needs-workbench' }, pkg: 'pkg-hello' },
     });
     expect(marketHintOf({ manifests: [MANIFEST], capabilities: OK, modules })).toBeNull();
   });

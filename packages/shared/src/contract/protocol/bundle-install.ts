@@ -258,7 +258,11 @@ export interface BundleCancellationPayload {
   readonly cancellation: BundleCancellation | null;
 }
 
-export type ModuleUpdateBlock = 'needs-workbench' | 'incompatible';
+export interface ModuleUpdateBlock {
+  readonly kind: 'needs-workbench' | 'incompatible';
+  readonly requirements?: Readonly<Record<string, string>>;
+  readonly runtimeVersion?: string;
+}
 
 export type LatestUnavailable = 'local' | 'no-registry' | 'not-registry' | 'probe-failed';
 
@@ -282,7 +286,7 @@ export interface WorkbenchVersion {
   readonly pkg: string;
   readonly installed: string;
   readonly latest?: string;
-  readonly latestBlocked?: 'incompatible';
+  readonly latestBlocked?: ModuleUpdateBlock;
   readonly running?: string;
   readonly local?: boolean;
   readonly spec?: string;

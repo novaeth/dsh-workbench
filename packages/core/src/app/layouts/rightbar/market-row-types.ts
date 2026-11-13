@@ -65,9 +65,14 @@ export type MarketHintKey =
   | 'panels.market.uncheckedHint'
   | 'panels.market.migrationHint'
   | 'panels.market.updateNeedsWorkbench'
+  | 'panels.market.updateNeedsDsh'
   | 'panels.market.updateIncompatible'
-  | 'panels.market.workbenchUpdateNeedsDsh'
   | 'panels.market.selfUpdateMigration';
+
+export interface MarketHint {
+  readonly key: MarketHintKey;
+  readonly params?: Readonly<Record<string, string>>;
+}
 
 export interface ModuleUpdate {
   readonly installed: string;
@@ -98,7 +103,7 @@ export interface MarketRow {
   readonly plugin?: boolean;
   readonly workbench?: boolean;
   readonly note?: MarketNote;
-  readonly hint?: MarketHintKey;
+  readonly hint?: MarketHint;
   readonly version?: { readonly installed?: string; readonly latest?: string };
   readonly moduleUpdate?: ModuleUpdate;
   readonly market?: MarketInstalledModule;

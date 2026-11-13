@@ -113,7 +113,7 @@ export function MarketDetail({
             {installedDescription(info)}
             {notice === null ? null : <p className={styles.discoverDetailText}>{notice}</p>}
             <MarketRowFailure t={t} failure={failure} onRecheck={onRecheck} rechecking={rechecking} />
-            {row.hint === undefined ? null : <p className={styles.discoverMuted}>{t(row.hint)}</p>}
+            {row.hint === undefined ? null : <p className={styles.discoverMuted}>{t(row.hint.key, row.hint.params)}</p>}
             {noteText === null ? null : (
               <p className={row.note?.tone === 'alert' ? styles.discoverError : styles.discoverMuted}>
                 {noteText}

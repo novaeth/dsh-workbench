@@ -443,7 +443,7 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
     cleanup();
   });
 
-  it('★ force 检查时才问 dsh 要完整版本表：带 tags/废弃/incompatible，latest 取表里最新', async () => {
+  it('★ 有新版就问 dsh 要完整版本表：带 tags/废弃/incompatible，latest 取表里最新', async () => {
     const { dir, cleanup } = profileWith('0.1.2');
     const { seam } = fakeShell({ '@a/mod': '0.2.0' }, { '@a/mod': declarationOf('mod', 3) });
     const asked: string[] = [];
@@ -468,7 +468,7 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
 
     const result = (await moduleVersionsHandler(fakeContext(manager, dir), seam as never)(
       new URLSearchParams('force=1'),
-    )) as { modules: { unit: string; latest?: string; latestBlocked?: string; versions?: unknown }[] };
+    )) as { modules: { unit: string; latest?: string; latestBlocked?: unknown; versions?: unknown }[] };
 
     expect(asked).toEqual(['@a/mod|{"registry":"https://declared.example/"}']);
     expect(result.modules[0]).toMatchObject({
@@ -523,7 +523,7 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
     cleanup();
   });
 
-  it('★ 没点检查（force 缺省）就不问版本表；dsh 说 not-updatable 也把表带回来，latest 仍走 npm view', async () => {
+  it('★ 没点检查（force 缺省）也问版本表：不兼容得在自动检测那一轮就知道；dsh 说 not-updatable 也把表带回来，latest 仍走 npm view', async () => {
     const { dir, cleanup } = profileWith('0.1.2');
     const { seam } = fakeShell({ '@a/mod': '0.2.0' });
     let asked = 0;
@@ -537,8 +537,15 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
     const plain = (await moduleVersionsHandler(fakeContext(silent, dir), seam as never)(
       new URLSearchParams(),
     )) as { modules: { unit: string; latest?: string; versions?: unknown }[] };
-    expect(asked).toBe(0);
-    expect(plain.modules[0]?.versions).toBeUndefined();
+    expect(asked).toBe(1);
+    expect(plain.modules[0]?.versions).toEqual({
+      status: 'listed',
+      installed: '0.1.2',
+      registry: null,
+      attempts: [],
+      omitted: 0,
+      versions: [],
+    });
     expect(plain.modules[0]?.latest).toBe('0.2.0');
 
     const refused = {
@@ -558,7 +565,7 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
     cleanup();
   });
 
-  it('★ dsh 判最新版与运行时 dsh 不兼容（我们这边协议能认）→ latestBlocked: incompatible', async () => {
+  it('★ dsh 判最新版与运行时 dsh 不兼容（我们这边协议能认）→ latestBlocked 带要求与当前 dsh', async () => {
     const { dir, cleanup } = profileWith('0.1.2');
     const { seam } = fakeShell({ '@a/mod': '0.2.0' }, { '@a/mod': declarationOf('mod', 3) });
     const manager = {
@@ -581,9 +588,17 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
       }),
     };
     const result = (await moduleVersionsHandler(fakeContext(manager, dir), seam as never)(
-      new URLSearchParams('force=1'),
-    )) as { modules: { unit: string; latest?: string; latestBlocked?: string }[] };
-    expect(result.modules[0]).toMatchObject({ unit: 'mod', latest: '0.2.0', latestBlocked: 'incompatible' });
+      new URLSearchParams(),
+    )) as { modules: { unit: string; latest?: string; latestBlocked?: unknown }[] };
+    expect(result.modules[0]).toMatchObject({
+      unit: 'mod',
+      latest: '0.2.0',
+      latestBlocked: {
+        kind: 'incompatible',
+        requirements: { '@deepseek-ai/dsh-web': '9.9.9' },
+        runtimeVersion: '0.2.2-rc.1',
+      },
+    });
     cleanup();
   });
 
@@ -619,29 +634,33 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
     cleanup();
   });
 
-  it('★ 新版要更新的协议 → 标 latestBlocked', async () => {
+  it('★ 新版要更新的协议 → 标 latestBlocked.kind: needs-workbench', async () => {
     const { dir, cleanup } = profileWith('0.1.2');
     const { seam } = fakeShell({ '@a/mod': '0.2.0' }, { '@a/mod': declarationOf('mod', 4) });
 
     const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam as never)(
       new URLSearchParams(),
-    )) as { modules: { unit: string; latestBlocked?: string }[] };
+    )) as { modules: { unit: string; latestBlocked?: unknown }[] };
 
-    expect(result.modules[0]).toMatchObject({ unit: 'mod', latest: '0.2.0', latestBlocked: 'needs-workbench' });
+    expect(result.modules[0]).toMatchObject({
+      unit: 'mod',
+      latest: '0.2.0',
+      latestBlocked: { kind: 'needs-workbench' },
+    });
     cleanup();
   });
 
-  it('★ 新版协议这一版工作台不认（更旧）→ latestBlocked: incompatible', async () => {
+  it('★ 新版协议这一版工作台不认（更旧）→ latestBlocked.kind: incompatible', async () => {
     const { dir, cleanup } = profileWith('0.1.2', '@c');
     const { seam } = fakeShell({ '@c/mod': '0.2.0' }, { '@c/mod': declarationOf('mod', 1) });
 
     const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam as never)(
       new URLSearchParams(),
-    )) as { modules: { unit: string; latestBlocked?: string }[] };
+    )) as { modules: { unit: string; latestBlocked?: unknown }[] };
 
     expect(result.modules.find((module) => module.unit === 'mod')).toMatchObject({
       latest: '0.2.0',
-      latestBlocked: 'incompatible',
+      latestBlocked: { kind: 'incompatible' },
     });
     cleanup();
   });
@@ -652,7 +671,7 @@ describe('已装模块的最新版（打开市场页问一次 registry）', () =
 
     const result = (await moduleVersionsHandler(fakeContext({ ...MANAGER }, dir), seam as never)(
       new URLSearchParams(),
-    )) as { modules: { unit: string; latestBlocked?: string }[] };
+    )) as { modules: { unit: string; latestBlocked?: unknown }[] };
 
     const mod = result.modules.find((module) => module.unit === 'mod');
     expect(mod).toMatchObject({ latest: '0.2.0' });

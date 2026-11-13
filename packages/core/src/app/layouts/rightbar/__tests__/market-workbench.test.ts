@@ -25,19 +25,28 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
     expect(marketActions(row as MarketRow)).toEqual(['update-workbench']);
   });
 
-  it('① 官方版本表说这一版跟当前 dsh 不兼容 → 不给更新，说明原因', () => {
+  it('① 官方版本表说这一版跟当前 dsh 不兼容 → 有新版样式，但不给更新，说明要哪一版 dsh', () => {
+    const blocked = {
+      kind: 'incompatible' as const,
+      requirements: { 'engines.dsh': '>=2.0.0' },
+      runtimeVersion: '1.0.0',
+    };
     const row = workbenchRow({
       pkg: CORE,
       installed: '0.1.18',
       latest: '0.1.19',
-      latestBlocked: 'incompatible',
+      latestBlocked: blocked,
     });
 
     expect(row).toMatchObject({
       state: 'outdated',
       canUpdate: false,
-      hint: 'panels.market.workbenchUpdateNeedsDsh',
-      moduleUpdate: { installed: '0.1.18', latest: '0.1.19', blocked: 'incompatible' },
+      hint: {
+        key: 'panels.market.updateNeedsDsh',
+        params: { dsh: 'dsh >=2.0.0', runtime: '1.0.0' },
+      },
+      moduleUpdate: { installed: '0.1.18', latest: '0.1.19', blocked },
+      version: { installed: '0.1.18', latest: '0.1.19' },
     });
     expect(marketActions(row as MarketRow)).toEqual([]);
   });
@@ -116,7 +125,7 @@ describe('市场里「工作台」自己那一行（四种处境）', () => {
 
     expect(row).toMatchObject({
       state: 'pending-followup',
-      hint: 'panels.market.migrationHint',
+      hint: { key: 'panels.market.migrationHint' },
       followUp: { id: 'data-root-migration', kind: 'data-migration', hard: false },
     });
     expect(MARKET_STATE_KEY['pending-followup']).toBe('panels.market.pendingFollowUp');
@@ -470,7 +479,7 @@ describe('迁移现场那一次：行上要说清"这次得先退出"', () => {
       { state: 'running', to: '0.1.19', migration: true },
     );
 
-    expect(row?.hint).toBe('panels.market.selfUpdateMigration');
+    expect(row?.hint).toEqual({ key: 'panels.market.selfUpdateMigration' });
   });
 
   it('★ 不是迁移现场（已经迁过）→ 一句提示都不给', () => {

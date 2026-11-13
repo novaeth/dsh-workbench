@@ -1,4 +1,5 @@
 import type { Translate } from '@dsh-workbench/shared';
+import { requirementsText } from '@dsh-workbench/shared';
 import type {
   BundleChange,
   BundleInspectProblem,
@@ -255,7 +256,14 @@ export function failureReasonKey(code: string): string | undefined {
   return FAILURE_KEYS[code];
 }
 
-export function failureReason(code: string, application: string, t: Translate): string {
+export function failureReason(code: string, application: string, t: Translate, change?: BundleChange): string {
+  if (code === 'incompatible-version') {
+    const issue = change?.incompatible?.[0];
+    const dsh = requirementsText(issue?.requirements);
+    if (issue !== undefined && dsh !== undefined) {
+      return t('panels.market.add.failureIncompatible', { dsh, runtime: issue.runtimeVersion });
+    }
+  }
   const key = failureReasonKey(code);
   if (key !== undefined) return t(key);
   if (code === application) return t('panels.market.add.reason.unknown');

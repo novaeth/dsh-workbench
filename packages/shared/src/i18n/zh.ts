@@ -249,8 +249,8 @@ export const zh = {
   'panels.market.detailSharedUsedBy': '使用它的模块',
   'panels.market.moduleOutdated': '有新版',
   'panels.market.updateNeedsWorkbench': '新版本要先把工作台升级才能用',
+  'panels.market.updateNeedsDsh': '新版本要 {dsh}，当前 dsh 是 {runtime}',
   'panels.market.updateIncompatible': '新版本和当前的工作台不匹配，暂时不能更新',
-  'panels.market.workbenchUpdateNeedsDsh': '新版本要先把 dsh 升级才能用',
   'panels.market.moduleRefused': '模块版本与工作台不匹配，暂时无法使用',
   'panels.market.moduleRestartHint': '重启后生效',
   'panels.market.pendingRestart': '重启后生效',
@@ -352,6 +352,7 @@ export const zh = {
   'panels.market.add.failureInstalled':
     '这个包已安装在当前工作台中。同一个包无法就地覆盖，需要先卸载再安装；本次卸载也未成功。',
   'panels.market.add.failureGeneric': '安装过程中出错，原因见「安装详情」。',
+  'panels.market.add.failureIncompatible': '这一版要 {dsh}，当前 dsh 是 {runtime}，先升级 dsh 再装。',
   'panels.market.add.failureCredentials': '这个仓库需要凭证，本机没有它的 git 凭据。请先在终端中执行一次 clone，并配置凭据助手，或改用 SSH 地址后重试。',
   'panels.market.add.approveTitle': '安装脚本需要批准',
   'panels.market.add.approveCaution': '请只批准可信的包。安装脚本会以你的权限在这台机器上运行。',

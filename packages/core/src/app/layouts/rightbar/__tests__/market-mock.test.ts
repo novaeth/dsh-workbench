@@ -46,7 +46,7 @@ describe('MARKET_MOCKS', () => {
           expect(installedList[0]?.note?.key, mock.id).toBe('panels.market.moduleRefused');
         }
         if (mock.expect.installedHint !== undefined) {
-          expect(installedList[0]?.hint, mock.id).toBe(mock.expect.installedHint);
+          expect(installedList[0]?.hint?.key, mock.id).toBe(mock.expect.installedHint);
           expect(installedList[0]?.note, mock.id).toBeUndefined();
         }
       }

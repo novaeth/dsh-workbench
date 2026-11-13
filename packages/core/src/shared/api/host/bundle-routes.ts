@@ -18,6 +18,7 @@ import {
 import type { UnitRefusal } from '@/kernel/host/unit-registry';
 import {
   BUNDLE_REGISTRY_DEFAULT,
+  type BundleIncompatible,
   type BundleInspectionPayload,
   type BundleRegistriesPayload,
   type BundleRegistry,
@@ -65,7 +66,16 @@ function updateBlockOf(raw: unknown, problems: readonly string[]): ModuleUpdateB
   if (problems.length === 0) return undefined;
   const declared = declarationApiVersionOf(raw);
   const newest = Math.max(...SUPPORTED_API_VERSIONS);
-  return declared !== undefined && declared > newest ? 'needs-workbench' : 'incompatible';
+  return { kind: declared !== undefined && declared > newest ? 'needs-workbench' : 'incompatible' };
+}
+
+function dshBlockOf(incompatible: BundleIncompatible | undefined): ModuleUpdateBlock | undefined {
+  if (incompatible === undefined) return undefined;
+  return {
+    kind: 'incompatible',
+    requirements: incompatible.requirements,
+    runtimeVersion: incompatible.runtimeVersion,
+  };
 }
 
 function titleOf(raw: unknown): UnitTitle | undefined {
@@ -155,7 +165,6 @@ async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: 
   const listed =
     read.local === true ||
     !input.check ||
-    !input.force ||
     queried === undefined ||
     seam === undefined ||
     registry === undefined ||
@@ -184,10 +193,10 @@ async function workbenchVersion(supply: ReturnType<typeof supplyPortOf>, input: 
           force: input.force,
           logger: input.logger,
         });
-  const blocked: 'incompatible' | undefined =
-    latest === undefined || visible.find((entry) => entry.version === latest)?.incompatible === undefined
+  const blocked =
+    latest === undefined
       ? undefined
-      : 'incompatible';
+      : dshBlockOf(visible.find((entry) => entry.version === latest)?.incompatible);
   return {
     pkg: read.pkg,
     installed: read.version,
@@ -247,7 +256,6 @@ export function moduleVersionsHandler(
           !local &&
           fromRegistry &&
           check &&
-          force &&
           seam !== undefined &&
           registry !== undefined &&
           probed !== undefined &&
@@ -277,7 +285,7 @@ export function moduleVersionsHandler(
             ? undefined
             : updateBlockOf(latestRaw, declarationProblemsOf(module.pkg, latestRaw));
         const incompatible = visible.find((entry) => entry.version === latest)?.incompatible;
-        const latestBlocked = peerBlocked ?? (incompatible === undefined ? undefined : 'incompatible');
+        const latestBlocked = peerBlocked ?? dshBlockOf(incompatible);
         if (refused === undefined) {
           refusalLog.delete(module.pkg);
         } else {

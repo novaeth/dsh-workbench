@@ -252,8 +252,8 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'panels.market.detailSharedUsedBy': 'Used by modules',
   'panels.market.moduleOutdated': 'update available',
   'panels.market.updateNeedsWorkbench': 'this version needs a newer workbench first',
+  'panels.market.updateNeedsDsh': 'this version needs {dsh}; the running dsh is {runtime}',
   'panels.market.updateIncompatible': 'the new version does not match this workbench, so it cannot be installed now',
-  'panels.market.workbenchUpdateNeedsDsh': 'this version needs a newer dsh first',
   'panels.market.moduleRefused': 'This module does not match this workbench, so it cannot be used for now.',
   'panels.market.moduleRestartHint': 'restart dsh once to bring it up',
   'panels.market.pendingRestart': 'restart required',
@@ -355,6 +355,7 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'panels.market.add.failureInstalled':
     'This package is already installed in the current workbench. The same package cannot be replaced in place: uninstall it first, then install again. This uninstall did not succeed.',
   'panels.market.add.failureGeneric': 'Something went wrong during installation; see Install details.',
+  'panels.market.add.failureIncompatible': 'This version needs {dsh}; the running dsh is {runtime}. Upgrade dsh first.',
   'panels.market.add.failureCredentials': 'This repository needs credentials, and this machine has none for it. Run a clone once in a terminal and set up a credential helper, or switch to the SSH address and try again.',
   'panels.market.add.approveTitle': 'Install scripts need approval',
   'panels.market.add.approveCaution': 'Approve only packages you trust. Install scripts run on this machine with your permissions.',

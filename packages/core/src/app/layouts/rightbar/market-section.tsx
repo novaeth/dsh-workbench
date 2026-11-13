@@ -103,7 +103,7 @@ export function MarketLineStatus({
       {row.hint === undefined ? null : (
         <>
           <span className={styles.marketSep} aria-hidden="true">·</span>
-          <span className={styles.marketReason}>{t(row.hint)}</span>
+          <span className={styles.marketReason}>{t(row.hint.key, row.hint.params)}</span>
         </>
       )}
       {noteText === null ? null : (

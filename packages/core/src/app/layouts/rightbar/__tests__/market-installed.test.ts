@@ -110,7 +110,7 @@ describe('市场页的「已装（本机）」那半（module-distribution spec 
       [],
       new Set(),
     );
-    expect(rows[0]?.hint).toBe('panels.market.moduleRestartHint');
+    expect(rows[0]?.hint).toEqual({ key: 'panels.market.moduleRestartHint' });
   });
 
   it('★ 装了但还没生效那一行：文案是「未生效」、点是黄的（不是「已安装」+绿点）', () => {
@@ -162,7 +162,7 @@ describe('市场页的「已装（本机）」那半（module-distribution spec 
     );
 
     expect(rows[0]?.state).toBe('outdated');
-    expect(rows[0]?.hint).toBe('panels.market.moduleRestartHint');
+    expect(rows[0]?.hint).toEqual({ key: 'panels.market.moduleRestartHint' });
   });
 
   it('★ 本地装的（link:）只标来源，不给任何解释 —— 更不许说「还没生效」', () => {
@@ -204,7 +204,7 @@ describe('市场页的「已装（本机）」那半（module-distribution spec 
           pkg: '@acme/module-inventory',
           installed: '0.1.1',
           latest: '0.2.0',
-          latestBlocked: 'needs-workbench',
+          latestBlocked: { kind: 'needs-workbench' },
         },
       ],
       [unit('inventory')],
@@ -212,9 +212,9 @@ describe('市场页的「已装（本机）」那半（module-distribution spec 
     );
     expect(rows[0]).toMatchObject({
       state: 'outdated',
-      moduleUpdate: { installed: '0.1.1', latest: '0.2.0', blocked: 'needs-workbench' },
+      moduleUpdate: { installed: '0.1.1', latest: '0.2.0', blocked: { kind: 'needs-workbench' } },
       canUpdate: false,
-      hint: 'panels.market.updateNeedsWorkbench',
+      hint: { key: 'panels.market.updateNeedsWorkbench' },
     });
     expect(marketActions(rows[0]!)).toEqual(['remove-bundle']);
     expect(marketHasUpdates(rows)).toBe(false);
@@ -228,13 +228,20 @@ describe('市场页的「已装（本机）」那半（module-distribution spec 
           pkg: '@acme/module-inventory',
           installed: '0.1.1',
           latest: '0.2.0',
-          latestBlocked: 'incompatible',
+          latestBlocked: {
+            kind: 'incompatible',
+            requirements: { 'engines.dsh': '>=2.0.0' },
+            runtimeVersion: '1.0.0',
+          },
         },
       ],
       [unit('inventory')],
       new Set(),
     );
-    expect(rows[0]?.hint).toBe('panels.market.updateIncompatible');
+    expect(rows[0]?.hint).toEqual({
+      key: 'panels.market.updateNeedsDsh',
+      params: { dsh: 'dsh >=2.0.0', runtime: '1.0.0' },
+    });
     expect(marketActions(rows[0]!)).toEqual(['remove-bundle']);
   });
 
@@ -286,7 +293,7 @@ describe('浏览器那半的拒因也进同一行（C-9）', () => {
 
     expect(units.refusals().map((one) => one.kind)).toEqual(['no-manifest']);
     expect(rows[0]?.note).toBeUndefined();
-    expect(rows[0]?.hint).toBe('panels.market.moduleRestartHint');
+    expect(rows[0]?.hint).toEqual({ key: 'panels.market.moduleRestartHint' });
     warn.mockRestore();
   });
 

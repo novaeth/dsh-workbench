@@ -68,12 +68,12 @@ describe('点下去那一行：从点下去到真的安定，只有右边在变'
   });
 
   it('不是那一行在跑 → 原样（重算出来的态照显示）', () => {
-    const live = row({ id: 'inventory', state: 'inactive', hint: 'panels.market.moduleRestartHint' });
+    const live = row({ id: 'inventory', state: 'inactive', hint: { key: 'panels.market.moduleRestartHint' } });
     const shown = withPinnedRow([live], pinnedRowOf(pending({ row: clicked }), undefined));
 
     expect(shown[0]).toBe(live);
     expect(shown[0]?.state).toBe('inactive');
-    expect(shown[0]?.hint).toBe('panels.market.moduleRestartHint');
+    expect(shown[0]?.hint).toEqual({ key: 'panels.market.moduleRestartHint' });
   });
 
   it('没记那一份（插件 / 工作台那几跳不记）→ 名单原样，只是换了份新数组', () => {

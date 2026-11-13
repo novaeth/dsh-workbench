@@ -281,6 +281,24 @@ describe('添加模块浮层：文案与来源选项（按 dsh 插件页的骨�
       failureCode(change({ errorCode: 'operation-error', errorDetail: 'ERR_PNPM_FETCH_404  GET https://x: Not Found' })),
     ).toBe('operation-error');
     expect(failureReason('credentials', 'failed', t)).toContain('要凭证');
+    expect(
+      failureReason(
+        'incompatible-version',
+        'failed',
+        t,
+        change({
+          errorCode: 'incompatible-version',
+          incompatible: [
+            {
+              name: '@a/mod',
+              version: '0.2.0',
+              runtimeVersion: '1.0.0',
+              requirements: { 'engines.dsh': '>=2.0.0' },
+            },
+          ],
+        }),
+      ),
+    ).toBe('这一版要 dsh >=2.0.0，当前 dsh 是 1.0.0，先升级 dsh 再装。');
     expect(failureReason('failed', 'failed', t)).toBe('操作失败，但没有给出原因，详情见安装输出的对应行。');
     expect(failureReason('some-new-code', 'failed', t)).toBe('some-new-code');
   });

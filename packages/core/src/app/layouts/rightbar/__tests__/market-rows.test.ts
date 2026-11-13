@@ -76,7 +76,7 @@ describe('marketRows', () => {
     expect(row?.canUpdate).toBe(false);
     expect(row?.canUninstall).toBe(false);
     expect(row?.note).toBeUndefined();
-    expect(row?.hint).toBe('panels.market.uncheckedHint');
+    expect(row?.hint).toEqual({ key: 'panels.market.uncheckedHint' });
   });
 
   it('未装 + 来源解析得出 → 只能装（不能更新/卸载一个没装的东西）', () => {
@@ -98,14 +98,15 @@ describe('marketRows', () => {
   });
 
   it('★ 源上的新版要更新的工作台 → 说「有新版」，但不给更新按钮，并说清为什么', () => {
+    const blocked = { kind: 'needs-workbench' as const };
     const row = marketRows([unit('issues')], installed(), {
-      issues: { installed: '1.0.0', latest: '2.0.0', blocked: 'needs-workbench' },
+      issues: { installed: '1.0.0', latest: '2.0.0', blocked },
     })[0];
 
     expect(row).toMatchObject({
       state: 'outdated',
-      hint: 'panels.market.updateNeedsWorkbench',
-      moduleUpdate: { installed: '1.0.0', latest: '2.0.0', blocked: 'needs-workbench' },
+      hint: { key: 'panels.market.updateNeedsWorkbench' },
+      moduleUpdate: { installed: '1.0.0', latest: '2.0.0', blocked },
     });
     expect(marketActions(row as never)).toEqual(['uninstall']);
     expect(marketHasUpdates([row as never])).toBe(false);
@@ -113,10 +114,10 @@ describe('marketRows', () => {
 
   it('★ 新版和这一版工作台不匹配（更旧或形状不对）→ 也不给更新，换一句说清', () => {
     const row = marketRows([unit('issues')], installed(), {
-      issues: { installed: '1.0.0', latest: '1.1.0', blocked: 'incompatible' },
+      issues: { installed: '1.0.0', latest: '1.1.0', blocked: { kind: 'incompatible' } },
     })[0];
 
-    expect(row?.hint).toBe('panels.market.updateIncompatible');
+    expect(row?.hint).toEqual({ key: 'panels.market.updateIncompatible' });
     expect(marketActions(row as never)).toEqual(['uninstall']);
   });
 
@@ -172,7 +173,7 @@ describe('marketRows', () => {
 
     expect(row?.state).toBe('unchecked');
     expect(row?.canInstall).toBe(true);
-    expect(row?.hint).toBe('panels.market.uncheckedHint');
+    expect(row?.hint).toEqual({ key: 'panels.market.uncheckedHint' });
   });
 
   it('★ 来源拿不到时**给一句能照做的话**，而不是一个灰按钮', () => {
@@ -388,7 +389,7 @@ describe('checkingRows：装的过程中 / 刚装完那一下的读数缺口', (
   it('★ 能力表还没跟上：正在装 / 刚装完的那一单元说「检测中」，不挂「重启再试」', () => {
     const rows = marketRows([unit('issues')], {});
     expect(rows[0]?.state).toBe('unknown');
-    expect(rows[0]?.hint).toBe('panels.market.uncheckedHint');
+    expect(rows[0]?.hint).toEqual({ key: 'panels.market.uncheckedHint' });
 
     expect(checkingRows(rows, { all: true, units: new Set() })[0]).toMatchObject({
       state: 'checking',

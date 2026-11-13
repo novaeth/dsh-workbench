@@ -5,19 +5,21 @@ import { supplyNeedsOf } from '@dsh-workbench/shared';
 import type { InstalledPlugin } from '@/shared/api/installed-plugins';
 import type { MarketNameMap } from './market-names';
 import type {
-  MarketHintKey,
+  MarketHint,
   MarketNote,
   MarketRow,
   MarketRowAction,
   MarketState,
   ModuleUpdate,
 } from './market-row-types';
+import { updateBlockHintOf } from './market-update-block';
 import type { SharedRow } from './market-shared-rows';
 import { workbenchActionsOf } from './market-workbench-row';
 
 import type { CapabilityMap } from '@/shared/hooks/use-capabilities';
 
 export type {
+  MarketHint,
   MarketHintKey,
   MarketNote,
   MarketRow,
@@ -106,12 +108,6 @@ export function refusalReasons(
   return [...new Set(client ?? [])];
 }
 
-function updateBlockHintOf(block: ModuleUpdateBlock): MarketHintKey {
-  return block === 'needs-workbench'
-    ? 'panels.market.updateNeedsWorkbench'
-    : 'panels.market.updateIncompatible';
-}
-
 export function installedIdSet(
   installed: readonly InstalledWorkbenchModule[] | undefined,
 ): ReadonlySet<string> | null {
@@ -182,7 +178,7 @@ export function installedRows(
       ...(remembered === undefined ? {} : { label: remembered }),
       state: outdated ? 'outdated' : refused.length > 0 ? 'unusable' : pending ? 'inactive' : 'installed',
       ...(pending
-        ? { hint: 'panels.market.moduleRestartHint' as const }
+        ? { hint: { key: 'panels.market.moduleRestartHint' } as const }
         : blocked === undefined
           ? {}
           : { hint: updateBlockHintOf(blocked) }),
@@ -458,10 +454,10 @@ export function marketRows(
             ...(entry.registry === undefined ? {} : { registry: entry.registry }),
           };
     const shown = moduleUpdate === undefined ? state : 'outdated';
-    const hint =
+    const hint: MarketHint | undefined =
       moduleUpdate?.blocked === undefined
         ? shown === 'unknown' || shown === 'unchecked'
-          ? ('panels.market.uncheckedHint' as const)
+          ? { key: 'panels.market.uncheckedHint' }
           : undefined
         : updateBlockHintOf(moduleUpdate.blocked);
     rows.push({

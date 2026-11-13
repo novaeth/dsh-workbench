@@ -97,7 +97,7 @@ export function AddModuleFailure({ t, state }: { t: Translate; state: AddModuleS
 export function AddModuleResult({ t, state }: { t: Translate; state: AddModuleState }) {
   const outcome = state.outcome;
   if (outcome === null) return null;
-  const reason = failureReason(failureCode(outcome.change), outcome.change.application, t);
+  const reason = failureReason(failureCode(outcome.change), outcome.change.application, t, outcome.change);
   const supply = supplyKey(outcome.supply.state);
   const builds = state.builds;
   const plugin = outcome.plugin;

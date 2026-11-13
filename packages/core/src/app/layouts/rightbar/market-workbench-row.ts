@@ -5,7 +5,8 @@ import {
   selfUpdateSwapping,
   type SelfUpdateMark,
 } from './market-settle';
-import type { MarketHintKey, MarketRow, MarketRowAction } from './market-row-types';
+import type { MarketHint, MarketRow, MarketRowAction } from './market-row-types';
+import { updateBlockHintOf } from './market-update-block';
 
 export const WORKBENCH_ROW_ID = 'workbench:self';
 
@@ -53,8 +54,8 @@ export function workbenchRow(
   const staleNote = mark !== undefined && mark.kind === 'pending-restart' && update !== undefined;
   const note = mark === undefined || staleNote ? undefined : selfUpdateNote(mark);
   const blocked = update === undefined ? undefined : version.latestBlocked;
-  const blockedHint: MarketHintKey | undefined =
-    blocked === undefined ? undefined : 'panels.market.workbenchUpdateNeedsDsh';
+  const blockedHint: MarketHint | undefined =
+    blocked === undefined ? undefined : updateBlockHintOf(blocked);
   const stale =
     !local && update === undefined && version.running !== undefined && version.running !== version.installed;
   const followUp = version.followUp;
@@ -76,7 +77,7 @@ export function workbenchRow(
     ...(local ? { local: true } : {}),
     ...(stale || followUpState || blockedHint === undefined ? {} : { hint: blockedHint }),
     ...(selfUpdate?.migration === true && selfUpdate.state === 'running'
-      ? { hint: 'panels.market.selfUpdateMigration' as const }
+      ? { hint: { key: 'panels.market.selfUpdateMigration' } }
       : {}),
     ...(note === undefined ? {} : { note }),
     version: {
@@ -87,7 +88,7 @@ export function workbenchRow(
       ? {}
       : { moduleUpdate: { ...update, ...(blocked === undefined ? {} : { blocked }) } }),
     ...(followUp === undefined ? {} : { followUp }),
-    ...(followUpState ? { hint: 'panels.market.migrationHint' as const } : {}),
+    ...(followUpState ? { hint: { key: 'panels.market.migrationHint' } } : {}),
     pkg: version.pkg,
     ...(version.spec === undefined ? {} : { spec: version.spec }),
     ...(version.registry === undefined ? {} : { registry: version.registry }),
