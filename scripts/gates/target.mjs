@@ -778,7 +778,13 @@ function walkMarkdown(dir) {
   const visit = (here) => {
     for (const entry of readdirSync(here)) {
       const full = join(here, entry);
-      if (statSync(full).isDirectory()) visit(full);
+      let stat;
+      try {
+        stat = statSync(full);
+      } catch {
+        continue;
+      }
+      if (stat.isDirectory()) visit(full);
       else if (entry.endsWith('.md')) out.push(full);
     }
   };
@@ -976,7 +982,12 @@ function firstPartyDocs() {
     for (const entry of readdirSync(here)) {
       if (DOC_SKIP.has(entry)) continue;
       const full = join(here, entry);
-      const stat = statSync(full);
+      let stat;
+      try {
+        stat = statSync(full);
+      } catch {
+        continue;
+      }
       if (stat.isDirectory()) {
         if (full !== ROOT) visit(full);
         continue;
