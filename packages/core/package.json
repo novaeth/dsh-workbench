@@ -88,7 +88,8 @@
     "dsh": ">=0.2.2-rc.2"
   },
   "peerDependencies": {
-    "react": "*"
+    "react": "*",
+    "react-dom": "*"
   },
   "peerDependenciesMeta": {
     "react": {
