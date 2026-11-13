@@ -53,6 +53,7 @@ import { asArgs, warn } from '../shared/api/host/host-args';
 import { createApprovalGate } from '@/shared/api/host/approval-gate';
 import { registerBootThemeGuard } from '@/shared/api/host/boot-theme-guard';
 import { registerDiyPreset } from '@/shared/api/host/diy-preset';
+import { createFlowAgentGateway, FLOW_CHILD_HIDDEN_TOOLS } from '@/shared/api/host/flow/agent';
 import { notifyLongTaskChange } from '@/shared/api/host/long-task-notice';
 export const name = 'dsh-workbench';
 interface ReleasedLookup { isReleased(id: string): boolean }
@@ -62,6 +63,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   if (seam !== undefined) provideGitProcessSeam(seam);
   registerBootThemeGuard(ctx);
   registerDiyPreset(ctx);
+  const flowAgents = createFlowAgentGateway(ctx);
   const facts = createFactLog();
   const values = createValueHandoff();
   const panelState = createPanelStateStore();
@@ -158,8 +160,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     liveManifests().find((manifest) => manifest.id === unit);
   const hasEnvNeeds = (manifest: UnitManifest): boolean => needsOf(manifest).length > 0;
   const declaredNow = (): readonly UnitManifest[] => liveManifests().filter(hasEnvNeeds);
-  const probeInput = (manifest: UnitManifest): NeedProbeInput => ({
-    unit: manifest.id,
+  const probeInput = (manifest: UnitManifest): NeedProbeInput => ({ unit: manifest.id,
     needs: needsOf(manifest),
   });
   const releasedOf = (unit: string): boolean =>
@@ -214,12 +215,11 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   const factsOfUnit = (unit: string): readonly string[] => [...(routesOfUnitMap.get(unit) ?? []), 'capability'];
   const callFacts = (unit: string, call: UnitCall): readonly string[] =>
     factsOfMap.get(unit)?.(call) ?? factsOfUnit(unit);
-  const deniedNow = (context: ToolScopeContext): readonly string[] => [
-    ...new Set([
-      ...[...mounted.values()].flatMap((item) => item.plan.gate?.deniedTools(context) ?? []),
-      ...mcpScope.denied(context),
-    ]),
-  ];
+  const deniedNow = (context: ToolScopeContext): readonly string[] => {
+    const gates = [...mounted.values()].flatMap((item) => item.plan.gate?.deniedTools(context) ?? []);
+    const hidden = context.session === null || !flowAgents.isChild(context.session) ? [] : FLOW_CHILD_HIDDEN_TOOLS;
+    return [...new Set([...gates, ...mcpScope.denied(context), ...hidden])];
+  };
   const closedReasonOf = createClosedReasonOf({
     ctx,
     gates: () => [...mounted.values()].map((item) => item.plan.gate),
@@ -283,7 +283,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
           notify: (change) =>
             notifyLongTaskChange(ctx.get('agents') as AgentsLookup | undefined, host.unit, change),
         },
-        longTaskRuns,
+        longTaskRuns, agents: flowAgents.port,
       });
     } catch (error) {
       mountFailures.set(id, { reason: failureReasonOf(error), host });
@@ -475,7 +475,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
         toolOf: (name) => unitsOfTool().get(name),
         faceOf: (unit) => mounted.get(unit)?.result,
         declaredNotes: declaredNoteTools,
-        deniedReasonOf: closedReasonOf,
+        deniedReasonOf: closedReasonOf, isFlowChild: flowAgents.isChild,
       }),
     );
     return () => off?.();

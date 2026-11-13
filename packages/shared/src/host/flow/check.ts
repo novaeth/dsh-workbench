@@ -1,6 +1,10 @@
+import { flowUsesAgents } from './agent.js';
 import type {
   FlowActionRegistry,
+  FlowActionStep,
+  FlowAgentStep,
   FlowCheck,
+  FlowCheckOptions,
   FlowDefinition,
   FlowPredicate,
   FlowProblem,
@@ -90,15 +94,108 @@ function checkPredicate(
   add(path, '不是合法的谓词');
 }
 
+function checkCommon(
+  step: FlowActionStep | FlowAgentStep,
+  at: string,
+  seen: ReadonlySet<string>,
+  add: AddProblem,
+): void {
+  const item = step.forEach !== undefined;
+  if (step.when !== undefined) {
+    checkPredicate(step.when, `${at}.when`, { seen, item: false, value: false }, add);
+  }
+  if (step.forEach !== undefined) {
+    checkValue(step.forEach.over, `${at}.forEach.over`, { seen, item: false, value: false }, add);
+    if (step.forEach.as.trim() === '') add(`${at}.forEach.as`, 'forEach.as 不能为空');
+    if (!Number.isInteger(step.forEach.max) || step.forEach.max < 1 || step.forEach.max > 50) {
+      add(`${at}.forEach.max`, 'forEach.max 要在 1..50');
+    }
+  }
+  if (step.retry !== undefined) {
+    if (
+      !Number.isInteger(step.retry.attempts) ||
+      step.retry.attempts < 0 ||
+      step.retry.attempts > 5
+    ) {
+      add(`${at}.retry.attempts`, 'retry.attempts 要在 0..5');
+    }
+    if (
+      step.retry.delayMs !== undefined &&
+      (!Number.isInteger(step.retry.delayMs) ||
+        step.retry.delayMs < 0 ||
+        step.retry.delayMs > 60_000)
+    ) {
+      add(`${at}.retry.delayMs`, 'retry.delayMs 要在 0..60000');
+    }
+  }
+  const poll = 'poll' in step ? step.poll : undefined;
+  if (poll !== undefined) {
+    if ('agent' in step) {
+      add(`${at}.poll`, 'agent 步骤不支持 poll');
+      return;
+    }
+    if (!Number.isInteger(poll.everyMs) || poll.everyMs < 100 || poll.everyMs > 60_000) {
+      add(`${at}.poll.everyMs`, 'poll.everyMs 要在 100..60000');
+    }
+    if (!Number.isInteger(poll.maxMs) || poll.maxMs < 0 || poll.maxMs > 1_800_000) {
+      add(`${at}.poll.maxMs`, 'poll.maxMs 要在 0..1800000');
+    } else if (poll.maxMs !== 0 && poll.maxMs < poll.everyMs) {
+      add(`${at}.poll.maxMs`, 'poll.maxMs 不能小于 everyMs');
+    }
+    if (
+      poll.onTimeout !== undefined &&
+      poll.onTimeout !== 'fail' &&
+      poll.onTimeout !== 'continue'
+    ) {
+      add(`${at}.poll.onTimeout`, 'poll.onTimeout 只能是 fail 或 continue');
+    }
+    checkPredicate(poll.until, `${at}.poll.until`, { seen, item, value: true }, add);
+  }
+}
+
+function checkAgent(step: FlowAgentStep, at: string, seen: ReadonlySet<string>, add: AddProblem): void {
+  const spec = step.agent;
+  const item = step.forEach !== undefined;
+  checkValue(spec.prompt, `${at}.agent.prompt`, { seen, item, value: false }, add);
+  if ('$lit' in spec.prompt && typeof spec.prompt.$lit !== 'string') {
+    add(`${at}.agent.prompt`, 'agent.prompt 要是个字符串');
+  }
+  if (spec.cwd !== undefined) {
+    checkValue(spec.cwd, `${at}.agent.cwd`, { seen, item, value: false }, add);
+    if ('$lit' in spec.cwd && typeof spec.cwd.$lit !== 'string') {
+      add(`${at}.agent.cwd`, 'agent.cwd 要是个字符串');
+    }
+  }
+  if (
+    spec.schema !== undefined &&
+    (typeof spec.schema !== 'object' || spec.schema === null || spec.schema['type'] !== 'object')
+  ) {
+    add(`${at}.agent.schema`, 'agent.schema 要是对象根的 JSON Schema');
+  }
+  for (const key of ['label', 'name', 'provider', 'model', 'preset'] as const) {
+    const value = spec[key];
+    if (value !== undefined && (typeof value !== 'string' || value.trim() === '')) {
+      add(`${at}.agent.${key}`, `${key} 不能为空`);
+    }
+  }
+  if (step.forEach !== undefined && spec.name !== undefined) {
+    add(`${at}.agent.name`, 'forEach 步骤里不要给 agent.name');
+  }
+}
+
 function checkFlowAt(
   flow: FlowDefinition,
   actions: Pick<FlowActionRegistry, 'has'>,
+  options: FlowCheckOptions,
   prefix: string,
   add: AddProblem,
 ): void {
   if (flow.id.trim() === '') add(`${prefix}id`, '流程 id 不能为空');
   if (flow.title.trim() === '') add(`${prefix}title`, '流程标题不能为空');
   if (flow.steps.length === 0) add(`${prefix}steps`, '至少要有一步');
+  if (options.agents === false && flowUsesAgents(flow)) {
+    add(`${prefix}steps`, '这一份运行时没有 agent 能力（没装 subagents）');
+  }
   if (flow.target !== undefined) {
     checkValue(flow.target, `${prefix}target`, { seen: new Set(), item: false, value: false }, add);
   }
@@ -122,7 +219,14 @@ function checkFlowAt(
           checkValue(value, `${at}.with.${key}`, { seen, item: false, value: false }, add);
         }
       }
-      checkFlowAt(step.flow, actions, `${at}.flow.`, add);
+      checkFlowAt(step.flow, actions, options, `${at}.flow.`, add);
+      seen.add(step.id);
+      return;
+    }
+
+    if ('agent' in step) {
+      checkAgent(step, at, seen, add);
+      checkCommon(step, at, seen, add);
       seen.add(step.id);
       return;
     }
@@ -131,85 +235,32 @@ function checkFlowAt(
     else if (!actions.has(step.action)) add(`${at}.action`, `注册表里没有这个动作：${step.action}`);
 
     const item = step.forEach !== undefined;
-    if (step.when !== undefined) {
-      checkPredicate(step.when, `${at}.when`, { seen, item: false, value: false }, add);
-    }
     if (step.with !== undefined) {
       for (const [key, value] of Object.entries(step.with)) {
         checkValue(value, `${at}.with.${key}`, { seen, item, value: false }, add);
       }
     }
 
-    if (step.forEach !== undefined) {
-      checkValue(step.forEach.over, `${at}.forEach.over`, { seen, item: false, value: false }, add);
-      if (step.forEach.as.trim() === '') add(`${at}.forEach.as`, 'forEach.as 不能为空');
-      if (!Number.isInteger(step.forEach.max) || step.forEach.max < 1 || step.forEach.max > 50) {
-        add(`${at}.forEach.max`, 'forEach.max 要在 1..50');
-      }
-    }
-
-    if (step.retry !== undefined) {
-      if (
-        !Number.isInteger(step.retry.attempts) ||
-        step.retry.attempts < 0 ||
-        step.retry.attempts > 5
-      ) {
-        add(`${at}.retry.attempts`, 'retry.attempts 要在 0..5');
-      }
-      if (
-        step.retry.delayMs !== undefined &&
-        (!Number.isInteger(step.retry.delayMs) ||
-          step.retry.delayMs < 0 ||
-          step.retry.delayMs > 60_000)
-      ) {
-        add(`${at}.retry.delayMs`, 'retry.delayMs 要在 0..60000');
-      }
-    }
-
-    if (step.poll !== undefined) {
-      if (
-        !Number.isInteger(step.poll.everyMs) ||
-        step.poll.everyMs < 100 ||
-        step.poll.everyMs > 60_000
-      ) {
-        add(`${at}.poll.everyMs`, 'poll.everyMs 要在 100..60000');
-      }
-      if (
-        !Number.isInteger(step.poll.maxMs) ||
-        step.poll.maxMs < 0 ||
-        step.poll.maxMs > 1_800_000
-      ) {
-        add(`${at}.poll.maxMs`, 'poll.maxMs 要在 0..1800000');
-      } else if (step.poll.maxMs !== 0 && step.poll.maxMs < step.poll.everyMs) {
-        add(`${at}.poll.maxMs`, 'poll.maxMs 不能小于 everyMs');
-      }
-      if (
-        step.poll.onTimeout !== undefined &&
-        step.poll.onTimeout !== 'fail' &&
-        step.poll.onTimeout !== 'continue'
-      ) {
-        add(`${at}.poll.onTimeout`, 'poll.onTimeout 只能是 fail 或 continue');
-      }
-      checkPredicate(step.poll.until, `${at}.poll.until`, { seen, item, value: true }, add);
-    }
-
+    checkCommon(step, at, seen, add);
     seen.add(step.id);
   });
 }
 
 /**
- * 校验一条流程：id / 步骤、动作存在、引用只指前面、重试与轮询在边界内、子流程也照查。
+ * 校验一条流程：id / 步骤、动作存在、引用只指前面、重试与轮询在边界内、agent 节点形状、子流程也照查。
  * 只做静态检查，不碰平台、不跑动作。
  * @param flow 流程定义。
  * @param actions 动作表（只问 `has`）。
+ * @param options 额外口径；`agents: false` 表示这一份运行时没有 agent 通道。
  * @returns 逐条问题；`ok` 为真表示没有。
  */
 export function checkFlow(
   flow: FlowDefinition,
   actions: Pick<FlowActionRegistry, 'has'>,
+  options: FlowCheckOptions = {},
 ): FlowCheck {
   const problems: FlowProblem[] = [];
-  checkFlowAt(flow, actions, '', (path, problem) => {
+  checkFlowAt(flow, actions, options, '', (path, problem) => {
     problems.push({ path, problem });
   });
   return { ok: problems.length === 0, problems };

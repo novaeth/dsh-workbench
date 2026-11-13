@@ -1,6 +1,7 @@
 import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { approvalFor, type ApprovalCall, type ToolUnit, type UnitMountResult } from '@dsh-workbench/shared/host';
 import { approvalCallOf } from './approval-call';
+import { flowChildDenial } from './flow/agent';
 import { fullPermissionOf } from './permission-mode';
 
 export interface ApprovalGateExec {
@@ -20,6 +21,15 @@ export interface ApprovalGateDeps {
   readonly faceOf: (unit: string) => UnitMountResult | undefined;
   readonly declaredNotes: () => ReadonlySet<string>;
   readonly deniedReasonOf?: ((name: string, agent: unknown) => string | undefined) | undefined;
+  readonly isFlowChild?: ((sessionId: string) => boolean) | undefined;
+}
+
+function sessionIdOf(agent: unknown): string | undefined {
+  if (typeof agent !== 'object' || agent === null) return undefined;
+  const session = (agent as { readonly session?: unknown }).session;
+  if (typeof session !== 'object' || session === null) return undefined;
+  const id = (session as { readonly id?: unknown }).id;
+  return typeof id === 'string' && id !== '' ? id : undefined;
 }
 
 export function createApprovalGate(
@@ -29,9 +39,20 @@ export function createApprovalGate(
     const name = exec.name === undefined ? undefined : String(exec.name);
     const closed = name === undefined ? undefined : deps.deniedReasonOf?.(name, exec.agent);
     if (closed !== undefined) return { kind: 'deny', reason: closed };
+    const tool = name === undefined ? undefined : deps.toolOf(name);
+    const session = sessionIdOf(exec.agent);
+    if (session !== undefined && deps.isFlowChild?.(session) === true && name !== undefined) {
+      const denied = flowChildDenial(name);
+      if (denied !== undefined) return { kind: 'deny', reason: denied };
+      if (tool?.writes === true) {
+        return {
+          kind: 'deny',
+          reason: `流程里的 agent 节点不能调写工具 ${name}：把写平台那一步做成动作步骤。`,
+        };
+      }
+    }
     const decision = await next();
     if (decision.kind !== 'allow') return decision;
-    const tool = name === undefined ? undefined : deps.toolOf(name);
     const owner = tool === undefined ? undefined : deps.faceOf(tool.unit);
     const detailOf = owner === undefined ? undefined : (call: ApprovalCall) => owner.approvalDetail?.(call);
     const call = approvalCallOf(exec, name);

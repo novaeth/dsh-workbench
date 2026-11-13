@@ -11,6 +11,7 @@ import type {} from '@deepseek-ai/dsh-sandbox-policy';
 import type {} from '@deepseek-ai/dsh-session';
 import type {} from '@deepseek-ai/dsh-session-projection';
 import type {} from '@deepseek-ai/dsh-shell';
+import type {} from '@deepseek-ai/dsh-subagent';
 import type {} from '@deepseek-ai/dsh-system-prompt';
 import type {} from '@deepseek-ai/dsh-tools';
 import type {} from '@deepseek-ai/dsh-user-approval';
@@ -18,6 +19,8 @@ import type {} from '@deepseek-ai/dsh-workspace';
 
 import type { Context } from '@deepseek-ai/cordis';
 import type { Entry, Loader } from '@deepseek-ai/cordis-plugin-loader';
+import type { Agent, AgentHandle, AgentOptions, AgentRegistry } from '@deepseek-ai/dsh-agent';
+import type { SubagentActivation, SubagentResult, SubagentRuntime } from '@deepseek-ai/dsh-subagent';
 import type { AgentPresetRegistry, PresetDefinition } from '@deepseek-ai/dsh-agent-preset-registry';
 import type { ProfileContext } from '@deepseek-ai/dsh-app-boot';
 import type { IndexInjection, WebRoute } from '@deepseek-ai/dsh-host-webserver';
@@ -29,7 +32,7 @@ import type { ShellExecution, ShellExecutor } from '@deepseek-ai/dsh-shell';
 import type { AssembleContext, PromptAssembly } from '@deepseek-ai/dsh-system-prompt';
 import type { ToolDefinition, ToolOutputDefinition, ToolRunContext, ToolsService } from '@deepseek-ai/dsh-tools';
 import type { Workspace, WorkspaceRegistry } from '@deepseek-ai/dsh-workspace';
-import type { ToolSchema } from '@deepseek-ai/dsh-llm';
+import type { ContentBlock, ToolSchema } from '@deepseek-ai/dsh-llm';
 
 /** 宿主 logger（`ctx.logger`）的原型，`info` 与 `warn` 调用前仍要判存在。 */
 export type { LoggerService as DshLogger } from '@deepseek-ai/cordis';
@@ -121,3 +124,36 @@ export type DshSandboxPolicy = Pick<SandboxPolicyService, 'resolve'>;
 /** dsh 的工具表（服务名 `tools`）；`register` 回的清理函数在卸载时摘掉这条工具。 */
 export type DshToolRegistry = Pick<ToolsService, 'register'>;
 
+
+/** 一个活着的 agent 句柄（`ctx.agents.get()` 拿到的那个）；子 agent 的 `parent` 就是它。 */
+export type DshAgent = Agent;
+
+/** `ctx.agents.create()` 回的那把句柄：只有它能拆掉这条 agent。 */
+export type DshAgentHandle = AgentHandle;
+
+/** 起一条 agent 时的模型选择与输出上限。 */
+export type DshAgentOptions = AgentOptions;
+
+/** 宿主侧的 agent 名册（服务名 `agents`）：按会话 id 找活着的 agent，也能自己起一条。 */
+export type DshAgentRegistry = Pick<AgentRegistry, 'get' | 'create'>;
+
+/** 自己起一条 agent 时给的那份：会话 id、会话元数据（目录 / 来源 / 模式）与模型选择。 */
+export type DshCreateAgentOptions = Parameters<AgentRegistry['create']>[0];
+
+/** 子代理服务（服务名 `subagents`）：按 provider 起一条受管子 agent。 */
+export type DshSubagentRuntime = Pick<SubagentRuntime, 'startActivation' | 'getProvider'>;
+
+/** 一条起好的子 agent：身份、结果与收摊。 */
+export type DshSubagentActivation = SubagentActivation;
+
+/** 子 agent 跑完的结果：最后一条回复、可选的结构化值、停止原因。 */
+export type DshSubagentResult = SubagentResult;
+
+/** 一条消息内容块（子 agent 的 prompt 与输出都是它）。 */
+export type DshContentBlock = ContentBlock;
+
+/** 一条会话 id 的 branded 串（子 agent 可以预先指定）。 */
+export type DshSessionId = import('@deepseek-ai/dsh-session').SessionId;
+
+/** 子 agent 结构化输出收的那份对象根 JSON Schema（dsh 的受支持子集）。 */
+export type DshObjectJsonSchema = import('@deepseek-ai/dsh-tools').ObjectJsonSchema;
