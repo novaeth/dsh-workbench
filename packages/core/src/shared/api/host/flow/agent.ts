@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type {
   DshAgent,
   DshAgentHandle,
+  DshAgentOptions,
   DshAgentRegistry,
   DshContentBlock,
   DshHostContext,
@@ -15,7 +16,6 @@ import type {
 
 const SUBAGENT_PROVIDER = 'spawn';
 const OWNER_PRESET = 'standard';
-const OWNER_ORIGIN = 'subagent' as const;
 
 interface ChildDenial {
   readonly matches: (name: string) => boolean;
@@ -113,11 +113,14 @@ export function createFlowAgentGateway(ctx: DshHostContext): FlowAgentGateway {
           }
           return runnerOf({ subagents, parent, children });
         }
+        const agentPreset = await ownerPresetOf(ctx);
+        const agentOptions = ownerModelOf(ctx);
         let handle: DshAgentHandle;
         try {
           handle = await agents.create({
             sessionId: randomUUID() as DshSessionId,
-            meta: { cwd: context.workspace, origin: OWNER_ORIGIN, agentPreset: ownerPresetOf(ctx) },
+            meta: { cwd: context.workspace, agentPreset },
+            agentOptions,
           });
         } catch (error) {
           throw new Error(`这一趟没有会话，agent 节点要自建一个：${messageOf(error)}`, {
@@ -137,11 +140,11 @@ export function createFlowAgentGateway(ctx: DshHostContext): FlowAgentGateway {
   };
 }
 
-function ownerPresetOf(ctx: DshHostContext): string {
+async function ownerPresetOf(ctx: DshHostContext): Promise<string> {
   const presets = ctx.get('agentPresets') as unknown as
-    | { list(): readonly { readonly id: string; readonly broken?: string }[] }
+    | { list(): Promise<readonly { readonly id: string; readonly broken?: string }[]> }
     | undefined;
-  const usable = (presets?.list() ?? [])
+  const usable = (presets === undefined ? [] : await presets.list())
     .filter((row) => row.broken === undefined)
     .map((row) => row.id);
   if (usable.includes(OWNER_PRESET)) return OWNER_PRESET;
@@ -150,6 +153,16 @@ function ownerPresetOf(ctx: DshHostContext): string {
     throw new Error('这一份 dsh 没有可用的 agent 模式，流程里的 agent 节点跑不了');
   }
   return first;
+}
+
+function ownerModelOf(ctx: DshHostContext): DshAgentOptions {
+  const defaults = ctx.get('agentDefaultModel') as unknown as
+    | { currentSelection(): DshAgentOptions }
+    | undefined;
+  if (defaults === undefined) {
+    throw new Error('这一份 dsh 没有默认模型，流程里的 agent 节点跑不了 —— 先在设置里选一个模型');
+  }
+  return defaults.currentSelection();
 }
 
 function messageOf(error: unknown): string {

@@ -209,7 +209,7 @@
 - 一次性 = 直接用现有工具 / 命令跑，不建模块。
 - 写平台的 flow 工具在清单里 `writes: true` + `needsApproval`；跑前给对象 / 环境 / 影响。
 - `deps.flow.check(flow, actions)` 先过；动作里用 `ctx.need(intervention)` 报人工干预节点（旧的 `ctx.login(url)` 仍可用），`ctx.log` 报进度。
-- **agent 节点**：子 agent 读与判断，不写平台；结果进 `steps.<id>`；没会话时外壳自建 owner。见 [FLOW.md](FLOW.md) §4。
+- **agent 节点**：子 agent 读与判断，不写平台；结果进 `steps.<id>`；按钮起会带你当前会话。见 [FLOW.md](FLOW.md) §4。
 - flow 的运行时只走 `deps.flow`，类型只走 `@dsh-workbench/core/contract`；不要为 flow 直接 import `@dsh-workbench/shared/host`。
 - 不要在 flow 里存凭据；不要把一次性任务静默固化。
 - 工具描述写「跑已固化的 <标题> 流程」；不要用它新建 flow，新需求先问用户。

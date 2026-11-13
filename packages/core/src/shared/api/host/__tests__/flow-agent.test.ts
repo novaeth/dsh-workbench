@@ -57,11 +57,13 @@ function contextOf(parts: {
   readonly subagents?: unknown;
   readonly agents?: unknown;
   readonly agentPresets?: unknown;
+  readonly agentDefaultModel?: unknown;
 }): DshHostContext {
   const services: Record<string, unknown> = {
     subagents: parts.subagents,
     agents: parts.agents,
     agentPresets: parts.agentPresets,
+    agentDefaultModel: parts.agentDefaultModel,
   };
   return { get: (name: string) => services[name] } as unknown as DshHostContext;
 }
@@ -187,7 +189,8 @@ describe('createFlowAgentGateway：把一步 agent 接到 dsh 的 subagents', ()
             };
           },
         },
-        agentPresets: { list: () => [{ id: 'standard' }, { id: 'ptc' }] },
+        agentPresets: { list: async () => [{ id: 'standard' }, { id: 'ptc' }] },
+        agentDefaultModel: { currentSelection: () => ({ provider: 'deepseek-official', model: 'deepseek-flash' }) },
       }),
     );
 
@@ -201,7 +204,8 @@ describe('createFlowAgentGateway：把一步 agent 接到 dsh 的 subagents', ()
 
     expect(created[0]).toMatchObject({
       sessionId: expect.any(String),
-      meta: { cwd: '/w/a', origin: 'subagent', agentPreset: 'standard' },
+      meta: { cwd: '/w/a', agentPreset: 'standard' },
+      agentOptions: { provider: 'deepseek-official', model: 'deepseek-flash' },
     });
     expect(recorder.calls[0]?.['parent']).toBe(owner);
     expect(disposed).toHaveLength(1);
@@ -220,7 +224,8 @@ describe('createFlowAgentGateway：把一步 agent 接到 dsh 的 subagents', ()
             return { agent: parentOf('owner-1'), async dispose() {} };
           },
         },
-        agentPresets: { list: () => [{ id: 'ptc' }, { id: 'broken', broken: '没装好' }] },
+        agentPresets: { list: async () => [{ id: 'ptc' }, { id: 'broken', broken: '没装好' }] },
+        agentDefaultModel: { currentSelection: () => ({ provider: 'p', model: 'm' }) },
       }),
     );
 
@@ -245,13 +250,34 @@ describe('createFlowAgentGateway：把一步 agent 接到 dsh 的 subagents', ()
             return { agent: parentOf('owner-1'), async dispose() {} };
           },
         },
-        agentPresets: { list: () => [] },
+        agentPresets: { list: async () => [] },
+        agentDefaultModel: { currentSelection: () => ({ provider: 'p', model: 'm' }) },
       }),
     );
 
     await expect(
       gateway.port?.open({ workspace: '/w/a', sessionId: undefined, signal: new AbortController().signal }),
     ).rejects.toThrow(/没有可用的 agent 模式/);
+  });
+
+  it('没有默认模型就当场说清，不推到自建失败里', async () => {
+    const recorder = subagentsOf();
+    const gateway = createFlowAgentGateway(
+      contextOf({
+        subagents: recorder.runtime,
+        agents: {
+          get: () => undefined,
+          async create() {
+            throw new Error('不该走到这里');
+          },
+        },
+        agentPresets: { list: async () => [{ id: 'standard' }] },
+      }),
+    );
+
+    await expect(
+      gateway.port?.open({ workspace: '/w/a', sessionId: undefined, signal: new AbortController().signal }),
+    ).rejects.toThrow(/没有默认模型/);
   });
 
   it('自建失败时给一句能看懂的话', async () => {
@@ -265,7 +291,8 @@ describe('createFlowAgentGateway：把一步 agent 接到 dsh 的 subagents', ()
             throw new Error('no factory');
           },
         },
-        agentPresets: { list: () => [{ id: 'standard' }] },
+        agentPresets: { list: async () => [{ id: 'standard' }] },
+        agentDefaultModel: { currentSelection: () => ({ provider: 'p', model: 'm' }) },
       }),
     );
 

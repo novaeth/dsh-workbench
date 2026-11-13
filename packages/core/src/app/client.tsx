@@ -67,6 +67,7 @@ import * as apiResourceModule from '@/shared/hooks/use-api-resource';
 import * as cardSummaryModule from '@/shared/hooks/use-card-summary';
 import * as factsModule from '@/shared/hooks/use-facts';
 import * as hostWriteModule from '@/shared/hooks/use-host-write';
+import { setWriteSessionSource, useKitHostWrite } from '@/shared/hooks/use-kit-write';
 import * as longTaskModule from '@/shared/hooks/use-long-task';
 import * as capabilityGateModule from '@/shared/hooks/use-capability-gate';
 import * as unitBoardModule from '@/shared/hooks/use-unit-board';
@@ -96,6 +97,7 @@ export const kit = {
     ...cardSummaryModule,
     ...factsModule,
     ...hostWriteModule,
+    useHostWrite: useKitHostWrite,
     ...longTaskModule,
     ...capabilityGateModule,
     ...unitBoardModule,
@@ -177,13 +179,13 @@ function mount(ctx: DshClientContext): void {
 
   installWorkbenchStyles(workbenchCss());
 
-  installContextChips(ctx, {
-    currentSessionId: () => {
-      const sessions = ctx.get('sessions');
-      const snapshot = sessions?.list.getSnapshot();
-      return snapshot === undefined ? undefined : currentSessionId(snapshot, false);
-    },
-  });
+  const sessionNow = (): string | undefined => {
+    const sessions = ctx.get('sessions');
+    const snapshot = sessions?.list.getSnapshot();
+    return snapshot === undefined ? undefined : currentSessionId(snapshot, false);
+  };
+  setWriteSessionSource(sessionNow);
+  installContextChips(ctx, { currentSessionId: sessionNow });
   ctx.effect(() => {
     let disposeDictionary: (() => void) | undefined;
     const publish = (): void => {

@@ -162,8 +162,9 @@ export const face: UnitModuleFace = {
   要人处理就让它的结论进 `when`，下一步在动作里 `ctx.need(intervention)` 停下来。
 - `provider` / `model` / `preset` 可以单步覆盖；`name` 给子会话起个认得出的名字（`forEach` 里别写，会撞名）。
 - **次数上限**：一条 run 默认最多 16 次 agent 调用（`forEach` 与重试都算），超了这一步失败。
-- **会话**：agent 节点借起这一趟的会话当父 agent；工具起的流程自带。看板按钮起的流程没有会话，
-  外壳会为这一趟自建一个后台 owner（`origin: 'subagent'`，不进侧栏），完成后连它一起收掉。
+- **会话**：agent 节点借起这一趟的会话当父 agent。工具起的流程自带；看板按钮起的外壳会把**你当前
+  这个对话**一起发过来，子 agent 就挂在那下面，trace 在会话树里看得见。宿主侧没有会话时（直接打动作
+  接口），才为这一趟自建一条临时会话，完成后连它一起收掉。
 
 人工干预进入 `needs-human` 时，外壳会自动向起它的会话发一条「在等你处理」notice（hold、按 run 去重），flow 侧什么都不用做。
 
