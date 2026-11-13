@@ -18,10 +18,6 @@ export interface IsolatedInstallDeps {
 
 export type IsolatedInstallResult = InstallRetryResult;
 
-function stagingOf(liveDir: string): string {
-  return `${liveDir}.staging-${randomUUID().slice(0, 8)}`;
-}
-
 function backupOf(liveDir: string): string {
   return `${liveDir}.prev-${now()}-${randomUUID().slice(0, 4)}`;
 }
@@ -76,18 +72,6 @@ export function rollbackToolchain(liveDir: string): boolean {
   return true;
 }
 
-function swap(liveDir: string, staging: string): void {
-  const backup = backupOf(liveDir);
-  const hadLive = existsSync(liveDir);
-  if (hadLive) renameSync(liveDir, backup);
-  try {
-    renameSync(staging, liveDir);
-  } catch (error) {
-    if (hadLive && existsSync(backup) && !existsSync(liveDir)) renameSync(backup, liveDir);
-    throw error;
-  }
-}
-
 function discard(dir: string): void {
   if (!existsSync(dir)) return;
   try {
@@ -101,23 +85,29 @@ export async function installIsolatedRuntime(
   deps: IsolatedInstallDeps,
 ): Promise<IsolatedInstallResult> {
   cleanupToolchainSiblings(deps.liveDir);
-  const staging = stagingOf(deps.liveDir);
-  mkdirSync(staging, { recursive: true });
-  writeTextFile(join(staging, 'package.json'), toolchainManifestOf());
-  writeTextFile(join(staging, '.npmrc'), toolchainNpmrcOf());
+  const backup = backupOf(deps.liveDir);
+  const hadLive = existsSync(deps.liveDir);
+  if (hadLive) renameSync(deps.liveDir, backup);
+  mkdirSync(deps.liveDir, { recursive: true });
+  writeTextFile(join(deps.liveDir, 'package.json'), toolchainManifestOf());
+  writeTextFile(join(deps.liveDir, '.npmrc'), toolchainNpmrcOf());
+  const restore = (): void => {
+    if (existsSync(deps.liveDir)) discard(deps.liveDir);
+    if (hadLive && existsSync(backup)) renameSync(backup, deps.liveDir);
+  };
   try {
     const result = await installWithRetry(
       {
         run: deps.run,
-        resolves: () => deps.ready(staging),
-        drop: () => removePath(join(staging, 'node_modules')),
-        describe: () => deps.describe(staging),
+        resolves: () => deps.ready(deps.liveDir),
+        drop: () => removePath(join(deps.liveDir, 'node_modules')),
+        describe: () => deps.describe(deps.liveDir),
         ...(deps.log === undefined ? {} : { log: deps.log }),
       },
-      deps.command(staging),
+      deps.command(deps.liveDir),
       {
         what: 'opencli',
-        dropLabel: '暂存目录的 node_modules',
+        dropLabel: '装了一半的 node_modules',
         mismatch: '第一遍没装上（下载缓存和已有的 node_modules 对不上）',
         unresolved: '第一遍装完还是读不到',
         settled: '装好了',
@@ -125,17 +115,21 @@ export async function installIsolatedRuntime(
         failedAgain: '还是没装上',
       },
     );
-    if (!result.ok) return result;
-    if (!deps.ready(staging)) {
-      return { ...result, ok: false, detail: `${result.detail}；暂存目录就绪复检不过` };
+    if (!result.ok) {
+      restore();
+      return result;
+    }
+    if (!deps.ready(deps.liveDir)) {
+      restore();
+      return { ...result, ok: false, detail: `${result.detail}；装完复检不过` };
     }
     writeTextFile(
-      join(staging, '.ready.json'),
+      join(deps.liveDir, '.ready.json'),
       `${JSON.stringify({ pin: OPENCLI_PIN, at: new Date(now()).toISOString() })}\n`,
     );
-    swap(deps.liveDir, staging);
     return result;
-  } finally {
-    discard(staging);
+  } catch (error) {
+    restore();
+    throw error;
   }
 }

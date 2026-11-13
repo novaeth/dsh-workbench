@@ -113,7 +113,7 @@ describe('runBootstrapCommand（自举命令走宿主域）', () => {
     expect(result.detail).toBe('one\ntwo\nthree');
   });
 
-  it('★ 真实 pnpm store 报错串到 installIsolatedRuntime：清暂存一次、把命令重跑一遍', async () => {
+  it('★ 真实 pnpm store 报错串到 installIsolatedRuntime：清掉装了一半的 node_modules 再跑一遍', async () => {
     let attempts = 0;
     const live = join(tempHome(), 'toolchain');
     const run = vi.fn(async () => {
@@ -139,7 +139,7 @@ describe('runBootstrapCommand（自举命令走宿主域）', () => {
     expect(run).toHaveBeenCalledTimes(2);
     expect(result.ok).toBe(true);
     expect(result.reinstalled).toBe(true);
-    expect(result.detail).toContain('暂存目录的 node_modules');
+    expect(result.detail).toContain('装了一半的 node_modules');
     expect(existsSync(join(live, 'package.json'))).toBe(true);
   });
 

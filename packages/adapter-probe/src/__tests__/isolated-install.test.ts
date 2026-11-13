@@ -65,8 +65,8 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-describe('installIsolatedRuntime（暂存 → 自检 → 原子换入）', () => {
-  it('★ 装进暂存目录，自检和标记都通过后才换入；旧树留一份 prev', async () => {
+describe('installIsolatedRuntime（旧树先挪成 prev → 直接装进 live → 自检）', () => {
+  it('★ 直接装进 live（链接指向最终路径，挪目录才不会断）；旧树留一份 prev', async () => {
     const live = liveDir();
     mkdirSync(live, { recursive: true });
     writeFileSync(join(live, 'old.txt'), 'old');
@@ -86,7 +86,7 @@ describe('installIsolatedRuntime（暂存 → 自检 → 原子换入）', () =>
     expect(existsSync(join(dirname(live), previous[0] ?? '', 'old.txt'))).toBe(true);
   });
 
-  it('★ 装失败 → 旧树原样不动，暂存目录清掉', async () => {
+  it('★ 装失败 → 旧树换回来，装了一半的 live 清掉', async () => {
     const live = liveDir();
     mkdirSync(live, { recursive: true });
     writeFileSync(join(live, 'old.txt'), 'old');
@@ -99,7 +99,7 @@ describe('installIsolatedRuntime（暂存 → 自检 → 原子换入）', () =>
     expect(isOpencliReadyAt(live)).toBe(false);
   });
 
-  it('★ store mismatch 只清暂存目录的 node_modules，旧树不动', async () => {
+  it('★ store mismatch 只清 live 里装了一半的 node_modules，旧树在 prev 里', async () => {
     const live = liveDir();
     mkdirSync(join(live, 'node_modules'), { recursive: true });
     writeFileSync(join(live, 'node_modules', 'live.txt'), 'live');
@@ -112,7 +112,7 @@ describe('installIsolatedRuntime（暂存 → 自检 → 原子换入）', () =>
 
     expect(result.ok).toBe(true);
     expect(result.reinstalled).toBe(true);
-    expect(result.detail).toContain('暂存目录的 node_modules');
+    expect(result.detail).toContain('装了一半的 node_modules');
     const previous = readdirSync(dirname(live)).filter((entry) => entry.startsWith('toolchain.prev-'));
     expect(existsSync(join(dirname(live), previous[0] ?? '', 'node_modules', 'live.txt'))).toBe(true);
     expect(isOpencliReadyAt(live)).toBe(true);
