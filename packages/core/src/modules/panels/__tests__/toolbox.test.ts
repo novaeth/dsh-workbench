@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createNoopDataReader } from '@dsh-workbench/shared/testing';
 import type { HostContext, UnitManifest } from '@dsh-workbench/shared';
 import type { DshToolDefinition } from '@dsh-workbench/shared/host';
-import { approvalFor, MCP_TOOLS_SERVICE, type McpServerPacks } from '@dsh-workbench/shared/host';
+import { approvalFor, MCP_TOOLS_SERVICE, SESSION_PROJECTIONS_SERVICE, type McpServerPacks } from '@dsh-workbench/shared/host';
 import { createHostKit, createWorkspaceStore, hostSurface, WORKBENCH_ADAPTERS } from '@dsh-workbench/shared/host';
 import { panelsHost } from '../index';
 import {
@@ -61,22 +61,35 @@ afterEach(() => {
 
 const store = () => createWorkspaceStore({ root: dir });
 
-function mount(mcp: readonly McpServerPacks[] = [], extra: readonly UnitManifest[] = []) {
+function mount(
+  mcp: readonly McpServerPacks[] = [],
+  extra: readonly UnitManifest[] = [],
+  presetOf: (session: string) => string | null = () => null,
+) {
   const registered: DshToolDefinition[] = [];
   const ctx = {
     get: (key: string) =>
       key === WORKBENCH_ADAPTERS
         ? adapters
-        : key === MCP_TOOLS_SERVICE
-          ? { servers: () => mcp }
-          : key === 'tools'
+        : key === SESSION_PROJECTIONS_SERVICE
           ? {
-              register: (definition: DshToolDefinition) => {
-                registered.push(definition);
-                return () => {};
-              },
+              stateOf: (session: unknown) =>
+                presetOf(
+                  typeof session === 'object' && session !== null
+                    ? String((session as { id?: unknown }).id ?? '')
+                    : String(session),
+                ),
             }
-          : undefined,
+          : key === MCP_TOOLS_SERVICE
+            ? { servers: () => mcp }
+            : key === 'tools'
+              ? {
+                  register: (definition: DshToolDefinition) => {
+                    registered.push(definition);
+                    return () => {};
+                  },
+                }
+              : undefined,
     provide: () => () => {},
     logger: { info: () => {}, warn: () => {} },
   } as unknown as HostContext;
@@ -208,6 +221,19 @@ describe('工具箱：默认只留控制面，按会话开包', () => {
       'workbench_board_x_do',
     ]);
     expect(deniedOf(mounted, 's-1', 'workbench-diy')).not.toContain(MANAGE_TOOLS[0]);
+  });
+
+  it('★ 工坊那条会话是先建会话、再 select DIY：header 上没有 preset，list 也要说已启用', async () => {
+    const { mounted, registered } = mount([], [], () => 'workbench-diy');
+
+    const listed = await call(registered, TOOLBOX_LIST_TOOL, {}, 's-1');
+
+    expect(String(listed['text'])).toContain('当前已启用：manage、diy');
+    expect(deniedOf(mounted, 's-1', 'workbench-diy')).toEqual(['workbench_board_x_list', 'workbench_board_x_do']);
+
+    const again = await call(registered, TOOLBOX_OPEN_TOOL, { targets: ['manage'] }, 's-1');
+    expect(again['newly']).toEqual([]);
+    expect(String(again['text'])).toContain('原本已启用');
   });
 
   it('★ 旧 dsh 没有会话 id：包全开，开包工具只回一句"不用开"', async () => {

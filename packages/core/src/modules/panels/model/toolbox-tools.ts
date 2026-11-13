@@ -1,5 +1,7 @@
 import type { DshHostContext, DshToolDefinition, DshToolRegistry, DshToolRunContext } from '@dsh-workbench/shared/host';
 import { sessionIdOf, sessionWorkspace } from '@dsh-workbench/shared/host';
+import { presetOfSession } from '@/shared/api/host/preset-scope';
+import { toolScopeContextOf } from '@/shared/api/host/tool-scope';
 import { TOOLBOX_CLOSE_TOOL, TOOLBOX_LIST_TOOL, TOOLBOX_OPEN_TOOL } from '../unit';
 import { textOutput } from './tool-output';
 import type { PackEntry, PackId, Toolbox } from './toolbox';
@@ -22,10 +24,8 @@ function targetsOf(raw: unknown): readonly string[] {
     .slice(0, PACK_TARGET_LIMIT);
 }
 
-function presetOf(exec: DshToolRunContext | undefined): string | null {
-  const header = exec?.agent?.session?.header as { agentPreset?: unknown } | undefined;
-  const value = header?.agentPreset;
-  return typeof value === 'string' && value !== '' ? value : null;
+function presetOf(ctx: DshHostContext, exec: DshToolRunContext | undefined): string | null {
+  return toolScopeContextOf(exec?.agent, (handle) => presetOfSession(ctx, handle))?.preset ?? null;
 }
 
 function countLine(pack: PackEntry): string {
@@ -125,7 +125,7 @@ export function registerToolboxTools(ctx: DshHostContext, toolbox: Toolbox): Arr
     output: OUTPUT,
     async execute(_raw: unknown, exec: DshToolRunContext) {
       const session = sessionIdOf(exec) ?? null;
-      return { text: catalogText(toolbox, session, presetOf(exec), sessionWorkspace(exec) ?? null) };
+      return { text: catalogText(toolbox, session, presetOf(ctx, exec), sessionWorkspace(exec) ?? null) };
     },
   };
 
@@ -158,11 +158,11 @@ export function registerToolboxTools(ctx: DshHostContext, toolbox: Toolbox): Arr
       'MCP server 启用 mcp:<server>；模块或插件自己的工具启用 unit:<模块或插件 id>。开启需要用户审批。',
     false,
     (plan, exec) => {
-      const newly = toolbox.open(plan.session, plan.packs, presetOf(exec));
+      const newly = toolbox.open(plan.session, plan.packs, presetOf(ctx, exec));
       return {
         packs: [...plan.packs],
         newly: [...newly],
-        text: openedText(toolbox, plan.session, presetOf(exec), newly),
+        text: openedText(toolbox, plan.session, presetOf(ctx, exec), newly),
       };
     },
   );
@@ -173,11 +173,11 @@ export function registerToolboxTools(ctx: DshHostContext, toolbox: Toolbox): Arr
       '相关事项完成后或后续不再需要时请关闭；无需审批。',
     true,
     (plan, exec) => {
-      const closed = toolbox.close(plan.session, plan.packs, presetOf(exec));
+      const closed = toolbox.close(plan.session, plan.packs, presetOf(ctx, exec));
       return {
         packs: [...plan.packs],
         closed: [...closed],
-        text: closedText(toolbox, plan.session, presetOf(exec), closed),
+        text: closedText(toolbox, plan.session, presetOf(ctx, exec), closed),
       };
     },
   );

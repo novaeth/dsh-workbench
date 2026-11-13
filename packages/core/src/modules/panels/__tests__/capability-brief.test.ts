@@ -83,4 +83,11 @@ describe('能力索引：写的是一句话索引进 skill 目录', () => {
     expect(brief.content).toContain(TOOLBOX_CLOSE_TOOL);
     expect(brief.content).toContain('mcp:<server>');
   });
+
+  it('★ 写明 DIY 模式的会话里 manage / diy 默认已开（否则模型会去白开一次）', () => {
+    const brief = capabilityBriefOf([pack('manage', 'shell'), pack('diy', 'shell')]);
+
+    expect(brief.content).toContain('workbench-diy');
+    expect(brief.content).toContain('默认已开');
+  });
 });

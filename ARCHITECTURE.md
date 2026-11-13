@@ -671,6 +671,8 @@ ctx.get('workbenchUnits').registerUnit({
 - 包不是新注册的工具 —— 注册照旧，包只决定"进不进上下文、能不能调"。模块可以在清单里给工具写
   `onDemand: false`，表示它不随包收（常驻）。
 - 状态按会话（宿主内存）；DIY 模式默认开 `manage + diy`，其余会话从空开始；显式 open/close 覆盖默认。
+  preset 一律读会话投影（`presetOfSession`，控制工具与收窄同一份）：工坊那条会话是建完再 select 的，
+  会话 header 上没有 `agentPreset`。
 - 开启工具包要用户审批（`elevates`）；非法 / 没在板子上的单元在审批之前就被拒；关闭不审批。
 - **发现性**（ADR-0108）：默认面就是模型能读到的全部索引，所以三把控制工具的文案里带一张最小能力地图
   （能力 → 包的字面量，含 `mcp:<server>`），且不抬 `tool-surface.test.ts` 的字数棘轮；

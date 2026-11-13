@@ -274,3 +274,32 @@ describe('没有调试约定 ⇒ 看 / 动 / 网络 / 日志整族零调用', ()
     expect(started.phase).toBe('debugging');
   });
 });
+
+describe('Desktop 部署：没有约定时说的是那条能走通的路', () => {
+  const rig = createDiyRig();
+  const versions = process.versions as Record<string, string | undefined>;
+
+  it('★★ Desktop 上不点 debug_start（那边开不了），直接给 read=<地址>，且一条命令都不发', async () => {
+    const saved = versions['electron'];
+    versions['electron'] = '99.0.0';
+    try {
+      const built = rig.harness({ withTools: true, pact: false, probe: [{ stdout: PAGE }] });
+
+      const error = await pageAt(
+        built.ctx as unknown as DshHostContext,
+        rig.diyExec() as DshToolRunContext,
+        { unit: 'demo' },
+      ).then(
+        () => new Error('没有拒'),
+        (one: Error) => one,
+      );
+
+      expect(error.message).toContain('read=<地址>');
+      expect(error.message).not.toContain('workbench_diy_debug_start');
+      expect(built.commands).toEqual([]);
+    } finally {
+      if (saved === undefined) delete versions['electron'];
+      else versions['electron'] = saved;
+    }
+  });
+});

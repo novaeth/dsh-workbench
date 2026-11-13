@@ -154,7 +154,9 @@ export async function pageAt(
   const held = store?.live(Date.now()) ?? null;
   const sessionId = sessionIdOf(exec);
   if (options.requirePact !== false) {
-    if (held === null) throw new Error(debugMissingPactText());
+    if (held === null) {
+      throw new Error(hostSurface().capabilities.pageDebug ? debugMissingPactText() : desktopPageText());
+    }
     if (held.sessionId !== sessionId) throw new Error(debugForeignPactText(held));
     if (held.phase === 'paused') throw new Error(debugPausedText(held));
   }
