@@ -122,7 +122,7 @@ export function WorkspaceRowMenu({ target, t, onClose, onAlias, onDelete, onReve
       items={items}
       anchor={null}
       portal
-      className={open ? undefined : styles.portalRoot}
+      className={point === undefined ? styles.portalRoot : undefined}
       autoFocus
       align={target?.align ?? 'end'}
       {...(point === undefined

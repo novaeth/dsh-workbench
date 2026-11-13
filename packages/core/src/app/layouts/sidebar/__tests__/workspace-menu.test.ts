@@ -84,8 +84,8 @@ describe('工作区行的三点菜单：悬停换图标、点开是菜单', () =
     expect(MENU).toContain('listClassName={styles.list}');
   });
 
-  it('★ 菜单根节点不挂在行里：关着时 display: contents（不占行盒），portal 始终挂载（CSS anchor 不重建）', () => {
-    expect(MENU).toContain('className={open ? undefined : styles.portalRoot}');
+  it('★ 菜单根节点不挂在行里：anchorRef 模式（含关着）display: contents；右键 point 模式固定 0×0，都不占行盒', () => {
+    expect(MENU).toContain('className={point === undefined ? styles.portalRoot : undefined}');
     expect(MENU).toContain('createPortal(menu, document.body)');
     expect(MENU).not.toContain('className={styles.anchor}');
   });
