@@ -196,7 +196,7 @@ export default [
 `dsh-wb-module lint --fix` 先写回再跑一遍看还剩什么。**`check` 永远不动手改文件** ——
 门禁是判据，不是修复器。
 
-模板生成三份文档：`readme.json` 是终端用户文案源（标题、简介、会看到什么、能做什么、agent 能做什么、数据从哪来、排障、FAQ），`README.md` 只由它生成；`DEVELOPING.md` 是作者文档（实现、路由、判据、数据源与三张表），由 `design.json` 生成。`design render` 刷新这两份；`design check` 会拦住空文案、占位符和技术词；旧模块先跑 `design migrate`，它把旧 `README.md` 原样保存为 `DEVELOPING.md`，再生成 `readme.json` 与用户 README。
+模板生成三份文档：`readme.json` 是终端用户文案源（标题、简介、卡片布局草图 `shots[]`、会看到什么、能做什么、agent 能做什么、数据从哪来、排障、FAQ，后五段是短条目），`README.md` 只由它生成；`DEVELOPING.md` 是作者文档（实现、路由、判据、数据源与三张表），由 `design.json` 生成。`design render` 刷新这两份；`design check` 会拦住空文案、占位符和技术词；旧模块先跑 `design migrate`，它把旧 `README.md` 原样保存为 `DEVELOPING.md`，再生成 `readme.json` 与用户 README。
 
 ## `design.json`：三张表
 

@@ -36,6 +36,26 @@ export const checks = [
         for (const token of ['src/', 'dsh-wb-module', 'design.json', '路由']) {
           if (readme.includes(token)) problems.push(`README 还带着开发者内容：${token}`);
         }
+        const drawn = read(probe, 'README.md');
+        if (!drawn.includes('## 卡片长这样')) problems.push('README 缺「卡片长这样」');
+        if (!drawn.includes('```text') || !drawn.includes('│ ● 标题 │')) problems.push('卡片图没画进 README');
+        if (!/## 你会看到什么\n\n- 填好/.test(drawn)) problems.push('正文没按条目渲染');
+
+        const noShot = JSON.parse(read(probe, 'readme.json'));
+        noShot.shots = [];
+        writeFileSync(join(probe, 'readme.json'), JSON.stringify(noShot, null, 2));
+        let shotFailure = '';
+        try {
+          run(['design', 'check', '--cwd', probe]);
+        } catch (error) {
+          shotFailure = `${error.stdout ?? ''}${error.stderr ?? ''}`;
+        }
+        if (!shotFailure.includes('shots 是空的')) problems.push('没画图时 design check 没拦住');
+        noShot.shots = [{ caption: '卡片', ascii: '┌─ 卡片 ─┐\n│ ● 标题 │\n└────────┘' }];
+        writeFileSync(join(probe, 'readme.json'), JSON.stringify(noShot, null, 2));
+        run(['design', 'render', '--cwd', probe]);
+        run(['design', 'check', '--cwd', probe]);
+
         if (!developing.includes('## 生成出来的形状')) problems.push('DEVELOPING 缺开发者章节');
         if (!developing.includes('<!-- dsh-wb:design:start -->')) problems.push('DEVELOPING 缺 design 标记');
         if (!developing.includes('### 表 1 面板')) problems.push('DEVELOPING 缺 design 表');

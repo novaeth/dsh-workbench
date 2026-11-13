@@ -432,9 +432,30 @@ export function renderDesign(design) {
   ].join('\n');
 }
 
-function sectionOf(heading, body) {
-  const text0 = text(body);
-  return text0 === '' ? [] : [`## ${heading}`, '', text0, ''];
+function bodyLinesOf(value) {
+  if (Array.isArray(value)) {
+    return value.flatMap((one) => {
+      const line = text(one);
+      return line === '' ? [] : [`- ${line}`];
+    });
+  }
+  const line = text(value);
+  return line === '' ? [] : [line];
+}
+
+function sectionOf(heading, value) {
+  const lines = bodyLinesOf(value);
+  return lines.length === 0 ? [] : [`## ${heading}`, '', ...lines, ''];
+}
+
+function shotsOf(source) {
+  const listed = Array.isArray(source?.shots) ? source.shots : [];
+  const single = text(source?.ascii) === '' ? [] : [{ caption: '', ascii: source.ascii }];
+  return [...single, ...listed].flatMap((one) => {
+    const drawing = typeof one?.ascii === 'string' ? one.ascii.replace(/\s+$/, '') : '';
+    if (drawing.trim() === '') return [];
+    return [{ caption: text(one?.caption), drawing }];
+  });
 }
 
 export function renderUserReadme(source) {
@@ -443,7 +464,21 @@ export function renderUserReadme(source) {
   const faq = asRows(source?.faq);
   const install = text(source?.install) === ''
     ? '在市场「已安装」里装或卸。装完在当前项目的面板里勾选这个模块，卡片才会出现；卸掉后卡片消失。'
-    : text(source?.install);
+    : source?.install;
+  const shots = shotsOf(source);
+  const shotLines = shots.length === 0
+    ? []
+    : [
+        '## 卡片长这样',
+        '',
+        ...shots.flatMap((one) => [
+          ...(one.caption === '' ? [] : [`**${one.caption}**`, '']),
+          '```text',
+          one.drawing,
+          '```',
+          '',
+        ]),
+      ];
   const faqLines = faq.length === 0
     ? []
     : [
@@ -457,6 +492,7 @@ export function renderUserReadme(source) {
     '',
     summary,
     '',
+    ...shotLines,
     ...sectionOf('你会看到什么', source?.see),
     ...sectionOf('你能做什么', source?.do),
     ...sectionOf('agent 能替你做什么', source?.agent),
@@ -499,12 +535,18 @@ export function userSourceSkeleton(manifest, design) {
   return {
     title: manifestTitleOf(manifest) || text(design?.name) || '模块',
     summary: text(design?.oneLine) || text(manifest?.description),
-    see: '（待填：终端用户会在卡片上看到什么；不要写组件名、图号、像素值）',
-    do: '（待填：终端用户自己能点什么、能改什么）',
-    agent: '（待填：agent 能替用户做什么；哪些动作会先弹审批）',
-    data: '（待填：数据从哪个系统来、用谁的登录、会不会写数据）',
+    shots: [
+      {
+        caption: '（可选：图注，比如「卡片」「设置面」「审批」）',
+        ascii: '（待填：一张卡片布局草图，用界面真实文案，按屏幕从上到下的顺序画）',
+      },
+    ],
+    see: ['（待填：用户在卡片上看到的第一样东西）'],
+    do: ['（待填：用户自己能点的一个按钮或能改的一项设置）'],
+    agent: ['（待填：agent 能替用户做的一件事；写之前要不要批准）'],
+    data: ['（待填：数据从哪来、用谁的登录、读还是写）'],
     install: '',
-    trouble: '（待填：没登录、超时、读不到时用户会看到什么、下一步点哪）',
+    trouble: ['（待填：出问题时用户看到什么、下一步点哪）'],
     faq: [],
   };
 }
@@ -523,18 +565,37 @@ const USER_COPY_FORBIDDEN = [
   ['平台内部字段', /\bglobal_key\b/],
 ];
 
+const BULLET_LIMIT = 70;
+
+function copyTextsOf(value) {
+  if (Array.isArray(value)) return value.map(text).filter((one) => one !== '');
+  const one = text(value);
+  return one === '' ? [] : [one];
+}
+
 export function userCopyProblemsOf(source) {
   const problems = [];
   if (source === undefined) return [`没有 ${README_SOURCE_FILE} —— 先跑 dsh-wb-module design init 或 design migrate`];
   for (const field of USER_COPY_FIELDS) {
-    const value = text(source?.[field]);
-    if (value === '') problems.push(`${field} 是空的 —— README 的「${field}」还没有用户文案`);
-    else if (value.includes('（待填')) problems.push(`${field} 还留着「（待填）」`);
+    const values = copyTextsOf(source?.[field]);
+    if (values.length === 0) problems.push(`${field} 是空的 —— README 的「${field}」还没有用户文案`);
+    for (const value of values) {
+      if (value.includes('（待填')) problems.push(`${field} 还留着「（待填）」`);
+      if (Array.isArray(source?.[field]) && value.length > BULLET_LIMIT) {
+        problems.push(`${field} 有一条 ${String(value.length)} 字 —— 超过 ${String(BULLET_LIMIT)} 字就拆成两条，或者把细节放进图里`);
+      }
+    }
+  }
+  const shots = asRows(source?.shots);
+  if (shots.length === 0) problems.push('shots 是空的 —— 至少画一张卡片布局图');
+  for (const [index, one] of shots.entries()) {
+    if (text(one?.ascii).includes('（待填')) problems.push(`shots[${index}] 还留着「（待填）」`);
   }
   for (const field of ['title', 'summary', 'see', 'do', 'agent', 'data', 'install', 'trouble']) {
-    const value = text(source?.[field]);
-    for (const [label, pattern] of USER_COPY_FORBIDDEN) {
-      if (pattern.test(value)) problems.push(`${field} 里有${label} —— 这段只给终端用户看`);
+    for (const value of copyTextsOf(source?.[field])) {
+      for (const [label, pattern] of USER_COPY_FORBIDDEN) {
+        if (pattern.test(value)) problems.push(`${field} 里有${label} —— 这段只给终端用户看`);
+      }
     }
   }
   for (const [index, one] of asRows(source?.faq).entries()) {

@@ -115,5 +115,6 @@ pnpm exec dsh-wb-module design accept    # 逐条走通后打勾
 
 ## 6 readme.json
 
-终端用户看到的 `README.md` 只从模块根的 `readme.json` 生成，字段是 `title` / `summary` / `see` / `do` / `agent` / `data` / `install` / `trouble` / `faq[]`。写的时候按用户视角：看到什么、能点什么、哪些要点头、数据从哪来；不写 `src/`、路由、判据、错误码、工具链命令，也不留 `（待填）`。`design render` 写 README，`design check` 会点出空字段、占位符和技术词。旧模块跑 `design migrate` 生成骨架。
+终端用户看到的 `README.md` 只从模块根的 `readme.json` 生成，字段是 `title` / `summary` / `shots[]` / `see[]` / `do[]` / `agent[]` / `data[]` / `install` / `trouble[]` / `faq[]`。写的时候按用户视角：看到什么、能点什么、哪些要点头、数据从哪来；不写 `src/`、路由、判据、错误码、工具链命令，也不留 `（待填）`。`shots` 至少一张：`{ caption, ascii }`，用界面真实文案画（按 [§3](#3-用-ascii-沟通) 的画法），渲染成「卡片长这样」那一节。其余各段写条目（每段 1–4 条，单条不超过 70 字），图为主、文为辅。
+`design render` 写 README，`design check` 会点出空字段、占位符和技术词。旧模块跑 `design migrate` 生成骨架。
 

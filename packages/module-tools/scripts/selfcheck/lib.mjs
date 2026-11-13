@@ -75,7 +75,12 @@ export function fillPendingDesign(dir) {
   if (existsSync(sourceFile)) {
     const source = JSON.parse(readFileSync(sourceFile, 'utf8'));
     for (const key of ['title', 'summary', 'see', 'do', 'agent', 'data', 'install', 'trouble']) {
-      if (typeof source[key] === 'string' && source[key].includes('（待填')) source[key] = '填好';
+      const value = source[key];
+      if (typeof value === 'string' && value.includes('（待填')) source[key] = '填好';
+      if (Array.isArray(value)) source[key] = value.map((one) => (typeof one === 'string' && one.includes('（待填') ? '填好' : one));
+    }
+    if (Array.isArray(source.shots)) {
+      source.shots = source.shots.map((one) => ({ ...one, ascii: '┌─ 卡片 ─┐\n│ ● 标题 │\n└────────┘' }));
     }
     writeFileSync(sourceFile, `${JSON.stringify(source, null, 2)}\n`);
   }
