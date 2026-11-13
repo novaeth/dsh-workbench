@@ -46,6 +46,7 @@ export interface UnitRegistry {
   fail(unit: string, reason: string): void;
   recovered(unit: string): void;
   failureOf(unit: string): string | undefined;
+  addedAt(unit: string): number | undefined;
 }
 
 function sourceLabel(source: UnitSource): string {
@@ -62,6 +63,7 @@ export function createUnitRegistry(options: {
   const hosts: HostUnit[] = [];
   const byUnit = new Map<string, HostUnit>();
   const failures = new Map<string, string>();
+  const added = new Map<string, number>();
   const listeners = new Set<() => void>();
 
   function notify(): void {
@@ -76,6 +78,7 @@ export function createUnitRegistry(options: {
       );
     }
     byUnit.set(host.unit, host);
+    added.set(host.unit, Date.now());
     hosts.push(host);
     notify();
 
@@ -153,5 +156,7 @@ export function createUnitRegistry(options: {
     },
 
     failureOf: (unit) => failures.get(unit),
+
+    addedAt: (unit) => added.get(unit),
   };
 }

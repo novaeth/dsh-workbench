@@ -737,3 +737,36 @@ describe('createLongTaskHost 的 notify（每次变更都叫一下，bump 那半
     expect(bumps).toEqual([['demo/runs']]);
   });
 });
+
+describe('热重载换实现（槽里那份认回来，但跑新代码）', () => {
+  it('★★ 同一个 key 再 create：历史留着，run/view 换成新的一版', async () => {
+    const scope = `test-rebind-${String(Date.now())}-${Math.random()}`;
+    const ran: string[] = [];
+    const first = createLongTaskHost({ scope, unit: 'demo', bump: () => {} });
+    const old = first.host.create({
+      key: 'batch',
+      run: async () => {
+        ran.push('old');
+        return {};
+      },
+      view: () => ({ mark: 'old' }),
+    });
+    old.start({ workspace: '/w/a', target: 'batch' });
+    await new Promise((done) => setTimeout(done, 20));
+
+    const second = createLongTaskHost({ scope, unit: 'demo', bump: () => {} });
+    const next = second.host.create({
+      key: 'batch',
+      run: async () => {
+        ran.push('new');
+        return {};
+      },
+      view: () => ({ mark: 'new' }),
+    });
+
+    expect(next).toBe(old);
+    next.start({ workspace: '/w/a', target: 'batch' });
+    await new Promise((done) => setTimeout(done, 20));
+    expect(ran).toEqual(['old', 'new']);
+  });
+});

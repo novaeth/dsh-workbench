@@ -76,15 +76,18 @@ export interface LongTaskRegistry<S extends LongTaskBase> {
   recheck(id: string): boolean;
   answer(id: string, values: Readonly<Record<string, string>>): boolean;
   onChange(listener: (change: LongTaskChange<S>) => void): () => void;
+  rebind?(deps: LongTaskDeps<S>): void;
 }
 
 export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDeps<S>): LongTaskRegistry<S> {
+  let bound = deps;
+
   const runs = new Map<string, LongTaskBase>();
   const controls = new Map<string, AbortController>();
-  const now = deps.now ?? (() => nowIso());
+  const now = bound.now ?? (() => nowIso());
   let counter = 0;
-  const nextId = deps.nextId ?? (() => `run-${clockNow()}-${(counter += 1)}`);
-  const recentMs = deps.recentMs ?? RECENT_MS;
+  const nextId = bound.nextId ?? (() => `run-${clockNow()}-${(counter += 1)}`);
+  const recentMs = bound.recentMs ?? RECENT_MS;
   const listeners = new Set<(change: LongTaskChange<S>) => void>();
 
   const live = (id: string): S | null => {
@@ -111,9 +114,13 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
   };
 
   return {
-    resumable: deps.recheck !== undefined,
+    get resumable() {
+      return bound.recheck !== undefined;
+    },
 
-    answerable: deps.answer !== undefined,
+    get answerable() {
+      return bound.answer !== undefined;
+    },
 
     active(workspace, target) {
       for (const snapshot of runs.values()) {
@@ -136,10 +143,10 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
         )
         .reverse()
         .map((snapshot) => ({
-          ...deps.view(snapshot as S),
+          ...bound.view(snapshot as S),
           id: snapshot.id,
-          ...(deps.recheck === undefined ? {} : { resumable: true }),
-          ...(deps.answer === undefined ? {} : { answerable: true }),
+          ...(bound.recheck === undefined ? {} : { resumable: true }),
+          ...(bound.answer === undefined ? {} : { answerable: true }),
         }));
     },
 
@@ -169,7 +176,7 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
         const current = live(id);
         if (current === null) return;
         const steps = [...current.steps, `${step.kind === 'fail' ? '✗ ' : ''}${step.text}`].slice(-20);
-        const extra = deps.step?.(step, current) ?? {};
+        const extra = bound.step?.(step, current) ?? {};
         if (step.intervention !== undefined) {
           patch(
             id,
@@ -210,7 +217,7 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
       const control = new AbortController();
       controls.set(id, control);
 
-      void deps
+      void bound
         .run({ payload: options.payload, onStep, signal: control.signal })
         .then((result) => {
           const current = live(id);
@@ -220,7 +227,7 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
             id,
             {
               status: 'ok',
-              ...(deps.outcome?.(result, current) ?? {}),
+              ...(bound.outcome?.(result, current) ?? {}),
               intervention: undefined,
               loginUrl: undefined,
             },
@@ -247,14 +254,14 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
 
     recheck(id) {
       const current = live(id);
-      if (current === null || deps.recheck === undefined) return false;
-      deps.recheck(current as S);
+      if (current === null || bound.recheck === undefined) return false;
+      bound.recheck(current as S);
       return true;
     },
 
     answer(id, values) {
       const current = live(id);
-      if (current === null || deps.answer === undefined) return false;
+      if (current === null || bound.answer === undefined) return false;
       const fields = current.intervention?.fields;
       if (fields === undefined || fields.length === 0) return false;
       const clean: Record<string, string> = {};
@@ -267,7 +274,7 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
         }
         clean[field.key] = text;
       }
-      deps.answer(current as S, clean);
+      bound.answer(current as S, clean);
       return true;
     },
 
@@ -279,7 +286,7 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
       patch(
         id,
         {
-          ...(deps.stopped?.(current) ?? {}),
+          ...(bound.stopped?.(current) ?? {}),
           status: 'stopped',
           intervention: undefined,
           loginUrl: undefined,
@@ -296,6 +303,9 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
     onChange(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);
+    },
+    rebind(next) {
+      bound = next;
     },
   };
 }
@@ -375,9 +385,12 @@ export function sharedLongTaskRegistry<S extends LongTaskBase>(
   const store = globalThis as unknown as Record<symbol, LongTaskRegistry<LongTaskBase> | undefined>;
   const slot = Symbol.for(`dsh-workbench:long-task:${scope}:${key}`);
   const existing = store[slot];
-  if (existing !== undefined && isRegistry(existing)) return existing as unknown as LongTaskRegistry<S>;
+  if (existing !== undefined && isRegistry(existing)) {
+    existing.rebind?.(deps as LongTaskDeps<LongTaskBase>);
+    return existing as unknown as LongTaskRegistry<S>;
+  }
   const created = createLongTaskRegistry(deps);
-  store[slot] = created;
+  store[slot] = created as unknown as LongTaskRegistry<LongTaskBase>;
   return created;
 }
 

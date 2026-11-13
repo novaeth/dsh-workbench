@@ -109,6 +109,7 @@ export function registerDiyTools(
             known: panelEntries.some((entry) => entry.id === one.unit),
             open: panels.isEnabled(one.unit, root),
             health: healthOf({ registry, unit: one.unit, installed: one.installed }),
+            mountedAt: registry?.addedAt?.(one.unit),
           }),
       );
       const preview = wanted === '' ? null : previewOf(wanted);
@@ -151,6 +152,7 @@ export function registerDiyTools(
             unit,
             name: nameOf.get(unit) ?? '',
             health: healthOf({ registry, unit, installed: installed.includes(unit) }),
+            mountedAt: registry?.addedAt?.(unit),
             ...(report === undefined ? {} : { report }),
           };
         });

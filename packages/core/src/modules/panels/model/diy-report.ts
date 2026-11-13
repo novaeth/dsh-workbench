@@ -89,6 +89,7 @@ export interface SuiteHealth {
 
 export interface RegistryLike {
   all(): readonly { readonly unit: string }[];
+  addedAt?(unit: string): number | undefined;
   refusals(): readonly { readonly unit: string; readonly reasons: readonly string[] }[];
   failureOf(unit: string): string | undefined;
 }
@@ -195,9 +196,17 @@ export function statusOf(options: {
   readonly known: boolean;
   readonly open: boolean;
   readonly health: SuiteHealth;
+  readonly mountedAt?: number | undefined;
 }): ModuleStatus {
   const { dir, unit, name, installed, known, open, health } = options;
   const facts = moduleBuildFacts(dir);
+  const mountedAt = options.mountedAt;
+  const newerThanRun =
+    mountedAt !== undefined &&
+    facts.artifacts.some((one) => {
+      const at = one.at === null ? Number.NaN : Date.parse(one.at);
+      return Number.isFinite(at) && at > mountedAt;
+    });
 
   const next =
     health.state === 'failed'
@@ -213,7 +222,9 @@ export function statusOf(options: {
               ? '尚未构建：pnpm exec dsh-wb-module build'
               : facts.stale
                 ? '源码比产物新：pnpm exec dsh-wb-module build（宿主侧秒级热替换；修改 client.js 后刷新页面）'
-                : '均已生效：修改源码后执行 build（宿主侧秒级热替换；修改 client.js 后刷新页面），无需再次安装';
+                : newerThanRun
+                  ? '产物比运行中的实例新：热更没落地（模块加载失败时最常见），改完源码再 build 一次；还不行就重启工作台'
+                  : '均已生效：修改源码后执行 build（宿主侧秒级热替换；修改 client.js 后刷新页面），无需再次安装';
 
   return {
     unit,
@@ -224,6 +235,7 @@ export function statusOf(options: {
     open,
     artifacts: facts.artifacts,
     stale: facts.stale,
+    ...(mountedAt === undefined ? {} : { mountedAt }),
     health,
     next,
   };
