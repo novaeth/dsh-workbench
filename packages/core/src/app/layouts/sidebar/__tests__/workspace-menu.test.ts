@@ -83,7 +83,8 @@ describe('工作区行的三点菜单：悬停换图标、点开是菜单', () =
     expect(MENU).toContain('listClassName={styles.list}');
   });
 
-  it('★ 菜单根节点不挂在行里：portal 到 body 之后没有行盒问题，右键那种模式它自己就是锚点（不能 display:none）', () => {
+  it('★ 菜单根节点不挂在行里：关着时连 portal 都不留（空 inline-flex 会在 body 末尾留一行盒），右键那种模式它自己就是锚点', () => {
+    expect(MENU).toContain('if (target === null) return null;');
     expect(MENU).toContain('createPortal(menu, document.body)');
     expect(MENU).not.toContain('className={styles.anchor}');
   });

@@ -101,6 +101,8 @@ export function WorkspaceRowMenu({ target, t, onClose, onAlias, onDelete, onReve
     };
   }, [open, onClose]);
 
+  if (target === null) return null;
+
   const menu = (
     <Menu
       open={open}
