@@ -9,7 +9,7 @@
 pnpm exec dsh-wb-module init my-unit                    # 建骨架（唯一模板，已默认）
 pnpm build        # dist/host.js + 套了 loader 壳的 client.js
 pnpm check        # 十四条判据
-pnpm design check # 设计底稿有没有空格、README / DEVELOPING.md 有没有落后
+pnpm design check # 设计底稿有没有空格、readme.json / README / DEVELOPING 有没有落后
 ```
 
 要发货再加一步 `pnpm exec dsh-wb-module publish`：跑门禁、核 `files` 与 `npm pack` 清单，默认 **只 dry run，不真发**。
@@ -196,12 +196,12 @@ export default [
 `dsh-wb-module lint --fix` 先写回再跑一遍看还剩什么。**`check` 永远不动手改文件** ——
 门禁是判据，不是修复器。
 
-模板生成两份文档：`README.md` 是终端用户看的说明（卡片上有什么、五种状态、agent 能做什么、数据从哪来、怎么装卸、出问题先看），`DEVELOPING.md` 是作者文档（实现、路由、判据、数据源与三张表）。`design render` 两份都刷新；旧模块先跑 `design migrate`，它把旧 `README.md` 原样保存为 `DEVELOPING.md`，再按 `design.json` 重生成用户 README。
+模板生成三份文档：`readme.json` 是终端用户文案源（标题、简介、会看到什么、能做什么、agent 能做什么、数据从哪来、排障、FAQ），`README.md` 只由它生成；`DEVELOPING.md` 是作者文档（实现、路由、判据、数据源与三张表），由 `design.json` 生成。`design render` 刷新这两份；`design check` 会拦住空文案、占位符和技术词；旧模块先跑 `design migrate`，它把旧 `README.md` 原样保存为 `DEVELOPING.md`，再生成 `readme.json` 与用户 README。
 
 ## `design.json`：三张表
 
 面板 / 能力 / 联动三张表、状态矩阵、数据源记录、写通道记录、验收清单都住在模块根目录的
-`design.json`，DEVELOPING.md 里那一段由它生成（夹在 `<!-- dsh-wb:design:start/end -->` 之间）；README.md 是由它生成的终端用户说明。
+`design.json`，DEVELOPING.md 里那一段由它生成（夹在 `<!-- dsh-wb:design:start/end -->` 之间）。README.md 的用户文案不看 design.json，只看模块根的 `readme.json`。
 
 它是**设计底稿**：三张表与探明记录装人话（`oneLine` / `shape` / `approvalText` / 三张表的文字）；
 读源那一条可以多带 `key` 与 `recipe` 两个机器字段 —— 它们只用于生成 `src/datasource.ts`，
@@ -265,7 +265,7 @@ export default [
 
 ```bash
 dsh-wb-module design check    # 空着的格一格格点名叫出来 + README / DEVELOPING 有没有落后
-dsh-wb-module design render   # 用 design.json 重新生成 README 与 DEVELOPING 那一段
+dsh-wb-module design render   # 用 readme.json 重新生成 README，用 design.json 刷新 DEVELOPING 那一段
 dsh-wb-module design accept   # 在真卡片上逐条走通后打勾
 ```
 
@@ -327,7 +327,7 @@ dsh-wb-module design accept   # 在真卡片上逐条走通后打勾
 `eslint.config.mjs`。
 
 `init` 连模板里的 `*.tpl` 一起拷、按已知 token 名逐个盖章（`__UNIT__` / `__NAME__` / `__DESC__` /
-`__SHELL_RANGE__` / `__DSH_UI_VERSION__`）、剥掉后缀，再用 `design.json` 生成 README 与 DEVELOPING 那一段。
+`__SHELL_RANGE__` / `__DSH_UI_VERSION__`）、剥掉后缀，再用 `readme.json` 生成 README、用 `design.json` 生成 DEVELOPING 那一段。
 `__SHELL_RANGE__` 取 init 所在工程实装的那份外壳版本；读不到就退回 module-tools 自己的版本；
 两者都读不到才保持 `^0.1.0` 并在 stderr 上说一句。
 

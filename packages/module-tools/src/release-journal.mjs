@@ -7,6 +7,7 @@ import { workbenchRootOf } from './release-util.mjs';
 const FINGERPRINT_FILES = [
   'package.json',
   'design.json',
+  'readme.json',
   'dist/host.js',
   'client.js',
   'cordis.patch.yml',

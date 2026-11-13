@@ -1,6 +1,6 @@
 # __NAME__ · agent 工作说明
 
-工作台模块（单元 `__UNIT__`）。终端用户说明在 `README.md`；实现、数据源、设计底稿在 `DEVELOPING.md`；这份只说工具链怎么用。
+工作台模块（单元 `__UNIT__`）。终端用户说明在 `README.md`（文案源 `readme.json`）；实现、数据源、设计底稿在 `DEVELOPING.md`；这份只说工具链怎么用。
 
 ## 干活循环
 
@@ -11,7 +11,7 @@
    **全绿**才算这件活做完。怎么读红、常见红：`@dsh-workbench/core/skills/workbench-module-diy/REVIEW.md`。
 3. `pnpm test` —— `src/**/__tests__/` 下、与改动同目录的 `*.test.ts`；新逻辑配对应用例，**全绿**才算完。
 
-`pnpm selfcheck` = build + `design check` + smoke；`design.json` 里的（待填）填完才绿。
+`pnpm selfcheck` = build + `design check` + smoke；`design.json` 与 `readme.json` 里的（待填）填完才绿。
 
 ## 工具链约定
 
@@ -21,6 +21,7 @@
 
 ## 先读
 
-- `README.md`：终端用户看的那份（做什么、会看到什么、agent 能做什么、数据从哪来）。
+- `readme.json`：终端用户文案源（标题、简介、会看到什么、能做什么、agent 能做什么、数据从哪来、排障、FAQ）。
+- `README.md`：由 `readme.json` 生成，不要手改。
 - `DEVELOPING.md`：实现、路由、判据、数据源与三张表。
 - `@dsh-workbench/core/skills/workbench-module-diy/`：路由 / 工具 / 卡片 / 文案的写法与约定（随外壳出货）。

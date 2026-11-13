@@ -23,13 +23,14 @@ export const checks = [
       const problems = [];
       try {
         run(['init', 'demo', '--dir', probe, '--template', 'diy']);
+        if (!existsSync(join(probe, 'readme.json'))) problems.push('init 没生成 readme.json');
         fillPendingDesign(probe);
         run(['design', 'render', '--cwd', probe]);
         run(['design', 'check', '--cwd', probe]);
 
         const readme = read(probe, 'README.md');
         const developing = read(probe, 'DEVELOPING.md');
-        for (const heading of ['## 卡片上有什么', '## 五种状态', '## agent 能替你做什么', '## 数据从哪来', '## 装和卸', '## 出问题先看']) {
+        for (const heading of ['## 你会看到什么', '## 你能做什么', '## agent 能替你做什么', '## 数据从哪来', '## 装和卸', '## 出问题先看']) {
           if (!readme.includes(heading)) problems.push(`README 缺「${heading}」`);
         }
         for (const token of ['src/', 'dsh-wb-module', 'design.json', '路由']) {
@@ -39,13 +40,37 @@ export const checks = [
         if (!developing.includes('<!-- dsh-wb:design:start -->')) problems.push('DEVELOPING 缺 design 标记');
         if (!developing.includes('### 表 1 面板')) problems.push('DEVELOPING 缺 design 表');
 
+        const design = JSON.parse(read(probe, 'design.json'));
+        design.oneLine = 'ENGINEERING_ONLY_SENTINEL';
+        writeFileSync(join(probe, 'design.json'), JSON.stringify(design, null, 2));
+        run(['design', 'render', '--cwd', probe]);
+        if (read(probe, 'README.md').includes('ENGINEERING_ONLY_SENTINEL')) {
+          problems.push('README 把 design.json 的工程字段带进来了');
+        }
+        run(['design', 'check', '--cwd', probe]);
+
+        const source = JSON.parse(read(probe, 'readme.json'));
+        source.see = '打开 src/host.ts 看';
+        writeFileSync(join(probe, 'readme.json'), JSON.stringify(source, null, 2));
+        let copyFailure = '';
+        try {
+          run(['design', 'check', '--cwd', probe]);
+        } catch (error) {
+          copyFailure = `${error.stdout ?? ''}${error.stderr ?? ''}`;
+        }
+        if (!copyFailure.includes('源码路径')) problems.push('用户文案里的源码路径没被 point 出来');
+        source.see = '填好';
+        writeFileSync(join(probe, 'readme.json'), JSON.stringify(source, null, 2));
+        run(['design', 'render', '--cwd', probe]);
+        run(['design', 'check', '--cwd', probe]);
+
         writeFileSync(join(probe, 'README.md'), '# old module\n\n## 生成出来的形状\n\n旧开发者说明\n');
         unlinkSync(join(probe, 'DEVELOPING.md'));
         run(['design', 'migrate', '--cwd', probe]);
         const migrated = read(probe, 'DEVELOPING.md');
         const user = read(probe, 'README.md');
         if (!migrated.includes('旧开发者说明')) problems.push('migrate 没把旧 README 保存到 DEVELOPING');
-        if (!user.includes('## 卡片上有什么')) problems.push('migrate 没重生成用户 README');
+        if (!user.includes('## 你会看到什么')) problems.push('migrate 没重生成用户 README');
         if (!existsSync(join(probe, 'design.json'))) problems.push('design.json 不见了');
       } catch (error) {
         const out = `${error.stdout ?? ''}${error.stderr ?? ''}`;

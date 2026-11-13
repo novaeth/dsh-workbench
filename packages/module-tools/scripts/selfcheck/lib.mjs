@@ -71,4 +71,12 @@ export function fillPending(value) {
 export function fillPendingDesign(dir) {
   const file = join(dir, 'design.json');
   writeFileSync(file, `${JSON.stringify(fillPending(JSON.parse(readFileSync(file, 'utf8'))), null, 2)}\n`);
+  const sourceFile = join(dir, 'readme.json');
+  if (existsSync(sourceFile)) {
+    const source = JSON.parse(readFileSync(sourceFile, 'utf8'));
+    for (const key of ['title', 'summary', 'see', 'do', 'agent', 'data', 'install', 'trouble']) {
+      if (typeof source[key] === 'string' && source[key].includes('（待填')) source[key] = '填好';
+    }
+    writeFileSync(sourceFile, `${JSON.stringify(source, null, 2)}\n`);
+  }
 }

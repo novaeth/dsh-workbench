@@ -139,7 +139,7 @@ function runGate(exec, root, options) {
 
 function gitPathsOf(info) {
   const prefix = info.packagePath === '.' ? '' : `${info.packagePath}/`;
-  return ['dist', 'client.js', 'cordis.patch.yml', 'package.json', 'README.md', 'DEVELOPING.md', 'CHANGELOG.md', 'design.json']
+  return ['dist', 'client.js', 'cordis.patch.yml', 'package.json', 'README.md', 'DEVELOPING.md', 'CHANGELOG.md', 'design.json', 'readme.json']
     .map((one) => `${prefix}${one}`)
     .filter((one) => existsSync(join(info.toplevel, one)));
 }

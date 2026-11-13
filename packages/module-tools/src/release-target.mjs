@@ -229,7 +229,7 @@ function gitInfoOf(root, manifest, args, exec) {
   });
   if (status.status !== 0) throw new ReleaseError(`读不了 git 状态：${tailOf(status.stderr)}`);
   const prefix = packagePath === '.' ? '' : `${packagePath}/`;
-  const allowed = ['dist', 'client.js', 'cordis.patch.yml', 'package.json', 'README.md', 'DEVELOPING.md', 'CHANGELOG.md', 'design.json'];
+  const allowed = ['dist', 'client.js', 'cordis.patch.yml', 'package.json', 'README.md', 'DEVELOPING.md', 'CHANGELOG.md', 'design.json', 'readme.json'];
   const dirty = status.stdout
     .trim()
     .split('\n')

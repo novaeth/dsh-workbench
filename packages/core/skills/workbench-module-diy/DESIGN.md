@@ -112,3 +112,8 @@ pnpm exec dsh-wb-module design accept    # 逐条走通后打勾
 
 `design.json` 只装人话。模块**不声明**"在哪些工作区出现"—— 用户用 `workbench_panels_show` / `_hide` 决定
 （[TOOLS.md](TOOLS.md) §12）。`contracts` 只对键名。
+
+## 6 readme.json
+
+终端用户看到的 `README.md` 只从模块根的 `readme.json` 生成，字段是 `title` / `summary` / `see` / `do` / `agent` / `data` / `install` / `trouble` / `faq[]`。写的时候按用户视角：看到什么、能点什么、哪些要点头、数据从哪来；不写 `src/`、路由、判据、错误码、工具链命令，也不留 `（待填）`。`design render` 写 README，`design check` 会点出空字段、占位符和技术词。旧模块跑 `design migrate` 生成骨架。
+
