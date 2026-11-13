@@ -1,0 +1,31 @@
+隔离运行时自愈冒烟：win32 · node=v24.22.2
+✅ ★ 安装命令的 --store-dir 就是既有 node_modules 记录的那个（结构化解析，不是包含关系） —— storeDirFor=C:\Users\RUNNER~1\AppData\Local\Temp\dsh-runtime-heal-sfotsA\recorded-store · --store-dir=C:\Users\RUNNER~1\AppData\Local\Temp\dsh-runtime-heal-sfotsA\recorded-store
+✅ 安装命令的 --dir 指向隔离 toolchain（带引号的整体） —— --dir=C:\Users\RUNNER~1\AppData\Local\Temp\dsh-runtime-heal-sfotsA\root\opencli\toolchain
+✅ ★ 记的是别的 store 就跟着它走（既有安装不被翻面） —— --store-dir=C:\Users\RUNNER~1\AppData\Local\Temp\dsh-runtime-heal-sfotsA\npm-cache
+✅ ★ 断链不算「装好了」（体检判据看得见） —— existsSync(link)=false
+✅ 真装上了就算「装好了」 —— existsSync=true
+✅ 本地 tarball 打得出来（整条 smoke 不碰网络） —— exit=0
+pnpm=10.32.1 · platform=win32
+✅ pnpm 主版本是 10（跨 store 的语义按 10 断言；漂版本要显式看见） —— 实测主版本 10
+✅ 先在同一个 toolchain 里用 store A 装出记录（模拟升级现场） —— exit=0
+heal 现场 live(toolchain): C:\Users\RUNNER~1\AppData\Local\Temp\dsh-runtime-heal-sfotsA\root-heal\opencli\toolchain
+  → .npmrc, .ready.json, node_modules, package.json, pnpm-lock.yaml
+heal 现场 live/node_modules: C:\Users\RUNNER~1\AppData\Local\Temp\dsh-runtime-heal-sfotsA\root-heal\opencli\toolchain\node_modules
+  → .modules.yaml, .pnpm, .pnpm-workspace-state-v1.json, @jackwener
+  modules.yaml={ |   "hoistedDependencies": {}, |   "hoistPattern": [ |     "*" |   ], |   "included": { |     "dependencies": true, |     "devDependencies": true, |     "optionalDependencies": true |   }, |   "injectedDeps": {}, |   "layoutVersion": 5, |   "nodeLinker": "isolated", |   "packageManager": "pnpm@10.32.1", |   "pendingB
+  ready.json=true · opencliDir=C:\Users\RUNNER~1\AppData\Local\Temp\dsh-runtime-heal-sfotsA\root-heal\opencli\toolchain\node_modules\@jackwener\opencli · opencli=false · 同一条=true
+  旁支 toolchain.prev-1794557758123-0cee: node_modules, package.json, pnpm-lock.yaml
+✅ ★ 就地升级不会被旧 store 卡住：装到暂存目录再换进来，真 pnpm 跑通 —— ok=true · 尝试=1 · 首遍首行=Progress: resolved 1, reused 0, downloaded 0, added 0
+✅ ★ 旧的 live 树没被就地覆盖：留了一份 prev 在旁边 —— prev 个数=1
+✅ 换进来的是新 store 装的那份：node_modules 记录里 storeDir 已经是 store B —— 记录里的 store=C:\Users\RUNNER~1\AppData\Local\Temp\dsh-runtime-heal-sfotsA\heal-store-b\v10 · 期望以它开头=C:\Users\RUNNER~1\AppData\Local\Temp\dsh-runtime-heal-sfotsA\heal-store-b
+❌ 重装后那份 opencli 真的在点名的位置 —— toolchainOpencliDir=C:\Users\RUNNER~1\AppData\Local\Temp\dsh-runtime-heal-sfotsA\root-heal\opencli\toolchain\node_modules\@jackwener\opencli
+[dsh-workbench] opencli 安装重来一遍：第一遍没装上（下载缓存和已有的 node_modules 对不上）
+✅ ★ 第一遍没装上就清一次再装（同一条命令，第二遍真 pnpm 装好） —— ok=true · reinstalled=true · 尝试=2
+✅ ★ 清单那一行被摘掉 → 同一步补回（不靠人再手改一遍）
+✅ ★ 补在末尾：别的组合包顺序一个不动 —— @deepseek-ai/dsh-base / @dsh-workbench/core
+✅ ★ 补回是幂等的：第二次一个字节都不写
+✅ ★ 依赖没装就不硬塞：说清原因，一个字节都不写（人话交给调用点） —— dependency-missing
+✅ ★ 清单读不了 → 说清 broken-manifest，同样不写 —— broken-manifest
+
+1 项没过：
+- 重装后那份 opencli 真的在点名的位置：toolchainOpencliDir=C:\Users\RUNNER~1\AppData\Local\Temp\dsh-runtime-heal-sfotsA\root-heal\opencli\toolchain\node_modules\@jackwener\opencli
