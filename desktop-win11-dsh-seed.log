@@ -1,0 +1,84 @@
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 工坊骨架还没建，等 full 那一趟。
+[dsh-workbench] 建 DIY 工坊 C:\Users\runneradmin\.dsh\workbench\diy
+[dsh-workbench] 工坊指引已链上：C:\Users\runneradmin\.dsh\workbench\diy\.agents\skills\workbench-module-diy
+[dsh-workbench] 工坊工具链对齐到 1.2.3-beta.4
+[dsh-workbench] 装工坊依赖（第一次会下载 react / typescript / vitest）...
+[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.overrides". See https://pnpm.io/settings for the new home of each setting.
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Progress: resolved 14, reused 0, downloaded 2, added 0
+Progress: resolved 47, reused 0, downloaded 6, added 0
+Progress: resolved 74, reused 0, downloaded 15, added 0
+Progress: resolved 74, reused 0, downloaded 24, added 0
+Progress: resolved 93, reused 0, downloaded 36, added 0
+Progress: resolved 152, reused 0, downloaded 63, added 0
+Progress: resolved 152, reused 0, downloaded 86, added 0
+Progress: resolved 184, reused 0, downloaded 132, added 0
+Progress: resolved 244, reused 0, downloaded 151, added 0
+Progress: resolved 244, reused 0, downloaded 152, added 0
+Progress: resolved 244, reused 0, downloaded 165, added 0
+Progress: resolved 251, reused 0, downloaded 202, added 0
+Progress: resolved 289, reused 0, downloaded 204, added 0
+Progress: resolved 336, reused 0, downloaded 257, added 0
+Progress: resolved 346, reused 0, downloaded 285, added 0
+Progress: resolved 374, reused 0, downloaded 331, added 0
+Packages: +343
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 400, reused 0, downloaded 348, added 0
+Progress: resolved 400, reused 0, downloaded 349, added 0
+Progress: resolved 400, reused 0, downloaded 349, added 45
+Progress: resolved 400, reused 0, downloaded 349, added 66
+Progress: resolved 400, reused 0, downloaded 349, added 76
+Progress: resolved 400, reused 0, downloaded 349, added 98
+Progress: resolved 400, reused 0, downloaded 349, added 126
+Progress: resolved 400, reused 0, downloaded 349, added 148
+Progress: resolved 400, reused 0, downloaded 349, added 157
+Progress: resolved 400, reused 0, downloaded 349, added 165
+Progress: resolved 400, reused 0, downloaded 349, added 166
+Progress: resolved 400, reused 0, downloaded 349, added 167
+Progress: resolved 400, reused 0, downloaded 349, added 168
+Progress: resolved 400, reused 0, downloaded 349, added 172
+Progress: resolved 400, reused 0, downloaded 349, added 173
+Progress: resolved 400, reused 0, downloaded 349, added 174
+Progress: resolved 400, reused 0, downloaded 349, added 175
+Progress: resolved 400, reused 0, downloaded 349, added 177
+Progress: resolved 400, reused 0, downloaded 349, added 178
+Progress: resolved 400, reused 0, downloaded 349, added 179
+Progress: resolved 400, reused 0, downloaded 349, added 180
+Progress: resolved 400, reused 0, downloaded 349, added 181
+Progress: resolved 400, reused 0, downloaded 349, added 207
+Progress: resolved 400, reused 0, downloaded 349, added 240
+Progress: resolved 400, reused 0, downloaded 349, added 249
+Progress: resolved 400, reused 0, downloaded 349, added 261
+Progress: resolved 400, reused 0, downloaded 349, added 267
+Progress: resolved 400, reused 0, downloaded 349, added 268
+Progress: resolved 400, reused 0, downloaded 349, added 269
+Progress: resolved 400, reused 0, downloaded 349, added 276
+Progress: resolved 400, reused 0, downloaded 349, added 302
+Progress: resolved 400, reused 0, downloaded 349, added 309
+Progress: resolved 400, reused 0, downloaded 349, added 326
+Progress: resolved 400, reused 0, downloaded 349, added 340
+Progress: resolved 400, reused 0, downloaded 349, added 342
+Progress: resolved 400, reused 0, downloaded 349, added 343, done
+.../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+.../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+ WARN  Issues with peer dependencies found
+.
+└─┬ @dsh-workbench/module-tools 1.2.7
+  └─┬ eslint-plugin-react 7.37.5
+    └── ✕ unmet peer eslint@"^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7": found 10.14.0
+
+devDependencies:
++ @deepseek-ai/dsh-client-ui-primitives 0.2.2-rc.2
++ @dsh-workbench/core 1.2.7
++ @dsh-workbench/module-tools 1.2.7
++ @dsh-workbench/shared 1.2.7
++ @types/node 24.19.2 (26.6.6 is available)
++ @types/react 19.3.0
++ esbuild 0.28.2
++ react 19.3.1
++ typescript 5.9.3 (7.0.2 is available)
++ vitest 5.1.0
+
+Done in 1m 8s using pnpm v10.32.1

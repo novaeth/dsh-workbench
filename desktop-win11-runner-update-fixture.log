@@ -1,0 +1,15 @@
+真装最新版 1.2.8-beta.0 → C:\Users\runneradmin\.dsh\workbench\versions\1.2.8-beta.0
+Packages: +42
+++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 42, reused 0, downloaded 29, added 8
+Progress: resolved 42, reused 0, downloaded 40, added 14
+Progress: resolved 42, reused 0, downloaded 42, added 42, done
+Done in 3.4s using pnpm v10.32.1
+版本 1.2.3-beta.4：内容取自 1.2.8-beta.0 的安装树（版本号改写），C:\Users\runneradmin\.dsh\workbench\versions\1.2.3-beta.4\node_modules
+profile=desktop
+version=1.2.3-beta.4
+versionDir=C:\Users\runneradmin\.dsh\workbench\versions\1.2.3-beta.4
+links=7
+settings=C:\Users\runneradmin\.dsh\workbench\settings.json
+marker=C:\Users\runneradmin\.dsh\workbench\self-update.json
+目标=1.2.8-beta.0
