@@ -1,5 +1,5 @@
 import { execa } from 'execa';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -170,20 +170,41 @@ async function productHealRound(runtime, probe, sharedHost) {
     log: (message) => process.stdout.write(`${message}\n`),
   };
 
-  const samePath = (value, expected) => {
-    const flat = (input) => input.replaceAll('\\', '/').toLowerCase();
-    return flat(value).includes(flat(expected));
+  const real = (input) => {
+    try {
+      return realpathSync.native(input);
+    } catch {
+      return input;
+    }
   };
-  const storeAfter = () => {
-    const recorded = join(toolchain, 'node_modules', '.modules.yaml');
-    return existsSync(recorded) ? readFileSync(recorded, 'utf8') : '';
-  };
+  const flat = (input) => real(input).replaceAll('\\', '/').toLowerCase();
+  const samePath = (value, expected) => flat(value).startsWith(flat(expected));
+  const storeAfter = () => runtime.storeDirFor(toolchain);
   const prevSiblings = () =>
     existsSync(dirname(toolchain))
       ? readdirSync(dirname(toolchain)).filter((entry) => entry.startsWith(`${basename(toolchain)}.prev-`)).length
       : 0;
 
   const outcome = await probe.installIsolatedRuntime(deps);
+
+  const dump = (label, dir) => {
+    const list = existsSync(dir) ? readdirSync(dir).sort().join(', ') : '(不存在)';
+    process.stdout.write(`heal 现场 ${label}: ${dir}\n  → ${list}\n`);
+  };
+  dump('live(toolchain)', toolchain);
+  dump('live/node_modules', join(toolchain, 'node_modules'));
+  const modulesFile = join(toolchain, 'node_modules', '.modules.yaml');
+  process.stdout.write(
+    `  modules.yaml=${existsSync(modulesFile) ? readFileSync(modulesFile, 'utf8').replaceAll('\n', ' | ').slice(0, 320) : '(没有)'}\n`,
+  );
+  process.stdout.write(
+    `  ready.json=${String(existsSync(join(toolchain, '.ready.json')))} · opencliDir=${runtime.toolchainOpencliDir()} · opencli=${String(existsSync(join(runtime.toolchainOpencliDir(), 'package.json')))} · 同一条=${String(toolchain === dirname(dirname(dirname(runtime.toolchainOpencliDir()))))}\n`,
+  );
+  for (const entry of readdirSync(dirname(toolchain)).sort()) {
+    if (!entry.startsWith(`${basename(toolchain)}.`)) continue;
+    const inner = join(dirname(toolchain), entry);
+    process.stdout.write(`  旁支 ${entry}: ${readdirSync(inner).sort().join(', ')}\n`);
+  }
 
   check(
     '★ 就地升级不会被旧 store 卡住：装到暂存目录再换进来，真 pnpm 跑通',
@@ -198,7 +219,7 @@ async function productHealRound(runtime, probe, sharedHost) {
   check(
     '换进来的是新 store 装的那份：node_modules 记录里 storeDir 已经是 store B',
     samePath(storeAfter(), storeB),
-    `modules.yaml 里 store B=${String(samePath(storeAfter(), storeB))}`,
+    `记录里的 store=${storeAfter()} · 期望以它开头=${storeB}`,
   );
   check(
     '重装后那份 opencli 真的在点名的位置',
