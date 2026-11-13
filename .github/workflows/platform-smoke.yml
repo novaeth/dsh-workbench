@@ -25,7 +25,7 @@ name: platform-smoke
     - cron: '23 3 * * 1'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: platform-smoke-${{ github.ref }}
@@ -71,21 +71,18 @@ jobs:
         run: command -v pwsh
       - name: Platform smoke (argv quoting / timeout / append)
         shell: bash
-        run: node scripts/smoke/platform-shell.mjs
+        run: node scripts/smoke/platform-shell.mjs 2>&1 | tee platform-shell.log
       - name: Install plan smoke (真 shell 跑 run → remove → mkdir → copy → link → optional → env)
         shell: bash
-        run: node scripts/smoke/install-plan.mjs
+        run: node scripts/smoke/install-plan.mjs 2>&1 | tee install-plan.log
       - name: Runtime heal smoke (升级现场：既有 store 记录 + 断链 → store 不合 → 清一次重装)
         shell: bash
         run: |
-          set -o pipefail
-          if ! node scripts/smoke/runtime-heal.mjs > heal.log 2>&1; then
-            tail -n 30 heal.log
-            body=$(grep -aE '❌|没过' heal.log | head -n 10 | sed -e 's/%/%25/g' | awk 'NF { printf "%s%%0A", $0 }')
+          if ! node scripts/smoke/runtime-heal.mjs 2>&1 | tee runtime-heal.log; then
+            body=$(grep -aE '❌|没过' runtime-heal.log | head -n 10 | sed -e 's/%/%25/g' | awk 'NF { printf "%s%%0A", $0 }')
             echo "::error title=runtime heal smoke failed::${body:0:1800}"
             exit 1
           fi
-          tail -n 3 heal.log
       - name: 自更新与自愈的判据（win32 的 $ComSpec / taskkill 分支在各腿上真跑）
         shell: bash
         run: |
@@ -97,26 +94,26 @@ jobs:
             src/__tests__/version-dir.test.ts \
             src/__tests__/version-switch.test.ts \
             src/__tests__/version-migrate.test.ts \
-            src/__tests__/isolated-install.test.ts > vitest.log 2>&1; then
-            tail -n 40 vitest.log
-            body=$(grep -aE 'FAIL |× |→ ' vitest.log | head -n 25 || tail -n 12 vitest.log)
+            src/__tests__/isolated-install.test.ts > self-update-vitest.log 2>&1; then
+            tail -n 40 self-update-vitest.log
+            body=$(grep -aE 'FAIL |× |→ ' self-update-vitest.log | head -n 25 || tail -n 12 self-update-vitest.log)
             body=$(printf '%s\n' "$body" | sed -e 's/%/%25/g' -e 's/\r$//' | awk 'NF { printf "%s%%0A", $0 }')
             echo "::error title=self-update criteria failed::${body:0:1800}"
             exit 1
           fi
-          tail -n 5 vitest.log
+          tail -n 5 self-update-vitest.log
       - name: 换版本不就地覆盖（四条腿真跑：真目录→链接 · 旧目录不动 · 坏版本不回退错 · 回退不重装）
         shell: bash
-        run: node scripts/smoke/self-update-links.mjs
+        run: node scripts/smoke/self-update-links.mjs 2>&1 | tee self-update-links.log
       - name: Renderer + seam tests
         shell: bash
-        run: pnpm --filter @dsh-workbench/shared exec vitest run src/host/__tests__/shell-render.test.ts src/host/__tests__/seam.test.ts src/host/seam/__tests__/process.test.ts
+        run: pnpm --filter @dsh-workbench/shared exec vitest run src/host/__tests__/shell-render.test.ts src/host/__tests__/seam.test.ts src/host/seam/__tests__/process.test.ts 2>&1 | tee renderer-seam.log
       - name: Capture controller tests
         shell: bash
-        run: pnpm --filter @dsh-workbench/core exec vitest run src/modules/panels/model/__tests__/diy-record-live.test.ts
+        run: pnpm --filter @dsh-workbench/core exec vitest run src/modules/panels/model/__tests__/diy-record-live.test.ts 2>&1 | tee capture.log
       - name: Browser read tests
         shell: bash
-        run: pnpm --filter @dsh-workbench/adapter-runtime exec vitest run src/browser/__tests__/browser-read.test.ts
+        run: pnpm --filter @dsh-workbench/adapter-runtime exec vitest run src/browser/__tests__/browser-read.test.ts 2>&1 | tee browser-read.log
       - name: Selfcheck (core)
         if: runner.os != 'Windows'
         shell: bash
@@ -145,3 +142,17 @@ jobs:
             exit 1
           fi
           tail -n 3 selfcheck.log
+
+      - name: Publish smoke logs (失败时推到分支，public 仓读不到 job 日志)
+        if: failure()
+        continue-on-error: true
+        shell: bash
+        run: |
+          git config user.name ci
+          git config user.email ci@example.com
+          shopt -s nullglob
+          files=(*.log)
+          if [ ${#files[@]} -eq 0 ]; then echo "没有日志可推"; exit 0; fi
+          git add -f "${files[@]}"
+          git commit -m "ci: platform smoke log [skip ci]" || true
+          git push origin HEAD:smoke-log-${{ matrix.label }}-${{ github.run_id }}
