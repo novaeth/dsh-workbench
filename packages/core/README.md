@@ -133,7 +133,7 @@ dsh-workbench migrate --force  # 已经迁过一次、想再补并一次
 |---|---|
 | 起工作台 | `npx @dsh-workbench/core` |
 | 换端口 | `WORKBENCH_PORT=3091 npx @dsh-workbench/core` |
-| 升级 | 市场里「工作台」那一行走自更新，或重新执行一次 `npx --yes @dsh-workbench/core@latest setup`（幂等），然后重启工作台。自更新换完链接会按新依赖重装 profile，旧版装进去的 dsh 包会被清掉；工坊工具链会在下次启动时自动更新到同一版本，不需要手动删除工坊 |
+| 升级 | 市场里「工作台」那一行走自更新，或重新执行一次 `npx --yes @dsh-workbench/core@latest setup`（幂等），然后重启工作台。自更新换完链接会按新依赖重装 profile，旧版装进去的 dsh 包会被清掉；工坊工具链会在下次启动时自动更新到同一版本，不需要手动删除工坊。版本目录（`~/.dsh/workbench/versions/`）只留当前和上一版，更旧的会在换版时清掉；被其它 profile 链接着的版本不动 |
 | 升级 dsh 之后 | 先升工作台、再升 dsh。旧版装出来的 profile 里还留着 dsh 插件层，新启动器会在起进程前拒绝并提示重装一次（`setup` 或 `dsh plugin --profile <名字> add @dsh-workbench/core`）；重装会按新依赖把旧 dsh 包清掉 |
 | 重建 profile | 先执行 `mv ~/.dsh/profiles/workbench ~/.dsh/profiles/workbench.bak`，再执行一次 `setup` |
 | 换左栏 | 设置 → 工作台设置 → 会话列表：默认官方；切换后会自动刷新页面生效（从旧版本升级上来的实例，第一次需要重启） |

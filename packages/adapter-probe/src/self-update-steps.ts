@@ -58,6 +58,13 @@ export interface SelfUpdateBundlesStep {
   readonly bundle: string;
 }
 
+export interface SelfUpdatePruneStep {
+  readonly kind: 'prune';
+  readonly versionsDir: string;
+  readonly profilesDir: string;
+  readonly keep: readonly string[];
+}
+
 export interface SelfUpdateExpectBootStep {
   readonly kind: 'expect-boot';
   readonly boot: {
@@ -81,6 +88,7 @@ export type SelfUpdateStep =
   | SelfUpdateVerifyStep
   | SelfUpdateSwitchStep
   | SelfUpdateBundlesStep
+  | SelfUpdatePruneStep
   | SelfUpdateExpectBootStep
   | SelfUpdateMarkerStep;
 
@@ -158,6 +166,7 @@ export function selfUpdateStepsOf(
           : {}),
       },
       { kind: 'bundles', profileDir, bundle: request.pkg },
+      { kind: 'prune', versionsDir: paths.versionsDir, profilesDir: join(request.dshHome, 'profiles'), keep: [version, request.from] },
       { kind: 'marker', state: 'pending-restart', version },
       {
         kind: 'expect-boot',

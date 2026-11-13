@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import {
   ensureProfileBundle,
+  ensureReleaseAge,
   removePath,
   tailLines,
   writeJsonFile,
@@ -13,6 +14,7 @@ import type {
   SelfUpdateSteps,
 } from './self-update-steps.js';
 import { bootVerdict, readBootRecord } from './self-update-boot.js';
+import { pruneVersions } from './self-update-prune.js';
 import {
   carryPreviousVersion,
   flipProfileLinks,
@@ -158,6 +160,7 @@ async function applyStep(
     );
     if (!flipped.ok) return { ok: false, detail: flipped.detail };
     writeProfileLinks({ profileDir: step.profileDir, links: step.links });
+    ensureReleaseAge({ dir: step.profileDir, packages: plan.packages });
     const reinstallNote = await reinstallProfile(plan, deps, log);
     return {
       ok: true,
@@ -170,6 +173,18 @@ async function applyStep(
     };
   }
   if (step.kind === 'expect-boot') return expectBoot(plan, step, deps, now, flippedAt);
+  if (step.kind === 'prune') {
+    const result = pruneVersions({
+      versionsDir: step.versionsDir,
+      profilesDir: step.profilesDir,
+      keep: step.keep,
+    });
+    const kept = result.kept.length === 0 ? '没有别的' : result.kept.join('、');
+    const removed =
+      result.removed.length === 0 ? '旧版本目录没动' : `清掉了 ${String(result.removed.length)} 个旧版本（${result.removed.join('、')}）`;
+    const failed = result.failed.length === 0 ? '' : `；这 ${String(result.failed.length)} 个没清掉（${result.failed.join('、')}）`;
+    return { ok: true, detail: `${removed}，留着 ${kept}${failed}` };
+  }
   if (step.kind === 'bundles') {
     const check = ensureProfileBundle(step.profileDir, step.bundle);
     if (check.refusal !== undefined) {
@@ -227,7 +242,7 @@ function runCommand(step: SelfUpdateInstallStep, deps: SelfUpdateRunDeps): Promi
 
 export function profileInstallArgs(head: string | undefined, profileDir: string): readonly string[] {
   const args = ['install', '--dir', profileDir, '--prefer-offline', '--config.confirm-modules-purge=false'];
-  return head !== undefined && head.endsWith('.cjs') ? [head, ...args] : args;
+  return head !== undefined && /\.[cm]?js$/.test(head) ? [head, ...args] : args;
 }
 
 async function reinstallProfile(

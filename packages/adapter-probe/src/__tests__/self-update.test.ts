@@ -80,7 +80,16 @@ describe('自更新：现场落在哪里', () => {
     expect(plan.command.args[0]?.endsWith('self-update-runner.js')).toBe(true);
     expect(plan.command.args[1]).toBe(plan.paths.planFile);
     expect(plan.command.log).toBe(plan.paths.log);
-    expect(plan.steps.steps.map((step) => step.kind)).toEqual(['version', 'install', 'verify', 'switch', 'bundles', 'marker', 'expect-boot']);
+    expect(plan.steps.steps.map((step) => step.kind)).toEqual([
+      'version',
+      'install',
+      'verify',
+      'switch',
+      'bundles',
+      'prune',
+      'marker',
+      'expect-boot',
+    ]);
     expect(plan.marker.state).toBe('running');
     expect(plan.marker.at).toBe('2026-11-10T12:00:00.000Z');
   });
@@ -136,7 +145,16 @@ describe('起更新：先落现场，再交给外面那个进程', () => {
     expect(failure).toBe('');
     const planFile = join(req.dshHome, 'workbench', 'self-update-plan.json');
     const written = JSON.parse(readFileSync(planFile, 'utf8')) as { steps: readonly { kind: string }[] };
-    expect(written.steps.map((step) => step.kind)).toEqual(['version', 'install', 'verify', 'switch', 'bundles', 'marker', 'expect-boot']);
+    expect(written.steps.map((step) => step.kind)).toEqual([
+      'version',
+      'install',
+      'verify',
+      'switch',
+      'bundles',
+      'prune',
+      'marker',
+      'expect-boot',
+    ]);
     const marker = JSON.parse(readFileSync(join(req.dshHome, 'workbench', 'self-update.json'), 'utf8')) as {
       state: string;
       from: string;
@@ -188,6 +206,14 @@ describe('自更新换完链接之后', () => {
     ]);
     expect(profileInstallArgs('/x/pnpm.cjs', '/p')).toEqual([
       '/x/pnpm.cjs',
+      'install',
+      '--dir',
+      '/p',
+      '--prefer-offline',
+      '--config.confirm-modules-purge=false',
+    ]);
+    expect(profileInstallArgs('/x/pnpm.mjs', '/p')).toEqual([
+      '/x/pnpm.mjs',
       'install',
       '--dir',
       '/p',

@@ -90,7 +90,16 @@ describe('自更新：编排是一份有序步骤（不是脚本）', () => {
   it('步骤顺序固定，且没有"等宿主"这类步', () => {
     const { request, paths } = caseDirs();
     const plan = planOf(request, paths, { at: '2026-11-10T12:00:00.000Z' });
-    expect(plan.steps.map((step) => step.kind)).toEqual(['version', 'install', 'verify', 'switch', 'bundles', 'marker', 'expect-boot']);
+    expect(plan.steps.map((step) => step.kind)).toEqual([
+      'version',
+      'install',
+      'verify',
+      'switch',
+      'bundles',
+      'prune',
+      'marker',
+      'expect-boot',
+    ]);
     expect(plan.marker).toMatchObject({ state: 'running', from: FROM, to: TO, at: '2026-11-10T12:00:00.000Z' });
     const text = JSON.stringify(plan.steps);
     expect(text).not.toContain('host.lock');
@@ -146,7 +155,7 @@ describe('自更新：runner 按步骤跑，失败只落在 marker 上', () => {
     const result = await runSelfUpdateSteps(plan, { processes: processes.host, now: () => '2026-11-10T12:01:00.000Z' });
     expect(result.ok).toBe(true);
     expect(result.state).toBe('pending');
-    expect(result.ran).toEqual(['version', 'install', 'verify', 'switch', 'bundles', 'marker', 'expect-boot']);
+    expect(result.ran).toEqual(['version', 'install', 'verify', 'switch', 'bundles', 'prune', 'marker', 'expect-boot']);
     expect(processes.calls).toHaveLength(2);
     expect(processes.calls[0]?.args).toContain('install');
     expect(processes.calls[1]?.args).toEqual(
