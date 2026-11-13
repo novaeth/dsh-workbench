@@ -1,0 +1,15 @@
+New Session
+Ctrl
++
+N
+Plugins
+Automation tasks
+More
+Workspaces
+Default workspace
+New Session
+More
+Plugins
+Install, enable, and configure plugins
+Refresh
+Add plugin
