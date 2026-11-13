@@ -466,10 +466,11 @@ export function renderUserReadme(source) {
     ? '在市场「已安装」里装或卸。装完在当前项目的面板里勾选这个模块，卡片才会出现；卸掉后卡片消失。'
     : source?.install;
   const shots = shotsOf(source);
+  const shotsHeading = text(source?.shotsTitle) || '长这样';
   const shotLines = shots.length === 0
     ? []
     : [
-        '## 卡片长这样',
+        `## ${shotsHeading}`,
         '',
         ...shots.flatMap((one) => [
           ...(one.caption === '' ? [] : [`**${one.caption}**`, '']),
@@ -535,6 +536,7 @@ export function userSourceSkeleton(manifest, design) {
   return {
     title: manifestTitleOf(manifest) || text(design?.name) || '模块',
     summary: text(design?.oneLine) || text(manifest?.description),
+    shotsTitle: '',
     shots: [
       {
         caption: '（可选：图注，比如「卡片」「设置面」「审批」）',

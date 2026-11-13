@@ -1,6 +1,7 @@
 {
   "title": "__UNIT__ 模块",
   "summary": "__DESC__",
+  "shotsTitle": "",
   "shots": [
     {
       "caption": "卡片",
