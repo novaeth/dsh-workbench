@@ -22,6 +22,19 @@ describe('Desktop opencli 安装命令', () => {
     expect(command).not.toContain('npm i --prefix');
   });
 
+  it('★ 暂存目录和 store 可以显式传：装到哪、用哪个 store 都跟着走', () => {
+    const command = opencliInstallCommand(
+      desktop,
+      (path) => path === pnpm,
+      '/tmp/toolchain.staging-x',
+      '/tmp/pnpm-store',
+    );
+
+    expect(command).toContain("--dir '/tmp/toolchain.staging-x'");
+    expect(command).toContain("--store-dir '/tmp/pnpm-store'");
+    expect(command).toContain('--save-exact');
+  });
+
   it('web 走 pnpm', () => {
     const command = opencliInstallCommand({ versions: { node: '24.15.0' } }, () => true);
 

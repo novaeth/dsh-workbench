@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -113,8 +113,9 @@ describe('runBootstrapCommand（自举命令走宿主域）', () => {
     expect(result.detail).toBe('one\ntwo\nthree');
   });
 
-  it('★ 真实 pnpm store 报错串到 installIsolatedRuntime：清一次并把命令重跑一遍', async () => {
+  it('★ 真实 pnpm store 报错串到 installIsolatedRuntime：清暂存一次、把命令重跑一遍', async () => {
     let attempts = 0;
+    const live = join(tempHome(), 'toolchain');
     const run = vi.fn(async () => {
       attempts += 1;
       return runBootstrapCommand('pnpm add --dir /x', {
@@ -126,14 +127,20 @@ describe('runBootstrapCommand（自举命令走宿主域）', () => {
             : { exitCode: 0, stdout: '+ @jackwener/opencli 1.2.1\n', stderr: '' },
       });
     });
-    const drop = vi.fn();
 
-    const result = await installIsolatedRuntime({ run, resolves: () => true, drop }, 'pnpm add --dir /x');
+    const result = await installIsolatedRuntime({
+      liveDir: live,
+      command: () => 'pnpm add --dir /x',
+      run,
+      ready: () => attempts >= 2,
+      describe: () => '',
+    });
 
-    expect(drop).toHaveBeenCalledTimes(1);
     expect(run).toHaveBeenCalledTimes(2);
     expect(result.ok).toBe(true);
     expect(result.reinstalled).toBe(true);
+    expect(result.detail).toContain('暂存目录的 node_modules');
+    expect(existsSync(join(live, 'package.json'))).toBe(true);
   });
 
   it('超时 → ok:false 且提示超时', async () => {

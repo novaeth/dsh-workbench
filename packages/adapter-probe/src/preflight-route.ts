@@ -3,8 +3,8 @@ import { basename, join } from 'node:path';
 import type { RuntimeCapabilities } from '@dsh-workbench/shared';
 import type { DshHostContext } from '@dsh-workbench/shared/host';
 import type { RouteTable } from '@dsh-workbench/shared/host';
-import { PREFLIGHT_INSTALL_TIMEOUT_MS, preflightHandler, quoteShellArgFor, removePath, type Seam, workbenchRoot } from '@dsh-workbench/shared/host';
-import { isOpencliReady, toolchainDir, toolchainOpencliDir } from '@dsh-workbench/adapter-runtime';
+import { PREFLIGHT_INSTALL_TIMEOUT_MS, preflightHandler, quoteShellArgFor, type Seam, workbenchRoot } from '@dsh-workbench/shared/host';
+import { isOpencliReady, isOpencliReadyAt, opencliBuiltAt, opencliPackageDir, storeDirFor, toolchainDir } from '@dsh-workbench/adapter-runtime';
 import { WAKE_BROWSER_ROUTE } from '@dsh-workbench/shared/contract/protocol/preflight-wake';
 import { runBootstrapCommand } from './bootstrap-run.js';
 import { createDiyPresetProbe } from './diy-preset-health.js';
@@ -128,26 +128,30 @@ export function registerPreflight(input: {
     installCommand,
     ...(extensionDirOf(input.extensionDir) === undefined ? {} : { extensionDir: extensionDirOf(input.extensionDir) }),
     installed: () => isOpencliReady(),
+    installedNote: () => {
+      if (!isOpencliReady()) return undefined;
+      const at = opencliBuiltAt(toolchainDir());
+      return at === undefined ? undefined : `${at} 装好`;
+    },
     versionAttempts: 3,
     withToolchainLock: (run) => holdToolchainLock(toolchainDir(), run).catch(() => run()),
     install: async () => {
       try {
         return await holdToolchainLock(toolchainDir(), async () => {
           if (isOpencliReady()) return { ok: true, detail: '另一个实例已经装好，不再重装' };
-          return installIsolatedRuntime(
-            {
-              run: (line) =>
-                runBootstrapCommand(line, {
-                  timeoutMs: PREFLIGHT_INSTALL_TIMEOUT_MS,
-                  seam: input.seam,
-                }),
-              resolves: () => isOpencliReady(),
-              describe: () => describeToolchain(toolchainDir(), toolchainOpencliDir()),
-              drop: () => removePath(join(toolchainDir(), 'node_modules')),
-              ...(installLog === undefined ? {} : { log: installLog }),
-            },
-            installCommand,
-          );
+          const store = storeDirFor(toolchainDir());
+          return installIsolatedRuntime({
+            liveDir: toolchainDir(),
+            command: (dir) => opencliInstallCommand(undefined, undefined, dir, store),
+            run: (line) =>
+              runBootstrapCommand(line, {
+                timeoutMs: PREFLIGHT_INSTALL_TIMEOUT_MS,
+                seam: input.seam,
+              }),
+            ready: (dir) => isOpencliReadyAt(dir),
+            describe: (dir) => describeToolchain(dir, opencliPackageDir(dir)),
+            ...(installLog === undefined ? {} : { log: installLog }),
+          });
         });
       } catch (error) {
         return { ok: false, detail: `等另一个实例装完时出错：${String(error)}` };

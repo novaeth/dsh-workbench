@@ -17,6 +17,7 @@ export * from './toolchain-probe.js';
 export * from './version-range.js';
 export * from './version-probe.js';
 export * from './install.js';
+export * from './isolated-install.js';
 export * from './self-update.js';
 export { createProbePort } from './probe-port.js';
 export { createSupplyPort } from './supply-port.js';

@@ -1,146 +1,178 @@
-import { describe, expect, it, vi } from 'vitest';
-import { installIsolatedRuntime } from '../isolated-install.js';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { isOpencliReadyAt } from '@dsh-workbench/adapter-runtime';
+import { OPENCLI_PIN } from '@dsh-workbench/shared/host';
+import { cleanupToolchainSiblings, installIsolatedRuntime, rollbackToolchain } from '../isolated-install.js';
 import type { IsolatedInstallDeps } from '../isolated-install.js';
 
-const COMMAND = 'pnpm add --dir /tmp/toolchain @jackwener/opencli@1.2.1';
+const PREFIX = 'install ';
 const STORE_ERROR = 'ERR_PNPM_UNEXPECTED_STORE  Expected store-dir /old/store, got /new/store';
-const SECOND_FAILURE = 'ERR_PNPM_UNEXPECTED_STORE  still the wrong store';
+const FETCH_ERROR = 'ERR_PNPM_FETCH_404  GET https://registry.npmjs.org/@jackwener%2Fopencli';
+const OK_RUN = { ok: true, detail: '+ @jackwener/opencli' };
 
-const OK_RUN = { ok: true, detail: '+ @jackwener/opencli 1.2.1' };
+const roots: string[] = [];
 
-function depsOf(input: {
-  results: readonly { ok: boolean; detail: string }[];
-  resolved: readonly boolean[];
-}): { deps: IsolatedInstallDeps; run: ReturnType<typeof vi.fn>; resolves: ReturnType<typeof vi.fn>; drop: ReturnType<typeof vi.fn>; log: ReturnType<typeof vi.fn> } {
-  let runIndex = 0;
-  let resolveIndex = 0;
-  const run = vi.fn(async () => input.results[Math.min(runIndex++, input.results.length - 1)] ?? OK_RUN);
-  const resolves = vi.fn(
-    () => input.resolved[Math.min(resolveIndex++, input.resolved.length - 1)] ?? true,
-  );
-  const drop = vi.fn();
-  const log = vi.fn();
-  return { deps: { run, resolves, drop, log }, run, resolves, drop, log };
+function liveDir(): string {
+  const root = mkdtempSync(join(tmpdir(), 'staged-install-'));
+  roots.push(root);
+  return join(root, 'toolchain');
 }
 
-describe('installIsolatedRuntime（装完自检 · 坏了清掉重装一遍）', () => {
-  it('★ 第一遍 ERR_PNPM_UNEXPECTED_STORE → 清一次 → 第二遍装上且读得到 → ok，只清一次', async () => {
-    const { deps, run, drop, resolves, log } = depsOf({
-      results: [{ ok: false, detail: STORE_ERROR }, OK_RUN],
-      resolved: [true],
-    });
+function writeTree(dir: string, main = true): void {
+  const pkg = join(dir, 'node_modules', '@jackwener', 'opencli');
+  mkdirSync(join(pkg, 'dist', 'src'), { recursive: true });
+  writeFileSync(join(pkg, 'package.json'), `${JSON.stringify({ name: '@jackwener/opencli', version: OPENCLI_PIN })}\n`);
+  if (main) writeFileSync(join(pkg, 'dist', 'src', 'main.js'), '');
+}
 
-    const result = await installIsolatedRuntime(deps, COMMAND);
+function depsOf(input: {
+  live: string;
+  results: readonly { ok: boolean; detail: string }[];
+  writes?: readonly boolean[];
+  ready?: (dir: string) => boolean;
+}): {
+  deps: IsolatedInstallDeps;
+  run: ReturnType<typeof vi.fn>;
+  log: ReturnType<typeof vi.fn>;
+} {
+  let index = 0;
+  const run = vi.fn(async (command: string) => {
+    const dir = command.slice(PREFIX.length);
+    const result = input.results[Math.min(index, input.results.length - 1)] ?? OK_RUN;
+    const writes = input.writes?.[index] ?? result.ok;
+    index += 1;
+    if (writes) writeTree(dir);
+    return result;
+  });
+  const log = vi.fn();
+  return {
+    deps: {
+      liveDir: input.live,
+      command: (dir) => `${PREFIX}${dir}`,
+      run,
+      ready: input.ready ?? ((dir) => isOpencliReadyAt(dir)),
+      describe: (dir) => dir,
+      log,
+    },
+    run,
+    log,
+  };
+}
+
+afterEach(() => {
+  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+});
+
+describe('installIsolatedRuntime（暂存 → 自检 → 原子换入）', () => {
+  it('★ 装进暂存目录，自检和标记都通过后才换入；旧树留一份 prev', async () => {
+    const live = liveDir();
+    mkdirSync(live, { recursive: true });
+    writeFileSync(join(live, 'old.txt'), 'old');
+    const { deps } = depsOf({ live, results: [OK_RUN] });
+
+    const result = await installIsolatedRuntime(deps);
 
     expect(result.ok).toBe(true);
-    expect(result.reinstalled).toBe(true);
-    expect(run).toHaveBeenCalledTimes(2);
-    expect(run).toHaveBeenNthCalledWith(1, COMMAND);
-    expect(run).toHaveBeenNthCalledWith(2, COMMAND);
-    expect(drop).toHaveBeenCalledTimes(1);
-    expect(resolves).toHaveBeenCalledTimes(1);
-    expect(log).toHaveBeenCalledTimes(1);
-    expect(result.detail).toContain('装了两遍');
-    expect(result.detail).toContain('清掉 toolchain/node_modules 重装后装好了');
-    expect(result.detail).toContain(STORE_ERROR);
-  });
-
-  it('★ 第一遍成功但那份 opencli 读不到（断链）→ 清掉重装一遍', async () => {
-    const { deps, run, drop, resolves } = depsOf({
-      results: [OK_RUN, OK_RUN],
-      resolved: [false, true],
-    });
-
-    const result = await installIsolatedRuntime(deps, COMMAND);
-
-    expect(result.ok).toBe(true);
-    expect(result.reinstalled).toBe(true);
-    expect(run).toHaveBeenCalledTimes(2);
-    expect(drop).toHaveBeenCalledTimes(1);
-    expect(resolves).toHaveBeenCalledTimes(2);
-    expect(result.detail).toContain('第一遍装完还是读不到');
-    expect(result.detail).toContain('清掉 toolchain/node_modules 重装后装好了');
-  });
-
-  it('★ 两遍都失败 → ok=false，只清一次，不跑第三遍', async () => {
-    const { deps, run, drop } = depsOf({
-      results: [{ ok: false, detail: STORE_ERROR }, { ok: false, detail: SECOND_FAILURE }],
-      resolved: [true],
-    });
-
-    const result = await installIsolatedRuntime(deps, COMMAND);
-
-    expect(result.ok).toBe(false);
-    expect(result.reinstalled).toBe(true);
-    expect(run).toHaveBeenCalledTimes(2);
-    expect(drop).toHaveBeenCalledTimes(1);
-    expect(result.detail).toContain('装了两遍');
-    expect(result.detail).toContain('清掉 toolchain/node_modules 重装后还是没装上');
-    expect(result.detail).toContain(STORE_ERROR);
-    expect(result.detail).toContain(SECOND_FAILURE);
-  });
-
-  it('★ 第一遍就成功且读得到 → 不清、不重跑', async () => {
-    const { deps, run, drop, resolves, log } = depsOf({
-      results: [OK_RUN],
-      resolved: [true],
-    });
-
-    const result = await installIsolatedRuntime(deps, COMMAND);
-
-    expect(result).toEqual({ ok: true, detail: OK_RUN.detail, reinstalled: false });
-    expect(run).toHaveBeenCalledTimes(1);
-    expect(drop).not.toHaveBeenCalled();
-    expect(resolves).toHaveBeenCalledTimes(1);
-    expect(log).not.toHaveBeenCalled();
-  });
-
-  it('第一遍失败但不是 store 对不上 → 原样返回，不重装', async () => {
-    const { deps, run, drop } = depsOf({
-      results: [{ ok: false, detail: 'ERR_PNPM_FETCH_404  GET https://registry.npmjs.org/@jackwener%2Fopencli' }],
-      resolved: [true],
-    });
-
-    const result = await installIsolatedRuntime(deps, COMMAND);
-
-    expect(result.ok).toBe(false);
     expect(result.reinstalled).toBe(false);
-    expect(result.detail).toContain('ERR_PNPM_FETCH_404');
-    expect(run).toHaveBeenCalledTimes(1);
-    expect(drop).not.toHaveBeenCalled();
+    expect(isOpencliReadyAt(live)).toBe(true);
+    expect(existsSync(join(live, 'old.txt'))).toBe(false);
+    const marker = JSON.parse(readFileSync(join(live, '.ready.json'), 'utf8')) as { pin: string; at: string };
+    expect(marker.pin).toBe(OPENCLI_PIN);
+    expect(Number.isNaN(Date.parse(marker.at))).toBe(false);
+    const previous = readdirSync(dirname(live)).filter((entry) => entry.startsWith('toolchain.prev-'));
+    expect(previous).toHaveLength(1);
+    expect(existsSync(join(dirname(live), previous[0] ?? '', 'old.txt'))).toBe(true);
   });
 
-  it.each([
-    ['ERR_PNPM_UNEXPECTED_STORE', STORE_ERROR],
-    ['ERR_PNPM_MODULES_BREAKING_CHANGE', 'ERR_PNPM_MODULES_BREAKING_CHANGE  node_modules path: /x'],
-    ['ERR_PNPM_ABORTED_REMOVE_MODULES_DIR', 'ERR_PNPM_ABORTED_REMOVE_MODULES_DIR  Failed to remove existing node_modules'],
-  ])('store 位置不合这一族（%s）→ 清一次重装', async (code, detail) => {
-    const { deps, run, drop } = depsOf({
-      results: [{ ok: false, detail }, OK_RUN],
-      resolved: [true],
+  it('★ 装失败 → 旧树原样不动，暂存目录清掉', async () => {
+    const live = liveDir();
+    mkdirSync(live, { recursive: true });
+    writeFileSync(join(live, 'old.txt'), 'old');
+    const { deps } = depsOf({ live, results: [{ ok: false, detail: FETCH_ERROR }] });
+
+    const result = await installIsolatedRuntime(deps);
+
+    expect(result.ok).toBe(false);
+    expect(readFileSync(join(live, 'old.txt'), 'utf8')).toBe('old');
+    expect(isOpencliReadyAt(live)).toBe(false);
+  });
+
+  it('★ store mismatch 只清暂存目录的 node_modules，旧树不动', async () => {
+    const live = liveDir();
+    mkdirSync(join(live, 'node_modules'), { recursive: true });
+    writeFileSync(join(live, 'node_modules', 'live.txt'), 'live');
+    const { deps } = depsOf({
+      live,
+      results: [{ ok: false, detail: STORE_ERROR }, OK_RUN],
     });
 
-    const result = await installIsolatedRuntime(deps, COMMAND);
+    const result = await installIsolatedRuntime(deps);
 
     expect(result.ok).toBe(true);
     expect(result.reinstalled).toBe(true);
-    expect(run).toHaveBeenCalledTimes(2);
-    expect(drop).toHaveBeenCalledTimes(1);
-    expect(result.detail).toContain(code);
+    expect(result.detail).toContain('暂存目录的 node_modules');
+    const previous = readdirSync(dirname(live)).filter((entry) => entry.startsWith('toolchain.prev-'));
+    expect(existsSync(join(dirname(live), previous[0] ?? '', 'node_modules', 'live.txt'))).toBe(true);
+    expect(isOpencliReadyAt(live)).toBe(true);
   });
 
-  it('第二遍装上但那份 opencli 还是读不到 → ok=false', async () => {
-    const { deps, run, drop } = depsOf({
+  it('★ 第二遍仍读不到 → ok=false，旧树保留', async () => {
+    const live = liveDir();
+    mkdirSync(live, { recursive: true });
+    writeFileSync(join(live, 'old.txt'), 'old');
+    const { deps } = depsOf({
+      live,
       results: [{ ok: false, detail: STORE_ERROR }, OK_RUN],
-      resolved: [false],
+      writes: [false, true],
+      ready: () => false,
     });
 
-    const result = await installIsolatedRuntime(deps, COMMAND);
+    const result = await installIsolatedRuntime(deps);
 
     expect(result.ok).toBe(false);
-    expect(result.reinstalled).toBe(true);
-    expect(run).toHaveBeenCalledTimes(2);
-    expect(drop).toHaveBeenCalledTimes(1);
-    expect(result.detail).toContain('清掉 toolchain/node_modules 重装后还是读不到');
+    expect(readFileSync(join(live, 'old.txt'), 'utf8')).toBe('old');
+  });
+});
+
+describe('rollbackToolchain', () => {
+  it('★ 把最新 prev 换回 live，坏树丢掉', () => {
+    const live = liveDir();
+    mkdirSync(live, { recursive: true });
+    writeFileSync(join(live, 'broken.txt'), 'broken');
+    mkdirSync(`${live}.prev-1`, { recursive: true });
+    writeFileSync(`${live}.prev-1/old.txt`, 'old');
+
+    expect(rollbackToolchain(live)).toBe(true);
+
+    expect(existsSync(join(live, 'old.txt'))).toBe(true);
+    expect(existsSync(join(live, 'broken.txt'))).toBe(false);
+    expect(readdirSync(dirname(live)).filter((entry) => entry.startsWith('toolchain.broken-'))).toHaveLength(0);
+  });
+
+  it('没有 prev → false，不动 live', () => {
+    const live = liveDir();
+    mkdirSync(live, { recursive: true });
+    writeFileSync(join(live, 'current.txt'), 'current');
+
+    expect(rollbackToolchain(live)).toBe(false);
+    expect(existsSync(join(live, 'current.txt'))).toBe(true);
+  });
+});
+
+describe('cleanupToolchainSiblings', () => {
+  it('清掉陈旧 staging 与旧 prev，只留最新一份 prev', () => {
+    const live = liveDir();
+    mkdirSync(live, { recursive: true });
+    mkdirSync(`${live}.staging-a`, { recursive: true });
+    mkdirSync(`${live}.prev-1`, { recursive: true });
+    mkdirSync(`${live}.prev-2`, { recursive: true });
+
+    cleanupToolchainSiblings(live);
+
+    expect(existsSync(`${live}.staging-a`)).toBe(false);
+    expect(existsSync(`${live}.prev-1`)).toBe(false);
+    expect(existsSync(`${live}.prev-2`)).toBe(true);
   });
 });

@@ -48,8 +48,12 @@ function packageVersionOf(file: string): string | undefined {
   }
 }
 
-export function opencliReadiness(): { readonly ready: boolean; readonly detail: string } {
-  const dir = toolchainOpencliDir();
+export function opencliPackageDir(projectDir: string): string {
+  return join(projectDir, 'node_modules', ...OPENCLI_NPM_PACKAGE.split('/'));
+}
+
+export function opencliReadinessAt(projectDir: string): { readonly ready: boolean; readonly detail: string } {
+  const dir = opencliPackageDir(projectDir);
   if (!existsSync(join(dir, 'package.json'))) return { ready: false, detail: '隔离副本不在' };
   if (!existsSync(join(dir, 'dist', 'src', 'main.js'))) {
     return { ready: false, detail: '隔离副本缺 dist/src/main.js' };
@@ -61,8 +65,27 @@ export function opencliReadiness(): { readonly ready: boolean; readonly detail: 
   return { ready: true, detail: OPENCLI_PIN };
 }
 
+export function opencliReadiness(): { readonly ready: boolean; readonly detail: string } {
+  return opencliReadinessAt(toolchainDir());
+}
+
+export function isOpencliReadyAt(projectDir: string): boolean {
+  return opencliReadinessAt(projectDir).ready;
+}
+
 export function isOpencliReady(): boolean {
-  return opencliReadiness().ready;
+  return isOpencliReadyAt(toolchainDir());
+}
+
+export function opencliBuiltAt(projectDir: string): string | undefined {
+  try {
+    const parsed: unknown = JSON.parse(readFileSync(join(projectDir, '.ready.json'), 'utf8'));
+    if (typeof parsed !== 'object' || parsed === null) return undefined;
+    const at = (parsed as Record<string, unknown>)['at'];
+    return typeof at === 'string' && at.trim() !== '' ? at.trim() : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export function cliCatalogPath(): string {
@@ -92,15 +115,21 @@ export function pnpmIsolationFlags(): string {
   );
 }
 
-export function isolatedInstallCommand(): string {
+export function isolatedInstallCommand(
+  dir: string = toolchainDir(),
+  store: string = storeDirFor(dir),
+): string {
   const pnpm = process.env.DSH_WB_PNPM?.trim() || 'pnpm';
-  return `${pnpm} add --dir ${quoteShellArg(toolchainDir())} ${OPENCLI_NPM_PACKAGE}@${OPENCLI_PIN} --store-dir ${quoteShellArg(storeDirFor(toolchainDir()))} ${pnpmIsolationFlags()} --allow-build=${OPENCLI_NPM_PACKAGE} --save-exact`;
+  return `${pnpm} add --dir ${quoteShellArg(dir)} ${OPENCLI_NPM_PACKAGE}@${OPENCLI_PIN} --store-dir ${quoteShellArg(store)} ${pnpmIsolationFlags()} --allow-build=${OPENCLI_NPM_PACKAGE} --save-exact`;
 }
 
-export function isolatedPnpmInstallCommand(pnpmCjs: string): string {
-  const store = storeDirFor(toolchainDir());
+export function isolatedPnpmInstallCommand(
+  pnpmCjs: string,
+  dir: string = toolchainDir(),
+  store: string = storeDirFor(dir),
+): string {
   return (
-    `node ${quoteShellArg(pnpmCjs)} add --dir ${quoteShellArg(toolchainDir())} ` +
+    `node ${quoteShellArg(pnpmCjs)} add --dir ${quoteShellArg(dir)} ` +
     `${OPENCLI_NPM_PACKAGE}@${OPENCLI_PIN} --store-dir ${quoteShellArg(store)} ` +
     `${pnpmIsolationFlags()} --allow-build=${OPENCLI_NPM_PACKAGE} --save-exact`
   );

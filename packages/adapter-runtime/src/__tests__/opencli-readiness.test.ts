@@ -3,13 +3,17 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { OPENCLI_PIN } from '@dsh-workbench/shared/host';
-import { isOpencliReady, opencliReadiness } from '../index.js';
+import { isOpencliReady, isOpencliReadyAt, opencliBuiltAt, opencliReadiness, opencliReadinessAt } from '../index.js';
 
-function seedCopy(root: string, version: string, main: boolean): void {
-  const dir = join(root, 'opencli', 'toolchain', 'node_modules', '@jackwener', 'opencli');
+function seedProject(projectDir: string, version: string, main: boolean): void {
+  const dir = join(projectDir, 'node_modules', '@jackwener', 'opencli');
   mkdirSync(join(dir, 'dist', 'src'), { recursive: true });
   writeFileSync(join(dir, 'package.json'), `${JSON.stringify({ name: '@jackwener/opencli', version })}\n`, 'utf8');
   if (main) writeFileSync(join(dir, 'dist', 'src', 'main.js'), '', 'utf8');
+}
+
+function seedCopy(root: string, version: string, main: boolean): void {
+  seedProject(join(root, 'opencli', 'toolchain'), version, main);
 }
 
 const roots: string[] = [];
@@ -49,6 +53,27 @@ describe('opencliReadiness', () => {
     expect(verdict.ready).toBe(false);
     expect(verdict.detail).toContain('0.0.1');
     expect(verdict.detail).toContain(OPENCLI_PIN);
+  });
+
+  it('★ 按项目目录判：暂存目录不用换环境就能自检', () => {
+    const root = mkdtempSync(join(tmpdir(), 'opencli-staging-'));
+    roots.push(root);
+    const project = join(root, 'toolchain.staging-x');
+    seedProject(project, OPENCLI_PIN, true);
+
+    expect(isOpencliReadyAt(project)).toBe(true);
+    expect(opencliReadinessAt(project).detail).toBe(OPENCLI_PIN);
+  });
+
+  it('读 .ready.json 的装好时间；没有就返回 undefined', () => {
+    const root = mkdtempSync(join(tmpdir(), 'opencli-marker-'));
+    roots.push(root);
+    const project = join(root, 'toolchain');
+
+    expect(opencliBuiltAt(project)).toBeUndefined();
+    mkdirSync(project, { recursive: true });
+    writeFileSync(join(project, '.ready.json'), '{"pin":"1.8.8","at":"2026-11-13T00:00:00.000Z"}\n');
+    expect(opencliBuiltAt(project)).toBe('2026-11-13T00:00:00.000Z');
   });
 
   it('清单、入口、版本都对 → 就绪', () => {

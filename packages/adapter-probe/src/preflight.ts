@@ -73,6 +73,7 @@ export function createPreflight(options: {
   logger?: { warn?(message: string): void } | undefined;
   install?: (() => Promise<{ ok: boolean; detail: string }>) | undefined;
   installed?: (() => boolean) | undefined;
+  installedNote?: (() => string | undefined) | undefined;
   versionAttempts?: number | undefined;
   withToolchainLock?: (<T>(run: () => Promise<T>) => Promise<T>) | undefined;
   warmReads?: (() => readonly (readonly string[])[]) | undefined;
@@ -361,7 +362,9 @@ export function createPreflight(options: {
     const diyStarted = skip('diy') ? undefined : options.probeDiy?.();
     if (withConsole && !skip('cli')) {
       patchStep('cli', { status: 'running', action: '检查 opencli 版本' });
-      appendLog('cli', `> 盘上自检：隔离运行时${options.installed?.() === true ? '在' : '不在'}（探测前）`);
+      const onDisk = options.installed?.() === true;
+      const note = onDisk ? options.installedNote?.() : undefined;
+      appendLog('cli', `> 盘上自检：隔离运行时${onDisk ? '在' : '不在'}${note === undefined ? '' : `（${note}）`}（探测前）`);
       if (diyStarted !== undefined) patchStep('diy', { status: 'running' });
 
       let version = await probeVersion();
