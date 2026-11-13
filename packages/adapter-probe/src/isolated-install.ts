@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, renameSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { toolchainManifestOf, toolchainNpmrcOf } from '@dsh-workbench/adapter-runtime';
-import { OPENCLI_PIN, removePath, writeTextFile } from '@dsh-workbench/shared/host';
+import { OPENCLI_PIN, now, removePath, writeTextFile } from '@dsh-workbench/shared/host';
 import { installWithRetry, type InstallAttempt, type InstallRetryResult } from './install-retry.js';
 
 export type IsolatedInstallRun = InstallAttempt;
@@ -23,7 +23,7 @@ function stagingOf(liveDir: string): string {
 }
 
 function backupOf(liveDir: string): string {
-  return `${liveDir}.prev-${Date.now()}-${randomUUID().slice(0, 4)}`;
+  return `${liveDir}.prev-${now()}-${randomUUID().slice(0, 4)}`;
 }
 
 export function cleanupToolchainSiblings(liveDir: string): void {
@@ -64,7 +64,7 @@ export function rollbackToolchain(liveDir: string): boolean {
   }
   const newest = entries.filter((entry) => entry.startsWith(`${name}.prev-`)).sort().at(-1);
   if (newest === undefined) return false;
-  const broken = `${liveDir}.broken-${Date.now()}`;
+  const broken = `${liveDir}.broken-${now()}`;
   if (existsSync(liveDir)) renameSync(liveDir, broken);
   try {
     renameSync(join(parent, newest), liveDir);
@@ -131,7 +131,7 @@ export async function installIsolatedRuntime(
     }
     writeTextFile(
       join(staging, '.ready.json'),
-      `${JSON.stringify({ pin: OPENCLI_PIN, at: new Date().toISOString() })}\n`,
+      `${JSON.stringify({ pin: OPENCLI_PIN, at: new Date(now()).toISOString() })}\n`,
     );
     swap(deps.liveDir, staging);
     return result;

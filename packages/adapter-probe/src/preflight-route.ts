@@ -135,28 +135,23 @@ export function registerPreflight(input: {
     },
     versionAttempts: 3,
     withToolchainLock: (run) => holdToolchainLock(toolchainDir(), run).catch(() => run()),
-    install: async () => {
-      try {
-        return await holdToolchainLock(toolchainDir(), async () => {
-          if (isOpencliReady()) return { ok: true, detail: '另一个实例已经装好，不再重装' };
-          const store = storeDirFor(toolchainDir());
-          return installIsolatedRuntime({
-            liveDir: toolchainDir(),
-            command: (dir) => opencliInstallCommand(undefined, undefined, dir, store),
-            run: (line) =>
-              runBootstrapCommand(line, {
-                timeoutMs: PREFLIGHT_INSTALL_TIMEOUT_MS,
-                seam: input.seam,
-              }),
-            ready: (dir) => isOpencliReadyAt(dir),
-            describe: (dir) => describeToolchain(dir, opencliPackageDir(dir)),
-            ...(installLog === undefined ? {} : { log: installLog }),
-          });
+    install: () =>
+      holdToolchainLock(toolchainDir(), async () => {
+        if (isOpencliReady()) return { ok: true, detail: '另一个实例已经装好，不再重装' };
+        const store = storeDirFor(toolchainDir());
+        return installIsolatedRuntime({
+          liveDir: toolchainDir(),
+          command: (dir) => opencliInstallCommand(undefined, undefined, dir, store),
+          run: (line) =>
+            runBootstrapCommand(line, {
+              timeoutMs: PREFLIGHT_INSTALL_TIMEOUT_MS,
+              seam: input.seam,
+            }),
+          ready: (dir) => isOpencliReadyAt(dir),
+          describe: (dir) => describeToolchain(dir, opencliPackageDir(dir)),
+          ...(installLog === undefined ? {} : { log: installLog }),
         });
-      } catch (error) {
-        return { ok: false, detail: `等另一个实例装完时出错：${String(error)}` };
-      }
-    },
+      }).catch((error: unknown) => ({ ok: false, detail: `等另一个实例装完时出错：${String(error)}` })),
     logger: input.ctx.logger,
     warmReads: input.warmReads,
     ...(input.runtimeCapabilities === undefined ? {} : { capabilities: input.runtimeCapabilities }),

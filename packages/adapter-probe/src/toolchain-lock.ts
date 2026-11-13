@@ -1,5 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import { setTimeout as delay } from 'node:timers/promises';
+import { now } from '@dsh-workbench/shared/host';
 import lockfile from 'proper-lockfile';
 
 export interface ToolchainLockOptions {
@@ -20,7 +21,7 @@ async function acquire(
   stale: number,
   waitMs: number,
 ): Promise<() => Promise<void>> {
-  const deadline = Date.now() + waitMs;
+  const deadline = now() + waitMs;
   for (;;) {
     try {
       return await lockfile.lock(dir, {
@@ -30,7 +31,7 @@ async function acquire(
         retries: 0,
       });
     } catch (error) {
-      if (!isLocked(error) || Date.now() >= deadline) throw error;
+      if (!isLocked(error) || now() >= deadline) throw error;
       await delay(POLL_MS);
     }
   }
