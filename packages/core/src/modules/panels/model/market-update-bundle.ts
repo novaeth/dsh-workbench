@@ -1,5 +1,5 @@
 import type { BundleManager, Seam, SupplyPort } from '@dsh-workbench/shared/host';
-import { quoteShellArg, requireSupply } from '@dsh-workbench/shared/host';
+import { PLUGIN_ID, quoteShellArg, requireSupply } from '@dsh-workbench/shared/host';
 import type { InstalledModule, ProfileModule } from '@dsh-workbench/shared/host';
 import type { BundleChange } from '@/kernel/contract/bundle-install';
 import { replaceDshBundle, type ReplaceBundleDeps } from './market-route';
@@ -148,6 +148,7 @@ export async function updateModuleBundle(
   const precheckRefused = forwarded !== null && forwarded.step === 'check';
   const swap =
     !precheckRefused &&
+    pkg === PLUGIN_ID &&
     stillStuck(change, after, before) &&
     before !== undefined &&
     deps.dshHome !== undefined &&

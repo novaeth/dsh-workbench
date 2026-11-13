@@ -10,6 +10,7 @@ import type { ReplaceBundleDeps } from '../model/market-route';
 import { updateModuleBundle } from '../model/market-update-bundle';
 
 const PKG = '@a/mod';
+const CORE = '@dsh-workbench/core';
 const change = (over: Partial<BundleChange> = {}): BundleChange => ({
   application: 'applied',
   stage: 'install',
@@ -107,8 +108,9 @@ describe('模块更新那一跳：跑完重新读盘对账', () => {
     const outcome = await updateModuleBundle(
       'mod',
       depsOf({
-        installed: () => ({ kind: 'module', pkg: PKG, unit: 'mod', version }),
+        installed: () => ({ kind: 'module', pkg: CORE, unit: 'mod', version }),
         install: async () => change({ application: 'failed', stage: 'remove', errorCode: 'stop-profile' }),
+        modules: () => [{ pkg: CORE, unit: 'mod', version: '0.1.0' }],
         dshHome: dir,
         profileName: 'workbench',
         swapWaitMs: 3000,
@@ -118,7 +120,7 @@ describe('模块更新那一跳：跑完重新读盘对账', () => {
             version = '0.1.1';
             writeFileSync(
               marker,
-              JSON.stringify({ pkg: PKG, profile: 'workbench', from: '0.1.0', to: '0.1.1', state: 'ok', version: '0.1.1' }),
+              JSON.stringify({ pkg: CORE, profile: 'workbench', from: '0.1.0', to: '0.1.1', state: 'ok', version: '0.1.1' }),
             );
             return { started: true, paths: { dir, planFile: '', marker, log: '', versionsDir: '' }, forward: '' };
           },
@@ -132,14 +134,36 @@ describe('模块更新那一跳：跑完重新读盘对账', () => {
     expect(outcome?.remedy).toBeUndefined();
   });
 
+  it('★ 第三方模块卸不掉 → 不碰工作台的版本目录，回落成命令（模块版本号不等于工作台版本号）', async () => {
+    const outcome = await updateModuleBundle(
+      'mod',
+      depsOf({
+        installed: () => ({ kind: 'module', pkg: PKG, unit: 'mod', version: '0.1.0' }),
+        install: async () => change({ application: 'failed', stage: 'remove', errorCode: 'stop-profile' }),
+        dshHome: mkdtempSync(join(tmpdir(), 'wb-swap-')),
+        profileName: 'workbench',
+        supply: {
+          startSelfUpdate: () => {
+            throw new Error('第三方模块不该走外部换版');
+          },
+        } as unknown as SupplyPort,
+      }),
+    );
+
+    expect(outcome?.change.application).toBe('failed');
+    expect(outcome?.remedy?.command).toContain('dsh plugin --profile workbench add');
+    expect(outcome?.remedy?.command).toContain(PKG);
+  });
+
   it('★ 外部那一步没把版本换掉 → 回落成失败 + 给命令（不假装成功）', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'wb-swap-'));
     const marker = join(dir, 'self-update.json');
     const outcome = await updateModuleBundle(
       'mod',
       depsOf({
-        installed: () => ({ kind: 'module', pkg: PKG, unit: 'mod', version: '0.1.0' }),
+        installed: () => ({ kind: 'module', pkg: CORE, unit: 'mod', version: '0.1.0' }),
         install: async () => change({ application: 'failed', stage: 'remove', errorCode: 'stop-profile' }),
+        modules: () => [{ pkg: CORE, unit: 'mod', version: '0.1.0' }],
         dshHome: dir,
         profileName: 'workbench',
         swapWaitMs: 200,
@@ -148,7 +172,7 @@ describe('模块更新那一跳：跑完重新读盘对账', () => {
           startSelfUpdate: () => {
             writeFileSync(
               marker,
-              JSON.stringify({ pkg: PKG, profile: 'workbench', from: '0.1.0', to: '0.1.1', state: 'failed', version: '0.1.0' }),
+              JSON.stringify({ pkg: CORE, profile: 'workbench', from: '0.1.0', to: '0.1.1', state: 'failed', version: '0.1.0' }),
             );
             return { started: true, paths: { dir, planFile: '', marker, log: '', versionsDir: '' }, forward: '' };
           },
