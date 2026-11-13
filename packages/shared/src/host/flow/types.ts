@@ -1,4 +1,5 @@
 import type { LongTaskIntervention } from '../../contract/long-task.js';
+import type { AiPort } from '../ai/port.js';
 
 /**
  * 一条流程：按顺序跑的步骤清单；步骤里的动作按名字从注册表取。
@@ -70,6 +71,10 @@ export interface FlowSubFlowStep {
  */
 export interface FlowAgentSpec {
   readonly prompt: FlowValue;
+  /** 要给它看的图片（data URL / 绝对路径），求值成一个字符串数组。 */
+  readonly images?: FlowValue | undefined;
+  /** 工具面：只留 `allow` 里的，去掉 `deny` 里的（名字是全局工具名）。 */
+  readonly tools?: { readonly allow?: readonly string[]; readonly deny?: readonly string[] } | undefined;
   readonly label?: string | undefined;
   readonly name?: string | undefined;
   readonly provider?: string | undefined;
@@ -95,7 +100,33 @@ export interface FlowAgentStep {
 /**
  * 一步要么调动作，要么跑子流程，要么让一个子 agent 判断。
  */
-export type FlowStep = FlowActionStep | FlowSubFlowStep | FlowAgentStep;
+/**
+ * 一步：让模型给一个结论。比 agent 节点轻（不起子 agent、没有工具），只借模型的判断。
+ */
+export interface FlowAiSpec {
+  /** 提示词，求成字符串。 */
+  readonly prompt: FlowValue;
+  /** 要给它看的图片，求成字符串数组（data URL 或绝对路径）。 */
+  readonly images?: FlowValue | undefined;
+  /** 对象根的 JSON Schema；给了就返回那个对象。 */
+  readonly schema?: Readonly<Record<string, unknown>> | undefined;
+  readonly provider?: string | undefined;
+  readonly model?: string | undefined;
+  readonly temperature?: number | undefined;
+  readonly timeoutMs?: number | undefined;
+}
+
+/** 一步：让模型读与判断，不起子 agent。 */
+export interface FlowAiStep {
+  readonly id: string;
+  readonly title?: string | undefined;
+  readonly ai: FlowAiSpec;
+  readonly when?: FlowPredicate | undefined;
+  readonly retry?: FlowRetry | undefined;
+  readonly forEach?: FlowForEach | undefined;
+}
+
+export type FlowStep = FlowActionStep | FlowSubFlowStep | FlowAgentStep | FlowAiStep;
 
 /**
  * 步骤入参里的一个值：字面量、引用，或二选一。
@@ -201,6 +232,7 @@ export interface FlowRunOptions {
   readonly sessionId?: string | undefined;
   readonly agentRunner?: FlowAgentRunner | undefined;
   readonly maxAgents?: number | undefined;
+  readonly ai?: AiPort | undefined;
   readonly onStep: (event: FlowStepEvent) => void;
   readonly sleep?: ((ms: number, signal: AbortSignal) => Promise<void>) | undefined;
   readonly now?: (() => number) | undefined;
@@ -240,6 +272,9 @@ export interface FlowCheck {
 export interface FlowAgentRequest {
   readonly stepId: string;
   readonly prompt: string;
+  readonly images?: readonly string[] | undefined;
+  /** 只让子 agent 看见这些工具；`deny` 优先。 */
+  readonly toolFilter?: { readonly allow?: readonly string[]; readonly deny?: readonly string[] } | undefined;
   readonly label?: string | undefined;
   readonly name?: string | undefined;
   readonly provider?: string | undefined;
@@ -287,4 +322,5 @@ export interface FlowAgentPort {
  */
 export interface FlowCheckOptions {
   readonly agents?: boolean | undefined;
+  readonly ai?: boolean | undefined;
 }

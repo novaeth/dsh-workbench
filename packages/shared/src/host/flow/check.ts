@@ -3,6 +3,7 @@ import type {
   FlowActionRegistry,
   FlowActionStep,
   FlowAgentStep,
+  FlowAiStep,
   FlowCheck,
   FlowCheckOptions,
   FlowDefinition,
@@ -95,7 +96,7 @@ function checkPredicate(
 }
 
 function checkCommon(
-  step: FlowActionStep | FlowAgentStep,
+  step: FlowActionStep | FlowAgentStep | FlowAiStep,
   at: string,
   seen: ReadonlySet<string>,
   add: AddProblem,
@@ -153,7 +154,47 @@ function checkCommon(
   }
 }
 
+function checkAi(step: FlowAiStep, at: string, seen: ReadonlySet<string>, add: AddProblem): void {
+  const spec = step.ai;
+  const item = step.forEach !== undefined;
+  checkValue(spec.prompt, `${at}.ai.prompt`, { seen, item, value: false }, add);
+  if ('$lit' in spec.prompt && typeof spec.prompt.$lit !== 'string') {
+    add(`${at}.ai.prompt`, 'ai.prompt 要是个字符串');
+  }
+  if (spec.images !== undefined) {
+    checkValue(spec.images, `${at}.ai.images`, { seen, item, value: false }, add);
+  }
+  if (
+    spec.schema !== undefined &&
+    (typeof spec.schema !== 'object' || spec.schema === null || spec.schema['type'] !== 'object')
+  ) {
+    add(`${at}.ai.schema`, 'ai.schema 要是对象根的 JSON Schema');
+  }
+  for (const key of ['provider', 'model'] as const) {
+    const value = spec[key];
+    if (value !== undefined && (typeof value !== 'string' || value.trim() === '')) {
+      add(`${at}.ai.${key}`, `${key} 不能为空`);
+    }
+  }
+  if (spec.temperature !== undefined && (typeof spec.temperature !== 'number' || spec.temperature < 0 || spec.temperature > 2)) {
+    add(`${at}.ai.temperature`, 'temperature 要在 0..2');
+  }
+  if (spec.timeoutMs !== undefined && (!Number.isInteger(spec.timeoutMs) || spec.timeoutMs < 0 || spec.timeoutMs > 600_000)) {
+    add(`${at}.ai.timeoutMs`, 'timeoutMs 要在 0..600000');
+  }
+}
+
 function checkAgent(step: FlowAgentStep, at: string, seen: ReadonlySet<string>, add: AddProblem): void {
+  const spec = step.agent;
+  if (spec.images !== undefined) checkValue(spec.images, `${at}.agent.images`, { seen, item: step.forEach !== undefined, value: false }, add);
+  for (const key of ['allow', 'deny'] as const) {
+    const list = spec.tools?.[key];
+    if (list !== undefined && !Array.isArray(list)) add(`${at}.agent.tools.${key}`, `tools.${key} 要是字符串数组`);
+  }
+  checkAgentRest(step, at, seen, add);
+}
+
+function checkAgentRest(step: FlowAgentStep, at: string, seen: ReadonlySet<string>, add: AddProblem): void {
   const spec = step.agent;
   const item = step.forEach !== undefined;
   checkValue(spec.prompt, `${at}.agent.prompt`, { seen, item, value: false }, add);
@@ -183,6 +224,14 @@ function checkAgent(step: FlowAgentStep, at: string, seen: ReadonlySet<string>, 
   }
 }
 
+function usesAi(flow: FlowDefinition): boolean {
+  for (const step of flow.steps) {
+    if ('ai' in step) return true;
+    if ('flow' in step && usesAi(step.flow)) return true;
+  }
+  return false;
+}
+
 function checkFlowAt(
   flow: FlowDefinition,
   actions: Pick<FlowActionRegistry, 'has'>,
@@ -195,6 +244,9 @@ function checkFlowAt(
   if (flow.steps.length === 0) add(`${prefix}steps`, '至少要有一步');
   if (options.agents === false && flowUsesAgents(flow)) {
     add(`${prefix}steps`, '这一份运行时没有 agent 能力（没装 subagents）');
+  }
+  if (options.ai === false && usesAi(flow)) {
+    add(`${prefix}steps`, '这一份运行时没有模型能力（没配 llm）');
   }
   if (flow.target !== undefined) {
     checkValue(flow.target, `${prefix}target`, { seen: new Set(), item: false, value: false }, add);
@@ -226,6 +278,13 @@ function checkFlowAt(
 
     if ('agent' in step) {
       checkAgent(step, at, seen, add);
+      checkCommon(step, at, seen, add);
+      seen.add(step.id);
+      return;
+    }
+
+    if ('ai' in step) {
+      checkAi(step, at, seen, add);
       checkCommon(step, at, seen, add);
       seen.add(step.id);
       return;

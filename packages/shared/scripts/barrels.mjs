@@ -18,8 +18,10 @@ function isInternal(rel) {
 function walk(dir, acc = []) {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, acc);
-    else if (/\.tsx?$/.test(entry) && !/\.test\.tsx?$/.test(entry)) acc.push(full);
+    if (statSync(full).isDirectory()) {
+      if (entry === '__tests__') continue;
+      walk(full, acc);
+    } else if (/\.tsx?$/.test(entry) && !/\.test\.tsx?$/.test(entry)) acc.push(full);
   }
   return acc;
 }

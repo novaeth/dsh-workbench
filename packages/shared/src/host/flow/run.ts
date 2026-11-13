@@ -1,3 +1,4 @@
+import type { AiPort } from '../ai/port.js';
 import { now as clockNow } from '../time.js';
 import { agentStopReasonText, agentSummaryOf } from './agent.js';
 import { evalPredicate, resolveInput, resolveValue } from './expr.js';
@@ -9,6 +10,7 @@ import type {
   FlowAgentRequest,
   FlowAgentRunner,
   FlowAgentStep,
+  FlowAiStep,
   FlowDefinition,
   FlowResult,
   FlowRunOptions,
@@ -121,7 +123,7 @@ async function callWithRetry(
 }
 
 interface RunOneOptions {
-  readonly step: FlowActionStep | FlowAgentStep;
+  readonly step: FlowActionStep | FlowAgentStep | FlowAiStep;
   readonly title: string;
   readonly stepId: string;
   readonly scope: FlowScope;
@@ -130,9 +132,40 @@ interface RunOneOptions {
   readonly runId: string;
   readonly workspace: string;
   readonly agentRunner: FlowAgentRunner | undefined;
+  readonly ai: AiPort | undefined;
   readonly sleep: Sleep;
   readonly now: () => number;
   readonly emit: (event: FlowStepEvent) => void;
+}
+
+function imagesOf(value: unknown, stepId: string): readonly string[] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) throw new Error(`步骤 ${stepId} 的 images 不是数组`);
+  return value.filter((one): one is string => typeof one === 'string' && one !== '');
+}
+
+function aiActionOf(step: FlowAiStep, scope: FlowScope, ai: AiPort | undefined): FlowAction {
+  const spec = step.ai;
+  const prompt = resolveValue(spec.prompt, scope);
+  if (typeof prompt !== 'string' || prompt.trim() === '') {
+    throw new Error(`步骤 ${step.id} 的 ai.prompt 不是非空字符串`);
+  }
+  const images = spec.images === undefined ? undefined : imagesOf(resolveValue(spec.images, scope), step.id);
+  return async (_input, context) => {
+    if (ai === undefined) throw new Error('这一步要模型跑，但这一趟没有模型通道');
+    const request = {
+      prompt,
+      ...(images === undefined || images.length === 0 ? {} : { images }),
+      ...(spec.schema === undefined ? {} : { schema: spec.schema }),
+      ...(spec.provider === undefined && spec.model === undefined
+        ? {}
+        : { model: { ...(spec.provider === undefined ? {} : { provider: spec.provider }), ...(spec.model === undefined ? {} : { model: spec.model }) } }),
+      ...(spec.temperature === undefined ? {} : { temperature: spec.temperature }),
+      ...(spec.timeoutMs === undefined ? {} : { timeoutMs: spec.timeoutMs }),
+      signal: context.signal,
+    };
+    return spec.schema === undefined ? ai.ask(request) : ai.askJson({ ...request, schema: spec.schema });
+  };
 }
 
 function agentActionOf(
@@ -164,6 +197,8 @@ function agentActionOf(
     ...(spec.preset === undefined ? {} : { preset: spec.preset }),
     ...(cwd === undefined ? {} : { cwd }),
     ...(spec.schema === undefined ? {} : { schema: spec.schema }),
+    ...(spec.images === undefined ? {} : { images: imagesOf(resolveValue(spec.images, scope), step.id) }),
+    ...(spec.tools === undefined ? {} : { toolFilter: spec.tools }),
   };
   return async (_input, context) => {
     if (runner === undefined) throw new Error('这一步要 agent 跑，但这一趟没有 agent 通道');
@@ -178,14 +213,16 @@ function agentActionOf(
 }
 
 async function runOneInner(options: RunOneOptions): Promise<unknown> {
-  const { step, title, stepId, scope, actions, signal, runId, workspace, agentRunner, sleep, now, emit } =
+  const { step, title, stepId, scope, actions, signal, runId, workspace, agentRunner, ai, sleep, now, emit } =
     options;
   const entry =
     'agent' in step
       ? { name: step.id, action: agentActionOf(step, title, scope, agentRunner), meta: {} }
-      : actions.get(step.action);
+      : 'ai' in step
+        ? { name: step.id, action: aiActionOf(step, scope, ai), meta: {} }
+        : actions.get(step.action);
   if (entry === undefined) throw new Error('注册表里没有这个动作');
-  const input = 'agent' in step ? undefined : resolveInput(step.with, scope);
+  const input = 'agent' in step || 'ai' in step ? undefined : resolveInput(step.with, scope);
   const context: FlowActionContext = {
     signal,
     runId,
@@ -204,7 +241,7 @@ async function runOneInner(options: RunOneOptions): Promise<unknown> {
 
   const poll = 'poll' in step ? step.poll : undefined;
   if (poll !== undefined) {
-    if ('agent' in step) throw new Error(`步骤 ${step.id} 不支持 poll`);
+    if ('agent' in step || 'ai' in step) throw new Error(`步骤 ${step.id} 不支持 poll`);
     const everyMs = Math.max(100, Math.min(60_000, Math.trunc(poll.everyMs)));
     const rawMax = Math.trunc(poll.maxMs);
     const maxMs = rawMax === 0 ? 0 : Math.max(everyMs, Math.min(1_800_000, rawMax));
@@ -335,6 +372,7 @@ export async function runFlow(options: FlowRunOptions): Promise<FlowResult> {
               runId,
               workspace,
               agentRunner: options.agentRunner,
+              ai: options.ai,
               sleep,
               now,
               emit,
@@ -357,12 +395,13 @@ export async function runFlow(options: FlowRunOptions): Promise<FlowResult> {
         runId,
         workspace,
         agentRunner: options.agentRunner,
+        ai: options.ai,
         sleep,
         now,
         emit,
       });
       steps[step.id] = value;
-      const summary = 'agent' in step ? agentSummaryOf(value) : undefined;
+      const summary = 'agent' in step || 'ai' in step ? agentSummaryOf(value) : undefined;
       emit({
         stepId: step.id,
         title,

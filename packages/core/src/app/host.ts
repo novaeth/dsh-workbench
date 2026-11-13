@@ -283,7 +283,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
           notify: (change) =>
             notifyLongTaskChange(ctx.get('agents') as AgentsLookup | undefined, host.unit, change),
         },
-        longTaskRuns, agents: flowAgents.port,
+        longTaskRuns, agents: flowAgents.port, ai: flowAgents.ai,
       });
     } catch (error) {
       mountFailures.set(id, { reason: failureReasonOf(error), host });

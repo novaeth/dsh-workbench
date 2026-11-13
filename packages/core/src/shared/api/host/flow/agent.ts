@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { createDshAi } from '../ai-adapter';
+import { imagePartOf } from '@dsh-workbench/shared/host';
 import type {
   DshAgent,
   DshAgentHandle,
@@ -9,10 +11,16 @@ import type {
   DshObjectJsonSchema,
   DshSessionId,
   DshSubagentRuntime,
+  AiPort,
   FlowAgentPort,
+  FlowAgentRequest,
   FlowAgentResult,
   FlowAgentRunner,
 } from '@dsh-workbench/shared/host';
+
+interface AttachmentStore {
+  saveImage(input: { data: Uint8Array; mediaType: string; name?: string }): Promise<unknown>;
+}
 
 const SUBAGENT_PROVIDER = 'spawn';
 const OWNER_PRESET = 'standard';
@@ -100,25 +108,27 @@ export function flowChildDenial(name: string): string | undefined {
 export interface FlowAgentGateway {
   readonly port: FlowAgentPort | undefined;
   readonly isChild: (sessionId: string) => boolean;
+  readonly ai: AiPort;
 }
 
 export function createFlowAgentGateway(ctx: DshHostContext): FlowAgentGateway {
   const children = new Set<string>();
   const isChild = (sessionId: string): boolean => children.has(sessionId);
   const subagents = ctx.get('subagents') as unknown as DshSubagentRuntime | undefined;
+  const store = ctx.get('attachments') as unknown as AttachmentStore | undefined;
   const agents = ctx.get('agents') as unknown as DshAgentRegistry | undefined;
-  if (subagents === undefined || agents === undefined) return { port: undefined, isChild };
+  if (subagents === undefined || agents === undefined) return { port: undefined, isChild, ai: createDshAi(ctx, () => undefined) };
 
-  return {
-    isChild,
-    port: {
+  let exposed: FlowAgentPort | undefined;
+  const ai = createDshAi(ctx, () => exposed);
+  const port: FlowAgentPort = {
       async open(context) {
         if (context.sessionId !== undefined) {
           const parent = agents.get(context.sessionId as DshSessionId);
           if (parent === undefined) {
             throw new Error('起这一趟的会话已经关了，agent 节点跑不了');
           }
-          return runnerOf({ subagents, parent, children });
+          return runnerOf({ subagents, parent, children, attachments: store });
         }
         const agentPreset = await ownerPresetOf(ctx);
         const agentOptions = ownerModelOf(ctx);
@@ -134,7 +144,7 @@ export function createFlowAgentGateway(ctx: DshHostContext): FlowAgentGateway {
             cause: error,
           });
         }
-        const runner = runnerOf({ subagents, parent: handle.agent, children });
+        const runner = runnerOf({ subagents, parent: handle.agent, children, attachments: store });
         return {
           run: runner.run,
           dispose: async () => {
@@ -143,8 +153,9 @@ export function createFlowAgentGateway(ctx: DshHostContext): FlowAgentGateway {
           },
         };
       },
-    },
   };
+  exposed = port;
+  return { isChild, ai, port };
 }
 
 async function ownerPresetOf(ctx: DshHostContext): Promise<string> {
@@ -176,10 +187,29 @@ function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+async function promptBlocksOf(
+  request: FlowAgentRequest,
+  store: AttachmentStore | undefined,
+): Promise<DshContentBlock[]> {
+  const blocks: DshContentBlock[] = [{ type: 'text', text: request.prompt }];
+  for (const image of request.images ?? []) {
+    if (store === undefined) throw new Error('这一份运行时没有附件服务，agent 节点带不了图片');
+    const part = await imagePartOf(image);
+    const ref = await store.saveImage({
+      data: part.data,
+      mediaType: part.mediaType as 'image/jpeg',
+      ...(part.name === undefined ? {} : { name: part.name }),
+    });
+    blocks.push({ type: 'image', attachment: ref } as unknown as DshContentBlock);
+  }
+  return blocks;
+}
+
 function runnerOf(parts: {
   readonly subagents: DshSubagentRuntime;
   readonly parent: DshAgent;
   readonly children: Set<string>;
+  readonly attachments?: AttachmentStore | undefined;
 }): FlowAgentRunner {
   return {
     async run(request, signal) {
@@ -195,7 +225,15 @@ function runnerOf(parts: {
           childId,
           label: request.label ?? request.stepId,
           ...(request.name === undefined ? {} : { name: request.name }),
-          prompt: [{ type: 'text', text: request.prompt }] as DshContentBlock[],
+          ...(request.toolFilter === undefined
+            ? {}
+            : {
+                toolFilter: {
+                  ...(request.toolFilter.allow === undefined ? {} : { allow: [...request.toolFilter.allow] }),
+                  ...(request.toolFilter.deny === undefined ? {} : { deny: [...request.toolFilter.deny] }),
+                } as never,
+              }),
+          prompt: await promptBlocksOf(request, parts.attachments),
           parent: parts.parent,
           signal,
           delivery: 'caller',

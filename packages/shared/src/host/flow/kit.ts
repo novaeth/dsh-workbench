@@ -1,6 +1,7 @@
 import { flowUsesAgents } from './agent.js';
 import { checkFlow } from './check.js';
 import { createFlowActionRegistry, runFlow } from './run.js';
+import type { AiPort } from '../ai/port.js';
 import type {
   FlowActionRegistry,
   FlowAgentPort,
@@ -34,12 +35,15 @@ export interface FlowHost {
  * @param agents 宿主的 agent 端口；没有（这一份运行时没装 subagents）就不支持 agent 节点。
  * @returns `createActions` / `check` / `run`。
  */
-export function createFlowHost(agents?: FlowAgentPort): FlowHost {
+export function createFlowHost(agents?: FlowAgentPort, ai?: AiPort): FlowHost {
   return {
     createActions: () => createFlowActionRegistry(),
     check: (flow, actions, options) =>
-      checkFlow(flow, actions, { agents: options?.agents ?? agents !== undefined }),
-    run: (options) => runWithAgents(options, agents),
+      checkFlow(flow, actions, {
+        agents: options?.agents ?? agents !== undefined,
+        ai: options?.ai ?? ai !== undefined,
+      }),
+    run: (options) => runWithAgents({ ...options, ...(ai === undefined ? {} : { ai }) }, agents),
   };
 }
 
