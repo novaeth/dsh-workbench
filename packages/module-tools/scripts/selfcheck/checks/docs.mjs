@@ -38,7 +38,7 @@ export const checks = [
         }
         const drawn = read(probe, 'README.md');
         if (!drawn.includes('## 长这样')) problems.push('README 缺「长这样」那一节');
-        if (!drawn.includes('```text') || !drawn.includes('│ ● 标题 │')) problems.push('卡片图没画进 README');
+        if (!drawn.includes('```\n┌─ 卡片 ─┐') || !drawn.includes('│ ● 标题 │')) problems.push('卡片图没画进 README');
         if (!/## 你会看到什么\n\n- 填好/.test(drawn)) problems.push('正文没按条目渲染');
 
         const noShot = JSON.parse(read(probe, 'readme.json'));

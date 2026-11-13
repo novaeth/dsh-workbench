@@ -474,7 +474,7 @@ export function renderUserReadme(source) {
         '',
         ...shots.flatMap((one) => [
           ...(one.caption === '' ? [] : [`**${one.caption}**`, '']),
-          '```text',
+          '```',
           one.drawing,
           '```',
           '',
