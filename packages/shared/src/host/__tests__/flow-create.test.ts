@@ -68,4 +68,55 @@ describe('createFlowTask：流程 + 长任务 + 工具的三件套', () => {
     ).toThrow(/missing/);
     longTasks.dispose();
   });
+
+  it('★★ 没有 agent 通道时不建带 agent 节点的流程，错误里带步骤路径', () => {
+    const { flowHost, longTasks } = hostOf();
+    const actions = flowHost.createActions();
+    expect(() =>
+      createFlowTask({
+        key: 'agent-flow',
+        flow: {
+          id: 'agent-flow',
+          title: '带 agent 的流程',
+          steps: [{ id: 'review', title: '评审', agent: { prompt: { $lit: '看一下' } } }],
+        },
+        actions,
+        flowHost,
+        longTasks: longTasks.host,
+        tool: { name: 'run', description: '跑' },
+      }),
+    ).toThrow(/agent 能力/);
+    longTasks.dispose();
+  });
+
+  it('★ 有 agent 端口时建得起来，agent 步骤照常跑', async () => {
+    const { longTasks } = hostOf();
+    const flowHost = createFlowHost({
+      async open() {
+        return {
+          async run() {
+            return { text: '可以发', childId: 'c-1', name: 'agent-1', stopReason: 'completed' };
+          },
+          async dispose() {},
+        };
+      },
+    });
+    const task = createFlowTask({
+      key: 'agent-ok',
+      flow: {
+        id: 'agent-ok',
+        title: '带 agent 的流程',
+        steps: [{ id: 'review', title: '评审', agent: { prompt: { $lit: '看一下' } } }],
+      },
+      actions: flowHost.createActions(),
+      flowHost,
+      longTasks: longTasks.host,
+      tool: { name: 'run', description: '跑' },
+    });
+
+    const started = task.start({ workspace: '/w/a', session: 's-1' });
+    await tick();
+    expect(task.runs.snapshot(started.id)).toMatchObject({ status: 'ok', session: 's-1' });
+    longTasks.dispose();
+  });
 });

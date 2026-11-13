@@ -170,8 +170,8 @@
 - **要人处理的节点**：给这一步带 `intervention`（类型从 `@dsh-workbench/shared` 取）：
   `{ title, hint?, actions?: ({kind:'open-url',url,label?} | {kind:'copy',text,label?})[], fields?, submitLabel? }`；
   `title` / `hint` 是字面量（宿主侧没有 `t`），`label` 缺省用外壳的词；带它的步骤停在 `needs-human`，下一条不带就回 `running`。
-- **结构化回执**：`fields` 是 `({key,label,kind?:'text'|'secret',placeholder?,required?})[]`，行上出表单，`submitLabel` 是提交钮；
-  接住回执给 `longTasks.create({ answer?(current, values) })`，`<单元>/runs/answer` 把 values 交给模块。values 只回给模块，不进快照 / agent 可读处。
+- **结构化回执**：`fields` 行上出表单，`submitLabel` 是提交钮；接住回执给 `longTasks.create({ answer?(current, values) })`，
+  `<单元>/runs/answer` 交回模块；values 不进快照。
 - **恢复**：默认靠模块自己轮询。给了 `recheck?(current)` 行上才有「我处理完了」（只发 `<单元>/runs/recheck`，外壳不承诺恢复）；
   要重试恢复就用 `withInterventionRetry(check, { attempts, delayMs })`（`@dsh-workbench/shared/host`）当 `recheck` handler：有界重试，check 回 `true` 即停。
 - 进入 `needs-human` 时外壳自动向起它的会话发「在等你处理」notice（hold、按 run 去重），模块不做。
@@ -192,7 +192,7 @@
   不认 signal 就不要画停止钮。画钮传 `stop`（`onStop: () => feed.stop(run.id)`、`busy`、`failed`、
   `label: 停止任务 {label}`、`askLabel: '确认停止'`）；失败文案画行下；两按确认归组件。
 - 外壳自带 `workbench_long_tasks_list`（读）与 `workbench_long_tasks_stop`（写）。自己起的免审批；
-  别人的 / 用户按的 / 没记来源的要审批；跨工作区直接拒。被停时外壳向起它的会话发 notice。
+  别人的 / 用户按的 / 没记来源的要审批；跨工作区直接拒。
 - `contracts` 查形状：注册表九个方法（含 `stop` / `live` / `answer`）、`create` 的 `key` / `run` / `view`、
   产物含 `useLongTask` / `LongTaskRow` 之一。是否真响应 signal 不在射程内。
 - 左栏那颗点由外壳按 `live()` 驱动；等人时升成「等你处理」的 warning，模块不做。
@@ -203,12 +203,13 @@
 
 ## 9.1 多步流程（workflow）
 
-多步、需要等待、需要重试、需要取消、以后还要运行 → 先按 [FLOW.md](FLOW.md) 询问用户是否固化。
+多步、要等、要重试、要取消、以后还要跑 → 先按 [FLOW.md](FLOW.md) 问用户是否固化。
 
-- 固化 = 模块宿主半侧的 `FlowDefinition`（类型从 `@dsh-workbench/core/contract` 取）+ `deps.flow.run` + §9 的长任务 + `registerTools`。
+- 固化 = 宿主半侧的 `FlowDefinition`（类型从 `@dsh-workbench/core/contract` 取）+ `deps.flow.run` + §9 的长任务 + `registerTools`。
 - 一次性 = 直接用现有工具 / 命令跑，不建模块。
 - 写平台的 flow 工具在清单里 `writes: true` + `needsApproval`；跑前给对象 / 环境 / 影响。
 - `deps.flow.check(flow, actions)` 先过；动作里用 `ctx.need(intervention)` 报人工干预节点（旧的 `ctx.login(url)` 仍可用），`ctx.log` 报进度。
+- **agent 节点**：子 agent 读与判断，不写平台；结果进 `steps.<id>`；按钮起会带你当前会话。见 [FLOW.md](FLOW.md) §4。
 - flow 的运行时只走 `deps.flow`，类型只走 `@dsh-workbench/core/contract`；不要为 flow 直接 import `@dsh-workbench/shared/host`。
 - 不要在 flow 里存凭据；不要把一次性任务静默固化。
 - 工具描述写「跑已固化的 <标题> 流程」；不要用它新建 flow，新需求先问用户。
@@ -224,5 +225,4 @@
   模块工具按工作区是否有这张卡收窄；DIY 族按模式收窄。
 - 外壳双重执行：清单不出现 + 调用时拒。
 
-"哪些工作区出现"不由模块声明：用户用 `workbench_panels_show` / `_hide` 控制，卡片与全部工具同判。
-`deniedTools` 可选。
+"哪些工作区出现"由用户用 `workbench_panels_show` / `_hide` 控制，卡片与全部工具同判；`deniedTools` 可选。

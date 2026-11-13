@@ -62,6 +62,7 @@ export * from './host/http.js';
 export * from './host/lib-capabilities.js';
 export * from './host/long-task.js';
 export * from './host/flow/types.js';
+export * from './host/flow/agent.js';
 export * from './host/flow/expr.js';
 export * from './host/flow/check.js';
 export * from './host/flow/run.js';

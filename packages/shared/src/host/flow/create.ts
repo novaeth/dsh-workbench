@@ -53,7 +53,7 @@ export function createFlowTask(options: CreateFlowTaskOptions): FlowTask {
 
   const runs = options.longTasks.create<LongTaskBase>({
     key: options.key,
-    ...flowTaskDeps(options.actions),
+    ...flowTaskDeps(options.actions, options.flowHost),
   });
 
   return {

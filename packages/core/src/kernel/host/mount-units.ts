@@ -1,4 +1,5 @@
 import type { HostContext, HostSurface } from '@dsh-workbench/shared';
+import type { FlowAgentPort } from '@dsh-workbench/shared/host';
 import type { DshHostContext } from '@dsh-workbench/shared/host';
 import type { DshToolDefinition, DshToolRegistry } from '@dsh-workbench/shared/host';
 import { APPROVAL_NOTE_ARG } from '@dsh-workbench/shared/host';
@@ -310,6 +311,7 @@ export function mountUnits(
         }
       | undefined;
     longTaskRuns?: Map<string, LongTaskRegistry<LongTaskBase>> | undefined;
+    agents?: FlowAgentPort | undefined;
   },
 ): UnitsPlan {
   const store = deps.store ?? createWorkspaceStore({ root: null });
@@ -320,6 +322,7 @@ export function mountUnits(
   const hostKit = createHostKit({
     libInstallCommand: (options) => adaptersOf(deps.ctx).supply.libInstallCommand(options),
     surface: deps.surface ?? hostSurface(),
+    ...(deps.agents === undefined ? {} : { agents: deps.agents }),
   });
   const data: DataReader = deps.data ?? {
     read: missingData,

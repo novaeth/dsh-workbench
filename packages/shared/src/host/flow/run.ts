@@ -1,10 +1,14 @@
 import { now as clockNow } from '../time.js';
+import { agentStopReasonText, agentSummaryOf } from './agent.js';
 import { evalPredicate, resolveInput, resolveValue } from './expr.js';
 import type {
   FlowAction,
   FlowActionContext,
   FlowActionRegistry,
   FlowActionStep,
+  FlowAgentRequest,
+  FlowAgentRunner,
+  FlowAgentStep,
   FlowDefinition,
   FlowResult,
   FlowRunOptions,
@@ -117,7 +121,7 @@ async function callWithRetry(
 }
 
 interface RunOneOptions {
-  readonly step: FlowActionStep;
+  readonly step: FlowActionStep | FlowAgentStep;
   readonly title: string;
   readonly stepId: string;
   readonly scope: FlowScope;
@@ -125,17 +129,63 @@ interface RunOneOptions {
   readonly signal: AbortSignal;
   readonly runId: string;
   readonly workspace: string;
+  readonly agentRunner: FlowAgentRunner | undefined;
   readonly sleep: Sleep;
   readonly now: () => number;
   readonly emit: (event: FlowStepEvent) => void;
 }
 
+function agentActionOf(
+  step: FlowAgentStep,
+  title: string,
+  scope: FlowScope,
+  runner: FlowAgentRunner | undefined,
+): FlowAction {
+  const spec = step.agent;
+  const prompt = resolveValue(spec.prompt, scope);
+  if (typeof prompt !== 'string' || prompt.trim() === '') {
+    throw new Error(`步骤 ${step.id} 的 agent.prompt 不是非空字符串`);
+  }
+  let cwd: string | undefined;
+  if (spec.cwd !== undefined) {
+    const resolved = resolveValue(spec.cwd, scope);
+    if (typeof resolved !== 'string' || resolved.trim() === '') {
+      throw new Error(`步骤 ${step.id} 的 agent.cwd 不是非空字符串`);
+    }
+    cwd = resolved;
+  }
+  const request: FlowAgentRequest = {
+    stepId: step.id,
+    prompt,
+    label: spec.label ?? title,
+    ...(spec.name === undefined ? {} : { name: spec.name }),
+    ...(spec.provider === undefined ? {} : { provider: spec.provider }),
+    ...(spec.model === undefined ? {} : { model: spec.model }),
+    ...(spec.preset === undefined ? {} : { preset: spec.preset }),
+    ...(cwd === undefined ? {} : { cwd }),
+    ...(spec.schema === undefined ? {} : { schema: spec.schema }),
+  };
+  return async (_input, context) => {
+    if (runner === undefined) throw new Error('这一步要 agent 跑，但这一趟没有 agent 通道');
+    const result = await runner.run(request, context.signal);
+    if (result.stopReason !== 'completed') throw new Error(agentStopReasonText(result.stopReason));
+    if (spec.schema !== undefined) {
+      if (result.value === undefined) throw new Error('agent 没给出符合格式的结论');
+      return result.value;
+    }
+    return result.text;
+  };
+}
+
 async function runOneInner(options: RunOneOptions): Promise<unknown> {
-  const { step, title, stepId, scope, actions, signal, runId, workspace, sleep, now, emit } =
+  const { step, title, stepId, scope, actions, signal, runId, workspace, agentRunner, sleep, now, emit } =
     options;
-  const entry = actions.get(step.action);
-  if (entry === undefined) throw new Error(`注册表里没有这个动作：${step.action}`);
-  const input = resolveInput(step.with, scope);
+  const entry =
+    'agent' in step
+      ? { name: step.id, action: agentActionOf(step, title, scope, agentRunner), meta: {} }
+      : actions.get(step.action);
+  if (entry === undefined) throw new Error('注册表里没有这个动作');
+  const input = 'agent' in step ? undefined : resolveInput(step.with, scope);
   const context: FlowActionContext = {
     signal,
     runId,
@@ -152,9 +202,11 @@ async function runOneInner(options: RunOneOptions): Promise<unknown> {
     },
   };
 
-  if (step.poll !== undefined) {
-    const everyMs = Math.max(100, Math.min(60_000, Math.trunc(step.poll.everyMs)));
-    const rawMax = Math.trunc(step.poll.maxMs);
+  const poll = 'poll' in step ? step.poll : undefined;
+  if (poll !== undefined) {
+    if ('agent' in step) throw new Error(`步骤 ${step.id} 不支持 poll`);
+    const everyMs = Math.max(100, Math.min(60_000, Math.trunc(poll.everyMs)));
+    const rawMax = Math.trunc(poll.maxMs);
     const maxMs = rawMax === 0 ? 0 : Math.max(everyMs, Math.min(1_800_000, rawMax));
     const startedAt = now();
     let pollAttempt = 0;
@@ -169,9 +221,9 @@ async function runOneInner(options: RunOneOptions): Promise<unknown> {
         message: `第 ${pollAttempt} 次`,
       });
       const value = await callWithRetry(entry.action, input, context, step.retry, sleep, signal);
-      if (evalPredicate(step.poll.until, { ...scope, value })) return value;
+      if (evalPredicate(poll.until, { ...scope, value })) return value;
       if (maxMs > 0 && now() - startedAt >= maxMs) {
-        if (step.poll.onTimeout === 'continue') return undefined;
+        if (poll.onTimeout === 'continue') return undefined;
         throw new Error(`步骤 ${step.id} 轮询超时（${maxMs}ms）`);
       }
       await sleep(everyMs, signal);
@@ -237,6 +289,7 @@ export async function runFlow(options: FlowRunOptions): Promise<FlowResult> {
           signal,
           runId: `${runId}/${step.id}`,
           workspace,
+          ...(options.agentRunner === undefined ? {} : { agentRunner: options.agentRunner }),
           onStep: (event) => {
             emit({
               ...event,
@@ -281,6 +334,7 @@ export async function runFlow(options: FlowRunOptions): Promise<FlowResult> {
               signal,
               runId,
               workspace,
+              agentRunner: options.agentRunner,
               sleep,
               now,
               emit,
@@ -293,7 +347,7 @@ export async function runFlow(options: FlowRunOptions): Promise<FlowResult> {
         continue;
       }
 
-      steps[step.id] = await runOne({
+      const value = await runOne({
         step,
         title,
         stepId: step.id,
@@ -302,11 +356,19 @@ export async function runFlow(options: FlowRunOptions): Promise<FlowResult> {
         signal,
         runId,
         workspace,
+        agentRunner: options.agentRunner,
         sleep,
         now,
         emit,
       });
-      emit({ stepId: step.id, title, status: 'ok' });
+      steps[step.id] = value;
+      const summary = 'agent' in step ? agentSummaryOf(value) : undefined;
+      emit({
+        stepId: step.id,
+        title,
+        status: 'ok',
+        ...(summary === undefined ? {} : { message: summary }),
+      });
       if (shouldStop()) return { status: 'ok', target, steps };
     } catch (error) {
       if (signal.aborted || isAbortError(error)) return stopped(steps, target);

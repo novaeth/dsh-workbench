@@ -1,4 +1,5 @@
 import { resolveValue } from './expr.js';
+import type { FlowHost } from './kit.js';
 import { runFlow } from './run.js';
 import type { FlowActionRegistry, FlowDefinition, FlowResult, FlowStepEvent } from './types.js';
 import type {
@@ -12,6 +13,7 @@ interface FlowPayload {
   readonly flow: FlowDefinition;
   readonly input: unknown;
   readonly workspace: string;
+  readonly session?: string | undefined;
 }
 
 function payloadOf(value: unknown): FlowPayload | null {
@@ -21,7 +23,13 @@ function payloadOf(value: unknown): FlowPayload | null {
   const workspace = record['workspace'];
   if (typeof flow !== 'object' || flow === null) return null;
   if (typeof workspace !== 'string' || workspace === '') return null;
-  return { flow: flow as FlowDefinition, input: record['input'], workspace };
+  const session = record['session'];
+  return {
+    flow: flow as FlowDefinition,
+    input: record['input'],
+    workspace,
+    ...(typeof session === 'string' && session !== '' ? { session } : {}),
+  };
 }
 
 function longStepOf(event: FlowStepEvent): LongTaskStep {
@@ -65,22 +73,25 @@ function targetOf(flow: FlowDefinition, input: unknown): string {
 /** 把流程跑成长任务：run / outcome / view / stopped 四条默认实现。 */
 export function flowTaskDeps(
   actions: FlowActionRegistry,
+  flowHost?: FlowHost,
 ): Pick<LongTaskDeps<LongTaskBase>, 'run' | 'outcome' | 'view' | 'stopped'> {
   return {
     run: async ({ payload, onStep, signal }) => {
       const parsed = payloadOf(payload);
       if (parsed === null) throw new Error('流程 run 的 payload 不对');
-      const result = await runFlow({
+      const runOptions = {
         flow: parsed.flow,
         input: parsed.input,
         actions,
         signal,
         runId: parsed.flow.id,
         workspace: parsed.workspace,
-        onStep: (event) => {
+        ...(parsed.session === undefined ? {} : { sessionId: parsed.session }),
+        onStep: (event: FlowStepEvent) => {
           onStep(longStepOf(event));
         },
-      });
+      };
+      const result = flowHost === undefined ? await runFlow(runOptions) : await flowHost.run(runOptions);
       if (result.status === 'failed') {
         throw result.error instanceof Error
           ? result.error
@@ -129,6 +140,7 @@ export function startFlow(options: StartFlowOptions): LongTaskBase {
       flow: options.flow,
       input: options.input,
       workspace: options.workspace,
+      ...(options.session === undefined ? {} : { session: options.session }),
     } satisfies FlowPayload,
     ...(options.session === undefined ? {} : { session: options.session }),
   });

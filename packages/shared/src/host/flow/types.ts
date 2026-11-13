@@ -65,9 +65,37 @@ export interface FlowSubFlowStep {
 }
 
 /**
- * 一步要么调动作，要么跑子流程。
+ * agent 节点要的那点东西：提示词（求成字符串）、可选的结构化输出形状，以及模型与会话的覆盖项。
+ * `provider` / `model` 指的是回答这一步的模型；`preset` 是这一轮 dsh 的 agent 模式 id。
  */
-export type FlowStep = FlowActionStep | FlowSubFlowStep;
+export interface FlowAgentSpec {
+  readonly prompt: FlowValue;
+  readonly label?: string | undefined;
+  readonly name?: string | undefined;
+  readonly provider?: string | undefined;
+  readonly model?: string | undefined;
+  readonly preset?: string | undefined;
+  readonly cwd?: FlowValue | undefined;
+  readonly schema?: Readonly<Record<string, unknown>> | undefined;
+}
+
+/**
+ * 一步：让一个子 agent 读与判断。结果进 `steps.<id>`：没 `schema` 是文本，有 `schema` 是那个对象。
+ * 不给 `poll` —— agent 不是可轮询的读口；要等就写在动作步骤里。
+ */
+export interface FlowAgentStep {
+  readonly id: string;
+  readonly title?: string | undefined;
+  readonly agent: FlowAgentSpec;
+  readonly when?: FlowPredicate | undefined;
+  readonly retry?: FlowRetry | undefined;
+  readonly forEach?: FlowForEach | undefined;
+}
+
+/**
+ * 一步要么调动作，要么跑子流程，要么让一个子 agent 判断。
+ */
+export type FlowStep = FlowActionStep | FlowSubFlowStep | FlowAgentStep;
 
 /**
  * 步骤入参里的一个值：字面量、引用，或二选一。
@@ -161,7 +189,7 @@ export interface FlowStepEvent {
 
 /**
  * 跑一条流程要的那几件：流程、输入、动作表、取消信号、身份与进度回调。
- * `sleep` / `now` 可注入，测试里用假时钟。
+ * `sleep` / `now` 可注入，测试里用假时钟；`sessionId` / `agentRunner` / `maxAgents` 只给 agent 节点用。
  */
 export interface FlowRunOptions {
   readonly flow: FlowDefinition;
@@ -170,6 +198,9 @@ export interface FlowRunOptions {
   readonly signal: AbortSignal;
   readonly runId: string;
   readonly workspace: string;
+  readonly sessionId?: string | undefined;
+  readonly agentRunner?: FlowAgentRunner | undefined;
+  readonly maxAgents?: number | undefined;
   readonly onStep: (event: FlowStepEvent) => void;
   readonly sleep?: ((ms: number, signal: AbortSignal) => Promise<void>) | undefined;
   readonly now?: (() => number) | undefined;
@@ -200,4 +231,60 @@ export interface FlowProblem {
 export interface FlowCheck {
   readonly ok: boolean;
   readonly problems: readonly FlowProblem[];
+}
+
+/**
+ * 起一个子 agent 的请求：提示词、可选的模型与模式覆盖、可选的输出形状。
+ * `schema` 是对象根的 JSON Schema；给了它就只认 `value`，文本只进步骤行摘要。
+ */
+export interface FlowAgentRequest {
+  readonly stepId: string;
+  readonly prompt: string;
+  readonly label?: string | undefined;
+  readonly name?: string | undefined;
+  readonly provider?: string | undefined;
+  readonly model?: string | undefined;
+  readonly preset?: string | undefined;
+  readonly cwd?: string | undefined;
+  readonly schema?: Readonly<Record<string, unknown>> | undefined;
+}
+
+/**
+ * 一个子 agent 跑完的样子：最后一条非空回复的文本、可选的结构化值、子会话身份与停止原因。
+ * 停止原因不在这里判失败 —— 由流程引擎把非 `completed` 翻成步骤失败。
+ */
+export interface FlowAgentResult {
+  readonly text: string;
+  readonly value?: unknown;
+  readonly childId: string;
+  readonly name: string;
+  readonly stopReason: string;
+}
+
+/**
+ * 一条流程跑起来时开的一个 agent 通道：按步骤跑子 agent，跑完收摊。
+ * 同一条流程（含子流程）共用一个 runner，预算与父会话都归它。
+ */
+export interface FlowAgentRunner {
+  run(request: FlowAgentRequest, signal: AbortSignal): Promise<FlowAgentResult>;
+  dispose(): Promise<void>;
+}
+
+/**
+ * 宿主给的 agent 端口：有会话就用它，没会话的按各宿主自己的办法（工作台会明确拒绝）。
+ * 没有 `subagents` 的运行时不注入这个端口，含 agent 节点的流程在 check 就会被拒。
+ */
+export interface FlowAgentPort {
+  open(context: {
+    readonly workspace: string;
+    readonly sessionId: string | undefined;
+    readonly signal: AbortSignal;
+  }): Promise<FlowAgentRunner>;
+}
+
+/**
+ * 校验的额外口径：`agents` 为假表示这一份运行时没有 agent 通道，含 agent 节点的流程直接报。
+ */
+export interface FlowCheckOptions {
+  readonly agents?: boolean | undefined;
 }

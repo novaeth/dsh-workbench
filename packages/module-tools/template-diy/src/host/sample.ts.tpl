@@ -92,11 +92,13 @@ export function createSample(deps: UnitMountDeps): Sample {
     runs,
     runTool,
     startFromPayload(payload: unknown): StartResult {
-      const path = textOf(recordOf(payload)['path']);
+      const body = recordOf(payload);
+      const path = textOf(body['path']);
       if (path === '') {
         return { ok: false, code: 'no-path', message: '没告诉我要跑哪个目录', text: '先打开一个项目再跑。' };
       }
-      return start(path, null);
+      const session = textOf(body['session']);
+      return start(path, session === '' ? null : session);
     },
   };
 }

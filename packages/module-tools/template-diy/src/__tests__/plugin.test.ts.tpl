@@ -306,6 +306,19 @@ describe('宿主侧的长任务与工具', () => {
     expect((await settled(h, started.runId))?.status).toBe('ok');
   });
 
+  it('★ 按钮带来的会话要接着用：这一趟记在它名下，不是另起一条', async () => {
+    const h = harness();
+    const action = h.mounted.actions?.find((one) => one.resource === RUN_RESOURCE);
+    const started = action?.handle({ path: join(scratch, 'sample'), session: 'session-from-card' }) as {
+      ok: boolean;
+      runId: string;
+    };
+    expect(started.ok).toBe(true);
+    const done = await settled(h, started.runId);
+    expect(done?.status).toBe('ok');
+    expect(done?.session).toBe('session-from-card');
+  });
+
   it('没有工作区时工具说清楚，不抛', async () => {
     const h = harness();
     h.mounted.registerTools();
