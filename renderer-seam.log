@@ -1,0 +1,12 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.2 [39m[90mD:/a/dsh-workbench/dsh-workbench/packages/shared[39m
+
+ [32m✓[39m src/host/__tests__/shell-render.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/host/seam/__tests__/process.test.ts [2m([22m[2m3 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 30[2mms[22m[39m
+ [32m✓[39m src/host/__tests__/seam.test.ts [2m([22m[2m32 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 245[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[32m54 passed[39m[22m[2m | [22m[33m2 skipped[39m[90m (56)[39m
+[2m   Start at [22m 14:28:57
+[2m   Duration [22m 692ms[2m (transform 36%, tests 33%, import 30%, worker 2%)[22m
+

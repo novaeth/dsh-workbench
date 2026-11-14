@@ -1,0 +1,28 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.2 [39m[90mD:/a/dsh-workbench/dsh-workbench/packages/adapter-probe[39m
+
+ [32m✓[39m src/__tests__/self-update.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 352[2mms[22m[39m
+ [32m✓[39m src/__tests__/isolated-install.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 816[2mms[22m[39m
+   [32m✓[39m installIsolatedRuntime（旧树先挪成 prev → 直接装进 live → 自检） [2m(4)[22m
+     [33m[2m✓[22m[39m ★ store mismatch 只清 live 里装了一半的 node_modules，旧树在 prev 里[33m 465[2mms[22m[39m
+ [32m✓[39m src/__tests__/version-dir.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 215[2mms[22m[39m
+ [32m✓[39m src/__tests__/version-switch.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 2742[2mms[22m[39m
+   [32m✓[39m 强杀后的恢复规则：只有没提交、目标没启动、快照还在才恢复 [2m(10)[22m
+     [33m[2m✓[22m[39m 快照里的旧目录已经不在了：不猜，保留现场[33m 521[2mms[22m[39m
+ [32m✓[39m src/__tests__/self-update-boot.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m src/__tests__/version-migrate.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 47[2mms[22m[39m
+ [32m✓[39m src/__tests__/self-update-steps.test.ts [2m([22m[2m28 tests[22m[2m)[22m[33m 4753[2mms[22m[39m
+   [32m✓[39m 自更新：runner 按步骤跑，失败只落在 marker 上 [2m(5)[22m
+     [33m[2m✓[22m[39m 一路跑通：marker 落 ok，链接与依赖都指到新版[33m 472[2mms[22m[39m
+   [32m✓[39m 清单不变量：dsh.profile.bundles 那一行更新前后都在 [2m(4)[22m
+     [33m[2m✓[22m[39m ★ 手工把那一行摘掉 → 同一步补回（判据 2）[33m 404[2mms[22m[39m
+     [33m[2m✓[22m[39m ★ 更新失败之后那一行仍在：失败路径自己复核一遍（判据 4）[33m 459[2mms[22m[39m
+   [32m✓[39m 确认窗口：只认「这一版确认可用」，不再自动回滚 [2m(4)[22m
+     [33m[2m✓[22m[39m ★ 新版起来了、客户端也确认了 → marker 落 ok，链接不回退（判据 4）[33m 346[2mms[22m[39m
+     [33m[2m✓[22m[39m ★ 重启起来的是旧版 → 不自动回滚：留 pending，链接仍指新版（自更新只报结果）[33m 388[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+[2m      Tests [22m [1m[32m115 passed[39m[22m[90m (115)[39m
+[2m   Start at [22m 14:28:00
+[2m   Duration [22m 5.95s[2m (tests 66%, transform 18%, import 15%)[22m
+

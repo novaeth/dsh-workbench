@@ -1,0 +1,12 @@
+✅ ★ 起 shell 的写法只有一处：pwsh / bash 的启动参数由渲染层给 — 只在 packages/shared/src/host/shell-render.ts（执行缝与自举都从那里拿 invocation）
+✅ ★ DIY 录制这一层没有 POSIX-only 的壳命令（Windows 上没有那些东西） — 用 node:fs 与执行缝的 argv：不拼 wc / cat / tail / grep / tr / pkill / kill -0
+✅ ★ 安装计划里没有 POSIX-only 编排（Windows 上没有 rm -rf / ln -s / cp -R，pwsh 5.1 也不认 ||） — 计划步骤是 PluginPlanStep[]（run 的 env 字段带环境变量），扫 19 个文件零命中
+✅ ★ 执行缝只有一条路 — 底层执行缝只在执行缝模块内部
+✅ ★ 每次执行缝调用都声明写入域 — 每次调用都带写入域
+✅ ★ 沙箱拒绝不被吞 — 拒绝都有去处
+❌ ★ 起进程只有一个入口 — packages/adapter-probe/src/version-gate.ts:4、packages/adapter-probe/src/version-gate.ts:79
+✅ ★ 宿主能力只在宿主接线里打开 — allowHost 只在宿主接线与执行缝内部出现
+❌ ★ 宿主文件写只有一个入口 — packages/shared/src/host/lease.ts:2
+✅ ★ 受控 env 只在 env-policy 里组装 — 受控 env（寄 HOME/缓存、关交互提示、删键）只在 env-policy 里定义
+
+8/10 通过 —— 失败：★ 起进程只有一个入口、★ 宿主文件写只有一个入口
