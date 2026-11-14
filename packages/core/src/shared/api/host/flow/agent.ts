@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { createDshAi } from '../ai-adapter';
+import { contentBlocksOf, type AttachmentStore } from '../ai-blocks';
 import { imagePartOf } from '@dsh-workbench/shared/host';
 import type {
   DshAgent,
@@ -17,10 +18,6 @@ import type {
   FlowAgentResult,
   FlowAgentRunner,
 } from '@dsh-workbench/shared/host';
-
-interface AttachmentStore {
-  saveImage(input: { data: Uint8Array; mediaType: string; name?: string }): Promise<unknown>;
-}
 
 const SUBAGENT_PROVIDER = 'spawn';
 const OWNER_PRESET = 'standard';
@@ -119,10 +116,8 @@ export function createFlowAgentGateway(ctx: DshHostContext): FlowAgentGateway {
   const agents = ctx.get('agents') as unknown as DshAgentRegistry | undefined;
   if (subagents === undefined || agents === undefined) return { port: undefined, isChild, ai: createDshAi(ctx, () => undefined) };
 
-  let exposed: FlowAgentPort | undefined;
-  const ai = createDshAi(ctx, () => exposed);
   const port: FlowAgentPort = {
-      async open(context) {
+    async open(context) {
         if (context.sessionId !== undefined) {
           const parent = agents.get(context.sessionId as DshSessionId);
           if (parent === undefined) {
@@ -152,9 +147,9 @@ export function createFlowAgentGateway(ctx: DshHostContext): FlowAgentGateway {
             await handle.dispose();
           },
         };
-      },
+    },
   };
-  exposed = port;
+  const ai = createDshAi(ctx, () => port);
   return { isChild, ai, port };
 }
 
@@ -191,18 +186,13 @@ async function promptBlocksOf(
   request: FlowAgentRequest,
   store: AttachmentStore | undefined,
 ): Promise<DshContentBlock[]> {
-  const blocks: DshContentBlock[] = [{ type: 'text', text: request.prompt }];
-  for (const image of request.images ?? []) {
-    if (store === undefined) throw new Error('这一份运行时没有附件服务，agent 节点带不了图片');
-    const part = await imagePartOf(image);
-    const ref = await store.saveImage({
-      data: part.data,
-      mediaType: part.mediaType as 'image/jpeg',
-      ...(part.name === undefined ? {} : { name: part.name }),
-    });
-    blocks.push({ type: 'image', attachment: ref } as unknown as DshContentBlock);
-  }
-  return blocks;
+  const images = await Promise.all((request.images ?? []).map((one) => imagePartOf(one)));
+  const blocks = await contentBlocksOf(
+    [{ kind: 'text', text: request.prompt }, ...images],
+    store,
+    '这一份运行时没有附件服务，agent 节点带不了图片',
+  );
+  return blocks as unknown as DshContentBlock[];
 }
 
 function runnerOf(parts: {

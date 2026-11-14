@@ -9,7 +9,7 @@ type MissingCapability = Exclude<keyof RuntimeCapabilities, (typeof CAPABILITY_K
 
 const CAPABILITIES_COVERED: MissingCapability extends never ? true : false = true;
 void CAPABILITIES_COVERED;
-const DATA_METHODS = ['read', 'request', 'requestMany', 'submit'] as const;
+const DATA_METHODS = ['read', 'request', 'requestMany', 'submit', 'plan'] as const;
 
 function isNonEmptyString(value: unknown): boolean {
   return typeof value === 'string' && value.trim() !== '';

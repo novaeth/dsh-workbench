@@ -1,4 +1,13 @@
-import type { CallOverrides, DataReader, DataRequest, RecipeCalls, RecipeResults, RequestRecipe } from '../contract/data.js';
+import type {
+  CallOverrides,
+  DataReader,
+  DataRequest,
+  PlanResults,
+  RecipeCalls,
+  RecipeResults,
+  RequestPlan,
+  RequestRecipe,
+} from '../contract/data.js';
 
 export interface RecipeCall {
   readonly kind: 'request' | 'submit' | 'many';
@@ -25,7 +34,14 @@ export function createNoopDataReader(): DataReader {
     requestMany: async <T = unknown>(_recipe: RequestRecipe, calls: RecipeCalls): Promise<RecipeResults<T>> =>
       filled(Object.keys(calls), NO_DATA) as RecipeResults<T>,
     submit: async () => NO_DATA,
+    plan: async (request: RequestPlan): Promise<PlanResults> => perStep(request, NO_DATA),
   };
+}
+
+function perStep(request: RequestPlan, result: unknown): PlanResults {
+  const out: Record<string, unknown> = {};
+  for (const step of request.steps) out[step.name] = result;
+  return out as PlanResults;
 }
 
 export function createFakeDataReader(
@@ -58,6 +74,9 @@ export function createFakeDataReader(
     async submit(recipe: RequestRecipe, overrides?: CallOverrides): Promise<unknown> {
       calls.push({ kind: 'submit', recipe, overrides });
       return answer(calls[calls.length - 1] as RecipeCall);
+    },
+    async plan(request: RequestPlan): Promise<PlanResults> {
+      return perStep(request, { ok: true, data: null });
     },
   } as unknown as DataReader;
   return Object.assign(reader, { requests, calls });

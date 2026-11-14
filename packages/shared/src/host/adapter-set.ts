@@ -46,6 +46,7 @@ export const CORE_METHODS = [
   ['data', 'request'],
   ['data', 'requestMany'],
   ['data', 'submit'],
+  ['data', 'plan'],
   ['supply', 'resolvePluginSource'],
   ['supply', 'libInstallCommand'],
   ['supply', 'libUninstallCommand'],

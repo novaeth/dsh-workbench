@@ -1,14 +1,7 @@
-/**
- * 端口：模块唯一要认识的那层。四个动词 + 能力探测 + 换实现。
- *
- * 它只做“跟模型无关”的事：归一化入参、结构化输出与重试、中止与超时、错误码。
- * 真的调模型（以及起子 agent）交给适配器。
- *
- * @module dsh-workbench/shared/host/ai/port
- */
 import type { AiAdapter, AiAgentResult, AiPart } from './adapter.js';
 import { partsOf } from './parts.js';
 import { problemsOf } from './schema.js';
+import { now } from '../time.js';
 import {
   aiError,
   type AgentOptions,
@@ -29,6 +22,14 @@ export interface AiPort {
   agent(request: AiRequest & { readonly agent?: AgentOptions }): Promise<string>;
   supports(capability: AiCapability): boolean;
   registerAdapter(adapter: AiAdapter): () => void;
+}
+
+function promptWithSchema(prompt: string, schema: JsonSchema): string {
+  return (
+    prompt +
+    '\n\n只输出一个 JSON 对象：不要代码块、不要前后解释。形状必须符合这个 JSON Schema：\n' +
+    JSON.stringify(schema)
+  );
 }
 
 function jsonOf(text: string): unknown {
@@ -56,11 +57,19 @@ function abortedNow(signal: AbortSignal | undefined): boolean {
   return signal?.aborted === true;
 }
 
-function abortedOf(request: AiRequest, error: unknown): never {
-  const timedOut = request.timeoutMs !== undefined && request.timeoutMs > 0 && request.signal?.aborted !== true;
+function timedOutOf(error: unknown, signal: AbortSignal | undefined): boolean {
+  const name = error instanceof Error ? error.name : '';
+  if (name === 'TimeoutError') return true;
+  const reason = signal?.reason;
+  return typeof reason === 'object' && reason !== null && (reason as { name?: string }).name === 'TimeoutError';
+}
+
+function abortedOf(request: AiRequest, error: unknown, signal: AbortSignal | undefined): never {
   const detail = { cause: error instanceof Error ? error.message : String(error) };
+  if (request.signal?.aborted === true) throw aiError('aborted', '模型调用被中止', detail);
+  const timedOut = timedOutOf(error, signal) || (request.timeoutMs !== undefined && request.timeoutMs > 0);
   throw timedOut
-    ? aiError('timeout', `模型调用超时（${String(request.timeoutMs)}ms）`, detail)
+    ? aiError('timeout', `模型调用超时（${String(request.timeoutMs ?? 0)}ms）`, detail)
     : aiError('aborted', '模型调用被中止', detail);
 }
 
@@ -88,7 +97,7 @@ export function createAiPort(initial: AiAdapter): AiPort {
       if (parts.some((one) => one.kind === 'image') && !port.supports('images')) {
         throw aiError('unsupported-input', '当前模型不吃图片，请先 supports("images") 再决定降级');
       }
-      const started = Date.now();
+      const started = now();
       const signal = raceSignal(request);
       try {
         const done = await adapter.complete({
@@ -103,11 +112,11 @@ export function createAiPort(initial: AiAdapter): AiPort {
           text: done.text,
           ...(done.usage === undefined ? {} : { usage: done.usage }),
           ...(done.model === undefined ? {} : { model: done.model }),
-          elapsedMs: Date.now() - started,
+          elapsedMs: now() - started,
         };
       } catch (error) {
         const name = error instanceof Error ? error.name : '';
-        if (name === 'AbortError' || name === 'TimeoutError') abortedOf(request, error);
+        if (name === 'AbortError' || name === 'TimeoutError') abortedOf(request, error, signal);
         if (error instanceof Error && (error as { code?: string }).code !== undefined) throw error;
         throw aiError('provider', error instanceof Error ? error.message : String(error));
       }
@@ -120,7 +129,7 @@ export function createAiPort(initial: AiAdapter): AiPort {
       const attempts = Math.max(1, Math.floor(request.retry ?? 1) + 1);
       let raw = '';
       for (let attempt = 0; attempt < attempts; attempt += 1) {
-        raw = await port.ask(request);
+        raw = await port.ask({ ...request, prompt: promptWithSchema(request.prompt, request.schema) });
         const value = jsonOf(raw);
         if (value !== undefined) {
           const problems = problemsOf(value, request.schema, request.strict ?? false);
@@ -145,10 +154,21 @@ export function createAiPort(initial: AiAdapter): AiPort {
           ...(request.model === undefined ? {} : { model: request.model }),
           ...(signal === undefined ? {} : { signal }),
         });
-        return done.text;
+        if (request.schema === undefined) return done.text;
+        if (done.value === undefined) {
+          throw aiError('schema-mismatch', 'agent 没给出符合格式的结论', { raw: done.text.slice(0, 2000) });
+        }
+        const problems = problemsOf(done.value, request.schema, request.strict ?? false);
+        if (problems.length > 0) {
+          throw aiError('schema-mismatch', 'agent 的结论不符合 schema', {
+            problems,
+            raw: done.text.slice(0, 2000),
+          });
+        }
+        return JSON.stringify(done.value);
       } catch (error) {
         if (abortedNow(request.signal) || (error instanceof Error && error.name === 'AbortError')) {
-          abortedOf(request, error);
+          abortedOf(request, error, signal);
         }
         if (error instanceof Error && (error as { code?: string }).code !== undefined) throw error;
         throw aiError('provider', error instanceof Error ? error.message : String(error));

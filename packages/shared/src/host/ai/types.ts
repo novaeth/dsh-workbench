@@ -1,14 +1,6 @@
-/**
- * 模块用模型的公共词汇：入参、结果、错误码、能力，以及“实现”那一侧的适配器接口。
- *
- * 这层只认模块作者给的东西（字符串、字节、JSON Schema），不暴露 dsh 的内核类型
- * （附件引用、内容块），这样内核换了词汇，模块不受影响。
- *
- * @module dsh-workbench/shared/host/ai/types
- */
 
 /** 这层认的能力；模块先问再降级，不要试错。 */
-export type AiCapability = 'text' | 'images' | 'json' | 'tools' | 'agent';
+export type AiCapability = 'text' | 'images' | 'agent';
 
 /** 结构化输出用的 JSON Schema（只用到对象根的一小部分关键字）。 */
 export type JsonSchema = Readonly<Record<string, unknown>>;
@@ -85,18 +77,9 @@ export type AiEvent =
 /** 一次调用的结果；`ask` 只取 `text`，要细节的走 `askRich`。 */
 export interface AiResult {
   readonly text: string;
-  readonly value?: unknown;
   readonly usage?: { readonly inputTokens?: number; readonly outputTokens?: number } | undefined;
   readonly model?: { readonly provider: string; readonly model: string } | undefined;
   readonly elapsedMs?: number | undefined;
-  readonly agent?:
-    | {
-        readonly childId: string;
-        readonly stopReason: string;
-        readonly turns: number;
-        readonly toolCalls: number;
-      }
-    | undefined;
 }
 
 /** 错误码：只增不删；认不出的码按失败处理。 */

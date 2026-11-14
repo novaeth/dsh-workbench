@@ -11,6 +11,7 @@ interface Saved {
 function ctxOf(options: {
   readonly chunks?: readonly unknown[];
   readonly withAttachments?: boolean;
+  readonly withLlm?: boolean;
   readonly selection?: { provider: string; model: string } | null;
 } = {}): { ctx: DshHostContext; saved: Saved[]; seen: Record<string, unknown>[] } {
   const saved: Saved[] = [];
@@ -22,6 +23,7 @@ function ctxOf(options: {
   const ctx = {
     get: (name: string) => {
       if (name === 'llm') {
+        if (options.withLlm === false) return undefined;
         return {
           stream: (request: Record<string, unknown>) => {
             seen.push(request);
@@ -98,6 +100,20 @@ describe('dsh 适配器的 agent 面', () => {
     });
   });
 
+  it('带图片时把图交给子 agent，而不是报不支持', async () => {
+    const seen: Record<string, unknown>[] = [];
+    const { ctx } = ctxOf();
+    const ai = createDshAi(ctx, () =>
+      agentPort(async (request) => {
+        seen.push(request);
+        return { text: 'ok', childId: 'c', stopReason: 'completed' };
+      }),
+    );
+    const photo = new Uint8Array([1, 2, 3]);
+    await ai.agent({ prompt: '看一眼', images: [{ data: photo, mediaType: 'image/jpeg', name: 'p1.jpg' }] });
+    expect(seen[0]?.['images']).toEqual([{ data: photo, mediaType: 'image/jpeg', name: 'p1.jpg' }]);
+  });
+
   it('budget.ms 超了就真的中止，报 budget-exceeded', async () => {
     const { ctx } = ctxOf();
     const ai = createDshAi(ctx, () =>
@@ -157,5 +173,9 @@ describe('dsh 适配器', () => {
     expect(createDshAiAdapter(ctxOf({ withAttachments: false }).ctx, () => undefined).capabilities).not.toContain(
       'images',
     );
+  });
+
+  it('没有模型端口时能力里没有 text', () => {
+    expect(createDshAiAdapter(ctxOf({ withLlm: false }).ctx, () => undefined).capabilities).not.toContain('text');
   });
 });

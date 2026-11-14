@@ -212,17 +212,33 @@ function agentActionOf(
   };
 }
 
+type StepShape =
+  | { readonly kind: 'action'; readonly step: FlowActionStep }
+  | { readonly kind: 'agent'; readonly step: FlowAgentStep }
+  | { readonly kind: 'ai'; readonly step: FlowAiStep };
+
+function shapeOf(step: FlowActionStep | FlowAgentStep | FlowAiStep): StepShape {
+  if ('agent' in step) return { kind: 'agent', step };
+  if ('ai' in step) return { kind: 'ai', step };
+  return { kind: 'action', step };
+}
+
+function isModelStep(step: FlowActionStep | FlowAgentStep | FlowAiStep): boolean {
+  return shapeOf(step).kind !== 'action';
+}
+
 async function runOneInner(options: RunOneOptions): Promise<unknown> {
   const { step, title, stepId, scope, actions, signal, runId, workspace, agentRunner, ai, sleep, now, emit } =
     options;
+  const shape = shapeOf(step);
   const entry =
-    'agent' in step
-      ? { name: step.id, action: agentActionOf(step, title, scope, agentRunner), meta: {} }
-      : 'ai' in step
-        ? { name: step.id, action: aiActionOf(step, scope, ai), meta: {} }
-        : actions.get(step.action);
+    shape.kind === 'agent'
+      ? { name: step.id, action: agentActionOf(shape.step, title, scope, agentRunner), meta: {} }
+      : shape.kind === 'ai'
+        ? { name: step.id, action: aiActionOf(shape.step, scope, ai), meta: {} }
+        : actions.get(shape.step.action);
   if (entry === undefined) throw new Error('注册表里没有这个动作');
-  const input = 'agent' in step || 'ai' in step ? undefined : resolveInput(step.with, scope);
+  const input = shape.kind === 'action' ? resolveInput(shape.step.with, scope) : undefined;
   const context: FlowActionContext = {
     signal,
     runId,
@@ -241,7 +257,7 @@ async function runOneInner(options: RunOneOptions): Promise<unknown> {
 
   const poll = 'poll' in step ? step.poll : undefined;
   if (poll !== undefined) {
-    if ('agent' in step || 'ai' in step) throw new Error(`步骤 ${step.id} 不支持 poll`);
+    if (shape.kind !== 'action') throw new Error(`步骤 ${step.id} 不支持 poll`);
     const everyMs = Math.max(100, Math.min(60_000, Math.trunc(poll.everyMs)));
     const rawMax = Math.trunc(poll.maxMs);
     const maxMs = rawMax === 0 ? 0 : Math.max(everyMs, Math.min(1_800_000, rawMax));
@@ -401,7 +417,7 @@ export async function runFlow(options: FlowRunOptions): Promise<FlowResult> {
         emit,
       });
       steps[step.id] = value;
-      const summary = 'agent' in step || 'ai' in step ? agentSummaryOf(value) : undefined;
+      const summary = isModelStep(step) ? agentSummaryOf(value) : undefined;
       emit({
         stepId: step.id,
         title,

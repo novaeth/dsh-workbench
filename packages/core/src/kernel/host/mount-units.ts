@@ -335,6 +335,11 @@ export function mountUnits(
       return out;
     },
     submit: missingData,
+    plan: async (plan) => {
+      const out: Record<string, Awaited<ReturnType<typeof missingData>>> = {};
+      for (const step of plan.steps) out[step.name] = await missingData();
+      return out;
+    },
   };
   const ownedUnits = deps.ownedUnits ?? (() => []);
   const mounted: MountedUnit[] = [];

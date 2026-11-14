@@ -1,9 +1,3 @@
-/**
- * 结构化输出的最小校验：对象根、required、properties 的 type、items 的 type、enum。
- * 不认识的关键字默认忽略；`strict` 时把它当成问题报出来。
- *
- * @module dsh-workbench/shared/host/ai/schema
- */
 import type { JsonSchema } from './types.js';
 
 /** 一处不合 schema 的地方。 */

@@ -1,7 +1,7 @@
 # AI：要模型就用 `deps.ai`
 
-模块要“让模型看一眼、给个结论”，只有这一个入口。不要自己去 `ctx.get('llm')`、不要自己拼内容块、
-不要自己存图片——那些活在宿主里做完了（`ctx.get('llm')` 仍在，是逃生口，不是推荐路径）。
+模块需要模型给出判断时，只有这一个入口。不要直接使用 `ctx.get('llm')`，也不要自己拼内容块或保存图片——
+这些工作由宿主完成（`ctx.get('llm')` 仍然可用，属于应急入口，不是推荐路径）。
 
 ## 1 三个动词
 
@@ -16,12 +16,12 @@ const verdict = await deps.ai.askJson({
 const rich = await deps.ai.askRich({ prompt: 'x' });   // + usage / model / elapsedMs
 ```
 
-- 除 `prompt` 外**全是可选**：加字段永远不会撞坏调用方。
-- `askJson` 保证返回对象：先解析、再校验 schema，不合格**自动重试一次**，仍不合格抛
-  `schema-mismatch`（`details.raw` 里有原始输出）。
-- 模型默认用用户在界面上选的那个；要覆盖就 `model: { provider, model }`。
+- 除 `prompt` 外**全部可选**：新增字段不会破坏调用方。
+- `askJson` 保证返回对象：schema 的紧凑描述会附在提示词末尾，先解析、再校验，不合格**自动重试一次**，
+  仍不合格抛 `schema-mismatch`（`details.raw` 里有原始输出）。
+- 模型默认使用用户在界面上选中的那个；需要覆盖时传 `model: { provider, model }`。
 
-## 2 图片：直接给，别自己编码
+## 2 图片：直接传入，不要自行编码
 
 ```ts
 await deps.ai.askJson({
@@ -31,17 +31,20 @@ await deps.ai.askJson({
 });
 ```
 
-三种给法都行：绝对路径、data URL、`Uint8Array`。宿主会 `saveImage` 成持久附件再送进模型；
-模块**看不到**附件引用这种内核词汇。
+三种写法都可以：绝对路径、data URL、`Uint8Array`。宿主会通过 `saveImage` 将其保存为持久附件，再送入模型；
+模块**不会接触**附件引用这类内核类型。
 
-⚠️ 别按 OpenAI 的 `image_url` 自己拼内容块——dsh 的适配器只认 `{ type: 'image', attachment }`，
-其余内容块会被**静默丢弃**，模型会回你“无法查看图片”，看着像模型不行。
+⚠️ 不要按 OpenAI 的 `image_url` 自行拼内容块——dsh 的适配器只认 `{ type: 'image', attachment }`，
+其余内容块会被**静默丢弃**，模型会回答“无法查看图片”，看起来像模型能力不足。
 
 先问能力再降级：
 
 ```ts
 if (!deps.ai.supports('images')) return reject('请人工核对扫描件');
 ```
+
+`supports('images')` 只回答「这一份运行时能不能送图」（有没有附件服务），不回答「选中的模型是否支持图片」——
+dsh 没有可查询的接口。模型不支持图片时，只有调用后才知道：可能报 `provider`，也可能只是在回答里说明看不到图。
 
 ## 3 长任务里的模型步骤
 
@@ -57,7 +60,7 @@ const runs = deps.longTasks.create({
 });
 ```
 
-`signal` 一路穿到底：用户按停止，模型调用立刻中止（错误码 `aborted`）。要显示进度就传 `onStep`。
+`signal` 会一路传递到模型调用：用户点击停止时，模型调用立即中止（错误码 `aborted`）。需要显示进度时传入 `onStep`。
 
 ## 4 流程里的模型步骤
 
@@ -74,10 +77,11 @@ const runs = deps.longTasks.create({
 ```
 
 - 结果进 `steps.<id>`；给 `schema` 得对象，否则得文本。
-- `check` 会在「这一份运行时没有模型」时**起跑前**就拒，不会跑到一半才炸。
-- 代码里的 `ai.ask` 与这里的 `ai` 步骤是**同一份入参**，加字段时两处同时获得。
+- `check` 会在「这一份运行时没有模型」时**在开始运行前**拒绝，不会运行到中途才失败。
+- 流程里的字段与 `AiRequest` 同名：`prompt` / `images` / `schema` / `temperature` / `timeoutMs`
+  （前两个用 `FlowValue` 求值），模型覆盖写成 `provider` / `model` 两个字符串。
 
-## 5 agent（要工具时才用）
+## 5 agent（需要工具时使用）
 
 ```ts
 await deps.ai.agent({
@@ -89,9 +93,12 @@ await deps.ai.agent({
 });
 ```
 
-- 比 `ask` 重得多：起一个子 agent，有工具、有自己一轮上下文。**能用 ask 就别用 agent。**
-- `tools.provide` 可以临时塞自己的函数（内部是一个桥接工具，调用结束即回收）。
-- `budget: { ms }` 超时**真中止**并报 `budget-exceeded`；`budget.tokens` 目前报 `unsupported-option`。
+- 开销远高于 `ask`：需要启动子 agent，带工具与独立的上下文。**能用 `ask` 就不要用 `agent`。**
+- `tools.provide` 可以临时提供自己的函数（内部是一个桥接工具，调用结束后即回收）。
+- `budget: { ms }` 超时后**确实中止**并报 `budget-exceeded`；`budget.tokens` 目前报 `unsupported-option`。
+- 带 `schema` 时返回的是该对象的 JSON 文本：结论不符合 schema 直接报 `schema-mismatch`，
+  不会把文本和结构化值混在一起又不报错。需要对象本身、不想多一层 JSON 文本时，使用 `askJson`。
+- 也能带图片：`images` 的三种给法与 `ask` 相同；图片先存成附件，再交给子 agent。
 - 还没实现的配置（`maxTurns` / `maxToolCalls` / `onTool` / `context` / `delivery` / `approval` /
   `session`）一律**明确报 `unsupported-option`**，不会装作生效。
 
@@ -100,11 +107,11 @@ await deps.ai.agent({
 `no-model` / `unsupported-input` / `unsupported-option` / `schema-mismatch` / `aborted` /
 `timeout` / `provider` / `budget-exceeded`。
 
-码表只增不删：**认不出的码按失败处理**，别当成功；新信息都在 `details` 里。
+码表只增不删：**认不出的码按失败处理**，不要当作成功；新信息都在 `details` 里。
 
 ## 7 测试
 
-别伪造 `ctx`：把 `deps.ai` 换成一个假实现即可（它就是个端口）。
+不要伪造 `ctx`：把 `deps.ai` 换成假实现即可（它本身就是一个端口）。
 
 ```ts
 const ai: AiPort = {
@@ -118,4 +125,5 @@ const ai: AiPort = {
 };
 ```
 
-`aiContractTests(makePort)`（`@dsh-workbench/shared/host`）是这层的契约：任何实现都该过一遍。
+替换这一层的实现时，按仓库里的契约测试验收：`packages/shared/src/host/ai/__tests__/contract.test.ts`
+（它不在公共入口导出）。

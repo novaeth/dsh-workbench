@@ -1,4 +1,15 @@
-import type { CallOverrides, DataReader, DataRequest, DataResult, RecipeCalls, RecipeResults, RequestRecipe } from '@dsh-workbench/shared';
+import type {
+  CallOverrides,
+  DataReader,
+  DataRequest,
+  DataResult,
+  PlanResults,
+  RecipeCalls,
+  RecipeResults,
+  RequestPlan,
+  RequestRecipe,
+} from '@dsh-workbench/shared';
+import { planResultsOf, scriptOfPlan } from '@dsh-workbench/shared/host';
 import { CHROME_MCP_RUNTIME } from './runtime-port.js';
 
 export interface McpDataReaderOptions {
@@ -46,6 +57,25 @@ export function createMcpDataReader(options: McpDataReaderOptions): DataReader {
     },
     async submit<T = unknown>(_recipe: RequestRecipe, _overrides?: CallOverrides): Promise<DataResult<T>> {
       return unsupported('submit');
+    },
+    async plan(request: RequestPlan): Promise<PlanResults> {
+      const failed = (error: unknown): PlanResults => {
+        const one = failure(error instanceof Error ? error.message : String(error));
+        return Object.fromEntries(request.steps.map((step) => [step.name, one]));
+      };
+      let script: string;
+      try {
+        script = scriptOfPlan(request);
+      } catch (error) {
+        return failed(error);
+      }
+      try {
+        await options.call('browser_navigate', { url: request.origin });
+        const value = await options.call('browser_evaluate', { script });
+        return planResultsOf(value, request.steps.map((one) => one.name));
+      } catch (error) {
+        return failed(error);
+      }
     },
   };
 }

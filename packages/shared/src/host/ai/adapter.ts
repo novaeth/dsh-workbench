@@ -1,11 +1,3 @@
-/**
- * 这层的“实现”那一侧：适配器负责真的去调模型（以及起子 agent）。
- *
- * 端口只做归一化（图片翻成字节、结构化输出、重试、错误码），所有碰 dsh 的活都在适配器里，
- * 这样测试只要一个假适配器，不用伪造 `ctx`。
- *
- * @module dsh-workbench/shared/host/ai/adapter
- */
 import type { AgentOptions, AiCapability, AiResult, JsonSchema } from './types.js';
 
 /** 一次调用里的一截内容：文字或一张图（图已经翻成字节）。 */
@@ -45,8 +37,8 @@ export interface AiAgentResult {
   readonly value?: unknown;
   readonly childId: string;
   readonly stopReason: string;
-  readonly turns: number;
-  readonly toolCalls: number;
+  readonly turns?: number | undefined;
+  readonly toolCalls?: number | undefined;
   readonly usage?: AiResult['usage'];
   readonly model?: AiResult['model'];
 }

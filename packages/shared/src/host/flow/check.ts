@@ -1,4 +1,4 @@
-import { flowUsesAgents } from './agent.js';
+import { flowUses } from './scan.js';
 import type {
   FlowActionRegistry,
   FlowActionStep,
@@ -131,8 +131,8 @@ function checkCommon(
   }
   const poll = 'poll' in step ? step.poll : undefined;
   if (poll !== undefined) {
-    if ('agent' in step) {
-      add(`${at}.poll`, 'agent 步骤不支持 poll');
+    if ('agent' in step || 'ai' in step) {
+      add(`${at}.poll`, `${'agent' in step ? 'agent' : 'ai'} 步骤不支持 poll`);
       return;
     }
     if (!Number.isInteger(poll.everyMs) || poll.everyMs < 100 || poll.everyMs > 60_000) {
@@ -154,52 +154,67 @@ function checkCommon(
   }
 }
 
-function checkAi(step: FlowAiStep, at: string, seen: ReadonlySet<string>, add: AddProblem): void {
-  const spec = step.ai;
-  const item = step.forEach !== undefined;
-  checkValue(spec.prompt, `${at}.ai.prompt`, { seen, item, value: false }, add);
+interface PromptSpec {
+  readonly prompt: FlowValue;
+  readonly images?: FlowValue | undefined;
+  readonly schema?: Readonly<Record<string, unknown>> | undefined;
+  readonly provider?: string | undefined;
+  readonly model?: string | undefined;
+}
+
+function checkPromptSpec(
+  spec: PromptSpec,
+  at: string,
+  label: string,
+  item: boolean,
+  seen: ReadonlySet<string>,
+  add: AddProblem,
+): void {
+  checkValue(spec.prompt, `${at}.${label}.prompt`, { seen, item, value: false }, add);
   if ('$lit' in spec.prompt && typeof spec.prompt.$lit !== 'string') {
-    add(`${at}.ai.prompt`, 'ai.prompt 要是个字符串');
+    add(`${at}.${label}.prompt`, `${label}.prompt 要是个字符串`);
   }
   if (spec.images !== undefined) {
-    checkValue(spec.images, `${at}.ai.images`, { seen, item, value: false }, add);
+    checkValue(spec.images, `${at}.${label}.images`, { seen, item, value: false }, add);
   }
   if (
     spec.schema !== undefined &&
     (typeof spec.schema !== 'object' || spec.schema === null || spec.schema['type'] !== 'object')
   ) {
-    add(`${at}.ai.schema`, 'ai.schema 要是对象根的 JSON Schema');
+    add(`${at}.${label}.schema`, `${label}.schema 要是对象根的 JSON Schema`);
   }
   for (const key of ['provider', 'model'] as const) {
     const value = spec[key];
     if (value !== undefined && (typeof value !== 'string' || value.trim() === '')) {
-      add(`${at}.ai.${key}`, `${key} 不能为空`);
+      add(`${at}.${label}.${key}`, `${label}.${key} 不能为空`);
     }
   }
-  if (spec.temperature !== undefined && (typeof spec.temperature !== 'number' || spec.temperature < 0 || spec.temperature > 2)) {
+}
+
+function checkAi(step: FlowAiStep, at: string, seen: ReadonlySet<string>, add: AddProblem): void {
+  const spec = step.ai;
+  checkPromptSpec(spec, at, 'ai', step.forEach !== undefined, seen, add);
+  if (
+    spec.temperature !== undefined &&
+    (typeof spec.temperature !== 'number' || spec.temperature < 0 || spec.temperature > 2)
+  ) {
     add(`${at}.ai.temperature`, 'temperature 要在 0..2');
   }
-  if (spec.timeoutMs !== undefined && (!Number.isInteger(spec.timeoutMs) || spec.timeoutMs < 0 || spec.timeoutMs > 600_000)) {
+  if (
+    spec.timeoutMs !== undefined &&
+    (!Number.isInteger(spec.timeoutMs) || spec.timeoutMs < 0 || spec.timeoutMs > 600_000)
+  ) {
     add(`${at}.ai.timeoutMs`, 'timeoutMs 要在 0..600000');
   }
 }
 
 function checkAgent(step: FlowAgentStep, at: string, seen: ReadonlySet<string>, add: AddProblem): void {
   const spec = step.agent;
-  if (spec.images !== undefined) checkValue(spec.images, `${at}.agent.images`, { seen, item: step.forEach !== undefined, value: false }, add);
+  const item = step.forEach !== undefined;
+  checkPromptSpec(spec, at, 'agent', item, seen, add);
   for (const key of ['allow', 'deny'] as const) {
     const list = spec.tools?.[key];
     if (list !== undefined && !Array.isArray(list)) add(`${at}.agent.tools.${key}`, `tools.${key} 要是字符串数组`);
-  }
-  checkAgentRest(step, at, seen, add);
-}
-
-function checkAgentRest(step: FlowAgentStep, at: string, seen: ReadonlySet<string>, add: AddProblem): void {
-  const spec = step.agent;
-  const item = step.forEach !== undefined;
-  checkValue(spec.prompt, `${at}.agent.prompt`, { seen, item, value: false }, add);
-  if ('$lit' in spec.prompt && typeof spec.prompt.$lit !== 'string') {
-    add(`${at}.agent.prompt`, 'agent.prompt 要是个字符串');
   }
   if (spec.cwd !== undefined) {
     checkValue(spec.cwd, `${at}.agent.cwd`, { seen, item, value: false }, add);
@@ -207,29 +222,15 @@ function checkAgentRest(step: FlowAgentStep, at: string, seen: ReadonlySet<strin
       add(`${at}.agent.cwd`, 'agent.cwd 要是个字符串');
     }
   }
-  if (
-    spec.schema !== undefined &&
-    (typeof spec.schema !== 'object' || spec.schema === null || spec.schema['type'] !== 'object')
-  ) {
-    add(`${at}.agent.schema`, 'agent.schema 要是对象根的 JSON Schema');
-  }
-  for (const key of ['label', 'name', 'provider', 'model', 'preset'] as const) {
+  for (const key of ['label', 'name', 'preset'] as const) {
     const value = spec[key];
     if (value !== undefined && (typeof value !== 'string' || value.trim() === '')) {
       add(`${at}.agent.${key}`, `${key} 不能为空`);
     }
   }
-  if (step.forEach !== undefined && spec.name !== undefined) {
+  if (item && spec.name !== undefined) {
     add(`${at}.agent.name`, 'forEach 步骤里不要给 agent.name');
   }
-}
-
-function usesAi(flow: FlowDefinition): boolean {
-  for (const step of flow.steps) {
-    if ('ai' in step) return true;
-    if ('flow' in step && usesAi(step.flow)) return true;
-  }
-  return false;
 }
 
 function checkFlowAt(
@@ -242,10 +243,10 @@ function checkFlowAt(
   if (flow.id.trim() === '') add(`${prefix}id`, '流程 id 不能为空');
   if (flow.title.trim() === '') add(`${prefix}title`, '流程标题不能为空');
   if (flow.steps.length === 0) add(`${prefix}steps`, '至少要有一步');
-  if (options.agents === false && flowUsesAgents(flow)) {
+  if (options.agents === false && flowUses(flow, 'agent')) {
     add(`${prefix}steps`, '这一份运行时没有 agent 能力（没装 subagents）');
   }
-  if (options.ai === false && usesAi(flow)) {
+  if (options.ai === false && flowUses(flow, 'ai')) {
     add(`${prefix}steps`, '这一份运行时没有模型能力（没配 llm）');
   }
   if (flow.target !== undefined) {

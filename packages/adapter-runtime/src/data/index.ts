@@ -1,4 +1,13 @@
-import { callsProblemOf, noWrite, recipeProblemOf, scriptOf, scriptOfMany, type Seam } from '@dsh-workbench/shared/host';
+import {
+  callsProblemOf,
+  noWrite,
+  planResultsOf,
+  recipeProblemOf,
+  scriptOf,
+  scriptOfMany,
+  scriptOfPlan,
+  type Seam,
+} from '@dsh-workbench/shared/host';
 import type {
   CallOverrides,
   DataError,
@@ -8,6 +17,8 @@ import type {
   DataResult,
   RecipeCalls,
   RecipeResults,
+  RequestPlan,
+  PlanResults,
   RequestRecipe,
 } from '@dsh-workbench/shared/host';
 import { browserRead, type BrowserReadResult } from '../browser/index.js';
@@ -388,6 +399,33 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
     },
     async requestMany<T = unknown>(recipe: RequestRecipe, calls: RecipeCalls): Promise<RecipeResults<T>> {
       return (await readMany(recipe, calls)) as RecipeResults<T>;
+    },
+    async plan(plan: RequestPlan): Promise<PlanResults> {
+      if (options.seam === undefined) {
+        const error = { code: 'invalid-request' as const, message: '没有执行缝，读不了浏览器' };
+        return Object.fromEntries(plan.steps.map((one) => [one.name, { ok: false as const, error }]));
+      }
+      let script: string;
+      try {
+        script = scriptOfPlan(plan);
+      } catch (error) {
+        const wrong = { code: 'invalid-request' as const, message: error instanceof Error ? error.message : String(error) };
+        return Object.fromEntries(plan.steps.map((one) => [one.name, { ok: false as const, error: wrong }]));
+      }
+      const result = await browserRead({
+        seam: options.seam,
+        script,
+        command,
+        url: plan.origin,
+        ...(plan.loginUrl === undefined ? {} : { loginUrl: plan.loginUrl }),
+        ...(plan.session === undefined ? {} : { session: plan.session }),
+        ...(plan.timeoutMs === undefined ? {} : { timeoutMs: plan.timeoutMs }),
+      });
+      if (!result.ok) {
+        const one = browserFailure(result, plan.loginUrl);
+        return Object.fromEntries(plan.steps.map((item) => [item.name, one]));
+      }
+      return planResultsOf(result.value, plan.steps.map((one) => one.name));
     },
     async submit<T = unknown>(recipe: RequestRecipe, overrides?: CallOverrides): Promise<DataResult<T>> {
       return (await readRecipe(recipe, overrides, 'submit')) as DataResult<T>;

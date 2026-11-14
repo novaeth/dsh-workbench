@@ -1,4 +1,5 @@
-import type { FlowDefinition, FlowStep } from './types.js';
+import { flowUses } from './scan.js';
+import type { FlowDefinition } from './types.js';
 
 const MAX_SUMMARY = 40;
 
@@ -8,15 +9,7 @@ const MAX_SUMMARY = 40;
  * @returns 有 agent 节点为真。
  */
 export function flowUsesAgents(flow: FlowDefinition): boolean {
-  for (const step of flow.steps) {
-    if (hasAgent(step)) return true;
-    if ('flow' in step && flowUsesAgents(step.flow)) return true;
-  }
-  return false;
-}
-
-function hasAgent(step: FlowStep): boolean {
-  return 'agent' in step;
+  return flowUses(flow, 'agent');
 }
 
 /**

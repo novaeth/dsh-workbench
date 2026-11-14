@@ -138,9 +138,32 @@ export type RecipeCalls = Readonly<Record<string, CallOverrides>>;
 
 export type RecipeResults<T = unknown> = Readonly<Record<string, DataResult<T>>>;
 
+export interface PlanStepResponse {
+  readonly kind?: 'json' | 'text' | 'bytes';
+  readonly path?: string;
+  readonly maxBytes?: number;
+}
+
+export interface PlanStep {
+  readonly name: string;
+  readonly request: RecipeRequest;
+  readonly response?: PlanStepResponse;
+}
+
+export interface RequestPlan {
+  readonly origin: string;
+  readonly loginUrl?: string;
+  readonly session?: string;
+  readonly timeoutMs?: number;
+  readonly steps: readonly PlanStep[];
+}
+
+export type PlanResults = Readonly<Record<string, DataResult<unknown>>>;
+
 export interface DataReader {
   read<T = unknown>(request: DataRequest): Promise<DataResult<T>>;
   request<T = unknown>(recipe: RequestRecipe, overrides?: CallOverrides): Promise<DataResult<T>>;
   requestMany<T = unknown>(recipe: RequestRecipe, calls: RecipeCalls): Promise<RecipeResults<T>>;
+  plan(plan: RequestPlan): Promise<PlanResults>;
   submit<T = unknown>(recipe: RequestRecipe, overrides?: CallOverrides): Promise<DataResult<T>>;
 }

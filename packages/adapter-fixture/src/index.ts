@@ -1,4 +1,4 @@
-import type { DataReader, DataRequest, DataResult, RecipeCalls, RecipeResults, RequestRecipe } from '@dsh-workbench/shared';
+import type { DataReader, DataRequest, DataResult, PlanResults, RecipeCalls, RecipeResults, RequestRecipe } from '@dsh-workbench/shared';
 import type { CoreAdapterSet, EnvSupplyPort, ProbePort, ProfilePort } from '@dsh-workbench/shared/host';
 import { ADAPTER_SET_API_VERSION } from '@dsh-workbench/shared/host';
 
@@ -16,6 +16,9 @@ const data: DataReader = {
   },
   async submit<T = unknown>(_recipe: RequestRecipe): Promise<DataResult<T>> {
     return { ok: true, data: FIXTURE_MARKER as T };
+  },
+  async plan(): Promise<PlanResults> {
+    return {};
   },
 };
 

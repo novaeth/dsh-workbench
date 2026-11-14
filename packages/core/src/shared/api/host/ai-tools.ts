@@ -1,9 +1,3 @@
-/**
- * `tools.provide` 的落点：把模块给的几个函数包成**一个**桥接工具注册上去，
- * 让子 agent 通过 `{ tool, args }` 调到它们；调用结束就注销，不留在全局工具面上。
- *
- * @module @dsh-workbench/core/shared/api/host/ai-tools
- */
 import { aiError, type AiToolDefinition } from '@dsh-workbench/shared/host';
 
 interface ToolRunContextLike {
@@ -15,9 +9,7 @@ interface ToolRegistryLike {
 }
 
 export interface BridgeTool {
-  /** 注册进去的那个工具名；要并进 `tools.allow`。 */
   readonly name: string;
-  /** 注销它；调用方必须在 `finally` 里调。 */
   dispose(): void;
 }
 
@@ -32,14 +24,6 @@ function descriptionOf(tools: readonly AiToolDefinition[]): string {
   ].join('\n');
 }
 
-/**
- * 注册一个桥接工具。
- * @param registry 宿主的工具注册表（`ctx.get('tools')`）。
- * @param tools 模块给的子工具。
- * @param timeoutMsPerTool 单个子工具的超时；0 表示不限。
- * @param signal 整轮调用的信号。
- * @returns 桥接工具的身份与注销函数。
- */
 export function registerBridgeTool(
   registry: ToolRegistryLike,
   tools: readonly AiToolDefinition[],

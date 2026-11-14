@@ -1,6 +1,7 @@
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { describe, expect, it } from 'vitest';
 import { holdToolchainLock } from '../index.js';
 
@@ -12,12 +13,18 @@ describe('holdToolchainLock', () => {
   it('两个持锁者串行，不交叠', async () => {
     const dir = lockDir();
     const order: string[] = [];
+    let entered: (() => void) | undefined;
+    const inside = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
     const first = holdToolchainLock(dir, async () => {
       order.push('a-in');
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      entered?.();
+      await delay(50);
       order.push('a-out');
       return 'a';
     });
+    await inside;
     const second = holdToolchainLock(dir, async () => {
       order.push('b-in');
       order.push('b-out');

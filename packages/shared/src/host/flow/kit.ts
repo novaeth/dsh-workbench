@@ -41,7 +41,7 @@ export function createFlowHost(agents?: FlowAgentPort, ai?: AiPort): FlowHost {
     check: (flow, actions, options) =>
       checkFlow(flow, actions, {
         agents: options?.agents ?? agents !== undefined,
-        ai: options?.ai ?? ai !== undefined,
+        ai: options?.ai ?? (ai !== undefined && ai.supports('text')),
       }),
     run: (options) => runWithAgents({ ...options, ...(ai === undefined ? {} : { ai }) }, agents),
   };

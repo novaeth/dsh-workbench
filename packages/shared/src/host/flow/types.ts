@@ -1,4 +1,5 @@
 import type { LongTaskIntervention } from '../../contract/long-task.js';
+import type { ImageLike } from '../ai/types.js';
 import type { AiPort } from '../ai/port.js';
 
 /**
@@ -65,23 +66,24 @@ export interface FlowSubFlowStep {
   readonly when?: FlowPredicate | undefined;
 }
 
-/**
- * agent 节点要的那点东西：提示词（求成字符串）、可选的结构化输出形状，以及模型与会话的覆盖项。
- * `provider` / `model` 指的是回答这一步的模型；`preset` 是这一轮 dsh 的 agent 模式 id。
- */
-export interface FlowAgentSpec {
-  readonly prompt: FlowValue;
-  /** 要给它看的图片（data URL / 绝对路径），求值成一个字符串数组。 */
-  readonly images?: FlowValue | undefined;
-  /** 工具面：只留 `allow` 里的，去掉 `deny` 里的（名字是全局工具名）。 */
-  readonly tools?: { readonly allow?: readonly string[]; readonly deny?: readonly string[] } | undefined;
+export interface FlowAgentTuning {
   readonly label?: string | undefined;
   readonly name?: string | undefined;
   readonly provider?: string | undefined;
   readonly model?: string | undefined;
   readonly preset?: string | undefined;
-  readonly cwd?: FlowValue | undefined;
   readonly schema?: Readonly<Record<string, unknown>> | undefined;
+}
+
+/**
+ * agent 节点要的那点东西：提示词（求成字符串）、可选的结构化输出形状，以及模型与会话的覆盖项。
+ * `provider` / `model` 指的是回答这一步的模型；`preset` 是这一轮 dsh 的 agent 模式 id。
+ */
+export interface FlowAgentSpec extends FlowAgentTuning {
+  readonly prompt: FlowValue;
+  readonly images?: FlowValue | undefined;
+  readonly tools?: { readonly allow?: readonly string[]; readonly deny?: readonly string[] } | undefined;
+  readonly cwd?: FlowValue | undefined;
 }
 
 /**
@@ -98,17 +100,11 @@ export interface FlowAgentStep {
 }
 
 /**
- * 一步要么调动作，要么跑子流程，要么让一个子 agent 判断。
- */
-/**
  * 一步：让模型给一个结论。比 agent 节点轻（不起子 agent、没有工具），只借模型的判断。
  */
 export interface FlowAiSpec {
-  /** 提示词，求成字符串。 */
   readonly prompt: FlowValue;
-  /** 要给它看的图片，求成字符串数组（data URL 或绝对路径）。 */
   readonly images?: FlowValue | undefined;
-  /** 对象根的 JSON Schema；给了就返回那个对象。 */
   readonly schema?: Readonly<Record<string, unknown>> | undefined;
   readonly provider?: string | undefined;
   readonly model?: string | undefined;
@@ -126,6 +122,9 @@ export interface FlowAiStep {
   readonly forEach?: FlowForEach | undefined;
 }
 
+/**
+ * 一步要么调动作，要么跑子流程，要么让一个子 agent 或模型判断。
+ */
 export type FlowStep = FlowActionStep | FlowSubFlowStep | FlowAgentStep | FlowAiStep;
 
 /**
@@ -269,19 +268,12 @@ export interface FlowCheck {
  * 起一个子 agent 的请求：提示词、可选的模型与模式覆盖、可选的输出形状。
  * `schema` 是对象根的 JSON Schema；给了它就只认 `value`，文本只进步骤行摘要。
  */
-export interface FlowAgentRequest {
+export interface FlowAgentRequest extends FlowAgentTuning {
   readonly stepId: string;
   readonly prompt: string;
-  readonly images?: readonly string[] | undefined;
-  /** 只让子 agent 看见这些工具；`deny` 优先。 */
+  readonly images?: readonly ImageLike[] | undefined;
   readonly toolFilter?: { readonly allow?: readonly string[]; readonly deny?: readonly string[] } | undefined;
-  readonly label?: string | undefined;
-  readonly name?: string | undefined;
-  readonly provider?: string | undefined;
-  readonly model?: string | undefined;
-  readonly preset?: string | undefined;
   readonly cwd?: string | undefined;
-  readonly schema?: Readonly<Record<string, unknown>> | undefined;
 }
 
 /**

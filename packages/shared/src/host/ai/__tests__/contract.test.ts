@@ -4,11 +4,6 @@ import { createAiPort } from '../port.js';
 import { problemsOf } from '../schema.js';
 import { isAiError, type AgentOptions, type JsonSchema } from '../types.js';
 
-/**
- * 契约：任何一份 `AiPort` 实现（真实现、测试替身、将来的适配器）都要过这一套。
- * 断言只碰外部行为：给什么拿什么、什么情况下给什么错误码。
- */
-
 interface Harness {
   readonly adapter: AiAdapter & {
     calls: AiCompleteRequest[];
@@ -20,10 +15,10 @@ interface Harness {
 function harness(options: { capabilities?: AiAdapter['capabilities']; reply?: (r: AiCompleteRequest) => string } = {}): Harness {
   const calls: AiCompleteRequest[] = [];
   const agents: { parts: unknown; agent: AgentOptions }[] = [];
-  let reply = options.reply ?? (() => 'ok');
+  const reply = options.reply ?? (() => 'ok');
   const adapter = {
     name: 'fake',
-    capabilities: options.capabilities ?? (['text', 'images', 'json', 'agent', 'tools'] as const),
+    capabilities: options.capabilities ?? (['text', 'images', 'agent'] as const),
     calls,
     agents,
     reply: (request: AiCompleteRequest) => reply(request),
@@ -84,7 +79,7 @@ export function aiContractTests(makePort: (h: Harness) => ReturnType<typeof crea
     });
 
     it('模型不吃图片时抛 unsupported-input，而不是把图丢掉', async () => {
-      const h = harness({ capabilities: ['text', 'json'] });
+      const h = harness({ capabilities: ['text'] });
       await expect(
         makePort(h).ask({ prompt: 'x', images: ['data:image/png;base64,AA=='] }),
       ).rejects.toSatisfy((error: unknown) => isAiError(error) && error.code === 'unsupported-input');
@@ -93,6 +88,16 @@ export function aiContractTests(makePort: (h: Harness) => ReturnType<typeof crea
     it('askJson 解析出对象', async () => {
       const h = harness({ reply: () => '{"verdict":"pass"}' });
       await expect(makePort(h).askJson({ prompt: 'x', schema: SCHEMA })).resolves.toEqual({ verdict: 'pass' });
+    });
+
+    it('askJson 把 schema 描述附在提示词末尾', async () => {
+      const h = harness({ reply: () => '{"verdict":"pass"}' });
+      await makePort(h).askJson({ prompt: '看这份合同', schema: SCHEMA });
+      const first = h.adapter.calls[0]?.parts[0];
+      const text = first?.kind === 'text' ? first.text : '';
+      expect(text.startsWith('看这份合同')).toBe(true);
+      expect(text).toContain('JSON Schema');
+      expect(text).toContain('"verdict"');
     });
 
     it('askJson 剥掉代码块围栏', async () => {
@@ -162,6 +167,26 @@ export function aiContractTests(makePort: (h: Harness) => ReturnType<typeof crea
       expect(text).toBe('agent-ok');
       const parts = h.adapter.agents[0]?.parts as readonly { kind: string }[];
       expect(parts.filter((one) => one.kind === 'image').length).toBe(1);
+    });
+
+    it('agent 带 schema：合格才回，回的是那个对象的 JSON', async () => {
+      const h = harness();
+      h.adapter.runAgent = async () => ({ text: '{"ok":true}', value: { ok: true }, childId: 'c', stopReason: 'completed', turns: 1, toolCalls: 0 });
+      const port = createAiPort(h.adapter);
+      const text = await port.agent({
+        prompt: 'x',
+        schema: { type: 'object', required: ['ok'], properties: { ok: { type: 'boolean' } } },
+      });
+      expect(JSON.parse(text)).toEqual({ ok: true });
+    });
+
+    it('agent 带 schema 但结论不合格 → schema-mismatch，不悄悄丢掉', async () => {
+      const h = harness();
+      h.adapter.runAgent = async () => ({ text: '乱说', childId: 'c', stopReason: 'completed', turns: 1, toolCalls: 0 });
+      const port = createAiPort(h.adapter);
+      await expect(
+        port.agent({ prompt: 'x', schema: { type: 'object', required: ['ok'], properties: {} } }),
+      ).rejects.toSatisfy((error: unknown) => isAiError(error) && error.code === 'schema-mismatch');
     });
 
     it('实现没有 runAgent 时 agent 直接说 unsupported-option', async () => {

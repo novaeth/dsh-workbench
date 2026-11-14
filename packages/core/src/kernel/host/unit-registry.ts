@@ -85,6 +85,7 @@ export function createUnitRegistry(options: {
     return () => {
       if (byUnit.get(host.unit) !== host) return;
       byUnit.delete(host.unit);
+      added.delete(host.unit);
       const index = hosts.indexOf(host);
       if (index >= 0) hosts.splice(index, 1);
       notify();

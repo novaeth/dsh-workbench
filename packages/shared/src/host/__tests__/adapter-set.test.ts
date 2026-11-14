@@ -64,6 +64,7 @@ const FULL = `{
     request: async () => ({ ok: true, data: {} }),
     requestMany: async () => ({}),
     submit: async () => ({ ok: true, data: {} }),
+    plan: async () => ({}),
   },
   supply: {
     resolvePluginSource: () => ({ ok: false, problem: 'not-declared' }),
@@ -235,5 +236,22 @@ describe('loadAdapterSet：从 profile 解析 set，失败不抛', () => {
     install(dir, 'fixture-set', 'export function createAdapterSet( {');
     const loaded = await loadAdapterSet(ctxOf(dir), 'fixture-set');
     expect(loaded).toMatchObject({ ok: false, failure: 'import-failed' });
+  });
+
+  it('没实现 data.plan 算缺成员（plan 是必备的）', async () => {
+    const dir = profileOf();
+    const without = FULL.replace("    plan: async () => ({}),\n", '');
+    install(dir, 'fixture-set', `export function createAdapterSet() { return ${without}; }`);
+    const loaded = await loadAdapterSet(ctxOf(dir), 'fixture-set');
+    expect(loaded).toMatchObject({ ok: false, failure: 'missing-member' });
+    expect(loaded.ok ? '' : loaded.detail).toContain('data.plan');
+  });
+
+  it('data.plan 给了但不是函数，算缺成员', async () => {
+    const dir = profileOf();
+    const broken = FULL.replace('plan: async () => ({})', 'plan: 1');
+    install(dir, 'fixture-set', `export function createAdapterSet() { return ${broken}; }`);
+    const loaded = await loadAdapterSet(ctxOf(dir), 'fixture-set');
+    expect(loaded).toMatchObject({ ok: false, failure: 'missing-member' });
   });
 });

@@ -1,4 +1,12 @@
-import type { DataReader, DataRequest, DataResult, RecipeCalls, RecipeResults, RequestRecipe } from '../contract/data.js';
+import type {
+  DataReader,
+  DataRequest,
+  DataResult,
+  PlanResults,
+  RecipeCalls,
+  RecipeResults,
+  RequestRecipe,
+} from '../contract/data.js';
 import type { AdapterSet } from '../host/adapters.js';
 import type { EnvSupplyPort, ModulePort, ProbePort, ProfilePort, RuntimePort, SupplyPort } from '../host/port-types.js';
 import type { HostActions } from '../host/port-types.js';
@@ -39,6 +47,9 @@ const data: DataReader = {
   },
   async submit<T = unknown>(_recipe: RequestRecipe): Promise<DataResult<T>> {
     return result<T>();
+  },
+  async plan(): Promise<PlanResults> {
+    return {};
   },
 };
 

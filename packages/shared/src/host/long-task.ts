@@ -84,10 +84,10 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
 
   const runs = new Map<string, LongTaskBase>();
   const controls = new Map<string, AbortController>();
-  const now = bound.now ?? (() => nowIso());
+  const now = (): string => (bound.now ?? nowIso)();
   let counter = 0;
-  const nextId = bound.nextId ?? (() => `run-${clockNow()}-${(counter += 1)}`);
-  const recentMs = bound.recentMs ?? RECENT_MS;
+  const nextId = (): string => (bound.nextId ?? (() => `run-${clockNow()}-${(counter += 1)}`))();
+  const recentMs = (): number => bound.recentMs ?? RECENT_MS;
   const listeners = new Set<(change: LongTaskChange<S>) => void>();
 
   const live = (id: string): S | null => {
@@ -131,7 +131,7 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
     },
 
     current(workspace) {
-      const floor = epochOf(now()) - recentMs;
+      const floor = epochOf(now()) - recentMs();
       const newest = new Map<string, LongTaskBase>();
       for (const snapshot of runs.values()) {
         if (snapshot.workspace !== workspace) continue;

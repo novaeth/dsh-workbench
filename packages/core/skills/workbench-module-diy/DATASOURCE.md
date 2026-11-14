@@ -109,7 +109,8 @@ routes: {
 | cookie + CSRF | 表单类后台 | `source: meta / cookieValue`，`place: header` |
 | bearer-refresh | 页面先换 token（如 `/api/auth/refresh`） | `source: endpoint`，`place: header` |
 | bearer-page | token 在页面初始 state / storage | `source: global / storage`，`place: header` |
-| custom | 签名 / WS / 多步 / 一次性 token | 不写 recipe，写 `custom: { why }`，代码里用旧的 `data.read({ kind: 'browser', script })` |
+| 多跳 | 后一跳要用前一跳的结果（session / CSRF / cursor） | 不写 recipe，写 `data.plan({ steps })`（见下节） |
+| custom | 签名 / WS / 二进制 / DOM | 不写 recipe，写 `custom: { why }`，代码里用 `data.read({ kind: 'browser', script })` |
 
 同一次读要打多条接口时（一个 refresh 换 token，再并发取余额、用量、订阅……），不要拆成 N 条配方
 各调一次：一条配方 + 一格 `calls`，一次换 token、并发打，结果按键回、每格各自成败：
@@ -139,8 +140,43 @@ const results = await data.requestMany(DATASOURCE.wallet, DATASOURCE_CALLS.walle
 `calls` 里的同名格覆盖它；一次最多 8 条。`calls` 必须配 `recipe`，`design check` 逐格校验。
 `requestMany` 也只读 GET —— 写仍是一条一条走 `submit`。
 
-配方还有两个可选机器字段：`session`（这条读用哪条 opencli 会话，默认 `workbench-read`；要和屏会话分开时写）
+配方还有两个可选机器字段：`session`（这条读用哪条 opencli 会话，默认 `workbench-read`；需与屏会话分开时写）
 与 `timeoutMs`（默认 25 秒）。
+
+### 多跳：后一步要用前一步的结果
+
+配方和 `calls` 都是**一次请求**。真实系统常见「先换 session / CSRF 再查询」——
+这时用 `data.plan` 把几步请求写成一个计划，**不需要写脚本**：
+
+```ts
+const out = await data.plan({
+  origin: 'https://oa.example.com',
+  loginUrl: 'https://oa.example.com/',
+  session: 'workbench-read',
+  steps: [
+    { name: 'key',
+      request: { method: 'POST', path: '/api/split', contentType: 'form', body: { scope: 'doing' } },
+      response: { kind: 'json', path: 'sessionkey' } },
+    { name: 'rows',
+      request: { method: 'POST', path: '/api/rows', contentType: 'form',
+                 body: { dataKey: '{{key}}', pageSize: '100' } },
+      response: { kind: 'json', path: 'datas' } },
+  ],
+});
+// 每步一个 DataResult；某步失败后，后面的步骤不再发请求
+```
+
+规则：
+
+- `{{步骤名}}` / `{{步骤名.路径}}` 可以出现在 path / query / headers / body 任意位置；运行时替换
+- `plan` 是**必备成员**：没实现会在加载时报 `missing-member`，模块可直接调用
+- **只允许向前引用**：引用未出现的步骤、重名、空 `path`、非法 `kind` 都是构建期错误（先用 `planProblemOf` 自检）
+- `response.kind` 三种：`json`（可带 `path` 取值）/ `text` / `bytes`（回 `{ base64, size, contentType }`，带 `maxBytes`）
+- 一张卡片要读多个不同的接口 → 各写一个 `plan`
+- 仍然是页面内 fetch（一次 eval、多次请求），cookie 的行为不变，宿主不接触凭据
+
+**仍需写脚本**：解析二进制（docx 解 ZIP、PDF 切图）、重编码图片、读 DOM 这些归 `custom`。
+`fw03-review` 的列表与表单走 `plan`，只有"下载并解析附件"是脚本。
 
 `custom` 只记"为什么配方盖不住"，脚本仍在代码里；`design check` 会给 warn。
 
