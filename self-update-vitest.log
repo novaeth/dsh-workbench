@@ -1,0 +1,21 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.2 [39m[90m/Users/runner/work/dsh-workbench/dsh-workbench/packages/adapter-probe[39m
+
+ [32m✓[39m src/__tests__/version-switch.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 484[2mms[22m[39m
+ [32m✓[39m src/__tests__/self-update-steps.test.ts [2m([22m[2m28 tests[22m[2m)[22m[33m 1059[2mms[22m[39m
+ [32m✓[39m src/__tests__/self-update.test.ts [2m([22m[2m30 tests[22m[2m)[22m[32m 69[2mms[22m[39m
+ [32m✓[39m src/__tests__/isolated-install.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 46[2mms[22m[39m
+ [32m✓[39m src/__tests__/version-dir.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32m✓[39m src/__tests__/self-update-boot.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/__tests__/version-migrate.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+[2m      Tests [22m [1m[32m115 passed[39m[22m[90m (115)[39m
+[2m   Start at [22m 14:26:50
+[2m   Duration [22m 3.42s[2m (transform 36%, import 33%, tests 30%)[22m
+
+[2m  Transform [22m [33mtransforming modules took 2.05s[39m[2m · 36% of tracked time, re-done on every run[22m
+[2m            [22m [2mpersist transforms across runs with [22m[33mfsModuleCache: true[39m
+[2m            [22m [2mon CI this only helps when the cache directory is persisted between runs[22m
+[2m            [22m [2mlearn more: https://vitest.dev/guide/improving-performance#caching-between-reruns[22m
+

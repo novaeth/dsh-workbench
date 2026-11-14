@@ -1,0 +1,196 @@
+
+> @dsh-workbench/core@1.2.12 selfcheck /Users/runner/work/dsh-workbench/dsh-workbench/packages/core
+> node scripts/selfcheck/index.mjs
+
+✅ dist/host/index.js 导出 apply() 且声明 inject: [webServer]
+✅ 宿主 apply 交出了 workbenchUnits 服务
+✅ ★ config 指向夹具 set 时，apply 用夹具的 data 且默认端口补齐 — {"ok":true,"data":{"adapterSet":"fixture"}} · defaults=true
+✅ 后注册的套件当场被挂载；注销后名单里没有它、再挂也不会带上它 — 挂了 1 次
+✅ ★ 一个套件的面挂载时抛错 → 只废它自己：后面注册的套件照挂，外壳没被带走 — 坏面挂了 1 次 · 好面挂了 1 次
+✅ apply() 注册了外壳自己的七条前缀路由（模块带的路由由模块自己挂） — /workbench/api/panel-state + /workbench/api/diy-debug + /workbench/api/diy-record + /workbench/api + /workbench/api/prefs + /workbench/api/actions + /workbench/api/provision
+✅ ★ apply() 注册了**恰好一条** exact 路由 —— 变更流（多了就是有人又开了一条通道） — exact:/workbench/events
+✅ ★ apply() 在装配期也收窄工具面（system-prompt/assemble 恰好一条） — 零套件时不做删减 · webserver/index-inject + tools/post-execute + agent/created + system-prompt/assemble + tools/pre-execute + agent/pre-step
+✅ GET /health 返回 200 + JSON{ok:true, pid:本进程} + 无 profileContext 时 profile 为 null（不读环境变量） — 200 · {"ok":true,"plugin":"@dsh-workbench/core","profile":null,"profileDir":null,"pid":446
+✅ profile 取自 profileContext.dir 的 basename，且环境变量被污染也不受影响 — profile=workbench env=wrong-profile-from-env
+✅ 没有 shell 时 panels 单元仍然可用，且清单为空（外壳自带零业务模块，全是装进来的；ADR-0009） — 0 个套件
+✅ 业务投影：未知子路径 404、非 GET 405 — 404 / 405
+✅ 偏好写：只认 POST（GET 405）、只服务 panels 一个资源、拒业务类动作、坏 JSON 400 — GET 405 · 资源 false · 动作 false · 坏 JSON 400
+✅ ★ 降级档（GET /changes）答的是同一份账本：修订 + 纪元 + 事实名 — {"ok":true,"epoch":"e1a1a74d6-4b17-49cd-9df6-9b416a925a4d","rev":6,"facts":["unit-manifest
+✅ ★ 变更流首帧是对游标的同步（纪元 + 修订 + 差量） — : connected
+
+data: {"type":"sync","epoch":"e1a1a74d6-4b17-49cd-9df6-9b416a925a4d","rev":6,
+✅ ★ 变更流声明成 SSE 且带 no-transform（压缩中间件攒够阈值才吐 = 推送变延迟推送） — text/event-stream; charset=utf-8 · no-store, no-transform
+✅ client.js 经 __ModuleLoader__.load() 注册，模块 id = 包名 — @dsh-workbench/core
+✅ factory 注入 slots / locale / layout / uiWorkspace / workspaces / shortcuts — slots,locale,layout,uiWorkspace,workspaces,shortcuts,remote,remote.session,remote.agentPresets,inputTriggers,conversation,contextMenus,sidebarRight,sessions
+✅ ★ 浏览器半侧直接用 dsh 的 UI 原语（经模块表 require，包里没有第二份实现） — 产物向模块表要了：react、@deepseek-ai/dsh-client-ui-primitives、react-dom
+✅ ★ 只向 dsh 的种子词表要东西（表外的名字在真加载器里会抛） — 表外的：（没有）
+✅ 客户端 apply 交出 workbenchUnits（注册 + 活名单两个动作；活名单里零业务模块 —— 装哪个来哪个） — （空）
+✅ ★ 宿主没担保的 unit 不静默：不进活名单、也不上板，且点名说出来（ADR-0038 §2.2） — [dsh-workbench] ghost-module 的卡片没挂上：宿主没有担保 unit「ghost-module」的清单 —— 这个包要么没装进这份 profile，要么它的 dsh.workbench 没通过校验。卡片先不挂：清单只有一处真相
+✅ 客户端导出 kit（模块作者唯一的入口）：四个面都在，hooks / components / api 各交出模块要用的成员 — hooks,components,api,lib
+✅ 注册了 locale 字典 — workbench
+✅ 启动 gate 在 apply 里第一时间立起来（不等 React），并把 #root 标成 inert（背景不可点）
+✅ ★ 策展闸：kit 面不许悄悄长大（新增成员要么被随包指引点名、要么被真实模块用过、要么显式豁免） — 97 个成员（冻结 91 + 新增 6）：全部有来路
+✅ ★ 指引一致闸：随包指引里写的 kit.<桶>.<名> 必须与真实 kit 面一致 — 12 处引用：都在真桶里
+✅ ★ 指引推荐表不许点名 kit 面上没有的件（KIT.md 速查表第二列） — 23 处推荐：都在 kit 面上
+✅ ★ 两道闸自己有负例（塞没人用也没点名的成员、名单腐烂、桶写错 ⇒ 当场红） — 11 条负例都对
+✅ ★ 发布图里没有夹具（发布入口的可达图里不许出现夹具模块；夹具只许走 @/shared/dev-surface/install 接缝）
+✅ ★ 审批明细座位注册了（priority < 0：single 座位同秩注册会抛） — priority=-1
+✅ apply() 注入了一份 <style>：自有前缀 .wb- + board 那份 + 面板列（构建把 CSS 打进来了）
+✅ 注册进 sidebar 槽并拿到组件，locale 命名空间是 workbench
+✅ ★ 自定义左栏的会话「更多」开的是 dsh 的共享上下文菜单（自己开 Menu 就是空菜单） — ⋯ → contextMenus.open(kind: session)
+✅ ★ 会话行的右键 / Shift+F10 走同一把共享菜单（行上铺 dsh 标准道具 useContextMenu 的 getTriggerProps） — 行 → getTriggerProps(kind: session)
+✅ ★ 自定义左栏不碰 dsh 自己声明的 session 菜单槽（0.2.2 起 ui-workspace 的 context menu adapter owns it：既不声明，也不 renderSlot） — 既不声明也不渲染
+✅ 一共就注册这十一个槽名，十二条注册（多一条都要想清楚为什么） — rightbar、sidebar.session.row.leading#long-task、sidebar.session.row.hover#long-task、sidebar.panellist#workbench-market、main、sidebar.footer.action#workbench-debug、sidebar.footer.action#workbench-record、settings.section#workbench-settings、settings.section.icon#workbench-settings、conversation.approval.detail、conversation.session.header.corner、sidebar
+✅ 市场注册了左栏入口与主区页面，且 key 同值 — workbench-market
+✅ ★ 没有注册 conversation.hero.workspace（遮蔽会做出空菜单）
+✅ ★ 注入的 CSS 里有隐藏 hero 选择工作区的规则
+✅ ★ 那个类名在**已装的 dsh** 里还在（dsh 一改类名当场红，别等用户看见按钮） — 不适用：没找到已装的 dsh（只保住了上面那条"我们的 CSS 里有规则"）
+✅ 重新声明了这十个座位（session.menu.item 归 dsh 的 workspace 声明） — sidebar.brand.mark,sidebar.brand.name,sidebar.toggle.badge,sidebar.panellist,sidebar.panellist.actions,sidebar.settings,sidebar.footer.action,sidebar.workspaces.session.row.action,sidebar.session.row.leading,sidebar.session.row.hover
+✅ ★ 刻意不声明 sidebar.workspaces（自带会话区因此不会挂载） — sidebar.brand.mark,sidebar.brand.name,sidebar.toggle.badge,sidebar.panellist,sidebar.panellist.actions,sidebar.settings,sidebar.footer.action,sidebar.workspaces.session.row.action,sidebar.session.row.leading,sidebar.session.row.hover
+✅ ★ 声明了 sidebar.session.row.hover 就必须真渲染它 — sidebar.brand.mark,sidebar.brand.name,sidebar.toggle.badge,sidebar.panellist,sidebar.panellist.actions,sidebar.settings,sidebar.footer.action,sidebar.workspaces.session.row.action,sidebar.session.row.leading,sidebar.session.row.hover
+✅ ★ 声明了 sidebar.panellist.actions 就必须真渲染它（官方的「更多」菜单靠它） — sidebar.brand.mark,sidebar.brand.name,sidebar.toggle.badge,sidebar.panellist,sidebar.panellist.actions,sidebar.settings,sidebar.footer.action,sidebar.workspaces.session.row.action,sidebar.session.row.leading,sidebar.session.row.hover
+✅ 左栏 inject 提供十二个能力 — listPanels,hasPanelActions,subscribePanels,openWorkspace,createWorkspace,pickDirectory,openSession,startSession,toggleSidebar,selectPanel,renameWorkspace,openSessionMenu
+✅ rightbar 以 priority -1 遮蔽出厂 RightbarRoot、不声明子座位、拿到了组件 — priority=-1
+✅ rightbar inject 提供四个能力 — applyRightbar,toggleRightbar,openPanel,goToPanel
+✅ rightbar 把状态以 hooks.rightbar 交出去（绑成 useRightbar）
+✅ ★ 切列入口注册进对话头部右上角（与出厂 ExpandButton 同座位） — -1
+✅ ★ 切列入口拿到切列动作、官方那列的开合源，以及与右栏同一份状态
+✅ ★ 右栏开合不做动画（帧的列表 + 出厂面板内容层一起关，我们这份连 transition 都不写） — 置 0=true · 两个作用域=true · 面板样式无动效=true · 收起不卸载=true
+✅ ★ 面板列自己带层号（推开 10 / 全屏 40，照出厂的 dock 层；对话的浮条盖不住它） — 10=true · 40=true · 全屏档=true
+✅ ★ 中区只注册了市场那一页（对话仍是默认页） — workbench-market
+✅ 注入的样式花括号配平（CSS 语法没有别的守卫） — 928 开 / 928 闭
+✅ ★ 样式里的 --wb-* 变量都用前定义过（用了没定义 = 整条声明失效）
+✅ ★ 外壳全局样式表里每个类都有组件拥有它（新词汇落进组件样式表，§18.44） — 50 个类都有组件在渲染
+✅ ★ 全局样式表只许减不许增（rightbar / sidebar / sidebar-app 的顶层规则块数，ADR-0029） — rightbar.css 10/10 · sidebar.css 48/48 · sidebar-app.css 43/43
+✅ ★ 组件样式（*.module.css）进了注入的那份样式（占位串已替换、哈希类名在） — 34 份组件样式
+✅ ★ CSS Modules 的类名都对得上（styles.X 在它 import 的 *.module.css 里有定义）
+✅ ★ 全局类名都对得上（className 里的 wb-* 在那份注入的样式里有定义）
+✅ ★ 组件样式里的动画名都在同一份 .module.css 里定义（借全局 @keyframes = 静默不转）
+❌ ★ 全仓代码零注释（只有公开入口成员的 JSDoc 与指令例外；CSS 一格都不许） — 65 处：packages/adapter-probe/src/__tests__/self-update-reinstall.test.ts:154、packages/adapter-probe/src/__tests__/self-update-steps.test.ts:175、packages/adapter-probe/src/__tests__/version-switch.test.ts:352、packages/adapter-probe/src/__tests__/version-switch.test.ts:356、packages/adapter-probe/src/__tests__/version-switch.test.ts:411
+✅ ★ 注释豁免面就是公开面（shared 三个入口 + kit 的来源文件；内部文件不放行） — 264 个公开文件
+✅ ★ 注释判据自己有负例（行注释 / 非 JSDoc / 非公开面 JSDoc / 行尾注释都算违规） — 15 条负例都对
+✅ ★ 写完通道的每个前缀只有一个注册处（两个注册处会把后面的 provision 挤掉） — registerPrefs=1 registerActions=1 registerProvision=1 registerPanelState=1
+✅ ★ seed 不再往 profile 追加数据隔离层（会话 / 项目 / 附件跟 web 共用数据根） — seed 走共用数据根 · 隔离补丁已删 · 空数组会让位
+✅ ★ 模块卡片词汇还在（外壳的样式表里：board.css 或组件自己的，别当死规则删） — 6 个代表类都在（35 份样式表）
+✅ ★ 模块的意图钩子（data-wb-*）不进外壳样式表（要更宽用契约类 wb-cardBleed；在册的只许减） — 在册 1 条：[data-wb-dot]
+✅ ★ 判据负例：`data-wb-*` 钩子认得出、外壳自己的属性选择器不误报 — 正例 [data-wb-bleed] 命中、负例 [data-platform] 不命中
+✅ ★ 令牌账（跨包）：引用的 --wb-* 都有定义 — 83 个引用都查得到
+✅ ★ 令牌账（跨包）：定义的 --wb-* 都有人用 — 90 个令牌都有人用
+✅ ★ 不再手搓按钮（用 dsh 的 Button；手搓类回来说明又长了一份）
+✅ ★ 不再手搓图标（用 dsh 的 Icon*Regular；只剩 IconBrandMark / IconBrandMarkColor / IconModuleMark / IconModules / IconNpm / IconOpencli / IconPanelScreen / IconConversation 是我们的）
+✅ ★ 状态点用 dsh 的 StateDot（dsh 的插件页也是这么用的）
+✅ ★ 手搓按钮连样式也不留（CSS 里也没有这些类了） — 0 个
+✅ ★ 选源选项排版照 dsh（常用项横排、自定义项竖排 → 输入框拉满宽） — 基础列 在 / label 横排 在 / pick 行 在
+✅ ★ 选源面板的关闭时机照 dsh（选中不关；开始检查才关） — 选中不关 / 开始检查会关
+✅ ★ shared 的哑组件里也不再有手搓按钮 — 0 处
+✅ ★ 会话行不被压缩（滚动 flex 列里的行必须 flex: none） — 已钉住 flex: none
+✅ ★ 每个卡片套件都用机制上报（useUnitBoard / useCardSummary），不许手写 useEffect —  都在
+✅ ★ 审批闸门从套件取策略与明细（host.ts 接线 + approval-gate.ts 按归属套件取，没有第二份兜底）
+✅ ★ 每个卡片套件都交"这次会发生什么" + 那块明细（漏了弹窗只剩一句通用话） —  都交了（只读套件没有审批面，不在此列）
+✅ ★ 注册期抛了：已经注册的工具要撤回（不然套件判失败、它的工具还挂着能调） — 调用点在 · 记账在
+✅ ★ 清单里声明会写的工具都由**它自己的套件**认领（外壳不再按名字认领）
+✅ ★ 审批机制里没有任何工具名（认领全在套件，外壳只留机制） — tool-approval.ts 里的 workbench_ 字面量：0 个
+✅ ★ 完全权限（审批 never + danger-full-access）下不再把 ask 交给 dsh（它会把 ask 自动拒掉） — 接线在 · 判据在
+✅ ★ 跨仓兜底表已经删掉（外壳里只有套件交的那一份认领；老模块靠升级，不许再加回来） — 已删
+✅ ★ 卡片的 ⟳ 都要能转（refreshing → wb-spinning，两个套件同一颗按钮不许长得不一样） — 1 处都带 wb-spinning
+✅ ★ 面板刷新凭据只许 ⟳ 自增（配置变更走事实，不许借它去刷所有卡） — Rightbar.tsx 里出现了 1 处 setPanelToken(（应当只有 ⟳ 那一处）
+✅ ★ 市场页装完/卸完只重取、不强探（宿主在动作里已经强探过并回写了缓存） — market/panel.tsx 里的绑定是 onChanged={reload}（应当是 onChanged={reload}）
+✅ ★ 进市场页不强探（有结论且新鲜就一次都不探；只有"没结论 / 过旧"才后台补一次） — 进页面那次补探先过 shouldProbeOnEnter 判据（别退回"挂载即强探"）
+✅ ★ 能力结论只有一份（读者各自 useState 存一份 = 左栏标签与市场页能互相矛盾） — use-capabilities.ts：useState 0 处 · useSyncExternalStore 用着（结论只该有一份，读者只读它）
+✅ ★ 左栏那枚徽标认模块包的新版、也认市场里的异常（入口漏带模块版本 = 模块有新版时标签永远不亮） — market/panel.tsx：marketHintOf 1 处 · useModuleVersions 用着（入口的徽标只该走那一处判据，版本读数取自共享 store）
+✅ ★ 模块版本结论只有一份（读者各自 useState 存一份 = 左栏标签与市场页能互相矛盾） — use-module-versions.ts：useState 0 处 · useSyncExternalStore 用着（结论只该有一份，读者只读它）
+✅ ★ 面板名单只在换工作区时清空（事实推送重读清空 = 整块板的卡都重打平台） — 1 处 setEnabled(null)，在 shouldDropPanels 判断里（应当只有 1 处且在判断里）
+✅ ★ 值交接只有 agent 工具能交（路由 / 服务 / hook 里 .hand( = 面板自己的读在续命那份值） — 11 处 hand 都在工具落点
+✅ ★ 忙态有下限时长（卡片刷新与添加弹窗的判定态都过 useVisibleBusy；取数层不许过 —— 轮询的格子会常亮） — 12 处都在名单里
+✅ ★ 每个阻断态都把 busy 交给那颗「重试」（漏一处 = 那个套件点了没反应） — 全部接上
+✅ ★ 每个套件都交"读工具惊动哪些事实"（factsOf；漏了的套件读工具永远不惊动面板） — panels 都交了
+✅ ★ 随包的启动 / 安装脚本不点名运行时（文案与入口都跟着适配器走） — 0 处
+✅ ★ 随包脚本不靠 x 位（pnpm publish 只给 bin 字段那条 755；直接执行 = 别人机器上 Permission denied） — seed-profile.sh 经 bash 呼；运行时的隔离包装不归启动器写（随适配器出货、由宿主自举落盘）
+✅ ★ 装了 ≠ 选中：启动器拒启并给修复命令；setup 的"确保选中"幂等补回（否则只有一台没入口的实例） — 缺则拒启 + 补齐 + 第二遍不写 + 依赖没装成不硬塞；ensure 排在 add 之后（10890 < 11223）✅
+✅ ★ 独立实例的端口写在 profile 里（`dsh-workbench` 与裸 `dsh workbench` 是同一个实例，端口不该由启动方式决定） — seed 里 3/3 处 · bundle 层没写
+✅ ★ 随包 shell 脚本都带 shebang，而且开了 -u 与 pipefail（少了就静默跑半截） — 4 份：check-launcher-spec.sh、check-workshop-generation.sh、seed-profile.sh、seed-workshop.sh
+✅ ★ 启动器"装哪一份"：仓库副本 link 本目录，装出来的那份按源上版本装（哪怕它正好落在某个 git 仓库里） — 各格都按契约 ✅
+✅ ★ 角落入口交出 selectColumn()（那两颗钮靠它切列） — column=workbench · 注册=true
+✅ ★ 点文件链接：先让位（注册真的撤下来了），不是把报错丢给用户 — 注册=false
+✅ ★ 点文件链接：先把几何报告权交还（closeRightbar） — 0 → 1 · column=dsh
+✅ ★ 椅面还没挂上时那次打开先候着（不是当场抛/静默丢） — （还没打开）
+✅ ★ renameWorkspace 把 dsh 那一次写翻成布尔（resolve→true / reject→false） — 成功=true 失败=false
+✅ ★ 椅面挂上（`mounted` 没动）之后自动展开一次（点了就该看见，不是点了没反应） — toggles=1 expanded=true
+✅ ★ 椅面挂上之后那次打开补上了（地址原样、只补一次） — resource:dsh-resource://file/session/s1/notes.md
+✅ ★ 椅面已在时直接透传（不再候着） — resource:dsh-resource://file/session/s1/notes.md、tab:browser
+✅ ★ 切回工作台：那一列重新注册上位 — expanded=true column=workbench
+✅ ★ 宿主担保过的 unit：清单按 unit 解析，后注册的模块当场进活名单（S0 的可变注册表 + 后加载组件）
+✅ ★ 后注册的模块，它的文案也当场并进字典（不是只有组件跟上了） — ["profileCreate.nav","profileCreate.lead","profileCreate.name","profileCreate.nameHint","profileCreate.source","profileCreate.current"]
+✅ ★ 注销之后它的文案也从字典里撤掉（不留残留文案）
+✅ ★ 工坊骨架与入口只由一处写（seed-workshop.sh 幂等；启动器只保 hmr 目录） — 骨架建起来、入口可执行、再跑一遍不炸 ✅ · 启动器只保目录 · 宿主自举会跑 entry
+✅ ★ 工坊代际自愈：基准显式输入（启动器不降级 / 目标取基准 / 没基准不动）+ 三条锁判据 + 六格指引软链 — 十八格都按契约 ✅
+✅ skills/ 随外壳包出货（DIY 模式的指引住这儿） — /Users/runner/work/dsh-workbench/dsh-workbench/packages/core/skills
+✅ ★ skills 在 package.json 的 files 里（漏了不报错，只是装出去没有它）
+✅ skills/ 里有 SKILL.md 与它指向的 references — 17 份
+✅ ★ 每份指引都在 8192 字符内（超了会被修剪器裁掉中间）
+✅ 指引之间的相对链接都指得到（改名不许烂在半路）
+✅ ★ hmr 监听根包含 DIY 工坊（少了它模块改了不热换，且不报错）
+✅ ★ hmr 的 ignored 抄全六条（少了 *(../) 那两条 node_modules 实目录会全进监听表）
+✅ ★ 启动器每次启动都建工坊目录（chokidar 对不存在的根收不到事件）
+✅ ★ DIY 指引的软链只有一份写口（在 seed-workshop.sh 的 link_workshop_skills 里，源优先基准那份） — 写口 在 · 启动器里没有残留
+✅ ★ 工坊骨架把 pnpm 与 store/cache 钉死在工坊内（否则 agent 的 install 会被沙箱拒）
+✅ ★ 可写根由产品代码声明，不进 profile / bundle 任何一层 — bundle 层没有 · 产品代码声明了 · profile/sandbox.patch.yml 已删
+✅ ★ 随包脚本都在 package.json 的 files 里（漏了 = 装出去那台静默什么都不做）
+✅ ★ 宿主自举写得下隔离运行时入口（可执行脚本，DSH_HOME 钉在命令里） — /var/folders/h5/t85nd63d71x27_8gl5gw3l_w0000gn/T/dsh-wb-bootstrap-zihZ1T/workbench/opencli/bin/opencli
+✅ ★ 宿主自举把工坊入口挂上（脱离执行缝跑随包脚本） — ok
+✅ ★ 仓库工作树副本不在启动时装工坊依赖（那是启动器/开发路径的事）
+✅ ★ 自举把 workbench/bin 与运行时自己的 bin 一起前插进 PATH（子进程按名字找到同一份） — /var/folders/h5/t85nd63d71x27_8gl5gw3l_w0000gn/T/dsh-wb-bootstrap-zihZ1T/workbench/opencli/bin:/var/folders/h5/t85nd63d71x27_8gl5gw3l_w0000gn/T/dsh-wb-bootstrap-zihZ1T/workbench/opencli/libs/node_modules/.bin:/var/folders/h5/t85nd63d71x27_8gl5gw3l_w0000gn/T/dsh-wb-bootstrap-zihZ1T/workbench/bin
+✅ ★ 宿主把工坊登记成工作台的工作区（少了它入口点了没反应，且不报错）
+✅ ★ DIY preset 在启动时从 dsh 的 standard 现场派生（没有生成物要维护） — 宿主接线 true · 读 loader/agentPresets true · 三处差分锚点 true · 生成物已删 true
+✅ ★ preset id 只有一处真相（派生那份从 DIY_PRESET_ID 来，宿主不另写一遍） — 代码说 workbench-diy · 派生用常量 true · 宿主没另写 true
+✅ ★ 落 DIY 模式只有一份实现（`diyStartOptions` 带 agentPreset），客户端一行都不许自己写 preset — 落模式实现 在 · agentPreset：实现里 1 处 / client.tsx 0 处
+✅ ★ 工坊那两条入口走同一份落模式实现（造一个模块 / 切到工坊的 startSession） — buildModule true / selectProject true / startSessionIn true / 侧栏 startSession true
+✅ ★ 判域按"要不要新凭据"判，不按"要不要接新平台" — 按新凭据判 ✅
+✅ ★ 指引有"数据从哪来"那一节：站点表 → 预装的运行时探 → 固化成一条读 → 三态 — 运行时 true / 预装 true / 固化 true / 三态 true / 站点表 true / 自检 true
+✅ ★ 指引有"写通道"那一节：现成写命令 → 入参/出参来源 → 没有预览档的不许试 — 运行时 true / 预览 true / 工程域 true / 回读 true
+✅ ★ 入口（SKILL.md）指向那一节，并且它排在"从模板改"之前 — SKILL.md 的索引与步骤
+✅ ★ 随包出货的 skill 里没有死链（链接必须落在包内且存在 —— 它的读者手里没有本仓） — 17 份指引 / 104 条包内链接
+✅ ★ 工坊的新名字不在"旧名字"名单里（否则每次启动改名一次，永远改不干净） — 新 工作台DIY / 旧 DIY 工坊、工作台自带 · DIY 模块住这儿
+✅ ★ 换名字只在客户端有一条一次性迁移（只认我们自己起过的名字）
+✅ ★ 声明了验过的 dsh 下限（旧一代没有现场派生的注册口，DIY 整个不显示） — engines.dsh ">=0.2.2-rc.2" · 验过的 dsh（primitives pin）0.2.2-rc.2 · 启动器读清单 true · 启动器没另写版本号 true
+✅ ★ DIY 模式挂不起来时，启动体检会摆出来并停在那一页（不是进去才发现） — 宿主读名册 true · 路由接上 true · 界面停在那一页 true · 升级命令一处真相 true（npm i -g @deepseek-ai/dsh@latest）
+✅ ★ DIY 那一跳不新造安装实现（只走 provision 装 + prefs 打开两条已有写通道）
+✅ ★ DIY 那一跳是窄门工具：只装本工作区里的模块（不接任意路径），装完顺手在会话的工作区上板
+✅ ★ 那一跳是幂等的：装过就不再装（同名重装只会得到"要重启"，而那一支连重载都不做） — 少了这一支，agent 每轮都会再装一遍，用户就会看到"要重启"
+✅ ★ DIY 那一族收在 diy 工具包里：开包才进上下文，调到时还有一道自己的落点闸 — 执行期那道闸没了：没有落点也照发命令
+✅ ★ 窄门工具的审批与事实都接上了（DIY 整族显式 allow；装的那把仍认领事实） — DIY 族没显式 allow（会被外壳按"写工具没认领"当场拒），或装那把不再认领事实了
+✅ ★ DIY 那一族一起被收走（两份清单里逐个列着，收窄时一个都不能漏；浏览器那 14 把对着枚举表核） — DIY 工具 33 把（枚举表 14 把）
+✅ ★ 没有调试约定 ⇒ 看 / 动 / 网络 / 日志整族当场拒（拒之前一条命令都不发；别人也不许自己开一条路碰屏；收工顺手收观察）
+✅ ★ 录制交接只碰自己那一扇窗，且收工收干净（ADR-0064） — prepare 在写侧 · read/stop 在读侧 · 只碰 workbench-rec · 收工停捕获 + 收标签 · 三处接线都在
+✅ ★ 门禁链不漂：包内那条 check 是把仓库根那条跑起来（不许自己串一份短的 —— 会漏 lint / 文档 / 模块判据） — pnpm -w run check
+✅ ★ 内核住 kernel/host + kernel/client，旧位置不再住内核 — 两个运行时内核各就各位
+✅ ★ Desktop/Electron 的原始事实只在平台适配器里读（业务代码只许问能力） — 只在 adapters/probe/platform、adapters/probe/toolchain、platform/client 与测试里
+✅ ★ 宿主 OS 的原始判定只在平台适配器里读（业务代码只问 capabilities） — 只在 adapters/probe/platform、toolchain、browser-wake、self-update、runtime-seed 与 client 契约里
+✅ ★ 数据根只从系统的用户主目录来：源码里不许自己读 HOME 环境变量（Windows 上它常常没设） — 只用 homedir() / userInfo().homedir
+✅ ★ 环境变量走宿主的 env 覆盖：命令行里不许手拼 env NAME=value / $env:NAME — 都走宿主 resolve({ env }) 的覆盖；例外：packages/adapter-probe/src/toolchain.ts（写的是 node shim 脚本本体：#!/bin/sh 里用 env 设 ELECTRON_RUN_AS_NODE 才是对的）
+✅ ★ 起 shell 的写法只有一处：pwsh / bash 的启动参数由渲染层给 — 只在 packages/shared/src/host/shell-render.ts（执行缝与自举都从那里拿 invocation）
+✅ ★ DIY 录制这一层没有 POSIX-only 的壳命令（Windows 上没有那些东西） — 用 node:fs 与执行缝的 argv：不拼 wc / cat / tail / grep / tr / pkill / kill -0
+✅ ★ 安装计划里没有 POSIX-only 编排（Windows 上没有 rm -rf / ln -s / cp -R，pwsh 5.1 也不认 ||） — 计划步骤是 PluginPlanStep[]（run 的 env 字段带环境变量），扫 19 个文件零命中
+✅ ★ 建链接必须显式给类型（Windows 上目录链接只能是 junction，不给类型建不起来） — 都传了中立的 junction（或走 linkDir），链接类型的平台分支只有 dirLinkTypeOf 一处（判据负例也过）
+✅ ★ PATH 只许按 node:path 的 delimiter 切（Windows 上分隔符是分号） — PATH 都按 node:path 的 delimiter 切（判据负例也过）
+✅ ★ 起 POSIX 探针只有一处（脚本与 bin 里写死 bash / sh，换台没装 shell 的机器整条判据就崩） — 只有 packages/core/scripts/selfcheck/lib.mjs 起 POSIX 探针（判据负例也过）
+✅ ★ 一级命令不走执行缝：市场索引 / 文档 / 体检 / 署名（argv 全由我们算，只碰自己的缓存） — 5 个文件 0 处
+✅ ★ 沙箱拒绝单独成一种结论：EPERM → sandbox，界面有一句话，不再是 git-network — 读索引 / 契约 / 中英文案都对上了
+✅ ★ 自己起 git 也禁交互：终端提示与 SSH 交互一律关（ASKPASS 只在 POSIX 上指 /usr/bin/false） — 三件都在
+✅ ★ 首次装工具链不出执行缝：bootstrap 不依赖可写根与部署 mode — 安装 / provision 都出缝
+✅ ★ pnpm 的 cache/state 钉在运行时根（执行缝里跑也不写 HOME） — cache / state 都在运行时根里
+✅ ★ 执行缝只有一条路 — 底层执行缝只在执行缝模块内部
+✅ ★ 每次执行缝调用都声明写入域 — 每次调用都带写入域
+✅ ★ 沙箱拒绝不被吞 — 拒绝都有去处
+✅ ★ 产品数据根只有一份算法 — 产品域根只由 data-root 算
+❌ ★ 起进程只有一个入口 — packages/adapter-probe/src/version-gate.ts:5、packages/adapter-probe/src/version-gate.ts:79
+✅ ★ 宿主能力只在宿主接线里打开 — allowHost 只在宿主接线与执行缝内部出现
+❌ ★ 宿主文件写只有一个入口 — packages/shared/src/host/lease.ts:2
+❌ ★ 宿主时间只从 time.ts 取 — packages/core/src/shared/api/host/host-lease.ts:18
+✅ ★ 受控 env 只在 env-policy 里组装 — 受控 env（寄 HOME/缓存、关交互提示、删键）只在 env-policy 里定义
+✅ ★ patch 解析只有一份 — patch 解析只住在 patch-blocks.ts，patch / config-sync 只是用
+
+181/185 通过 —— 失败：★ 全仓代码零注释（只有公开入口成员的 JSDoc 与指令例外；CSS 一格都不许）、★ 起进程只有一个入口、★ 宿主文件写只有一个入口、★ 宿主时间只从 time.ts 取
+/Users/runner/work/dsh-workbench/dsh-workbench/packages/core:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @dsh-workbench/core@1.2.12 selfcheck: `node scripts/selfcheck/index.mjs`
+Exit status 1
