@@ -1,0 +1,26 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.2 [39m[90mD:/a/dsh-workbench/dsh-workbench/packages/adapter-probe[39m
+
+ [32m✓[39m src/__tests__/self-update.test.ts [2m([22m[2m30 tests[22m[2m)[22m[32m 300[2mms[22m[39m
+ [32m✓[39m src/__tests__/isolated-install.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 280[2mms[22m[39m
+ [32m✓[39m src/__tests__/version-switch.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 2139[2mms[22m[39m
+ [32m✓[39m src/__tests__/version-dir.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 98[2mms[22m[39m
+ [32m✓[39m src/__tests__/self-update-boot.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m src/__tests__/version-migrate.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32m✓[39m src/__tests__/self-update-steps.test.ts [2m([22m[2m28 tests[22m[2m)[22m[33m 3968[2mms[22m[39m
+   [32m✓[39m 自更新：runner 按步骤跑，失败只落在 marker 上 [2m(5)[22m
+     [33m[2m✓[22m[39m 一路跑通：marker 落 ok，链接与依赖都指到新版[33m 452[2mms[22m[39m
+     [33m[2m✓[22m[39m ★ 第一遍只落了俩包、第二遍补齐 → 认第二遍，接着往下走[33m 343[2mms[22m[39m
+   [32m✓[39m 确认窗口：只认「这一版确认可用」，不再自动回滚 [2m(4)[22m
+     [33m[2m✓[22m[39m ★ 新版起来了、客户端也确认了 → marker 落 ok，链接不回退（判据 4）[33m 325[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+[2m      Tests [22m [1m[32m115 passed[39m[22m[90m (115)[39m
+[2m   Start at [22m 14:28:10
+[2m   Duration [22m 5.72s[2m (tests 50%, transform 28%, import 21%)[22m
+
+[2m  Transform [22m [33mtransforming modules took 3.86s[39m[2m · 28% of tracked time, re-done on every run[22m
+[2m            [22m [2mpersist transforms across runs with [22m[33mfsModuleCache: true[39m
+[2m            [22m [2mon CI this only helps when the cache directory is persisted between runs[22m
+[2m            [22m [2mlearn more: https://vitest.dev/guide/improving-performance#caching-between-reruns[22m
+
