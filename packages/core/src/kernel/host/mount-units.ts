@@ -11,6 +11,7 @@ import {
   createLongTaskHost,
   createUnitSeam,
   hostSurface,
+  scopedDataReader,
   workbenchRoot,
 } from '@dsh-workbench/shared/host';
 import { homedir } from 'node:os';
@@ -320,12 +321,17 @@ export function mountUnits(
     ok: false as const,
     error: { code: 'invalid-request' as const, message: '没有注入 DataReader：模块只能走 deps.data 读数据' },
   });
-  const hostKit = createHostKit({
-    libInstallCommand: (options) => adaptersOf(deps.ctx).supply.libInstallCommand(options),
-    surface: deps.surface ?? hostSurface(),
-    ...(deps.agents === undefined ? {} : { agents: deps.agents }),
-    ...(deps.ai === undefined ? {} : { ai: deps.ai }),
-  });
+  const failEach = async (plan: { readonly steps?: readonly { readonly name: string }[] }) => {
+    const steps = Array.isArray(plan?.steps) ? plan.steps : [];
+    const out: Record<string, Awaited<ReturnType<typeof missingData>>> = Object.create(null) as Record<
+      string,
+      Awaited<ReturnType<typeof missingData>>
+    >;
+    for (const step of steps) {
+      if (typeof step?.name === 'string') out[step.name] = await missingData();
+    }
+    return out;
+  };
   const data: DataReader = deps.data ?? {
     read: missingData,
     request: missingData,
@@ -335,11 +341,8 @@ export function mountUnits(
       return out;
     },
     submit: missingData,
-    plan: async (plan) => {
-      const out: Record<string, Awaited<ReturnType<typeof missingData>>> = {};
-      for (const step of plan.steps) out[step.name] = await missingData();
-      return out;
-    },
+    plan: failEach,
+    submitPlan: failEach,
   };
   const ownedUnits = deps.ownedUnits ?? (() => []);
   const mounted: MountedUnit[] = [];
@@ -356,6 +359,14 @@ export function mountUnits(
       continue;
     }
     const unit = host.manifest.id;
+    const unitData = scopedDataReader(data, host.manifest.host.origins);
+    const unitHostKit = createHostKit({
+      libInstallCommand: (options) => adaptersOf(deps.ctx).supply.libInstallCommand(options),
+      surface: deps.surface ?? hostSurface(),
+      ...(deps.agents === undefined ? {} : { agents: deps.agents }),
+      ...(deps.ai === undefined ? {} : { ai: deps.ai }),
+      ...(deps.data === undefined ? {} : { data: unitData }),
+    });
     const tools = deps.ctx.get('tools');
     const toolJournal: Array<() => void> = [];
     const mountCtx = tools === undefined ? deps.ctx : scopedMountCtx(deps.ctx, tools, toolJournal, declaredNotes);
@@ -378,8 +389,8 @@ export function mountUnits(
         manifests: deps.manifests,
         ownedUnits,
         ...(deps.installable === undefined ? {} : { installable: deps.installable }),
-        data,
-        ...hostKit,
+        data: unitData,
+        ...unitHostKit,
         ...(seam === undefined ? {} : { seam }),
         env: declaredEnvOf(host.manifest),
         ...(deps.libs === undefined ? {} : { libs: deps.libs }),

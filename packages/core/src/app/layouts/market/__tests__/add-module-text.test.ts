@@ -185,6 +185,7 @@ describe('添加模块浮层：文案与来源选项（按 dsh 插件页的骨�
       version: '0.1.2',
       description: '最小样本模块',
       registry: 'https://r.example/',
+      origins: [],
     });
 
     const plugin = previewOf(
@@ -204,6 +205,7 @@ describe('添加模块浮层：文案与来源选项（按 dsh 插件页的骨�
       description: '',
       registry: '',
       pluginName: 'dashboards',
+      origins: [],
     });
     expect(previewOf({ status: 'accepted', kind: 'path', bundle: null, registry: null }, 'fallback')).toMatchObject({
       kind: 'module',

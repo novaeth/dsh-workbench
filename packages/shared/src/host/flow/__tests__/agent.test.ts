@@ -279,7 +279,7 @@ describe('createFlowHost：通道、预算与收摊', () => {
         return recorder.runner;
       },
     };
-    const host = createFlowHost(port);
+    const host = createFlowHost({ agents: port });
     const result = await host.run({
       flow: flowOf([
         { id: 'a', agent: { prompt: lit('一') } },
@@ -302,9 +302,11 @@ describe('createFlowHost：通道、预算与收摊', () => {
   it('没有 agent 节点的流程不开通道', async () => {
     const opened: string[] = [];
     const host = createFlowHost({
-      async open(context) {
-        opened.push(context.workspace);
-        return recorded(async () => answerOf({ text: '' })).runner;
+      agents: {
+        async open(context) {
+          opened.push(context.workspace);
+          return recorded(async () => answerOf({ text: '' })).runner;
+        },
       },
     });
     const actions = host.createActions();
@@ -326,8 +328,10 @@ describe('createFlowHost：通道、预算与收摊', () => {
   it('次数上限：超过就失败，整条通道照样收摊', async () => {
     const recorder = recorded(async () => answerOf({ text: '好' }));
     const host = createFlowHost({
-      async open() {
-        return recorder.runner;
+      agents: {
+        async open() {
+          return recorder.runner;
+        },
       },
     });
     const capped = await host.run({
@@ -356,8 +360,10 @@ describe('createFlowHost：通道、预算与收摊', () => {
       throw new Error('起不来');
     });
     const host = createFlowHost({
-      async open() {
-        return recorder.runner;
+      agents: {
+        async open() {
+          return recorder.runner;
+        },
       },
     });
     const result = await host.run({

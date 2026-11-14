@@ -4,6 +4,7 @@ import {
   declarationApiVersionOf,
   declarationProblemsOf,
   declaresPackage,
+  readDeclaration,
   param,
   PLUGIN_ID,
   SUPPORTED_API_VERSIONS,
@@ -359,16 +360,16 @@ function refusedInspection(problems: readonly string[]): BundleInspection | unde
   return { status: 'refused', problem: 'not-a-workbench-module', reason: problems.join('；') };
 }
 
-async function declarationRefusal(
+async function rawDeclarationOf(
   supply: ReturnType<typeof supplyPortOf>,
   spec: string,
   inspection: BundleInspection,
   ctx: DshHostContext,
   manager: BundleManager,
-): Promise<BundleInspection | undefined> {
+): Promise<{ readonly subject: string; readonly raw: unknown } | undefined> {
   if (inspection.status !== 'accepted' || inspection.name === undefined) return undefined;
   if (inspection.kind === 'path') {
-    return refusedInspection(supply.declarationRefusalOf(inspection.name, supply.pathDeclarationOf(spec)));
+    return { subject: inspection.name, raw: supply.pathDeclarationOf(spec) };
   }
   if (inspection.kind !== 'registry') return undefined;
   const seam = seamOf(ctx);
@@ -378,8 +379,14 @@ async function declarationRefusal(
       ? inspection.registry
       : ((await manager.registries())?.resolved ?? undefined);
   if (registry === undefined) return undefined;
-  const raw = await supply.registryDeclarationOf({ seam, name: inspection.name, registry });
-  return refusedInspection(supply.declarationRefusalOf(inspection.name, raw));
+  const pinned =
+    typeof inspection.version === 'string' && inspection.version !== ''
+      ? `${inspection.name}@${inspection.version}`
+      : inspection.name;
+  return {
+    subject: inspection.name,
+    raw: await supply.registryDeclarationOf({ seam, name: pinned, registry }),
+  };
 }
 
 async function packageOverride(
@@ -439,10 +446,19 @@ export function bundleInspectHandler(ctx: DshHostContext): RouteHandler {
         error: { code: 'workbench/bad-inspection', message: '插件管理器回的预检结果看不懂。' },
       };
     }
+    const override = await packageOverride(supply, spec, inspection, ctx, manager, asked);
+    const declared = override === undefined ? await rawDeclarationOf(supply, spec, inspection, ctx, manager) : undefined;
     const refused =
-      (await packageOverride(supply, spec, inspection, ctx, manager, asked)) ??
-      (await declarationRefusal(supply, spec, inspection, ctx, manager));
-    const payload: BundleInspectionPayload = { inspection: refused ?? inspection };
+      override ??
+      (declared === undefined
+        ? undefined
+        : refusedInspection(supply.declarationRefusalOf(declared.subject, declared.raw)));
+    let finalInspection = refused ?? inspection;
+    if (finalInspection.status === 'accepted' && declared !== undefined) {
+      const origins = readDeclaration(declared.subject, declared.raw).manifest?.host.origins;
+      if (origins !== undefined) finalInspection = { ...finalInspection, origins };
+    }
+    const payload: BundleInspectionPayload = { inspection: finalInspection };
     return { ok: true, ...payload };
   };
 }

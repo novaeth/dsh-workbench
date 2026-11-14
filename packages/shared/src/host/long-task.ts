@@ -175,7 +175,12 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
       const onStep = (step: LongTaskStep): void => {
         const current = live(id);
         if (current === null) return;
-        const steps = [...current.steps, `${step.kind === 'fail' ? '✗ ' : ''}${step.text}`].slice(-20);
+        const line = `${step.kind === 'fail' ? '✗ ' : ''}${step.text}`;
+        const repeated =
+          current.step === step.text &&
+          step.intervention !== undefined &&
+          current.intervention?.title === step.intervention.title;
+        const steps = repeated ? current.steps : [...current.steps, line].slice(-20);
         const extra = bound.step?.(step, current) ?? {};
         if (step.intervention !== undefined) {
           patch(

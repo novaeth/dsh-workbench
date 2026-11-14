@@ -1,4 +1,5 @@
 import type { UnitHostNeeds, UnitManifest, UnitTitle } from '../contract/unit.js';
+import { isRecord, text } from './guards.js';
 import { unitTitleKey } from '../contract/unit.js';
 import { needsProblemsOf, type Need } from './needs.js';
 
@@ -72,7 +73,7 @@ const TITLE_KEYS = ['zh', 'en'] as const satisfies readonly (keyof UnitTitle)[];
 const TOOL_KEYS = ['name', 'writes', 'key', 'onDemand'] as const satisfies readonly (keyof UnitToolDeclaration)[];
 
 const TOOL_KEY_SHAPE = /^[a-z][a-zA-Z0-9]*$/;
-const HOST_KEYS = ['inject', 'optional', 'writes'] as const satisfies readonly (keyof UnitHostNeeds)[];
+const HOST_KEYS = ['inject', 'optional', 'writes', 'origins'] as const satisfies readonly (keyof UnitHostNeeds)[];
 
 type MissingCardKey = Exclude<keyof UnitCardDeclaration, (typeof CARD_KEYS)[number]>;
 type MissingTitleKey = Exclude<keyof UnitTitle, (typeof TITLE_KEYS)[number]>;
@@ -90,12 +91,23 @@ void HOST_KEYS_COVERED;
 
 const UNIT_WRITE_SCOPES: readonly string[] = ['unit', 'workspace'];
 
-function text(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
-}
-
-function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+function originProblemsOf(subject: string, value: readonly string[]): string[] {
+  const problems: string[] = [];
+  for (const one of value) {
+    let url: URL;
+    try {
+      url = new URL(one);
+    } catch {
+      problems.push(`${subject}: ${JSON.stringify(one)} 不是合法 URL`);
+      continue;
+    }
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      problems.push(`${subject}: ${JSON.stringify(one)} 只能是 http / https`);
+    } else if (url.pathname !== '/' || url.search !== '' || url.hash !== '') {
+      problems.push(`${subject}: ${JSON.stringify(one)} 只能是站点根（不要带 path / query / hash）`);
+    }
+  }
+  return problems;
 }
 
 /**
@@ -283,6 +295,13 @@ export function declarationProblemsOf(subject: string, raw: unknown): readonly s
       if (host.optional !== undefined) {
         problems.push(...stringArrayProblems(`${subject}: dsh.workbench.host.optional`, host.optional));
       }
+      if (host.origins !== undefined) {
+        const shape = stringArrayProblems(`${subject}: dsh.workbench.host.origins`, host.origins);
+        problems.push(...shape);
+        if (shape.length === 0) {
+          problems.push(...originProblemsOf(`${subject}: dsh.workbench.host.origins`, host.origins as readonly string[]));
+        }
+      }
       if (host.writes !== undefined) {
         const shape = stringArrayProblems(`${subject}: dsh.workbench.host.writes`, host.writes);
         problems.push(...shape);
@@ -346,6 +365,9 @@ export function readDeclaration(subject: string, raw: unknown): DeclarationRead 
         inject: [...(declaration.host.inject ?? [])],
         ...(declaration.host.optional === undefined ? {} : { optional: [...declaration.host.optional] }),
         writes: [...(declaration.host.writes ?? [])],
+        ...(declaration.host.origins === undefined
+          ? {}
+          : { origins: [...new Set(declaration.host.origins.map((one) => new URL(one).origin))] }),
       },
       ...(declaration.needs === undefined ? {} : { needs: declaration.needs }),
     },

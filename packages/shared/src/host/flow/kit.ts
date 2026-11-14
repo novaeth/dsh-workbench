@@ -8,6 +8,7 @@ import type {
   FlowAgentRunner,
   FlowCheck,
   FlowCheckOptions,
+  FlowDataPort,
   FlowDefinition,
   FlowResult,
   FlowRunOptions,
@@ -30,20 +31,52 @@ export interface FlowHost {
   run(options: FlowRunOptions): Promise<FlowResult>;
 }
 
+export interface FlowHostOptions {
+  readonly agents?: FlowAgentPort | undefined;
+  readonly ai?: AiPort | undefined;
+  readonly data?: FlowDataPort | undefined;
+}
+
+function isAgentPort(value: FlowHostOptions | FlowAgentPort): value is FlowAgentPort {
+  return typeof (value as { readonly open?: unknown }).open === 'function';
+}
+
 /**
- * 建一份无状态的流程宿主 kit。
- * @param agents 宿主的 agent 端口；没有（这一份运行时没装 subagents）就不支持 agent 节点。
+ * 建一份无状态的流程宿主 kit。老的位置参数形式仍接受，新的调用方传 options。
+ * @param input 宿主 options，或旧的 agent 端口。
+ * @param ai 旧形式里的模型端口。
+ * @param data 旧形式里的数据端口。
  * @returns `createActions` / `check` / `run`。
  */
-export function createFlowHost(agents?: FlowAgentPort, ai?: AiPort): FlowHost {
+export function createFlowHost(
+  input?: FlowHostOptions | FlowAgentPort,
+  ai?: AiPort,
+  data?: FlowDataPort,
+): FlowHost {
+  const options: FlowHostOptions =
+    input === undefined
+      ? { ...(ai === undefined ? {} : { ai }), ...(data === undefined ? {} : { data }) }
+      : isAgentPort(input)
+        ? { agents: input, ...(ai === undefined ? {} : { ai }), ...(data === undefined ? {} : { data }) }
+        : input;
+  const { agents, ai: aiPort, data: dataPort } = options;
   return {
     createActions: () => createFlowActionRegistry(),
-    check: (flow, actions, options) =>
+    check: (flow, actions, checkOptions) =>
       checkFlow(flow, actions, {
-        agents: options?.agents ?? agents !== undefined,
-        ai: options?.ai ?? (ai !== undefined && ai.supports('text')),
+        agents: checkOptions?.agents ?? agents !== undefined,
+        ai: checkOptions?.ai ?? (aiPort !== undefined && aiPort.supports('text')),
+        data: checkOptions?.data ?? (dataPort !== undefined && typeof dataPort.plan === 'function'),
       }),
-    run: (options) => runWithAgents({ ...options, ...(ai === undefined ? {} : { ai }) }, agents),
+    run: (runOptions) =>
+      runWithAgents(
+        {
+          ...runOptions,
+          ...(aiPort === undefined ? {} : { ai: aiPort }),
+          ...(dataPort === undefined ? {} : { data: dataPort }),
+        },
+        agents,
+      ),
   };
 }
 

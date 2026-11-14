@@ -1,29 +1,47 @@
 import {
   callsProblemOf,
   noWrite,
+  now,
+  planProblemOf,
   planResultsOf,
   recipeProblemOf,
   scriptOf,
   scriptOfMany,
   scriptOfPlan,
+  allSame,
   type Seam,
 } from '@dsh-workbench/shared/host';
 import type {
   CallOverrides,
+  DataCallOptions,
   DataError,
-  DataErrorCode,
+  DataFailure,
   DataReader,
   DataRequest,
   DataResult,
+  PlanStepResult,
   RecipeCalls,
   RecipeResults,
   RequestPlan,
   PlanResults,
   RequestRecipe,
+  SubmitPlanOptions,
 } from '@dsh-workbench/shared/host';
 import { browserRead, type BrowserReadResult } from '../browser/index.js';
-import { createOpencli } from '../cli/index.js';
-import { WorkbenchDataError } from '@dsh-workbench/shared/host';
+import { attachOf } from './attachment.js';
+import { readHttp } from './http.js';
+import { createCommandRead } from './command-read.js';
+import { createSessionQueue } from './queue.js';
+import { submitPlanOf, type SubmitRun } from './submit-plan.js';
+import { sessionOf, type DataReaderOptions } from './types.js';
+import {
+  allFailure,
+  asRecord,
+  browserFailure,
+  failure,
+  pageFailure,
+  pickOf,
+} from './result.js';
 import {
   channelCallOf,
   channelCommandLine,
@@ -33,160 +51,144 @@ import {
 } from './channel.js';
 
 export * from './channel-plugin.js';
+export type { QueueWaitEvent } from './queue.js';
+export type { DataReaderOptions, SaveBytes, SaveBytesInput } from './types.js';
 
-export interface DataReaderOptions {
-  readonly seam?: Seam | undefined;
-  readonly command?: string | undefined;
-  readonly fetch?: typeof fetch | undefined;
-  readonly channel?: boolean | undefined;
-  readonly channelInstalled?: (() => boolean) | undefined;
-}
+const MAX_WIN32_ARGV = 24_000;
 
-const DEFAULT_TIMEOUT_MS = 20_000;
-
-function failure(code: DataErrorCode, message: string, extra: Partial<DataError> = {}): DataResult<never> {
-  return { ok: false, error: { code, message, ...extra } };
-}
-
-function parse(text: string): DataResult<unknown> {
-  try {
-    return { ok: true, data: JSON.parse(text) };
-  } catch {
-    return failure('parse', '返回的不是 JSON', { detail: text.slice(0, 2000) });
-  }
-}
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : undefined;
-}
-
-function dataCodeOf(pageCode: string): DataErrorCode {
-  const code = pageCode.trim().toUpperCase().replace(/-/g, '_');
-  if (
-    code === 'NOT_LOGGED_IN' ||
-    code === 'AUTH_FAILED' ||
-    code === 'AUTH_REQUIRED' ||
-    code === 'UNAUTHORIZED' ||
-    code === 'UNAUTHENTICATED' ||
-    code === 'PERMISSION_DENIED' ||
-    code === 'FORBIDDEN' ||
-    code.includes('UNAUTH')
-  ) {
-    return 'auth';
-  }
-  if (code === 'TIMEOUT' || code === 'CLI_TIMEOUT') return 'timeout';
-  if (/^HTTP_\d{3}$/.test(code)) return 'http';
-  if (code === 'PARSE' || code === 'SHAPE') return 'parse';
-  return 'browser';
-}
-
-function statusOf(pageCode: string): number | undefined {
-  const match = /^http-(\d{3})$/i.exec(pageCode.trim());
-  return match === null ? undefined : Number(match[1]);
-}
-
-function browserFailure(result: BrowserReadResult, loginUrl?: string): DataResult<never> {
-  const pageCode = result.pageCode ?? result.code;
-  const mapped = dataCodeOf(result.code);
-  const code = mapped === 'browser' ? dataCodeOf(pageCode) : mapped;
-  const status = statusOf(result.code) ?? statusOf(pageCode);
-  const helpUrl = result.helpUrl ?? (code === 'auth' ? loginUrl : undefined);
-  return {
-    ok: false,
-    error: {
-      code,
-      message: result.message,
-      ...(status === undefined ? {} : { status }),
-      ...(result.detail === undefined ? {} : { detail: result.detail }),
-      ...(result.hint === undefined ? {} : { hint: result.hint }),
-      ...(helpUrl === undefined ? {} : { helpUrl }),
-      ...(pageCode === '' ? {} : { pageCode }),
-    },
-  };
-}
-
-function pageFailure(pageCode: string, message: string, loginUrl?: string): DataResult<never> {
-  const code = dataCodeOf(pageCode);
-  const status = statusOf(pageCode);
-  const helpUrl = code === 'auth' ? loginUrl : undefined;
-  return {
-    ok: false,
-    error: {
-      code,
-      message,
-      ...(status === undefined ? {} : { status }),
-      ...(helpUrl === undefined ? {} : { helpUrl }),
-      ...(pageCode === '' ? {} : { pageCode }),
-    },
-  };
-}
-
-function pickOf(value: unknown, path: string): unknown {
-  let at: unknown = value;
-  for (const key of path.split('.')) {
-    const box = asRecord(at);
-    if (box === undefined) return undefined;
-    at = box[key];
-  }
-  return at;
-}
-
-function allFailure(
-  names: readonly string[],
-  code: DataErrorCode,
-  message: string,
-  extra: Partial<DataError> = {},
-): Record<string, DataResult<never>> {
-  const out: Record<string, DataResult<never>> = {};
-  for (const name of names) out[name] = { ok: false, error: { code, message, ...extra } };
-  return out;
+function scriptArgProblemOf(script: string): string | undefined {
+  if (typeof process === 'undefined' || process.platform !== 'win32') return undefined;
+  if (Math.ceil(Buffer.byteLength(script, 'utf8') / 3) * 4 <= MAX_WIN32_ARGV) return undefined;
+  return '这份计划在 Windows 上太长（脚本超过命令行上限）：拆成几份计划，或把步骤写短一点';
 }
 
 export function createDataReader(options: DataReaderOptions = {}): DataReader {
   const fetchOf = options.fetch ?? globalThis.fetch;
   const command = options.command ?? 'opencli';
+  const queue = createSessionQueue();
+  const queueWaitMs = options.queueWaitMs ?? 30_000;
+  const readCommand = createCommandRead({ seam: options.seam, command });
 
-  async function readHttp(request: Extract<DataRequest, { kind: 'http' }>): Promise<DataResult<unknown>> {
-    if (fetchOf === undefined) return failure('invalid-request', '这个运行时没有 fetch');
-    const timeoutMs = request.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+  type BrowserReadInput = Parameters<typeof browserRead>[0];
+
+  function browserCall(input: {
+    readonly seam: Seam;
+    readonly script: string;
+    readonly url?: string | undefined;
+    readonly loginUrl?: string | undefined;
+    readonly session: string;
+    readonly open?: boolean | undefined;
+    readonly timeoutMs?: number | undefined;
+    readonly signal?: AbortSignal | undefined;
+    readonly retry?: boolean | undefined;
+  }): BrowserReadInput {
+    return {
+      seam: input.seam,
+      script: input.script,
+      command,
+      ...(input.url === undefined ? {} : { url: input.url }),
+      ...(input.loginUrl === undefined || input.loginUrl === '' ? {} : { loginUrl: input.loginUrl }),
+      session: input.session,
+      ...(input.open === undefined ? {} : { open: input.open }),
+      ...(input.timeoutMs === undefined ? {} : { timeoutMs: input.timeoutMs }),
+      ...(input.signal === undefined ? {} : { signal: input.signal }),
+      ...(input.retry === undefined ? {} : { retry: input.retry }),
+    };
+  }
+
+  type Guarded<T> =
+    | { readonly kind: 'done'; readonly value: T }
+    | { readonly kind: 'failed'; readonly result: DataFailure };
+
+  type UnwrappedBrowser = { readonly ok: true; readonly result: BrowserReadResult } | DataFailure;
+
+  function unwrapBrowser(got: Guarded<BrowserReadResult>, loginUrl?: string): UnwrappedBrowser {
+    if (got.kind === 'failed') return got.result;
+    if (!got.value.ok) return browserFailure(got.value, loginUrl);
+    return { ok: true, result: got.value };
+  }
+
+  function recipeBrowserInput(
+    recipe: RequestRecipe,
+    script: string,
+    seam: Seam,
+    callOptions: DataCallOptions,
+  ): Parameters<typeof guardedBrowser>[0] {
+    return {
+      seam,
+      script,
+      url: recipe.origin,
+      ...(recipe.loginUrl === undefined ? {} : { loginUrl: recipe.loginUrl }),
+      ...(recipe.session === undefined ? {} : { session: recipe.session }),
+      ...(callOptions.open === undefined ? {} : { open: callOptions.open }),
+      ...(recipe.timeoutMs === undefined ? {} : { timeoutMs: recipe.timeoutMs }),
+      ...(callOptions.signal === undefined ? {} : { signal: callOptions.signal }),
+    };
+  }
+
+  async function guardedBrowser(input: {
+    readonly seam: Seam;
+    readonly script: string;
+    readonly url?: string | undefined;
+    readonly loginUrl?: string | undefined;
+    readonly session?: string | undefined;
+    readonly open?: boolean | undefined;
+    readonly timeoutMs?: number | undefined;
+    readonly signal?: AbortSignal | undefined;
+    readonly retry?: boolean | undefined;
+  }): Promise<Guarded<BrowserReadResult>> {
+    const argv = scriptArgProblemOf(input.script);
+    if (argv !== undefined) return { kind: 'failed', result: failure('invalid-request', argv) };
+    const session = sessionOf(input.session);
+    return serialGuard(session, input.signal, () => browserRead(browserCall({ ...input, session })));
+  }
+
+  async function serialGuard<T>(
+    session: string,
+    signal: AbortSignal | undefined,
+    work: () => Promise<T>,
+  ): Promise<Guarded<T>> {
+    const started = now();
+    const outcome = await queue.acquire(session, signal, queueWaitMs);
     try {
-      const response = await fetchOf(request.url, {
-        method: 'GET',
-        ...(request.headers === undefined ? {} : { headers: request.headers }),
-        signal: controller.signal,
-      });
-      const text = await response.text();
-      if (!response.ok) {
-        return failure(response.status === 401 || response.status === 403 ? 'auth' : 'http', `HTTP ${response.status}`, {
-          status: response.status,
-          detail: text.slice(0, 2000),
-        });
-      }
-      return parse(text);
-    } catch (error) {
-      if (controller.signal.aborted) return failure('timeout', `读超时（${timeoutMs}ms）`);
-      return failure('http', error instanceof Error ? error.message : String(error));
+      options.onQueue?.({ session, waitedMs: now() - started, outcome });
+    } catch {
+    }
+    if (outcome === 'aborted') {
+      return { kind: 'failed', result: failure('aborted', '已停止', { pageCode: 'aborted' }) };
+    }
+    if (outcome === 'timeout') {
+      return {
+        kind: 'failed',
+        result: failure('timeout', '排队太久，没轮到这次读', { hint: '稍后重试' }),
+      };
+    }
+    try {
+      return { kind: 'done', value: await work() };
     } finally {
-      clearTimeout(timer);
+      queue.release(session);
     }
   }
 
-  async function readBrowser(request: Extract<DataRequest, { kind: 'browser' }>): Promise<DataResult<unknown>> {
+  async function readBrowser(
+    request: Extract<DataRequest, { kind: 'browser' }>,
+    callOptions: DataCallOptions,
+  ): Promise<DataResult<unknown>> {
     if (options.seam === undefined) return failure('invalid-request', '没有执行缝，读不了浏览器');
-    const result = await browserRead({
-      seam: options.seam,
+    const open = callOptions.open ?? request.open;
+    const got = await guardedBrowser({
+      seam: options.seam as Seam,
       script: request.script,
-      command,
       ...(request.url === undefined ? {} : { url: request.url }),
       ...(request.loginUrl === undefined ? {} : { loginUrl: request.loginUrl }),
       ...(request.session === undefined ? {} : { session: request.session }),
-      ...(request.open === undefined ? {} : { open: request.open }),
+      ...(open === undefined ? {} : { open }),
       ...(request.timeoutMs === undefined ? {} : { timeoutMs: request.timeoutMs }),
+      ...(callOptions.signal === undefined ? {} : { signal: callOptions.signal }),
     });
-    if (!result.ok) return browserFailure(result, request.loginUrl);
-    return { ok: true, data: result.value };
+    const unwrapped = unwrapBrowser(got, request.loginUrl);
+    if (!unwrapped.ok) return unwrapped;
+    return { ok: true, data: unwrapped.result.value };
   }
 
   const channelState: { value: ChannelState } = { value: 'unknown' };
@@ -195,6 +197,7 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
     seam: Seam,
     call: ChannelCall,
     recipe: RequestRecipe,
+    signal: AbortSignal | undefined,
   ): Promise<DataResult<unknown> | undefined> {
     const result = await seam
       .run({
@@ -203,9 +206,11 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
         retry: recipe.request.method === 'GET' ? 'safe' : 'never',
         timeoutMs: call.timeoutMs + 5000,
         bestEffort: true,
+        ...(signal === undefined ? {} : { signal }),
       })
       .catch(() => undefined);
     if (result === undefined) return undefined;
+    if (result.aborted) return failure('aborted', '已停止', { pageCode: 'aborted' });
     if (result.timedOut) return failure('timeout', `通道读超时（${call.timeoutMs}ms）`);
     if (result.exitCode !== 0) return undefined;
     let parsed: unknown;
@@ -241,8 +246,9 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
     recipe: RequestRecipe,
     overrides: CallOverrides | undefined,
     mode: 'request' | 'submit',
+    callOptions: DataCallOptions,
   ): Promise<DataResult<unknown>> {
-    const problem = recipeProblemOf(recipe);
+    const problem = recipeProblemOf(recipe, overrides);
     if (problem !== undefined) return failure('invalid-request', problem);
     if (mode === 'request' && recipe.request.method !== 'GET') {
       return failure('invalid-request', 'request 只读 GET；写走 submit');
@@ -251,7 +257,7 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
     const seam = options.seam;
     const call = options.channel === false ? undefined : channelCallOf(recipe, overrides ?? {}, command);
     if (call !== undefined && (await ensureChannel(seam, command, channelState, options.channelInstalled))) {
-      const viaChannel = await readChannel(seam, call, recipe);
+      const viaChannel = await readChannel(seam, call, recipe, callOptions.signal);
       if (viaChannel !== undefined) return viaChannel;
       channelState.value = 'unavailable';
     }
@@ -261,16 +267,10 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
     } catch (error) {
       return failure('invalid-request', error instanceof Error ? error.message : String(error));
     }
-    const result = await browserRead({
-      seam,
-      script,
-      command,
-      url: recipe.origin,
-      ...(recipe.loginUrl === undefined ? {} : { loginUrl: recipe.loginUrl }),
-      ...(recipe.session === undefined ? {} : { session: recipe.session }),
-      ...(recipe.timeoutMs === undefined ? {} : { timeoutMs: recipe.timeoutMs }),
-    });
-    if (!result.ok) return browserFailure(result, recipe.loginUrl);
+    const got = await guardedBrowser(recipeBrowserInput(recipe, script, seam, callOptions));
+    const unwrapped = unwrapBrowser(got, recipe.loginUrl);
+    if (!unwrapped.ok) return unwrapped;
+    const result = unwrapped.result;
     const box = asRecord(result.value);
     if (box !== undefined && box['ok'] === true) {
       if ('data' in box) return { ok: true, data: box['data'] };
@@ -281,7 +281,11 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
     });
   }
 
-  async function readMany(recipe: RequestRecipe, calls: RecipeCalls): Promise<RecipeResults> {
+  async function readMany(
+    recipe: RequestRecipe,
+    calls: RecipeCalls,
+    callOptions: DataCallOptions,
+  ): Promise<RecipeResults> {
     const names = Object.keys(calls);
     const problem = callsProblemOf(recipe, calls);
     if (problem !== undefined) return allFailure(names, 'invalid-request', problem);
@@ -296,15 +300,9 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
     } catch (error) {
       return allFailure(names, 'invalid-request', error instanceof Error ? error.message : String(error));
     }
-    const result = await browserRead({
-      seam,
-      script,
-      command,
-      url: recipe.origin,
-      ...(recipe.loginUrl === undefined ? {} : { loginUrl: recipe.loginUrl }),
-      ...(recipe.session === undefined ? {} : { session: recipe.session }),
-      ...(recipe.timeoutMs === undefined ? {} : { timeoutMs: recipe.timeoutMs }),
-    });
+    const got = await guardedBrowser(recipeBrowserInput(recipe, script, seam, callOptions));
+    if (got.kind === 'failed') return allFailure(names, got.result.error.code, got.result.error.message, got.result.error);
+    const result = got.value;
     if (!result.ok) {
       const one = browserFailure(result, recipe.loginUrl);
       const failed: Record<string, DataResult<unknown>> = {};
@@ -341,94 +339,99 @@ export function createDataReader(options: DataReaderOptions = {}): DataReader {
     return out;
   }
 
-  const openclis = new Map<string, ReturnType<typeof createOpencli>>();
-
-  function opencliOf(plugin: string, timeoutMs: number): ReturnType<typeof createOpencli> {
-    const key = `${plugin}:${String(timeoutMs)}`;
-    const cached = openclis.get(key);
-    if (cached !== undefined) return cached;
-    const created = createOpencli({
-      seam: options.seam as Seam,
-      plugin,
-      command,
-      timeoutMs,
-    });
-    openclis.set(key, created);
-    return created;
-  }
-
-  async function readCommand(request: Extract<DataRequest, { kind: 'command' }>): Promise<DataResult<unknown>> {
-    if (options.seam === undefined) return failure('invalid-request', '没有执行缝，跑不了命令');
-    if (request.adapter !== 'opencli') {
-      return failure('invalid-request', `不认识的命令适配器：${request.adapter}`);
-    }
-    const plugin = request.argv[0];
-    if (plugin === undefined) return failure('invalid-request', '命令缺少 argv[0]（插件名）');
-    const timeoutMs = request.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    try {
-      const { value } = await opencliOf(plugin, timeoutMs).json(request.argv.slice(1));
-      return { ok: true, data: value };
-    } catch (error) {
-      if (!(error instanceof WorkbenchDataError)) return failure('command', String(error));
-      const code: DataErrorCode =
-        error.code === 'auth-required' || error.code === 'permission-denied'
-          ? 'auth'
-          : error.code === 'cli-timeout'
-            ? 'timeout'
-            : error.code === 'cli-bad-output'
-              ? 'parse'
-              : 'command';
-      return failure(code, error.message, {
-        ...(error.detail === undefined ? {} : { detail: error.detail }),
-        ...(error.hint === undefined ? {} : { hint: error.hint }),
-        ...(error.helpUrl === undefined ? {} : { helpUrl: error.helpUrl }),
-        pageCode: error.code,
-      });
-    }
-  }
-
   return {
-    async read<T = unknown>(request: DataRequest): Promise<DataResult<T>> {
-      if (request.kind === 'http') return (await readHttp(request)) as DataResult<T>;
-      if (request.kind === 'browser') return (await readBrowser(request)) as DataResult<T>;
-      if (request.kind === 'command') return (await readCommand(request)) as DataResult<T>;
+    async read<T = unknown>(request: DataRequest, callOptions: DataCallOptions = {}): Promise<DataResult<T>> {
+      if (request.kind === 'http') return (await readHttp(request, callOptions, fetchOf)) as DataResult<T>;
+      if (request.kind === 'browser') return (await readBrowser(request, callOptions)) as DataResult<T>;
+      if (request.kind === 'command') return (await readCommand(request, callOptions)) as DataResult<T>;
       return failure('invalid-request', '不认识的读类型') as DataResult<T>;
     },
-    async request<T = unknown>(recipe: RequestRecipe, overrides?: CallOverrides): Promise<DataResult<T>> {
-      return (await readRecipe(recipe, overrides, 'request')) as DataResult<T>;
+    async request<T = unknown>(
+      recipe: RequestRecipe,
+      overrides?: CallOverrides,
+      callOptions: DataCallOptions = {},
+    ): Promise<DataResult<T>> {
+      return (await readRecipe(recipe, overrides, 'request', callOptions)) as DataResult<T>;
     },
-    async requestMany<T = unknown>(recipe: RequestRecipe, calls: RecipeCalls): Promise<RecipeResults<T>> {
-      return (await readMany(recipe, calls)) as RecipeResults<T>;
+    async requestMany<T = unknown>(
+      recipe: RequestRecipe,
+      calls: RecipeCalls,
+      callOptions: DataCallOptions = {},
+    ): Promise<RecipeResults<T>> {
+      return (await readMany(recipe, calls, callOptions)) as RecipeResults<T>;
     },
-    async plan(plan: RequestPlan): Promise<PlanResults> {
+    async plan(plan: RequestPlan, callOptions: DataCallOptions = {}): Promise<PlanResults> {
       if (options.seam === undefined) {
-        const error = { code: 'invalid-request' as const, message: '没有执行缝，读不了浏览器' };
-        return Object.fromEntries(plan.steps.map((one) => [one.name, { ok: false as const, error }]));
+        return allSame(plan, { code: 'invalid-request', message: '没有执行缝，读不了浏览器' });
       }
+      const problem = planProblemOf(plan)[0];
+      if (problem !== undefined) {
+        return allSame(plan, { code: 'invalid-request', message: `${problem.path}: ${problem.problem}` });
+      }
+      const session = sessionOf(plan.session);
+      const names = plan.steps.map((one) => one.name);
       let script: string;
       try {
         script = scriptOfPlan(plan);
       } catch (error) {
-        const wrong = { code: 'invalid-request' as const, message: error instanceof Error ? error.message : String(error) };
-        return Object.fromEntries(plan.steps.map((one) => [one.name, { ok: false as const, error: wrong }]));
+        const wrong: DataError = {
+          code: 'invalid-request',
+          message: error instanceof Error ? error.message : String(error),
+        };
+        return allSame(plan, wrong);
       }
-      const result = await browserRead({
-        seam: options.seam,
+      const got = await guardedBrowser({
+        seam: options.seam as Seam,
         script,
-        command,
         url: plan.origin,
         ...(plan.loginUrl === undefined ? {} : { loginUrl: plan.loginUrl }),
-        ...(plan.session === undefined ? {} : { session: plan.session }),
+        session,
+        open: callOptions.open ?? false,
         ...(plan.timeoutMs === undefined ? {} : { timeoutMs: plan.timeoutMs }),
+        ...(callOptions.signal === undefined ? {} : { signal: callOptions.signal }),
       });
-      if (!result.ok) {
-        const one = browserFailure(result, plan.loginUrl);
-        return Object.fromEntries(plan.steps.map((item) => [item.name, one]));
+      if (got.kind === 'failed') return allSame(plan, got.result.error);
+      const result = got.value;
+      if (!result.ok) return allSame(plan, browserFailure(result, plan.loginUrl).error);
+      const outcome = planResultsOf(result.value, names, {
+        ...(plan.loginUrl === undefined ? {} : { loginUrl: plan.loginUrl }),
+      });
+      const final: Record<string, PlanStepResult<unknown>> = { ...outcome };
+      for (const step of plan.steps) {
+        if (step.response?.saveAs !== 'attachment') continue;
+        const one = outcome[step.name];
+        if (one !== undefined) final[step.name] = await attachOf(step, one, options.saveBytes);
       }
-      return planResultsOf(result.value, plan.steps.map((one) => one.name));
+      return final;
     },
-    async submit<T = unknown>(recipe: RequestRecipe, overrides?: CallOverrides): Promise<DataResult<T>> {
-      return (await readRecipe(recipe, overrides, 'submit')) as DataResult<T>;
+    async submitPlan(plan: RequestPlan, submitOptions: SubmitPlanOptions): Promise<PlanResults> {
+      if (options.seam === undefined) {
+        return allSame(plan, { code: 'invalid-request', message: '没有执行缝，写不了' });
+      }
+      const run: SubmitRun = async (script) => {
+        const got = await guardedBrowser({
+          seam: options.seam as Seam,
+          script,
+          url: plan.origin,
+          ...(plan.loginUrl === undefined ? {} : { loginUrl: plan.loginUrl }),
+          ...(plan.session === undefined ? {} : { session: plan.session }),
+          open: submitOptions.open ?? false,
+          ...(plan.timeoutMs === undefined ? {} : { timeoutMs: plan.timeoutMs }),
+          ...(submitOptions.signal === undefined ? {} : { signal: submitOptions.signal }),
+          retry: false,
+        });
+        if (got.kind === 'failed') return got.result;
+        if (!got.value.ok) return browserFailure(got.value, plan.loginUrl);
+        return { ok: true, value: got.value.value };
+      };
+      return submitPlanOf(plan, submitOptions, run, options.saveBytes);
+    },
+    async submit<T = unknown>(
+      recipe: RequestRecipe,
+      overrides?: CallOverrides,
+      callOptions: DataCallOptions = {},
+    ): Promise<DataResult<T>> {
+      return (await readRecipe(recipe, overrides, 'submit', callOptions)) as DataResult<T>;
     },
   };
 }

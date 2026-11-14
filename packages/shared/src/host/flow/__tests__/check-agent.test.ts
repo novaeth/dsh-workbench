@@ -107,8 +107,10 @@ describe('checkFlow：agent 节点的静态口径', () => {
 
   it('有 agent 端口时同一份流程过关', () => {
     const host = createFlowHost({
-      async open() {
-        throw new Error('不该开');
+      agents: {
+        async open() {
+          throw new Error('不该开');
+        },
       },
     });
     const check = host.check(

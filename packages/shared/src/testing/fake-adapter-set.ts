@@ -28,6 +28,7 @@ import { declarationRefusalOf, pathDeclarationOf } from '../host/local-declarati
 import { createRegistryLookup } from '../host/registry-declaration.js';
 import { createPackageRouter } from '../host/package-route.js';
 import { createReleaseProbe } from '../host/release-probe.js';
+import { confirmEachStep } from './data.js';
 
 export const FAKE_ADAPTER_MARKER = { adapterSet: 'fake' } as const;
 
@@ -50,6 +51,9 @@ const data: DataReader = {
   },
   async plan(): Promise<PlanResults> {
     return {};
+  },
+  submitPlan(request, options): Promise<PlanResults> {
+    return confirmEachStep(request, options.confirm, () => FAKE_ADAPTER_MARKER);
   },
 };
 

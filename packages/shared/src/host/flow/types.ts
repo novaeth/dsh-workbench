@@ -1,3 +1,4 @@
+import type { DataCallOptions, PlanResults, RequestPlan } from '../../contract/data.js';
 import type { LongTaskIntervention } from '../../contract/long-task.js';
 import type { ImageLike } from '../ai/types.js';
 import type { AiPort } from '../ai/port.js';
@@ -123,9 +124,29 @@ export interface FlowAiStep {
 }
 
 /**
- * 一步要么调动作，要么跑子流程，要么让一个子 agent 或模型判断。
+ * 一步：按一份内联的读取计划读数据；结果摊平后挂在 `steps.<id>`，失败时这一步失败。
+ * 不支持 `poll` / `forEach`：要循环让计划自己表达。
  */
-export type FlowStep = FlowActionStep | FlowSubFlowStep | FlowAgentStep | FlowAiStep;
+export interface FlowDataStep {
+  readonly id: string;
+  readonly title?: string | undefined;
+  readonly data: RequestPlan;
+  readonly open?: boolean | undefined;
+  readonly when?: FlowPredicate | undefined;
+  readonly retry?: FlowRetry | undefined;
+}
+
+/**
+ * 流程要读数据时用的窄口：只借 `plan`，不把整个 DataReader 灌进引擎。
+ */
+export interface FlowDataPort {
+  plan(plan: RequestPlan, options?: DataCallOptions): Promise<PlanResults>;
+}
+
+/**
+ * 一步要么调动作，要么跑子流程，要么让一个子 agent / 模型判断，要么读一份数据计划。
+ */
+export type FlowStep = FlowActionStep | FlowSubFlowStep | FlowAgentStep | FlowAiStep | FlowDataStep;
 
 /**
  * 步骤入参里的一个值：字面量、引用，或二选一。
@@ -232,6 +253,7 @@ export interface FlowRunOptions {
   readonly agentRunner?: FlowAgentRunner | undefined;
   readonly maxAgents?: number | undefined;
   readonly ai?: AiPort | undefined;
+  readonly data?: FlowDataPort | undefined;
   readonly onStep: (event: FlowStepEvent) => void;
   readonly sleep?: ((ms: number, signal: AbortSignal) => Promise<void>) | undefined;
   readonly now?: (() => number) | undefined;
@@ -315,4 +337,5 @@ export interface FlowAgentPort {
 export interface FlowCheckOptions {
   readonly agents?: boolean | undefined;
   readonly ai?: boolean | undefined;
+  readonly data?: boolean | undefined;
 }

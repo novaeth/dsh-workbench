@@ -92,13 +92,15 @@ describe('createFlowTask：流程 + 长任务 + 工具的三件套', () => {
   it('★ 有 agent 端口时建得起来，agent 步骤照常跑', async () => {
     const { longTasks } = hostOf();
     const flowHost = createFlowHost({
-      async open() {
-        return {
-          async run() {
-            return { text: '可以发', childId: 'c-1', name: 'agent-1', stopReason: 'completed' };
-          },
-          async dispose() {},
-        };
+      agents: {
+        async open() {
+          return {
+            async run() {
+              return { text: '可以发', childId: 'c-1', name: 'agent-1', stopReason: 'completed' };
+            },
+            async dispose() {},
+          };
+        },
       },
     });
     const task = createFlowTask({

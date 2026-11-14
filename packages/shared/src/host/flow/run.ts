@@ -1,6 +1,7 @@
 import type { AiPort } from '../ai/port.js';
 import { now as clockNow } from '../time.js';
 import { agentStopReasonText, agentSummaryOf } from './agent.js';
+import { dataActionOf } from './data.js';
 import { evalPredicate, resolveInput, resolveValue } from './expr.js';
 import type {
   FlowAction,
@@ -11,6 +12,8 @@ import type {
   FlowAgentRunner,
   FlowAgentStep,
   FlowAiStep,
+  FlowDataPort,
+  FlowDataStep,
   FlowDefinition,
   FlowResult,
   FlowRunOptions,
@@ -123,7 +126,7 @@ async function callWithRetry(
 }
 
 interface RunOneOptions {
-  readonly step: FlowActionStep | FlowAgentStep | FlowAiStep;
+  readonly step: FlowActionStep | FlowAgentStep | FlowAiStep | FlowDataStep;
   readonly title: string;
   readonly stepId: string;
   readonly scope: FlowScope;
@@ -133,6 +136,7 @@ interface RunOneOptions {
   readonly workspace: string;
   readonly agentRunner: FlowAgentRunner | undefined;
   readonly ai: AiPort | undefined;
+  readonly data: FlowDataPort | undefined;
   readonly sleep: Sleep;
   readonly now: () => number;
   readonly emit: (event: FlowStepEvent) => void;
@@ -215,20 +219,23 @@ function agentActionOf(
 type StepShape =
   | { readonly kind: 'action'; readonly step: FlowActionStep }
   | { readonly kind: 'agent'; readonly step: FlowAgentStep }
-  | { readonly kind: 'ai'; readonly step: FlowAiStep };
+  | { readonly kind: 'ai'; readonly step: FlowAiStep }
+  | { readonly kind: 'data'; readonly step: FlowDataStep };
 
-function shapeOf(step: FlowActionStep | FlowAgentStep | FlowAiStep): StepShape {
+function shapeOf(step: FlowActionStep | FlowAgentStep | FlowAiStep | FlowDataStep): StepShape {
   if ('agent' in step) return { kind: 'agent', step };
   if ('ai' in step) return { kind: 'ai', step };
+  if ('data' in step) return { kind: 'data', step };
   return { kind: 'action', step };
 }
 
-function isModelStep(step: FlowActionStep | FlowAgentStep | FlowAiStep): boolean {
-  return shapeOf(step).kind !== 'action';
+function isModelStep(step: FlowActionStep | FlowAgentStep | FlowAiStep | FlowDataStep): boolean {
+  const kind = shapeOf(step).kind;
+  return kind === 'agent' || kind === 'ai';
 }
 
 async function runOneInner(options: RunOneOptions): Promise<unknown> {
-  const { step, title, stepId, scope, actions, signal, runId, workspace, agentRunner, ai, sleep, now, emit } =
+  const { step, title, stepId, scope, actions, signal, runId, workspace, agentRunner, ai, data, sleep, now, emit } =
     options;
   const shape = shapeOf(step);
   const entry =
@@ -236,7 +243,13 @@ async function runOneInner(options: RunOneOptions): Promise<unknown> {
       ? { name: step.id, action: agentActionOf(shape.step, title, scope, agentRunner), meta: {} }
       : shape.kind === 'ai'
         ? { name: step.id, action: aiActionOf(shape.step, scope, ai), meta: {} }
-        : actions.get(shape.step.action);
+        : shape.kind === 'data'
+          ? {
+              name: step.id,
+              action: dataActionOf(shape.step, data, { sleep }),
+              meta: {},
+            }
+          : actions.get(shape.step.action);
   if (entry === undefined) throw new Error('注册表里没有这个动作');
   const input = shape.kind === 'action' ? resolveInput(shape.step.with, scope) : undefined;
   const context: FlowActionContext = {
@@ -343,6 +356,8 @@ export async function runFlow(options: FlowRunOptions): Promise<FlowResult> {
           runId: `${runId}/${step.id}`,
           workspace,
           ...(options.agentRunner === undefined ? {} : { agentRunner: options.agentRunner }),
+          ...(options.ai === undefined ? {} : { ai: options.ai }),
+          ...(options.data === undefined ? {} : { data: options.data }),
           onStep: (event) => {
             emit({
               ...event,
@@ -365,12 +380,14 @@ export async function runFlow(options: FlowRunOptions): Promise<FlowResult> {
         continue;
       }
 
-      if (step.forEach !== undefined) {
-        const over = resolveValue(step.forEach.over, { in: input, steps });
+      const forEach = 'forEach' in step ? step.forEach : undefined;
+      if (forEach !== undefined) {
+        if ('data' in step) throw new Error(`步骤 ${step.id} 不支持 forEach`);
+        const over = resolveValue(forEach.over, { in: input, steps });
         if (!Array.isArray(over)) {
           throw new Error(`步骤 ${step.id} 的 forEach.over 不是数组`);
         }
-        const max = Math.max(1, Math.min(50, Math.trunc(step.forEach.max)));
+        const max = Math.max(1, Math.min(50, Math.trunc(forEach.max)));
         if (over.length > max) {
           throw new Error(`步骤 ${step.id} 的 forEach 有 ${over.length} 项，超过上限 ${max}`);
         }
@@ -389,6 +406,7 @@ export async function runFlow(options: FlowRunOptions): Promise<FlowResult> {
               workspace,
               agentRunner: options.agentRunner,
               ai: options.ai,
+              data: options.data,
               sleep,
               now,
               emit,
@@ -412,6 +430,7 @@ export async function runFlow(options: FlowRunOptions): Promise<FlowResult> {
         workspace,
         agentRunner: options.agentRunner,
         ai: options.ai,
+        data: options.data,
         sleep,
         now,
         emit,

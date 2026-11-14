@@ -355,7 +355,7 @@ packages/core/src/
 
 | 端口 | 位置 | 管什么 |
 |---|---|---|
-| `DataReader` | `shared/contract/data.ts` | 统一传输：`http` / `browser` / `command`，以及配方 `request` / `submit` |
+| `DataReader` | `shared/contract/data.ts` | 统一传输：`http` / `browser` / `command`，配方 `request` / `submit`，多跳读取计划 `plan` |
 | `ProfilePort` | `shared/host/port-types.ts` | profile 目录、dsh 插件、自更新视图 |
 | `EnvSupplyPort` | `shared/host/port-types.ts` | 供给窄口：插件来源、安装/卸载命令、救法命令、release（9 个方法） |
 | `ModulePort` | `shared/host/port-types.ts` | 已安装模块、registry、bundle、profile 包、自更新 |
@@ -454,7 +454,7 @@ interface DataError {
 ```
 <!-- doc-facts:end data-contract -->
 
-- `http`：**只做 GET**；写走模块工具与审批。统一超时、状态码、401/403 → `auth`、非 JSON → `parse`。
+- `http`：**只做 GET**；写走模块工具与审批。统一超时、状态码、401 → `auth` / 403 → `permission-denied`、非 JSON → `parse`。
 - `browser`：复用浏览器适配器，读会话默认与屏会话分开。
 - `command`：宿主执行命令，JSON 解析失败归 `parse`。
 - 未知 `kind` → `invalid-request`。
@@ -493,8 +493,54 @@ data.submit(recipe, overrides?)           // 写工具里调
   写同理：`writes[].key + recipe` 进同一个 `DATASOURCE`，工具里调 `data.submit(DATASOURCE.<key>, …)`。
 - `requestMany` 只编译一次脚本：`calls` 的键就是结果名，每格的 `path` / `query` / `headers` / `response`
   覆盖配方的同名默认值；一条失败不连累其余（逐格映射页面码）。
-- 页面码 → `DataError` 的映射带 `pageCode`：`auth` / `http` / `timeout` / `parse` / `browser`。
+- 页面码 → `DataError` 的映射带 `pageCode`：`auth` / `permission-denied` / `http` / `timeout` / `parse` / `browser`。
 - 模块宿主 `mount({ data })`，卡片只消费模块路由，不直接读。
+
+### 4.4.2 读取计划（plan）
+
+`plan` 是 `DataReader` 的**必备成员**，服务「后一跳要用前一跳结果」的多跳读；配方只覆盖单跳。
+
+```ts
+const out = await data.plan(
+  {
+    origin: 'https://oa.example.com',
+    loginUrl: 'https://oa.example.com/',
+    session: 'workbench-read',
+    authLoss: { path: 'errorCode', equals: '002', messagePath: 'msg' },
+    steps: [
+      { name: 'key',
+        request: { method: 'POST', path: '/api/split', contentType: 'form', body: { a: '1' } },
+        response: { kind: 'json', path: 'sessionkey' } },
+      { name: 'rows',
+        request: { method: 'POST', path: '/api/rows', contentType: 'form',
+                   body: { dataKey: '{{key}}', pageSize: '100' } },
+        response: { kind: 'json', path: 'datas' } },
+    ],
+  },
+  { signal },
+);
+// out.key / out.rows：每步 { ok, data | error, elapsedMs }；失败后后面的步标 skipped
+```
+
+- 仍然是**一次 eval、多次 fetch**：凭据只在页面里，宿主不碰 cookie/token。
+- 每步 `response.kind` 是 `json`（可带 `path`）/ `text` / `bytes`（`{ base64, size, contentType }`）/
+  `html`（`selector` + `fields`，用 `DOMParser` 解析 fetch 回来的文本）。
+- 错误码 `DataErrorCode` 含 `invalid-request` / `http` / `auth` / `timeout` / `aborted` / `skipped` /
+  `parse` / `command` / `browser` / `permission-denied`；`skipped` 出现在失败计划的后继步与写计划里没确认的步。
+- 引用 `{{步骤名}}` / `{{步骤名.路径}}`，只许向前引用；构建期用 `planProblemOf` 自检；
+  一次最多 32 步，页面里有 deadline 与每跳超时。
+- 每步一支结果，`plan` **不抛错**：调用方判 `.ok`。flow 的 `{ data }` 步骤会包成
+  `DataStepError` 再抛；直接调用的模块要自己判 `.ok`。
+- `signal` 走调用级 options，不在 `RequestPlan` 里；同 `session` 的浏览器读串行，不同 `session` 并行；
+  `plan` 默认不自动导航，要打开页面传 `{ open: true }`。
+- 分页用 `repeat`（数字区间）或 `while`（原始 JSON 的某条路径等于目标值），最多 50 轮；
+  HTML 用 `response.kind: 'html'` + `selector` / `fields`。
+- `bytes` 可加 `saveAs: 'attachment'`：宿主把 base64 交给附件服务，结果换成附件引用，不再把大块二进制塞进卡片。
+- 写计划用必备的 `submitPlan(plan, { idempotencyKey, confirm })`：每步先问 `confirm` 再写，GET / 分页
+  直接拒；写失败不重试，后续步骤标 `skipped`；`onStep` 给长任务行推步骤。长任务启动本身已过用户确认，
+  里面直接传 `confirm: () => true`，不逐步弹审批。
+- `authLoss` 命中整支失败并回 `auth` + `helpUrl`；flow 的 data 步骤会把它翻成 `needs-human`。
+- `plan` / `submitPlan` 必备；`AdapterSet` 协议是 v2，第三方集合没实现会在加载时报 `missing-member` 并回退默认集合。
 
 ### 4.5 第三方适配器集合
 
@@ -505,7 +551,7 @@ data.submit(recipe, overrides?)           // 写工具里调
 import type { AdapterSet } from '@dsh-workbench/shared/host';
 
 export function createAdapterSet(ctx): AdapterSet {
-  return { apiVersion: 1, id: '@acme/adapters-set', version: '1.0.0', /* ... */ };
+  return { apiVersion: 2, id: '@acme/adapters-set', version: '1.0.0', /* ... */ };
 }
 ```
 
@@ -649,6 +695,8 @@ ctx.get('workbenchUnits').registerUnit({
 ### 5.6 装配期
 
 - `host.inject` 缺一个就挂不上；`host.optional` 缺了降级。
+- `host.origins` 声明模块会读的站点根；声明后 `deps.data` 的 HTTP / 配方 / 计划只放行这些 origin；
+  无 URL 的 browser 脚本与 command 读不在校验范围；path / registry 安装预检会展示。
 - 路由名必须是 `<unit>` 或 `<unit>/…`。
 - 路由 / 偏好资源 / 动作资源 / 上下文 kind 重名只废后来那个单元。
 - `gate` 与 `provision` 全壳只能有一个提供者。

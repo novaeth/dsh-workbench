@@ -75,6 +75,11 @@ _Avoid_: 健康、评分、质量分
 也可能走**公共通道** —— 见下一条。
 _Avoid_: 脚本、数据源配置、adapter（那是 opencli 插件那一层）
 
+**读取计划（plan）**：一条读里按顺序打多次请求的那份声明 —— 后一跳用 `{{步骤名}}` / `{{步骤名.路径}}`
+引用前一跳的结果。一次 eval、多次 fetch，凭据仍只在页面里；每步一支结果，失败即停、后面的步标 skipped。
+`plan` 是 `DataReader` 的必备成员；支持 `signal`、`authLoss`、每跳 `elapsedMs`、`repeat` / `while` 分页与 `html` 选择器。
+_Avoid_: 多步配方（那是一条请求多格）、脚本、workflow
+
 **公共通道（channel）**：随壳出货的一个 opencli 插件（`workbench fetch` / `workbench send`），
 浏览器只当 cookie jar，请求在宿主进程里发。它只服务 `cookie` / `cookieValue` 两种凭据来源，
 跑不起来就回落页面脚本。它是**传输换了个位置，不是新能力** —— `cookie` 来源页面脚本本来就全对。

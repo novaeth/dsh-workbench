@@ -59,6 +59,11 @@ export function AddModulePreview({ t, state }: { t: Translate; state: AddModuleS
         )}
         {preview.description === '' ? null : <p className={styles.subjectDesc}>{preview.description}</p>}
         <p className={styles.subjectMeta}>{source}</p>
+        {preview.origins.length === 0 ? null : (
+          <p className={styles.subjectMeta}>
+            {t('panels.market.add.origins', { origins: preview.origins.join(', ') })}
+          </p>
+        )}
       </div>
       {plugin ? <p className={styles.result}>{t('panels.market.add.pluginPreview', runtimeTermsOf(t))}</p> : null}
     </div>

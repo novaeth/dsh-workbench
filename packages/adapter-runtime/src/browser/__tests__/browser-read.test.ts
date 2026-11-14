@@ -7,6 +7,7 @@ interface Step {
   readonly stderr?: string;
   readonly exitCode?: number;
   readonly timedOut?: boolean;
+  readonly aborted?: boolean;
 }
 
 function fakeShell(plan: readonly Step[]) {
@@ -26,7 +27,7 @@ function fakeShell(plan: readonly Step[]) {
         result: async () => ({
           exitCode: step.exitCode ?? 0,
           timedOut: step.timedOut ?? false,
-          aborted: false,
+          aborted: step.aborted ?? false,
           stdout: { text: step.stdout ?? '', truncated: false },
           stderr: { text: step.stderr ?? '', truncated: false },
         }),
@@ -278,5 +279,31 @@ describe('evalScriptArgOf', () => {
     const packed = evalScriptArgOf('"读一读那张卡"', 'win32');
     const encoded = /atob\('([^']*)'\)/.exec(packed)?.[1] ?? '';
     expect(Buffer.from(encoded, 'base64').toString('utf8')).toBe('"读一读那张卡"');
+  });
+});
+
+describe('browserRead · 取消', () => {
+  it('signal 传到执行缝；aborted 不再重试', async () => {
+    const { seam, calls } = fakeShell([{ aborted: true }]);
+    const controller = new AbortController();
+    const out = await browserRead({ seam, script, signal: controller.signal, ...FAST });
+
+    expect(out.ok).toBe(false);
+    expect(out.code).toBe('aborted');
+    expect(out.pageCode).toBe('aborted');
+    expect(calls).toHaveLength(1);
+    expect((calls[0] as { signal?: AbortSignal }).signal).toBe(controller.signal);
+  });
+
+  it('打开页面时被停：返回 aborted，不再读第二遍', async () => {
+    const { seam, commands } = fakeShell([
+      { stdout: JSON.stringify({ ok: false, code: 'not-on-site' }) },
+      { aborted: true },
+    ]);
+    const controller = new AbortController();
+    const out = await browserRead({ seam, script, url: URL, signal: controller.signal, ...FAST });
+
+    expect(out.code).toBe('aborted');
+    expect(commands.filter((one) => one.includes("'eval'"))).toHaveLength(1);
   });
 });

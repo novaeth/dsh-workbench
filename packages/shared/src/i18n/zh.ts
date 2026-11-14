@@ -310,6 +310,7 @@ export const zh = {
   'panels.market.add.registryWithHost': '{name}（{host}）',
   'panels.market.add.registryToggle': '安装源',
   'panels.market.add.installVersion': '版本 {version}',
+  'panels.market.add.origins': '会读取这些站：{origins}',
   'panels.market.add.registryDefault': '默认安装源',
   'panels.market.add.registryCustom': '自定义地址',
   'panels.market.add.registryCustomPlaceholder': 'https://npm.example.com/',

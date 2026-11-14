@@ -127,6 +127,24 @@ export const apply = plugin.apply;
 
 不写 `writes`（或写 `[]`）= 不拿门面：`deps.seam` 是 `undefined`，代码里按可选处理。
 
+读站点数据的模块再声明 `host.origins`：`["https://oa.example.com"]`。声明后 `deps.data` 的
+HTTP / 配方 / 计划只放行这些站点，未声明的 origin 直接回 `invalid-request`；path / registry 安装预检会列出「会读取这些站」。
+无 URL 的 `browser` 脚本与 `command` 读不在 origin 校验范围。不写 = 兼容旧模块，仍放行；写 `[]` = 一个都不许。
+
+写计划放在 `writes: true` 的工具 `execute` 里（审批门在工具层先过）：
+
+```ts
+const out = await deps.data.submitPlan(plan, { idempotencyKey: input.idempotencyKey, confirm: () => true });
+```
+
+`confirm` 返回 false 就停；`onStep` 可把每步推成长任务行。`submitPlan` 不重复审批。
+
+长任务本身已经是用户确认后才启动的，里面的写计划直接传 `confirm: () => true` 即可，
+不要再逐步弹审批；要额外确认是产品自己的选择，不是 `submitPlan` 的默认要求。
+
+登录丢失可先用 `authLossOf(value)` 判：401、`status:false` + 登录/超时文案、跳 `/login`（403 算没权限）；
+`status:false` 单独不算，避免把业务错误误判成登录。
+
 ```ts
 const result = await deps.seam?.run({
   scope: 'unit',

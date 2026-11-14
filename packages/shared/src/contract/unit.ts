@@ -48,6 +48,7 @@ export interface UnitTool {
 
 /**
  * 模块要外壳的哪些服务：inject 缺一个就挂不上，optional 缺了照挂。
+ * origins 是模块要读写的站点（能解析的 origin）；声明了就只有这些站点放行，写 `[]` 等于一个都不许。
  * writes 声明模块要哪几档执行缝写入域：unit 是模块自己的数据目录，workspace 是当前会话工作区；
  * 缺省 [] = 不给执行缝门面（deps.seam 是 undefined）。
  */
@@ -55,6 +56,7 @@ export interface UnitHostNeeds {
   readonly inject: readonly string[];
   readonly optional?: readonly string[];
   readonly writes?: readonly ('unit' | 'workspace')[];
+  readonly origins?: readonly string[];
 }
 
 /**

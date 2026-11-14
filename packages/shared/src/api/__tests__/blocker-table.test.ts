@@ -6,7 +6,27 @@ import { blockerOf, blockerOfCapability, blockerOfError } from '../blocker-table
 
 const t: Translate = (key, params) => (params === undefined ? key : `${key}(${JSON.stringify(params)})`);
 
+describe('blockerOf', () => {
+  it('data 的 auth 没带 helpUrl 时，用调用方的 loginUrl 补上', () => {
+    const blocker = blockerOf({
+      error: { code: 'auth', message: '需要登录' },
+      t: ((key: string) => key) as never,
+      loginUrl: 'https://oa.example.com/login',
+    });
+    expect(blocker?.actions.map((one) => one.kind)).toEqual(['open-url', 'retry']);
+  });
+});
+
 describe('blockerOfError', () => {
+  it('data 口的 auth 也能出「去登录」那颗动作', () => {
+    const blocker = blockerOfError(
+      { code: 'auth', message: '需要登录', helpUrl: 'https://oa.example.com/login' },
+      ((key: string) => key) as never,
+      { platform: 'OA' },
+    );
+    expect(blocker.actions.map((one) => one.kind)).toEqual(['open-url', 'retry']);
+    expect(blocker.title).toBe('blocker.login.title');
+  });
   it('未登录 + 有登录页地址 → 行内「去登录 ↗」+ 一颗手动「重试」（不安排自动重试）', () => {
     const blocker = blockerOfError(
       { code: 'auth-required', message: '未登录 Acme', helpUrl: 'https://example.com/login' },

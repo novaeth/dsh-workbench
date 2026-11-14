@@ -45,7 +45,9 @@ export interface BrowserReadOptions {
   readonly open?: boolean;
   readonly timeoutMs?: number;
   readonly retryMs?: number;
+  readonly retry?: boolean;
   readonly settleMs?: number;
+  readonly signal?: AbortSignal;
   readonly platform?: NodeJS.Platform;
 }
 
@@ -80,16 +82,36 @@ function blockerFor(code: string): 'auth-required' | 'permission-denied' | undef
   return undefined;
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function abortedNow(signal: AbortSignal | undefined): boolean {
+  return signal?.aborted === true;
+}
+
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    if (signal?.aborted === true) {
+      resolve();
+      return;
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    function onAbort(): void {
+      clearTimeout(timer);
+      resolve();
+    }
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
 }
 
 type Attempt =
   | { readonly kind: 'value'; readonly value: unknown }
+  | { readonly kind: 'aborted' }
   | { readonly kind: 'failure'; readonly result: Omit<BrowserReadResult, 'at'> };
 
 type ShellOutcome =
   | { readonly kind: 'ok'; readonly stdout: string }
+  | { readonly kind: 'aborted'; readonly detail: string; readonly stderr: string }
   | { readonly kind: 'timeout'; readonly detail: string; readonly stderr: string }
   | { readonly kind: 'failed'; readonly detail: string; readonly stderr: string };
 
@@ -106,14 +128,18 @@ async function shellRun(
   argv: readonly string[],
   timeoutMs: number,
   platform: NodeJS.Platform,
+  signal: AbortSignal | undefined,
 ): Promise<ShellOutcome> {
+  if (signal?.aborted === true) return { kind: 'aborted', detail: '已停止', stderr: '' };
   const result = await seam.run({
     command: backgroundLine(command, argv, platform),
     intent: noWrite(),
     retry: 'safe',
     timeoutMs,
     env: OPENCLI_WINDOW_ENV,
+    ...(signal === undefined ? {} : { signal }),
   });
+  if (result.aborted) return { kind: 'aborted', detail: '已停止', stderr: result.stderr };
   if (result.timedOut) {
     return { kind: 'timeout', detail: `没在 ${Math.round(timeoutMs / 1000)} 秒内返回`, stderr: result.stderr };
   }
@@ -130,7 +156,9 @@ async function evalOnce(
   script: string,
   timeoutMs: number,
   retryMs: number,
+  retry: boolean,
   platform: NodeJS.Platform,
+  signal: AbortSignal | undefined,
 ): Promise<Attempt> {
   const run = async (): Promise<Attempt> => {
     let attempt: Awaited<ReturnType<typeof shellRun>>;
@@ -141,6 +169,7 @@ async function evalOnce(
         ['browser', session, 'eval', evalScriptArgOf(script, platform), '--window', 'background'],
         timeoutMs,
         platform,
+        signal,
       );
     } catch (error) {
       return {
@@ -154,6 +183,7 @@ async function evalOnce(
         },
       };
     }
+    if (attempt.kind === 'aborted') return { kind: 'aborted' };
     if (attempt.kind === 'timeout') {
       return {
         kind: 'failure',
@@ -197,9 +227,10 @@ async function evalOnce(
   };
 
   const first = await run();
-  if (first.kind === 'value') return first;
-  if (first.result.code !== 'cli-exec-failed') return first;
-  await sleep(retryMs);
+  if (first.kind === 'value' || first.kind === 'aborted') return first;
+  if (!retry || first.result.code !== 'cli-exec-failed') return first;
+  await sleep(retryMs, signal);
+  if (abortedNow(signal)) return { kind: 'aborted' };
   return run();
 }
 
@@ -210,10 +241,18 @@ async function openOnce(
   url: string,
   timeoutMs: number,
   platform: NodeJS.Platform,
+  signal: AbortSignal | undefined,
 ): Promise<Omit<BrowserReadResult, 'at'> | undefined> {
   let attempt: Awaited<ReturnType<typeof shellRun>>;
   try {
-    attempt = await shellRun(seam, command, ['browser', session, 'open', url, '--window', 'background'], timeoutMs, platform);
+    attempt = await shellRun(
+      seam,
+      command,
+      ['browser', session, 'open', url, '--window', 'background'],
+      timeoutMs,
+      platform,
+      signal,
+    );
   } catch (error) {
     return {
       ok: false,
@@ -225,6 +264,9 @@ async function openOnce(
     };
   }
   if (attempt.kind === 'ok') return undefined;
+  if (attempt.kind === 'aborted') {
+    return { ok: false, code: 'aborted', pageCode: 'aborted', message: '已停止' };
+  }
   return {
     ok: false,
     code: attempt.kind === 'timeout' ? 'cli-timeout' : 'cli-exec-failed',
@@ -236,16 +278,23 @@ async function openOnce(
 }
 
 export async function browserRead(options: BrowserReadOptions): Promise<BrowserReadResult> {
-  const { seam, script, url, loginUrl, open = true } = options;
+  const { seam, script, url, loginUrl, open = true, signal } = options;
   const command = options.command ?? 'opencli';
   const session = options.session ?? BROWSER_READ_SESSION;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const retryMs = options.retryMs ?? DEFAULT_RETRY_MS;
+  const retry = options.retry ?? true;
   const settleMs = options.settleMs ?? DEFAULT_SETTLE_MS;
   const platform = options.platform ?? process.platform;
   const at = now();
+  if (signal?.aborted === true) {
+    return { ok: false, code: 'aborted', pageCode: 'aborted', at, message: '已停止' };
+  }
 
-  const first = await evalOnce(seam, command, session, script, timeoutMs, retryMs, platform);
+  const first = await evalOnce(seam, command, session, script, timeoutMs, retryMs, retry, platform, signal);
+  if (first.kind === 'aborted') {
+    return { ok: false, code: 'aborted', pageCode: 'aborted', at, message: '已停止' };
+  }
   if (first.kind === 'failure') return { ...first.result, at };
   let page = first.value;
 
@@ -261,10 +310,16 @@ export async function browserRead(options: BrowserReadOptions): Promise<BrowserR
         ...(url === undefined ? {} : { helpUrl: url }),
       };
     }
-    const opened = await openOnce(seam, command, session, url, timeoutMs, platform);
+    const opened = await openOnce(seam, command, session, url, timeoutMs, platform, signal);
     if (opened !== undefined) return { ...opened, at };
-    await sleep(settleMs);
-    const second = await evalOnce(seam, command, session, script, timeoutMs, retryMs, platform);
+    await sleep(settleMs, signal);
+    if (abortedNow(signal)) {
+      return { ok: false, code: 'aborted', pageCode: 'aborted', at, message: '已停止' };
+    }
+    const second = await evalOnce(seam, command, session, script, timeoutMs, retryMs, retry, platform, signal);
+    if (second.kind === 'aborted') {
+      return { ok: false, code: 'aborted', pageCode: 'aborted', at, message: '已停止' };
+    }
     if (second.kind === 'failure') return { ...second.result, at };
     page = second.value;
     if (codeOf(page) === 'not-on-site') {
@@ -306,7 +361,6 @@ export async function browserRead(options: BrowserReadOptions): Promise<BrowserR
       message,
       hint: '这个账号没有权限',
       detail: JSON.stringify(page),
-      ...(loginUrl === undefined && url === undefined ? {} : { helpUrl: loginUrl ?? url }),
     };
   }
   return {

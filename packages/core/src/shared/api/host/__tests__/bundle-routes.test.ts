@@ -249,6 +249,28 @@ describe('装机预检：本地 path spec 读得到那份 package.json', () => {
     }
   });
 
+  it('path spec：声明了 origins → 预检把归一化后的站点带出来', async () => {
+    const { dir, cleanup } = fixturePackage({
+      name: '@t/local-o',
+      dsh: {
+        workbench: {
+          ...DECLARED,
+          host: { inject: [], origins: ['https://oa.example.com/', 'https://x.example.com'] },
+        },
+      },
+    });
+    try {
+      const { ctx } = inspectContext(accepted('path', '@t/local-o'));
+      const result = await bundleInspectHandler(ctx)(new URLSearchParams({ spec: dir }));
+      expect(result).toMatchObject({
+        ok: true,
+        inspection: { status: 'accepted', origins: ['https://oa.example.com', 'https://x.example.com'] },
+      });
+    } finally {
+      cleanup();
+    }
+  });
+
   it('★ path spec：声明缺 apiVersion → 装前就拒，理由点名那个包（file: 前缀与 spec 同形）', async () => {
     const { dir, cleanup } = fixturePackage({
       name: '@t/local-b',

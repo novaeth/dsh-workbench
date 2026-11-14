@@ -165,6 +165,16 @@ describe('createLongTaskRegistry 的人工干预节点（needs-human）', () => 
     expect(snapshot?.loginUrl).toBeUndefined();
   });
 
+  it('同一步反复报同一个干预：只留一行，不刷掉进度', () => {
+    const h = harness();
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+
+    for (let at = 0; at < 5; at += 1) h.step({ kind: 'info', text: '第 rows 跳没成（auth）：需要登录', intervention: need });
+
+    expect(runs.snapshot(started.id)?.steps).toHaveLength(1);
+  });
+
   it('★★ 下一条不带干预的步骤：退回 running，载荷清掉', () => {
     const h = harness();
     const runs = createLongTaskRegistry(h.deps);

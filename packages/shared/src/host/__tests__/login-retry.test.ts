@@ -71,6 +71,40 @@ describe('withLoginRetry：认证失败就等登录', () => {
     expect(ctx.logins).toEqual(['https://example.test/login']);
   });
 
+  it('announce 可换成 ctx.need，sleep 可注入', async () => {
+    const controller = new AbortController();
+    const ctx = context(controller.signal);
+    const needs: Array<{ readonly title: string }> = [];
+    const sleeps: number[] = [];
+    let attempts = 0;
+    const action: FlowAction = async () => {
+      attempts += 1;
+      if (attempts === 1) throw authError();
+      return 'ok';
+    };
+    const value: FlowActionContext = {
+      ...ctx.value,
+      need: (intervention) => {
+        needs.push(intervention);
+      },
+    };
+
+    const result = await withLoginRetry(action, {
+      sleep: async (ms) => {
+        sleeps.push(ms);
+      },
+      announce: (url, _error, context) => {
+        context.need({ title: '需要登录', actions: [{ kind: 'open-url', url }] });
+      },
+    })({}, value);
+
+    expect(result).toBe('ok');
+    expect(attempts).toBe(2);
+    expect(sleeps).toEqual([5000]);
+    expect(needs[0]?.title).toBe('需要登录');
+    expect(ctx.logins).toEqual([]);
+  });
+
   it('★★ 到了上限就不再重试，但动作继续等登录；停止才结束', async () => {
     const controller = new AbortController();
     const ctx = context(controller.signal);

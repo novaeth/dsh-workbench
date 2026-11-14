@@ -41,6 +41,22 @@ describe('DataReader', () => {
     if (!result.ok) expect(result.error.code).toBe('timeout');
   });
 
+  it('http 被调用方停掉 → aborted，不是 timeout', async () => {
+    const fetch = vi.fn(
+      (_url: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+        }),
+    );
+    const reader = createDataReader({ fetch: fetch as typeof globalThis.fetch });
+    const controller = new AbortController();
+    const pending = reader.read({ kind: 'http', url: 'https://example.test/slow' }, { signal: controller.signal });
+    controller.abort();
+    const result = await pending;
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('aborted');
+  });
+
   it('command 读成功；没有 shell 时明确拒绝', async () => {
     const fake = createFakeShell(() => ({ stdout: '{"ok":true}' }));
     const reader = createDataReader({ seam: seamFor(fake.shell) });

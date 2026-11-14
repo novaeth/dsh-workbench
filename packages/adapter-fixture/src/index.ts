@@ -17,14 +17,23 @@ const data: DataReader = {
   async submit<T = unknown>(_recipe: RequestRecipe): Promise<DataResult<T>> {
     return { ok: true, data: FIXTURE_MARKER as T };
   },
-  async plan(): Promise<PlanResults> {
-    return {};
+  async plan(request): Promise<PlanResults> {
+    return Object.fromEntries(
+      request.steps.map((step) => [step.name, { ok: true as const, data: { ...FIXTURE_MARKER, step: step.name } }]),
+    ) as PlanResults;
+  },
+  submitPlan(request, _options): Promise<PlanResults> {
+    return Promise.resolve(
+      Object.fromEntries(
+        request.steps.map((step) => [step.name, { ok: true as const, data: { ...FIXTURE_MARKER, step: step.name } }]),
+      ) as PlanResults,
+    );
   },
 };
 
 const supply: EnvSupplyPort = {
   resolvePluginSource: () => ({ ok: false, problem: 'not-declared' }),
-  libInstallCommand: () => '',
+  libInstallCommand: (): string => '',
   libUninstallCommand: () => '',
   pluginInstallPlan: () => ({ ok: false, problem: 'not-declared' }),
   recoveryCommand: () => '',

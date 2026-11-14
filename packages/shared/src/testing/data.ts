@@ -1,3 +1,4 @@
+import { allSame } from '../host/plan-results.js';
 import type {
   CallOverrides,
   DataReader,
@@ -6,7 +7,9 @@ import type {
   RecipeCalls,
   RecipeResults,
   RequestPlan,
+  PlanStep,
   RequestRecipe,
+  SubmitPlanOptions,
 } from '../contract/data.js';
 
 export interface RecipeCall {
@@ -27,6 +30,37 @@ function filled(names: readonly string[], value: unknown): RecipeResults {
   return out as RecipeResults;
 }
 
+export async function confirmEachStep(
+  request: RequestPlan,
+  confirm: SubmitPlanOptions['confirm'],
+  valueOf: (step: PlanStep) => unknown,
+): Promise<PlanResults> {
+  const out: Record<string, unknown> = Object.create(null) as Record<string, unknown>;
+  let stopped = false;
+  for (const [index, step] of request.steps.entries()) {
+    if (Object.hasOwn(out, step.name)) continue;
+    if (stopped) {
+      out[step.name] = { ok: false, error: { code: 'skipped', message: '前面没有完成，没有写', pageCode: 'skipped' } };
+      continue;
+    }
+    if (!(await confirm(step, index))) {
+      out[step.name] = { ok: false, error: { code: 'skipped', message: '没有确认，没有写', pageCode: 'declined' } };
+      stopped = true;
+      continue;
+    }
+    try {
+      out[step.name] = { ok: true, data: valueOf(step) };
+    } catch (error) {
+      out[step.name] = {
+        ok: false,
+        error: { code: 'invalid-request', message: error instanceof Error ? error.message : String(error) },
+      };
+      stopped = true;
+    }
+  }
+  return out as PlanResults;
+}
+
 export function createNoopDataReader(): DataReader {
   return {
     read: async () => NO_DATA,
@@ -34,14 +68,13 @@ export function createNoopDataReader(): DataReader {
     requestMany: async <T = unknown>(_recipe: RequestRecipe, calls: RecipeCalls): Promise<RecipeResults<T>> =>
       filled(Object.keys(calls), NO_DATA) as RecipeResults<T>,
     submit: async () => NO_DATA,
-    plan: async (request: RequestPlan): Promise<PlanResults> => perStep(request, NO_DATA),
+    plan: async (request: RequestPlan): Promise<PlanResults> => allSame(request, NO_DATA.error),
+    submitPlan: async (request: RequestPlan, submitOptions: SubmitPlanOptions): Promise<PlanResults> => {
+      const first = request.steps[0];
+      if (first !== undefined) await submitOptions.confirm(first, 0);
+      return allSame(request, NO_DATA.error);
+    },
   };
-}
-
-function perStep(request: RequestPlan, result: unknown): PlanResults {
-  const out: Record<string, unknown> = {};
-  for (const step of request.steps) out[step.name] = result;
-  return out as PlanResults;
 }
 
 export function createFakeDataReader(
@@ -76,7 +109,10 @@ export function createFakeDataReader(
       return answer(calls[calls.length - 1] as RecipeCall);
     },
     async plan(request: RequestPlan): Promise<PlanResults> {
-      return perStep(request, { ok: true, data: null });
+      return Object.fromEntries(request.steps.map((step) => [step.name, { ok: true, data: null }]));
+    },
+    submitPlan(request: RequestPlan, submitOptions: SubmitPlanOptions): Promise<PlanResults> {
+      return confirmEachStep(request, submitOptions.confirm, () => null);
     },
   } as unknown as DataReader;
   return Object.assign(reader, { requests, calls });

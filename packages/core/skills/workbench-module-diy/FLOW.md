@@ -109,6 +109,11 @@ export const face: UnitModuleFace = {
 - `registerTools()`：**调用时才注册**，返回一组清理函数；里面 `tools.register(tool)`（`execute` 里 `start` 或 `runs.start`，返回 `{ ok, runId, status, text }`；再按 `runId` 查）。
 - 写平台的工具：清单 `writes: true` + `needsApproval` / `approvalDetail`；动作里不要自己再问一遍。
 - 校验：`deps.flow.check(flow, actions)`；有问题先修，不装。
+- **数据步骤**：`{ id, title?, data: RequestPlan, when?, retry? }`，内联 plan；结果摊平成
+  `{ key, rows }` 挂到 `steps.<id>`，失败时 `failedStep` 指到这一步。不支持 `poll` / `forEach`；
+  `plan` 失败即这一步失败，auth 会自动进 `needs-human`（带登录链接）并在原地重试。
+  读站点数据的 plan 写法见 [DATASOURCE.md](DATASOURCE.md#多跳后一步要用前一步的结果)；
+  分页、HTML 表格都写在 plan 里（`repeat` / `while` / `response.kind: 'html'`）。
 
 `registerTools()` 的返回值是**清理函数数组**（外壳卸载 / 热换时逐个调），不是“注册函数数组”。
 清单里每一条 `dsh.workbench.tools` 必须在这里注册一把、名字逐字一致；没有工具就 `() => []`。
@@ -124,9 +129,10 @@ export const face: UnitModuleFace = {
 | 不限时（审核） | `poll.maxMs: 0` |
 | 逐项 + 轮询 | `forEach` 与 `poll` 同一步；每项单独轮询 |
 | 子流程 | `{ id, flow: subFlow, with: { ... } }`；结果在 `steps.<id>` |
+| 多跳读 | `{ id, data: RequestPlan }`；结果在 `steps.<id>.<步骤名>`，默认先打开 origin（`open: false` 可关） |
 | 提前结束 | `flow.stopWhen` |
 | 人工干预 | 动作里调 `ctx.need(intervention)`（`title` 说清要人做什么，可选 `hint` / `actions`），长任务进 `needs-human`；报完继续自己轮询，条件满足再发下一步；要「我处理完了」那颗钮，就在 `longTasks.create` 里给可选 `recheck`（点了只请模块再看一眼，外壳不承诺恢复；要自动重试就用 `withInterventionRetry(check, { attempts, delayMs })` 当 handler，check 回 `true` 即停）；要行上出回执表单，就给 `intervention.fields`（`{key,label,kind?:'text'|'secret',placeholder?,required?}`）与 `submitLabel`，并在 `longTasks.create` 里给 `answer?(current, values)` —— values 只回给模块，不进快照 / agent 可读处 |
-| 登录 | 动作用 `withLoginRetry(action)`：认证失败自动 `ctx.login(url)` 并在原地重试；长任务进 `needs-login`，超过 `maxMs` 仍停在那里等用户停止。这是旧路，新代码用 `ctx.need` 的 `open-url` 动作 |
+| 登录 | 动作用 `withLoginRetry(action)`：认证失败自动 `ctx.login(url)` 并在原地重试；长任务进 `needs-login`。data 步骤换了新路：`auth` 且计划给了 `loginUrl` 进 `needs-human` + 登录链接；没给就当场失败 |
 
 分支（`already_merged` / `can_merge` / `REVIEW_WAITING`）继续写在动作里；flow 只保留稳定的外层顺序。
 
@@ -176,6 +182,8 @@ export const face: UnitModuleFace = {
 - 在 flow 里存密钥 / token；凭据走已有登录或 `needs`。
 - 让 flow 绕过审批；写工具的审批在清单，不在动作里。
 - 让 agent 节点写平台、问人、再委派；它只读与判断，写与等人都在动作步骤里。
+- 把 `data.plan` 的失败当成功：它返回每步结果、从不抛错；不判 `.ok`，空列表会被当成"读到了"。
+- throw 裸 `DataError` 对象当步骤失败：包成 `Error`（带 `code` / `helpUrl`），否则长任务行显示 `[object Object]`。
 
 ## 6 验收
 

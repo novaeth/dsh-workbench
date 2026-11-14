@@ -18,6 +18,7 @@ export interface AddModulePreview {
   readonly description: string;
   readonly registry: string;
   readonly pluginName?: string;
+  readonly origins: readonly string[];
 }
 
 export function previewOf(
@@ -32,6 +33,7 @@ export function previewOf(
       description: '',
       registry: inspection.registry ?? '',
       ...(inspection.pluginName === undefined ? {} : { pluginName: inspection.pluginName }),
+      origins: [],
     };
   }
   return {
@@ -40,6 +42,7 @@ export function previewOf(
     version: inspection.version ?? '',
     description: inspection.description ?? '',
     registry: inspection.registry ?? '',
+    origins: inspection.origins ?? [],
   };
 }
 

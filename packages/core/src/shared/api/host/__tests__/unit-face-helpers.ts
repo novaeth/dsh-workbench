@@ -3,7 +3,7 @@ import type { UnitMountDeps, UnitMountResult, ToolScopeContext } from '@dsh-work
 import { unitTitleKey } from '@dsh-workbench/shared/host';
 import type { HostUnit } from '@/kernel/host/unit-registry';
 
-export function manifest(id: string, host: { inject: string[]; optional?: string[] }): UnitManifest {
+export function manifest(id: string, host: { inject: string[]; optional?: string[]; origins?: string[] }): UnitManifest {
   return { id, titleKey: unitTitleKey(id), card: null, tools: [], host };
 }
 

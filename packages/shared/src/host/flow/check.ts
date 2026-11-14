@@ -1,3 +1,4 @@
+import { planProblemOf } from '../data-plan.js';
 import { flowUses } from './scan.js';
 import type {
   FlowActionRegistry,
@@ -6,9 +7,11 @@ import type {
   FlowAiStep,
   FlowCheck,
   FlowCheckOptions,
+  FlowDataStep,
   FlowDefinition,
   FlowPredicate,
   FlowProblem,
+  FlowRetry,
   FlowValue,
 } from './types.js';
 
@@ -95,6 +98,19 @@ function checkPredicate(
   add(path, '不是合法的谓词');
 }
 
+function checkRetry(retry: FlowRetry | undefined, at: string, add: AddProblem): void {
+  if (retry === undefined) return;
+  if (!Number.isInteger(retry.attempts) || retry.attempts < 0 || retry.attempts > 5) {
+    add(`${at}.retry.attempts`, 'retry.attempts 要在 0..5');
+  }
+  if (
+    retry.delayMs !== undefined &&
+    (!Number.isInteger(retry.delayMs) || retry.delayMs < 0 || retry.delayMs > 60_000)
+  ) {
+    add(`${at}.retry.delayMs`, 'retry.delayMs 要在 0..60000');
+  }
+}
+
 function checkCommon(
   step: FlowActionStep | FlowAgentStep | FlowAiStep,
   at: string,
@@ -112,23 +128,7 @@ function checkCommon(
       add(`${at}.forEach.max`, 'forEach.max 要在 1..50');
     }
   }
-  if (step.retry !== undefined) {
-    if (
-      !Number.isInteger(step.retry.attempts) ||
-      step.retry.attempts < 0 ||
-      step.retry.attempts > 5
-    ) {
-      add(`${at}.retry.attempts`, 'retry.attempts 要在 0..5');
-    }
-    if (
-      step.retry.delayMs !== undefined &&
-      (!Number.isInteger(step.retry.delayMs) ||
-        step.retry.delayMs < 0 ||
-        step.retry.delayMs > 60_000)
-    ) {
-      add(`${at}.retry.delayMs`, 'retry.delayMs 要在 0..60000');
-    }
-  }
+  checkRetry(step.retry, at, add);
   const poll = 'poll' in step ? step.poll : undefined;
   if (poll !== undefined) {
     if ('agent' in step || 'ai' in step) {
@@ -191,6 +191,19 @@ function checkPromptSpec(
   }
 }
 
+function checkData(step: FlowDataStep, at: string, seen: ReadonlySet<string>, add: AddProblem): void {
+  if (step.when !== undefined) {
+    checkPredicate(step.when, `${at}.when`, { seen, item: false, value: false }, add);
+  }
+  checkRetry(step.retry, at, add);
+  if (step.open !== undefined && typeof step.open !== 'boolean') add(`${at}.open`, 'open 要是 true / false');
+  for (const problem of planProblemOf(step.data)) {
+    add(`${at}.data.${problem.path}`, problem.problem);
+  }
+  if ('poll' in step) add(`${at}.poll`, 'data 步骤不支持 poll');
+  if ('forEach' in step) add(`${at}.forEach`, 'data 步骤不支持 forEach');
+}
+
 function checkAi(step: FlowAiStep, at: string, seen: ReadonlySet<string>, add: AddProblem): void {
   const spec = step.ai;
   checkPromptSpec(spec, at, 'ai', step.forEach !== undefined, seen, add);
@@ -249,6 +262,9 @@ function checkFlowAt(
   if (options.ai === false && flowUses(flow, 'ai')) {
     add(`${prefix}steps`, '这一份运行时没有模型能力（没配 llm）');
   }
+  if (options.data === false && flowUses(flow, 'data')) {
+    add(`${prefix}steps`, '这一份运行时没有数据读取能力（没有 data.plan）');
+  }
   if (flow.target !== undefined) {
     checkValue(flow.target, `${prefix}target`, { seen: new Set(), item: false, value: false }, add);
   }
@@ -262,6 +278,8 @@ function checkFlowAt(
     const at = `${prefix}steps[${index}]`;
     if (step.id.trim() === '') add(`${at}.id`, '步骤 id 不能为空');
     if (seen.has(step.id)) add(`${at}.id`, `步骤 id 重复：${step.id}`);
+    const shapes = ['flow', 'data', 'agent', 'ai', 'action'].filter((one) => one in step);
+    if (shapes.length > 1) add(`${at}`, `一步只能是一种：现在同时有 ${shapes.join(' / ')}`);
 
     if ('flow' in step) {
       if (step.when !== undefined) {
@@ -273,6 +291,12 @@ function checkFlowAt(
         }
       }
       checkFlowAt(step.flow, actions, options, `${at}.flow.`, add);
+      seen.add(step.id);
+      return;
+    }
+
+    if ('data' in step) {
+      checkData(step, at, seen, add);
       seen.add(step.id);
       return;
     }

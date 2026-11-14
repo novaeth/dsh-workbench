@@ -313,6 +313,7 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'panels.market.add.registryWithHost': '{name} ({host})',
   'panels.market.add.registryToggle': 'Source',
   'panels.market.add.installVersion': 'Version {version}',
+  'panels.market.add.origins': 'Reads these sites: {origins}',
   'panels.market.add.registryDefault': 'Default source',
   'panels.market.add.registryCustom': 'Custom address',
   'panels.market.add.registryCustomPlaceholder': 'https://npm.example.com/',

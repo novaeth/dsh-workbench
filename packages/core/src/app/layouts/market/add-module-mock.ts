@@ -70,6 +70,7 @@ export const ADD_MODULE_MOCKS: readonly AddModuleMock[] = [
       version: '0.1.2',
       description: '最小样本模块：一枚「你好」卡片',
       registry: 'registry.npmmirror.com',
+      origins: [],
     },
   },
   {
@@ -83,6 +84,7 @@ export const ADD_MODULE_MOCKS: readonly AddModuleMock[] = [
       version: '',
       description: '',
       registry: '',
+      origins: [],
     },
   },
   {
@@ -97,6 +99,7 @@ export const ADD_MODULE_MOCKS: readonly AddModuleMock[] = [
       description: '',
       registry: 'registry.npmmirror.com',
       pluginName: 'dashboards',
+      origins: [],
     },
   },
   { id: 'installing', label: '正在安装（可取消）', phase: 'installing', spec: '@dsh-workbench/module-hello' },

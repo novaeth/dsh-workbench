@@ -57,6 +57,60 @@ describe('mountUnits', () => {
     expect(plan.mounted[0]?.readiness.missingSoft).toEqual(['shell']);
   });
 
+  it('模块的 data 按 host.origins 收口', async () => {
+    let seen: UnitMountDeps | undefined;
+    const unit = hostOf(manifest('scoped', { inject: [], origins: ['https://a.example.com'] }), (deps) => {
+      seen = deps;
+      return { routes: {}, registerTools: () => [] };
+    });
+    const plan = mountUnits([unit], {
+      ctx: ctxWith([]),
+      manifests: () => [unit.manifest],
+      data: {
+        read: async () => ({ ok: true, data: null }),
+        request: async () => ({ ok: true, data: null }),
+        requestMany: async (_recipe: unknown, calls: Record<string, unknown>) =>
+          Object.fromEntries(Object.keys(calls).map((name) => [name, { ok: true, data: null }])),
+        submit: async () => ({ ok: true, data: null }),
+        plan: async (request: { readonly steps: readonly { readonly name: string }[] }) =>
+          Object.fromEntries(request.steps.map((step) => [step.name, { ok: true, data: 'real' }])),
+        submitPlan: async (request: { readonly steps: readonly { readonly name: string }[] }) =>
+          Object.fromEntries(request.steps.map((step) => [step.name, { ok: true, data: 'real' }])),
+      } as never,
+    });
+    expect(plan.mounted).toHaveLength(1);
+    if (seen === undefined) throw new Error('没有拿到宿主 kit');
+    const denied = await seen.data.plan({
+      origin: 'https://b.example.com',
+      steps: [{ name: 'x', request: { method: 'GET', path: '/x' } }],
+    });
+    expect(denied['x']).toMatchObject({
+      ok: false,
+      error: { code: 'invalid-request', pageCode: 'origin-not-declared' },
+    });
+    const allowed = await seen.data.plan({
+      origin: 'https://a.example.com',
+      steps: [{ name: 'x', request: { method: 'GET', path: '/x' } }],
+    });
+    expect(allowed['x']).toMatchObject({ ok: true, data: 'real' });
+  });
+
+  it('没注入 DataReader 时每一步都回 invalid-request，不抛', async () => {
+    let seen: UnitMountDeps | undefined;
+    const unit = hostOf(manifest('no-data', { inject: [] }), (deps) => {
+      seen = deps;
+      return { routes: {}, registerTools: () => [] };
+    });
+    mountUnits([unit], { ctx: ctxWith([]), manifests: () => [unit.manifest] });
+    if (seen === undefined) throw new Error('没有拿到宿主 kit');
+    const out = await seen.data.plan({
+      origin: 'https://a.example.com',
+      steps: [{ name: 'constructor', request: { method: 'GET', path: '/x' } }],
+    });
+    expect(out['constructor']).toMatchObject({ ok: false, error: { code: 'invalid-request' } });
+    expect(Object.getPrototypeOf(out)).toBe(null);
+  });
+
   it('闸门"谁提供用谁的"；没人提供就是 undefined（外壳视为全开）', () => {
     const gate = { deniedTools: () => ['workbench_x'], subscribe: () => () => {} };
     const plan = mountUnits(

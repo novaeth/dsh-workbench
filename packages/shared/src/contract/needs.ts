@@ -1,3 +1,4 @@
+import { isRecord, text } from './guards.js';
 /**
  * 模块要的一样东西的类别；v2 只认这四种，加种类在注册表里加，不改这份形状。
  */
@@ -146,14 +147,6 @@ export interface NeedKindSpec {
 
 const SOURCE_KEYS = ['kind', 'package', 'registryEnv', 'registryDefault', 'url', 'ref', 'path', 'env'];
 const REGISTRY_PATTERN = /^(?:https?|file):\/\//;
-
-function text(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
-}
-
-function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
 
 /**
  * 这个字符串是不是协议认得的 need 类别。

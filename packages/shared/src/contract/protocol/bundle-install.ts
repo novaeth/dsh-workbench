@@ -38,6 +38,7 @@ export interface BundleInspectionAccepted {
   readonly bundle: boolean | null;
   readonly registry: BundleRegistry;
   readonly host?: string;
+  readonly origins?: readonly string[];
 }
 
 export interface BundleInspectionRefused {

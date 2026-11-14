@@ -38,7 +38,8 @@ export function blockerOfError(
   }
 
   switch (error.code) {
-    case 'auth-required': {
+    case 'auth-required':
+    case 'auth': {
       const path = shortenPath(context.path ?? '');
       void path;
       const actions: BlockerAction[] =
@@ -145,10 +146,8 @@ export function blockerOf(parts: {
     if (fromCapability !== undefined) return fromCapability;
   }
   if (parts.error === undefined) return undefined;
-  const helpUrl =
-    parts.error.helpUrl !== undefined || parts.error.code !== 'auth-required'
-      ? parts.error.helpUrl
-      : parts.loginUrl;
+  const isLogin = parts.error.code === 'auth-required' || parts.error.code === 'auth';
+  const helpUrl = parts.error.helpUrl !== undefined || !isLogin ? parts.error.helpUrl : parts.loginUrl;
   const withHelp = helpUrl === undefined ? parts.error : { ...parts.error, helpUrl };
   return blockerOfError(
     withHelp,

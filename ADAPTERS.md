@@ -62,7 +62,7 @@ import type { AdapterSet } from '@dsh-workbench/shared/host';
 
 export function createAdapterSet(ctx): AdapterSet {
   return {
-    apiVersion: 1,
+    apiVersion: 2,
     id: '@acme/adapters-set',
     version: '1.0.0',
     data: myDataReader,
@@ -79,6 +79,10 @@ export function createAdapterSet(ctx): AdapterSet {
 
 只替换一部分时，可以只交 `CoreAdapterSet`（`apiVersion` / `id` / `version` + `data` / `supply` / `profile` / `probe`）；
 `modules` / `runtime` / `plugins` / `actions` 由默认 set 补齐。
+
+`DataReader` 必须有 `plan`（多跳读取）与 `submitPlan`（写计划，见 [ARCHITECTURE §4.4.2](ARCHITECTURE.md)）。
+只交 `CoreAdapterSet` 的第三方集合也一样：没实现会在加载时报 `missing-member`，然后回退默认集合。
+适配器协议现在是 **v2**；v1 集合要补 `data.plan` 与 `data.submitPlan` 并升 `apiVersion`，加载失败时 `detail` 会点明缺的是哪个。
 
 安装与配置：
 

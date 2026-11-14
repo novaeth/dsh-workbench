@@ -190,10 +190,13 @@ describe('perform · cookieValue 来源', () => {
 });
 
 describe('perform · 信封', () => {
-  it('401 / 403 → not-logged-in', async () => {
+  it('401 → not-logged-in；403 → forbidden', async () => {
     stubFetch({ status: 401, text: '{}' });
-    const result = await perform({}, { api: 1, url: 'https://x.example.com/a', jar: 'none' }, 'GET');
-    expect(result.code).toBe('not-logged-in');
+    const first = await perform({}, { api: 1, url: 'https://x.example.com/a', jar: 'none' }, 'GET');
+    expect(first.code).toBe('not-logged-in');
+    stubFetch({ status: 403, text: '{}' });
+    const second = await perform({}, { api: 1, url: 'https://x.example.com/a', jar: 'none' }, 'GET');
+    expect(second.code).toBe('forbidden');
   });
 
   it('其他非 2xx → http-<status>，并带截断正文', async () => {

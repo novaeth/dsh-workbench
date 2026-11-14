@@ -127,7 +127,8 @@ function tokenLines(recipe: RequestRecipe, auth: RecipeAuth): string[] {
       '  } catch (error) {',
       '    return { ok: false, code: "fetch-failed", message: String(error) };',
       '  }',
-      '  if (pre.status === 401 || pre.status === 403) return { ok: false, code: "not-logged-in" };',
+      '  if (pre.status === 401) return { ok: false, code: "not-logged-in" };',
+      '  if (pre.status === 403) return { ok: false, code: "forbidden" };',
       '  const preText = await pre.text();',
       '  if (!pre.ok) return { ok: false, code: "http-" + pre.status, message: preText.slice(0, 200) };',
       '  let preJson;',
@@ -201,6 +202,9 @@ export function scriptOf(recipe: RequestRecipe, overrides: CallOverrides = {}): 
   lines.push('  const text = await res.text();');
   lines.push(
     `  if (new TextEncoder().encode(text).length > ${maxBytes}) return { ok: false, code: "too-large", message: "返回超过 ${Math.round(maxBytes / 1024)} KB" };`,
+  );
+  lines.push(
+    '  if (res.status === 403) return { ok: false, code: "forbidden", message: text.slice(0, 200) };',
   );
   lines.push('  if (!res.ok) return { ok: false, code: "http-" + res.status, message: text.slice(0, 200) };');
   if (responseKind === 'text') {

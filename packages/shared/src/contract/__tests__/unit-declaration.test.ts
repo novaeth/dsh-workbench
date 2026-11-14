@@ -125,3 +125,40 @@ describe('声明协议的键表', () => {
     expect(Object.keys(full).sort()).toEqual([...DECLARATION_KEYS].sort());
   });
 });
+
+describe('origin 权限声明', () => {
+  const withOrigins = (origins: unknown) => ({
+    ...declared([]),
+    host: { inject: [], origins },
+  });
+
+  it('合法 origin 归一化进清单', () => {
+    const read = readDeclaration('@t/demo', withOrigins(['https://oa.example.com/', 'https://x.example.com']));
+    expect(read.problems).toEqual([]);
+    expect(read.manifest?.host.origins).toEqual(['https://oa.example.com', 'https://x.example.com']);
+  });
+
+  it('path / query / 非 http 都拒', () => {
+    const problems = declarationProblemsOf(
+      '@t/demo',
+      withOrigins(['https://oa.example.com/oa', 'https://x.example.com/?a=1', 'ftp://x.example.com']),
+    ).join('\n');
+    expect(problems).toMatch(/只能是站点根/);
+    expect(problems).toMatch(/只能是 http \/ https/);
+  });
+
+  it('带端口、大写 host、重复项都按站点根归一化并去重', () => {
+    const read = readDeclaration(
+      '@t/demo',
+      withOrigins(['https://OA.Example.com:8443/', 'https://oa.example.com:8443', 'https://oa.example.com:8443/']),
+    );
+    expect(read.problems).toEqual([]);
+    expect(read.manifest?.host.origins).toEqual(['https://oa.example.com:8443']);
+  });
+
+  it('不写 origins 就是没声明（兼容旧模块）', () => {
+    const read = readDeclaration('@t/demo', withOrigins(undefined));
+    expect(read.problems).toEqual([]);
+    expect(read.manifest?.host.origins).toBeUndefined();
+  });
+});

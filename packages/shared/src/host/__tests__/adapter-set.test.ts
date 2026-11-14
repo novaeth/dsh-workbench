@@ -56,7 +56,7 @@ function ctxOf(dir: string | null): DshHostContext {
 }
 
 const FULL = `{
-  apiVersion: 1,
+  apiVersion: 2,
   id: 'fixture',
   version: '1.0.0',
   data: {
@@ -65,6 +65,7 @@ const FULL = `{
     requestMany: async () => ({}),
     submit: async () => ({ ok: true, data: {} }),
     plan: async () => ({}),
+    submitPlan: async () => ({}),
   },
   supply: {
     resolvePluginSource: () => ({ ok: false, problem: 'not-declared' }),
@@ -166,7 +167,7 @@ describe('loadAdapterSet：从 profile 解析 set，失败不抛', () => {
 
   it('协议版本不对 → incompatible-version', async () => {
     const dir = profileOf();
-    install(dir, 'fixture-set', `export function createAdapterSet() { return { ...${FULL}, apiVersion: 2 }; }`);
+    install(dir, 'fixture-set', `export function createAdapterSet() { return { ...${FULL}, apiVersion: 1 }; }`);
     const loaded = await loadAdapterSet(ctxOf(dir), 'fixture-set');
     expect(loaded).toMatchObject({ ok: false, failure: 'incompatible-version' });
   });
@@ -176,7 +177,7 @@ describe('loadAdapterSet：从 profile 解析 set，失败不抛', () => {
     install(
       dir,
       'fixture-set',
-      'export function createAdapterSet() { return { apiVersion: 1, id: "fixture", version: "1.0.0", data: { read: async () => ({ ok: true, data: {} }) }, profile: { dirOf: () => null }, probe: { probeUnits: async () => [] } }; }',
+      'export function createAdapterSet() { return { apiVersion: 2, id: "fixture", version: "1.0.0", data: { read: async () => ({ ok: true, data: {} }) }, profile: { dirOf: () => null }, probe: { probeUnits: async () => [] } }; }',
     );
     const loaded = await loadAdapterSet(ctxOf(dir), 'fixture-set');
     expect(loaded).toMatchObject({ ok: false, failure: 'missing-member' });
@@ -188,7 +189,7 @@ describe('loadAdapterSet：从 profile 解析 set，失败不抛', () => {
     install(
       dir,
       'fixture-set',
-      'export function createAdapterSet() { return { apiVersion: 1, data: { read: async () => ({ ok: true, data: {} }) }, supply: { resolvePluginSource: () => ({ ok: false, problem: "not-declared" }) }, profile: { dirOf: () => null }, probe: { probeUnits: async () => [] } }; }',
+      'export function createAdapterSet() { return { apiVersion: 2, data: { read: async () => ({ ok: true, data: {} }) }, supply: { resolvePluginSource: () => ({ ok: false, problem: "not-declared" }) }, profile: { dirOf: () => null }, probe: { probeUnits: async () => [] } }; }',
     );
     const loaded = await loadAdapterSet(ctxOf(dir), 'fixture-set');
     expect(loaded).toMatchObject({ ok: false, failure: 'missing-member' });
@@ -209,7 +210,7 @@ describe('loadAdapterSet：从 profile 解析 set，失败不抛', () => {
     install(
       dir,
       'fixture-set',
-      'export function createAdapterSet() { return { apiVersion: 1, id: "fixture", version: "1.0.0", data: {}, supply: { resolvePluginSource: () => ({ ok: false, problem: "not-declared" }) }, profile: { dirOf: () => null }, probe: { probeUnits: async () => [] } }; }',
+      'export function createAdapterSet() { return { apiVersion: 2, id: "fixture", version: "1.0.0", data: {}, supply: { resolvePluginSource: () => ({ ok: false, problem: "not-declared" }) }, profile: { dirOf: () => null }, probe: { probeUnits: async () => [] } }; }',
     );
     const loaded = await loadAdapterSet(ctxOf(dir), 'fixture-set');
     expect(loaded).toMatchObject({ ok: false, failure: 'missing-member' });
@@ -240,11 +241,20 @@ describe('loadAdapterSet：从 profile 解析 set，失败不抛', () => {
 
   it('没实现 data.plan 算缺成员（plan 是必备的）', async () => {
     const dir = profileOf();
-    const without = FULL.replace("    plan: async () => ({}),\n", '');
+    const without = FULL.replace('    plan: async () => ({}),\n', '');
     install(dir, 'fixture-set', `export function createAdapterSet() { return ${without}; }`);
     const loaded = await loadAdapterSet(ctxOf(dir), 'fixture-set');
     expect(loaded).toMatchObject({ ok: false, failure: 'missing-member' });
     expect(loaded.ok ? '' : loaded.detail).toContain('data.plan');
+  });
+
+  it('没实现 data.submitPlan 算缺成员（v2 起 submitPlan 必备）', async () => {
+    const dir = profileOf();
+    const without = FULL.replace('    submitPlan: async () => ({}),\n', '');
+    install(dir, 'fixture-set', `export function createAdapterSet() { return ${without}; }`);
+    const loaded = await loadAdapterSet(ctxOf(dir), 'fixture-set');
+    expect(loaded).toMatchObject({ ok: false, failure: 'missing-member' });
+    expect(loaded.ok ? '' : loaded.detail).toContain('data.submitPlan');
   });
 
   it('data.plan 给了但不是函数，算缺成员', async () => {

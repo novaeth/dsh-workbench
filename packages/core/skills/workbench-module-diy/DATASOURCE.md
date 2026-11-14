@@ -39,24 +39,20 @@
    两拍、重启重试、平台码映射都在工具内。目标：找到承载数据的位置（列表页或其后的 XHR），
    记 URL、参数、凭据来源。
 
-   **Desktop**：这条 `read=` 探索线照旧；Desktop 只是不能对 Electron 里的工作台页做屏调试，
-   不影响站点探索。录制（`_record_*`）也照旧。
-
    - 不知道数据在哪：先执行 `performance.getEntriesByType('resource')`，筛选 `/api/`、`.json`。
      有 → 接口读；无但页面有整块表格 → DOM 读。判断一次即可。
    - `opencli` 随工作台预装（隔离运行时位于 `$DSH_HOME/workbench/opencli/`，启动检查时安装，不碰 `~/.opencli`）。
      如果隔离运行时尚未安装完成，工具会报错提示；请转述原文，不要猜测 URL。
-   - 脚本约定：不在站点 → `{ ok: false, code: "not-on-site" }`；登录过期 → `{ ok: false, code: "not-logged-in" }`
-     （工具归一为 `auth-required`）；成功 → `{ ok: true, ...数据 }`。
+   - 脚本约定：不在站点 → `not-on-site`；登录过期 → `not-logged-in`；没权限 → `forbidden`
+     （工具归一为 `permission-denied`）；成功 → `{ ok: true, ...数据 }`。
    - 新 session 的 `eval` 会静默开 `about:blank`（后台容器窗，不抢焦点）。脚本第一行判断
      `location.origin`；不在站点则 `open` 该页，等约 1 秒再 eval。在 shell 里运行 opencli 时不要自行
      拼接命令前缀：`OPENCLI_WINDOW` 这类环境变量通过宿主 shell 的 env 覆盖（`env` 是叠加，POSIX / pwsh 通用），
      手写 `env NAME=value` / `$env:NAME` 在另一个平台就是坏的。
    - 读与屏用不同会话：`data.read({ kind: 'browser' })` 默认读会话 `workbench-read`；`workbench` 是看 / 动族的屏会话。同名会把用户的页导航走。需要独立标签就传 `session: "<unit>"`。
-   - DOM 读取不要在宿主脚本里使用 `querySelectorAll`：宿主产物禁止 `document.`，而且无法做单元测试。探测时用
-     `workbench_diy_find`（`read=…, args=["--css", "<选择器>"]`）；固化时用
-     `data.read({ kind: 'browser', url, script })` 返回 JSON，把「切换格 + 按列取值」做成两个纯函数。
-   - 工作台刚重启时桥接尚未就绪：首次读取会报「命令跑不起来」，等一秒后重读；超时不要重试。
+   - DOM 读取用 `workbench_diy_find` 探、固化用 `data.read({ kind: 'browser', url, script })`；
+     别用 `querySelectorAll`（HTML 用 `DOMParser`）
+   - 刚重启时桥接未就绪：首次读报「命令跑不起来」，等一秒重读；超时不要重试。
 
 3. **试一条最小读** —— 先证明能拿到，再写模块。记录：结构化字段形状；未登录长什么样；超时 / 被墙的形状。
    产出必须是一条可重复的命令或请求。
@@ -145,77 +141,78 @@ const results = await data.requestMany(DATASOURCE.wallet, DATASOURCE_CALLS.walle
 
 ### 多跳：后一步要用前一步的结果
 
-配方和 `calls` 都是**一次请求**。真实系统常见「先换 session / CSRF 再查询」——
-这时用 `data.plan` 把几步请求写成一个计划，**不需要写脚本**：
+配方和 `calls` 都是一次请求。真实系统常见「先换 session / CSRF 再查询」——
+用 `data.plan` 把几步写成一个计划，不需要写脚本：
 
 ```ts
 const out = await data.plan({
   origin: 'https://oa.example.com',
   loginUrl: 'https://oa.example.com/',
-  session: 'workbench-read',
+  authLoss: { path: 'errorCode', equals: '002', messagePath: 'msg' },
   steps: [
-    { name: 'key',
-      request: { method: 'POST', path: '/api/split', contentType: 'form', body: { scope: 'doing' } },
+    { name: 'key', request: { method: 'POST', path: '/api/split', contentType: 'form', body: { scope: 'doing' } },
       response: { kind: 'json', path: 'sessionkey' } },
-    { name: 'rows',
-      request: { method: 'POST', path: '/api/rows', contentType: 'form',
-                 body: { dataKey: '{{key}}', pageSize: '100' } },
+    { name: 'rows', request: { method: 'POST', path: '/api/rows', body: { dataKey: '{{key}}' } },
       response: { kind: 'json', path: 'datas' } },
   ],
-});
-// 每步一个 DataResult；某步失败后，后面的步骤不再发请求
+}, { signal });
 ```
 
 规则：
 
-- `{{步骤名}}` / `{{步骤名.路径}}` 可以出现在 path / query / headers / body 任意位置；运行时替换
-- `plan` 是**必备成员**：没实现会在加载时报 `missing-member`，模块可直接调用
-- **只允许向前引用**：引用未出现的步骤、重名、空 `path`、非法 `kind` 都是构建期错误（先用 `planProblemOf` 自检）
-- `response.kind` 三种：`json`（可带 `path` 取值）/ `text` / `bytes`（回 `{ base64, size, contentType }`，带 `maxBytes`）
-- 一张卡片要读多个不同的接口 → 各写一个 `plan`
-- 仍然是页面内 fetch（一次 eval、多次请求），cookie 的行为不变，宿主不接触凭据
+- `plan` 是必备成员（没实现报 `missing-member`）；类型从 `@dsh-workbench/core/contract` 取
+- `{{步骤名}}` / `{{步骤名.路径}}` 可出现在 path / query / headers / body；只许向前引用
+- 重名、空 `path`、非法 `kind`、`origin` 带 path 都是构建期错误（先用 `planProblemOf` 自检）；
+  一次最多 32 步，`timeoutMs` 在 1s..120s
+- `response.kind`：`json` / `text` / `bytes`（`{ base64, size, contentType }`；`saveAs` 落附件）/ `html`（`selector` + `fields`）
+- 失败后未跑的步标 `skipped`；引用 / `response.path` 取不到也算失败
+- `authLoss` 命中（如 OA `errorCode: "002"`）整支失败并回 `auth` + `helpUrl`；
+  没有它只认 401 / 跳登录页（403 归「没有权限」）
+- `signal` 中断页面读；同 `session` 串行（排队 30s），不同 `session` 并行；默认不导航，要导航传 `{ open: true }`。
+  `request.path` 只能是站内路径（写完整 URL 或 `//` 开头会被拒）。
 
-**仍需写脚本**：解析二进制（docx 解 ZIP、PDF 切图）、重编码图片、读 DOM 这些归 `custom`。
-`fw03-review` 的列表与表单走 `plan`，只有"下载并解析附件"是脚本。
+**循环 / HTML**：`repeat: { over: '1..{{total}}', max: 20 }`（`total` 是前面某一步的名字）；
+`while: { path: 'hasNext', equals: false, max: 20 }`；
+`response: { kind: 'html', selector: 'table tr', fields: { title: 'td' } }`。
 
-`custom` 只记"为什么配方盖不住"，脚本仍在代码里；`design check` 会给 warn。
+**写计划**：`submitPlan(plan, { idempotencyKey, confirm })`；`confirm(step, index)` 返回 true 才写
+（长任务传 `() => true`）；GET / 分页不收，失败不重试；幂等键要非空字符串。
 
-探 DOM（服务端渲染的表格）不在配方里：用 `_find` 探，固化仍走老的 `data.read({ kind: 'browser', script })`
-或 `browserFind`（DOM 读走 `find`，不写 eval 脚本）。
+**仍归 `custom`**：二进制解析、重编码图片、复杂 DOM。
 
-`opencli` 是**侦察兵，不是日常通道**：探明后，日常读必须是一条固定、便宜、可解释的调用
-（配方就是那条调用；`eval` 只在探测和 `custom` 里出现）。
+`opencli` 是**侦察兵**：探明后日常读要是一条固定、便宜、可解释的调用（配方就是那条；
+`eval` 只在探测与 `custom` 里出现）。
 
-配方的**执行体由壳决定，不写在模块里**：凭据来源是 `cookie` / `cookieValue` 时，壳可能用宿主侧的
-公共通道（Node fetch + 浏览器 cookie jar）而不是页面脚本；两者结果形状、错误码、三态都一样。
-模块不需要知道走的是哪条 —— 照 `data.request(DATASOURCE.<key>)` 写就对了。
+配方的**执行体由壳决定**：凭据来源是 `cookie` / `cookieValue` 时，壳可能用宿主侧公共通道
+（Node fetch + 浏览器 cookie jar）而不是页面脚本；两者形状、错误码、三态一样。
 
 ## 三态
 
-拿不到数据是常态。卡片必须画得出：
+拿不到数据是常态，卡片必须画得出：
 
 | 情况 | 文案 |
 |---|---|
 | 没登录 / 凭据过期 | "去 XX 登录一下"（可点，指到用户常用入口） |
-| 超时 / 网络不通 | "这次没读到，稍后重试" + 重试 |
-| 站点改版、字段缺失 | "读到的形状和预期不一样"；不显示空白、不显示 0 |
+| 超时 / 网络不通 | "这次没读到，稍后重试" |
+| 站点改版、字段缺失 | "形状和预期不一样" |
 
-任何输入（待机 / 在读 / 有值 / 空 / 读不到）下抛异常或出现 `undefined` / `NaN` 的卡片都会让用户认为"卡片不出来"。
+任何输入下抛异常或出现 `undefined` / `NaN` 的卡片都会让用户认为"卡片不出来"；
 `check --only cards` 拦这条（[REVIEW.md](REVIEW.md)）。
 
 ## 错误码
 
-平台码（如 `AUTH_UNAUTHORIZED`）先映射，不透传：
+平台码先映射，不透传：
 
 | code | 用户看到 |
 |---|---|
-| `auth` + `helpUrl` | "需要登录 XX" + 去登录 + 重试（无 `helpUrl` 只剩重试） |
-| `timeout` | 细提示（不换整卡）+ 重试 |
-| `command` / `http` / `parse` | 整卡"读不到" + 重试；`hint` 写清确认什么 |
-| `browser` + `helpUrl` | "没有权限" / 页面读失败 + 权限页 + 重试 |
-| 其他 | 整卡显示 `message` + 重试 |
+| `auth` + `helpUrl` | "需要登录 XX" + 去登录 + 重试（无 `helpUrl` 直接失败） |
+| `timeout` | 细提示 + 重试 |
+| `command` / `http` / `parse` | 整卡"读不到"+ 重试 |
+| `permission-denied` | "没有权限" + 权限页（有 `helpUrl` 时） |
+| `invalid-request` / `aborted` / `skipped` | 指出计划哪里不对 / 按停 / 没跑 |
+| `browser` + `helpUrl` | "没有权限" + 权限页 + 重试 |
 
-字段位置：`message` 标题、`hint` 可照做的一句、`detail` 折叠的原始输出。
+字段：`message` 标题、`hint` 可照做、`detail` 折叠原文。
 
 ## 门禁
 

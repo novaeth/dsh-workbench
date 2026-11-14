@@ -207,7 +207,8 @@ export async function perform(page, kwargs, method) {
   if (new TextEncoder().encode(text).length > maxBytes) {
     return fail('too-large', `返回超过 ${Math.round(maxBytes / 1024)} KB`);
   }
-  if (response.status === 401 || response.status === 403) return fail('not-logged-in', `HTTP ${response.status}`);
+  if (response.status === 401) return fail('not-logged-in', 'HTTP 401');
+  if (response.status === 403) return fail('forbidden', `HTTP 403 ${text.slice(0, 200)}`);
   if (!response.ok) return fail(`http-${response.status}`, text.slice(0, 200));
 
   const kind = textOf(kwargs.kind) === 'text' ? 'text' : 'json';

@@ -2,6 +2,11 @@ export interface DataRequestBase {
   readonly timeoutMs?: number;
 }
 
+export interface DataCallOptions {
+  readonly signal?: AbortSignal | undefined;
+  readonly open?: boolean | undefined;
+}
+
 export interface HttpDataRequest extends DataRequestBase {
   readonly kind: 'http';
   readonly url: string;
@@ -25,7 +30,17 @@ export interface CommandDataRequest extends DataRequestBase {
 
 export type DataRequest = HttpDataRequest | BrowserDataRequest | CommandDataRequest;
 
-export type DataErrorCode = 'invalid-request' | 'http' | 'auth' | 'timeout' | 'parse' | 'command' | 'browser';
+export type DataErrorCode =
+  | 'invalid-request'
+  | 'http'
+  | 'auth'
+  | 'permission-denied'
+  | 'timeout'
+  | 'aborted'
+  | 'skipped'
+  | 'parse'
+  | 'command'
+  | 'browser';
 
 export interface DataError {
   readonly code: DataErrorCode;
@@ -139,15 +154,46 @@ export type RecipeCalls = Readonly<Record<string, CallOverrides>>;
 export type RecipeResults<T = unknown> = Readonly<Record<string, DataResult<T>>>;
 
 export interface PlanStepResponse {
-  readonly kind?: 'json' | 'text' | 'bytes';
+  readonly kind?: 'json' | 'text' | 'bytes' | 'html';
   readonly path?: string;
   readonly maxBytes?: number;
+  readonly selector?: string;
+  readonly fields?: Readonly<Record<string, string>>;
+  readonly saveAs?: 'attachment';
 }
 
+/** 分页：`over` 支持 `1..{{total}}` 这种数字区间（`total` 是前面某一步的名字）；`as` 是每轮变量名，默认 `item`。 */
+export interface PlanRepeat {
+  readonly over: string;
+  readonly as?: string;
+  readonly max?: number;
+}
+
+/** 分页：每轮请求可用 `{{page}}` / `{{index}}`；`path` 相对原始 JSON 响应。 */
+export interface PlanWhile {
+  readonly path: string;
+  readonly equals: unknown;
+  readonly max?: number;
+}
+
+/** 计划里的一步：`name` 供后面的步用 `{{name}}` 引用。 */
 export interface PlanStep {
   readonly name: string;
   readonly request: RecipeRequest;
   readonly response?: PlanStepResponse;
+  readonly repeat?: PlanRepeat;
+  readonly while?: PlanWhile;
+}
+
+/**
+ * 计划级登录丢失形状：命中就整支失败并回 `auth`；OA 的 `errorCode: '002'` 写在模块自己的 plan 里。
+ * `equals` 与 `in` 二选一；`loginUrl` 要是绝对 http(s) URL（决定卡片上有没有「去登录」）。
+ */
+export interface AuthLoss {
+  readonly path: string;
+  readonly equals?: unknown;
+  readonly in?: readonly unknown[];
+  readonly messagePath?: string;
 }
 
 export interface RequestPlan {
@@ -155,15 +201,41 @@ export interface RequestPlan {
   readonly loginUrl?: string;
   readonly session?: string;
   readonly timeoutMs?: number;
+  readonly authLoss?: AuthLoss;
   readonly steps: readonly PlanStep[];
 }
 
-export type PlanResults = Readonly<Record<string, DataResult<unknown>>>;
+export type PlanStepResult<T = unknown> = DataResult<T> & { readonly elapsedMs?: number };
+
+export type PlanResults = Readonly<Record<string, PlanStepResult<unknown>>>;
+
+/**
+ * 写计划的调用参数：幂等键必填，逐步骤确认由调用方给；`confirm` 返回 false 就停，不写。
+ * 只能在 `writes: true` 的工具/动作实现里调用 —— 审批门在工具层先过，这里不重复审批。
+ */
+export interface SubmitPlanOptions extends DataCallOptions {
+  readonly idempotencyKey: string;
+  readonly confirm: (step: PlanStep, index: number) => boolean | Promise<boolean>;
+  readonly onStep?: ((step: PlanStep, index: number, result: PlanStepResult<unknown>) => void) | undefined;
+}
 
 export interface DataReader {
-  read<T = unknown>(request: DataRequest): Promise<DataResult<T>>;
-  request<T = unknown>(recipe: RequestRecipe, overrides?: CallOverrides): Promise<DataResult<T>>;
-  requestMany<T = unknown>(recipe: RequestRecipe, calls: RecipeCalls): Promise<RecipeResults<T>>;
-  plan(plan: RequestPlan): Promise<PlanResults>;
-  submit<T = unknown>(recipe: RequestRecipe, overrides?: CallOverrides): Promise<DataResult<T>>;
+  read<T = unknown>(request: DataRequest, options?: DataCallOptions): Promise<DataResult<T>>;
+  request<T = unknown>(
+    recipe: RequestRecipe,
+    overrides?: CallOverrides,
+    options?: DataCallOptions,
+  ): Promise<DataResult<T>>;
+  requestMany<T = unknown>(
+    recipe: RequestRecipe,
+    calls: RecipeCalls,
+    options?: DataCallOptions,
+  ): Promise<RecipeResults<T>>;
+  plan(plan: RequestPlan, options?: DataCallOptions): Promise<PlanResults>;
+  submitPlan(plan: RequestPlan, options: SubmitPlanOptions): Promise<PlanResults>;
+  submit<T = unknown>(
+    recipe: RequestRecipe,
+    overrides?: CallOverrides,
+    options?: DataCallOptions,
+  ): Promise<DataResult<T>>;
 }

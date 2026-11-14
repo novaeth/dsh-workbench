@@ -9,6 +9,12 @@ export interface LoginRetryOptions {
   readonly maxMs?: number | undefined;
   readonly isAuthError?: ((error: unknown) => boolean) | undefined;
   readonly loginUrlOf?: ((error: unknown) => string | undefined) | undefined;
+  readonly announce?: ((url: string, error: unknown, context: FlowActionContext) => void) | undefined;
+  readonly sleep?: ((ms: number, signal: AbortSignal) => Promise<void>) | undefined;
+}
+
+function defaultAnnounce(url: string, _error: unknown, context: FlowActionContext): void {
+  context.login(url);
 }
 
 function fieldOf(error: unknown, key: string): string {
@@ -73,6 +79,8 @@ export function withLoginRetry(
   const maxMs = options.maxMs ?? 30 * 60 * 1000;
   const isAuthError = options.isAuthError ?? defaultIsAuthError;
   const loginUrlOf = options.loginUrlOf ?? defaultLoginUrl;
+  const announce = options.announce ?? defaultAnnounce;
+  const pause = options.sleep ?? sleep;
 
   return async (input, context: FlowActionContext) => {
     const startedAt = now();
@@ -83,11 +91,11 @@ export function withLoginRetry(
         if (context.signal.aborted) throw error;
         if (!isAuthError(error)) throw error;
         const url = loginUrlOf(error);
-        if (url !== undefined) context.login(url);
+        if (url !== undefined) announce(url, error, context);
         if (maxMs > 0 && now() - startedAt >= maxMs) {
           await waitForAbort(context.signal);
         }
-        await sleep(everyMs, context.signal);
+        await pause(everyMs, context.signal);
       }
     }
   };

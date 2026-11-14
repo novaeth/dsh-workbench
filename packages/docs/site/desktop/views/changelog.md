@@ -18,6 +18,18 @@
 - **多跳读取**：新增 `deps.data.plan`，后一跳可以引用前一跳的结果（`{{步骤名}}`），
   会话键、CSRF、游标这类「先换取、后使用」的接口不必再写脚本。`plan` 现在是必备能力：
   后台适配组件没有实现它时，加载阶段就会报错并指出缺少哪个成员；模块不用再自己判断。
+- **读数据能停、能看清受阻于哪一跳**：`data.plan` 接 `signal`，停止长任务会中断运行中的页面读；
+  每跳带 `elapsedMs`，长任务行给一条耗时摘要；同一会话的读串行，避免互相踩。
+- **流程里直接写数据步骤**：`{ data: RequestPlan }`，结果摊平到 `steps.<id>`；登录失效且计划给了
+  `loginUrl` 时进「等你处理」带登录链接，登录后原地重试（没给 `loginUrl` 直接失败）；`poll` / `forEach` 不开放。
+- **适配器协议升到 v2**：`DataReader.plan` 与 `submitPlan` 都是必备成员；v1 集合要补两者并升 `apiVersion`。
+- **读取计划能分页、读表格、落附件**：`repeat` / `while` 最多 50 轮；`response.kind: 'html'`
+  直接按 `selector` / `fields` 取表格；
+  `bytes` + `saveAs: 'attachment'` 把二进制交给宿主附件服务，结果换成附件引用。
+- **写计划有逐步骤确认与幂等键**：`submitPlan` 只在每步确认后写，GET / 分页直接拒；
+  写失败不重试，后续步骤标 `skipped`，附件和长任务都能接。
+- **模块要读哪些站，装之前先看**：`host.origins` 声明站点根；运行期 `deps.data` 只放行声明过的 origin，
+  path / registry 安装预检直接列出「会读取这些站」（git 源装前读不到清单）。不写仍按旧模块放行。
 
 #### 🐛 修复
 

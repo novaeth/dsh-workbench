@@ -47,6 +47,7 @@ export const CORE_METHODS = [
   ['data', 'requestMany'],
   ['data', 'submit'],
   ['data', 'plan'],
+  ['data', 'submitPlan'],
   ['supply', 'resolvePluginSource'],
   ['supply', 'libInstallCommand'],
   ['supply', 'libUninstallCommand'],
@@ -207,7 +208,7 @@ export function validateAdapterSet(value: unknown, spec: string): AdapterSetLoad
   if (version === undefined || !SUPPORTED_ADAPTER_API_VERSIONS.includes(version)) {
     return failure(
       'incompatible-version',
-      `${spec} 的适配器协议版本是 ${String(record['apiVersion'])}，工作台只认 v${ADAPTER_SET_API_VERSION}`,
+      `${spec} 的适配器协议版本是 ${String(record['apiVersion'])}，工作台只认 v${ADAPTER_SET_API_VERSION}；v1 集合要补 data.plan 与 data.submitPlan 并升到 v2`,
       spec,
     );
   }
@@ -228,7 +229,12 @@ export function validateAdapterSet(value: unknown, spec: string): AdapterSetLoad
     }
   }
   if (missing.length > 0) {
-    return failure('missing-member', `${spec} 少了 ${missing.join(' / ')}`, spec);
+    const hint = missing.includes('data.submitPlan')
+      ? '（适配器集合要补写计划 data.submitPlan）'
+      : missing.includes('data.plan')
+        ? '（适配器集合要补多跳读取 data.plan）'
+        : '';
+    return failure('missing-member', `${spec} 少了 ${missing.join(' / ')}${hint}`, spec);
   }
   return { ok: true, spec, set: record as unknown as CoreAdapterSet };
 }

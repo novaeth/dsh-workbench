@@ -15,7 +15,7 @@ import type {
 
 export const WORKBENCH_ADAPTERS = 'workbenchAdapters';
 
-export const ADAPTER_SET_API_VERSION = 1;
+export const ADAPTER_SET_API_VERSION = 2;
 
 export const SUPPORTED_ADAPTER_API_VERSIONS: readonly number[] = [ADAPTER_SET_API_VERSION];
 

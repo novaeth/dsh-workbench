@@ -43,7 +43,8 @@ describe('scriptOf · 六种配方', () => {
     expect(script).toContain('fetch("https://x.example.com/api/user/auth/refresh"');
     expect(script).toContain('const token = pick(preJson, "data.access_token");');
     expect(script).toContain('headers["authorization"] = "Bearer " + token;');
-    expect(script).toContain('if (pre.status === 401 || pre.status === 403)');
+    expect(script).toContain('if (pre.status === 401)');
+    expect(script).toContain('code: "forbidden"');
   });
 
   it('CSRF 从 meta 取，放到头里', () => {

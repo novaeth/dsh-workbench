@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   createFlowActionRegistry,
+  createFlowHost,
   createLongTaskRegistry,
   type FlowActionRegistry,
   type FlowDefinition,
@@ -9,9 +10,9 @@ import { flowTaskDeps, startFlow } from '../flow/task.js';
 
 const tick = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 
-function runsOf(actions: FlowActionRegistry) {
+function runsOf(actions: FlowActionRegistry, flowHost?: ReturnType<typeof createFlowHost>) {
   return createLongTaskRegistry({
-    ...flowTaskDeps(actions),
+    ...flowTaskDeps(actions, flowHost),
     now: () => '2026-10-28T00:00:00.000Z',
     nextId: () => 'run-1',
   });
@@ -176,5 +177,39 @@ describe('flowTaskDeps / startFlow', () => {
     release?.();
     await tick();
     expect(runs.snapshot(started.id)?.status).toBe('ok');
+  });
+});
+
+describe('flowTaskDeps · data 步骤', () => {
+  it('流程里的 data 步骤跑通，结果进快照，耗时进步骤行', async () => {
+    const actions = createFlowActionRegistry();
+    const flowHost = createFlowHost({
+      data: {
+        plan: async () => ({
+          rows: { ok: true, data: [1, 2], elapsedMs: 3 },
+        }),
+      },
+    });
+    const runs = runsOf(actions, flowHost);
+    const flow: FlowDefinition = {
+      id: 'data',
+      title: '读数据',
+      steps: [
+        {
+          id: 'read',
+          title: '读待办',
+          data: {
+            origin: 'https://oa.example.com',
+            steps: [{ name: 'rows', request: { method: 'GET', path: '/api/rows' } }],
+          },
+        },
+      ],
+    };
+
+    const started = startFlow({ runs, flow, input: {}, workspace: '/w/a' });
+    await tick();
+    const snapshot = runs.snapshot(started.id);
+    expect(snapshot?.status).toBe('ok');
+    expect(snapshot?.steps.some((step) => step.includes('读数据：1 跳 3ms'))).toBe(true);
   });
 });
