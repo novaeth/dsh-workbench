@@ -1,0 +1,13 @@
+file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/self-update-version-tree.mjs:61
+  if (!existsSync(file)) throw new Error(`dist 里没有 ${file} —— 先在仓根 build 一次再来跑`);
+                               ^
+
+Error: dist 里没有 D:\a\dsh-workbench\dsh-workbench\packages\adapter-probe\dist\self-update-plan.js —— 先在仓根 build 一次再来跑
+    at distModule (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/self-update-version-tree.mjs:61:32)
+    at main (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/self-update-update-fixture.mjs:39:22)
+    at file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/self-update-update-fixture.mjs:94:7
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.22.2
