@@ -1,0 +1,267 @@
+{
+  "ok": true,
+  "manifests": [
+    {
+      "id": "panels",
+      "titleKey": "panels.title",
+      "card": null,
+      "tools": [
+        {
+          "name": "workbench_toolbox_list",
+          "writes": false
+        },
+        {
+          "name": "workbench_toolbox_open",
+          "writes": false,
+          "elevates": true
+        },
+        {
+          "name": "workbench_toolbox_close",
+          "writes": false
+        },
+        {
+          "name": "workbench_panels_list",
+          "writes": false
+        },
+        {
+          "name": "workbench_modules_list",
+          "writes": false
+        },
+        {
+          "name": "workbench_market_sources",
+          "writes": false
+        },
+        {
+          "name": "workbench_market_categories",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_status",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_panel",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_components",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_recon",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_spec",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_state",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_html",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_find",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_click",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_hover",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_type",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_fill",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_keys",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_scroll",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_wait",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_eval",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_screenshot",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_network",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_dialog",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_logs_watch",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_logs_read",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_logs_stop",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_record_read",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_record_detail",
+          "writes": false
+        },
+        {
+          "name": "workbench_diy_record_stop",
+          "writes": false
+        },
+        {
+          "name": "workbench_long_tasks_list",
+          "writes": false
+        },
+        {
+          "name": "workbench_panels_show",
+          "writes": true
+        },
+        {
+          "name": "workbench_panels_hide",
+          "writes": true
+        },
+        {
+          "name": "workbench_panels_move",
+          "writes": true
+        },
+        {
+          "name": "workbench_panels_reset",
+          "writes": true
+        },
+        {
+          "name": "workbench_panels_follow",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_install",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_update",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_uninstall",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_install_bundle",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_update_dependency",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_update_plugin",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_uninstall_plugin",
+          "writes": true
+        },
+        {
+          "name": "workbench_modules_update_workbench",
+          "writes": true
+        },
+        {
+          "name": "workbench_market_enable",
+          "writes": true
+        },
+        {
+          "name": "workbench_market_disable",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_install",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_publish",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_show",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_record_prepare",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_debug_start",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_debug_pause",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_debug_resume",
+          "writes": true
+        },
+        {
+          "name": "workbench_diy_debug_stop",
+          "writes": true
+        },
+        {
+          "name": "workbench_long_tasks_stop",
+          "writes": true
+        }
+      ],
+      "host": {
+        "inject": [],
+        "optional": [
+          "tools",
+          "workbenchSeam"
+        ]
+      }
+    },
+    {
+      "id": "hello",
+      "title": {
+        "zh": "示例模块",
+        "en": "Sample module"
+      },
+      "titleKey": "dsh-workbench.unit.hello.title",
+      "card": {
+        "order": 90
+      },
+      "tools": [],
+      "host": {
+        "inject": [],
+        "writes": []
+      }
+    }
+  ],
+  "installable": [
+    "hello"
+  ]
+}
