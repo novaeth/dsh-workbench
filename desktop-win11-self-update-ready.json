@@ -1,0 +1,7 @@
+{
+  "from": "1.2.3-beta.4",
+  "to": "1.4.0-beta.0",
+  "installed": "1.4.0-beta.0",
+  "running": "1.2.3-beta.4",
+  "local": false
+}
