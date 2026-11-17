@@ -1,0 +1,30 @@
+[0.0s] MILESTONE cdp-ready @ 0.0s
+[0.0s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.0s] pages: dsh-app://app/
+[0.0s] MILESTONE app-page @ 0.0s
+[0.0s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [] none :: HARNESS | Loading plugins…
+[5.6s] ready wait [checking] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: Workspaces | No sessions yet | More | Into the Unknown | Preview | Choose a workspace to start | Workbench panel | Reading the panel setup… | Preparing the workbench |  | Getting the runtime ready… |  | Loading settings…
+[5.6s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[7.7s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[7.7s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[9.7s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[9.7s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[11.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: | Preview | Standard mode | Describe what you want to build, / commands, @ files or sessions | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[11.7s] MILESTONE ready @ 11.7s
+[11.7s] verify wait :: host units panels,hello :: cards wb-card-hello ::  or sessions | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[11.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-verify-body.txt (345 bytes)
+[11.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-units.json (6078 bytes)
+[11.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-client-bundles.json (25 bytes)
+[11.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-page-internals.json (2096 bytes)
+[11.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-console-events.json (9688 bytes)
+[12.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-verify-running.json (1089 bytes)
+[12.0s] MILESTONE module-card @ 12.0s
+[12.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-smoke.json (101 bytes)
+[12.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-final-body.txt (345 bytes)
+[12.0s] TITLE: DeepSeek Harness
+[32.0s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+[32.0s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"32.0s","milestones":{"cdp-ready":"0.0s","app-page":"0.0s","cdp-connected":"0.1s","ready":"11.7s","module-card":"12.0s"},"card":true,"units":["panels","hello"]}
