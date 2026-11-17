@@ -1,0 +1,64 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.2 [39m[90mD:/a/dsh-workbench/dsh-workbench/packages/shared[39m
+
+ [31m❯[39m src/host/shell/__tests__/shell-render.test.ts [2m([22m[2m23 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 32[2mms[22m[39m
+   [32m✓[39m callOperatorOf [2m(3)[22m
+     [32m✓[39m pwsh：命令位置带引号时补 & 调用符[32m 3[2mms[22m[39m
+     [32m✓[39m pwsh：不带引号（或以空白开头的不带引号）原样[32m 0[2mms[22m[39m
+     [32m✓[39m posix 不管引号：bash 里命令位置本来就是命令[32m 0[2mms[22m[39m
+   [32m✓[39m invocationOf [2m(7)[22m
+     [32m✓[39m pwsh：-NoProfile -NonInteractive -Command，载荷带上 &[32m 4[2mms[22m[39m
+     [32m✓[39m pwsh：普通命令行不加 &[32m 3[2mms[22m[39m
+     [32m✓[39m posix：bash -c，脚本原样[32m 0[2mms[22m[39m
+     [32m✓[39m win32 只有 powershell.exe：文件换掉，三个启动参数与 & 调用符照旧[32m 1[2mms[22m[39m
+     [32m✓[39m win32 有 pwsh.exe：照旧 pwsh[32m 0[2mms[22m[39m
+     [32m✓[39m win32 两个都没有：仍给 pwsh[32m 1[2mms[22m[39m
+     [32m✓[39m posix：不受 PowerShell 解析影响[32m 0[2mms[22m[39m
+   [32m✓[39m powershellFileOf [2m(7)[22m
+     [32m✓[39m win32：PATH 里有 pwsh.exe 给 pwsh[32m 0[2mms[22m[39m
+     [32m✓[39m ★ win32：PATH 段被引号包着（安装器常这么写）时仍找得到 pwsh.exe[32m 1[2mms[22m[39m
+     [32m✓[39m win32：没有 pwsh.exe 但有 powershell.exe 时退回 powershell.exe[32m 0[2mms[22m[39m
+     [32m✓[39m win32：两个都没有仍给 pwsh（报错继续指向要装的那个）[32m 0[2mms[22m[39m
+     [32m✓[39m win32：按 PATH 段顺序先找遍 pwsh.exe 再找 powershell.exe，路径按 win32 拼[32m 0[2mms[22m[39m
+     [32m✓[39m win32：PATH 空或全是空段时不查文件系统[32m 1[2mms[22m[39m
+     [32m✓[39m 非 win32：恒给 pwsh，不去 PATH 里找[32m 0[2mms[22m[39m
+   [32m✓[39m quotedArgvLine / quotedLineOf [2m(4)[22m
+     [32m✓[39m posix：单引号；内嵌引号关引号再转义[32m 0[2mms[22m[39m
+     [32m✓[39m win32：单引号 + 内嵌引号双写[32m 2[2mms[22m[39m
+     [32m✓[39m 空 argv 给空串[32m 0[2mms[22m[39m
+     [32m✓[39m 整条 invocation 按目标平台引号[32m 0[2mms[22m[39m
+   [31m❯[39m launcherPathOf / launcherInvocationOf [2m(2)[22m
+[31m     [31m×[31m ★ win32 走 .cmd 包装，经 cmd.exe /d /c 起（ComSpec 优先）[39m[32m 9[2mms[22m[39m
+     [32m✓[39m ★ 其余平台直接跑启动脚本，参数原样[32m 0[2mms[22m[39m
+ [32m✓[39m src/host/seam/__tests__/process.test.ts [2m([22m[2m3 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 33[2mms[22m[39m
+ [32m✓[39m src/host/seam/__tests__/seam.test.ts [2m([22m[2m32 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 242[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/host/shell/__tests__/shell-render.test.ts[2m > [22mlauncherPathOf / launcherInvocationOf[2m > [22m★ win32 走 .cmd 包装，经 cmd.exe /d /c 起（ComSpec 优先）
+[31m[1mAssertionError[22m: expected 'C:\Windows\system32\cmd.exe' to be 'cmd.exe' // Object.is equality[39m
+
+Expected: [32m"cmd.exe"[39m
+Received: [31m"[7mC:\Windows\system32\[27mcmd.exe"[39m
+
+[36m [2m❯[22m src/host/shell/__tests__/shell-render.test.ts:[2m178:78[22m[39m
+    [90m176|[39m       args: ['/d', '/c', file, 'setup'],
+    [90m177|[39m     });
+    [90m178|[39m     expect(launcherInvocationOf(binDir, ['setup'], 'win32', undefined)…
+    [90m   |[39m                                                                              [31m^[39m
+    [90m179|[39m   });
+    [90m180|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m55 passed[39m[22m[2m | [22m[33m2 skipped[39m[90m (58)[39m
+[2m   Start at [22m 12:25:09
+[2m   Duration [22m 829ms[2m (transform 39%, import 32%, tests 27%, worker 2%)[22m
+
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/shared/src/host/shell/__tests__/shell-render.test.ts,title=src/host/shell/__tests__/shell-render.test.ts > launcherPathOf / launcherInvocationOf > ★ win32 走 .cmd 包装，经 cmd.exe /d /c 起（ComSpec 优先）,line=178,column=78::AssertionError: expected 'C:\Windows\system32\cmd.exe' to be 'cmd.exe' // Object.is equality%0A%0AExpected: "cmd.exe"%0AReceived: "C:\Windows\system32\cmd.exe"%0A%0A ❯ src/host/shell/__tests__/shell-render.test.ts:178:78%0A%0A
+undefined
+D:\a\dsh-workbench\dsh-workbench\packages\shared:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command "vitest" not found
