@@ -1,0 +1,58 @@
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.2s] ready wait [] none :: HARNESS | Loading plugins…
+[2.2s] ready wait [] none :: HARNESS | Loading plugins…
+[4.4s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[4.4s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[7.5s] ready wait [checking] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: HARNESS | Loading plugins… | Preparing the workbench |  | Getting the runtime ready…
+[7.5s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[9.7s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[9.7s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[11.7s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[11.7s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[13.7s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[13.7s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[15.7s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[15.7s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[17.8s] ready wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: r/browser-extension; (2) click the link below to install it from the Chrome Web Store. When done, come back and click Retry. | Get the extension in the Chrome Web Store | Open browser | Retry | Enter the workbench anyway
+[17.8s] 模拟用户装扩展：起浏览器 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing（--load-extension=/Users/runner/work/_temp/opencli-ext，日志 /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-add-plugin-chrome.log）
+[17.8s] MILESTONE browser-launched @ 17.8s
+[21.0s] extension wait: connected :: {"ok":true,"data":{"cliVersion":"2.0.3","daemonRunning":true,"daemonFlaky":false,"daemonStale":false,"daemonVersion":"2.0.3","extensionConnected":true,"extensionFlaky":false,"extensionVersion":"1.0.27","extensionOutdated":false,"connectivity":{"ok":true,"durationMs":376},"profiles":[{"contextId":"usvvwgzz","extensionConnected":true,"extensionVersion":"1.0.27","extensionCompatRange":">=1.7.0","pending":0,"lastSeenAt":1794914180380}],"adapterShadows":[],"issues":[]}}
+[21.0s] chrome targets: page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | browser_ui:chrome://webui-toolbar.top-chrome/ | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | browser_ui:chrome://webui-toolbar.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://webui-toolbar.top-chrome/ | service_worker:chrome-extension://kmogdbfhcachbdcbjajeghpiogegbbnh/dist/background.js
+[21.1s] STEP click ["Retry","重试"]: "Retry"
+[24.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: rd mode | Describe what you want to build, / commands, @ files or sessions | Workspace Write | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[24.3s] MILESTONE ready @ 24.3s
+[24.5s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Workbench module market"
+[27.5s] market-page: | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[27.5s] MILESTONE market-open @ 27.5s
+[27.5s] MILESTONE add-plugin-market @ 27.5s
+[27.5s] STEP click ["已安装","Installed"]: "Installed"
+[28.4s] STEP click ["添加模块","Add module"]: "Add module"
+[29.6s] add-plugin dialog wait: {"field":true,"buttons":["Close","Install guide and examples","Source\nnpm registry","Install"]}
+[29.6s] add-plugin spec field: ""
+[30.1s] add-plugin filled: "opencli-plugin-hello"
+[30.2s] STEP click ["安装","Install"]: "Install"
+[31.4s] MILESTONE plugin-check-clicked @ 31.4s
+[31.4s] plugin preview wait: bench |  | This card comes from a standalone workbench module. |  | Add module |  | Enter a package name for a module or opencli plugin, a Git repository URL, or a local directory path. |  | Checking…
+[33.4s] plugin preview wait: bench |  | This card comes from a standalone workbench module. |  | Add module |  | Enter a package name for a module or opencli plugin, a Git repository URL, or a local directory path. |  | Checking…
+[35.4s] plugin preview wait: lo |  | Plugin name: hello |  | https://registry.npmjs.org/ |  | This is an opencli plugin: it will be installed into the opencli plugin area and works right away, with no restart. |  | Edit | Install
+[35.4s] MILESTONE plugin-preview @ 35.4s
+[35.4s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-add-plugin-add-plugin-preview-body.txt (828 bytes)
+[35.4s] STEP click ["安装","Install"]: "Install"
+[36.6s] MILESTONE plugin-install-clicked @ 36.6s
+[36.6s] plugin-installed: m a standalone workbench module. |  | Add module |  | Enter a package name for a module or opencli plugin, a Git repository URL, or a local directory path. |  | Installing the module… | Cancel install
+[38.7s] plugin-installed: m a standalone workbench module. |  | Add module |  | Enter a package name for a module or opencli plugin, a Git repository URL, or a local directory path. |  | Installing the module… | Cancel install
+[40.7s] plugin-installed: dule |  | Enter a package name for a module or opencli plugin, a Git repository URL, or a local directory path. |  | Installed |  | opencli-plugin-hello |  | Installed: opencli plugin hello |  | Close
+[40.7s] MILESTONE plugin-installed @ 40.7s
+[40.7s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-add-plugin-add-plugin-body.txt (699 bytes)
+[40.7s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-add-plugin-add-plugin.json (95 bytes)
+[40.7s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-add-plugin-smoke.json (133 bytes)
+[40.7s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-add-plugin-final-body.txt (699 bytes)
+[40.7s] TITLE: DeepSeek Harness
+[40.9s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-add-plugin.png (85384 bytes)
+[40.9s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"40.9s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.1s","browser-launched":"17.8s","ready":"24.3s","market-open":"27.5s","add-plugin-market":"27.5s","plugin-check-clicked":"31.4s","plugin-preview":"35.4s","plugin-install-clicked":"36.6s","plugin-installed":"40.7s"},"spec":"opencli-plugin-hello","preview":true,"installed":true,"market":true}

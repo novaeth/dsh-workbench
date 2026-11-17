@@ -1,0 +1,6 @@
+{
+  "visibility": "visible",
+  "row": true,
+  "panel": true,
+  "status": 200
+}
