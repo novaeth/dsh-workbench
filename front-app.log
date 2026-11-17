@@ -1,0 +1,13 @@
+✅ 前台应用读得出来 —— 命令退出码 0 · 读到 4194316
+✅ 读到的是刚打开的那个应用 —— 期望 /^\d+$/，实际 4194316
+❌ 带回前台跑得通 —— 退出码 1 · X Error of failed request:  BadWindow (invalid Window parameter)
+  Major opcode of failed request:  20 (X_GetProperty)
+  Resource id in failed request:  0x40000c
+  Serial number of failed request:  26
+✅ 找不到的应用不假装成功 —— 退出码 1
+
+1 项没过：
+- 带回前台跑得通：退出码 1 · X Error of failed request:  BadWindow (invalid Window parameter)
+  Major opcode of failed request:  20 (X_GetProperty)
+  Resource id in failed request:  0x40000c
+  Serial number of failed request:  26
