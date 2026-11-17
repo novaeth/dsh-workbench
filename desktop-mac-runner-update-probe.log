@@ -1,0 +1,57 @@
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.2s] MILESTONE cdp-connected @ 0.2s
+[0.2s] health wait [] none :: HARNESS | Loading plugins…
+[0.2s] ready wait [] none :: HARNESS | Loading plugins…
+[2.3s] ready wait [] none :: HARNESS | Loading plugins…
+[4.4s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[4.4s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[7.4s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: Workspaces | No sessions yet | More | Into the Unknown | Preview | Choose a workspace to start | Workbench panel | Reading the panel setup… | Preparing the workbench |  | Getting the runtime ready… |  | Loading settings…
+[7.4s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[9.4s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[9.4s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[11.4s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[11.4s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[13.5s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[13.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[15.5s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[15.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[17.5s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[17.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[19.6s] ready wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: r/browser-extension; (2) click the link below to install it from the Chrome Web Store. When done, come back and click Retry. | Get the extension in the Chrome Web Store | Open browser | Retry | Enter the workbench anyway
+[19.6s] 模拟用户装扩展：起浏览器 /Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing（--load-extension=/Users/runner/work/_temp/opencli-ext，日志 /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-chrome.log）
+[19.6s] MILESTONE browser-launched @ 19.6s
+[23.6s] extension wait: connected :: {"ok":true,"data":{"cliVersion":"2.0.3","daemonRunning":true,"daemonFlaky":false,"daemonStale":false,"daemonVersion":"2.0.3","extensionConnected":true,"extensionFlaky":false,"extensionVersion":"1.0.27","extensionOutdated":false,"connectivity":{"ok":true,"durationMs":45},"profiles":[{"contextId":"fdmakqtt","extensionConnected":true,"extensionVersion":"1.0.27","extensionCompatRange":">=1.7.0","pending":0,"lastSeenAt":1794913332346}],"adapterShadows":[],"issues":[]}}
+[23.7s] chrome targets: page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | browser_ui:chrome://webui-toolbar.top-chrome/ | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | browser_ui:chrome://webui-toolbar.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://webui-toolbar.top-chrome/ | service_worker:chrome-extension://kmogdbfhcachbdcbjajeghpiogegbbnh/dist/background.js
+[23.7s] STEP click ["Retry","重试"]: "Retry"
+[26.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: rd mode | Describe what you want to build, / commands, @ files or sessions | Workspace Write | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[26.9s] MILESTONE ready @ 26.9s
+[27.0s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Workbench module market"
+[30.0s] market-page: | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[30.0s] MILESTONE market-open @ 30.0s
+[30.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-body.txt (614 bytes)
+[30.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[32.0s] STEP workbench row: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[32.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-row.json (4394 bytes)
+[32.8s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-before.json (890 bytes)
+[32.8s] STEP click ["更新","Update","升级","Upgrade"]: "Upgrade"
+[35.8s] MILESTONE self-update-clicked @ 35.8s
+[38.4s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-alive.txt (79 bytes)
+[38.4s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[40.4s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[42.4s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[44.4s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[46.4s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[46.4s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-ready.txt (673 bytes)
+[46.4s] MILESTONE self-update-ready @ 46.4s
+[46.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-row-after.json (4343 bytes)
+[47.3s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-ready.json (131 bytes)
+[47.3s] MILESTONE self-update-verified @ 47.3s
+[47.3s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-smoke.json (117 bytes)
+[47.4s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-final-body.txt (673 bytes)
+[47.4s] TITLE: DeepSeek Harness
+[47.5s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update.png (94220 bytes)
+[47.5s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"47.5s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.2s","browser-launched":"19.6s","ready":"26.9s","market-open":"30.0s","self-update-clicked":"35.8s","self-update-ready":"46.4s","self-update-verified":"47.3s"},"updated":true,"ready":true,"live":true,"to":"1.4.0-beta.0"}
