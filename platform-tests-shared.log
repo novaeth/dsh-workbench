@@ -1,0 +1,53 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.2 [39m[90mD:/a/dsh-workbench/dsh-workbench/packages/shared[39m
+
+ [32m✓[39m src/host/shell/__tests__/shell-render.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [31m❯[39m src/host/runtime/__tests__/env-policy.test.ts [2m([22m[2m10 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 24[2mms[22m[39m
+   [31m❯[39m 受控 env 入口 [2m(10)[22m
+     [32m✓[39m product：HOME / 缓存全钉在运行时根，真 npmrc/gitconfig 只读指过去[32m 3[2mms[22m[39m
+     [32m✓[39m product：没有真配置时不指过去[32m 1[2mms[22m[39m
+     [32m✓[39m unit：HOME 与 npm/pnpm 目录钉到单元数据目录[32m 1[2mms[22m[39m
+     [32m✓[39m ★ product/unit：USERPROFILE 也钉在隔离 home（Windows 上 os.homedir() 读它）[32m 1[2mms[22m[39m
+[31m     [31m×[31m ★ win32 形态的隔离 home 一并给 HOMEDRIVE/HOMEPATH[39m[32m 6[2mms[22m[39m
+     [32m✓[39m ★ productHomeEnv 就是要给 launcher 的那一层：HOME + 平台对应的那套[32m 3[2mms[22m[39m
+     [32m✓[39m bootstrap：继承父环境、HOME/缓存钉住、PATH 可替换、pwsh 加 USERPROFILE[32m 1[2mms[22m[39m
+     [32m✓[39m promptless：posix 关 askpass 指向 false，win32 删掉父进程的 askpass[32m 1[2mms[22m[39m
+     [32m✓[39m 叠层：undefined 删键，envTextOf 丢掉非字符串[32m 1[2mms[22m[39m
+     [32m✓[39m PATH 前插去重[32m 0[2mms[22m[39m
+ [32m✓[39m src/host/seam/__tests__/process.test.ts [2m([22m[2m3 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 44[2mms[22m[39m
+ [32m✓[39m src/host/runtime/__tests__/front-app.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/host/shell/__tests__/shell-text.test.ts [2m([22m[2m14 tests[22m[2m | [22m[33m4 skipped[39m[2m)[22m[33m 895[2mms[22m[39m
+   [32m✓[39m quoteShellArg（Windows pwsh） [2m(1)[22m
+     [33m[2m✓[22m[39m 经真 pwsh 解析后原样往返[33m 890[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m4 passed[39m[22m[90m (5)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m54 passed[39m[22m[2m | [22m[33m5 skipped[39m[90m (60)[39m
+[2m   Start at [22m 16:26:00
+[2m   Duration [22m 1.31s[2m (tests 70%, import 15%, transform 14%, worker 2%)[22m
+
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/shared/src/host/runtime/__tests__/env-policy.test.ts,title=src/host/runtime/__tests__/env-policy.test.ts > 受控 env 入口 > ★ win32 形态的隔离 home 一并给 HOMEDRIVE/HOMEPATH,line=88,column=32::AssertionError: expected 'C:' to be undefined%0A%0A- Expected:%0Aundefined%0A%0A+ Received:%0A"C:"%0A%0A ❯ src/host/runtime/__tests__/env-policy.test.ts:88:32%0A%0A
+undefined
+D:\a\dsh-workbench\dsh-workbench\packages\shared:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command "vitest" not found
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/host/runtime/__tests__/env-policy.test.ts[2m > [22m受控 env 入口[2m > [22m★ win32 形态的隔离 home 一并给 HOMEDRIVE/HOMEPATH
+[31m[1mAssertionError[22m: expected 'C:' to be undefined[39m
+
+[32m- Expected:[39m
+undefined
+
+[31m+ Received:[39m
+"C:"
+
+[36m [2m❯[22m src/host/runtime/__tests__/env-policy.test.ts:[2m88:32[22m[39m
+    [90m 86|[39m     expect(env['HOMEPATH']).toBe('\\rt\\home');
+    [90m 87|[39m     const posix = productEnvOf({ runtimeRoot: RUNTIME, realHome: REAL_…
+    [90m 88|[39m     expect(posix['HOMEDRIVE']).toBeUndefined();
+    [90m   |[39m                                [31m^[39m
+    [90m 89|[39m     expect(posix['HOMEPATH']).toBeUndefined();
+    [90m 90|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
