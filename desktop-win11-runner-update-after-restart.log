@@ -1,0 +1,36 @@
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [] none :: HARNESS | Loading plugins…
+[4.2s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[4.2s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[6.2s] ready wait [checking] toolchain:running(node --version · npm --version · pnpm --version) cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[6.2s] 体检还在跑，先等它：toolchain:running · cli:pending · bridge:pending · diy:pending
+[10.5s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: Workspaces | No sessions yet | More | Into the Unknown | Preview | Choose a workspace to start | Workbench panel | Reading the panel setup… | Preparing the workbench |  | Getting the runtime ready… |  | Loading settings…
+[10.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[12.5s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: llo, workbench |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[12.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[14.6s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[14.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[16.6s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[16.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[18.6s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: | Preview | Standard mode | Describe what you want to build, / commands, @ files or sessions | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[18.6s] MILESTONE ready @ 18.6s
+[18.6s] verify wait :: host units panels,hello :: cards wb-card-hello ::  or sessions | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[18.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-self-update-verify-body.txt (345 bytes)
+[18.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-self-update-units.json (6078 bytes)
+[18.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-self-update-client-bundles.json (25 bytes)
+[18.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-self-update-page-internals.json (2096 bytes)
+[18.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-self-update-console-events.json (9697 bytes)
+[19.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-self-update-verify-running.json (1089 bytes)
+[19.0s] MILESTONE module-card @ 19.0s
+[19.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-self-update-smoke.json (101 bytes)
+[19.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-after-self-update-final-body.txt (345 bytes)
+[19.0s] TITLE: DeepSeek Harness
+[39.0s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+[39.0s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"39.0s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.1s","ready":"18.6s","module-card":"19.0s"},"card":true,"units":["panels","hello"]}

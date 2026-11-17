@@ -1,0 +1,9 @@
+版本目录已铺好：C:\Users\runneradmin\.dsh\workbench\versions\1.4.0-beta.0
+装好了：1.4.0-beta.0
+装完自检过了
+兼容性未知（missing-dsh-version），已经做过隔离入口检查
+已经指到 C:\Users\runneradmin\.dsh\workbench\versions\1.4.0-beta.0（重启后生效）
+清单里 @dsh-workbench/core 那一行一直都在
+旧版本目录没动，留着 1.2.3-beta.4、1.4.0-beta.0
+marker 落 pending-restart
+1.4.0-beta.0 已就绪，重启后生效
