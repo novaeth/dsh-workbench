@@ -1,0 +1,20 @@
+
+> @dsh-workbench/core-workspace@1.4.0-beta.0 check /home/runner/work/dsh-workbench/dsh-workbench
+> pnpm run lint:commit && pnpm run build && pnpm run check:deps && pnpm run typecheck && pnpm run lint && pnpm run check:duplication && pnpm run coverage && pnpm run check:gates:target -- --fail-on-red && pnpm run arch && pnpm run check:docs && pnpm run check:copy:strict && pnpm run check:runtimes && pnpm run selfcheck && pnpm run check:modules && pnpm run check:adapter-defaults && node scripts/check-adapter-contract.mjs && node scripts/check-opencli-wire.mjs && pnpm run check:release-packages && pnpm run check:release-artifacts
+
+
+> @dsh-workbench/core-workspace@1.4.0-beta.0 lint:commit /home/runner/work/dsh-workbench/dsh-workbench
+> git log -1 --format=%B | commitlint --verbose
+
+[90m⧗[39m   --- input ---
+[1mfix(ci): Windows 的 CRLF workflow 也要能解析出 run 命令行
+
+- jobsOf 按 \r?\n 切行：Windows checkout 是 CRLF，run: 的行尾 \r 会让 .*$ 不匹配
+- Windows 自检步骤改为 always()，平台单测红时也能看到自检结论[22m
+[31m✖[39m   subject must not be sentence-case [90m[subject-case][39m
+
+[1m[31m✖[39m   found 1 problems, 0 warnings[22m
+ⓘ   Get help: https://github.com/conventional-changelog/commitlint/#what-is-commitlint
+
+ ELIFECYCLE  Command failed with exit code 1.
+ ELIFECYCLE  Command failed with exit code 1.
