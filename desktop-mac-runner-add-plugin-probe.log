@@ -1,0 +1,48 @@
+[0.0s] MILESTONE cdp-ready @ 0.0s
+[0.0s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.0s] pages: dsh-app://app/
+[0.0s] MILESTONE app-page @ 0.0s
+[0.0s] target: dsh-app://app/
+[0.0s] MILESTONE cdp-connected @ 0.0s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[2.2s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[4.3s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: llo, workbench |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[4.3s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[6.3s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[6.3s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[8.3s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: rd mode | Describe what you want to build, / commands, @ files or sessions | Workspace Write | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[8.3s] MILESTONE ready @ 8.3s
+[8.4s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Workbench module market"
+[11.4s] market-page: | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[11.4s] MILESTONE market-open @ 11.4s
+[11.4s] MILESTONE add-plugin-market @ 11.4s
+[11.4s] STEP click ["已安装","Installed"]: "Installed"
+[12.2s] STEP click ["添加模块","Add module"]: "Add module"
+[13.4s] add-plugin dialog wait: {"field":true,"buttons":["Close","Install guide and examples","Source\nnpm registry","Install"]}
+[13.4s] add-plugin spec field: ""
+[13.9s] add-plugin filled: "opencli-plugin-hello"
+[13.9s] STEP click ["安装","Install"]: "Install"
+[15.1s] MILESTONE plugin-check-clicked @ 15.1s
+[15.2s] plugin preview wait: bench |  | This card comes from a standalone workbench module. |  | Add module |  | Enter a package name for a module or opencli plugin, a Git repository URL, or a local directory path. |  | Checking…
+[17.2s] plugin preview wait: bench |  | This card comes from a standalone workbench module. |  | Add module |  | Enter a package name for a module or opencli plugin, a Git repository URL, or a local directory path. |  | Checking…
+[19.2s] plugin preview wait: lo |  | Plugin name: hello |  | https://registry.npmjs.org/ |  | This is an opencli plugin: it will be installed into the opencli plugin area and works right away, with no restart. |  | Edit | Install
+[19.4s] MILESTONE plugin-preview @ 19.4s
+[19.4s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-add-plugin-add-plugin-preview-body.txt (828 bytes)
+[19.4s] STEP click ["安装","Install"]: "Install"
+[20.6s] MILESTONE plugin-install-clicked @ 20.6s
+[20.6s] plugin-installed: m a standalone workbench module. |  | Add module |  | Enter a package name for a module or opencli plugin, a Git repository URL, or a local directory path. |  | Installing the module… | Cancel install
+[22.6s] plugin-installed: m a standalone workbench module. |  | Add module |  | Enter a package name for a module or opencli plugin, a Git repository URL, or a local directory path. |  | Installing the module… | Cancel install
+[25.1s] plugin-installed: m a standalone workbench module. |  | Add module |  | Enter a package name for a module or opencli plugin, a Git repository URL, or a local directory path. |  | Installing the module… | Cancel install
+[27.4s] plugin-installed: m a standalone workbench module. |  | Add module |  | Enter a package name for a module or opencli plugin, a Git repository URL, or a local directory path. |  | Installing the module… | Cancel install
+[29.4s] plugin-installed: m a standalone workbench module. |  | Add module |  | Enter a package name for a module or opencli plugin, a Git repository URL, or a local directory path. |  | Installing the module… | Cancel install
+[31.5s] plugin-installed: dule |  | Enter a package name for a module or opencli plugin, a Git repository URL, or a local directory path. |  | Installed |  | opencli-plugin-hello |  | Installed: opencli plugin hello |  | Close
+[31.5s] MILESTONE plugin-installed @ 31.5s
+[31.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-add-plugin-add-plugin-body.txt (774 bytes)
+[31.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-add-plugin-add-plugin.json (95 bytes)
+[31.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-add-plugin-smoke.json (133 bytes)
+[31.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-add-plugin-final-body.txt (774 bytes)
+[31.5s] TITLE: DeepSeek Harness
+[32.5s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-add-plugin.png (86012 bytes)
+[32.5s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"32.5s","milestones":{"cdp-ready":"0.0s","app-page":"0.0s","cdp-connected":"0.0s","ready":"8.3s","market-open":"11.4s","add-plugin-market":"11.4s","plugin-check-clicked":"15.1s","plugin-preview":"19.4s","plugin-install-clicked":"20.6s","plugin-installed":"31.5s"},"spec":"opencli-plugin-hello","preview":true,"installed":true,"market":true}
