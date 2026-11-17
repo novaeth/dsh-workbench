@@ -1,0 +1,98 @@
+[0.0s] MILESTONE cdp-ready @ 0.0s
+[0.0s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [] none :: HARNESS | Loading plugins…
+[4.1s] ready wait [] none :: HARNESS | Loading plugins…
+[7.2s] ready wait [checking] toolchain:running(node --version · npm --version · pnpm --version) cli:pending bridge:pending diy:pending :: Workspaces | No sessions yet | More | Into the Unknown | Preview | Choose a workspace to start | Workbench panel | Reading the panel setup… | Preparing the workbench |  | Getting the runtime ready… |  | Loading settings…
+[7.2s] 体检还在跑，先等它：toolchain:running · cli:pending · bridge:pending · diy:pending
+[9.2s] ready wait [checking] toolchain:running(node --version · npm --version · pnpm --version) cli:pending bridge:pending diy:pending :: le module |  | hello, workbench |  | This card comes from a standalone workbench module. |  | Preparing the workbench | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode
+[9.2s] 体检还在跑，先等它：toolchain:running · cli:pending · bridge:pending · diy:pending
+[11.3s] ready wait [checking] toolchain:running(node --version · npm --version · pnpm --version) cli:pending bridge:pending diy:pending :: le module |  | hello, workbench |  | This card comes from a standalone workbench module. |  | Preparing the workbench | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode
+[11.3s] 体检还在跑，先等它：toolchain:running · cli:pending · bridge:pending · diy:pending
+[13.3s] ready wait [checking] toolchain:running(node --version · npm --version · pnpm --version) cli:pending bridge:pending diy:pending :: le module |  | hello, workbench |  | This card comes from a standalone workbench module. |  | Preparing the workbench | Check the environment | - | Install background tools | - | Connect your browser | - | Check DIY mode
+[13.3s] 体检还在跑，先等它：toolchain:running · cli:pending · bridge:pending · diy:pending
+[15.3s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: llo, workbench |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[15.3s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[17.3s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[17.3s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[19.3s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[19.3s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[21.3s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[21.3s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[23.4s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[23.4s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[25.4s] ready wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: r\browser-extension; (2) click the link below to install it from the Chrome Web Store. When done, come back and click Retry. | Get the extension in the Chrome Web Store | Open browser | Retry | Enter the workbench anyway
+[25.4s] 模拟用户装扩展：起浏览器 D:\a\_temp\cft\chrome-win64\chrome.exe（--load-extension=D:\a\_temp\opencli-ext，日志 D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-chrome.log）
+[25.4s] MILESTONE browser-launched @ 25.4s
+[30.6s] extension wait: connected :: {"ok":true,"data":{"cliVersion":"2.0.3","daemonRunning":true,"daemonFlaky":false,"daemonStale":false,"daemonVersion":"2.0.3","extensionConnected":true,"extensionFlaky":false,"extensionVersion":"1.0.27","extensionOutdated":false,"connectivity":{"ok":true,"durationMs":4133},"profiles":[{"contextId":"qvrv9ghr","extensionConnected":true,"extensionVersion":"1.0.27","extensionCompatRange":">=1.7.0","pending":0,"lastSeenAt":1794910688329}],"adapterShadows":[],"issues":[]}}
+[30.7s] chrome targets: page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://webui-toolbar.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://webui-toolbar.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/ | service_worker:chrome-extension://eghmcigglheggjiadbmpddohagagpnca/dist/background.js
+[30.7s] STEP click ["Retry","重试"]: "Retry"
+[33.9s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: | Preview | Standard mode | Describe what you want to build, / commands, @ files or sessions | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[33.9s] MILESTONE ready @ 33.9s
+[34.0s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Workbench module market"
+[37.0s] market-page: | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[37.0s] MILESTONE market-open @ 37.0s
+[37.0s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-body.txt (606 bytes)
+[37.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[39.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[41.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[43.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[45.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[47.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[49.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[51.1s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[53.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[56.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[58.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[60.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[62.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[64.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[66.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[68.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[70.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[72.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[74.1s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[76.1s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[78.1s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[80.1s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[82.1s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[84.1s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[86.1s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[88.1s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[90.1s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[92.1s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[94.2s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[96.2s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[98.2s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[100.2s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[102.2s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[104.2s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[106.2s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[108.2s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[110.2s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[112.3s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[114.3s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[116.3s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[118.3s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[120.3s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[122.3s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[124.3s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[126.3s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[128.3s] STEP workbench row: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[128.3s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-row.json (4394 bytes)
+[128.3s] FAIL 工作台那一行没有「更新」钮（盘上/源上版本没读到？）
+[128.3s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-console-events.json (10082 bytes)
+[128.3s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-failed-body.txt (649 bytes)
+[148.3s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+[148.3s] FATAL Error: 工作台那一行没有「更新」钮（盘上/源上版本没读到？）（现场：desktop-win10-self-update-failed-body.txt / desktop-win10-self-update-failed-preflight.json）
+    at fail (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:267:9)
+    at async smokeSelfUpdate (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:1037:5)
+    at async main (file:///D:/a/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:1416:11)
+[148.3s] SMOKE_SUMMARY {"outcome":"failed","elapsed":"148.3s","milestones":{"cdp-ready":"0.0s","app-page":"0.1s","cdp-connected":"0.1s","browser-launched":"25.4s","ready":"33.9s","market-open":"37.0s"},"reason":"工作台那一行没有「更新」钮（盘上/源上版本没读到？）（现场：desktop-win10-self-update-failed-body.txt / desktop-win10-self-update-failed-preflight.json）"}
+[148.3s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-fatal-body.txt (649 bytes)
+[149.3s] SHOT D:\a\dsh-workbench\dsh-workbench\desktop-win10-self-update-fatal.png (60503 bytes)
