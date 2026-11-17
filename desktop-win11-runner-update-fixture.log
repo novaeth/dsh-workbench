@@ -1,0 +1,42 @@
+真装最新版 1.4.0-beta.0 → C:\Users\runneradmin\.dsh\workbench\versions\1.4.0-beta.0
+装最新版 1.4.0-beta.0 没成：
+│ ├─┬ @dsh-workbench/adapter-profile 1.4.0-beta.0
+│ │ ├── ✕ missing peer react@"*"
+│ │ └── ✕ missing peer @deepseek-ai/dsh-client-ui-primitives@0.2.2-rc.2
+│ └─┬ @dsh-workbench/adapter-runtime 1.4.0-beta.0
+│   ├── ✕ missing peer react@"*"
+│   └── ✕ missing peer @deepseek-ai/dsh-client-ui-primitives@0.2.2-rc.2
+├─┬ @dsh-workbench/core 1.4.0-beta.0
+│ ├── ✕ missing peer react@"*"
+│ ├── ✕ missing peer @deepseek-ai/dsh-client-ui-primitives@0.2.2-rc.2
+│ ├── ✕ missing peer react-dom@"*"
+│ ├─┬ @dsh-workbench/shared 1.4.0-beta.0
+│ │ ├── ✕ missing peer react@"*"
+│ │ └── ✕ missing peer @deepseek-ai/dsh-client-ui-primitives@0.2.2-rc.2
+│ └─┬ @dsh-workbench/adapters-default 1.4.0-beta.0
+│   ├── ✕ missing peer react@"*"
+│   └── ✕ missing peer @deepseek-ai/dsh-client-ui-primitives@0.2.2-rc.2
+└─┬ @dsh-workbench/shared 1.4.0-beta.0
+  ├── ✕ missing peer react@"*"
+  └── ✕ missing peer @deepseek-ai/dsh-client-ui-primitives@0.2.2-rc.2
+Peer dependencies that should be installed:
+  @deepseek-ai/dsh-client-ui-primitives@0.2.2-rc.2
+  react-dom@"*"
+  react@"*"
+
+Packages: +42
+++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 42, reused 0, downloaded 2, added 0
+Progress: resolved 42, reused 0, downloaded 4, added 0
+Progress: resolved 42, reused 0, downloaded 9, added 0
+Progress: resolved 42, reused 0, downloaded 12, added 0
+Progress: resolved 42, reused 0, downloaded 30, added 4
+Progress: resolved 42, reused 0, downloaded 40, added 17
+Progress: resolved 42, reused 0, downloaded 40, added 21
+Progress: resolved 42, reused 0, downloaded 40, added 38
+Progress: resolved 42, reused 0, downloaded 40, added 40
+Progress: resolved 42, reused 0, downloaded 41, added 40
+Progress: resolved 42, reused 0, downloaded 41, added 41
+ ERR_PNPM_FETCH_404  GET https://registry.npmjs.org/@dsh-workbench/adapter-runtime/-/adapter-runtime-1.4.0-beta.0.tgz: Not Found - 404
+
+No authorization header was set for the request.

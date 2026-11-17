@@ -1,0 +1,9 @@
+{
+  "card": true,
+  "units": [
+    "panels",
+    "hello"
+  ],
+  "phase": "ready",
+  "bridge": "ok"
+}
