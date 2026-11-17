@@ -1,0 +1,22 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.2 [39m[90mD:/a/dsh-workbench/dsh-workbench/packages/adapter-probe[39m
+
+ [32m✓[39m src/self-update/__tests__/self-update.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 385[2mms[22m[39m
+ [32m✓[39m src/self-update/__tests__/self-update-steps.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 3424[2mms[22m[39m
+   [32m✓[39m 自更新：runner 按步骤跑，失败只落在 marker 上 [2m(6)[22m
+     [33m[2m✓[22m[39m ★ 第一遍只落了俩包、第二遍补齐 → 认第二遍，接着往下走[33m 407[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-dir.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 70[2mms[22m[39m
+ [32m✓[39m src/self-update/__tests__/self-update-boot.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-migrate.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-switch.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 16136[2mms[22m[39m
+   [32m✓[39m 版本目录：自检与安装 [2m(5)[22m
+     [33m[2m✓[22m[39m 抓不到（404）是临时性的：重试几次，但不「清掉重装」，最后如实回报[33m 15036[2mms[22m[39m
+ [32m✓[39m src/install/__tests__/isolated-install.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 15306[2mms[22m[39m
+   [32m✓[39m installIsolatedRuntime（旧树先挪成 prev → 直接装进 live → 自检） [2m(5)[22m
+     [33m[2m✓[22m[39m ★ 装失败 → 旧树换回来，装了一半的 live 清掉[33m 15039[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+[2m      Tests [22m [1m[32m119 passed[39m[22m[90m (119)[39m
+[2m   Start at [22m 12:23:44
+[2m   Duration [22m 18.39s[2m (tests 85%, transform 9%, import 6%)[22m
+
