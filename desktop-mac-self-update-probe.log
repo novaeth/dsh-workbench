@@ -1,0 +1,83 @@
+[0.0s] MILESTONE cdp-ready @ 0.0s
+[0.0s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.2s] ready wait [] none :: HARNESS | Loading plugins…
+[4.2s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[4.2s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[6.5s] ready wait [checking] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: | Choose a workspace to start | Workbench panel | Reading the panel setup… | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[6.5s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[8.6s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[8.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[10.6s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[10.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[12.6s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[12.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[14.7s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: rd mode | Describe what you want to build, / commands, @ files or sessions | Workspace Write | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[14.7s] MILESTONE ready @ 14.7s
+[15.2s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Workbench module market"
+[18.2s] market-page: | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[18.2s] MILESTONE market-open @ 18.2s
+[18.2s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-body.txt (601 bytes)
+[18.2s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[20.4s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[22.4s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[24.4s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[26.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[28.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[30.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[32.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[34.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[36.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[38.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[40.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[42.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[44.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[46.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[48.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[50.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[52.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[54.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[56.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[58.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[60.6s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[62.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[64.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[66.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[68.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[70.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[72.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[74.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[76.7s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[78.8s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[80.8s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[82.8s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[84.8s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[86.8s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[88.8s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[90.8s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[92.8s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[94.8s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[96.9s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[98.9s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[100.9s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[102.9s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[104.9s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[106.9s] self-update row wait: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[108.9s] STEP workbench row: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[108.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-row.json (4394 bytes)
+[108.9s] FAIL 工作台那一行没有「更新」钮（盘上/源上版本没读到？）
+[108.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-console-events.json (9691 bytes)
+[108.9s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-failed-body.txt (644 bytes)
+[109.1s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-failed.png (93446 bytes)
+[109.1s] FATAL Error: 工作台那一行没有「更新」钮（盘上/源上版本没读到？）（现场：desktop-mac-self-update-failed-body.txt / desktop-mac-self-update-failed-preflight.json）
+    at fail (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:267:9)
+    at async smokeSelfUpdate (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:1037:5)
+    at async main (file:///Users/runner/work/dsh-workbench/dsh-workbench/scripts/desktop-smoke/cdp-probe.mjs:1416:11)
+[109.1s] SMOKE_SUMMARY {"outcome":"failed","elapsed":"109.1s","milestones":{"cdp-ready":"0.0s","app-page":"0.1s","cdp-connected":"0.1s","ready":"14.7s","market-open":"18.2s"},"reason":"工作台那一行没有「更新」钮（盘上/源上版本没读到？）（现场：desktop-mac-self-update-failed-body.txt / desktop-mac-self-update-failed-preflight.json）"}
+[109.1s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-fatal-body.txt (644 bytes)
+[109.1s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-self-update-fatal.png (93446 bytes)

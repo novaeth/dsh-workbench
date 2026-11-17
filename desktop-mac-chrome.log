@@ -1,0 +1,3 @@
+
+DevTools listening on ws://127.0.0.1:9333/devtools/browser/92856a63-8082-4169-9fc8-6dc492f5d333
+[5003:18641:1117/101756.359139:ERROR:chrome/browser/ui/webui/ntp/new_tab_ui.cc:54] Requested load of chrome://newtab/ for incorrect profile type.
