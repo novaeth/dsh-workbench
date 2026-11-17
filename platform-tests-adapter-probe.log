@@ -1,0 +1,33 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.2 [39m[90mD:/a/dsh-workbench/dsh-workbench/packages/adapter-probe[39m
+
+ [32m✓[39m src/preflight/__tests__/preflight.test.ts [2m([22m[2m43 tests[22m[2m)[22m[33m 2810[2mms[22m[39m
+   [32m✓[39m createPreflight [2m(31)[22m
+     [33m[2m✓[22m[39m ★ 版本命令第一次非零、第二次成功 → 短重试就返回，不惊动安装[33m 1056[2mms[22m[39m
+     [33m[2m✓[22m[39m ★ 另一处在装（锁被占）→ 探测等锁，不提前判失败[33m 738[2mms[22m[39m
+ [32m✓[39m src/self-update/__tests__/self-update-steps.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 3665[2mms[22m[39m
+   [32m✓[39m 换上这一版时目录还被占着（真目录那一次）：等它退出，别硬来 [2m(3)[22m
+     [33m[2m✓[22m[39m 不是"占着"那种错（比如路径没了）→ 不等，当场报[33m 583[2mms[22m[39m
+ [32m✓[39m src/probe/__tests__/probe-units.test.ts [2m([22m[2m37 tests[22m[2m)[22m[33m 477[2mms[22m[39m
+ [32m✓[39m src/self-update/__tests__/self-update.test.ts [2m([22m[2m31 tests[22m[2m)[22m[32m 120[2mms[22m[39m
+ [2m[90m↓[39m[22m src/toolchain/__tests__/runtime-seed.test.ts [2m([22m[2m25 tests[22m[2m | [22m[33m25 skipped[39m[2m)[22m
+ [32m✓[39m src/toolchain/__tests__/toolchain.test.ts [2m([22m[2m30 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 104[2mms[22m[39m
+ [32m✓[39m src/runtime/__tests__/browser-wake.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 598[2mms[22m[39m
+ [32m✓[39m src/preflight/__tests__/preflight-route.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 203[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-dir.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 94[2mms[22m[39m
+ [32m✓[39m src/runtime/__tests__/platform.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/self-update/__tests__/self-update-boot.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-migrate.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/install/__tests__/install-smoke.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-switch.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 16036[2mms[22m[39m
+   [32m✓[39m 版本目录：自检与安装 [2m(5)[22m
+     [33m[2m✓[22m[39m 抓不到（404）是临时性的：重试几次，但不「清掉重装」，最后如实回报[33m 15051[2mms[22m[39m
+ [32m✓[39m src/install/__tests__/isolated-install.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 15233[2mms[22m[39m
+   [32m✓[39m installIsolatedRuntime（旧树先挪成 prev → 直接装进 live → 自检） [2m(5)[22m
+     [33m[2m✓[22m[39m ★ 装失败 → 旧树换回来，装了一半的 live 清掉[33m 15035[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m14 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (15)[39m
+[2m      Tests [22m [1m[32m259 passed[39m[22m[2m | [22m[33m26 skipped[39m[90m (285)[39m
+[2m   Start at [22m 16:32:33
+[2m   Duration [22m 21.52s[2m (tests 85%, import 9%, transform 6%)[22m
+
