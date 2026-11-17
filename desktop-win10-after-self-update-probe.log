@@ -1,0 +1,42 @@
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [] none :: HARNESS | Loading plugins…
+[4.3s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[4.3s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[9.5s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: HARNESS | Loading plugins… | Preparing the workbench |  | Getting the runtime ready…
+[9.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[11.6s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[11.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[13.6s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[13.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[15.6s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[15.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[17.6s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[17.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[19.6s] ready wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: r\browser-extension; (2) click the link below to install it from the Chrome Web Store. When done, come back and click Retry. | Get the extension in the Chrome Web Store | Open browser | Retry | Enter the workbench anyway
+[19.6s] 模拟用户装扩展：起浏览器 D:\a\_temp\cft\chrome-win64\chrome.exe（--load-extension=D:\a\_temp\opencli-ext，日志 D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-chrome.log）
+[19.6s] MILESTONE browser-launched @ 19.6s
+[22.1s] extension wait: connected :: {"ok":true,"data":{"cliVersion":"2.0.3","daemonRunning":true,"daemonFlaky":false,"daemonStale":false,"daemonVersion":"2.0.3","extensionConnected":true,"extensionFlaky":false,"extensionVersion":"1.0.27","extensionOutdated":false,"connectivity":{"ok":true,"durationMs":1260},"profiles":[{"contextId":"jpxwc6ck","extensionConnected":true,"extensionVersion":"1.0.27","extensionCompatRange":">=1.7.0","pending":0,"lastSeenAt":1794914214144}],"adapterShadows":[],"issues":[]}}
+[22.1s] chrome targets: page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://webui-toolbar.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://webui-toolbar.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/ | service_worker:chrome-extension://eghmcigglheggjiadbmpddohagagpnca/dist/background.js
+[22.1s] STEP click ["Retry","重试"]: "Retry"
+[25.4s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: | Preview | Standard mode | Describe what you want to build, / commands, @ files or sessions | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[25.4s] MILESTONE ready @ 25.4s
+[25.4s] verify wait :: host units panels,hello :: cards wb-card-hello ::  or sessions | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[25.4s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-verify-body.txt (345 bytes)
+[25.4s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-units.json (6078 bytes)
+[25.4s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-client-bundles.json (25 bytes)
+[25.4s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-page-internals.json (2096 bytes)
+[25.4s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-console-events.json (9697 bytes)
+[25.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-verify-running.json (1089 bytes)
+[25.8s] MILESTONE module-card @ 25.8s
+[25.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-smoke.json (101 bytes)
+[25.8s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win10-after-self-update-final-body.txt (345 bytes)
+[25.8s] TITLE: DeepSeek Harness
+[45.9s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+[45.9s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"45.9s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.1s","browser-launched":"19.6s","ready":"25.4s","module-card":"25.8s"},"card":true,"units":["panels","hello"]}
