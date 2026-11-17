@@ -1,0 +1,6 @@
+✅ 前台应用读得出来 —— 命令退出码 0 · 读到 com.apple.TextEdit · 原文 "\"CFBundleIdentifier\"=\"com.apple.TextEdit\""
+✅ 读到的是刚打开的那个应用 —— 期望 com.apple.TextEdit，实际 com.apple.TextEdit
+✅ 带回前台跑得通 —— 命令 open -b 'com.apple.TextEdit'
+✅ 找不到的应用不假装成功 —— 退出码 1
+
+全部通过。

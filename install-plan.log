@@ -1,0 +1,15 @@
+安装计划冒烟：darwin · shell=bash · node=v24.22.3
+✅ 整条计划在当前平台（真 shell）跑完
+✅ run 把 argv 原样交给子进程（假 pnpm） —— ["install","--prefix","/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/dsh-install-plan-7ocNNv/root/plugins/demo/opencli"]
+✅ 假 pnpm 的 install 真的在 --prefix 落过盘（remove 之前） —— {"kind":"remove","marker":true}
+✅ remove 清掉了它、mkdir 又把目录立起来了（copy 之前） —— {"kind":"copy","marker":false,"dir":true}
+✅ copy 把渠道内容倒进目标 —— "channel-v1\n"
+✅ link 能读回目标内容 —— "channel-v1\n"
+✅ link 是链接且指向目标（win32 上是 junction） —— linked=true points=true
+✅ optional 的失败 run 真失败了，也没把后面的步骤停下 —— {"tool":"pnpm","argv":["fail"],"registry":null,"failed":true}
+✅ 带 env 的 run 把 NPM_CONFIG_REGISTRY 交给子进程 —— "https://registry.test.invalid/"
+✅ 带 env 的 run argv 里没有 registry —— ["plugin","install","/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/dsh-install-plan-7ocNNv/root/plugins/demo/opencli"]
+✅ 命令行里搜不到 NPM_CONFIG_REGISTRY=
+⏭ 非 win32，跳过旧写法反例（那条在 POSIX 上本来就能跑）
+
+全部通过。
