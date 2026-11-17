@@ -1,0 +1,24 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.2 [39m[90mD:/a/dsh-workbench/dsh-workbench/packages/adapter-probe[39m
+
+ [32m✓[39m src/self-update/__tests__/self-update.test.ts [2m([22m[2m31 tests[22m[2m)[22m[32m 211[2mms[22m[39m
+ [32m✓[39m src/self-update/__tests__/self-update-steps.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 3743[2mms[22m[39m
+   [32m✓[39m 换版事务：失败不留半成品，提交后不再改判失败 [2m(5)[22m
+     [33m[2m✓[22m[39m ★ 翻完链新版目录被掏空：回到旧版，不把 profile 留在残树上[33m 605[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-dir.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 449[2mms[22m[39m
+   [32m✓[39m 版本目录：项目文件从 profile 搬过来 [2m(9)[22m
+     [33m[2m✓[22m[39m 名单里没有的包补进 minimumReleaseAgeExclude 块，且不越出这一段[33m 392[2mms[22m[39m
+ [32m✓[39m src/self-update/__tests__/self-update-boot.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-migrate.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-switch.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 16047[2mms[22m[39m
+   [32m✓[39m 版本目录：自检与安装 [2m(5)[22m
+     [33m[2m✓[22m[39m 抓不到（404）是临时性的：重试几次，但不「清掉重装」，最后如实回报[33m 15040[2mms[22m[39m
+ [32m✓[39m src/install/__tests__/isolated-install.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 15358[2mms[22m[39m
+   [32m✓[39m installIsolatedRuntime（旧树先挪成 prev → 直接装进 live → 自检） [2m(5)[22m
+     [33m[2m✓[22m[39m ★ 装失败 → 旧树换回来，装了一半的 live 清掉[33m 15020[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+[2m      Tests [22m [1m[32m119 passed[39m[22m[90m (119)[39m
+[2m   Start at [22m 14:43:02
+[2m   Duration [22m 17.89s[2m (tests 87%, transform 9%, import 4%)[22m
+
