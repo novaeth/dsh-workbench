@@ -1,0 +1,164 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.2 [39m[90mD:/a/dsh-workbench/dsh-workbench/packages/adapter-probe[39m
+
+ [31m❯[39m src/preflight/__tests__/preflight.test.ts [2m([22m[2m43 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[33m 2573[2mms[22m[39m
+   [31m❯[39m createPreflight [2m(31)[22m
+     [32m✓[39m 环境齐了 → 两步都 ok，放行[32m 20[2mms[22m[39m
+     [32m✓[39m ★ 自检那行在"不在"时带上原因（换根 / 换 pin / 被删，只有这行能分开）[32m 7[2mms[22m[39m
+     [32m✓[39m 缺 opencli → 自动安装 → 重探 → 放行；安装期间界面能拿到"正在执行的动作"[32m 27[2mms[22m[39m
+     [32m✓[39m 装不上 → 停住，并给出确切命令与原始输出[32m 14[2mms[22m[39m
+     [32m✓[39m 某一拍自己抛了 → 收成 failed 那一屏，不把 run 的 promise 甩出去（否则宿主会当致命错误退出）[32m 1[2mms[22m[39m
+     [32m✓[39m 装完仍然调不动（PATH 没生效）→ 也算失败，不假放行[32m 16[2mms[22m[39m
+     [32m✓[39m bridge 不通 → 只警告，照样放行，并把 doctor 的输出带出来[32m 16[2mms[22m[39m
+     [32m✓[39m ★ 浏览器通道坏：`doctor` 明明 exit 0（报告里写着 not connected），要按报告判，不能看退出码[32m 30[2mms[22m[39m
+     [32m✓[39m ★ 通道好时 detail 取"Everything looks good!"，不是输出的最后一行（那可能是升级提示）[32m 17[2mms[22m[39m
+     [32m✓[39m ★ 没选默认 profile：先说"选哪个"，命令也给 profile list（重启服务解决不了它）[32m 30[2mms[22m[39m
+     [32m✓[39m ★ 扩展有更新可用（通道仍通）不算坏：不谎报成 warn[32m 15[2mms[22m[39m
+     [32m✓[39m 幂等：重复 run 不重跑命令（体检结果不缓存数据，但也不该被轮询放大）[32m 16[2mms[22m[39m
+     [32m✓[39m hard 会重探（用户按的「重试」走它，不看新鲜度）[32m 32[2mms[22m[39m
+     [32m✓[39m ★ 两页同时打开：第二页跟着第一页那一轮，不再排第二轮[32m 16[2mms[22m[39m
+     [32m✓[39m ★ 刚跑出 ready 再问一次不重跑：第二页拿到的就是上一份[32m 19[2mms[22m[39m
+     [32m✓[39m ★ 上一轮是 failed：再问一次照样重跑（修完东西刷新就该好，不用等新鲜期）[32m 29[2mms[22m[39m
+     [32m✓[39m 装不上 → guidance: install（该给安装命令）[32m 2[2mms[22m[39m
+     [32m✓[39m ★ 重试只从那一步开始：前面已过的步骤不重跑（bridge 重试不再探一遍工具链）[32m 30[2mms[22m[39m
+     [32m✓[39m ★ 包已经在盘上时 --version 非零不算没装：不重装，把真实报错摆出来[32m 2[2mms[22m[39m
+     [32m✓[39m ★★ 盘上出了支持范围（3.0.0）→ 按未就绪重装，不把不该用的副本当通过[32m 45[2mms[22m[39m
+     [33m[2m✓[22m[39m ★ 版本命令第一次非零、第二次成功 → 短重试就返回，不惊动安装[33m 1016[2mms[22m[39m
+[31m     [31m×[31m ★ stalled 不跟着重试（重试也等不到，还会白等 30 秒）[39m[32m 13[2mms[22m[39m
+     [33m[2m✓[22m[39m ★ 另一处在装（锁被占）→ 探测等锁，不提前判失败[33m 864[2mms[22m[39m
+     [32m✓[39m 探测在工具链锁里跑：有另一处在装时会先等它[32m 10[2mms[22m[39m
+     [32m✓[39m 装完还找不到 → guidance: path（别再让用户装一遍）[32m 14[2mms[22m[39m
+     [32m✓[39m 执行缝本身坏了 → guidance: shell（用户自己装不了这个）[32m 1[2mms[22m[39m
+     [32m✓[39m 执行缝本身坏了 → 直接失败，**不**去跑 npm install（装了也不可能成功）[32m 1[2mms[22m[39m
+     [32m✓[39m 重探会清掉上一轮的结果（不然界面一边"安装中"一边挂着旧的 ✓）[32m 45[2mms[22m[39m
+     [32m✓[39m 带着一轮没跑完又来一次 hard：跟着那一轮，不另起第二轮[32m 16[2mms[22m[39m
+     [32m✓[39m 三页同时强探：合并成一轮且**不交错**（交错是"phase ready 但某步还在 running"的根因）[32m 32[2mms[22m[39m
+     [32m✓[39m 日志里留下一行体检结果（排障用）[32m 32[2mms[22m[39m
+   [32m✓[39m Desktop：浏览器没开时，等用户点「打开浏览器」再开 [2m(3)[22m
+     [32m✓[39m ★ 只有扩展没连上 → **不**自动开（开窗会抢前台），只把「可以点」交给界面[32m 15[2mms[22m[39m
+     [32m✓[39m ★ 通道本来就好 → 记住哪个浏览器在承载扩展；快照仍带 canWakeBrowser[32m 32[2mms[22m[39m
+     [32m✓[39m ★ 不是桌面版（没有 desktopBrowser）→ 快照不带 canWakeBrowser，界面不会画那颗按钮[32m 31[2mms[22m[39m
+   [32m✓[39m classifyFailure（失败时给人话指引的依据） [2m(4)[22m
+     [32m✓[39m 权限问题 → permission（该提示 sudo / 全局目录）[32m 0[2mms[22m[39m
+     [32m✓[39m 网络问题 → network（该提示查代理）[32m 0[2mms[22m[39m
+     [32m✓[39m 命令不存在 → missing[32m 0[2mms[22m[39m
+     [32m✓[39m 认不出来就说认不出来（不硬猜）[32m 0[2mms[22m[39m
+   [31m❯[39m 宿主不交回命令结果（沙箱 / 子进程起不来） [2m(3)[22m
+[31m     [31m×[31m ★ 版本命令没返回 → 40 秒内停住走 host 那档，后面的 doctor 一条都不发[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m ★ 版本通了、doctor 没返回 → 也停住走 host 那档，不再白等第二遍[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m ★ 重试要重新探：上一次卡住不把这一次也判死[39m[32m 2[2mms[22m[39m
+   [32m✓[39m 隔离 opencli 的绝对路径不许被 shell 拆词 [2m(2)[22m
+     [32m✓[39m ★ win32 上路径带空格（C:\Users\John Smith\…）→ 命令里是整段带引号的 token[32m 24[2mms[22m[39m
+     [32m✓[39m ★ 路径带单引号时按 pwsh 的字面量逃逸（两个单引号），不留 POSIX 那套反斜杠[32m 30[2mms[22m[39m
+ [32m✓[39m src/probe/__tests__/probe-units.test.ts [2m([22m[2m37 tests[22m[2m)[22m[32m 262[2mms[22m[39m
+ [32m✓[39m src/self-update/__tests__/self-update-steps.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 4578[2mms[22m[39m
+   [32m✓[39m 一次性迁移：旧版只压在 profile 的真目录里 [2m(1)[22m
+     [33m[2m✓[22m[39m ★ 真目录现场：新版确认了 → 旧版留在版本目录里，profile 指到新版[33m 792[2mms[22m[39m
+ [32m✓[39m src/self-update/__tests__/self-update.test.ts [2m([22m[2m31 tests[22m[2m)[22m[32m 191[2mms[22m[39m
+ [2m[90m↓[39m[22m src/toolchain/__tests__/runtime-seed.test.ts [2m([22m[2m25 tests[22m[2m | [22m[33m25 skipped[39m[2m)[22m
+ [32m✓[39m src/toolchain/__tests__/toolchain.test.ts [2m([22m[2m30 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 503[2mms[22m[39m
+ [32m✓[39m src/runtime/__tests__/browser-wake.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 437[2mms[22m[39m
+ [32m✓[39m src/preflight/__tests__/preflight-route.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 203[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-dir.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 81[2mms[22m[39m
+ [32m✓[39m src/runtime/__tests__/platform.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/self-update/__tests__/self-update-boot.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-migrate.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m src/install/__tests__/install-smoke.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-switch.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 16326[2mms[22m[39m
+   [32m✓[39m 版本目录：自检与安装 [2m(5)[22m
+     [33m[2m✓[22m[39m 抓不到（404）是临时性的：重试几次，但不「清掉重装」，最后如实回报[33m 15048[2mms[22m[39m
+ [32m✓[39m src/install/__tests__/isolated-install.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 15278[2mms[22m[39m
+   [32m✓[39m installIsolatedRuntime（旧树先挪成 prev → 直接装进 live → 自检） [2m(5)[22m
+     [33m[2m✓[22m[39m ★ 装失败 → 旧树换回来，装了一半的 live 清掉[33m 15027[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m13 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (15)[39m
+[2m      Tests [22m [1m[31m4 failed[39m[22m[2m | [22m[1m[32m255 passed[39m[22m[2m | [22m[33m26 skipped[39m[90m (285)[39m
+[2m   Start at [22m 16:26:04
+[2m   Duration [22m 23.30s[2m (tests 80%, import 11%, transform 8%)[22m
+
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > createPreflight > ★ stalled 不跟着重试（重试也等不到，还会白等 30 秒）,line=358,column=26::AssertionError: expected [ '& \'opencli\' --version', …(1) ] to deeply equal [ '\'opencli\' --version' ]%0A%0A- Expected%0A+ Received%0A%0A  [%0A-   "'opencli' --version",%0A+   "& 'opencli' --version",%0A+   "& 'opencli' doctor",%0A  ]%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:358:26%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > 宿主不交回命令结果（沙箱 / 子进程起不来） > ★ 版本命令没返回 → 40 秒内停住走 host 那档，后面的 doctor 一条都不发,line=618,column=30::AssertionError: expected 'ready' to be 'failed' // Object.is equality%0A%0AExpected: "failed"%0AReceived: "ready"%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:618:30%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > 宿主不交回命令结果（沙箱 / 子进程起不来） > ★ 版本通了、doctor 没返回 → 也停住走 host 那档，不再白等第二遍,line=637,column=30::AssertionError: expected 'ready' to be 'failed' // Object.is equality%0A%0AExpected: "failed"%0AReceived: "ready"%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:637:30%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > 宿主不交回命令结果（沙箱 / 子进程起不来） > ★ 重试要重新探：上一次卡住不把这一次也判死,line=654,column=38::AssertionError: expected undefined to be 'host' // Object.is equality%0A%0A- Expected:%0A"host"%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:654:38%0A%0A
+undefined
+D:\a\dsh-workbench\dsh-workbench\packages\adapter-probe:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command "vitest" not found
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 4 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22mcreatePreflight[2m > [22m★ stalled 不跟着重试（重试也等不到，还会白等 30 秒）
+[31m[1mAssertionError[22m: expected [ '& \'opencli\' --version', …(1) ] to deeply equal [ '\'opencli\' --version' ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "'opencli' --version",[39m
+[31m+   "& 'opencli' --version",[39m
+[31m+   "& 'opencli' doctor",[39m
+[2m  ][22m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m358:26[22m[39m
+    [90m356|[39m       const snapshot = await pending;
+    [90m357|[39m
+    [90m358|[39m       expect(fake.calls).toEqual(["'opencli' --version"]);
+    [90m   |[39m                          [31m^[39m
+    [90m359|[39m       expect(snapshot.guidance).toBe('host');
+    [90m360|[39m     } finally {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22m宿主不交回命令结果（沙箱 / 子进程起不来）[2m > [22m★ 版本命令没返回 → 40 秒内停住走 host 那档，后面的 doctor 一条都不发
+[31m[1mAssertionError[22m: expected 'ready' to be 'failed' // Object.is equality[39m
+
+Expected: [32m"failed"[39m
+Received: [31m"ready"[39m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m618:30[22m[39m
+    [90m616|[39m       const snapshot = await pending;
+    [90m617|[39m
+    [90m618|[39m       expect(snapshot.phase).toBe('failed');
+    [90m   |[39m                              [31m^[39m
+    [90m619|[39m       expect(snapshot.guidance).toBe('host');
+    [90m620|[39m       expect(snapshot.failure).toBe('host');
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22m宿主不交回命令结果（沙箱 / 子进程起不来）[2m > [22m★ 版本通了、doctor 没返回 → 也停住走 host 那档，不再白等第二遍
+[31m[1mAssertionError[22m: expected 'ready' to be 'failed' // Object.is equality[39m
+
+Expected: [32m"failed"[39m
+Received: [31m"ready"[39m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m637:30[22m[39m
+    [90m635|[39m       const snapshot = await pending;
+    [90m636|[39m
+    [90m637|[39m       expect(snapshot.phase).toBe('failed');
+    [90m   |[39m                              [31m^[39m
+    [90m638|[39m       expect(snapshot.guidance).toBe('host');
+    [90m639|[39m       expect(fake.calls).toEqual(["'opencli' --version", "'opencli' do…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22m宿主不交回命令结果（沙箱 / 子进程起不来）[2m > [22m★ 重试要重新探：上一次卡住不把这一次也判死
+[31m[1mAssertionError[22m: expected undefined to be 'host' // Object.is equality[39m
+
+[32m- Expected:[39m
+"host"
+
+[31m+ Received:[39m
+undefined
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m654:38[22m[39m
+    [90m652|[39m       const first = preflight.run();
+    [90m653|[39m       await vi.advanceTimersByTimeAsync(130_000);
+    [90m654|[39m       expect((await first).guidance).toBe('host');
+    [90m   |[39m                                      [31m^[39m
+    [90m655|[39m
+    [90m656|[39m       const second = preflight.run({ hard: true });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯[22m[39m
