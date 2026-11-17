@@ -1,0 +1,33 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.2 [39m[90mD:/a/dsh-workbench/dsh-workbench/packages/adapter-probe[39m
+
+ [32m✓[39m src/self-update/__tests__/self-update.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 387[2mms[22m[39m
+ [32m✓[39m src/self-update/__tests__/self-update-steps.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 6176[2mms[22m[39m
+   [32m✓[39m 自更新：runner 按步骤跑，失败只落在 marker 上 [2m(6)[22m
+     [33m[2m✓[22m[39m 一路跑通：marker 落 ok，链接与依赖都指到新版[33m 318[2mms[22m[39m
+     [33m[2m✓[22m[39m ★ 换完链接把 profile 的 pnpm 锁也一起换到新版（清单说新版、锁说旧版的缺口）[33m 540[2mms[22m[39m
+     [33m[2m✓[22m[39m 切换那一步抛了：也变成 failed，不冒出未处理的异常[33m 1070[2mms[22m[39m
+   [32m✓[39m 清单不变量：dsh.profile.bundles 那一行更新前后都在 [2m(4)[22m
+     [33m[2m✓[22m[39m ★ 手工把那一行摘掉 → 同一步补回（判据 2）[33m 336[2mms[22m[39m
+   [32m✓[39m 确认窗口：只认「这一版确认可用」，不再自动回滚 [2m(4)[22m
+     [33m[2m✓[22m[39m ★ 重启起来的是旧版 → 不自动回滚：留 pending，链接仍指新版（自更新只报结果）[33m 331[2mms[22m[39m
+     [33m[2m✓[22m[39m ★ 新版起来但工作台那半一直没露面 → 也不翻回去[33m 371[2mms[22m[39m
+     [33m[2m✓[22m[39m ★ 还没重启过（窗口内没有新记录）→ 不判失败、不回头，marker 留在 pending-restart[33m 564[2mms[22m[39m
+   [32m✓[39m 换上这一版时目录还被占着（真目录那一次）：等它退出，别硬来 [2m(3)[22m
+     [33m[2m✓[22m[39m ★ 前两次说"占着"，第三次成了 → 照常换上（并说清是等出来的）[33m 313[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-dir.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 86[2mms[22m[39m
+ [32m✓[39m src/self-update/__tests__/self-update-boot.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-migrate.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-switch.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 16562[2mms[22m[39m
+   [32m✓[39m 版本目录：自检与安装 [2m(5)[22m
+     [33m[2m✓[22m[39m 抓不到（404）是临时性的：重试几次，但不「清掉重装」，最后如实回报[33m 15066[2mms[22m[39m
+ [32m✓[39m src/install/__tests__/isolated-install.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 16361[2mms[22m[39m
+   [32m✓[39m installIsolatedRuntime（旧树先挪成 prev → 直接装进 live → 自检） [2m(5)[22m
+     [33m[2m✓[22m[39m ★ 直接装进 live（链接指向最终路径，挪目录才不会断）；旧树留一份 prev[33m 1105[2mms[22m[39m
+     [33m[2m✓[22m[39m ★ 装失败 → 旧树换回来，装了一半的 live 清掉[33m 15070[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+[2m      Tests [22m [1m[32m119 passed[39m[22m[90m (119)[39m
+[2m   Start at [22m 14:43:36
+[2m   Duration [22m 20.22s[2m (tests 82%, transform 14%, import 4%)[22m
+
