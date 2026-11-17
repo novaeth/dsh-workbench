@@ -1,0 +1,3 @@
+
+DevTools listening on ws://127.0.0.1:9333/devtools/browser/78cfeda0-bec2-4f2d-b757-43df6fea9257
+[824:3044:1117/082722.650:ERROR:chrome\browser\ui\views\user_education\impl\browser_user_education_interface_impl.cc:186] Attempting to show IPH IPH_ExtensionsZeroStatePromo before browser initialization complete; IPH will not be shown.
