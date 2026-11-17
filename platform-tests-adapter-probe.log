@@ -1,0 +1,759 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.2 [39m[90mD:/a/dsh-workbench/dsh-workbench/packages/adapter-probe[39m
+
+ [31m❯[39m src/preflight/__tests__/preflight.test.ts [2m([22m[2m43 tests[22m[2m | [22m[31m15 failed[39m[2m)[22m[33m 2490[2mms[22m[39m
+   [31m❯[39m createPreflight [2m(31)[22m
+[31m     [31m×[31m 环境齐了 → 两步都 ok，放行[39m[32m 42[2mms[22m[39m
+     [32m✓[39m ★ 自检那行在"不在"时带上原因（换根 / 换 pin / 被删，只有这行能分开）[32m 20[2mms[22m[39m
+[31m     [31m×[31m 缺 opencli → 自动安装 → 重探 → 放行；安装期间界面能拿到"正在执行的动作"[39m[32m 48[2mms[22m[39m
+     [32m✓[39m 装不上 → 停住，并给出确切命令与原始输出[32m 6[2mms[22m[39m
+     [32m✓[39m 某一拍自己抛了 → 收成 failed 那一屏，不把 run 的 promise 甩出去（否则宿主会当致命错误退出）[32m 1[2mms[22m[39m
+     [32m✓[39m 装完仍然调不动（PATH 没生效）→ 也算失败，不假放行[32m 23[2mms[22m[39m
+     [32m✓[39m bridge 不通 → 只警告，照样放行，并把 doctor 的输出带出来[32m 31[2mms[22m[39m
+     [32m✓[39m ★ 浏览器通道坏：`doctor` 明明 exit 0（报告里写着 not connected），要按报告判，不能看退出码[32m 32[2mms[22m[39m
+     [32m✓[39m ★ 通道好时 detail 取"Everything looks good!"，不是输出的最后一行（那可能是升级提示）[32m 16[2mms[22m[39m
+     [32m✓[39m ★ 没选默认 profile：先说"选哪个"，命令也给 profile list（重启服务解决不了它）[32m 15[2mms[22m[39m
+     [32m✓[39m ★ 扩展有更新可用（通道仍通）不算坏：不谎报成 warn[32m 31[2mms[22m[39m
+     [32m✓[39m 幂等：重复 run 不重跑命令（体检结果不缓存数据，但也不该被轮询放大）[32m 31[2mms[22m[39m
+     [32m✓[39m hard 会重探（用户按的「重试」走它，不看新鲜度）[32m 63[2mms[22m[39m
+[31m     [31m×[31m ★ 两页同时打开：第二页跟着第一页那一轮，不再排第二轮[39m[32m 34[2mms[22m[39m
+[31m     [31m×[31m ★ 刚跑出 ready 再问一次不重跑：第二页拿到的就是上一份[39m[32m 29[2mms[22m[39m
+     [32m✓[39m ★ 上一轮是 failed：再问一次照样重跑（修完东西刷新就该好，不用等新鲜期）[32m 31[2mms[22m[39m
+     [32m✓[39m 装不上 → guidance: install（该给安装命令）[32m 3[2mms[22m[39m
+     [32m✓[39m ★ 重试只从那一步开始：前面已过的步骤不重跑（bridge 重试不再探一遍工具链）[32m 44[2mms[22m[39m
+     [32m✓[39m ★ 包已经在盘上时 --version 非零不算没装：不重装，把真实报错摆出来[32m 16[2mms[22m[39m
+[31m     [31m×[31m ★★ 盘上出了支持范围（3.0.0）→ 按未就绪重装，不把不该用的副本当通过[39m[32m 48[2mms[22m[39m
+[31m     [31m×[31m ★ 版本命令第一次非零、第二次成功 → 短重试就返回，不惊动安装[39m[33m 1043[2mms[22m[39m
+[31m     [31m×[31m ★ stalled 不跟着重试（重试也等不到，还会白等 30 秒）[39m[32m 6[2mms[22m[39m
+     [33m[2m✓[22m[39m ★ 另一处在装（锁被占）→ 探测等锁，不提前判失败[33m 546[2mms[22m[39m
+     [32m✓[39m 探测在工具链锁里跑：有另一处在装时会先等它[32m 31[2mms[22m[39m
+     [32m✓[39m 装完还找不到 → guidance: path（别再让用户装一遍）[32m 31[2mms[22m[39m
+     [32m✓[39m 执行缝本身坏了 → guidance: shell（用户自己装不了这个）[32m 1[2mms[22m[39m
+     [32m✓[39m 执行缝本身坏了 → 直接失败，**不**去跑 npm install（装了也不可能成功）[32m 1[2mms[22m[39m
+     [32m✓[39m 重探会清掉上一轮的结果（不然界面一边"安装中"一边挂着旧的 ✓）[32m 46[2mms[22m[39m
+[31m     [31m×[31m 带着一轮没跑完又来一次 hard：跟着那一轮，不另起第二轮[39m[32m 31[2mms[22m[39m
+[31m     [31m×[31m 三页同时强探：合并成一轮且**不交错**（交错是"phase ready 但某步还在 running"的根因）[39m[32m 32[2mms[22m[39m
+     [32m✓[39m 日志里留下一行体检结果（排障用）[32m 31[2mms[22m[39m
+   [31m❯[39m Desktop：浏览器没开时，等用户点「打开浏览器」再开 [2m(3)[22m
+[31m     [31m×[31m ★ 只有扩展没连上 → **不**自动开（开窗会抢前台），只把「可以点」交给界面[39m[32m 16[2mms[22m[39m
+     [32m✓[39m ★ 通道本来就好 → 记住哪个浏览器在承载扩展；快照仍带 canWakeBrowser[32m 14[2mms[22m[39m
+     [32m✓[39m ★ 不是桌面版（没有 desktopBrowser）→ 快照不带 canWakeBrowser，界面不会画那颗按钮[32m 31[2mms[22m[39m
+   [32m✓[39m classifyFailure（失败时给人话指引的依据） [2m(4)[22m
+     [32m✓[39m 权限问题 → permission（该提示 sudo / 全局目录）[32m 0[2mms[22m[39m
+     [32m✓[39m 网络问题 → network（该提示查代理）[32m 0[2mms[22m[39m
+     [32m✓[39m 命令不存在 → missing[32m 0[2mms[22m[39m
+     [32m✓[39m 认不出来就说认不出来（不硬猜）[32m 0[2mms[22m[39m
+   [31m❯[39m 宿主不交回命令结果（沙箱 / 子进程起不来） [2m(3)[22m
+[31m     [31m×[31m ★ 版本命令没返回 → 40 秒内停住走 host 那档，后面的 doctor 一条都不发[39m[32m 4[2mms[22m[39m
+[31m     [31m×[31m ★ 版本通了、doctor 没返回 → 也停住走 host 那档，不再白等第二遍[39m[32m 2[2mms[22m[39m
+[31m     [31m×[31m ★ 重试要重新探：上一次卡住不把这一次也判死[39m[32m 2[2mms[22m[39m
+   [31m❯[39m 隔离 opencli 的绝对路径不许被 shell 拆词 [2m(2)[22m
+[31m     [31m×[31m ★ win32 上路径带空格（C:\Users\John Smith\…）→ 命令里是整段带引号的 token[39m[32m 24[2mms[22m[39m
+[31m     [31m×[31m ★ 路径带单引号时按 pwsh 的字面量逃逸（两个单引号），不留 POSIX 那套反斜杠[39m[32m 31[2mms[22m[39m
+ [32m✓[39m src/self-update/__tests__/self-update-steps.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 3232[2mms[22m[39m
+   [32m✓[39m 清单不变量：dsh.profile.bundles 那一行更新前后都在 [2m(4)[22m
+     [33m[2m✓[22m[39m ★ 手工把那一行摘掉 → 同一步补回（判据 2）[33m 517[2mms[22m[39m
+ [31m❯[39m src/probe/__tests__/probe-units.test.ts [2m([22m[2m37 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 451[2mms[22m[39m
+   [32m✓[39m probeUnits：extension 一类 [2m(11)[22m
+     [32m✓[39m 命令齐了 → need ok、unit ok[32m 16[2mms[22m[39m
+     [32m✓[39m 插件在但命令缺 → need outdated，列出缺哪几个（不是含糊的"失败"）[32m 12[2mms[22m[39m
+     [32m✓[39m 插件不在 → need missing，unit missing[32m 16[2mms[22m[39m
+     [32m✓[39m 执行缝坏了 → need unchecked（带原因），且不谎报"缺命令"[32m 2[2mms[22m[39m
+     [32m✓[39m 退出码 0 但输出读不懂 → unchecked（"我读不懂"，不是"你没装插件"）[32m 14[2mms[22m[39m
+     [32m✓[39m plugin list 退出码非 0 → unchecked，detail 带退出码与 stderr（不把原因吞掉）[32m 16[2mms[22m[39m
+     [32m✓[39m plugin list 超时 → unchecked，detail 说清多少秒没返回[32m 16[2mms[22m[39m
+     [32m✓[39m ★ 每一份安装都必须**报名字**：名字对不上就是"没装"[32m 16[2mms[22m[39m
+     [32m✓[39m ★ 三个单元只跑**一次** plugin list（同一份机器事实）[32m 17[2mms[22m[39m
+     [32m✓[39m 零插件的机器上探出来是 missing（该装），不是 unchecked[32m 15[2mms[22m[39m
+     [32m✓[39m 不认识的运行时 → need unchecked，说清是运行时没探法[32m 1[2mms[22m[39m
+   [32m✓[39m probeUnits：provision / update 的事实 [2m(6)[22m
+     [32m✓[39m 插件不在 + git 来源 → provision=ready，命令就是那一条 spec[32m 14[2mms[22m[39m
+     [32m✓[39m local 来源 + 环境变量设了 → provision=ready，命令里是那一条路径[32m 16[2mms[22m[39m
+     [32m✓[39m ★ local 来源但环境变量没设 → provision=env-missing（界面据此给能照做的话）[32m 15[2mms[22m[39m
+     [32m✓[39m 插件不在但**没声明来源** → provision=not-declared（不许猜地址去装）[32m 16[2mms[22m[39m
+     [32m✓[39m 缺必需命令（版本旧）→ 给升级命令[32m 16[2mms[22m[39m
+     [32m✓[39m 都齐 → 没有命令[32m 15[2mms[22m[39m
+   [32m✓[39m probeUnits：bin / env 两类 [2m(7)[22m
+     [32m✓[39m ★★ bin 不在 PATH → need missing + 命令名，且不跑 plugin list[32m 20[2mms[22m[39m
+     [32m✓[39m ★ 作者声明了 install 且机器上缺 → 带上那条命令，界面才有得点[32m 11[2mms[22m[39m
+     [32m✓[39m ★ install 是 npm 包 → 命令装进隔离运行时的共用依赖前缀（不碰全局）[32m 16[2mms[22m[39m
+     [32m✓[39m 平台对不上 → 不给命令（别教用户在 Windows 上跑 brew）[32m 15[2mms[22m[39m
+     [32m✓[39m bin 在 PATH → ok[32m 5[2mms[22m[39m
+     [32m✓[39m ★ 和运行时命令同名 → 不探（工作台自己的 opencli 不在 PATH 也算有）[32m 1[2mms[22m[39m
+     [32m✓[39m env 设了 → ok；没设 → missing 且 secret 不回显值[32m 1[2mms[22m[39m
+   [32m✓[39m probeUnits：汇总 [2m(2)[22m
+     [32m✓[39m required: false 缺了 → unit 仍 ok，need 仍报 missing[32m 10[2mms[22m[39m
+     [32m✓[39m 最坏的那条决定 unit status（missing 赢过 outdated）[32m 17[2mms[22m[39m
+   [32m✓[39m probeUnits：供给索引与冲突 [2m(2)[22m
+     [32m✓[39m ★★ 两个单元声明同一个插件、源不同 → 两家都 unchecked，不 last-wins[32m 1[2mms[22m[39m
+     [32m✓[39m ★ 单单元入口给了 catalog 才看得见别人的声明；不给就只顾自己[32m 14[2mms[22m[39m
+   [32m✓[39m probeUnits：缓存与并发 [2m(2)[22m
+     [32m✓[39m 结果记在进程内：第二次不再跑命令，force 才重探[32m 31[2mms[22m[39m
+     [32m✓[39m ★ 同一批并发探只发一轮 plugin list，两边拿到同一份[32m 16[2mms[22m[39m
+   [32m✓[39m parsePluginList [2m(3)[22m
+     [32m✓[39m JSON 数组照读[32m 0[2mms[22m[39m
+     [32m✓[39m ★ 零插件时的人话 = 空列表（不是"读不懂"）[32m 0[2mms[22m[39m
+     [32m✓[39m 真的读不懂 → undefined（不猜成"没装"）[32m 0[2mms[22m[39m
+   [31m❯[39m 跨平台的命令形态 [2m(4)[22m
+     [32m✓[39m ★ win32 的 bin 探测走 where.exe（PowerShell 里 where 是 Where-Object 的别名）[32m 14[2mms[22m[39m
+     [32m✓[39m ★ POSIX 的 bin 探测照旧 command -v[32m 16[2mms[22m[39m
+[31m     [31m×[31m ★ 隔离 opencli 的路径带空格 → plugin list 里整段带引号[39m[32m 22[2mms[22m[39m
+     [32m✓[39m ★ 探测缓存按平台分开：先 win32 后 linux 不串味[32m 9[2mms[22m[39m
+ [32m✓[39m src/self-update/__tests__/self-update.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 321[2mms[22m[39m
+ [32m✓[39m src/toolchain/__tests__/toolchain.test.ts [2m([22m[2m30 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 104[2mms[22m[39m
+ [2m[90m↓[39m[22m src/toolchain/__tests__/runtime-seed.test.ts [2m([22m[2m25 tests[22m[2m | [22m[33m25 skipped[39m[2m)[22m
+ [31m❯[39m src/runtime/__tests__/browser-wake.test.ts [2m([22m[2m14 tests[22m[2m | [22m[31m10 failed[39m[2m)[22m[32m 192[2mms[22m[39m
+   [31m❯[39m Desktop 浏览器唤醒 [2m(9)[22m
+[31m     [31m×[31m 通道本就通 → 只记住正在跑的那个浏览器，不打开任何东西[39m[32m 20[2mms[22m[39m
+[31m     [31m×[31m ★ 没浏览器在跑 → 后台打开记住的那个，等它连上再算成功[39m[32m 8[2mms[22m[39m
+[31m     [31m×[31m ★ 浏览器已经开着（扩展没连）→ 不再开一个窗，也不谎报连上[39m[32m 16[2mms[22m[39m
+[31m     [31m×[31m 记住的是 Edge 就开 Edge（不被「先装的 Chrome」带偏）[39m[32m 15[2mms[22m[39m
+     [32m✓[39m 一个能开的浏览器都没有 → no-browser（不白跑 open）[32m 31[2mms[22m[39m
+[31m     [31m×[31m open 失败 → launch-failed（如实说，不接着等）[39m[32m 17[2mms[22m[39m
+[31m     [31m×[31m 打开了但一直没连上 → not-connected（预检保留原来的 warn）[39m[32m 6[2mms[22m[39m
+[31m     [31m×[31m ★ Windows 装了 Chrome 且没在跑 → cmd start 拉起来并等连接[39m[32m 5[2mms[22m[39m
+     [32m✓[39m 非 macOS/Linux/Windows 的平台仍然 unsupported，一条命令都不发[32m 1[2mms[22m[39m
+   [32m✓[39m observe（通道好时记住承载扩展的浏览器） [2m(1)[22m
+     [32m✓[39m 只有一个在跑 → 记它；多个在跑 → 认 Chrome[32m 30[2mms[22m[39m
+   [31m❯[39m 命令 token 按平台引号包住 [2m(2)[22m
+     [32m✓[39m ★ bridgeFixCommand 把整段路径包成一个 token（带空格也不散架）[32m 0[2mms[22m[39m
+[31m     [31m×[31m ★ win32 上带空格的隔离路径 → daemon status 里整段带引号[39m[32m 9[2mms[22m[39m
+   [31m❯[39m Linux 启动浏览器 [2m(2)[22m
+[31m     [31m×[31m ★ 这台机器没有 setsid → 如实报 launch-failed（不再谎报 not-connected）[39m[32m 16[2mms[22m[39m
+[31m     [31m×[31m ★ 有 setsid → 照旧 setsid 起它[39m[32m 16[2mms[22m[39m
+ [32m✓[39m src/preflight/__tests__/preflight-route.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 197[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-dir.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 63[2mms[22m[39m
+ [32m✓[39m src/runtime/__tests__/platform.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/self-update/__tests__/self-update-boot.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-migrate.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/install/__tests__/install-smoke.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/self-update/version/__tests__/version-switch.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 15989[2mms[22m[39m
+   [32m✓[39m 版本目录：自检与安装 [2m(5)[22m
+     [33m[2m✓[22m[39m 抓不到（404）是临时性的：重试几次，但不「清掉重装」，最后如实回报[33m 15041[2mms[22m[39m
+ [32m✓[39m src/install/__tests__/isolated-install.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 15195[2mms[22m[39m
+   [32m✓[39m installIsolatedRuntime（旧树先挪成 prev → 直接装进 live → 自检） [2m(5)[22m
+     [33m[2m✓[22m[39m ★ 装失败 → 旧树换回来，装了一半的 live 清掉[33m 15040[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m11 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (15)[39m
+[2m      Tests [22m [1m[31m26 failed[39m[22m[2m | [22m[1m[32m233 passed[39m[22m[2m | [22m[33m26 skipped[39m[90m (285)[39m
+[2m   Start at [22m 15:40:14
+[2m   Duration [22m 22.05s[2m (tests 81%, import 11%, transform 8%)[22m
+
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > createPreflight > 环境齐了 → 两步都 ok，放行,line=24,column=52::AssertionError: expected [ '& \'opencli\' --version', …(1) ] to deeply equal [ '\'opencli\' --version', …(1) ]%0A%0A- Expected%0A+ Received%0A%0A  [%0A-   "'opencli' --version",%0A-   "'opencli' doctor",%0A+   "& 'opencli' --version",%0A+   "& 'opencli' doctor",%0A  ]%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:24:52%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > createPreflight > 缺 opencli → 自动安装 → 重探 → 放行；安装期间界面能拿到"正在执行的动作",line=64,column=52::AssertionError: expected [ '& \'opencli\' --version', …(2) ] to deeply equal [ '\'opencli\' --version', …(2) ]%0A%0A- Expected%0A+ Received%0A%0A  [%0A-   "'opencli' --version",%0A-   "'opencli' --version",%0A-   "'opencli' doctor",%0A+   "& 'opencli' --version",%0A+   "& 'opencli' --version",%0A+   "& 'opencli' doctor",%0A  ]%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:64:52%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > createPreflight > ★ 两页同时打开：第二页跟着第一页那一轮，不再排第二轮,line=216,column=52::AssertionError: expected [ '& \'opencli\' --version', …(1) ] to deeply equal [ '\'opencli\' --version', …(1) ]%0A%0A- Expected%0A+ Received%0A%0A  [%0A-   "'opencli' --version",%0A-   "'opencli' doctor",%0A+   "& 'opencli' --version",%0A+   "& 'opencli' doctor",%0A  ]%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:216:52%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > createPreflight > ★ 刚跑出 ready 再问一次不重跑：第二页拿到的就是上一份,line=226,column=52::AssertionError: expected [ '& \'opencli\' --version', …(1) ] to deeply equal [ '\'opencli\' --version', …(1) ]%0A%0A- Expected%0A+ Received%0A%0A  [%0A-   "'opencli' --version",%0A-   "'opencli' doctor",%0A+   "& 'opencli' --version",%0A+   "& 'opencli' doctor",%0A  ]%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:226:52%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > createPreflight > ★★ 盘上出了支持范围（3.0.0）→ 按未就绪重装，不把不该用的副本当通过,line=317,column=52::AssertionError: expected [ '& \'opencli\' --version', …(2) ] to deeply equal [ '\'opencli\' --version', …(2) ]%0A%0A- Expected%0A+ Received%0A%0A  [%0A-   "'opencli' --version",%0A-   "'opencli' --version",%0A-   "'opencli' doctor",%0A+   "& 'opencli' --version",%0A+   "& 'opencli' --version",%0A+   "& 'opencli' doctor",%0A  ]%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:317:52%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > createPreflight > ★ 版本命令第一次非零、第二次成功 → 短重试就返回，不惊动安装,line=337,column=52::AssertionError: expected [ '& \'opencli\' --version', …(2) ] to deeply equal [ '\'opencli\' --version', …(2) ]%0A%0A- Expected%0A+ Received%0A%0A  [%0A-   "'opencli' --version",%0A-   "'opencli' --version",%0A-   "'opencli' doctor",%0A+   "& 'opencli' --version",%0A+   "& 'opencli' --version",%0A+   "& 'opencli' doctor",%0A  ]%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:337:52%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > createPreflight > ★ stalled 不跟着重试（重试也等不到，还会白等 30 秒）,line=358,column=26::AssertionError: expected [ '& \'opencli\' --version', …(1) ] to deeply equal [ '\'opencli\' --version' ]%0A%0A- Expected%0A+ Received%0A%0A  [%0A-   "'opencli' --version",%0A+   "& 'opencli' --version",%0A+   "& 'opencli' doctor",%0A  ]%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:358:26%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > createPreflight > 带着一轮没跑完又来一次 hard：跟着那一轮，不另起第二轮,line=481,column=52::AssertionError: expected [ '& \'opencli\' --version', …(1) ] to deeply equal [ '\'opencli\' --version', …(1) ]%0A%0A- Expected%0A+ Received%0A%0A  [%0A-   "'opencli' --version",%0A-   "'opencli' doctor",%0A+   "& 'opencli' --version",%0A+   "& 'opencli' doctor",%0A  ]%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:481:52%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > createPreflight > 三页同时强探：合并成一轮且**不交错**（交错是"phase ready 但某步还在 running"的根因）,line=494,column=22::AssertionError: expected [ '& \'opencli\' --version', …(1) ] to deeply equal [ '\'opencli\' --version', …(1) ]%0A%0A- Expected%0A+ Received%0A%0A  [%0A-   "'opencli' --version",%0A-   "'opencli' doctor",%0A+   "& 'opencli' --version",%0A+   "& 'opencli' doctor",%0A  ]%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:494:22%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > Desktop：浏览器没开时，等用户点「打开浏览器」再开 > ★ 只有扩展没连上 → **不**自动开（开窗会抢前台），只把「可以点」交给界面,line=523,column=29::AssertionError: expected [ '& \'opencli\' --version', …(1) ] to deeply equal [ '\'opencli\' --version', …(1) ]%0A%0A- Expected%0A+ Received%0A%0A  [%0A-   "'opencli' --version",%0A-   "'opencli' doctor",%0A+   "& 'opencli' --version",%0A+   "& 'opencli' doctor",%0A  ]%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:523:29%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > 宿主不交回命令结果（沙箱 / 子进程起不来） > ★ 版本命令没返回 → 40 秒内停住走 host 那档，后面的 doctor 一条都不发,line=618,column=30::AssertionError: expected 'ready' to be 'failed' // Object.is equality%0A%0AExpected: "failed"%0AReceived: "ready"%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:618:30%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > 宿主不交回命令结果（沙箱 / 子进程起不来） > ★ 版本通了、doctor 没返回 → 也停住走 host 那档，不再白等第二遍,line=637,column=30::AssertionError: expected 'ready' to be 'failed' // Object.is equality%0A%0AExpected: "failed"%0AReceived: "ready"%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:637:30%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > 宿主不交回命令结果（沙箱 / 子进程起不来） > ★ 重试要重新探：上一次卡住不把这一次也判死,line=654,column=38::AssertionError: expected undefined to be 'host' // Object.is equality%0A%0A- Expected:%0A"host"%0A%0A+ Received:%0Aundefined%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:654:38%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > 隔离 opencli 的绝对路径不许被 shell 拆词 > ★ win32 上路径带空格（C%3A\Users\John Smith\…）→ 命令里是整段带引号的 token,line=682,column=52::AssertionError: expected [ …(3) ] to deeply equal [ …(3) ]%0A%0A- Expected%0A+ Received%0A%0A  [%0A-   "'C:\\Users\\John Smith\\.dsh\\workbench\\opencli\\bin\\opencli.cmd' --version",%0A-   "'C:\\Users\\John Smith\\.dsh\\workbench\\opencli\\bin\\opencli.cmd' doctor",%0A-   "'C:\\Users\\John Smith\\.dsh\\workbench\\opencli\\bin\\opencli.cmd' 'issues' -f json",%0A+   "& 'C:\\Users\\John Smith\\.dsh\\workbench\\opencli\\bin\\opencli.cmd' --version",%0A+   "& 'C:\\Users\\John Smith\\.dsh\\workbench\\opencli\\bin\\opencli.cmd' doctor",%0A+   "& 'C:\\Users\\John Smith\\.dsh\\workbench\\opencli\\bin\\opencli.cmd' 'issues' -f json",%0A  ]%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:682:52%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/preflight/__tests__/preflight.test.ts,title=src/preflight/__tests__/preflight.test.ts > 隔离 opencli 的绝对路径不许被 shell 拆词 > ★ 路径带单引号时按 pwsh 的字面量逃逸（两个单引号），不留 POSIX 那套反斜杠,line=696,column=36::AssertionError: expected '& \'C:\Users\O\'\'Brien\opencli.cmd\'…' to be '\'C:\Users\O\'\'Brien\opencli.cmd\' -…' // Object.is equality%0A%0AExpected: "'C:\Users\O''Brien\opencli.cmd' --version"%0AReceived: "& 'C:\Users\O''Brien\opencli.cmd' --version"%0A%0A ❯ src/preflight/__tests__/preflight.test.ts:696:36%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/probe/__tests__/probe-units.test.ts,title=src/probe/__tests__/probe-units.test.ts > 跨平台的命令形态 > ★ 隔离 opencli 的路径带空格 → plugin list 里整段带引号,line=454,column=32::AssertionError: expected '& \'C:\Users\John Smith\.dsh\workbenc…' to be '\'C:\Users\John Smith\.dsh\workbench\…' // Object.is equality%0A%0AExpected: "'C:\Users\John Smith\.dsh\workbench\opencli\bin\opencli.cmd' plugin list -f json"%0AReceived: "& 'C:\Users\John Smith\.dsh\workbench\opencli\bin\opencli.cmd' plugin list -f json"%0A%0A ❯ src/probe/__tests__/probe-units.test.ts:454:32%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/runtime/__tests__/browser-wake.test.ts,title=src/runtime/__tests__/browser-wake.test.ts > Desktop 浏览器唤醒 > 通道本就通 → 只记住正在跑的那个浏览器，不打开任何东西,line=75,column=20::AssertionError: expected { status: 'unknown' } to deeply equal { status: 'connected' }%0A%0A- Expected%0A+ Received%0A%0A  {%0A-   "status": "connected",%0A+   "status": "unknown",%0A  }%0A%0A ❯ src/runtime/__tests__/browser-wake.test.ts:75:20%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/runtime/__tests__/browser-wake.test.ts,title=src/runtime/__tests__/browser-wake.test.ts > Desktop 浏览器唤醒 > ★ 没浏览器在跑 → 后台打开记住的那个，等它连上再算成功,line=89,column=20::AssertionError: expected { status: 'unknown' } to deeply equal { status: 'connected', …(1) }%0A%0A- Expected%0A+ Received%0A%0A  {%0A-   "browser": "chrome",%0A-   "status": "connected",%0A+   "status": "unknown",%0A  }%0A%0A ❯ src/runtime/__tests__/browser-wake.test.ts:89:20%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/runtime/__tests__/browser-wake.test.ts,title=src/runtime/__tests__/browser-wake.test.ts > Desktop 浏览器唤醒 > ★ 浏览器已经开着（扩展没连）→ 不再开一个窗，也不谎报连上,line=99,column=20::AssertionError: expected { status: 'unknown' } to deeply equal { status: 'browser-open', …(1) }%0A%0A- Expected%0A+ Received%0A%0A  {%0A-   "browser": "chrome",%0A-   "status": "browser-open",%0A+   "status": "unknown",%0A  }%0A%0A ❯ src/runtime/__tests__/browser-wake.test.ts:99:20%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/runtime/__tests__/browser-wake.test.ts,title=src/runtime/__tests__/browser-wake.test.ts > Desktop 浏览器唤醒 > 记住的是 Edge 就开 Edge（不被「先装的 Chrome」带偏）,line=113,column=20::AssertionError: expected { status: 'unknown' } to deeply equal { Object (status, browser) }%0A%0A- Expected%0A+ Received%0A%0A  {%0A-   "browser": "edge",%0A-   "status": "connected",%0A+   "status": "unknown",%0A  }%0A%0A ❯ src/runtime/__tests__/browser-wake.test.ts:113:20%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/runtime/__tests__/browser-wake.test.ts,title=src/runtime/__tests__/browser-wake.test.ts > Desktop 浏览器唤醒 > open 失败 → launch-failed（如实说，不接着等）,line=139,column=20::AssertionError: expected { status: 'unknown' } to deeply equal { status: 'launch-failed', …(1) }%0A%0A- Expected%0A+ Received%0A%0A  {%0A-   "browser": "chrome",%0A-   "status": "launch-failed",%0A+   "status": "unknown",%0A  }%0A%0A ❯ src/runtime/__tests__/browser-wake.test.ts:139:20%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/runtime/__tests__/browser-wake.test.ts,title=src/runtime/__tests__/browser-wake.test.ts > Desktop 浏览器唤醒 > 打开了但一直没连上 → not-connected（预检保留原来的 warn）,line=147,column=20::AssertionError: expected { status: 'unknown' } to deeply equal { status: 'not-connected', …(1) }%0A%0A- Expected%0A+ Received%0A%0A  {%0A-   "browser": "chrome",%0A-   "status": "not-connected",%0A+   "status": "unknown",%0A  }%0A%0A ❯ src/runtime/__tests__/browser-wake.test.ts:147:20%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/runtime/__tests__/browser-wake.test.ts,title=src/runtime/__tests__/browser-wake.test.ts > Desktop 浏览器唤醒 > ★ Windows 装了 Chrome 且没在跑 → cmd start 拉起来并等连接,line=177,column=34::AssertionError: expected { status: 'unknown' } to deeply equal { status: 'connected', …(1) }%0A%0A- Expected%0A+ Received%0A%0A  {%0A-   "browser": "chrome",%0A-   "status": "connected",%0A+   "status": "unknown",%0A  }%0A%0A ❯ src/runtime/__tests__/browser-wake.test.ts:177:34%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/runtime/__tests__/browser-wake.test.ts,title=src/runtime/__tests__/browser-wake.test.ts > 命令 token 按平台引号包住 > ★ win32 上带空格的隔离路径 → daemon status 里整段带引号,line=236,column=34::AssertionError: expected { status: 'unknown' } to deeply equal { status: 'connected' }%0A%0A- Expected%0A+ Received%0A%0A  {%0A-   "status": "connected",%0A+   "status": "unknown",%0A  }%0A%0A ❯ src/runtime/__tests__/browser-wake.test.ts:236:34%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/runtime/__tests__/browser-wake.test.ts,title=src/runtime/__tests__/browser-wake.test.ts > Linux 启动浏览器 > ★ 这台机器没有 setsid → 如实报 launch-failed（不再谎报 not-connected）,line=262,column=45::AssertionError: expected { status: 'unknown' } to deeply equal { status: 'launch-failed', …(1) }%0A%0A- Expected%0A+ Received%0A%0A  {%0A-   "browser": "chrome",%0A-   "status": "launch-failed",%0A+   "status": "unknown",%0A  }%0A%0A ❯ src/runtime/__tests__/browser-wake.test.ts:262:45%0A%0A
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/adapter-probe/src/runtime/__tests__/browser-wake.test.ts,title=src/runtime/__tests__/browser-wake.test.ts > Linux 启动浏览器 > ★ 有 setsid → 照旧 setsid 起它,line=277,column=45::AssertionError: expected { status: 'unknown' } to deeply equal { status: 'not-connected', …(1) }%0A%0A- Expected%0A+ Received%0A%0A  {%0A-   "browser": "chrome",%0A-   "status": "not-connected",%0A+   "status": "unknown",%0A  }%0A%0A ❯ src/runtime/__tests__/browser-wake.test.ts:277:45%0A%0A
+undefined
+D:\a\dsh-workbench\dsh-workbench\packages\adapter-probe:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command "vitest" not found
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 26 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22mcreatePreflight[2m > [22m环境齐了 → 两步都 ok，放行
+[31m[1mAssertionError[22m: expected [ '& \'opencli\' --version', …(1) ] to deeply equal [ '\'opencli\' --version', …(1) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "'opencli' --version",[39m
+[32m-   "'opencli' doctor",[39m
+[31m+   "& 'opencli' --version",[39m
+[31m+   "& 'opencli' doctor",[39m
+[2m  ][22m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m24:52[22m[39m
+    [90m 22|[39m     expect(snapshot.steps.map((item) => `${item.id}=${item.status}`)).…
+    [90m 23|[39m     expect(snapshot.steps[0]?.detail).toBe('2.0.3');
+    [90m 24|[39m     expect(fake.calls.map((call) => call.command)).toEqual(["'opencli'…
+    [90m   |[39m                                                    [31m^[39m
+    [90m 25|[39m   });
+    [90m 26|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22mcreatePreflight[2m > [22m缺 opencli → 自动安装 → 重探 → 放行；安装期间界面能拿到"正在执行的动作"
+[31m[1mAssertionError[22m: expected [ '& \'opencli\' --version', …(2) ] to deeply equal [ '\'opencli\' --version', …(2) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "'opencli' --version",[39m
+[32m-   "'opencli' --version",[39m
+[32m-   "'opencli' doctor",[39m
+[31m+   "& 'opencli' --version",[39m
+[31m+   "& 'opencli' --version",[39m
+[31m+   "& 'opencli' doctor",[39m
+[2m  ][22m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m64:52[22m[39m
+    [90m 62|[39m     expect(snapshot.phase).toBe('ready');
+    [90m 63|[39m     expect(snapshot.steps[0]?.status).toBe('ok');
+    [90m 64|[39m     expect(fake.calls.map((call) => call.command)).toEqual([
+    [90m   |[39m                                                    [31m^[39m
+    [90m 65|[39m       "'opencli' --version",
+    [90m 66|[39m       "'opencli' --version",
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22mcreatePreflight[2m > [22m★ 两页同时打开：第二页跟着第一页那一轮，不再排第二轮
+[31m[1mAssertionError[22m: expected [ '& \'opencli\' --version', …(1) ] to deeply equal [ '\'opencli\' --version', …(1) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "'opencli' --version",[39m
+[32m-   "'opencli' doctor",[39m
+[31m+   "& 'opencli' --version",[39m
+[31m+   "& 'opencli' doctor",[39m
+[2m  ][22m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m216:52[22m[39m
+    [90m214|[39m     await Promise.all([first, second]);
+    [90m215|[39m
+    [90m216|[39m     expect(fake.calls.map((call) => call.command)).toEqual(["'opencli'…
+    [90m   |[39m                                                    [31m^[39m
+    [90m217|[39m     expect(preflight.snapshot().phase).toBe('ready');
+    [90m218|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22mcreatePreflight[2m > [22m★ 刚跑出 ready 再问一次不重跑：第二页拿到的就是上一份
+[31m[1mAssertionError[22m: expected [ '& \'opencli\' --version', …(1) ] to deeply equal [ '\'opencli\' --version', …(1) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "'opencli' --version",[39m
+[32m-   "'opencli' doctor",[39m
+[31m+   "& 'opencli' --version",[39m
+[31m+   "& 'opencli' doctor",[39m
+[2m  ][22m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m226:52[22m[39m
+    [90m224|[39m     const again = await preflight.run();
+    [90m225|[39m
+    [90m226|[39m     expect(fake.calls.map((call) => call.command)).toEqual(["'opencli'…
+    [90m   |[39m                                                    [31m^[39m
+    [90m227|[39m     expect(again).toEqual(done);
+    [90m228|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22mcreatePreflight[2m > [22m★★ 盘上出了支持范围（3.0.0）→ 按未就绪重装，不把不该用的副本当通过
+[31m[1mAssertionError[22m: expected [ '& \'opencli\' --version', …(2) ] to deeply equal [ '\'opencli\' --version', …(2) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "'opencli' --version",[39m
+[32m-   "'opencli' --version",[39m
+[32m-   "'opencli' doctor",[39m
+[31m+   "& 'opencli' --version",[39m
+[31m+   "& 'opencli' --version",[39m
+[31m+   "& 'opencli' doctor",[39m
+[2m  ][22m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m317:52[22m[39m
+    [90m315|[39m     expect(snapshot.phase).toBe('ready');
+    [90m316|[39m     expect(snapshot.steps[0]?.detail).toBe('2.0.3');
+    [90m317|[39m     expect(fake.calls.map((call) => call.command)).toEqual([
+    [90m   |[39m                                                    [31m^[39m
+    [90m318|[39m       "'opencli' --version",
+    [90m319|[39m       "'opencli' --version",
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22mcreatePreflight[2m > [22m★ 版本命令第一次非零、第二次成功 → 短重试就返回，不惊动安装
+[31m[1mAssertionError[22m: expected [ '& \'opencli\' --version', …(2) ] to deeply equal [ '\'opencli\' --version', …(2) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "'opencli' --version",[39m
+[32m-   "'opencli' --version",[39m
+[32m-   "'opencli' doctor",[39m
+[31m+   "& 'opencli' --version",[39m
+[31m+   "& 'opencli' --version",[39m
+[31m+   "& 'opencli' doctor",[39m
+[2m  ][22m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m337:52[22m[39m
+    [90m335|[39m     expect(install).not.toHaveBeenCalled();
+    [90m336|[39m     expect(snapshot.phase).toBe('ready');
+    [90m337|[39m     expect(fake.calls.map((call) => call.command)).toEqual([
+    [90m   |[39m                                                    [31m^[39m
+    [90m338|[39m       "'opencli' --version",
+    [90m339|[39m       "'opencli' --version",
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22mcreatePreflight[2m > [22m★ stalled 不跟着重试（重试也等不到，还会白等 30 秒）
+[31m[1mAssertionError[22m: expected [ '& \'opencli\' --version', …(1) ] to deeply equal [ '\'opencli\' --version' ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "'opencli' --version",[39m
+[31m+   "& 'opencli' --version",[39m
+[31m+   "& 'opencli' doctor",[39m
+[2m  ][22m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m358:26[22m[39m
+    [90m356|[39m       const snapshot = await pending;
+    [90m357|[39m
+    [90m358|[39m       expect(fake.calls).toEqual(["'opencli' --version"]);
+    [90m   |[39m                          [31m^[39m
+    [90m359|[39m       expect(snapshot.guidance).toBe('host');
+    [90m360|[39m     } finally {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22mcreatePreflight[2m > [22m带着一轮没跑完又来一次 hard：跟着那一轮，不另起第二轮
+[31m[1mAssertionError[22m: expected [ '& \'opencli\' --version', …(1) ] to deeply equal [ '\'opencli\' --version', …(1) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "'opencli' --version",[39m
+[32m-   "'opencli' doctor",[39m
+[31m+   "& 'opencli' --version",[39m
+[31m+   "& 'opencli' doctor",[39m
+[2m  ][22m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m481:52[22m[39m
+    [90m479|[39m     await Promise.all([first, second]);
+    [90m480|[39m
+    [90m481|[39m     expect(fake.calls.map((call) => call.command)).toEqual([
+    [90m   |[39m                                                    [31m^[39m
+    [90m482|[39m       "'opencli' --version",
+    [90m483|[39m       "'opencli' doctor",
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22mcreatePreflight[2m > [22m三页同时强探：合并成一轮且**不交错**（交错是"phase ready 但某步还在 running"的根因）
+[31m[1mAssertionError[22m: expected [ '& \'opencli\' --version', …(1) ] to deeply equal [ '\'opencli\' --version', …(1) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "'opencli' --version",[39m
+[32m-   "'opencli' doctor",[39m
+[31m+   "& 'opencli' --version",[39m
+[31m+   "& 'opencli' doctor",[39m
+[2m  ][22m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m494:22[22m[39m
+    [90m492|[39m
+    [90m493|[39m     const commands = fake.calls.map((call) => call.command);
+    [90m494|[39m     expect(commands).toEqual([
+    [90m   |[39m                      [31m^[39m
+    [90m495|[39m       "'opencli' --version",
+    [90m496|[39m       "'opencli' doctor",
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22mDesktop：浏览器没开时，等用户点「打开浏览器」再开[2m > [22m★ 只有扩展没连上 → **不**自动开（开窗会抢前台），只把「可以点」交给界面
+[31m[1mAssertionError[22m: expected [ '& \'opencli\' --version', …(1) ] to deeply equal [ '\'opencli\' --version', …(1) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "'opencli' --version",[39m
+[32m-   "'opencli' doctor",[39m
+[31m+   "& 'opencli' --version",[39m
+[31m+   "& 'opencli' doctor",[39m
+[2m  ][22m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m523:29[22m[39m
+    [90m521|[39m
+    [90m522|[39m     expect(wake).not.toHaveBeenCalled();
+    [90m523|[39m     expect(fake.commands()).toEqual(["'opencli' --version", "'opencli'…
+    [90m   |[39m                             [31m^[39m
+    [90m524|[39m     expect(snapshot.steps[1]?.status).toBe('warn');
+    [90m525|[39m     expect(snapshot.steps[1]?.command).toBeUndefined();
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22m宿主不交回命令结果（沙箱 / 子进程起不来）[2m > [22m★ 版本命令没返回 → 40 秒内停住走 host 那档，后面的 doctor 一条都不发
+[31m[1mAssertionError[22m: expected 'ready' to be 'failed' // Object.is equality[39m
+
+Expected: [32m"failed"[39m
+Received: [31m"ready"[39m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m618:30[22m[39m
+    [90m616|[39m       const snapshot = await pending;
+    [90m617|[39m
+    [90m618|[39m       expect(snapshot.phase).toBe('failed');
+    [90m   |[39m                              [31m^[39m
+    [90m619|[39m       expect(snapshot.guidance).toBe('host');
+    [90m620|[39m       expect(snapshot.failure).toBe('host');
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22m宿主不交回命令结果（沙箱 / 子进程起不来）[2m > [22m★ 版本通了、doctor 没返回 → 也停住走 host 那档，不再白等第二遍
+[31m[1mAssertionError[22m: expected 'ready' to be 'failed' // Object.is equality[39m
+
+Expected: [32m"failed"[39m
+Received: [31m"ready"[39m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m637:30[22m[39m
+    [90m635|[39m       const snapshot = await pending;
+    [90m636|[39m
+    [90m637|[39m       expect(snapshot.phase).toBe('failed');
+    [90m   |[39m                              [31m^[39m
+    [90m638|[39m       expect(snapshot.guidance).toBe('host');
+    [90m639|[39m       expect(fake.calls).toEqual(["'opencli' --version", "'opencli' do…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22m宿主不交回命令结果（沙箱 / 子进程起不来）[2m > [22m★ 重试要重新探：上一次卡住不把这一次也判死
+[31m[1mAssertionError[22m: expected undefined to be 'host' // Object.is equality[39m
+
+[32m- Expected:[39m
+"host"
+
+[31m+ Received:[39m
+undefined
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m654:38[22m[39m
+    [90m652|[39m       const first = preflight.run();
+    [90m653|[39m       await vi.advanceTimersByTimeAsync(130_000);
+    [90m654|[39m       expect((await first).guidance).toBe('host');
+    [90m   |[39m                                      [31m^[39m
+    [90m655|[39m
+    [90m656|[39m       const second = preflight.run({ hard: true });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22m隔离 opencli 的绝对路径不许被 shell 拆词[2m > [22m★ win32 上路径带空格（C:\Users\John Smith\…）→ 命令里是整段带引号的 token
+[31m[1mAssertionError[22m: expected [ …(3) ] to deeply equal [ …(3) ][39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "'C:\\Users\\John Smith\\.dsh\\workbench\\opencli\\bin\\opencli.cmd' --version",[39m
+[32m-   "'C:\\Users\\John Smith\\.dsh\\workbench\\opencli\\bin\\opencli.cmd' doctor",[39m
+[32m-   "'C:\\Users\\John Smith\\.dsh\\workbench\\opencli\\bin\\opencli.cmd' 'issues' -f json",[39m
+[31m+   "& 'C:\\Users\\John Smith\\.dsh\\workbench\\opencli\\bin\\opencli.cmd' --version",[39m
+[31m+   "& 'C:\\Users\\John Smith\\.dsh\\workbench\\opencli\\bin\\opencli.cmd' doctor",[39m
+[31m+   "& 'C:\\Users\\John Smith\\.dsh\\workbench\\opencli\\bin\\opencli.cmd' 'issues' -f json",[39m
+[2m  ][22m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m682:52[22m[39m
+    [90m680|[39m
+    [90m681|[39m     expect(snapshot.phase).toBe('ready');
+    [90m682|[39m     expect(fake.calls.map((call) => call.command)).toEqual([
+    [90m   |[39m                                                    [31m^[39m
+    [90m683|[39m       `'${command}' --version`,
+    [90m684|[39m       `'${command}' doctor`,
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/preflight/__tests__/preflight.test.ts[2m > [22m隔离 opencli 的绝对路径不许被 shell 拆词[2m > [22m★ 路径带单引号时按 pwsh 的字面量逃逸（两个单引号），不留 POSIX 那套反斜杠
+[31m[1mAssertionError[22m: expected '& \'C:\Users\O\'\'Brien\opencli.cmd\'…' to be '\'C:\Users\O\'\'Brien\opencli.cmd\' -…' // Object.is equality[39m
+
+Expected: [32m"'C:\Users\O''Brien\opencli.cmd' --version"[39m
+Received: [31m"[7m& [27m'C:\Users\O''Brien\opencli.cmd' --version"[39m
+
+[36m [2m❯[22m src/preflight/__tests__/preflight.test.ts:[2m696:36[22m[39m
+    [90m694|[39m     await preflight.run();
+    [90m695|[39m
+    [90m696|[39m     expect(fake.calls[0]?.command).toBe(`'C:\\Users\\O''Brien\\opencli…
+    [90m   |[39m                                    [31m^[39m
+    [90m697|[39m     expect(fake.calls[0]?.command).not.toContain(`'\\''`);
+    [90m698|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/probe/__tests__/probe-units.test.ts[2m > [22m跨平台的命令形态[2m > [22m★ 隔离 opencli 的路径带空格 → plugin list 里整段带引号
+[31m[1mAssertionError[22m: expected '& \'C:\Users\John Smith\.dsh\workbenc…' to be '\'C:\Users\John Smith\.dsh\workbench\…' // Object.is equality[39m
+
+Expected: [32m"'C:\Users\John Smith\.dsh\workbench\opencli\bin\opencli.cmd' plugin list -f json"[39m
+Received: [31m"[7m& [27m'C:\Users\John Smith\.dsh\workbench\opencli\bin\opencli.cmd' plugin list -f json"[39m
+
+[36m [2m❯[22m src/probe/__tests__/probe-units.test.ts:[2m454:32[22m[39m
+    [90m452|[39m     });
+    [90m453|[39m
+    [90m454|[39m     expect(fake.commands()[0]).toBe(`'${command}' plugin list -f json`…
+    [90m   |[39m                                [31m^[39m
+    [90m455|[39m     expect(found[0]?.status).toBe('ok');
+    [90m456|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/runtime/__tests__/browser-wake.test.ts[2m > [22mDesktop 浏览器唤醒[2m > [22m通道本就通 → 只记住正在跑的那个浏览器，不打开任何东西
+[31m[1mAssertionError[22m: expected { status: 'unknown' } to deeply equal { status: 'connected' }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "status": "connected",[39m
+[31m+   "status": "unknown",[39m
+[2m  }[22m
+
+[36m [2m❯[22m src/runtime/__tests__/browser-wake.test.ts:[2m75:20[22m[39m
+    [90m 73|[39m     const result = await desktop.wake();
+    [90m 74|[39m
+    [90m 75|[39m     expect(result).toEqual({ status: 'connected' });
+    [90m   |[39m                    [31m^[39m
+    [90m 76|[39m     expect(fake.commands().some((line) => line.startsWith('open '))).t…
+    [90m 77|[39m     expect(JSON.parse(readFileSync(stateFile, 'utf8'))).toEqual({ brow…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/runtime/__tests__/browser-wake.test.ts[2m > [22mDesktop 浏览器唤醒[2m > [22m★ 没浏览器在跑 → 后台打开记住的那个，等它连上再算成功
+[31m[1mAssertionError[22m: expected { status: 'unknown' } to deeply equal { status: 'connected', …(1) }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "browser": "chrome",[39m
+[32m-   "status": "connected",[39m
+[31m+   "status": "unknown",[39m
+[2m  }[22m
+
+[36m [2m❯[22m src/runtime/__tests__/browser-wake.test.ts:[2m89:20[22m[39m
+    [90m 87|[39m     const result = await desktop.wake();
+    [90m 88|[39m
+    [90m 89|[39m     expect(result).toEqual({ status: 'connected', browser: 'chrome' });
+    [90m   |[39m                    [31m^[39m
+    [90m 90|[39m     expect(fake.commands()).toContain(`open -g -j -a '${CHROME_APP}'`);
+    [90m 91|[39m     expect(JSON.parse(readFileSync(stateFile, 'utf8'))).toEqual({ brow…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/runtime/__tests__/browser-wake.test.ts[2m > [22mDesktop 浏览器唤醒[2m > [22m★ 浏览器已经开着（扩展没连）→ 不再开一个窗，也不谎报连上
+[31m[1mAssertionError[22m: expected { status: 'unknown' } to deeply equal { status: 'browser-open', …(1) }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "browser": "chrome",[39m
+[32m-   "status": "browser-open",[39m
+[31m+   "status": "unknown",[39m
+[2m  }[22m
+
+[36m [2m❯[22m src/runtime/__tests__/browser-wake.test.ts:[2m99:20[22m[39m
+    [90m 97|[39m     const result = await desktop.wake();
+    [90m 98|[39m
+    [90m 99|[39m     expect(result).toEqual({ status: 'browser-open', browser: 'chrome'…
+    [90m   |[39m                    [31m^[39m
+    [90m100|[39m     expect(fake.commands().some((line) => line.startsWith('open '))).t…
+    [90m101|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/runtime/__tests__/browser-wake.test.ts[2m > [22mDesktop 浏览器唤醒[2m > [22m记住的是 Edge 就开 Edge（不被「先装的 Chrome」带偏）
+[31m[1mAssertionError[22m: expected { status: 'unknown' } to deeply equal { Object (status, browser) }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "browser": "edge",[39m
+[32m-   "status": "connected",[39m
+[31m+   "status": "unknown",[39m
+[2m  }[22m
+
+[36m [2m❯[22m src/runtime/__tests__/browser-wake.test.ts:[2m113:20[22m[39m
+    [90m111|[39m     const result = await desktop.wake();
+    [90m112|[39m
+    [90m113|[39m     expect(result).toEqual({ status: 'connected', browser: 'edge' });
+    [90m   |[39m                    [31m^[39m
+    [90m114|[39m     expect(fake.commands()).toContain(`open -g -j -a '${EDGE_APP}'`);
+    [90m115|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/runtime/__tests__/browser-wake.test.ts[2m > [22mDesktop 浏览器唤醒[2m > [22mopen 失败 → launch-failed（如实说，不接着等）
+[31m[1mAssertionError[22m: expected { status: 'unknown' } to deeply equal { status: 'launch-failed', …(1) }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "browser": "chrome",[39m
+[32m-   "status": "launch-failed",[39m
+[31m+   "status": "unknown",[39m
+[2m  }[22m
+
+[36m [2m❯[22m src/runtime/__tests__/browser-wake.test.ts:[2m139:20[22m[39m
+    [90m137|[39m     const result = await desktop.wake();
+    [90m138|[39m
+    [90m139|[39m     expect(result).toEqual({ status: 'launch-failed', browser: 'chrome…
+    [90m   |[39m                    [31m^[39m
+    [90m140|[39m   });
+    [90m141|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/runtime/__tests__/browser-wake.test.ts[2m > [22mDesktop 浏览器唤醒[2m > [22m打开了但一直没连上 → not-connected（预检保留原来的 warn）
+[31m[1mAssertionError[22m: expected { status: 'unknown' } to deeply equal { status: 'not-connected', …(1) }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "browser": "chrome",[39m
+[32m-   "status": "not-connected",[39m
+[31m+   "status": "unknown",[39m
+[2m  }[22m
+
+[36m [2m❯[22m src/runtime/__tests__/browser-wake.test.ts:[2m147:20[22m[39m
+    [90m145|[39m     const result = await desktop.wake();
+    [90m146|[39m
+    [90m147|[39m     expect(result).toEqual({ status: 'not-connected', browser: 'chrome…
+    [90m   |[39m                    [31m^[39m
+    [90m148|[39m   });
+    [90m149|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/runtime/__tests__/browser-wake.test.ts[2m > [22mDesktop 浏览器唤醒[2m > [22m★ Windows 装了 Chrome 且没在跑 → cmd start 拉起来并等连接
+[31m[1mAssertionError[22m: expected { status: 'unknown' } to deeply equal { status: 'connected', …(1) }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "browser": "chrome",[39m
+[32m-   "status": "connected",[39m
+[31m+   "status": "unknown",[39m
+[2m  }[22m
+
+[36m [2m❯[22m src/runtime/__tests__/browser-wake.test.ts:[2m177:34[22m[39m
+    [90m175|[39m     });
+    [90m176|[39m
+    [90m177|[39m     expect(await desktop.wake()).toEqual({ status: 'connected', browse…
+    [90m   |[39m                                  [31m^[39m
+    [90m178|[39m     expect(fake.commands().some((line) => line.startsWith('cmd /d /s /…
+    [90m179|[39m     expect(fake.commands().join('\n')).toContain('chrome.exe');
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/runtime/__tests__/browser-wake.test.ts[2m > [22m命令 token 按平台引号包住[2m > [22m★ win32 上带空格的隔离路径 → daemon status 里整段带引号
+[31m[1mAssertionError[22m: expected { status: 'unknown' } to deeply equal { status: 'connected' }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "status": "connected",[39m
+[31m+   "status": "unknown",[39m
+[2m  }[22m
+
+[36m [2m❯[22m src/runtime/__tests__/browser-wake.test.ts:[2m236:34[22m[39m
+    [90m234|[39m     });
+    [90m235|[39m
+    [90m236|[39m     expect(await desktop.wake()).toEqual({ status: 'connected' });
+    [90m   |[39m                                  [31m^[39m
+    [90m237|[39m     expect(fake.commands()[0]).toBe(`'${command}' daemon status`);
+    [90m238|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/runtime/__tests__/browser-wake.test.ts[2m > [22mLinux 启动浏览器[2m > [22m★ 这台机器没有 setsid → 如实报 launch-failed（不再谎报 not-connected）
+[31m[1mAssertionError[22m: expected { status: 'unknown' } to deeply equal { status: 'launch-failed', …(1) }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "browser": "chrome",[39m
+[32m-   "status": "launch-failed",[39m
+[31m+   "status": "unknown",[39m
+[2m  }[22m
+
+[36m [2m❯[22m src/runtime/__tests__/browser-wake.test.ts:[2m262:45[22m[39m
+    [90m260|[39m     });
+    [90m261|[39m
+    [90m262|[39m     expect(await linuxDesktop(fake).wake()).toEqual({ status: 'launch-…
+    [90m   |[39m                                             [31m^[39m
+    [90m263|[39m     expect(fake.commands().some((line) => line.startsWith('setsid ')))…
+    [90m264|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/26]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/runtime/__tests__/browser-wake.test.ts[2m > [22mLinux 启动浏览器[2m > [22m★ 有 setsid → 照旧 setsid 起它
+[31m[1mAssertionError[22m: expected { status: 'unknown' } to deeply equal { status: 'not-connected', …(1) }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "browser": "chrome",[39m
+[32m-   "status": "not-connected",[39m
+[31m+   "status": "unknown",[39m
+[2m  }[22m
+
+[36m [2m❯[22m src/runtime/__tests__/browser-wake.test.ts:[2m277:45[22m[39m
+    [90m275|[39m     });
+    [90m276|[39m
+    [90m277|[39m     expect(await linuxDesktop(fake).wake()).toEqual({ status: 'not-con…
+    [90m   |[39m                                             [31m^[39m
+    [90m278|[39m     expect(fake.commands()).toContain(
+    [90m279|[39m       "setsid '/usr/bin/google-chrome' --no-startup-window >/dev/null …
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/26]⎯[22m[39m
