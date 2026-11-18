@@ -1,0 +1,86 @@
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.1s] MILESTONE cdp-connected @ 0.1s
+[0.1s] health wait [] none :: HARNESS | Loading plugins…
+[0.1s] ready wait [] none :: HARNESS | Loading plugins…
+[2.1s] ready wait [] none :: HARNESS | Loading plugins…
+[4.1s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[4.1s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[6.2s] ready wait [checking] toolchain:running(node --version · npm --version · pnpm --version) cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[6.2s] 体检还在跑，先等它：toolchain:running · cli:pending · bridge:pending · diy:pending
+[12.1s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: Workspaces | No sessions yet | More | Into the Unknown | Preview | Choose a workspace to start | Workbench panel | Reading the panel setup… | Preparing the workbench |  | Getting the runtime ready… |  | Loading settings…
+[12.1s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[14.5s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[14.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[16.5s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[16.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[18.6s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[18.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[20.6s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[20.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[22.6s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[22.6s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[24.6s] ready wait [ready] toolchain:ok cli:ok bridge:warn diy:ok :: r\browser-extension; (2) click the link below to install it from the Chrome Web Store. When done, come back and click Retry. | Get the extension in the Chrome Web Store | Open browser | Retry | Enter the workbench anyway
+[24.6s] 模拟用户装扩展：起浏览器 D:\a\_temp\cft\chrome-win64\chrome.exe（--load-extension=D:\a\_temp\opencli-ext，日志 D:\a\dsh-workbench\dsh-workbench\desktop-win11-self-update-chrome.log）
+[24.6s] MILESTONE browser-launched @ 24.6s
+[30.5s] extension wait: connected :: {"ok":true,"data":{"cliVersion":"2.0.3","daemonRunning":true,"daemonFlaky":false,"daemonStale":false,"daemonVersion":"2.0.3","extensionConnected":true,"extensionFlaky":false,"extensionVersion":"1.0.27","extensionOutdated":false,"connectivity":{"ok":true,"durationMs":4372},"profiles":[{"contextId":"z4nkxqpd","extensionConnected":true,"extensionVersion":"1.0.27","extensionCompatRange":">=1.7.0","pending":0,"lastSeenAt":1794985065620}],"adapterShadows":[],"issues":[]}}
+[30.5s] chrome targets: browser_ui:chrome://omnibox-popup.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://webui-toolbar.top-chrome/ | browser_ui:chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html | browser_ui:chrome://omnibox-popup.top-chrome/ | page:chrome://newtab/ | iframe:chrome-untrusted://new-tab-page/one-google-bar?paramsencoded= | browser_ui:chrome://webui-toolbar.top-chrome/ | service_worker:chrome-extension://eghmcigglheggjiadbmpddohagagpnca/dist/background.js
+[30.5s] STEP click ["Retry","重试"]: "Retry"
+[33.7s] ready wait [checking] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:pending ::   | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | - | Check DIY mode
+[33.7s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:pending
+[35.8s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: | Preview | Standard mode | Describe what you want to build, / commands, @ files or sessions | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[35.8s] MILESTONE ready @ 35.8s
+[35.8s] STEP click ["Browse the module market","Choose modules","Browse modules","Open the module market","Workbench module market","模块市场","浏览模块","工作台模块市场"]: "Workbench module market"
+[38.9s] market-page: | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[38.9s] MILESTONE market-open @ 38.9s
+[38.9s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-self-update-body.txt (606 bytes)
+[38.9s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[40.9s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[42.9s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[44.9s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[46.9s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[48.9s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[50.9s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[53.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[55.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[57.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[59.0s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[64.4s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[66.4s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[68.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[70.5s] self-update row wait: found=true buttons=["Workbench","View details for Workbench"]
+[72.5s] STEP workbench row: found=true buttons=["Workbench","View details for Workbench","Upgrade"]
+[72.5s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-self-update-row.json (4387 bytes)
+[73.1s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-self-update-before.json (883 bytes)
+[73.2s] STEP click ["升级","Upgrade"]: "Upgrade"
+[76.2s] MILESTONE self-update-clicked @ 76.2s
+[76.6s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-self-update-alive.txt (78 bytes)
+[76.6s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[78.6s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[84.6s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[86.6s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[88.6s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[90.6s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[92.6s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[94.6s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[96.6s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[98.6s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[100.7s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[102.7s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[104.7s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[106.7s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[108.7s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[110.7s] self-update wait: stalled | Uninstall | After installation, select it on that project’s panel page before the module appears. | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[110.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-self-update-ready.txt (671 bytes)
+[110.7s] MILESTONE self-update-ready @ 110.7s
+[110.7s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-self-update-row-after.json (4336 bytes)
+[111.3s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-self-update-ready.json (117 bytes)
+[111.3s] MILESTONE self-update-verified @ 111.3s
+[111.3s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-self-update-smoke.json (110 bytes)
+[111.3s] WROTE D:\a\dsh-workbench\dsh-workbench\desktop-win11-self-update-final-body.txt (671 bytes)
+[111.3s] TITLE: DeepSeek Harness
+[131.3s] SHOT 失败（证据少一张，不影响判定）：CDP Page.captureScreenshot 20 秒没回（页面可能正在重载）
+[131.3s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"131.3s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.1s","browser-launched":"24.6s","ready":"35.8s","market-open":"38.9s","self-update-clicked":"76.2s","self-update-ready":"110.7s","self-update-verified":"111.3s"},"updated":true,"ready":true,"live":true,"to":"1.3.2"}
