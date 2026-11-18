@@ -1,0 +1,9 @@
+cft: https://storage.googleapis.com/chrome-for-testing-public/158.0.8127.36/mac-arm64/chrome-mac-arm64.zip
+/Users/runner/work/_temp/cft.zip: 200339070 字节
+chrome: Google Chrome for Testing 158.0.8127.36
+opencli pin: 2.0.3
+latest release: v2.0.3
+extension: https://github.com/jackwener/opencli/releases/download/v2.0.3/opencli-extension-v1.0.27.zip
+/Users/runner/work/_temp/opencli-ext.zip: 49186 字节
+extension version: 1.0.27 · dir: /Users/runner/work/_temp/opencli-ext
+env: DESKTOP_SMOKE_CHROME=/Users/runner/work/_temp/cft/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing · DESKTOP_SMOKE_EXTENSION=/Users/runner/work/_temp/opencli-ext · DESKTOP_SMOKE_OPENCLI=/Users/runner/.dsh/workbench/opencli/bin/opencli

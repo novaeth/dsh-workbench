@@ -1,0 +1,42 @@
+[0.1s] MILESTONE cdp-ready @ 0.1s
+[0.1s] 桌面端点就绪：Chrome/152.0.7977.130
+[0.1s] pages: dsh-app://app/
+[0.1s] MILESTONE app-page @ 0.1s
+[0.1s] target: dsh-app://app/
+[0.2s] MILESTONE cdp-connected @ 0.2s
+[0.2s] health wait [] none :: HARNESS | Loading plugins…
+[0.2s] ready wait [] none :: HARNESS | Loading plugins…
+[2.2s] ready wait [] none :: HARNESS | Loading plugins…
+[4.5s] ready wait [idle] toolchain:pending cli:pending bridge:pending diy:pending :: HARNESS | Loading plugins…
+[4.5s] 体检还在跑，先等它：toolchain:pending · cli:pending · bridge:pending · diy:pending
+[7.3s] ready wait [checking] toolchain:ok cli:running(检查 opencli 版本) bridge:pending diy:running :: HARNESS | Loading plugins… | Preparing the workbench |  | Getting the runtime ready…
+[7.3s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[9.4s] ready wait [installing] toolchain:ok cli:running(安装 opencli) bridge:pending diy:running :: llo, workbench |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[9.4s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[11.4s] ready wait [installing] toolchain:ok cli:running(安装 opencli) bridge:pending diy:running :: llo, workbench |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | Install background tools | › | - | Connect your browser | Check DIY mode
+[11.4s] 体检还在跑，先等它：toolchain:ok · cli:running · bridge:pending · diy:running
+[13.4s] ready wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[13.4s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[15.5s] ready wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[15.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[17.5s] ready wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[17.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[19.5s] ready wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[19.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[21.5s] ready wait [installing] toolchain:ok cli:ok bridge:running(检查浏览器通道) diy:running :: ch |  | This card comes from a standalone workbench module. |  | Preparing the workbench | ✓ | Check the environment | Looks good | › | ✓ | Install background tools | Ready | › | Connect your browser | › | Check DIY mode
+[21.5s] 体检还在跑，先等它：toolchain:ok · cli:ok · bridge:running · diy:running
+[23.5s] ready wait [ready] toolchain:ok cli:ok bridge:ok diy:ok :: rd mode | Describe what you want to build, / commands, @ files or sessions | Workspace Write | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[23.5s] MILESTONE ready @ 23.5s
+[23.5s] verify wait :: host units panels,hello :: cards wb-card-hello :: kspace Write | Select model | Workbench panel | Sample module |  | hello, workbench |  | This card comes from a standalone workbench module.
+[23.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-self-update-verify-body.txt (356 bytes)
+[23.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-self-update-units.json (6078 bytes)
+[23.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-self-update-client-bundles.json (25 bytes)
+[23.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-self-update-page-internals.json (2096 bytes)
+[23.5s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-self-update-console-events.json (9700 bytes)
+[24.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-self-update-verify-running.json (1013 bytes)
+[24.0s] MILESTONE module-card @ 24.0s
+[24.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-self-update-smoke.json (101 bytes)
+[24.0s] WROTE /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-self-update-final-body.txt (356 bytes)
+[24.0s] TITLE: DeepSeek Harness
+[24.1s] SHOT /Users/runner/work/dsh-workbench/dsh-workbench/desktop-mac-after-self-update.png (64424 bytes)
+[24.1s] SMOKE_SUMMARY {"outcome":"passed","elapsed":"24.1s","milestones":{"cdp-ready":"0.1s","app-page":"0.1s","cdp-connected":"0.2s","ready":"23.5s","module-card":"24.0s"},"card":true,"units":["panels","hello"]}

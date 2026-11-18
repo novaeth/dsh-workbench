@@ -1,0 +1,35 @@
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/3de15f96-8dad-4c64-bdc8-08b50757ba1a
+[5763:1118/055257.255146:ERROR:content/browser/gpu/gpu_process_host.cc:1035] GPU process exited unexpectedly: exit_code=15
+[5763:1118/055257.318360:ERROR:content/browser/network_service_instance_impl.cc:650] Network service crashed or was terminated, restarting service.
+Error: Desktop renderer exited: killed
+    at WebContents.<anonymous> (file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/lib/main.js:21509:107)
+    at WebContents.emit (node:events:526:24)
+
+DevTools listening on ws://127.0.0.1:9223/devtools/browser/7e7c58c7-4e0b-45c7-be81-0eee859b144d
+[9225:1118/055408.594270:ERROR:content/browser/gpu/gpu_process_host.cc:1035] GPU process exited unexpectedly: exit_code=15
+[9225:1118/055408.658277:ERROR:content/browser/network_service_instance_impl.cc:650] Network service crashed or was terminated, restarting service.
+Error: Desktop renderer exited: killed
+    at WebContents.<anonymous> (file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/lib/main.js:21509:107)
+    at WebContents.emit (node:events:526:24)
+
+DevTools listening on ws://127.0.0.1:9226/devtools/browser/e0e49a7a-4dce-4412-b822-bcc62fe5c2db
+[11639:1118/055527.251605:ERROR:content/browser/gpu/gpu_process_host.cc:1035] GPU process exited unexpectedly: exit_code=15
+[11639:1118/055527.324755:ERROR:content/browser/network_service_instance_impl.cc:650] Network service crashed or was terminated, restarting service.
+Error: Desktop renderer exited: killed
+    at WebContents.<anonymous> (file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/lib/main.js:21509:107)
+    at WebContents.emit (node:events:526:24)
+
+DevTools listening on ws://127.0.0.1:9227/devtools/browser/ead2c2ee-7fe8-4826-91e5-41546fd587c7
+[14630:1118/055657.419028:ERROR:content/browser/gpu/gpu_process_host.cc:1035] GPU process exited unexpectedly: exit_code=15
+[14630:1118/055657.513406:ERROR:content/browser/network_service_instance_impl.cc:650] Network service crashed or was terminated, restarting service.
+Error: Desktop renderer exited: killed
+    at WebContents.<anonymous> (file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/lib/main.js:21509:107)
+    at WebContents.emit (node:events:526:24)
+
+DevTools listening on ws://127.0.0.1:9228/devtools/browser/089a146a-be3c-4b4f-a770-e417232110e7
+[17924:1118/055805.796484:ERROR:content/browser/network_service_instance_impl.cc:650] Network service crashed or was terminated, restarting service.
+[17924:1118/055805.803287:ERROR:content/browser/gpu/gpu_process_host.cc:1035] GPU process exited unexpectedly: exit_code=15
+Error: Desktop renderer exited: killed
+    at WebContents.<anonymous> (file:///Applications/DeepSeek%20Harness.app/Contents/Resources/app.asar/lib/main.js:21509:107)
+    at WebContents.emit (node:events:526:24)
