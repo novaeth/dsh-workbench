@@ -1,0 +1,50 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.2 [39m[90mD:/a/dsh-workbench/dsh-workbench/packages/shared[39m
+
+ [32m✓[39m src/host/shell/__tests__/shell-render.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/host/runtime/__tests__/env-policy.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m src/host/seam/__tests__/process.test.ts [2m([22m[2m3 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 30[2mms[22m[39m
+ [32m✓[39m src/host/runtime/__tests__/front-app.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/host/shell/__tests__/shell-text.test.ts [2m([22m[2m14 tests[22m[2m | [22m[33m4 skipped[39m[2m)[22m[33m 1482[2mms[22m[39m
+   [32m✓[39m quoteShellArg（Windows pwsh） [2m(1)[22m
+     [33m[2m✓[22m[39m 经真 pwsh 解析后原样往返[33m 1475[2mms[22m[39m
+ [31m❯[39m src/host/shell/__tests__/windows-quote.test.ts [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 3420[2mms[22m[39m
+   [31m❯[39m Windows：命令拼接后子进程收到的原样字节 [2m(1)[22m
+[31m     [31m×[31m ★★ 带引号 / & / | / % / 括号的负载原样到达[39m[33m 3418[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m5 passed[39m[22m[90m (6)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m55 passed[39m[22m[2m | [22m[33m5 skipped[39m[90m (61)[39m
+[2m   Start at [22m 09:40:20
+[2m   Duration [22m 3.96s[2m (tests 92%, import 4%, transform 4%, worker 1%)[22m
+
+
+::error file=D%3A/a/dsh-workbench/dsh-workbench/packages/shared/src/host/shell/__tests__/windows-quote.test.ts,title=src/host/shell/__tests__/windows-quote.test.ts > Windows：命令拼接后子进程收到的原样字节 > ★★ 带引号 / & / | / %25 / 括号的负载原样到达,line=43,column=36::AssertionError: expected { engine: 'pwsh', …(1) } to deeply equal { engine: 'pwsh', …(1) }%0A%0A- Expected%0A+ Received%0A%0A  {%0A    "engine": "pwsh",%0A    "received": [%0A-     "const pick = (one) => one?.value ?? null; if (a && b || c) { stash[\"x\"] = `100%25 ${a}`; } el.setAttribute('data-x', \"a&b|c<d>e\"); const re = /^[a-z]+$/i; ",%0A+     "const pick = (one) => one?.value ?? null; if (a && b || c) { stash[x] = `100%25 ${a}`; } el.setAttribute('data-x', a",%0A    ],%0A  }%0A%0A ❯ src/host/shell/__tests__/windows-quote.test.ts:43:36%0A%0A
+undefined
+D:\a\dsh-workbench\dsh-workbench\packages\shared:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command "vitest" not found
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/host/shell/__tests__/windows-quote.test.ts[2m > [22mWindows：命令拼接后子进程收到的原样字节[2m > [22m★★ 带引号 / & / | / % / 括号的负载原样到达
+[31m[1mAssertionError[22m: expected { engine: 'pwsh', …(1) } to deeply equal { engine: 'pwsh', …(1) }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "engine": "pwsh",[22m
+[2m    "received": [[22m
+[32m-     "const pick = (one) => one?.value ?? null; if (a && b || c) { stash[\"x\"] = `100% ${a}`; } el.setAttribute('data-x', \"a&b|c<d>e\"); const re = /^[a-z]+$/i; ",[39m
+[31m+     "const pick = (one) => one?.value ?? null; if (a && b || c) { stash[x] = `100% ${a}`; } el.setAttribute('data-x', a",[39m
+[2m    ],[22m
+[2m  }[22m
+
+[36m [2m❯[22m src/host/shell/__tests__/windows-quote.test.ts:[2m43:36[22m[39m
+    [90m 41|[39m       });
+    [90m 42|[39m       const received = run.stdout.trim() === '' ? [] : (JSON.parse(run…
+    [90m 43|[39m       expect({ engine, received }).toEqual({ engine, received: [NASTY]…
+    [90m   |[39m                                    [31m^[39m
+    [90m 44|[39m     }
+    [90m 45|[39m   });
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
