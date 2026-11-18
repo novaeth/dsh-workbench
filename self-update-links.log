@@ -1,0 +1,19 @@
+✅ ① 一次性迁移：七条真目录全换成链接 —— 0 条还是真目录
+✅ ① 旧版本目录一个字节没动（更新不删在用的目录） —— 2251799813723070:1794986960878.385
+✅ ① 清单那一行还在
+✅ ① marker 说"已就绪，重启后生效" —— pending-restart
+✅ ① 装到了独立版本目录里
+✅ ② 迁移之后再更新一次：链接指到更新的一版
+✅ ② 上一次那个版本目录 inode/mtime 没变 —— 1688849860301826:1794986961703.6465
+✅ ③ 装不齐：那一步没成，链接仍指在旧版 —— 退出码 1
+✅ ③ 清单那一行还在
+✅ ③ marker 落 failed 且说清是"装不齐" —— {"dshHome":"C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\dsh-self-update-links-QgwKis\\dsh-home","profile":"workbench","pkg":"@dsh-workbench/core","from":"1.2.3-beta.4","to":"1.2.3-beta.5","pinned":true,"state":"failed","version":"1.2.3-beta.4","at":"2026-11-18T07:29:34.915Z","reason":"incomplete"}
+✅ ③ 上一次那个版本目录没被动过
+✅ ③ 坏版本的目录没被当成能用的那一版
+✅ ④ 起来了但不是新版 → 不自动回滚，链接留在装好的那一版 —— 现在指到 C:\Users\RUNNER~1\AppData\Local\Temp\dsh-self-update-links-QgwKis\dsh-home\workbench\versions\1.2.3-beta.5\node_modules\@dsh-workbench\core
+✅ ④ marker 留 pending-restart（等下一次确认，不自己翻回去） —— {"dshHome":"C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\dsh-self-update-links-QgwKis\\dsh-home","profile":"workbench","pkg":"@dsh-workbench/core","from":"1.2.3-beta.4","to":"1.2.3-beta.5","pinned":true,"state":"pending-restart","version":"1.2.3-beta.5","at":"2026-11-18T07:30:05.377Z","phase":"committed","committed":true}
+✅ ④ 不为回滚额外装一遍（就这一版的安装，没有第二次） —— 装了 1 次（另有 1 次是换链后的 profile 清单同步）
+✅ ④ 那一版目录还在
+✅ ⑤ 整段跑完没碰过真实数据根（这是踩过两次的那个坑） —— missing / missing
+
+全部通过。

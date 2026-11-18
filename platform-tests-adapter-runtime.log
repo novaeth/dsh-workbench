@@ -1,0 +1,20 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.2 [39m[90mD:/a/dsh-workbench/dsh-workbench/packages/adapter-runtime[39m
+
+ [32m✓[39m src/cli/__tests__/opencli-runtime.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 168[2mms[22m[39m
+ [32m✓[39m src/browser/__tests__/browser-read.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 89[2mms[22m[39m
+ [32m✓[39m src/cli/__tests__/opencli.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 182[2mms[22m[39m
+ [32m✓[39m src/cli/__tests__/command.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/cli/__tests__/opencli-window.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m src/data/__tests__/index.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 43[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+[2m      Tests [22m [1m[32m67 passed[39m[22m[90m (67)[39m
+[2m   Start at [22m 07:30:33
+[2m   Duration [22m 1.85s[2m (transform 49%, import 39%, tests 11%, worker 1%)[22m
+
+[2m  Transform [22m [33mtransforming modules took 2.19s[39m[2m · 49% of tracked time, re-done on every run[22m
+[2m            [22m [2mpersist transforms across runs with [22m[33mfsModuleCache: true[39m
+[2m            [22m [2mon CI this only helps when the cache directory is persisted between runs[22m
+[2m            [22m [2mlearn more: https://vitest.dev/guide/improving-performance#caching-between-reruns[22m
+
