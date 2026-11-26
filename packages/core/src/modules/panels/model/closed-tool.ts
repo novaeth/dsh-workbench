@@ -11,8 +11,8 @@ export function packClosedReason(tool: string, pack: PackEntry): string {
   const summary = pack.hint.replace(/[。；，、]+$/, '');
   const what = summary === '' ? '' : `（${summary}）`;
   return (
-    `${tool} 收在 ${pack.id} 工具包里${what}，这次会话没开：调 ${TOOLBOX_OPEN_TOOL}（targets: ["${pack.id}"]）开包，` +
-    `开完重调一次；不确定还有哪些包就先 ${TOOLBOX_LIST_TOOL}。`
+    `${tool} 属于 ${pack.id} 工具包${what}，当前未启用：请调用 ${TOOLBOX_OPEN_TOOL}（targets: ["${pack.id}"]）打开，再重试；` +
+    `不确定还有哪些工具包，请先调用 ${TOOLBOX_LIST_TOOL}。`
   );
 }
 
@@ -27,13 +27,13 @@ export function diyManageAbsentReason(tool: string): string {
 export function offBoardReason(tool: string, unit: string, diy = false): string {
   if (diy) {
     return (
-      `${tool} 所属的 ${unit} 不在板子上，工具不进上下文：先 ${DIY_SHOW_TOOL} 把模块显示到面板上，` +
-      `再重调一次。`
+      `${tool} 所属的 ${unit} 不在板子上，工具不进上下文：请先调用 ${DIY_SHOW_TOOL} 把模块显示到面板上，` +
+      `再重试。`
     );
   }
   return (
-    `${tool} 所属的 ${unit} 不在板子上，工具不进上下文：先 ${PANELS_SHOW_TOOL} 把模块启用到面板上，` +
-    `再 ${TOOLBOX_OPEN_TOOL} 开它的工具包。`
+    `${tool} 所属的 ${unit} 不在板子上，工具不进上下文：请先调用 ${PANELS_SHOW_TOOL} 把模块启用到面板上，` +
+    `再调用 ${TOOLBOX_OPEN_TOOL} 打开它的工具包。`
   );
 }
 

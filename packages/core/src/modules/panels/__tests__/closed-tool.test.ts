@@ -11,7 +11,7 @@ import type { PackEntry } from '../model/toolbox';
 const shellPack: PackEntry = {
   id: 'manage',
   label: { zh: '工作台管理', en: 'workbench admin' },
-  hint: '面板 · 安装 / 卸载 / 更新模块 · 市场 · 长任务',
+  hint: '面板 · 安装 / 卸载 / 更新模块 · 模块市场 · 长任务',
   tools: ['workbench_panels_show'],
   kind: 'shell',
 };
@@ -25,12 +25,12 @@ const mcpPack: PackEntry = {
 };
 
 describe('收起的工具：理由要能让模型说出下一次调什么', () => {
-  it('外壳包：点名包 id、它能干什么、开包工具、以及不确定时的目录', () => {
+  it('外壳包：点名包 id、它能干什么、打开工具包的工具、以及不确定时的目录', () => {
     const reason = packClosedReason('workbench_panels_show', shellPack);
 
     expect(reason).toContain('workbench_panels_show');
     expect(reason).toContain('manage');
-    expect(reason).toContain('面板 · 安装 / 卸载 / 更新模块 · 市场 · 长任务');
+    expect(reason).toContain('面板 · 安装 / 卸载 / 更新模块 · 模块市场 · 长任务');
     expect(reason).toContain(`${TOOLBOX_OPEN_TOOL}（targets: ["manage"]）`);
     expect(reason).toContain(TOOLBOX_LIST_TOOL);
   });
@@ -41,7 +41,7 @@ describe('收起的工具：理由要能让模型说出下一次调什么', () =
     expect(reason).toContain(`${TOOLBOX_OPEN_TOOL}（targets: ["mcp:chrome"]）`);
   });
 
-  it('没上板：先上板再开包，两条动作都给出来', () => {
+  it('没上板：先上板再打开工具包，两条动作都给出来', () => {
     const reason = offBoardReason('workbench_off_y_list', 'off-y');
 
     expect(reason).toContain('off-y');
@@ -49,7 +49,7 @@ describe('收起的工具：理由要能让模型说出下一次调什么', () =
     expect(reason).toContain(TOOLBOX_OPEN_TOOL);
   });
 
-  it('能力缺失：说清"开包也救不了"，并给出这台 dsh 上的替代做法', () => {
+  it('能力缺失：说清"打开工具包也救不了"，并给出这台 dsh 上的替代做法', () => {
     const reason = absentScreenReason('workbench_diy_debug_start');
 
     expect(reason).toContain('workbench_diy_debug_start');
