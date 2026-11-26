@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { availableParallelism, totalmem } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execa } from "execa";
@@ -55,7 +56,10 @@ const runOne = ({ name, script }) => {
 function concurrencyOf() {
   const configured = Number(process.env.WB_TEST_CONCURRENCY ?? "");
   if (Number.isInteger(configured) && configured > 0) return Math.min(configured, targets.length);
-  return process.env.CI ? Math.min(3, targets.length) : targets.length;
+  const byCpu = Math.max(1, Math.floor(availableParallelism() / 2));
+  const byMemory = Math.max(1, Math.floor(totalmem() / 1024 ** 3 / 4));
+  const dynamic = Math.max(1, Math.min(targets.length, byCpu, byMemory, 6));
+  return process.env.CI ? Math.min(3, dynamic) : dynamic;
 }
 
 const limit = concurrencyOf();
