@@ -57,22 +57,19 @@ export const checks = [
     },
   },
   {
-    title: '★ DIY 指引的软链只有一份写口（在 seed-workshop.sh 的 link_workshop_skills 里，源优先基准那份）',
+    title: '★ DIY 指引只由模式供给：工坊骨架不再建软链，包内 skill 仍在',
     run(_ctx, report) {
-
       const seed = seedWorkshop();
+      const linkFree =
+        !seed.includes('link_workshop_skills') &&
+        !seed.includes('$DIY_DIR/.agents/skills/workbench-module-diy') &&
+        !launcher().includes('ln -s') &&
+        !launcher().includes('.agents/skills');
+      const packed = existsSync(join(PKG, 'skills/workbench-module-diy/SKILL.md'));
       report(
-        '★ DIY 指引的软链只有一份写口（在 seed-workshop.sh 的 link_workshop_skills 里，源优先基准那份）',
-        seed.includes('link_workshop_skills()') &&
-          seed.includes('$DIY_DIR/.agents/skills/workbench-module-diy') &&
-          seed.includes('$SHELL_ROOT/skills/workbench-module-diy') &&
-          seed.includes('$REPO_DIR/skills/workbench-module-diy') &&
-
-          seed.split('link_workshop_skills\n').length - 1 >= 2 &&
-
-          !launcher().includes('ln -s') &&
-          !launcher().includes('.agents/skills'),
-        `写口 ${seed.includes('link_workshop_skills()') ? '在' : '不在'} · 启动器里${launcher().includes('.agents/skills') ? '还有残留' : '没有残留'}`,
+        '★ DIY 指引只由模式供给：工坊骨架不再建软链，包内 skill 仍在',
+        linkFree && packed,
+        !linkFree ? '工坊骨架里还留着 DIY skill 软链' : packed ? '' : '包内 DIY skill 不见了',
       );
     },
   },

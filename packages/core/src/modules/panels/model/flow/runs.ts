@@ -24,6 +24,7 @@ export interface DiyFlowRuns {
   provide(session: string, value: unknown): FlowProvideResult;
   advance(session: string, value: unknown): Promise<DiyAdvance>;
   stop(session: string): void;
+  subscribe(listener: (session: string) => void): () => void;
 }
 
 export function createDiyFlowRuns(options: {
@@ -32,6 +33,11 @@ export function createDiyFlowRuns(options: {
   readonly onEnd: (session: string) => void;
 }): DiyFlowRuns {
   const runs = new Map<string, Run>();
+  const listeners = new Set<(session: string) => void>();
+
+  const notify = (session: string): void => {
+    for (const listener of [...listeners]) listener(session);
+  };
 
   const stepAt = (run: Run): FlowNodeStep | null => {
     const position = run.session.current();
@@ -43,6 +49,13 @@ export function createDiyFlowRuns(options: {
     stepOf(session) {
       const run = runs.get(session);
       return run === undefined ? null : stepAt(run);
+    },
+
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
     },
 
     valuesOf(session) {
@@ -71,10 +84,12 @@ export function createDiyFlowRuns(options: {
       void session_.result.then(() => {
         if (runs.get(session) !== run) return;
         runs.delete(session);
+        notify(session);
         options.onEnd(session);
       });
       const step = stepAt(run);
       if (step === null) throw new Error('流程一步都走不了，检查定义');
+      notify(session);
       return step;
     },
 
@@ -100,6 +115,7 @@ export function createDiyFlowRuns(options: {
         await new Promise((resolve) => setTimeout(resolve, 0));
         const after = run.session.current()?.stepId ?? undefined;
         if (after !== before) {
+          notify(session);
           return { ok: true, step: after === undefined ? null : runs.get(session) === undefined ? null : stepAt(run) };
         }
       }
@@ -111,6 +127,7 @@ export function createDiyFlowRuns(options: {
       if (run === undefined) return;
       run.session.abort();
       runs.delete(session);
+      notify(session);
     },
   };
 }

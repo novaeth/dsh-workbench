@@ -54,7 +54,7 @@ import { asArgs, warn } from '../shared/api/host/host-args';
 import { createApprovalGate } from '@/shared/api/host/approval-gate';
 import { registerBootThemeGuard } from '@/shared/api/host/boot-theme-guard';
 import { mountDiyPreset } from '@/shared/api/host/diy-preset-host';
-import { createFlowAgentGateway, FLOW_CHILD_HIDDEN_TOOLS } from '@/shared/api/host/flow/agent';
+import { createFlowAgentGateway, FLOW_CHILD_HIDDEN_TOOLS, flowChildHiddenNames } from '@/shared/api/host/flow/agent';
 import { notifyLongTaskChange } from '@/shared/api/host/long-task-notice';
 import { installToolResultEffects, provideToolNames } from '@/shared/api/host/tool-result-effects';
 export const name = 'dsh-workbench';
@@ -229,7 +229,10 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     factsOfMap.get(unit)?.(call) ?? factsOfUnit(unit);
   const deniedNow = (context: ToolScopeContext): readonly string[] => {
     const gates = [...mounted.values()].flatMap((item) => item.plan.gate?.deniedTools(context) ?? []);
-    const hidden = context.session === null || !flowAgents.isChild(context.session) ? [] : FLOW_CHILD_HIDDEN_TOOLS;
+    if (context.session === null || !flowAgents.isChild(context.session)) {
+      return [...new Set([...gates, ...mcpScope.denied(context)])];
+    }
+    const hidden = [...FLOW_CHILD_HIDDEN_TOOLS, ...flowChildHiddenNames(unitsOfTool().keys())];
     return [...new Set([...gates, ...mcpScope.denied(context), ...hidden])];
   };
   const closedReasonOf = createClosedReasonOf({

@@ -75,7 +75,15 @@ export function registerDiyPreset(ctx: DshHostContext, port: DiyPresetSourcePort
     }
     if (config === undefined) return { ok: false, retry: true };
     try {
-      return { ok: true, definition: diyPresetFrom(config, dir, source), source };
+      const name =
+        typeof config === 'object' && config !== null && typeof (config as { name?: unknown }).name === 'string'
+          ? (config as { name: string }).name.trim()
+          : '';
+      return {
+        ok: true,
+        definition: diyPresetFrom(config, dir, source, name === '' ? (source === 'standard' ? '标准模式' : source) : name),
+        source,
+      };
     } catch (error) {
       ctx.logger?.warn?.(`[dsh-workbench] 从「${source}」派生「工作台 DIY 模式」失败：${String(error)}`);
       return { ok: false, retry: false };
@@ -87,11 +95,20 @@ export function registerDiyPreset(ctx: DshHostContext, port: DiyPresetSourcePort
     if (wanted.ok || source === DIY_PRESET_SOURCE_DEFAULT) return wanted;
     const fallback = derive(loader, DIY_PRESET_SOURCE_DEFAULT);
     if (fallback.ok) {
+      const reason = wanted.retry ? '原来源不可用' : '原来源无法派生';
       ctx.logger?.warn?.(
         wanted.retry
           ? `[dsh-workbench] dsh 里没有「${source}」这个模式；DIY 模式改为从「${DIY_PRESET_SOURCE_DEFAULT}」派生`
           : `[dsh-workbench] 「${source}」无法派生 DIY 模式；改为从「${DIY_PRESET_SOURCE_DEFAULT}」派生`,
       );
+      return {
+        ok: true,
+        source: fallback.source,
+        definition: {
+          ...fallback.definition,
+          description: `${fallback.definition.description}（${reason}，已改为基于标准模式）`,
+        },
+      };
     }
     return fallback;
   }

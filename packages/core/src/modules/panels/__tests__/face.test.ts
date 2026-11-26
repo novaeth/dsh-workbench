@@ -10,7 +10,7 @@ import { createHostKit, createWorkspaceStore, hostSurface } from '@dsh-workbench
 import { PANELS_FILE, PANELS_MODULE_ID, RELEASED_FILE } from '../model/service';
 import {
   ALL_TOOLS,
-  DIY_BORROWED_TOOLS,
+  DIY_FLOW_TOOLS,
   DIY_PACK_TOOLS,
   MANAGE_TOOLS,
   RESIDENT_TOOLS,
@@ -122,22 +122,25 @@ describe('panelsHost', () => {
     for (const control of TOOLBOX_TOOLS) expect(denied).not.toContain(control);
   });
 
-  it('★★ 工具包是会话级开关：DIY 模式只开 diy（工坊族 + 借来的七把）（与工作区无关）', () => {
+  it('★★ 工具包是会话级开关：DIY 模式只开 diy-flow（与工作区无关）', () => {
     const workshop = path.join(dir, 'workbench', 'diy');
     const result = mount({ ctx: fakeCtx().ctx, manifests: [panelsUnit] });
     const all = new Set([...MANAGE_TOOLS, ...DIY_PACK_TOOLS]);
+    const flow = new Set<string>(DIY_FLOW_TOOLS);
+    const diyDenied = new Set<string>([...all].filter((name) => !flow.has(name)));
+    diyDenied.add('write');
+    diyDenied.add('edit');
 
     expect(new Set(result.gate?.deniedTools({ workspace: '/w/a', preset: null, session: 's-1' }))).toEqual(all);
     expect(new Set(result.gate?.deniedTools({ workspace: workshop, preset: null, session: 's-2' }))).toEqual(all);
-    const notBorrowed = MANAGE_TOOLS.filter((one) => !(DIY_BORROWED_TOOLS as readonly string[]).includes(one));
     expect(new Set(result.gate?.deniedTools({ workspace: '/w/a', preset: 'workbench-diy', session: 's-3' }))).toEqual(
-      new Set([...notBorrowed, 'write', 'edit']),
+      diyDenied,
     );
     expect(new Set(result.gate?.deniedTools({ workspace: workshop, preset: 'workbench-diy', session: 's-4' }))).toEqual(
-      new Set([...notBorrowed, 'write', 'edit']),
+      diyDenied,
     );
     expect(new Set(result.gate?.deniedTools({ workspace: null, preset: 'workbench-diy', session: 's-5' }))).toEqual(
-      new Set([...notBorrowed, 'write', 'edit']),
+      diyDenied,
     );
   });
 

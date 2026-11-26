@@ -1,11 +1,27 @@
 import type { UnitManifest } from '@dsh-workbench/shared';
 import type { McpServerPacks, ToolScopeContext } from '@dsh-workbench/shared/host';
 import { DIY_PRESET_ID } from '@/shared/api/diy';
-import { DIY_PACK_TOOLS, MANAGE_TOOLS, RESIDENT_TOOLS } from '../unit';
+import {
+  DIY_BUILD_TOOLS,
+  DIY_DEBUG_TOOLS,
+  DIY_FLOW_TOOLS,
+  DIY_PAGE_TOOLS,
+  DIY_PROBE_TOOLS,
+  DIY_RECORD_TOOLS,
+  MANAGE_TOOLS,
+  RESIDENT_TOOLS,
+} from '../unit';
 
 export { PACK_TARGET_LIMIT } from '../unit';
 
-export type ShellPackId = 'manage' | 'diy';
+export type ShellPackId =
+  | 'manage'
+  | 'diy-flow'
+  | 'diy-probe'
+  | 'diy-build'
+  | 'diy-page'
+  | 'diy-debug'
+  | 'diy-record';
 
 export type PackId = ShellPackId | `unit:${string}` | `mcp:${string}`;
 
@@ -39,22 +55,39 @@ function unitHint(description: string | undefined, tools: readonly { readonly na
   return clipped(tools.map((tool) => tool.name.replace(/^workbench_/, '')).join(' · '));
 }
 
-const SHELL_PACKS: readonly PackEntry[] = [
-  {
-    id: 'manage',
-    label: { zh: '工作台管理', en: 'workbench admin' },
-    hint: '面板 · 安装 / 卸载 / 更新模块 · 市场 · 长任务',
-    tools: MANAGE_TOOLS,
-    kind: 'shell',
-  },
-  {
-    id: 'diy',
-    label: { zh: 'DIY 工具', en: 'DIY tools' },
-    hint: '工坊 · 创建 / 安装 / 发布模块 · 调试 · 录制 · 日志 · 页面动作',
-    tools: DIY_PACK_TOOLS,
-    kind: 'shell',
-  },
+const SHELL_PACK_ROWS: readonly [ShellPackId, string, string, string, readonly string[]][] = [
+  ['manage', '工作台管理', 'workbench admin', '面板 · 安装 / 卸载 / 更新模块 · 模块市场 · 长任务', MANAGE_TOOLS],
+  ['diy-flow', 'DIY 流程', 'DIY flow', '工坊流程 · 状态 / 计划 / 步骤 / 面板 / 查看已安装模块', DIY_FLOW_TOOLS],
+  ['diy-probe', 'DIY 数据源', 'DIY probe', '数据源 · 站点表 / 接口 / 请求配方', DIY_PROBE_TOOLS],
 ];
+
+const SHELL_PACK_ROWS_TAIL: readonly [ShellPackId, string, string, string, readonly string[]][] = [
+  ['diy-build', 'DIY 创建与安装', 'DIY build', '创建 / 安装 · 发布 / 显示 / 隐藏 / 长任务', DIY_BUILD_TOOLS],
+  ['diy-page', 'DIY 页面', 'DIY page', '页面 · 读取 / 点击 / 填写 / 截图 / 网络 / 日志', DIY_PAGE_TOOLS],
+  ['diy-debug', 'DIY 调试', 'DIY debug', '调试 · 会占用用户当前页面（开始 / 暂停 / 恢复 / 停止）', DIY_DEBUG_TOOLS],
+  ['diy-record', 'DIY 录制', 'DIY record', '录制 · 录制一次真实写入（准备 / 读取 / 详情 / 结束）', DIY_RECORD_TOOLS],
+];
+
+const SHELL_PACKS: readonly PackEntry[] = [...SHELL_PACK_ROWS, ...SHELL_PACK_ROWS_TAIL].map(([id, zh, en, hint, tools]) => ({
+  id,
+  label: { zh, en },
+  hint,
+  tools,
+  kind: 'shell',
+}));
+
+export function flowPacksOf(step: string | null): readonly PackId[] {
+  switch (step) {
+    case 'probe':
+      return ['diy-probe'];
+    case 'build':
+      return ['diy-build'];
+    case 'verify':
+      return ['diy-page'];
+    default:
+      return [];
+  }
+}
 
 export interface Toolbox {
   catalog(workspace?: string | null): readonly PackEntry[];
@@ -62,6 +95,8 @@ export interface Toolbox {
   closedPackOf(tool: string, context: ToolScopeContext): PackEntry | undefined;
   open(session: string, packs: readonly PackId[], preset: string | null): readonly PackId[];
   close(session: string, packs: readonly PackId[], preset: string | null): readonly PackId[];
+  autoOpen(session: string, packs: readonly PackId[]): readonly PackId[];
+  clearAuto(session: string): readonly PackId[];
   subscribe(listener: () => void): () => void;
   resolve(targets: readonly string[], workspace?: string | null): {
     readonly packs: readonly PackId[];
@@ -73,11 +108,12 @@ export interface Toolbox {
 
 interface SessionState {
   readonly opened: Set<PackId>;
+  readonly auto: Set<PackId>;
   readonly closed: Set<PackId>;
 }
 
 function defaultPacks(preset: string | null): ReadonlySet<PackId> {
-  return new Set<PackId>(preset === DIY_PRESET_ID ? ['diy'] : []);
+  return new Set<PackId>(preset === DIY_PRESET_ID ? ['diy-flow'] : []);
 }
 
 function unitPacks(manifests: readonly UnitManifest[]): readonly PackEntry[] {
@@ -110,7 +146,7 @@ export function createToolbox(options: {
   const stateOf = (session: string): SessionState => {
     const found = states.get(session);
     if (found !== undefined) return found;
-    const created: SessionState = { opened: new Set(), closed: new Set() };
+    const created: SessionState = { opened: new Set(), auto: new Set(), closed: new Set() };
     states.set(session, created);
     return created;
   };
@@ -147,6 +183,7 @@ export function createToolbox(options: {
     const state = states.get(session);
     if (state === undefined) return open;
     for (const pack of state.opened) open.add(pack);
+    for (const pack of state.auto) open.add(pack);
     for (const pack of state.closed) open.delete(pack);
     return open;
   };
@@ -189,6 +226,7 @@ export function createToolbox(options: {
         if (!entries.has(pack)) continue;
         const wasOpen = packsOf(session, preset).has(pack);
         state.closed.delete(pack);
+        state.auto.delete(pack);
         state.opened.add(pack);
         if (!wasOpen) newly.push(pack);
       }
@@ -202,11 +240,33 @@ export function createToolbox(options: {
       for (const pack of packs) {
         const wasOpen = packsOf(session, preset).has(pack);
         state.opened.delete(pack);
+        state.auto.delete(pack);
         state.closed.add(pack);
         if (wasOpen) closed.push(pack);
       }
       if (closed.length > 0) notify();
       return closed;
+    },
+
+    autoOpen(session, packs) {
+      const state = stateOf(session);
+      const opened: PackId[] = [];
+      for (const pack of packs) {
+        if (state.closed.has(pack) || state.opened.has(pack) || state.auto.has(pack)) continue;
+        state.auto.add(pack);
+        opened.push(pack);
+      }
+      if (opened.length > 0) notify();
+      return opened;
+    },
+
+    clearAuto(session) {
+      const state = states.get(session);
+      if (state === undefined) return [];
+      const cleared = [...state.auto];
+      state.auto.clear();
+      if (cleared.length > 0) notify();
+      return cleared;
     },
 
     subscribe(listener) {

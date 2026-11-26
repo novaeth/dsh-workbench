@@ -29,35 +29,45 @@ interface ChildDenial {
   readonly reason: string;
 }
 
+const ASK_USER = 'ask_user_question';
+const DELEGATE = new Set([
+  'subagent',
+  'subagent_fork',
+  'send_message',
+  'list_agents',
+  'wait_agent',
+  'list_subagent_models',
+]);
+const WORKFLOW = 'workflow';
+const EXIT_PLAN = 'exit_plan_mode';
+const PRESENT = 'present';
+const GOALS = new Set(['create_goal', 'update_goal']);
+const TOOLBOX = ['workbench_toolbox_list', 'workbench_toolbox_open', 'workbench_toolbox_close'] as const;
+const READ_ONLY = ['skill', 'bash', 'write', 'edit'] as const;
+
 const CHILD_DENIALS: readonly ChildDenial[] = [
   {
-    matches: (name) => name === 'ask_user_question',
+    matches: (name) => name === ASK_USER,
     reason: '流程里的 agent 节点不能问人：要人处理请写在动作步骤的 ctx.need 里。',
   },
   {
-    matches: (name) =>
-      name === 'subagent' ||
-      name === 'subagent_fork' ||
-      name === 'send_message' ||
-      name === 'list_agents' ||
-      name === 'wait_agent' ||
-      name === 'list_subagent_models',
+    matches: (name) => DELEGATE.has(name),
     reason: '流程里的 agent 节点不再委派：编排归流程，下一步写成动作步骤或另一个 agent 节点。',
   },
   {
-    matches: (name) => name === 'workflow',
+    matches: (name) => name === WORKFLOW,
     reason: '流程里的 agent 节点不能自己跑 workflow：编排归流程。',
   },
   {
-    matches: (name) => name === 'exit_plan_mode',
+    matches: (name) => name === EXIT_PLAN,
     reason: '流程里的 agent 节点没有计划审批出口。',
   },
   {
-    matches: (name) => name === 'present',
+    matches: (name) => name === PRESENT,
     reason: '流程里的 agent 节点不能交交付件：结论写回步骤，落盘由动作步骤做。',
   },
   {
-    matches: (name) => name === 'create_goal' || name === 'update_goal',
+    matches: (name) => GOALS.has(name),
     reason: '流程里的 agent 节点不能改目标。',
   },
   {
@@ -80,21 +90,21 @@ const CHILD_DENIALS: readonly ChildDenial[] = [
     matches: (name) => name === 'workbench_long_tasks_stop',
     reason: '流程里的 agent 节点不能停别的长任务。',
   },
+  {
+    matches: (name) => name === 'skill' || name === 'bash' || name === 'write' || name === 'edit',
+    reason: '流程里的 agent 节点只读：不加载技能、不执行 shell 命令、不写入或修改文件。',
+  },
 ];
 
 export const FLOW_CHILD_HIDDEN_TOOLS: readonly string[] = [
-  'ask_user_question',
-  'subagent',
-  'subagent_fork',
-  'send_message',
-  'workflow',
-  'present',
-  'create_goal',
-  'update_goal',
-  'exit_plan_mode',
-  'workbench_toolbox_list',
-  'workbench_toolbox_open',
-  'workbench_toolbox_close',
+  ASK_USER,
+  ...DELEGATE,
+  WORKFLOW,
+  EXIT_PLAN,
+  PRESENT,
+  ...GOALS,
+  ...TOOLBOX,
+  ...READ_ONLY,
 ];
 
 export function flowChildDenial(name: string): string | undefined {
@@ -102,6 +112,10 @@ export function flowChildDenial(name: string): string | undefined {
     if (denial.matches(name)) return denial.reason;
   }
   return undefined;
+}
+
+export function flowChildHiddenNames(names: Iterable<string>): readonly string[] {
+  return [...names].filter((name) => flowChildDenial(name) !== undefined);
 }
 
 export interface FlowAgentGateway {
@@ -228,14 +242,6 @@ function runnerOf(parts: {
           childId,
           label: request.label ?? request.stepId,
           ...(request.name === undefined ? {} : { name: request.name }),
-          ...(request.toolFilter === undefined
-            ? {}
-            : {
-                toolFilter: {
-                  ...(request.toolFilter.allow === undefined ? {} : { allow: [...request.toolFilter.allow] }),
-                  ...(request.toolFilter.deny === undefined ? {} : { deny: [...request.toolFilter.deny] }),
-                } as never,
-              }),
           prompt: await promptBlocksOf(request, parts.attachments),
           parent: parts.parent,
           signal,

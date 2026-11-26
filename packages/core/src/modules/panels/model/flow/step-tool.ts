@@ -6,6 +6,7 @@ import { plainJson } from '../diy-context';
 import { positionOf, titleOf } from './position';
 import { PROGRESS_OUTPUT } from './progress-output';
 import type { DiyFlowRuns } from './runs';
+import { packNoteOf } from './pack-note';
 
 const STEP_FIELDS: Readonly<Record<string, readonly string[]>> = {
   probe: ['sites'],
@@ -107,6 +108,7 @@ export function registerDiyStepTool(ctx: DshHostContext, runs: DiyFlowRuns): Arr
       if (!advanced.ok) throw new Error(advanced.problem ?? '这一步未提交成功');
       const destination = destinationOf(runs.inputOf(session));
       const step = advanced.step;
+      const packNote = packNoteOf(ctx, exec, step?.id ?? null);
       const values = runs.valuesOf(session);
       const at = positionOf(step?.id ?? null, destination, values);
       return plainJson({
@@ -121,7 +123,7 @@ export function registerDiyStepTool(ctx: DshHostContext, runs: DiyFlowRuns): Arr
             ? `流程已完成：共 ${at.total} 步，全部提交。`
             : `停在第 ${at.index}/${at.total} 步（${titleOf(step.id, destination, values)}）。下一步：${
                 nextOf(step.id, destination)
-              }。`,
+              }。${packNote === '' ? '' : ` ${packNote}`}`,
       });
     },
   };

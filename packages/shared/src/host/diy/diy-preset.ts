@@ -149,7 +149,7 @@ export function diyPresetSourcesOf(entries: Iterable<DshLoaderEntry>): readonly 
   const rows: DiyPresetSourceRow[] = [];
   for (const config of configRowsOf(entries)) {
     const id = config.id as string;
-    if (id === DIY_PRESET_ID || seen.has(id)) continue;
+    if (id === DIY_PRESET_ID || id === 'cordis' || seen.has(id)) continue;
     seen.add(id);
     rows.push({
       id,
@@ -176,6 +176,7 @@ export function diyPresetFrom(
   source: unknown,
   skillsDir: string,
   sourceId: string = DIY_PRESET_SOURCE_DEFAULT,
+  sourceName: string = sourceId,
 ): DshAgentPresetDefinition {
   const plugins = clonedPluginsOf(sourceConfigOf(source, sourceId), sourceId);
 
@@ -206,7 +207,7 @@ export function diyPresetFrom(
   return {
     id: DIY_PRESET_ID,
     name: DIY_PRESET_NAME,
-    description: DIY_PRESET_DESCRIPTION,
+    description: `${DIY_PRESET_DESCRIPTION}（基于「${sourceName}」）`,
     order: DIY_PRESET_ORDER,
     plugins: plugins as unknown as DshAgentPresetDefinition['plugins'],
   };

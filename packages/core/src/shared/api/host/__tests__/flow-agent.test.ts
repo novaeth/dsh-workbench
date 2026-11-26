@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DshHostContext, FlowAgentRequest } from '@dsh-workbench/shared/host';
 import { createApprovalGate } from '../approval-gate';
-import { FLOW_CHILD_HIDDEN_TOOLS, createFlowAgentGateway, flowChildDenial } from '../flow/agent';
+import { FLOW_CHILD_HIDDEN_TOOLS, createFlowAgentGateway, flowChildDenial, flowChildHiddenNames } from '../flow/agent';
 
 interface SubagentRecorder {
   readonly runtime: {
@@ -425,9 +425,18 @@ describe('流程子会话的工具边界', () => {
     expect(flowChildDenial('schedule_create')).toContain('排日程');
     expect(flowChildDenial('workbench_diy_install')).toContain('工作台本身');
     expect(flowChildDenial('workbench_toolbox_open')).toContain('不能自己开工具包');
-    expect(FLOW_CHILD_HIDDEN_TOOLS).toEqual(expect.arrayContaining(['workbench_toolbox_open', 'workbench_toolbox_close']));
+    expect(FLOW_CHILD_HIDDEN_TOOLS).toEqual(
+      expect.arrayContaining(['workbench_toolbox_open', 'workbench_toolbox_close', 'skill']),
+    );
+    expect(flowChildHiddenNames(['workbench_diy_status', 'workbench_gitops_list', 'cordis_inspect', 'skill'])).toEqual([
+      'workbench_diy_status',
+      'cordis_inspect',
+      'skill',
+    ]);
+    expect(flowChildDenial('skill')).toContain('不加载技能');
     expect(flowChildDenial('workbench_gitops_list')).toBeUndefined();
-    expect(flowChildDenial('bash')).toBeUndefined();
+    expect(flowChildDenial('bash')).toContain('不执行 shell 命令');
+    expect(flowChildDenial('write')).toContain('只读');
   });
 
   it('子会话调写工具被审批门拒，普通会话放行', async () => {

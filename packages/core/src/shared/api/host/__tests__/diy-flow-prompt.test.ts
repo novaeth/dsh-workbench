@@ -41,10 +41,13 @@ describe('DIY 流程入口：写进系统提示词', () => {
     expect(text).toContain('workbench_diy_step');
   });
 
-  it('★ 常驻这段有上限（改成英文后实测 553 字），不回到「第一次不审批」', () => {
-    expect(DIY_FLOW_TEXT.length).toBeLessThanOrEqual(553);
+  it('★ 常驻这段有上限（预算 720 字），不回到「第一次不审批」', () => {
+    expect(DIY_FLOW_TEXT.length).toBeLessThanOrEqual(720);
     expect(DIY_FLOW_TEXT).not.toContain('第一次不审批');
     expect(DIY_FLOW_TEXT).toContain('「补充方案」');
+    expect(DIY_FLOW_TEXT).toContain('Write/edit stay closed');
+    expect(DIY_FLOW_TEXT).toContain('diy-probe');
+    expect(DIY_FLOW_TEXT).toContain('if a tool is closed');
   });
 
   it('★ 非 DIY 会话与 flow 子 agent 都不给', () => {

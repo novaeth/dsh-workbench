@@ -50,7 +50,7 @@ import { pluginRoutes } from './model/plugin-section';
 import { pluginDirOf } from './model/plugin-name';
 import { installedPackageRoutes } from './model/installed-package-routes';
 import { registerPanelTools } from './model/tools';
-import { createToolbox } from './model/toolbox';
+import { createToolbox, flowPacksOf } from './model/toolbox';
 import { createFlowHost } from '@dsh-workbench/shared/host';
 import { DIY_BOARD_FLOW } from './model/flow/definitions';
 import { BEFORE_FLOW, deniedAtStep } from './model/flow/gate';
@@ -148,6 +148,15 @@ export const panelsHost: UnitOwnedFace = {
       packsOf: (session, preset) => toolbox.packsOf(session, preset),
     };
     ctx.provide(TOOLBOX_SERVICE, toolboxPort);
+    const offAutoPacks = diyRuns.subscribe((session) => {
+        const step = diyRuns.stepOf(session);
+        if (step === null) {
+          toolbox.clearAuto(session);
+          return;
+        }
+        toolbox.autoOpen(session, flowPacksOf(step.id));
+    });
+    ctx.effect?.(() => () => offAutoPacks(), 'panels: 流程步自动开 DIY 子包（单调加开，结束收回）');
     const installRuns: LongTaskRegistry<LongTaskBase> = createLongTaskRegistry<LongTaskBase>({
       view: (snapshot) => ({
         title: snapshot.status === 'stopped' ? `${snapshot.target} · 已停止等待（安装可能仍在进行）` : snapshot.target,
@@ -441,9 +450,11 @@ export const panelsHost: UnitOwnedFace = {
           return packClosedReason(tool, pack);
         },
         subscribe: (listener) => {
+          const offFlow = diyRuns.subscribe(() => listener());
           const offPanels = panels.subscribe(listener);
           const offBox = toolbox.subscribe(listener);
           return () => {
+            offFlow();
             offPanels();
             offBox();
           };

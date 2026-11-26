@@ -5,6 +5,27 @@ const diyToolsSource = () =>
     .map((rel) => read(pkg(rel)))
     .join('\n');
 
+const sourcesOf = () => ({
+  tools: diyToolsSource(),
+  index: read(pkg('src/modules/panels/index.ts')),
+  unit: read(pkg('src/modules/panels/unit.ts')),
+  toolbox: read(pkg('src/modules/panels/model/toolbox.ts')),
+});
+
+const subpackWired = (toolbox) =>
+  ['DIY_FLOW_TOOLS', 'DIY_PROBE_TOOLS', 'DIY_BUILD_TOOLS', 'DIY_PAGE_TOOLS', 'DIY_DEBUG_TOOLS', 'DIY_RECORD_TOOLS'].every(
+    (name) => toolbox.includes(name),
+  );
+
+const blockOf = (unit, name) => {
+  const actual = name === 'DIY_PAGE_TOOLS' ? 'PAGE_TOOLS' : name;
+  const from = unit.indexOf(`const ${actual} = [`);
+  return from === -1 ? '' : unit.slice(from, unit.indexOf('] as const', from));
+};
+
+const namesOf = (block) =>
+  new Set([...block.matchAll(/\b([A-Z][A-Z0-9_]*_TOOL)\b/g)].map((one) => one[1]));
+
 export const checks = [
   {
     title: '★ DIY 那一跳不新造安装实现（只走 provision 装 + prefs 打开两条已有写通道）',
@@ -21,9 +42,7 @@ export const checks = [
   {
     title: '★ DIY 那一跳是窄门工具：只装本工作区里的模块（不接任意路径），装完顺手在会话的工作区上板',
     run(_ctx, report) {
-      const tools = diyToolsSource();
-      const unit = read(pkg('src/modules/panels/unit.ts'));
-      const index = read(pkg('src/modules/panels/index.ts'));
+      const { tools, unit, index } = sourcesOf();
       const doorKept =
         tools.includes('insideRoot(root, found.dir)') &&
         tools.includes('modulesIn(root') &&
@@ -51,25 +70,20 @@ export const checks = [
     },
   },
   {
-    title: '★ DIY 那一族收在 diy 工具包里：开包才进上下文，调到时还有一道自己的落点闸',
+    title: '★ DIY 那一族收在六个 DIY 子包里：开包才进上下文，调到时还有一道自己的落点闸',
     run(_ctx, report) {
 
-      const tools = diyToolsSource();
-      const index = read(pkg('src/modules/panels/index.ts'));
-      const unit = read(pkg('src/modules/panels/unit.ts'));
-      const toolbox = read(pkg('src/modules/panels/model/toolbox.ts'));
+      const { tools, index, toolbox } = sourcesOf();
       const visibility =
-        toolbox.includes('DIY_PACK_TOOLS') &&
-        unit.includes('...DIY_DEBUG_TOOLS,') &&
-        unit.includes('...DIY_RECORD_TOOLS,') &&
+        subpackWired(toolbox) &&
         index.includes('toolbox.deniedTools(') &&
         index.includes('registerToolboxTools(');
       const door = tools.includes('workspaceOf(ctx, exec)') && tools.includes('throw new Error');
       report(
-        '★ DIY 那一族收在 diy 工具包里：开包才进上下文，调到时还有一道自己的落点闸',
+        '★ DIY 那一族收在六个 DIY 子包里：开包才进上下文，调到时还有一道自己的落点闸',
         visibility && door,
         !visibility
-          ? 'DIY 那些工具没被 diy 工具包收着（或收窄没走 toolbox.deniedTools）⇒ 没开包的会话也会看到 DIY 那一族'
+          ? 'DIY 那些工具没被六个 DIY 子包收着（或收窄没走 toolbox.deniedTools）⇒ 没开包的会话也会看到 DIY 那一族'
           : '执行期那道闸没了：没有落点也照发命令',
       );
     },
@@ -89,7 +103,7 @@ export const checks = [
     },
   },
   {
-    title: '★ DIY 那一族一起被收走（两份清单里逐个列着，收窄时一个都不能漏）',
+    title: '★ DIY 那一族一起被收走（两份清单里逐个列着，收窄时一个都不能漏；六个子包并集完整）',
     run(_ctx, report) {
       const unit = read(pkg('src/modules/panels/unit.ts'));
       const constants = [...unit.matchAll(/export const (DIY_[A-Z_]+)_TOOL = '(workbench_diy_[a-z_]+)'/g)];
@@ -99,9 +113,11 @@ export const checks = [
 
       const browserSource = read(pkg('src/modules/panels/model/diy-browser-tools.ts'));
       const rows = [...browserSource.matchAll(/tool:\s*(DIY_[A-Z_]+_TOOL)/g)].map((one) => one[1]);
-      const familyStart = unit.indexOf('export const DIY_TOOLS = [');
-      const familyBlock = unit.slice(familyStart, unit.indexOf('] as const', familyStart));
-      const family = new Set([...familyBlock.matchAll(/(DIY_[A-Z_]+)_TOOL/g)].map((one) => `${one[1]}_TOOL`));
+      const family = new Set(
+        ['DIY_TOOLS', 'PAGE_TOOLS', 'DIY_FLOW_FAMILY', 'DIY_PROBE_FAMILY', 'DIY_BUILD_FAMILY', 'DIY_LOGS_FAMILY'].flatMap(
+          (name) => [...namesOf(blockOf(unit, name))],
+        ),
+      );
       const browserMissing = rows.filter((one) => !family.has(one));
       const REMOVED = [
         'DIY_LOOK_TOOL',
@@ -115,10 +131,7 @@ export const checks = [
       const stale = REMOVED.filter((one) => unit.includes(one));
 
       const toolbox = read(pkg('src/modules/panels/model/toolbox.ts'));
-      const inPack =
-        toolbox.includes('DIY_PACK_TOOLS') &&
-        unit.includes('...DIY_DEBUG_TOOLS,') &&
-        unit.includes('...DIY_RECORD_TOOLS,');
+      const inPack = subpackWired(toolbox);
       const wrong =
         missing.length > 0
           ? `没进清单的：${missing.map((one) => one[2]).join('、')}`
@@ -127,7 +140,7 @@ export const checks = [
             : stale.length > 0
               ? `被删的七把还在：${stale.join('、')}`
               : !inPack
-                ? 'diy 工具包不是这份名单（或漏了调试 / 录制那两族）'
+                ? '六个 DIY 子包没接上（或漏了流程 / 数据源 / 建 / 页面 / 调试 / 录制某一族）'
                 : '';
       report(
         '★ DIY 那一族一起被收走（两份清单里逐个列着，收窄时一个都不能漏；浏览器那 14 把对着枚举表核）',
@@ -139,6 +152,65 @@ export const checks = [
           browserMissing.length === 0 &&
           stale.length === 0,
         wrong === '' ? `DIY 工具 ${String(names.size)} 把（枚举表 ${String(rows.length)} 把）` : wrong,
+      );
+    },
+  },
+  {
+    title: '★ 六个 DIY 子包恰好覆盖整族：每把工具只在一个包，借来的按表分配',
+    run(_ctx, report) {
+      const unit = read(pkg('src/modules/panels/unit.ts'));
+      const subpacks = [
+        'DIY_FLOW_TOOLS',
+        'DIY_PROBE_TOOLS',
+        'DIY_BUILD_TOOLS',
+        'DIY_PAGE_TOOLS',
+        'DIY_DEBUG_TOOLS',
+        'DIY_RECORD_TOOLS',
+      ];
+      const familyOf = {
+        DIY_FLOW_TOOLS: 'DIY_FLOW_FAMILY',
+        DIY_PROBE_TOOLS: 'DIY_PROBE_FAMILY',
+        DIY_BUILD_TOOLS: 'DIY_BUILD_FAMILY',
+        DIY_PAGE_TOOLS: 'PAGE_TOOLS',
+      };
+      const owner = new Map();
+      const duplicates = [];
+      for (const name of subpacks) {
+        const members = namesOf(blockOf(unit, name));
+        const family = familyOf[name];
+        if (family !== undefined) for (const tool of namesOf(blockOf(unit, family))) members.add(tool);
+        for (const tool of members) {
+          if (owner.has(tool)) duplicates.push(`${tool} 在 ${owner.get(tool)} 与 ${name}`);
+          else owner.set(tool, name);
+        }
+      }
+      const family = new Set(
+        [
+          'DIY_TOOLS',
+          'PAGE_TOOLS',
+          'DIY_FLOW_FAMILY',
+          'DIY_PROBE_FAMILY',
+          'DIY_BUILD_FAMILY',
+          'DIY_LOGS_FAMILY',
+          'DIY_DEBUG_TOOLS',
+          'DIY_RECORD_TOOLS',
+          'DIY_BORROWED_TOOLS',
+        ].flatMap((name) => [...namesOf(blockOf(unit, name))]),
+      );
+      const missing = [...family].filter((one) => !owner.has(one));
+      const extra = [...owner.keys()].filter((one) => !family.has(one));
+      const wrong =
+        duplicates.length > 0
+          ? duplicates.join('；')
+          : missing.length > 0
+            ? `没进任何子包：${missing.join('、')}`
+            : extra.length > 0
+              ? `不在 DIY 整族里：${extra.join('、')}`
+              : '';
+      report(
+        '★ 六个 DIY 子包恰好覆盖整族：每把工具只在一个包，借来的按表分配',
+        wrong === '',
+        wrong === '' ? `${String(owner.size)} 把，六个包各管一段` : wrong,
       );
     },
   },
@@ -190,15 +262,11 @@ export const checks = [
     run(_ctx, report) {
 
       const unit = read(pkg('src/modules/panels/unit.ts'));
-      const block = (name) => {
-        const from = unit.indexOf(`export const ${name} = [`);
-        return from === -1 ? '' : unit.slice(from, unit.indexOf('] as const', from));
-      };
       const record = read(pkg('src/modules/panels/model/diy-record.ts'));
       const approval = read(pkg('src/modules/panels/model/approval.ts'));
       const index = read(pkg('src/modules/panels/index.ts'));
-      const writes = block('WRITE_TOOLS');
-      const reads = block('READ_TOOLS');
+      const writes = blockOf(unit, 'WRITE_TOOLS');
+      const reads = blockOf(unit, 'READ_TOOLS');
       const wrong = !writes.includes('DIY_RECORD_PREPARE_TOOL')
         ? 'prepare 不在写侧（那就没有审批那一拍，开窗不用点头）'
         : !reads.includes('DIY_RECORD_READ_TOOL') || !reads.includes('DIY_RECORD_STOP_TOOL')

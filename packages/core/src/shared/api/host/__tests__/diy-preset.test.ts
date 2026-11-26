@@ -123,6 +123,7 @@ describe('registerDiyPreset（启动时现场注册）', () => {
     };
     expect(skills.config?.customSkillDirs?.[0]).toMatch(/[\\/]skills$/);
     expect(definition.plugins.some((row) => (row as { id?: string }).id === 'tool-cordis')).toBe(true);
+    expect(definition.description).toContain('基于「标准模式」');
     expect(info).toHaveBeenCalled();
   });
 
@@ -169,6 +170,7 @@ describe('registerDiyPreset（启动时现场注册）', () => {
     await flush();
     const definition = register.mock.calls[0]?.[0] as DshAgentPresetDefinition;
     expect(idsOf(definition)).not.toContain('tool-mine');
+    expect(definition.description).toContain('原来源不可用');
     expect(String(warn.mock.calls[0]?.[0] ?? '')).toContain('gone');
   });
 
@@ -182,6 +184,8 @@ describe('registerDiyPreset（启动时现场注册）', () => {
     registerDiyPreset(ctx, portOf('broken'));
     await flush();
     expect(register).toHaveBeenCalledTimes(1);
+    const definition = register.mock.calls[0]?.[0] as DshAgentPresetDefinition;
+    expect(definition.description).toContain('原来源无法派生');
     expect(String(warn.mock.calls[0]?.[0] ?? '')).toContain('broken');
   });
 

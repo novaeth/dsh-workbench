@@ -46,6 +46,27 @@ describe('按会话跑的流程', () => {
     expect(runs.stepOf('s-1')?.id).toBe('plan');
   });
 
+  it('★ start / advance / stop 会通知订阅者；退订之后不再通知', async () => {
+    const runs = runsOf();
+    let changes = 0;
+    const off = runs.subscribe(() => {
+      changes += 1;
+    });
+
+    runs.start('s-1', { destination: 'board', summary: '盯库存' });
+    expect(changes).toBe(1);
+
+    await runs.advance('s-1', { sites: [] });
+    expect(changes).toBeGreaterThanOrEqual(2);
+
+    runs.stop('s-1');
+    expect(changes).toBeGreaterThanOrEqual(3);
+
+    off();
+    runs.start('s-2', { destination: 'board', summary: '盯库存' });
+    expect(changes).toBe(3);
+  });
+
   it('★ 停掉之后不再有流程，重复开始会重新起一条', async () => {
     const runs = runsOf();
     runs.start('s-1', { destination: 'board', summary: '盯库存' });

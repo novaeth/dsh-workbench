@@ -5,12 +5,12 @@ import { registerPromptText } from './prompt-section';
 export const DIY_FLOW_SECTION = 'workbench:diy-flow';
 
 export const DIY_FLOW_TEXT =
-  'This is a workbench DIY session. To create or change a module, your first call must be ' +
-  'workbench_diy_plan (destination=board / headless / tweak; summary restates the request). ' +
-  'On create, that call carries only the destination and the summary — no approval yet; ' +
-  'on change, submit the full plan at once. ' +
-  'The plan step (「确认方案」 / 「补充方案」) uses workbench_diy_plan; every other step goes through ' +
-  'workbench_diy_step, and done: true is the only completion signal. ' +
+  'This is a workbench DIY session. Write/edit stay closed until the build step: probe only, never bypass with bash. ' +
+  'To create or change a module, first call workbench_diy_plan (destination=board / headless / tweak; summary restates the request); ' +
+  'create sends only destination + summary, change sends the full plan. ' +
+  'The plan step (「确认方案」 / 「补充方案」) uses workbench_diy_plan; every other step uses workbench_diy_step; done: true is the only completion signal. ' +
+  'Packs diy-probe / diy-build / diy-page open by step, diy-debug / diy-record manually; ' +
+  'if a tool is closed, follow the error\'s step; do not switch tools to retry. ' +
   'Never enter this flow for one-off tasks, existing modules, view-only requests, or troubleshooting.';
 
 const DIY_FLOW_ORDER = 701;

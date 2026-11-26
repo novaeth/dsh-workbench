@@ -92,14 +92,18 @@ description: 在工作台里查清当前面板的问题，或为它新增一块�
 所以「确认方案之前不动手」是**默认路径上**的约束，不是沙箱。真正的把关点是方案那一步的审批：
 用户批准后才开始执行；绕过审批写出的内容，用户必须能在对话里看到。
 
-## 这个会话只有 DIY 一个包
+## 这个会话默认只启用 DIY 流程包
 
-它装着工坊族 33 把（状态 / 面板 / 安装 / 显示 / 发布 / 页面 / 日志 / 录制 / 调试），
-外加从管理族借来的七把：`panels_hide`、`modules_list`、`modules_install`、
-`modules_install_bundle`、`modules_uninstall`、`long_tasks_list`、`long_tasks_stop`。
+DIY 模式默认只启用 `diy-flow`（状态 / 计划 / 步骤 / 面板 / 查看已安装模块）。
+流程按步骤自动启用：
 
-`manage` 包在 DIY 会话里**不提供**，也不要试着开启。更新模块、更换实现、安装插件、修改模块来源、调整面板顺序
-这些不在这个会话里做，回普通会话。
+- 查看数据源：`diy-probe`（`_recon` / `_spec`）；
+- 创建模块：`diy-build`（`_install` / `_publish` / `_show`，外加从管理族借用的 `panels_hide` /
+  `modules_install` / `modules_install_bundle` / `modules_uninstall` / `long_tasks_list` / `long_tasks_stop`）；
+- 验证页面显示：`diy-page`（页面族与日志）。
+
+录制前手动打开 `diy-record`；调试前手动打开 `diy-debug`。`manage` 工具包在 DIY 会话中**不提供**，不要尝试开启。
+更新模块、更换实现、安装插件、修改模块来源、调整面板顺序，这些操作不在这个会话中进行；请回到普通会话操作。
 
 审批口径一句话：**「加自己的、能撤的」不问；「引外来的、删掉的、占屏的、发出去的」问。**
 所以 `_install` / `_show` / `panels_hide` 不问；安装外部包、卸载模块、停止长任务、开启屏幕调试、录制、发布需要审批。

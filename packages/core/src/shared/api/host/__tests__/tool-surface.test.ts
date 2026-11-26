@@ -8,11 +8,36 @@ import { registerRecordTools } from '@/modules/panels/model/diy-record-tools';
 import { registerLongTaskTools } from '@/modules/panels/model/long-task-tools';
 import { registerToolboxTools } from '@/modules/panels/model/toolbox-tools';
 import { createToolbox } from '@/modules/panels/model/toolbox';
-import { TOOLBOX_LIST_TOOL, TOOLBOX_TOOLS } from '@/modules/panels/unit';
+import {
+  DIY_BUILD_TOOLS,
+  DIY_DEBUG_TOOLS,
+  DIY_FLOW_TOOLS,
+  DIY_PAGE_TOOLS,
+  DIY_PROBE_TOOLS,
+  DIY_RECORD_TOOLS,
+  TOOLBOX_LIST_TOOL,
+  TOOLBOX_TOOLS,
+} from '@/modules/panels/unit';
 
 const TOOLBOX_CHAR_BUDGET = 394;
 const MANAGE_CHAR_BUDGET = 1687;
-const DIY_CHAR_BUDGET = 5014;
+const DIY_CHAR_BUDGET = 4960;
+const DIY_PACK_BUDGETS = {
+  'diy-flow': 450,
+  'diy-probe': 270,
+  'diy-build': 780,
+  'diy-page': 2570,
+  'diy-debug': 190,
+  'diy-record': 770,
+} as const;
+const DIY_PACK_TOOLS = {
+  'diy-flow': DIY_FLOW_TOOLS,
+  'diy-probe': DIY_PROBE_TOOLS,
+  'diy-build': DIY_BUILD_TOOLS,
+  'diy-page': DIY_PAGE_TOOLS,
+  'diy-debug': DIY_DEBUG_TOOLS,
+  'diy-record': DIY_RECORD_TOOLS,
+} as const;
 
 type Surface = 'toolbox' | 'manage' | 'diy';
 
@@ -127,7 +152,7 @@ describe('工具面是常驻上下文：话要一句顶一句', () => {
     );
   });
 
-  it('★ diy 包：DIY 25 + 调试 4 + 录制 4，共 33 把；开包才付这份钱（2026-11-17 实测 5014：结束那句「缺材料先不结束」）', () => {
+  it('★ 拆包前的 DIY 族（可注册子集）：33 把；现在默认只付 diy-flow 这份', () => {
     const tools = registered('diy');
     const total = tools.reduce((sum, tool) => sum + promptTextOf(tool).length, 0);
 
@@ -135,6 +160,24 @@ describe('工具面是常驻上下文：话要一句顶一句', () => {
     expect(total, `${TOTAL_OF('diy')} / 预算 ${String(DIY_CHAR_BUDGET)}`).toBeLessThanOrEqual(
       DIY_CHAR_BUDGET,
     );
+  });
+
+  it('★ 每个 DIY 子包各有预算；默认面只有 diy-flow，明显小于拆包前', () => {
+    const tools = registered('diy');
+
+    for (const [id, budget] of Object.entries(DIY_PACK_BUDGETS)) {
+      const names = new Set<string>(DIY_PACK_TOOLS[id as keyof typeof DIY_PACK_TOOLS]);
+      const packTools = tools.filter((tool) => names.has(tool.name));
+      const total = packTools.reduce((sum, tool) => sum + promptTextOf(tool).length, 0);
+      expect(total, `${id} / 预算 ${String(budget)}`).toBeLessThanOrEqual(budget);
+    }
+
+    const flowNames = new Set<string>(DIY_FLOW_TOOLS);
+    const flowTotal = tools
+      .filter((tool) => flowNames.has(tool.name))
+      .reduce((sum, tool) => sum + promptTextOf(tool).length, 0);
+    expect(flowTotal).toBeLessThanOrEqual(DIY_PACK_BUDGETS['diy-flow']);
+    expect(flowTotal).toBeLessThan(DIY_CHAR_BUDGET / 4);
   });
 
   it('每把工具都有描述（空描述 = 模型只能靠名字猜）', () => {

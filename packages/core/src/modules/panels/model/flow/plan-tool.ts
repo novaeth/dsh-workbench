@@ -12,6 +12,7 @@ import { toolRegistryOf } from '../tool-registry-guard';
 import { PLAN_DRAFT_PROPERTIES } from './definitions';
 import { planStep, type Destination } from './plan-step';
 import { PROGRESS_OUTPUT } from './progress-output';
+import { packNoteOf } from './pack-note';
 import type { DiyFlowRuns } from './runs';
 
 const DESTINATIONS: readonly Destination[] = ['ready', 'once', 'reroute', 'board', 'headless', 'tweak'];
@@ -111,10 +112,10 @@ function validatedChanges(sections: Record<string, string[]>, shots: readonly Re
 export function registerDiyPlanTool(ctx: DshHostContext, runs: DiyFlowRuns): Array<() => void> {
   const tools = toolRegistryOf(ctx, '跳过 DIY 计划工具注册');
   if (tools === undefined) return [];
-  return [tools.register(planToolOf(runs))];
+  return [tools.register(planToolOf(ctx, runs))];
 }
 
-function planToolOf(runs: DiyFlowRuns): DshToolDefinition {
+function planToolOf(ctx: DshHostContext, runs: DiyFlowRuns): DshToolDefinition {
   return {
     name: DIY_PLAN_TOOL,
     description:
@@ -184,7 +185,12 @@ function planToolOf(runs: DiyFlowRuns): DshToolDefinition {
       });
 
       if (!result.ok) throw new Error(result.text);
-      return plainJson({ ...result, step: result.step ?? '' });
+      const packNote = packNoteOf(ctx, exec, result.step);
+      return plainJson({
+        ...result,
+        text: `${result.text}${packNote === '' ? '' : ` ${packNote}`}`,
+        step: result.step ?? '',
+      });
     },
   };
 }

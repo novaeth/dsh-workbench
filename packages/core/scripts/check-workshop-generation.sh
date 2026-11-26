@@ -14,7 +14,7 @@
 #
 # 十八格：① 同代 / ② 不同代 / ③ 退避 / ④ 无参 setup / ⑤ 首次无基准 / ⑥ 装成才 ok /
 # ⑦ 漂移（启动器不降级）/ ⑧ 目标取基准 / ⑨ 没基准一个字节不动 / ⑩ 撞锁目标不同要排队 /
-# ⑪ 撞锁目标相同看心跳 / ⑫ 被抢锁后不碰别人的锁 / ⑬–⑱ 指引软链六格。
+# ⑪ 撞锁目标相同看心跳 / ⑫ 被抢锁后不碰别人的锁 / ⑬–⑱ 不再挂 DIY skill 软链。
 #
 # 用法: bash scripts/check-workshop-generation.sh   # 成功打印 ALL OK，失败打印 FAIL: ...
 
@@ -267,44 +267,35 @@ c12() {
 }
 
 c13() {
-  # 指引软链只有一份写口（seed-workshop.sh），源**优先基准那份**，第二遍不重写。
-  # 这里故意跑"启动器那份"、基准给"profile 那份"，且只有 profile 里有 skills —— 区分开
-  # "指基准"与"指跑脚本这份副本"。
   r="$work/r"; setup_shell "$r" 9.9.9 9.9.9
   mkdir -p "$r/profile/skills/workbench-module-diy"; printf 'x\n' >"$r/profile/skills/workbench-module-diy/SKILL.md"
   link="$r/workbench/diy/.agents/skills/workbench-module-diy"
   run_it "$r" entry launcher "$r/profile"
-  [ -L "$link" ] || fail "⑬ 带基准跑 entry 没把指引链上"
-  [ "$(link_real_of "$link")" = "$(real_of "$r/profile/skills/workbench-module-diy")" ] || fail "⑬ 链的不是基准那份（$(readlink "$link" 2>/dev/null)）"
-  inode="$(ls -i "$link" | awk '{print $1}')"
-  run_it "$r" entry launcher "$r/profile"
-  [ "$(ls -i "$link" | awk '{print $1}')" = "$inode" ] || fail "⑬ 第二遍把软链重写了（inode 变了）"
-  [ "$(link_real_of "$link")" = "$(real_of "$r/profile/skills/workbench-module-diy")" ] || fail "⑬ 第二遍改了指向"
-  echo "⑬ 指引软链：源优先基准那份、第二遍不重写 ✅"
+  if [ -e "$link" ] || [ -L "$link" ]; then fail "⑬ 工坊骨架又挂了 DIY skill 软链"; fi
+  echo "⑬ 工坊骨架不再挂 DIY skill 软链 ✅"
 }
 
 c14() {
   o="$work/o"; setup_shell "$o" 9.9.9 9.9.9
   mkdir -p "$o/profile/skills/workbench-module-diy"; printf 'x\n' >"$o/profile/skills/workbench-module-diy/SKILL.md"
   run_it "$o" entry profile "$o/launcher"
-  [ "$(link_real_of "$o/workbench/diy/.agents/skills/workbench-module-diy")" = "$(real_of "$o/profile/skills/workbench-module-diy")" ] || fail "⑭ 基准里没有时没退回跑脚本那份"
-  echo "⑭ 基准里没有就退回副本那份 ✅"
+  if [ -e "$o/workbench/diy/.agents/skills/workbench-module-diy" ]; then fail "⑭ 基准里没有 skills 也照挂了"; fi
+  echo "⑭ 没有源就不挂，骨架照样起来 ✅"
 }
 
 c15() {
   p="$work/p"; setup_shell "$p" 9.9.9 9.9.9
   run_it "$p" entry profile
-  if [ -L "$p/workbench/diy/.agents/skills/workbench-module-diy" ] || [ -e "$p/workbench/diy/.agents/skills/workbench-module-diy" ]; then fail "⑮ 没有源却挂出了死链"; fi
-  echo "⑮ 两份都没有就不挂（死链比没有更坏）✅"
+  if [ -L "$p/workbench/diy/.agents/skills/workbench-module-diy" ] || [ -e "$p/workbench/diy/.agents/skills/workbench-module-diy" ]; then fail "⑮ 没有源却挂出了东西"; fi
+  echo "⑮ 两份都没有就不挂 ✅"
 }
 
 c16() {
-  # 挂指引不是代际决策：没基准也照挂（skills 在跑脚本那份里 → 退回它那份）。
   t="$work/t"; setup_shell "$t" 9.9.9 9.9.9
   mkdir -p "$t/launcher/skills/workbench-module-diy"; printf 'x\n' >"$t/launcher/skills/workbench-module-diy/SKILL.md"
   run_it "$t" entry launcher none
-  [ "$(link_real_of "$t/workbench/diy/.agents/skills/workbench-module-diy")" = "$(real_of "$t/launcher/skills/workbench-module-diy")" ] || fail "⑯ 没基准就不挂了（挂指引不该挂在代际判断上）"
-  echo "⑯ 没基准也照挂（退回跑脚本那份）✅"
+  if [ -e "$t/workbench/diy/.agents/skills/workbench-module-diy" ]; then fail "⑯ 没基准也照挂了"; fi
+  echo "⑯ 没基准也不挂（不再看代际）✅"
 }
 
 c17() {
@@ -313,8 +304,8 @@ c17() {
   printf 'not a directory\n' >"$q/workbench/diy/.agents"
   if run_it "$q" entry profile; then :; else fail "⑰ 挂不上时把 entry 带崩了"; fi
   [ -x "$q/workbench/bin/dsh-wb-module" ] || fail "⑰ 挂不上时入口没写完"
-  [ ! -L "$q/workbench/diy/.agents/skills/workbench-module-diy" ] || fail "⑰ 竟然还挂上了"
-  echo "⑰ 挂不上只留一句话、不当场炸 ✅"
+  [ ! -L "$q/workbench/diy/.agents/skills/workbench-module-diy" ] || fail "⑰ 竟然还挂了东西"
+  echo "⑰ 不挂时入口照常写完 ✅"
 }
 
 c18() {
@@ -325,7 +316,6 @@ c18() {
   run_it "$w2" entry profile
   [ -f "$w2/workbench/diy/.agents/skills/workbench-module-diy/keep.md" ] || fail "⑱ 把别人的真目录里的东西弄没了"
   [ ! -L "$w2/workbench/diy/.agents/skills/workbench-module-diy" ] || fail "⑱ 竟然把别人的真目录换成了软链"
-  [ ! -e "$w2/workbench/diy/.agents/skills/workbench-module-diy/workbench-module-diy" ] || fail "⑱ 往别人的真目录里套了一层软链"
   echo "⑱ 那儿是别人的真目录就不碰 ✅"
 }
 

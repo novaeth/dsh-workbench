@@ -5,16 +5,25 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createNoopDataReader } from '@dsh-workbench/shared/testing';
 import type { HostContext, UnitManifest } from '@dsh-workbench/shared';
 import type { DshToolDefinition } from '@dsh-workbench/shared/host';
-import { MCP_TOOLS_SERVICE, PANELS_SERVICE, SESSION_PROJECTIONS_SERVICE, type McpServerPacks } from '@dsh-workbench/shared/host';
+import {
+  MCP_TOOLS_SERVICE,
+  PANELS_SERVICE,
+  SESSION_PROJECTIONS_SERVICE,
+  TOOLBOX_SERVICE,
+  type McpServerPacks,
+} from '@dsh-workbench/shared/host';
 import { createHostKit, createWorkspaceStore, hostSurface, WORKBENCH_ADAPTERS } from '@dsh-workbench/shared/host';
 import { panelsHost } from '../index';
-import { createToolbox } from '../model/toolbox';
+import { createToolbox, flowPacksOf } from '../model/toolbox';
 import type { PanelsService } from '../model/service';
 import type { SkillProvider } from '../model/unit-skills';
 import {
-  DIY_BORROWED_TOOLS,
+  DIY_FLOW_TOOLS,
   DIY_PACK_TOOLS,
+  DIY_PLAN_TOOL,
+  DIY_STEP_TOOL,
   MANAGE_TOOLS,
+  MODULES_LIST_TOOL,
   PANELS_SHOW_TOOL,
   TOOLBOX_CLOSE_TOOL,
   TOOLBOX_LIST_TOOL,
@@ -104,6 +113,8 @@ function mount(
             }
           : key === MCP_TOOLS_SERVICE
             ? { servers: () => mcp }
+            : key === TOOLBOX_SERVICE
+            ? provided.get(TOOLBOX_SERVICE)
             : key === 'tools'
               ? {
                   register: (definition: DshToolDefinition) => {
@@ -190,7 +201,7 @@ describe('工具箱：默认只留控制面，按会话开包', () => {
     expect(openTool?.writes).toBe(false);
   });
 
-  it('★ 默认会话：manage / diy / 单元包全收着；开一个单元包只放它自己', async () => {
+  it('★ 默认会话：manage / 六个 DIY 子包 / 单元包全收着；开一个单元包只放它自己', async () => {
     const { mounted, registered } = mount();
     const all = new Set([...MANAGE_TOOLS, ...DIY_PACK_TOOLS, 'workbench_board_x_list', 'workbench_board_x_do']);
 
@@ -246,17 +257,66 @@ describe('工具箱：默认只留控制面，按会话开包', () => {
     expect(deniedOf(mounted, 's-2')).toContain(MANAGE_TOOLS[0]);
   });
 
-  it('DIY 模式只开 diy（工坊族 + 借来的七把），判去向之前写文件被拒；显式收掉之后不再默认开回来', async () => {
+  it('DIY 模式只开 diy-flow；判去向之前写文件被拒；显式收掉之后不再默认开回来', async () => {
     const { mounted, registered } = mount();
-    const notBorrowed = MANAGE_TOOLS.filter((one) => !(DIY_BORROWED_TOOLS as readonly string[]).includes(one));
+    const flow = new Set<string>(DIY_FLOW_TOOLS);
+    const notBorrowed = MANAGE_TOOLS.filter((one) => one !== MODULES_LIST_TOOL);
+    const closedDiy = DIY_PACK_TOOLS.filter((one) => !flow.has(one));
 
     expect(new Set(deniedOf(mounted, 's-1', 'workbench-diy'))).toEqual(
-      new Set([...notBorrowed, 'write', 'edit', 'workbench_board_x_list', 'workbench_board_x_do']),
+      new Set([...notBorrowed, ...closedDiy, 'write', 'edit', 'workbench_board_x_list', 'workbench_board_x_do']),
     );
-    await call(registered, TOOLBOX_CLOSE_TOOL, { targets: ['diy'] }, 's-1');
+    await call(registered, TOOLBOX_CLOSE_TOOL, { targets: ['diy-flow'] }, 's-1');
     expect(new Set(deniedOf(mounted, 's-1', 'workbench-diy'))).toEqual(
       new Set([...MANAGE_TOOLS, ...DIY_PACK_TOOLS, 'write', 'edit', 'workbench_board_x_list', 'workbench_board_x_do']),
     );
+  });
+
+  it('★ 流程步变化会通知 gate；build 步写工具不再被流程闸拒', async () => {
+    const { mounted, registered } = mount();
+    let changes = 0;
+    const off = mounted.gate?.subscribe?.(() => {
+      changes += 1;
+    });
+
+    await call(registered, DIY_PLAN_TOOL, { destination: 'board', summary: '盯库存' }, 's-1');
+    const probing = deniedOf(mounted, 's-1', 'workbench-diy');
+    expect(probing).toContain('write');
+    expect(probing).not.toContain('workbench_diy_recon');
+    expect(probing).toContain('workbench_diy_install');
+
+    await call(registered, DIY_STEP_TOOL, { sites: [] }, 's-1');
+    await call(
+      registered,
+      DIY_PLAN_TOOL,
+      { destination: 'board', summary: '盯库存', see: ['一眼'], do: ['一点'], agent: ['一件'], data: ['一处'] },
+      's-1',
+    );
+
+    const building = deniedOf(mounted, 's-1', 'workbench-diy');
+    expect(changes).toBeGreaterThanOrEqual(2);
+    expect(building).not.toContain('write');
+    expect(building).not.toContain('workbench_diy_install');
+    expect(building).not.toContain('workbench_diy_recon');
+    expect(building).toContain('workbench_diy_state');
+    off?.();
+  });
+
+  it('★ 用户先收掉 diy-build：build 步不会被自动开回来，返回点名并给下一步', async () => {
+    const { mounted, registered } = mount();
+
+    await call(registered, DIY_PLAN_TOOL, { destination: 'board', summary: '盯库存' }, 's-1');
+    await call(registered, TOOLBOX_CLOSE_TOOL, { targets: ['diy-build'] }, 's-1');
+    await call(registered, DIY_STEP_TOOL, { sites: [] }, 's-1');
+    const planned = await call(
+      registered,
+      DIY_PLAN_TOOL,
+      { destination: 'board', summary: '盯库存', see: ['一眼'], do: ['一点'], agent: ['一件'], data: ['一处'] },
+      's-1',
+    );
+
+    expect(String(planned['text'])).toContain('diy-build');
+    expect(deniedOf(mounted, 's-1', 'workbench-diy')).toContain('workbench_diy_install');
   });
 
   it('★ 工坊那条会话是先建会话、再 select DIY：header 上没有 preset，list 也要说已启用', async () => {
@@ -264,15 +324,39 @@ describe('工具箱：默认只留控制面，按会话开包', () => {
 
     const listed = await call(registered, TOOLBOX_LIST_TOOL, {}, 's-1');
 
-    expect(String(listed['text'])).toContain('当前已启用：diy');
+    expect(String(listed['text'])).toContain('当前已启用：diy-flow');
     expect(String(listed['text'])).not.toContain('manage');
-    const notBorrowed = MANAGE_TOOLS.filter((one) => !(DIY_BORROWED_TOOLS as readonly string[]).includes(one));
+    const flow = new Set<string>(DIY_FLOW_TOOLS);
+    const notBorrowed = MANAGE_TOOLS.filter((one) => one !== MODULES_LIST_TOOL);
+    const closedDiy = DIY_PACK_TOOLS.filter((one) => !flow.has(one));
     expect(new Set(deniedOf(mounted, 's-1', 'workbench-diy'))).toEqual(
-      new Set([...notBorrowed, 'write', 'edit', 'workbench_board_x_list', 'workbench_board_x_do']),
+      new Set([...notBorrowed, ...closedDiy, 'write', 'edit', 'workbench_board_x_list', 'workbench_board_x_do']),
     );
 
     const again = await call(registered, TOOLBOX_OPEN_TOOL, { targets: ['manage'] }, 's-1');
     expect(String(again['text'])).toContain('DIY 模式下不提供 manage 工具包');
+  });
+
+  it('★ 自动开包：流程内单调加开，结束只收回自动开的；手动开 / 收优先', () => {
+    const box = createToolbox({ manifests: () => [] });
+    const preset = 'workbench-diy';
+
+    expect([...box.packsOf('s-1', preset)]).toEqual(['diy-flow']);
+    expect(box.autoOpen('s-1', flowPacksOf('probe'))).toEqual(['diy-probe']);
+    expect([...box.packsOf('s-1', preset)]).toEqual(['diy-flow', 'diy-probe']);
+
+    box.autoOpen('s-1', flowPacksOf('build'));
+    expect([...box.packsOf('s-1', preset)]).toEqual(['diy-flow', 'diy-probe', 'diy-build']);
+    expect(box.autoOpen('s-1', flowPacksOf('probe'))).toEqual([]);
+
+    box.open('s-1', ['diy-record'], preset);
+    box.clearAuto('s-1');
+    expect([...box.packsOf('s-1', preset)]).toEqual(['diy-flow', 'diy-record']);
+
+    box.autoOpen('s-1', flowPacksOf('build'));
+    box.close('s-1', ['diy-build'], preset);
+    expect(box.autoOpen('s-1', flowPacksOf('build'))).toEqual([]);
+    expect(box.packsOf('s-1', preset).has('diy-build')).toBe(false);
   });
 
   it('★ 旧 dsh 没有会话 id：包全开，开包工具只回一句"不用开"', async () => {
@@ -292,26 +376,28 @@ describe('工具箱：默认只留控制面，按会话开包', () => {
     expect(deniedOf(mounted, 's-1')).toContain(MANAGE_TOOLS[0]);
   });
 
-  it('list 目录：外壳两个包 + 板子上的单元包，每个一行 id 与一句简介', async () => {
+  it('list 目录：manage + 六个 DIY 子包 + 板子上的单元包，每个一行 id 与一句简介', async () => {
     const { registered } = mount();
 
     const listed = await call(registered, TOOLBOX_LIST_TOOL, {}, 's-1');
     const text = String(listed['text']);
 
     expect(text).toContain('manage');
-    expect(text).toContain('diy');
+    for (const id of ['diy-flow', 'diy-probe', 'diy-build', 'diy-page', 'diy-debug', 'diy-record']) {
+      expect(text).toContain(id);
+    }
     expect(text).toContain('unit:board-x');
-    expect(text).toContain('面板 · 安装 / 卸载 / 更新模块 · 市场 · 长任务');
-    expect(text).toContain('工坊 · 创建 / 安装 / 发布模块 · 调试 · 录制 · 日志 · 页面动作');
+    expect(text).toContain('面板 · 安装 / 卸载 / 更新模块 · 模块市场 · 长任务');
+    expect(text).toContain('创建 / 安装 · 发布 / 显示 / 隐藏 / 长任务');
     expect(text).toContain('board_x_list · board_x_do');
   });
 
-  it('★ 发布模块写在 diy 的简介里：agent 只看得到这一行，不能让它猜（2026-11-23 补上）', async () => {
+  it('★ 发布模块写在 diy-build 的简介里：agent 只看得到这一行，不能让它猜（2026-11-23 补上）', async () => {
     const { registered } = mount();
 
     const text = String((await call(registered, TOOLBOX_LIST_TOOL, {}, 's-1'))['text']);
 
-    expect(text).toMatch(/^- diy — .*发布模块/m);
+    expect(text).toMatch(/^- diy-build — .*发布/m);
     expect(text).toMatch(/^- manage — .*安装 \/ 卸载 \/ 更新模块/m);
   });
 

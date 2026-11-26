@@ -106,7 +106,7 @@ target_version() {
 
 # 外壳 manifest 里钉的那份 dsh UI 版本（模块模板默认带的那个 devDependency，见
 # `内部设计记录` §3.1）。源优先**基准**（正在跑的那份外壳），
-# 没有才退回跑脚本这份副本 —— 与 link_workshop_skills 同一条口径。
+# 没有才退回跑脚本这份副本 —— 与模块模板同一条口径。
 # 读不到就留空：调用方按"不写这一项"处理（模块 `init` 那边有自己的兜底常量与一句人话）。
 shell_primitives_version() {
   local root="$SHELL_ROOT"
@@ -166,49 +166,6 @@ log_line() {
   mkdir -p "$(dirname "$SEED_LOG")" 2>/dev/null || true
   printf '%s\n' "$*" >>"$SEED_LOG" 2>/dev/null || true
   if [ -t 1 ]; then printf '%s\n' "$*"; fi
-}
-
-# ── 工坊**自己带着** DIY 的指引：这条软链只有一份写口 ──────────────────────────
-#
-# 指引住进工坊的理由：DIY 会话的 cwd 就是工坊，而 dsh 的 skill-filesystem 是从 **cwd 下的
-# `.agents/skills/`** 发现技能的（本仓自己那条 `module-design` 就是这么被看见的）—— 于是
-# 进工坊的会话天然看得见它，**不用去改用户任何默认设置**（改默认 preset 会连带把用户后面
-# 新建的普通会话也变成 DIY 模式）。
-#
-# ⚠️ 写口只有这一处，而且故意放在**本脚本**里：启动器（`bin/dsh-workbench`）与宿主自举
-# （`src/shared/api/host/runtime-seed.ts`）都会跑它，于是"挂指引"只有一份实现。曾经是两处
-# 各写一遍（启动器一段 bash + TS 的 `linkSkills`），写的是同一个路径、目标也一致 —— 那是
-# **同一件事两个实现**：哪天只有一边改了源或判据，就会每次启动互相改指，症状是"会话里那份
-# 指引时新时旧"，还是**不报错**（软链指到哪 skill 发现都不吭声）。
-#
-# 源优先**基准**（正在跑的那份外壳，由调用者显式给）那份，没有才退回跑脚本这份副本；
-# 两者都没有（包还没做完）就**不挂** —— 挂出来是条死链，而 skill 发现对死链不报错。
-# 幂等：`readlink` 已经等于源就**一个字节不写**（entry 每次启动都会跑到这里）。
-# 这条与代际无关：**不要**把它挂在"有基准"的判断上 —— 挂指引不是代际决策。
-link_workshop_skills() {
-  local src="$REPO_DIR/skills/workbench-module-diy"
-  if [ -n "$SHELL_ROOT" ] && [ -d "$SHELL_ROOT/skills/workbench-module-diy" ]; then
-    src="$SHELL_ROOT/skills/workbench-module-diy"
-  fi
-  [ -d "$src" ] || return 0
-
-  local link="$DIY_DIR/.agents/skills/workbench-module-diy"
-  if [ "$(readlink "$link" 2>/dev/null || true)" = "$src" ]; then return 0; fi
-  # 那儿要是别人的**真目录**（不是我们建的软链）就不碰它：`ln -s` 会往它里面再套一层。
-  if [ -e "$link" ] && [ ! -L "$link" ]; then
-    echo "→ ⚠️ $link 已存在且不是软链 —— 不动它（手工处理，或先把它挪走）；这条不影响启动。" >&2
-    return 0
-  fi
-
-  # 先 rm -f：旧软链还在时 `ln -s` 会顺着它把新链**套进去**（symlink 指向 symlink）。
-  mkdir -p "$(dirname "$link")" 2>/dev/null || true
-  rm -f "$link" 2>/dev/null || true
-  if ln -s "$src" "$link" 2>/dev/null; then
-    echo "→ 工坊指引已链上：$link → $src"
-  else
-    # 挂不上只留一句话，不当场炸：这条是"锦上添花"，不该把启动带崩（自举同理）。
-    echo "→ ⚠️ DIY 指引没挂上（${link}）—— 手工从 ${src} 建一条软链即可；这条不影响启动。" >&2
-  fi
 }
 
 # 一次 node 调用把四份 package.json 的版本读出来（基准 / core / module-tools / shared，一行一份）。
@@ -570,8 +527,6 @@ chmod +x "$ENTRY_DIR/dsh-wb-module"
 
 if [ "$MODE" = "entry" ]; then
   echo "→ DIY 工坊入口：$ENTRY_DIR/dsh-wb-module"
-  # 挂指引**不**看基准（每次启动都跑一遍，幂等）：它是"锦上添花"，不是代际决策。
-  link_workshop_skills
   maybe_start_workshop_sync
   exit 0
 fi
@@ -755,8 +710,7 @@ else
   fi
 fi
 
-# 完整的这一趟跑完：先挂指引（不管有没有基准 —— setup 那趟也要建起来），再看要不要自愈。
-link_workshop_skills
+# 完整的这一趟跑完，再看要不要自愈。
 
 # 完整的这一趟跑完，也顺手比一次代际 —— **有基准才算**。
 #

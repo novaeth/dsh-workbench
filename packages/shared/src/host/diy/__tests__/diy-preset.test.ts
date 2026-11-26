@@ -188,10 +188,12 @@ describe('diyPresetSourcesOf（可选的来源模式）', () => {
       entriesOf(
         { ...standard(), id: 'late', order: 5, name: '后来的模式', description: '说明' },
         { ...standard(), id: 'early', order: 2 },
+        { ...standard(), id: 'cordis', order: 3 },
         { ...standard(), id: DIY_PRESET_ID, order: 1 },
       ),
     );
     expect(rows.map((row) => row.id)).toEqual(['early', 'late']);
+    expect(rows.map((row) => row.id)).not.toContain('cordis');
     expect(rows[1]).toEqual({
       id: 'late',
       name: '后来的模式',

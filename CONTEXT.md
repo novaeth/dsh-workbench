@@ -34,8 +34,8 @@ _Avoid_: 右栏、rightbar、sidebar
 **模块**：看板上的一块内容（缺陷、服务状态、最近提交…）。用户可以选择显示哪些、以什么顺序显示。
 _Avoid_: 卡片、组件、widget
 
-**工具包（tool pack）**：一组按会话开关的 agent 工具 —— `manage`（面板 · 安装 / 卸载 / 更新模块 · 市场 · 长任务）、
-`diy`（工坊 · 创建 / 安装 / 发布模块 · 调试 · 录制 · 日志 · 页面动作）、每个挂在板子上的模块 / 插件各一个
+**工具包（tool pack）**：一组按会话开关的 agent 工具 —— `manage`（面板 · 安装 / 卸载 / 更新模块 · 模块市场 · 长任务）、
+DIY 子包（`diy-flow` 默认；`diy-probe` / `diy-build` / `diy-page` / `diy-debug` / `diy-record` 按需）、每个挂在板子上的模块 / 插件各一个
 `unit:<id>`，以及 dsh 的 MCP server 各一个
 `mcp:<server>`（默认不启用：工作台设置里打开「MCP 按需加载」后才按需；工具自己的审批仍走 dsh）。默认只挂三把 `workbench_toolbox_*` 控制工具；
 agent 按用户意图开启工具包（不审批），关闭即时收回；模块可以声明工具的 `onDemand: false` 让它常驻。

@@ -18,9 +18,16 @@ function sessionOf(input: { blank?: boolean; preset?: string | null }): SessionS
 }
 
 function harness(
-  input: { path?: string; session?: SessionSummary | null; presets?: boolean; defaultPreset?: string } = {},
+  input: {
+    path?: string;
+    session?: SessionSummary | null;
+    presets?: boolean;
+    defaultPreset?: string;
+    select?: () => Promise<{ ok: boolean }>;
+    contextMenus?: { notify: ReturnType<typeof vi.fn> };
+  } = {},
 ) {
-  const select = vi.fn(() => Promise.resolve({ ok: true }));
+  const select = vi.fn(input.select ?? (() => Promise.resolve({ ok: true })))
   const listeners = new Set<() => void>();
   let byId: SessionsSnapshot['byId'] = input.session === null ? {} : { s1: input.session ?? sessionOf({}) };
   const workspaces: WorkspaceSnapshot = {
@@ -48,7 +55,8 @@ function harness(
     },
   };
   const ctx = {
-    get: (name: string) => (name === 'sessions' ? sessions : undefined),
+    get: (name: string) =>
+      name === 'sessions' ? sessions : name === 'contextMenus' ? input.contextMenus : undefined,
     remote:
       input.presets === false
         ? {}
@@ -127,5 +135,44 @@ describe('工坊空白会话补 DIY 模式', () => {
 
     appear(sessionOf({}));
     expect(select).toHaveBeenCalledWith('s1', DIY_PRESET_ID);
+  });
+
+  it('★ 第一次没切成：下一次快照再试，成功之后才不再重复', async () => {
+    const select = vi.fn().mockRejectedValueOnce(new Error('busy')).mockResolvedValueOnce({ ok: true });
+    const { ctx, appear } = harness({
+      select: () => select() as Promise<{ ok: boolean }>,
+    });
+    installWorkshopPreset(ctx);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(select).toHaveBeenCalledTimes(1);
+
+    appear(sessionOf({}));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(select).toHaveBeenCalledTimes(2);
+
+    appear(sessionOf({}));
+    await Promise.resolve();
+    expect(select).toHaveBeenCalledTimes(2);
+  });
+
+  it('★ 连续三次失败给用户一句可见的说明，不只是一条 console.warn', async () => {
+    const notify = vi.fn();
+    const select = vi.fn(() => Promise.reject(new Error('no')));
+    const { ctx, appear } = harness({
+      select: () => select() as Promise<{ ok: boolean }>,
+      contextMenus: { notify },
+    });
+    installWorkshopPreset(ctx);
+    for (let i = 0; i < 3; i += 1) {
+      await Promise.resolve();
+      await Promise.resolve();
+      appear(sessionOf({}));
+    }
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(notify).toHaveBeenCalledWith(expect.stringContaining('请在模式选择器中选择 DIY 模式'), false);
   });
 });

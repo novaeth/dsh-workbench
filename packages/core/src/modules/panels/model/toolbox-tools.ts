@@ -75,8 +75,8 @@ function targetPlan(
   if (preset === DIY_PRESET_ID && packs.includes('manage')) {
     return {
       error:
-        'DIY 模式下不提供 manage 工具包：装 / 卸 / 显示 / 隐藏 / 排序 / 市场 / 长任务都在 diy 包里，' +
-        '直接调用即可，无需开包。',
+        'DIY 模式下不提供 manage 工具包：查看已安装模块、隐藏面板、安装模块、安装模块包、卸载模块、查看或停止长任务，请使用 diy-flow 与 diy-build；' +
+        '用 workbench_toolbox_list 查看当前已启用的工具包。',
     };
   }
   return { session, packs };
@@ -153,10 +153,9 @@ export function registerToolboxTools(ctx: DshHostContext, toolbox: Toolbox): Arr
 
   const openTool = targetTool(
     TOOLBOX_OPEN_TOOL,
-    '开启工作台工具包，把其中的工具加入本次会话。' +
-      '面板 / 模块（安装 / 卸载 / 更新）/ 模块市场 / 长任务用 manage（DIY 模式不提供，diy 已含这一族）；' +
-      '工坊（创建 / 安装 / 发布模块）/ 页面 / 调试 / 录制 / 日志用 diy；' +
-      'MCP server 用 mcp:<server>；模块或插件自己的工具用 unit:<模块或插件 id>。',
+    '开启工作台工具包。面板 / 模块 / 模块市场 / 长任务用 manage（DIY 模式不提供）；' +
+      '工坊流程用 diy-flow（默认），创建与安装用 diy-build，页面用 diy-page；其余用 workbench_toolbox_list 查看；' +
+      'MCP server 用 mcp:<server>；模块工具用 unit:<id>。',
     false,
     (plan, exec) => {
       const newly = toolbox.open(plan.session, plan.packs, presetOf(ctx, exec));

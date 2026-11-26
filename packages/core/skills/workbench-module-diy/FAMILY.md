@@ -17,12 +17,12 @@
 | 控制台 | `_logs_watch` → 操作 → `_logs_read` → `_logs_stop` |
 | 捕获「用户点击之后发送了什么」 | `_record_prepare` → 用户操作 → `_record_read` → `_record_detail` → `_record_stop` |
 
-## 1b 借来的七把
+## 1b 借用的七个管理工具
 
-DIY 工具包还包含管理族的七把工具，因为工坊会使用：`panels_hide`（只把一格收起来，不问）、
-`modules_list` / `modules_install` / `modules_install_bundle` / `modules_uninstall`（安装现成模块、卸载模块，均需审批）、
-`long_tasks_list` / `long_tasks_stop`（查看 / 停止运行中的长任务；停止需审批）。
-其余管理工具（更新、更换实现、插件安装与卸载、模块来源配置、面板排序）不在 DIY 会话里；需要使用这些工具时，回到普通会话。
+借用的七个管理工具分布在两个子包中：`modules_list` 在 `diy-flow`；`panels_hide`（仅隐藏一个面板，不询问）、
+`modules_install` / `modules_install_bundle` / `modules_uninstall`（安装现成模块、卸载模块，均需审批）、
+`long_tasks_list` / `long_tasks_stop`（查看 / 停止运行中的长任务；停止需审批）在 `diy-build`。
+其余管理工具（更新、更换实现、安装与卸载插件、配置模块来源、调整面板顺序）不在 DIY 会话中；需要使用这些工具时，请回到普通会话。
 
 ## 2 前置
 

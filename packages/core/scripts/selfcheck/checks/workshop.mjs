@@ -45,12 +45,12 @@ echo ok`);
   },
   {
     title:
-      '★ 工坊代际自愈：基准显式输入（启动器不降级 / 目标取基准 / 没基准不动）+ 三条锁判据 + 六格指引软链',
+      '★ 工坊代际自愈：基准显式输入（启动器不降级 / 目标取基准 / 没基准不动）+ 三条锁判据 + 工坊不再挂 DIY skill 软链',
     run(_ctx, report) {
       const probe = posixProbeOf(pkg('scripts/check-workshop-generation.sh'));
       const passed = probe.endsWith('ALL OK');
       report(
-        '★ 工坊代际自愈：基准显式输入（启动器不降级 / 目标取基准 / 没基准不动）+ 三条锁判据 + 六格指引软链',
+        '★ 工坊代际自愈：基准显式输入（启动器不降级 / 目标取基准 / 没基准不动）+ 三条锁判据 + 工坊不再挂 DIY skill 软链',
         passed,
         passed ? '十八格都按契约 ✅' : `探针输出：${probe}`,
       );

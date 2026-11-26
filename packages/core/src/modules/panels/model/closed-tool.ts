@@ -18,9 +18,9 @@ export function packClosedReason(tool: string, pack: PackEntry): string {
 
 export function diyManageAbsentReason(tool: string): string {
   return (
-    `${tool} 在 DIY 会话里不提供：manage 包只给普通会话，无法在这里开启，不要尝试开启。` +
-    'DIY 里能用的管理能力是借来的那七把（收起来 / 看市场与已装 / 装包 / 装插件库 / 卸模块 / 看长任务 / 停长任务）；' +
-    '更新模块、换实现、插件装卸、市场源配置、调面板顺序这些回普通会话做。'
+    `${tool} 在 DIY 会话里不提供：manage 工具包只给普通会话，无法在这里开启，不要尝试开启。` +
+    'DIY 会话可用的管理工具分布在 diy-flow 与 diy-build：查看已安装模块、隐藏面板、安装模块、安装模块包、卸载模块、查看或停止长任务。' +
+    '更新模块、更换实现、安装或卸载插件、配置模块来源、调整面板顺序，请在普通会话中操作。'
   );
 }
 

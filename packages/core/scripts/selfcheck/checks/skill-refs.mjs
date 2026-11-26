@@ -5,7 +5,15 @@ import { documentedInterfaces } from '../public-types.mjs';
 
 const SKILL_DIR = pkg('skills/workbench-module-diy');
 const UNIT = pkg('src/modules/panels/unit.ts');
-const PACKS = new Set(['manage', 'diy']);
+const PACKS = new Set([
+  'manage',
+  'diy-flow',
+  'diy-probe',
+  'diy-build',
+  'diy-page',
+  'diy-debug',
+  'diy-record',
+]);
 const TITLE = '★ DIY skill 里的工具名必须是现名（含 _foo 简写），旧名/带语法的名字当场红';
 
 export function toolNamesOf(source) {
