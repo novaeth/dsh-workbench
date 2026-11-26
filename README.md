@@ -148,6 +148,9 @@ Desktop 里个别浏览器调试能力不可用；网页浏览与录制不受影
 需要创建模块时，开启 DIY 模式，让 agent 现场创建并安装，不需要先学一套框架。
 具体做法见 [模块 DIY 指引](packages/core/skills/workbench-module-diy/SKILL.md)。
 
+Desktop 插件页的「精选插件」标签页收录社区精选的插件：安装 dsh-featured 完整版后，
+可在那里搜索、按标签筛选并查看详情。
+
 ## 数据和设置
 
 - **会话、项目、附件**：都放在 `~/.dsh` 下，Desktop 与工作台共用这一份；安装或卸载工作台都不会修改它们。

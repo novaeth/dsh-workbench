@@ -55,6 +55,7 @@ import { createApprovalGate } from '@/shared/api/host/approval-gate';
 import { registerBootThemeGuard } from '@/shared/api/host/boot-theme-guard';
 import { mountDiyPreset } from '@/shared/api/host/diy-preset-host';
 import { createFlowAgentGateway, FLOW_CHILD_HIDDEN_TOOLS } from '@/shared/api/host/flow/agent';
+import { integrateFeaturedPlugins } from '@/shared/api/host/featured';
 import { notifyLongTaskChange } from '@/shared/api/host/long-task-notice';
 import { installToolResultEffects, provideToolNames } from '@/shared/api/host/tool-result-effects';
 export const name = 'dsh-workbench';
@@ -493,4 +494,5 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   ctx.effect(() => registerPanelState(ctx, panelState), `${PLUGIN_ID}: 面板运行态上报（浏览器半侧报自己的取数与渲染收尾）`);
   ctx.effect(() => registerDiyActs(ctx, { bump: (names) => facts.bump(names) }), `${PLUGIN_ID}: DIY 的两族键（用户按的）`);
   ctx.effect(() => registerApi(ctx, routes), `${PLUGIN_ID}: HTTP 投影`);
+  integrateFeaturedPlugins(ctx);
 }

@@ -204,12 +204,13 @@ export const checks = [
     },
   },
   {
-    title: '★ apply() 注册了**恰好一条** exact 路由 —— 变更流（多了就是有人又开了一条通道）',
+    title: '★ apply() 注册的 exact 路由就两条：变更流与精选目录（多一条都想清楚为什么）',
     run(ctx, report) {
       const streamRoutes = ctx.routes.filter((r) => r.kind === 'exact');
+      const paths = streamRoutes.map((r) => r.path);
       report(
-        '★ apply() 注册了**恰好一条** exact 路由 —— 变更流（多了就是有人又开了一条通道）',
-        streamRoutes.length === 1 && streamRoutes[0]?.path === '/workbench/events',
+        '★ apply() 注册的 exact 路由就两条：变更流与精选目录（多一条都想清楚为什么）',
+        paths.length === 2 && paths.includes('/workbench/events') && paths.includes('/dsh-plugins-plugin/featured'),
         streamRoutes.map((r) => `${r.kind}:${r.path}`).join(' + ') || '（没有）',
       );
     },

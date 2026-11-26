@@ -17,6 +17,7 @@ import { startMarketAutoCheck } from '@/app/layouts/market/market-auto-check';
 import { registerDebugFooter } from '@/app/layouts/sidebar/debug-footer';
 import { clientSurface } from '@/shared/api/platform/client';
 import { registerWorkbenchSettings } from '@/app/layouts/workbench-settings/register';
+import { installFeaturedEntry } from '@/app/layouts/featured/register';
 import { selectProject, selectedProjectId } from '@/app/layouts/project-selection';
 import { WORKSHOP_PAST_TITLES, WORKSHOP_TITLE, diyStartOptions, isWorkshopPath } from '@/shared/api/diy';
 import { installWorkshopPreset } from '@/app/layouts/sidebar/workshop-preset';
@@ -418,6 +419,7 @@ function mount(ctx: DshClientContext): void {
   });
   if (clientSurface().capabilities.debugFooter) attemptEntry('debug-footer', () => registerDebugFooter(ctx));
   attemptEntry('workbench-settings', () => registerWorkbenchSettings(ctx));
+  attemptEntry('featured-tab', () => installFeaturedEntry(ctx));
   ctx.effect(() => {
     const workshop = workshopWorkspace();
     if (workshop === undefined) return () => undefined;

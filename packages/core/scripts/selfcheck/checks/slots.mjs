@@ -235,12 +235,12 @@ export const checks = [
     },
   },
   {
-    title: '一共就注册这十二个槽名，十二条注册（多一条都要想清楚为什么）',
+    title: '一共就注册这十三个槽名，十三条注册（多一条都要想清楚为什么）',
     run(ctx, report) {
       const { registrations } = ctx;
 
       report(
-        '一共就注册这十二个槽名，十二条注册（多一条都要想清楚为什么）',
+        '一共就注册这十三个槽名，十三条注册（多一条都要想清楚为什么）',
         [...new Set(registrations.map((r) => r.options.name))].sort().join(',') ===
           [
             'conversation.input.dock',
@@ -255,10 +255,11 @@ export const checks = [
             'conversation.approval.detail',
             'settings.section',
             'settings.section.icon',
+            'plugins.tab',
           ]
             .sort()
             .join(',') &&
-          registrations.length === 12,
+          registrations.length === 13,
         registrations
           .map((r) => `${r.options.name}${r.options.id === undefined ? '' : `#${r.options.id}`}`)
           .join('、'),

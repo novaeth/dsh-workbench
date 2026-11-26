@@ -72,6 +72,18 @@ export type DshLayoutPanels = {
   setRightbar?(px: number): void;
 };
 
+type FeaturedTabInstallTarget = {
+  spec: string;
+  registry?: string;
+  title: string;
+  version: string;
+};
+
+type FeaturedTabOwner = {
+  install: (target: FeaturedTabInstallTarget) => void;
+  openPackage: (packageName: string) => void;
+};
+
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
     workbench: string;
@@ -86,6 +98,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
     'sidebar.settings': { kind: 'single'; scope: 'root' };
     'sidebar.footer.action': { kind: 'list'; scope: 'root' };
     'conversation.approval.detail': { kind: 'single'; scope: 'root' };
+    'plugins.tab': { kind: 'list'; scope: 'root'; owner: FeaturedTabOwner };
   }
 }
 

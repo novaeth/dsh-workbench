@@ -26,7 +26,7 @@ function provisionFacts(provision: ProvisionHandler, request: ProvisionRequest):
   return [...PROVISION_FACTS, ...scopes];
 }
 
-function sendJson(res: DshResponse, status: number, body: unknown): void {
+export function sendJson(res: DshResponse, status: number, body: unknown): void {
   res.statusCode = status;
   res.setHeader('content-type', 'application/json; charset=utf-8');
   res.setHeader('cache-control', 'no-store');

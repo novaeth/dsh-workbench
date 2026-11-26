@@ -1,0 +1,21 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--wb-len-12);
+  max-width: var(--wb-len-560);
+  padding: var(--wb-len-24) var(--wb-len-24) var(--wb-len-32);
+}
+
+.desc {
+  margin: 0;
+  font-size: var(--dsw-font-s-14-font-size);
+  line-height: var(--wb-line-22);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.action {
+  display: flex;
+  align-items: center;
+  gap: var(--wb-len-8);
+}
