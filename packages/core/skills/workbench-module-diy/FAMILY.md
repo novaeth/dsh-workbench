@@ -31,6 +31,9 @@
   `_debug_pause` 只暂停看屏。不碰屏的：`_status` / `_panel` / `_recon` / `_spec` /
   `_install` / `_show` / `_publish`；`_find` / `_eval` 带 `read=` 时也不碰。
 - 录制独立：`_record_prepare` 审批一次，其余不问；同一时间只能有一场录制，需要重新录制时先调用 `_record_stop`。
+- Desktop 上调试与日志那两族（`_debug_start` / `_debug_pause` / `_debug_resume` / `_debug_stop`、
+  `_logs_watch` / `_logs_read` / `_logs_stop`）不提供 —— 没有可绑定的 Chrome 标签；页面族还在，
+  但只走带站点地址的只读线：不带地址的看 / 动 / 网络会被拒绝，并说明这条下一步。
 
 ## 3 参数之外的坑
 

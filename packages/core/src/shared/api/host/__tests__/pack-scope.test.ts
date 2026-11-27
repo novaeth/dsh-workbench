@@ -67,7 +67,6 @@ describe('MCP 包的收窄接在注册期（dsh 0.2.2 的 assembly 里还没有 
     const scope = createMcpScope({ ctx, reapply: () => {}, settings: settingsOf(false) });
     const port = provided[MCP_TOOLS_SERVICE] as McpToolsPort;
 
-    expect(scope.extraDenied({} as never, context)).toEqual([]);
     expect(scope.denied(context)).toEqual([]);
     expect(port.servers()).toEqual([]);
   });
@@ -77,10 +76,6 @@ describe('MCP 包的收窄接在注册期（dsh 0.2.2 的 assembly 里还没有 
     const scope = createMcpScope({ ctx, reapply: () => {}, settings: settingsOf(true) });
 
     expect(scope.denied(context)).toEqual(['mcp__chrome__list_pages', 'mcp__chrome__navigate_page']);
-    expect(scope.extraDenied({} as never, context)).toEqual([
-      'mcp__chrome__list_pages',
-      'mcp__chrome__navigate_page',
-    ]);
     expect((provided[MCP_TOOLS_SERVICE] as McpToolsPort).servers()).toEqual([
       { name: 'chrome', tools: ['mcp__chrome__list_pages', 'mcp__chrome__navigate_page'] },
     ]);

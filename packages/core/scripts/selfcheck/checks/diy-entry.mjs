@@ -13,13 +13,30 @@ export const checks = [
     title: '★ 宿主把工坊登记成工作台的工作区（少了它入口点了没反应，且不报错）',
     run(_ctx, report) {
       const hostEntry = read(pkg('src/app/host.ts'));
+      const workshop = read(pkg('src/shared/api/host/workshop-session.ts'));
       const diyModule = read(pkg('src/shared/api/host/diy.ts'));
       report(
         '★ 宿主把工坊登记成工作台的工作区（少了它入口点了没反应，且不报错）',
-        hostEntry.includes("'workspaceRegistry'") &&
-          hostEntry.includes('workshopPathOf(') &&
+        hostEntry.includes('registerWorkshopSession(') &&
+          workshop.includes("'workspaceRegistry'") &&
+          workshop.includes('workshopPathOf(') &&
           /join\(workbenchRoot\(\), 'diy'\)/.test(diyModule) &&
           !diyModule.includes('dshHomePath'),
+      );
+    },
+  },
+  {
+    title: '★ 空工坊的首会话由宿主按 DIY 预设创建（没有会话控制器时只登记工作区）',
+    run(_ctx, report) {
+      const workshop = read(pkg('src/shared/api/host/workshop-session.ts'));
+      const wired = read(pkg('src/app/host.ts')).includes('registerWorkshopSession(ctx)');
+      const creates = ['sessionIds.length > 0', 'agentPreset: DIY_PRESET_ID', "'sessionController'"].every(
+        (needle) => workshop.includes(needle),
+      );
+      report(
+        '★ 空工坊的首会话由宿主按 DIY 预设创建（没有会话控制器时只登记工作区）',
+        wired && creates,
+        `接线 ${wired} · 只在空工坊建 ${workshop.includes('sessionIds.length > 0')} · 带 DIY 预设 ${workshop.includes('agentPreset: DIY_PRESET_ID')} · 有控制器才建 ${workshop.includes("'sessionController'")}`,
       );
     },
   },

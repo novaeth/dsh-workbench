@@ -751,8 +751,8 @@ ctx.get('workbenchUnits').registerUnit({
   `onDemand: false`，表示它不随包收（常驻）。
 - 状态按会话（宿主内存）；DIY 模式默认只开 `diy-flow`（`manage` 不提供，管理工具分布在 `diy-flow` / `diy-build` 中），其余会话从空开始；
   显式 open/close 覆盖默认。
-  preset 一律读会话投影（`presetOfSession`，控制工具与收窄同一份）：工坊那条会话是建完再 select 的，
-  会话 header 上没有 `agentPreset`。
+  preset 一律读会话投影（`presetOfSession`，控制工具与收窄同一份）：工坊首会话由宿主在工坊工作区为空时按 DIY preset 建，
+  其余 dsh 自己建的会话仍可能先落到默认模式，再由客户端补选（失败可见、可重试）。
 - 开启工具包不审批：它只是把工具解锁到本次会话，包里的写工具仍逐条问；非法 / 没在板子上的单元
   照样被拒；关闭不审批。
 - **发现性**（ADR-0108）：默认面就是模型能读到的全部索引，所以三把控制工具的文案里带一张最小能力地图
@@ -768,8 +768,9 @@ ctx.get('workbenchUnits').registerUnit({
   下一步调 `workbench_toolbox_open`"；同一道判断也让被收起的写工具不再弹一张点了也白点的审批屏
   （`shared/api/host/approval-gate.ts` 的 `deniedReasonOf`；从 agent 与挂载面取理由的是
   `shared/api/host/closed-tool-gate.ts`，`app/host.ts` 只留一行接线）。
-- `system-prompt/assemble` 的 `narrow` 与注册期的 `restrict` 共用同一份 deny（ADR-0020）；
-  MCP 那半边多一份"只有看到 assembly 才算得出来"的 deny（`extraDenied`）—— 先认出 `mcp__*` 再收。
+- 工具面的收窄只在注册期 `restrict`：dsh 的 `system-prompt/assemble` 瀑布传入的 assembly 不带 `tools`（ADR-0108 §4），
+  装配期改清单那条 `narrow` 已删除；装配期那条监听只刷新插件命令面（返回原样）。
+  MCP 的 deny 与其它门一起进注册期同一份 `deniedNow`（`mcpScope.denied`）。
   板子隐藏的单元与今天一样始终收着，开启工具包也绕不过去。
 - 装配期、工具面、审批的实现落在 `modules/panels/model/toolbox*.ts` 与 `modules/panels/unit.ts`。
 

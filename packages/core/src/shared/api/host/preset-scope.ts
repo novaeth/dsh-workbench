@@ -1,6 +1,5 @@
 import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { SESSION_PROJECTIONS_SERVICE, type ToolScopeContext } from '@dsh-workbench/shared/host';
-import type { DshPromptAssembly } from '@dsh-workbench/shared/host';
 import { createToolScope, type ToolScope, type ToolScopeAgent } from './tool-scope';
 
 export type SessionProjections = DshHostContext['sessionProjections'];
@@ -10,9 +9,6 @@ type ProjectionSession = Parameters<SessionProjections['stateOf']>[0];
 export interface PresetScopeOptions {
   readonly ctx: DshHostContext;
   readonly deniedTools: (context: ToolScopeContext) => readonly string[];
-  readonly extraDenied?:
-    | ((assembly: DshPromptAssembly, context: ToolScopeContext) => readonly string[])
-    | undefined;
   readonly logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
 }
 
@@ -46,7 +42,6 @@ function watchPreset(ctx: DshHostContext, listener: () => void): void {
 export function createPresetScope(options: PresetScopeOptions): ToolScope {
   const scope = createToolScope({
     deniedTools: options.deniedTools,
-    ...(options.extraDenied === undefined ? {} : { extraDenied: options.extraDenied }),
     presetOf: (handle) => presetOfSession(options.ctx, handle),
     logger: options.logger,
   });

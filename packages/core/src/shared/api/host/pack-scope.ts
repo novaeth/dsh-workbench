@@ -1,4 +1,4 @@
-import type { DshHostContext, DshPromptAssembly } from '@dsh-workbench/shared/host';
+import type { DshHostContext } from '@dsh-workbench/shared/host';
 import {
   MCP_TOOLS_SERVICE,
   TOOLBOX_SERVICE,
@@ -24,7 +24,6 @@ export function registeredToolNames(ctx: DshHostContext, scope?: unknown): reado
 }
 
 export interface McpScope {
-  extraDenied(assembly: DshPromptAssembly, context: ToolScopeContext): readonly string[];
   denied(context: ToolScopeContext): readonly string[];
 }
 
@@ -55,11 +54,6 @@ export function createMcpScope(options: {
   };
 
   return {
-    extraDenied(_assembly, context) {
-      if (!enabled()) return [];
-      refresh(context);
-      return deniedFor(ctx, packs, context);
-    },
     denied(context) {
       if (!enabled()) return [];
       refresh(context);

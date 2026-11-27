@@ -24,14 +24,13 @@ import { mountWorkbenchSettings, workbenchSettingsAction } from '@/shared/api/ho
 import { mountModuleModels } from '@/shared/api/host/module-model';
 import { basename } from 'node:path';
 import { registerFactStream } from '@/shared/api/host/events';
-import { WORKSHOP_TITLE } from '@/kernel/contract/diy';
-import { workshopPathOf } from '@/shared/api/host/diy';
+import { registerWorkshopSession } from '@/shared/api/host/workshop-session';
 import { WORKBENCH_ADAPTERS, needsOf, resolveAdapterSet, type AdapterSet, type NeedProbeInput, type PluginRowsSource, type PluginUnitsPort, type WorkbenchConfig } from '@dsh-workbench/shared/host';
 import { UNIT_MANIFESTS_ROUTE } from '@/kernel/contract/unit-manifests';
 import { LONG_TASKS_ROUTE } from '@/kernel/contract/long-tasks';
 import { liveLongTaskRows } from '@/shared/api/host/long-tasks';
 import { createContextInjector, installContextInject, type ContextRenderer } from '@/shared/api/host/context-inject';
-import type { DshHostContext, DshPromptAssembly, LongTaskBase, LongTaskRegistry, UnitCall, UnitMountResult, ToolScopeContext } from '@dsh-workbench/shared/host';
+import type { DshHostContext, LongTaskBase, LongTaskRegistry, UnitCall, UnitMountResult, ToolScopeContext } from '@dsh-workbench/shared/host';
 import { applyPlanFailures, declaredNotesOf, mountUnits, failureReasonOf, type UnitsPlan } from '@/kernel/host/mount-units';
 import { createUnitProbe } from '@/kernel/host/unit-probe';
 import { createUnitRegistry, installableUnitsOf, type HostUnit } from '@/kernel/host/unit-registry';
@@ -156,14 +155,6 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   });
   assembleHostUnits(units);
   mountBuildPush({ ctx, units, apply: applyProfile, profileDir });
-  ctx.inject(['workspaceRegistry'], (scoped) => {
-    const registry = scoped.get('workspaceRegistry');
-    const workshop = workshopPathOf(scoped);
-    if (registry === undefined || workshop === null) return;
-    void registry.create(workshop, WORKSHOP_TITLE).catch((error: unknown) => {
-      ctx.logger?.warn?.(`dsh-workbench: 工坊没能登记成工作区 —— ${String(error)}`);
-    });
-  });
   const liveManifests = (): readonly UnitManifest[] => units.manifests();
   const hasEnvNeeds = (manifest: UnitManifest): boolean => needsOf(manifest).length > 0;
   const declaredNow = (): readonly UnitManifest[] => liveManifests().filter(hasEnvNeeds);
@@ -190,11 +181,11 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   const settings = mountWorkbenchSettings({ ctx, routes, root: workbenchRoot() });
   mountModuleModels({ ctx, routes });
   mountDiyPreset({ ctx, routes, settings });
+  registerWorkshopSession(ctx);
   const mcpScope = createMcpScope({ ctx, reapply: () => toolScope.reapply(), settings });
   const toolScope = createPresetScope({
     ctx,
     deniedTools: (context) => deniedNow(context),
-    extraDenied: (assembly, context) => mcpScope.extraDenied(assembly, context),
     logger: ctx.logger,
   });
   ctx.effect(
@@ -456,13 +447,12 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     return () => off?.();
   }, `${PLUGIN_ID}: agent 的工具面按工作区收窄（创建时）`);
   ctx.effect(() => {
-    const off = ctx.on?.('system-prompt/assemble', async (_assembly, context, next) => {
+    const off = ctx.on?.('system-prompt/assemble', async (_assembly, _context, next) => {
       pluginTools?.touch();
-      const resolved = await next();
-      return toolScope.narrow(resolved as DshPromptAssembly, context?.agent ?? context?.scope);
+      return next();
     });
     return () => off?.();
-  }, `${PLUGIN_ID}: 打包提示时就把收起的工具从清单里去掉（不靠限制的生效时机）`);
+  }, `${PLUGIN_ID}: 每次装配前刷新插件命令面（装配期不改工具表：收窄只在注册期）`);
   ctx.effect(() => registerWorkbenchPriority(ctx, flowAgents.isChild), `${PLUGIN_ID}: 工作台工具优先（系统提示词段）`);
   ctx.effect(() => registerDiyFlowPrompt(ctx, flowAgents.isChild), `${PLUGIN_ID}: DIY 流程入口（系统提示词段）`);
   ctx.effect(() => () => toolScope.disposeAll(), `${PLUGIN_ID}: 卸载时撤销工具面限制`);

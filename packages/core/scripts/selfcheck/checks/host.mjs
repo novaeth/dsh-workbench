@@ -215,7 +215,7 @@ export const checks = [
     },
   },
   {
-    title: '★ apply() 在装配期也收窄工具面（system-prompt/assemble 恰好一条）',
+    title: '★ 装配期不改工具表：assemble 那条监听只刷新插件命令面（收窄只在注册期 restrict）',
     async run(ctx, report) {
       const { routes, listeners } = ctx;
       const route = routes.find((r) => r.path === '/workbench/api');
@@ -228,16 +228,16 @@ export const checks = [
         .map((one) => one.listener);
       ctx.assembleListeners = assembleListeners;
       const widened = { tools: [{ name: 'workbench_panels' }, { name: 'bash' }] };
-      const narrowed = await assembleListeners[0](
+      const unchanged = await assembleListeners[0](
         widened,
         { scope: { session: { header: {} } } },
         () => Promise.resolve(widened),
       );
-      ctx.narrowed = narrowed;
+      ctx.unchanged = unchanged;
       report(
-        '★ apply() 在装配期也收窄工具面（system-prompt/assemble 恰好一条）',
-        assembleListeners.length === 1 && narrowed.tools.map((tool) => tool.name).join(',') === 'workbench_panels,bash',
-        `零套件时不做删减 · ${listeners.map((one) => one.event).join(' + ') || '（没有监听）'}`,
+        '★ 装配期不改工具表：assemble 那条监听只刷新插件命令面（收窄只在注册期 restrict）',
+        assembleListeners.length === 1 && unchanged === widened,
+        `返回原样=${String(unchanged === widened)} · ${listeners.map((one) => one.event).join(' + ') || '（没有监听）'}`,
       );
     },
   },

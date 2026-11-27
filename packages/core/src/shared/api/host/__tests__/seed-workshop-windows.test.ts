@@ -2,11 +2,9 @@ import { execFileSync, spawn } from 'node:child_process';
 import {
   chmodSync,
   existsSync,
-  lstatSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
-  readlinkSync,
   realpathSync,
   rmSync,
   writeFileSync,
@@ -25,7 +23,7 @@ afterEach(() => {
 
 function fakeShellRoot(root: string): string {
   const shellRoot = join(root, 'shell');
-  mkdirSync(join(shellRoot, 'skills', 'workbench-module-diy'), { recursive: true });
+  mkdirSync(shellRoot, { recursive: true });
   writeFileSync(
     join(shellRoot, 'package.json'),
     JSON.stringify({
@@ -67,7 +65,7 @@ writeFileSync(join(dir, 'package.json'), '{"version":"9.9.9"}');
 }
 
 describe('Windows 工坊 Node seed', () => {
-  it('★ full 建骨架 + 调 pnpm install + 挂指引，不依赖 bash', () => {
+  it('★ full 建骨架 + 调 pnpm install，不挂 skill 软链，不依赖 bash', () => {
     const root = mkdtempSync(join(tmpdir(), 'wb-seed-win-'));
     roots.push(root);
     const shellRoot = fakeShellRoot(root);
@@ -93,9 +91,7 @@ describe('Windows 工坊 Node seed', () => {
     expect(existsSync(join(diy, 'packages'))).toBe(true);
     expect(out).toContain('建 DIY 工坊');
 
-    const skillLink = join(diy, '.agents', 'skills', 'workbench-module-diy');
-    expect(lstatSync(skillLink).isSymbolicLink()).toBe(true);
-    expect(resolve(readlinkSync(skillLink))).toBe(resolve(join(shellRoot, 'skills', 'workbench-module-diy')));
+    expect(existsSync(join(diy, '.agents'))).toBe(false);
 
     const calls = readFileSync(join(root, 'pnpm-calls.log'), 'utf8');
     expect(calls.trim().split('\n').map((one) => realpathSync(one))).toContain(realpathSync(diy));
@@ -234,7 +230,7 @@ describe('Windows 工坊 Node seed', () => {
     roots.push(root);
     const repo = join(root, 'repo');
     const shellRoot = join(repo, 'packages', 'workbench');
-    mkdirSync(join(shellRoot, 'skills', 'workbench-module-diy'), { recursive: true });
+    mkdirSync(shellRoot, { recursive: true });
     mkdirSync(join(repo, 'packages', 'module-tools'), { recursive: true });
     mkdirSync(join(repo, 'packages', 'shared'), { recursive: true });
     writeFileSync(join(shellRoot, 'package.json'), JSON.stringify({ version: '9.9.9' }), 'utf8');

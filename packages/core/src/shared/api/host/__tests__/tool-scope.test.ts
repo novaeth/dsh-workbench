@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { DshPromptAssembly } from '@dsh-workbench/shared/host';
 import type { ToolScopeContext } from '@dsh-workbench/shared/host';
 import { createToolScope, type ScopedToolRegistry } from '../tool-scope';
 
@@ -108,25 +107,6 @@ describe('tool-scope', () => {
 
     expect(seen.map((context) => context.session)).toEqual(['s-1', 's-2']);
     expect(calls).toHaveLength(2);
-  });
-
-  it('★ 装配期还有一份"看 assembly 才算得出来"的 deny（MCP 那种）：按名字从清单里拿掉；注册期那份另算', () => {
-    const { registry } = fakeTools();
-    const scope = createToolScope({
-      deniedTools: () => [],
-      extraDenied: (assembly, context) =>
-        (assembly.tools ?? [])
-          .map((tool) => tool.name)
-          .filter((name) => name.startsWith('mcp__') && context.session === 's-1'),
-    });
-
-    const assembly = {
-      tools: [{ name: 'mcp__chrome__a' }, { name: 'workbench_panels_list' }],
-    } as unknown as DshPromptAssembly;
-    const narrowed = scope.narrow(assembly, agentWith(registry, '/w/a', undefined, 's-1'));
-
-    expect(narrowed.tools).toEqual([{ name: 'workbench_panels_list' }]);
-    expect(scope.narrow(assembly, agentWith(registry, '/w/a', undefined, 's-2')).tools).toEqual(assembly.tools);
   });
 
   it('★★ preset 选上了：reapply 之后整条限制撤掉（那 34 把放出来）', () => {
@@ -299,79 +279,5 @@ describe('tool-scope', () => {
     expect(() => scope.apply(agentWith(boom, '/w/a'))).not.toThrow();
     expect(warn).toHaveBeenCalledTimes(1);
     expect(String(warn.mock.calls[0]?.[0])).toContain('限制工具面失败');
-  });
-});
-
-describe('tool-scope · 装配期过滤', () => {
-  const assembly = {
-    tools: [{ name: 'workbench_panels' }, { name: 'workbench_demo_issues' }],
-  } as unknown as DshPromptAssembly;
-
-  it('★ 限制被撤掉之后（插件热换），下一次装配仍然按配置过滤', () => {
-    const { registry } = fakeTools();
-    const scope = createToolScope({ deniedTools: () => ['workbench_demo_issues'] });
-    const agent = agentWith(registry, '/w/a');
-
-    scope.apply(agent);
-    scope.disposeAll();
-
-    expect(scope.narrow(assembly, agent)).toEqual({ tools: [{ name: 'workbench_panels' }] });
-  });
-
-  it('★★ 装配期也看 preset：DIY 会话里那 34 把留在清单里', () => {
-    const scope = createToolScope({
-      deniedTools: (context) => (context.preset === 'workbench-diy' ? [] : ['workbench_demo_issues']),
-    });
-
-    expect(scope.narrow(assembly, agentWith(undefined, '/w/a', 'workbench-diy'))).toBe(assembly);
-    expect(scope.narrow(assembly, agentWith(undefined, '$DSH_HOME/workbench/diy'))).toEqual({
-      tools: [{ name: 'workbench_panels' }],
-    });
-  });
-
-  it('读不到 cwd 时按 null 问（与设限制那份同一口径）', () => {
-    const seen: Array<string | null> = [];
-    const scope = createToolScope({
-      deniedTools: (context) => {
-        seen.push(context.workspace);
-        return [];
-      },
-    });
-
-    scope.narrow(assembly, {});
-
-    expect(seen).toEqual([null]);
-  });
-
-  it('没有要收的：原样返回同一个对象', () => {
-    const scope = createToolScope({ deniedTools: () => [] });
-
-    expect(scope.narrow(assembly, agentWith(fakeTools().registry, '/w/a'))).toBe(assembly);
-  });
-
-  it('要收的名字这次没出现：原样返回同一个对象', () => {
-    const scope = createToolScope({ deniedTools: () => ['workbench_inventory_binding'] });
-
-    expect(scope.narrow(assembly, {})).toBe(assembly);
-  });
-
-  it('配置变了下一次装配立刻是新集（不缓存）', () => {
-    let deny = ['workbench_panels'];
-    const scope = createToolScope({ deniedTools: () => deny });
-
-    expect(scope.narrow(assembly, {})).toEqual({ tools: [{ name: 'workbench_demo_issues' }] });
-
-    deny = [];
-    expect(scope.narrow(assembly, {})).toBe(assembly);
-  });
-
-  it('载荷没有 tools（或根本不是对象）时原样返回，不抛', () => {
-    const scope = createToolScope({ deniedTools: () => ['workbench_panels'] });
-    const empty = {} as unknown as DshPromptAssembly;
-    const missing = { tools: undefined } as unknown as DshPromptAssembly;
-
-    expect(scope.narrow(empty, {})).toBe(empty);
-    expect(scope.narrow(missing, {})).toBe(missing);
-    expect(() => scope.narrow(undefined as unknown as DshPromptAssembly, {})).not.toThrow();
   });
 });

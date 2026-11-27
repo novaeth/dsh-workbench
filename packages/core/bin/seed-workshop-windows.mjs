@@ -1,15 +1,6 @@
 #!/usr/bin/env node
 import { execa } from 'execa';
-import {
-  existsSync,
-  lstatSync,
-  mkdirSync,
-  readFileSync,
-  readlinkSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import which from 'which';
@@ -112,27 +103,6 @@ function specs(version) {
     tools: `^${version}`,
     shared: `^${version}`,
   };
-}
-
-function ensureSkills() {
-  const source = join(shellRoot, 'skills', 'workbench-module-diy');
-  if (!existsSync(source)) return;
-  const link = join(diy, '.agents', 'skills', 'workbench-module-diy');
-  try {
-    const stat = lstatSync(link);
-    if (!stat.isSymbolicLink()) return;
-    if (resolve(readlinkSync(link)) === resolve(source)) return;
-    rmSync(link, { force: true });
-  } catch {
-
-  }
-  mkdirSync(dirname(link), { recursive: true });
-  try {
-    symlinkSync(resolve(source), link, 'junction');
-    say(`工坊指引已链上：${link}`);
-  } catch (error) {
-    say(`DIY 指引没挂上（${String(error)}）—— 不影响启动。`);
-  }
 }
 
 function writeSkeleton(version) {
@@ -309,8 +279,6 @@ if (!existsSync(manifest)) {
   if (version === '') process.exit(0);
   writeSkeleton(version);
 }
-
-ensureSkills();
 
 const depsMissing = !existsSync(join(diy, 'node_modules'));
 if (depsMissing && mode === 'entry') process.exit(0);

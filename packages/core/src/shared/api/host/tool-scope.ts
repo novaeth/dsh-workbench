@@ -1,4 +1,3 @@
-import type { DshPromptAssembly } from '@dsh-workbench/shared/host';
 import type { ToolScopeContext } from '@dsh-workbench/shared/host';
 
 export interface ScopedToolRegistry {
@@ -22,14 +21,12 @@ export interface ToolScopeAgent {
 
 export interface ToolScopeOptions {
   deniedTools(context: ToolScopeContext): readonly string[];
-  extraDenied?: ((assembly: DshPromptAssembly, context: ToolScopeContext) => readonly string[]) | undefined;
   presetOf?: ((handle: ToolScopeAgent) => string | null) | undefined;
   logger?: { info?(message: string): void; warn?(message: string): void } | undefined;
 }
 
 export interface ToolScope {
   apply(agent: unknown): void;
-  narrow(assembly: DshPromptAssembly, agent: unknown): DshPromptAssembly;
   reapply(): void;
   disposeAll(): void;
 }
@@ -105,18 +102,6 @@ export function createToolScope(options: ToolScopeOptions): ToolScope {
       const handle = agentOf(agent);
       if (handle === undefined) return;
       sync(handle);
-    },
-    narrow(assembly, agent) {
-      const tools = assembly?.tools;
-      const context = toolScopeContextOf(agent, options.presetOf);
-      if (context === null || tools === undefined) return assembly;
-      const deny = new Set([
-        ...options.deniedTools(context),
-        ...(options.extraDenied?.(assembly, context) ?? []),
-      ]);
-      if (deny.size === 0) return assembly;
-      const kept = tools.filter((tool) => !deny.has(tool.name));
-      return kept.length === tools.length ? assembly : { ...assembly, tools: kept };
     },
     reapply() {
       for (const ref of [...seen]) {

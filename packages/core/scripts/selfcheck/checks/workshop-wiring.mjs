@@ -60,16 +60,19 @@ export const checks = [
     title: '★ DIY 指引只由模式供给：工坊骨架不再建软链，包内 skill 仍在',
     run(_ctx, report) {
       const seed = seedWorkshop();
+      const windows = read(pkg('bin/seed-workshop-windows.mjs'));
       const linkFree =
         !seed.includes('link_workshop_skills') &&
         !seed.includes('$DIY_DIR/.agents/skills/workbench-module-diy') &&
+        !/'?\.agents'?/.test(windows) &&
+        !windows.includes('workbench-module-diy') &&
         !launcher().includes('ln -s') &&
         !launcher().includes('.agents/skills');
       const packed = existsSync(join(PKG, 'skills/workbench-module-diy/SKILL.md'));
       report(
         '★ DIY 指引只由模式供给：工坊骨架不再建软链，包内 skill 仍在',
         linkFree && packed,
-        !linkFree ? '工坊骨架里还留着 DIY skill 软链' : packed ? '' : '包内 DIY skill 不见了',
+        !linkFree ? '工坊骨架（sh 或 Node 那条）里还留着 DIY skill 软链' : packed ? '' : '包内 DIY skill 不见了',
       );
     },
   },
