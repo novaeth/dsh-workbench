@@ -7,11 +7,11 @@
     "version": "0.2.2-rc.5",
     "macosArm64": {
       "url": "https://download.deepseek.com/desktop/dsh-latest-macos-arm64.dmg",
-      "etag": "840b19c68da5d8496d67be1152671d31"
+      "etag": "379317bbde2188b7135f5d7ff2926b46"
     },
     "windowsX64": {
       "url": "https://download.deepseek.com/desktop/dsh-latest-windows-x64.exe",
-      "etag": "02190dbda3adba4d82c7dfcf28ed2fb0"
+      "etag": "66dcffff1cb6209f4e1a7c0e12178e61"
     }
   },
   "chromeForTesting": {
