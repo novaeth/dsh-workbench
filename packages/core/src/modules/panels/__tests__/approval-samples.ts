@@ -58,7 +58,7 @@ export const WRITE_CALLS: Readonly<Record<string, unknown>> = {
   [DIY_DEBUG_PAUSE_TOOL]: {},
   [DIY_DEBUG_RESUME_TOOL]: {},
   [DIY_DEBUG_STOP_TOOL]: {},
-  [DIY_PLAN_TOOL]: { destination: 'board', summary: '盯库存低于 10 的', cells: '3 格' },
+  [DIY_PLAN_TOOL]: { destination: 'board', summary: '盯库存低于 10 的' },
   [LONG_TASKS_STOP_TOOL]: { unit: 'inventory', id: 'run-1' },
 };
 

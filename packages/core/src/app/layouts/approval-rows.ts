@@ -37,6 +37,19 @@ function argCell(value: unknown): ApprovalCell {
   return argLine(value);
 }
 
+export function planApprovalRows(
+  args: Readonly<Record<string, unknown>>,
+  t: Translate,
+): readonly ApprovalRow[] {
+  const value = args['approval'];
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return [];
+  const approval = value as Readonly<Record<string, unknown>>;
+  return (['object', 'change', 'target', 'impact'] as const).flatMap((key) => {
+    const text = textOf(approval, key);
+    return text === '' ? [] : [{ label: t(`approval.fact.${key}`), value: text }];
+  });
+}
+
 export function recordApprovalRows(
   args: Readonly<Record<string, unknown>>,
   t: Translate,

@@ -25,10 +25,24 @@ const isBuild = { $in: [{ $ref: 'in.destination' }, ['board', 'headless']] } as 
 
 type PlanSectionKey = (typeof README_SECTION_KEYS)[number];
 
+export const SECTION_LABELS: Readonly<Record<PlanSectionKey, string>> = {
+  see: '你会看到什么',
+  do: '你能做什么',
+  agent: 'agent 能做什么',
+  data: '数据从哪来',
+};
+
+export const HEADLESS_LABELS: Readonly<Record<PlanSectionKey, string>> = {
+  see: '输出',
+  do: '触发',
+  agent: '批准',
+  data: '数据',
+};
+
 const PLAN_SECTION_HINTS: Readonly<Record<PlanSectionKey, string>> = {
-  see: '用户一眼能看到什么。',
-  do: '用户自己能点击或修改什么。',
-  agent: 'agent 能为用户做什么，执行前是否需要批准。',
+  see: '看板：用户一眼能看到什么；无看板：输出是什么。',
+  do: '看板：用户能点击或修改什么；无看板：在哪触发。',
+  agent: '看板：agent 能做什么；无看板：哪些动作需要批准。',
   data: '数据从哪来、用谁的登录，以及只读取还是写入。',
 };
 
@@ -40,12 +54,9 @@ const PLAN_SECTION_PROPERTIES: Record<string, unknown> = Object.fromEntries(
 );
 
 export const PLAN_DRAFT_PROPERTIES: Record<string, unknown> = {
-  cells: { type: 'string', description: '看板分几格，每格显示什么。' },
-  steps: { type: 'string', description: '从抓取数据到生成卡片一共几步。' },
-  minutes: { type: 'string', description: '用户大约需要等几分钟。' },
   shots: {
     type: 'array',
-    description: '一两张界面预览：每张把界面上的真实文案按从上到下的顺序画进 ascii 字段，并配一句图注。无看板时不要提交。',
+    description: '界面预览：看板与改模块至少一张非审批图；每张用真实文案并配图注。无看板只在有写工具时需要审批图。',
     items: {
       type: 'object',
       properties: {
@@ -56,10 +67,25 @@ export const PLAN_DRAFT_PROPERTIES: Record<string, unknown> = {
       required: ['caption', 'ascii'],
     },
   },
+  approval: {
+    type: 'object',
+    description: '有写工具时必填；同时给一张 kind: "approval" 的审批屏。',
+    properties: {
+      object: { type: 'string', description: '修改项。' },
+      change: { type: 'string', description: '修改后。' },
+      target: { type: 'string', description: '目标位置。' },
+      impact: { type: 'string', description: '影响范围。' },
+    },
+    required: ['object', 'change', 'target', 'impact'],
+    additionalProperties: false,
+  },
   ...PLAN_SECTION_PROPERTIES,
 };
 
-const PLAN_SCHEMA = schemaOf([...README_SECTION_KEYS], PLAN_DRAFT_PROPERTIES);
+const PLAN_SCHEMA = schemaOf([...README_SECTION_KEYS], {
+  ...PLAN_DRAFT_PROPERTIES,
+  baseline: { type: 'boolean' },
+});
 
 const PROBE_SCHEMA = schemaOf(['sites'], { sites: { type: 'array' } });
 

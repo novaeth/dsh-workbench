@@ -49,7 +49,7 @@ describe('DIY 流程定义', () => {
 
     const values: Record<string, unknown> = {
       probe: { sites: [] },
-      plan: { cells: '3', ...{ see: ['一眼'], do: ['一点'], agent: ['一件'], data: ['一处'] } },
+      plan: { baseline: true, ...{ see: ['一眼'], do: ['一点'], agent: ['一件'], data: ['一处'] } },
       build: { unit: 'stock' },
       install: { unit: 'stock', installed: true },
       verify: { passed: [], unverified: [] },
@@ -102,19 +102,10 @@ describe('DIY 流程定义', () => {
     expect(session.provide('probe', { sites: [] })).toEqual({ ok: true });
     await tick();
 
-    const refused = session.provide('plan', { cells: '3' });
+    const refused = session.provide('plan', {});
 
     expect(refused.ok).toBe(false);
     expect(refused.ok ? '' : refused.problem).toContain('see');
-  });
-
-  it('★ 非看板去向：一步都不跑，全部跳过', async () => {
-    const { session, events } = openBoard('once');
-    const result = await session.result;
-
-    expect(result.status).toBe('ok');
-    expect(result.steps).toEqual({});
-    expect(events.filter((one) => one.status === 'skipped').map((one) => one.stepId)).toEqual(DIY_BOARD_STEPS);
   });
 
   it('★ 写工具只在「建模块」与「留账」不拒，其余步骤都在定义里写明了拒', () => {

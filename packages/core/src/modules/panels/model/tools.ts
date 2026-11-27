@@ -1,4 +1,4 @@
-import { toolRegistryOf } from './tool-registry-guard';
+import { readOnlyToolOf, registerTools } from './tool-registry-guard';
 import type { DshHostContext, DshToolDefinition, DshToolRunContext } from '@dsh-workbench/shared/host';
 import { sessionWorkspace } from '@dsh-workbench/shared/host';
 import type { ValueHandoff } from '@dsh-workbench/shared/host';
@@ -89,21 +89,12 @@ export function registerPanelTools(
   panels: PanelsService,
   values?: ValueHandoff,
 ): Array<() => void> {
-  const tools = toolRegistryOf(ctx, '跳过户表面板工具注册');
-  if (tools === undefined) return [];
-
-  const listTool: DshToolDefinition = {
-    name: PANELS_LIST_TOOL,
-    description:
-      '查看面板配置：已启用哪些模块、顺序如何。当前工作区优先，未单独配置的项跟随机器级默认值；' +
+  const listTool = readOnlyToolOf(
+    PANELS_LIST_TOOL,
+    '查看面板配置：已启用哪些模块、顺序如何。当前工作区优先，未单独配置的项跟随机器级默认值；' +
       '机器级默认值只影响尚未配置过的工作区。',
-    parameters: {
-      type: 'object',
-      properties: { scope: SCOPE_PARAM },
-      additionalProperties: false,
-    },
-    output: OUTPUT,
-    async execute(raw: unknown, exec: DshToolRunContext) {
+    OUTPUT,
+    async (raw: unknown, exec: DshToolRunContext) => {
       const scope = scopeOf(raw);
       const workspace = sessionWorkspace(exec);
       const units = panels.list(workspace, scope);
@@ -113,7 +104,8 @@ export function registerPanelTools(
       }
       return { units, text: render(units, workspace, scope) };
     },
-  };
+    { scope: SCOPE_PARAM },
+  );
 
   const showTool: DshToolDefinition = {
     name: PANELS_SHOW_TOOL,
@@ -265,12 +257,5 @@ export function registerPanelTools(
     },
   };
 
-  return [
-    tools.register(listTool),
-    tools.register(showTool),
-    tools.register(hideTool),
-    tools.register(moveTool),
-    tools.register(resetTool),
-    tools.register(followTool),
-  ];
+  return registerTools(ctx, '跳过户表面板工具注册', [listTool, showTool, hideTool, moveTool, resetTool, followTool]);
 }

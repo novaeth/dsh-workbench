@@ -12,6 +12,13 @@ const SECTION_LABELS = {
   data: 'approval.plan.data',
 } as const satisfies Readonly<Record<ReadmeSectionKey, string>>;
 
+const HEADLESS_SECTION_LABELS = {
+  see: 'approval.plan.output',
+  do: 'approval.plan.trigger',
+  agent: 'approval.plan.approval',
+  data: 'approval.plan.headlessData',
+} as const satisfies Readonly<Record<ReadmeSectionKey, string>>;
+
 const CHANGE_TAG = /^(新增|删除|修改)：/;
 
 const CHANGE_TONE: Readonly<Record<string, string>> = {
@@ -43,12 +50,13 @@ export function planSections(
   t: Translate,
 ): readonly { label: string; items: readonly string[] }[] {
   const sections: { label: string; items: readonly string[] }[] = [];
+  const labels = args['destination'] === 'headless' ? HEADLESS_SECTION_LABELS : SECTION_LABELS;
   for (const key of README_SECTION_KEYS) {
     const raw = args[key];
     const items = Array.isArray(raw)
       ? raw.flatMap((one) => (typeof one === 'string' && one.trim() !== '' ? [one.trim()] : []))
       : [];
-    if (items.length > 0) sections.push({ label: t(SECTION_LABELS[key]), items });
+    if (items.length > 0) sections.push({ label: t(labels[key]), items });
   }
   return sections;
 }

@@ -2,28 +2,27 @@ import type {
   DshHostContext,
   DshToolDefinition,
   DshToolRunContext,
-  ReadmeSectionKey,
   ReadmeShot,
 } from '@dsh-workbench/shared/host';
 import { README_SECTION_KEYS, readmeShotKindProblem, sessionIdOf } from '@dsh-workbench/shared/host';
 import { DIY_PLAN_TOOL } from '../../unit';
 import { plainJson } from '../diy-context';
 import { toolRegistryOf } from '../tool-registry-guard';
-import { PLAN_DRAFT_PROPERTIES } from './definitions';
-import { planStep, type Destination } from './plan-step';
+import { HEADLESS_LABELS, PLAN_DRAFT_PROPERTIES, SECTION_LABELS } from './definitions';
+import { planBaselineOf, planStep, type Destination, type PlanApproval } from './plan-step';
 import { PROGRESS_OUTPUT } from './progress-output';
 import { packNoteOf } from './pack-note';
 import type { DiyFlowRuns } from './runs';
 
-const DESTINATIONS: readonly Destination[] = ['ready', 'once', 'reroute', 'board', 'headless', 'tweak'];
-const BUILDABLE: readonly Destination[] = ['board', 'headless', 'tweak'];
+const DESTINATIONS: readonly Destination[] = ['board', 'headless', 'tweak'];
+const DEAD_FIELDS = ['cells', 'steps', 'minutes'] as const;
 
 function asText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
 function hasPlanContent(record: Readonly<Record<string, unknown>>): boolean {
-  return ['shots', 'see', 'do', 'agent', 'data'].some((key) => Array.isArray(record[key]));
+  return ['shots', 'see', 'do', 'agent', 'data'].some((key) => Array.isArray(record[key])) || record['approval'] !== undefined;
 }
 
 function asShots(value: unknown): ReadmeShot[] {
@@ -48,18 +47,15 @@ function asShots(value: unknown): ReadmeShot[] {
   });
 }
 
-const SECTION_LABELS: Readonly<Record<ReadmeSectionKey, string>> = {
-  see: '一眼看到',
-  do: '用户能做',
-  agent: 'agent 能做什么',
-  data: '数据从哪来',
-};
-
-function validatedSections(record: Record<string, unknown>): Record<string, string[]> {
+function validatedSections(
+  record: Record<string, unknown>,
+  destination: Destination,
+): Record<string, string[]> {
+  const labels = destination === 'headless' ? HEADLESS_LABELS : SECTION_LABELS;
   const out: Record<string, string[]> = {};
   for (const key of README_SECTION_KEYS) {
     const raw = record[key];
-    const label = SECTION_LABELS[key];
+    const label = labels[key];
     if (!Array.isArray(raw)) throw new Error(`invalid plan: 缺少 ${key}（${label}）`);
     const items = raw.map((one, at) => {
       if (typeof one !== 'string' || one.trim() === '') {
@@ -76,9 +72,8 @@ function validatedSections(record: Record<string, unknown>): Record<string, stri
 const CHANGE_TAGS = ['新增', '删除', '修改'] as const;
 const UNCHANGED = '没变';
 
-function validatedChanges(sections: Record<string, string[]>, shots: readonly ReadmeShot[]): void {
+function validatedChanges(sections: Record<string, string[]>): void {
   let changed = 0;
-  let mentionsApproval = false;
   for (const key of README_SECTION_KEYS) {
     const items = sections[key] ?? [];
     if (items.length === 1 && items[0] === UNCHANGED) continue;
@@ -86,7 +81,6 @@ function validatedChanges(sections: Record<string, string[]>, shots: readonly Re
       throw new Error(`invalid plan: ${key} 这一段没变就只写「${UNCHANGED}」一条，不要和其它条目混在一起`);
     }
     for (const item of items) {
-      if (item.includes('审批')) mentionsApproval = true;
       const tag = CHANGE_TAGS.find((one) => item.startsWith(`${one}：`));
       if (tag === undefined) {
         throw new Error(
@@ -100,12 +94,67 @@ function validatedChanges(sections: Record<string, string[]>, shots: readonly Re
     }
   }
   if (changed === 0) throw new Error(`invalid plan: 四段全是「${UNCHANGED}」，这次没有任何改动`);
-  const hasApprovalShot = shots.some((shot) => shot.kind === 'approval');
-  if (mentionsApproval && !hasApprovalShot) {
-    throw new Error('invalid plan: 四段提到审批屏，但 shots 里没有 kind: "approval" 的图（给一张改之后的审批屏）');
+}
+
+function validatedApproval(value: unknown): PlanApproval | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new Error('invalid plan: 写工具需要审批四格：修改项、修改后、目标位置、影响范围');
   }
-  if (hasApprovalShot && !mentionsApproval) {
-    throw new Error('invalid plan: shots 里有 kind: "approval" 的图，但四段没写审批屏改了什么');
+  const record = value as Record<string, unknown>;
+  const fields = ['object', 'change', 'target', 'impact'] as const;
+  const missing = fields.filter((key) => asText(record[key]) === '');
+  if (missing.length > 0) {
+    throw new Error(`invalid plan: 审批四格缺少 ${missing.join(' / ')}；补齐修改项、修改后、目标位置、影响范围`);
+  }
+  return {
+    object: asText(record['object']),
+    change: asText(record['change']),
+    target: asText(record['target']),
+    impact: asText(record['impact']),
+  };
+}
+
+function validatedPresentation(
+  destination: Destination,
+  sections: Record<string, string[]>,
+  shots: readonly ReadmeShot[],
+  approval: PlanApproval | undefined,
+): void {
+  const hasVisual = shots.some((shot) => shot.kind !== 'approval');
+  if (!hasVisual && destination === 'board') throw new Error('invalid plan: 给一张卡片图，图里用真实文案');
+  if (!hasVisual && destination === 'tweak') throw new Error('invalid plan: 给一张改之后的图，图里用真实文案');
+  const approvalShots = shots.filter((shot) => shot.kind === 'approval');
+  const mentionsApproval = Object.values(sections).some((items) => items.some((item) => item.includes('审批')));
+  if (!mentionsApproval && (approval !== undefined || approvalShots.length > 0)) {
+    throw new Error('invalid plan: 四段没写需要审批的写工具；删掉审批图与审批四格，或在 agent 段写清写操作');
+  }
+  if (!mentionsApproval) return;
+  if (approval === undefined) {
+    throw new Error('invalid plan: 有写工具时要补齐审批四格：修改项、修改后、目标位置、影响范围');
+  }
+  if (approvalShots.length === 0) {
+    throw new Error('invalid plan: 有写工具时要给一张 kind: "approval" 的审批屏');
+  }
+  if (approvalShots.some((shot) => !/审批|approval/iu.test(shot.caption))) {
+    throw new Error('invalid plan: 审批图的图注要写清「审批屏」，不要与卡片图混用');
+  }
+}
+
+function checkFlowInput(
+  runs: DiyFlowRuns,
+  session: string,
+  destination: Destination,
+  summary: string,
+  restart: boolean,
+): void {
+  if (runs.stepOf(session) === null) return;
+  const input = runs.inputOf(session);
+  if (input['destination'] !== destination) {
+    throw new Error('当前流程的去向已锁定；先调用 workbench_diy_step（cancel: true）终止当前流程，再用新去向重开。');
+  }
+  if (input['summary'] !== summary && !restart) {
+    throw new Error('需求复述变了；确认这次会从头来后，带 restart: true 重新调用。当前进度保持不变。');
   }
 }
 
@@ -119,26 +168,24 @@ function planToolOf(ctx: DshHostContext, runs: DiyFlowRuns): DshToolDefinition {
   return {
     name: DIY_PLAN_TOOL,
     description:
-      '需要为用户创建或修改面板模块时，在动手之前使用：先说清用户要什么（先询问、等回答），再判断去向。' +
-      '一次性任务、使用现成模块、只是提问都不要调用。' +
-      '创建模块时第一次只提交去向与一句话复述，走到「确认方案」再提交四段（有看板时再加 ascii）；改模块从「补充方案」起步，可以一次提交完整方案。' +
-      '流程开始后，除方案那一步外的每一步都用 workbench_diy_step 提交；返回 done: true 才算完成。' +
-      '建模块（board / headless）时四段（see/do/agent/data）讲清这个模块是什么，再加一两张 shots；' +
-      '改模块（tweak）时四段只写这次的变化：每条以「新增：」「删除：」「修改：」开头，没变的段只写一条「没变」' +
-      '（不用解释它原本是什么），shots 只给改之后的图（不用画改前）；动了审批屏就四段都按审批屏写，' +
-      '并给 kind: "approval" 的图。',
+      '创建或修改模块时使用。先提交去向与复述，再在方案步提交四段；之后每一步用 workbench_diy_step。' +
+      '看板与改模块至少一张非审批图；有写工具时补 approval 四格和 kind: "approval" 的审批屏。' +
+      '无看板四段写输出 / 触发 / 批准 / 数据。改模块每条以「新增：」「删除：」「修改：」开头，没变的段只写「没变」。' +
+      '去向不可更改；summary 变化会先拒绝，确认进度从头开始后用 restart: true 重开。',
     parameters: {
       type: 'object',
       properties: {
         destination: {
           type: 'string',
           enum: [...DESTINATIONS],
-          description:
-            'ready=现成模块 / once=一次性 / reroute=改道 / board=看板模块 / headless=无看板模块（仍创建并安装） / tweak=修改已有模块',
         },
         summary: {
           type: 'string',
           description: '一句话复述用户要什么，尽量用用户的原话；改模块时写这次改了什么。',
+        },
+        restart: {
+          type: 'boolean',
+          description: '需求复述变化时显式重开；旧进度会全部清除。',
         },
         ...PLAN_DRAFT_PROPERTIES,
       },
@@ -150,34 +197,40 @@ function planToolOf(ctx: DshHostContext, runs: DiyFlowRuns): DshToolDefinition {
       const session = sessionIdOf(exec);
       if (session === null) throw new Error('当前会话没有 id，无法推进流程');
       const record = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
+      for (const key of DEAD_FIELDS) {
+        if (record[key] !== undefined) throw new Error(`invalid plan: ${key} 没有消费者；删掉这个字段，需要表达时写进方案正文或图注`);
+      }
       const destination = asText(record['destination']) as Destination;
       if (!DESTINATIONS.includes(destination)) {
         throw new Error(`去向只能是：${DESTINATIONS.join(' / ')}`);
       }
       const summary = asText(record['summary']);
       if (summary === '') throw new Error('summary 不能为空：用用户的原话复述一遍');
+      const restart = record['restart'] === true;
+      checkFlowInput(runs, session, destination, summary, restart);
       const current = runs.stepOf(session);
       const willStartAtPlan = current === null && destination === 'tweak';
       const hasContent = hasPlanContent(record);
       const submittingPlan = current?.id === 'plan' || (willStartAtPlan && hasContent);
-      const sections = submittingPlan ? validatedSections(record) : {};
+      const sections = submittingPlan ? validatedSections(record, destination) : {};
       const shots = asShots(record['shots']);
-      if (!submittingPlan && BUILDABLE.includes(destination) && hasContent) {
+      const approval = validatedApproval(record['approval']);
+      if (!submittingPlan && hasContent) {
         throw new Error(
           current === null
-            ? '现在还没到「确认方案」：先只提交去向与一句话复述；查看数据来源提交完后，在「确认方案」那一步再提交四段（有看板时再加 ascii）。'
-            : `现在停在「${current.title ?? current.id}」；这一步用 workbench_diy_step 提交，方案四段（有看板时再加 ascii）只在方案那一步提交。`,
+            ? '现在还没到「确认方案」：先只提交去向与一句话复述；查看数据来源提交完后，在「确认方案」那一步再提交四段与界面预览。'
+            : `现在停在「${current.title ?? current.id}」；这一步用 workbench_diy_step 提交，方案四段与界面预览只在方案那一步提交。`,
         );
       }
-      if (submittingPlan && destination === 'tweak') validatedChanges(sections, shots);
+      if (submittingPlan && destination === 'tweak') validatedChanges(sections);
+      if (submittingPlan) validatedPresentation(destination, sections, shots, approval);
 
       const result = await planStep(runs, session, {
         destination,
         summary,
-        ...(asText(record['cells']) === '' ? {} : { cells: asText(record['cells']) }),
-        ...(asText(record['steps']) === '' ? {} : { steps: asText(record['steps']) }),
-        ...(asText(record['minutes']) === '' ? {} : { minutes: asText(record['minutes']) }),
+        restart,
         ...(shots.length === 0 ? {} : { shots }),
+        ...(approval === undefined ? {} : { approval }),
         ...(sections['see'] === undefined ? {} : { see: sections['see'] }),
         ...(sections['do'] === undefined ? {} : { do: sections['do'] }),
         ...(sections['agent'] === undefined ? {} : { agent: sections['agent'] }),
@@ -186,8 +239,11 @@ function planToolOf(ctx: DshHostContext, runs: DiyFlowRuns): DshToolDefinition {
 
       if (!result.ok) throw new Error(result.text);
       const packNote = packNoteOf(ctx, exec, result.step);
+      const currentSummary = asText(runs.inputOf(session)['summary']);
+      const baseline = planBaselineOf(runs.valuesOf(session), currentSummary);
       return plainJson({
         ...result,
+        baseline: baseline ?? { available: false },
         text: `${result.text}${packNote === '' ? '' : ` ${packNote}`}`,
         step: result.step ?? '',
       });

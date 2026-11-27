@@ -25,8 +25,6 @@ describe('计划工具推进流程', () => {
       do: ['一点'],
       agent: ['一件'],
       data: ['一处'],
-      cells: '3',
-      minutes: '5',
     });
 
     expect(result.ok).toBe(true);
@@ -36,17 +34,17 @@ describe('计划工具推进流程', () => {
     expect(runs.stepOf('s-1')?.id).toBe('probe');
   });
 
-  it('★★ 判成一次性：一条流程都不开', async () => {
-    const { runs, ended } = runsOf();
+  it('★★ 去向锁定：从看板改成交付工具会被拒，流程不动', async () => {
+    const { runs } = runsOf();
+    await planStep(runs, 's-1', { destination: 'board', summary: '盯库存' });
 
-    const result = await planStep(runs, 's-1', { destination: 'once', summary: '算一下这个月的数' });
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    const result = await planStep(runs, 's-1', { destination: 'tweak', summary: '盯库存' });
 
-    expect(result.done).toBe(true);
-    expect(result.step).toBeNull();
-    expect(result.ok).toBe(true);
-    expect(runs.stepOf('s-1')).toBeNull();
-    expect(ended).toEqual([]);
+    expect(result.ok).toBe(false);
+    expect(result.text).toContain('去向已锁定');
+    expect(result.text).toContain('cancel: true');
+    expect(runs.stepOf('s-1')?.id).toBe('probe');
+    expect(runs.inputOf('s-1')['destination']).toBe('board');
   });
 
   it('★ 先判去向停在站探；站探递完再调，才递方案', async () => {
@@ -70,7 +68,6 @@ describe('计划工具推进流程', () => {
     const second = await planStep(runs, 's-1', {
       destination: 'board',
       summary: '盯库存低于 10 的',
-      cells: '2',
       see: ['一眼'],
       do: ['一点'],
       agent: ['一件'],
@@ -132,20 +129,25 @@ describe('计划工具推进流程', () => {
     expect(runs.stepOf('s-1')?.id).toBe('build');
   });
 
-  it('★ 范围变了重新计划：旧流程被停掉，新流程从查看数据来源开始', async () => {
+  it('★ 需求变化先拒绝；显式重启才清空进度从头来', async () => {
     const { runs } = runsOf();
-    await planStep(runs, 's-1', { destination: 'board', summary: '第一版', see: ['一眼'], do: ['一点'], agent: ['一件'], data: ['一处'] });
+    await planStep(runs, 's-1', { destination: 'board', summary: '第一版' });
+
+    const refused = await planStep(runs, 's-1', { destination: 'board', summary: '改成另一件事' });
+    expect(refused.ok).toBe(false);
+    expect(refused.text).toContain('restart: true');
+    expect(runs.stepOf('s-1')?.id).toBe('probe');
 
     const again = await planStep(runs, 's-1', {
       destination: 'board',
       summary: '改成另一件事',
-      see: ['一眼'],
-      do: ['一点'],
-      agent: ['一件'],
-      data: ['一处'],
+      restart: true,
     });
 
     expect(again.step).toBe('probe');
+    expect(again.restarted).toBe(true);
+    expect(again.text).toContain('从头来');
     expect(runs.stepOf('s-1')?.id).toBe('probe');
+    expect(runs.inputOf('s-1')['summary']).toBe('改成另一件事');
   });
 });

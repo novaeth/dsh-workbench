@@ -12,25 +12,28 @@ const BODY = {
 
 const call = (destination: string, extra: Record<string, unknown> = {}) => ({
   name: DIY_PLAN_TOOL,
-  arguments: { destination, summary: '盯库存低于 10 的', cells: '3', steps: '3 步', ...BODY, ...extra },
+  arguments: { destination, summary: '盯库存低于 10 的', ...BODY, ...extra },
   session: 's1',
 });
 
-describe('判成看板才问一句，其余去向不问', () => {
-  it('★★ 看板：标题说清这是模块设计方案，加上她的原话', () => {
+describe('三个计划去向都在方案提交时问一句', () => {
+  it('★★ 标题带上这次复述', () => {
     const verdict = panelsApprovalFor()(call('board'));
 
     expect(verdict?.kind).toBe('ask');
     const question = verdict?.kind === 'ask' ? verdict.question.zh : '';
-    expect(question).toBe('模块设计方案');
+    expect(question).toBe('盯库存低于 10 的的方案');
   });
 
-  it('★★ 一次性：不问，直接走', () => {
-    expect(panelsApprovalFor()(call('once'))).toEqual({ kind: 'allow' });
+  it('★ 标题超过十五个字会截断', () => {
+    const verdict = panelsApprovalFor()(call('board', { summary: '一二三四五六七八九十甲乙丙丁戊己' }));
+    const question = verdict?.kind === 'ask' ? verdict.question.zh : '';
+
+    expect(question).toBe('一二三四五六七八九十甲乙丙丁戊…的方案');
   });
 
-  it('★ 用现成的 / 改道：都不问', () => {
-    for (const destination of ['ready', 'reroute']) {
+  it('★ 不认可的去向不弹审批，交给计划工具拒绝', () => {
+    for (const destination of ['once', 'ready', 'reroute']) {
       expect(panelsApprovalFor()(call(destination)), destination).toEqual({ kind: 'allow' });
     }
   });
@@ -40,7 +43,7 @@ describe('判成看板才问一句，其余去向不问', () => {
     const question = verdict?.kind === 'ask' ? verdict.question.zh : '';
 
     expect(verdict?.kind).toBe('ask');
-    expect(question).toBe('模块设计方案');
+    expect(question).toBe('盯库存低于 10 的的方案');
   });
 
   it('★ 没有复述就不问（问也没内容给她看）', () => {

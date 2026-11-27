@@ -5,6 +5,7 @@ import { ApprovalDetail, ApprovalPlan, CardBoundary, zh } from '@dsh-workbench/s
 import {
   marketSourceRows,
   moduleSupplyRows,
+  planApprovalRows,
   pluginApprovalRows,
   pluginToolIndexOf,
   publishRows,
@@ -18,6 +19,7 @@ import { planSections } from '../approval-plan';
 import {
   ALL_TOOLS,
   DIY_PUBLISH_TOOL,
+  DIY_PLAN_TOOL,
   DIY_RECORD_PREPARE_TOOL,
   DIY_RECORD_READ_TOOL,
   MARKET_DISABLE_TOOL,
@@ -204,6 +206,34 @@ describe('计划审批：除了那张画，还要说清这个模块能给她什�
 
   it('★ 一段都没填就什么也不画（不出现空标题）', () => {
     expect(planSections({ destination: 'board', summary: '盯库存' }, t)).toEqual([]);
+  });
+
+  it('★★ 无看板换成输出 / 触发 / 批准 / 数据', () => {
+    expect(planSections({ ...args, destination: 'headless' }, t).map((section) => section.label)).toEqual([
+      '输出',
+      '触发',
+      '批准',
+      '数据',
+    ]);
+  });
+
+  it('★★ 写工具的审批四格进入计划审批屏', () => {
+    const approval = {
+      object: '库存阈值',
+      change: '从 10 改成 20',
+      target: '库存模块设置',
+      impact: '只影响当前项目',
+    };
+    const rows = planApprovalRows({ approval }, t);
+    expect(rows.map((row) => [row.label, row.value])).toEqual([
+      [t('approval.fact.object'), '库存阈值'],
+      [t('approval.fact.change'), '从 10 改成 20'],
+      [t('approval.fact.target'), '库存模块设置'],
+      [t('approval.fact.impact'), '只影响当前项目'],
+    ]);
+    const view = shellApprovalDetail({ tool: DIY_PLAN_TOOL, args: { ...args, approval } }, t) as PlanView;
+    expect(view.type).toBe(ApprovalPlan);
+    expect(view.props.rows).toEqual(rows);
   });
 });
 

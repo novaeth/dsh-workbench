@@ -6,6 +6,7 @@ import {
   moduleOperationRows,
   moduleSupplyRows,
   panelApprovalRows,
+  planApprovalRows,
   pluginApprovalRows,
   recordApprovalRows,
   stopApprovalRows,
@@ -19,6 +20,7 @@ export {
   moduleOperationRows,
   moduleSupplyRows,
   panelApprovalRows,
+  planApprovalRows,
   pluginApprovalRows,
   recordApprovalRows,
   stopApprovalRows,
@@ -447,7 +449,7 @@ export function shellApprovalDetail(
     return h(MarketSourceApprovalSeat, { tool: input.tool, args: input.args, t });
   }
   if (input.tool === DIY_PLAN_TOOL) {
-    return <ApprovalPlan rows={[]}>{h(PlanCard, { args: input.args, t })}</ApprovalPlan>;
+    return <ApprovalPlan rows={planApprovalRows(input.args, t)}>{h(PlanCard, { args: input.args, t })}</ApprovalPlan>;
   }
   const plan = shellApprovalPlan(input, t, pluginTools, manifests);
   if (plan === undefined) return undefined;

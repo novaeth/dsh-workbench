@@ -290,7 +290,15 @@ describe('工具箱：默认只留控制面，按会话开包', () => {
     await call(
       registered,
       DIY_PLAN_TOOL,
-      { destination: 'board', summary: '盯库存', see: ['一眼'], do: ['一点'], agent: ['一件'], data: ['一处'] },
+      {
+        destination: 'board',
+        summary: '盯库存',
+        see: ['一眼'],
+        do: ['一点'],
+        agent: ['一件'],
+        data: ['一处'],
+        shots: [{ caption: '库存卡片', ascii: '库存 8 件' }],
+      },
       's-1',
     );
 
@@ -312,7 +320,15 @@ describe('工具箱：默认只留控制面，按会话开包', () => {
     const planned = await call(
       registered,
       DIY_PLAN_TOOL,
-      { destination: 'board', summary: '盯库存', see: ['一眼'], do: ['一点'], agent: ['一件'], data: ['一处'] },
+      {
+        destination: 'board',
+        summary: '盯库存',
+        see: ['一眼'],
+        do: ['一点'],
+        agent: ['一件'],
+        data: ['一处'],
+        shots: [{ caption: '库存卡片', ascii: '库存 8 件' }],
+      },
       's-1',
     );
 

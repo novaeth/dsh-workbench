@@ -6,4 +6,6 @@ export const PROGRESS_OUTPUT = textOutput({
   total: { type: 'number' },
   remaining: { type: 'number' },
   done: { type: 'boolean' },
+  restarted: { type: 'boolean' },
+  baseline: { type: 'object', additionalProperties: true },
 });

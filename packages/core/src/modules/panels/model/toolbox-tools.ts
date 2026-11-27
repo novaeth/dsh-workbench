@@ -1,4 +1,4 @@
-import { toolRegistryOf } from './tool-registry-guard';
+import { readOnlyToolOf, registerTools } from './tool-registry-guard';
 import type { DshHostContext, DshToolDefinition, DshToolRunContext } from '@dsh-workbench/shared/host';
 import { sessionIdOf, sessionWorkspace } from '@dsh-workbench/shared/host';
 import { presetOfSession } from '@/shared/api/host/preset-scope';
@@ -113,21 +113,15 @@ function closedText(toolbox: Toolbox, session: string, preset: string | null, cl
 }
 
 export function registerToolboxTools(ctx: DshHostContext, toolbox: Toolbox): Array<() => void> {
-  const tools = toolRegistryOf(ctx, '跳过工具包控制工具注册');
-  if (tools === undefined) return [];
-
-  const listTool: DshToolDefinition = {
-    name: TOOLBOX_LIST_TOOL,
-    description:
-      '列出工作台工具包与当前已启用的包。' +
-      '不确定开哪个包、或已开的包不满足时先调用。',
-    parameters: { type: 'object', properties: {}, additionalProperties: false },
-    output: OUTPUT,
-    async execute(_raw: unknown, exec: DshToolRunContext) {
+  const listTool = readOnlyToolOf(
+    TOOLBOX_LIST_TOOL,
+    '列出工作台工具包与当前已启用的包。' + '不确定开哪个包、或已开的包不满足时先调用。',
+    OUTPUT,
+    async (_raw: unknown, exec: DshToolRunContext) => {
       const session = sessionIdOf(exec) ?? null;
       return { text: catalogText(toolbox, session, presetOf(ctx, exec), sessionWorkspace(exec) ?? null) };
     },
-  };
+  );
 
   const targetTool = (
     name: string,
@@ -181,5 +175,5 @@ export function registerToolboxTools(ctx: DshHostContext, toolbox: Toolbox): Arr
     },
   );
 
-  return [tools.register(listTool), tools.register(openTool), tools.register(closeTool)];
+  return registerTools(ctx, '跳过工具包控制工具注册', [listTool, openTool, closeTool]);
 }

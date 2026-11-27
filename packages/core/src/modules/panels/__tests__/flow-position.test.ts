@@ -45,6 +45,15 @@ describe('第几步与还剩几步', () => {
   it('★ 两把流程工具回话是同一份形状', () => {
     const properties = (PROGRESS_OUTPUT.schema as { properties: Record<string, unknown> }).properties;
 
-    expect(Object.keys(properties)).toEqual(['text', 'step', 'index', 'total', 'remaining', 'done']);
+    expect(Object.keys(properties)).toEqual([
+      'text',
+      'step',
+      'index',
+      'total',
+      'remaining',
+      'done',
+      'restarted',
+      'baseline',
+    ]);
   });
 });

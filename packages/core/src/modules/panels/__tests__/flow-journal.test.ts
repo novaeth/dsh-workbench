@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createFlowHost, type DiyFlowJournal, type DiyFlowSnapshot } from '@dsh-workbench/shared/host';
 import { DIY_BOARD_FLOW } from '../model/flow/definitions';
 import { createDiyFlowRuns } from '../model/flow/runs';
+import { planBaselineOf } from '../model/flow/plan-step';
 
 function journalOf(): { journal: DiyFlowJournal; snapshots: DiyFlowSnapshot[] } {
   const snapshots: DiyFlowSnapshot[] = [];
@@ -28,6 +29,7 @@ const runsOf = (journal: DiyFlowJournal) => {
 };
 
 const plan = {
+  baseline: true,
   see: ['一眼'],
   do: ['一点'],
   agent: ['一件'],
@@ -49,6 +51,14 @@ describe('流程状态 journal', () => {
     const next = runsOf(journal);
     expect(next.runs.stepOf('s-1')?.id).toBe('build');
     expect(next.runs.valuesOf('s-1')).toMatchObject({ plan });
+    expect(planBaselineOf(next.runs.valuesOf('s-1'), '改阈值')).toMatchObject({
+      available: true,
+      summary: '改阈值',
+      see: ['一眼'],
+      do: ['一点'],
+      agent: ['一件'],
+      data: ['一处'],
+    });
     expect(next.runs.start('s-1', { destination: 'tweak', summary: '改阈值' }).id).toBe('build');
     expect(snapshots).toHaveLength(2);
   });
