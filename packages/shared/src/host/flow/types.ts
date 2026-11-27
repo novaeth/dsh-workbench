@@ -265,10 +265,16 @@ export interface FlowStepEvent {
 /**
  * 开一条由外部推进的流程：引擎不执行任何步骤，只算条件、报当前步、等外部递结果。
  */
+export interface FlowResume {
+  readonly stepId: string;
+  readonly values: Readonly<Record<string, unknown>>;
+}
+
 export interface FlowOpenOptions {
   readonly flow: FlowDefinition;
   readonly input: unknown;
   readonly onStep: (event: FlowStepEvent) => void;
+  readonly resume?: FlowResume | undefined;
   readonly now?: (() => number) | undefined;
 }
 

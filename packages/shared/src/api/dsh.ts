@@ -25,6 +25,7 @@ import type { AgentPresetRegistry, PresetDefinition } from '@deepseek-ai/dsh-age
 import type { ProfileContext } from '@deepseek-ai/dsh-app-boot';
 import type { IndexInjection, WebRoute } from '@deepseek-ai/dsh-host-webserver';
 import type { dshHomePath } from '@deepseek-ai/dsh-home-paths';
+import type { Session, SessionId, SessionStore } from '@deepseek-ai/dsh-session';
 import type { PluginInstallRequestId, PluginManager } from '@deepseek-ai/dsh-plugin-manager';
 import type Hmr from '@deepseek-ai/dsh-hmr';
 import type { ApprovalService } from '@deepseek-ai/dsh-user-approval';
@@ -157,7 +158,13 @@ export type DshSubagentResult = SubagentResult;
 export type DshContentBlock = ContentBlock;
 
 /** 一条会话 id 的 branded 串（子 agent 可以预先指定）。 */
-export type DshSessionId = import('@deepseek-ai/dsh-session').SessionId;
+export type DshSessionId = SessionId;
+
+/** 一条活着的 dsh 会话：插件记录与 projection 都从它读写。 */
+export type DshSession = Session;
+
+/** 宿主侧的会话名册（服务名 `sessions`）；这里只用按 id 取会话。 */
+export type DshSessionStore = Pick<SessionStore, 'get'>;
 
 /** 子 agent 结构化输出收的那份对象根 JSON Schema（dsh 的受支持子集）。 */
 export type DshObjectJsonSchema = import('@deepseek-ai/dsh-tools').ObjectJsonSchema;

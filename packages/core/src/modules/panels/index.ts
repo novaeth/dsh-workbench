@@ -51,7 +51,7 @@ import { pluginDirOf } from './model/plugin-name';
 import { installedPackageRoutes } from './model/installed-package-routes';
 import { registerPanelTools } from './model/tools';
 import { createToolbox, flowPacksOf } from './model/toolbox';
-import { createFlowHost } from '@dsh-workbench/shared/host';
+import { createDshFlowJournal, createFlowHost } from '@dsh-workbench/shared/host';
 import { DIY_BOARD_FLOW } from './model/flow/definitions';
 import { BEFORE_FLOW, deniedAtStep } from './model/flow/gate';
 import { registerDiyPlanTool } from './model/flow/plan-tool';
@@ -133,6 +133,7 @@ export const panelsHost: UnitOwnedFace = {
       host: createFlowHost(),
       flow: DIY_BOARD_FLOW,
       onEnd: () => {},
+      journal: createDshFlowJournal(ctx),
     });
     const toolbox = createToolbox({
       manifests,

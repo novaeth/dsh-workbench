@@ -152,3 +152,10 @@ export function flowFor(destination: unknown): DiyFlow {
   if (destination === 'write-record') return DIY_WRITE_RECORD_FLOW;
   return DIY_BOARD_FLOW;
 }
+
+export function flowById(id: string): DiyFlow | null {
+  if (id === DIY_TWEAK_FLOW.id) return DIY_TWEAK_FLOW;
+  if (id === DIY_WRITE_RECORD_FLOW.id) return DIY_WRITE_RECORD_FLOW;
+  if (id === DIY_BOARD_FLOW.id) return DIY_BOARD_FLOW;
+  return null;
+}

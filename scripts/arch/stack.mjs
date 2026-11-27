@@ -8,6 +8,7 @@ function softCapability(preferred, softSyntax, apiNames, hint) {
 export const DEPENDENCY_ALLOWLIST = [
   '@deepseek-ai/cordis',
   '@deepseek-ai/cordis-plugin-loader',
+  '@deepseek-ai/dsh-session',
   '@dsh-workbench/adapters-default',
   '@dsh-workbench/shared',
   '@puppeteer/browsers',

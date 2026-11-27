@@ -61,6 +61,8 @@ export * from './host/flow/check.js';
 export * from './host/flow/create.js';
 export * from './host/flow/data.js';
 export * from './host/flow/expr.js';
+export * from './host/flow/dsh-journal.js';
+export * from './host/flow/journal.js';
 export * from './host/flow/kit.js';
 export * from './host/flow/login-retry.js';
 export * from './host/flow/open.js';

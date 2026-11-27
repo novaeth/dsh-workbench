@@ -76,6 +76,9 @@ export const DIY_RECORD_SERVICE = "workbenchDiyRecord";
 /** 会话投影服务的 dsh 服务名（`sessionProjections`）：宿主经 `stateOf(session, 'agentPreset')` 读那一档。 */
 export const SESSION_PROJECTIONS_SERVICE = "sessionProjections";
 
+/** 会话名册服务的 dsh 服务名（`sessions`）：按 id 拿 Session，写 plugin record。 */
+export const SESSION_STORE_SERVICE = "sessions";
+
 /** 面板清单一次取回的行数上限（条）：外部模块拿它当分页参数。 */
 export const PANEL_LIST_LIMIT = 50;
 
