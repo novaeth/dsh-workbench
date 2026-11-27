@@ -562,27 +562,30 @@ describe('模块 skill：/workbench-<unit-id> 只列当前工作区可用、仅�
   it('只给当前工作区可见、有工具的单元；panels、无工具、未启用都没有', async () => {
     const { skillRegistry } = mount([], [offUnit, emptyUnit]);
     const skills = await providerOf(skillRegistry).list({ cwd: dir });
+    const board = skills.find((one) => one.name === 'workbench-board-x');
 
-    expect(skills.map((one) => one.name)).toEqual(['workbench-board-x']);
-    expect(skills[0]?.description).toBe('看板 X');
-    expect(skills[0]?.invocation).toEqual({ modelInvocable: false, userInvocable: true });
-    expect(skills[0]?.source).toBe('custom');
-    expect(skills[0]?.provider).toBe('workbench');
-    expect(skills[0]?.locator).toBe('board-x');
+    expect(skills.map((one) => one.name)).toEqual(['workbench', 'workbench-board-x']);
+    expect(board?.description).toBe('看板 X');
+    expect(board?.invocation).toEqual({ modelInvocable: false, userInvocable: true });
+    expect(board?.source).toBe('custom');
+    expect(board?.provider).toBe('workbench');
+    expect(board?.locator).toBe('board-x');
   });
 
-  it('没有项目：没有 skill', async () => {
+  it('没有项目：只剩工作台自己的根入口', async () => {
     const { skillRegistry } = mount();
     const provider = providerOf(skillRegistry);
-    expect(await provider.list({})).toEqual([]);
-    expect(await provider.list({ cwd: path.join(os.tmpdir(), 'not-registered') })).toEqual([]);
+    expect((await provider.list({})).map((one) => one.name)).toEqual(['workbench']);
+    expect(
+      (await provider.list({ cwd: path.join(os.tmpdir(), 'not-registered') })).map((one) => one.name),
+    ).toEqual(['workbench']);
   });
 
   it('正文只点名模块和工具包，不点名具体工具', async () => {
     const { skillRegistry } = mount();
     const provider = providerOf(skillRegistry);
     const candidates = await provider.list({ cwd: dir });
-    const candidate = candidates[0];
+    const candidate = candidates.find((one) => one.name === 'workbench-board-x');
     if (candidate === undefined) throw new Error('没有 skill');
     const skill = await provider.get(candidate, { cwd: dir });
 
@@ -609,10 +612,15 @@ describe('模块 skill：/workbench-<unit-id> 只列当前工作区可用、仅�
     const { skillRegistry } = mount([], [pluginUnit], () => null, true, [pluginUnit.id]);
 
     const skills = await providerOf(skillRegistry).list({ cwd: dir });
+    const grafana = skills.find((one) => one.name === 'workbench-grafana');
 
-    expect(skills.map((one) => one.name)).toEqual(['workbench-board-x', 'workbench-grafana']);
-    expect(skills[1]?.description).toBe('grafana');
-    expect(skills[1]?.locator).toBe(pluginUnit.id);
+    expect(skills.map((one) => one.name)).toEqual([
+      'workbench',
+      'workbench-board-x',
+      'workbench-grafana',
+    ]);
+    expect(grafana?.description).toBe('grafana');
+    expect(grafana?.locator).toBe(pluginUnit.id);
   });
 
   it('★ 拼不出合法名字的单元：跳过并记一条警告，不把坏名字发给 dsh', async () => {
@@ -620,7 +628,22 @@ describe('模块 skill：/workbench-<unit-id> 只列当前工作区可用、仅�
 
     const skills = await providerOf(skillRegistry).list({ cwd: dir });
 
-    expect(skills.map((one) => one.name)).toEqual(['workbench-board-x']);
+    expect(skills.map((one) => one.name)).toEqual(['workbench', 'workbench-board-x']);
     expect(warnings.join('\n')).toContain(oddUnit.id);
+  });
+
+  it('★ 根入口 /workbench：只表明意图，正文点 manage / diy-flow，不点具体工具', async () => {
+    const { skillRegistry } = mount();
+    const provider = providerOf(skillRegistry);
+    const root = (await provider.list({})).find((one) => one.name === 'workbench');
+    if (root === undefined) throw new Error('没有根入口');
+
+    expect(root.invocation).toEqual({ modelInvocable: false, userInvocable: true });
+    expect(root.description).toContain('工作台');
+
+    const skill = await provider.get(root, {});
+    expect(skill?.content).toContain('manage');
+    expect(skill?.content).toContain('diy-flow');
+    expect(skill?.content).not.toContain('workbench_toolbox_open');
   });
 });

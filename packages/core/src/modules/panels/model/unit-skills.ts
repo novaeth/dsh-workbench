@@ -52,6 +52,27 @@ const SKILL_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const SKILL_PROVIDER = 'workbench';
 
+const WORKBENCH_ROOT = 'workbench';
+
+const WORKBENCH_ROOT_LOCATOR = { kind: 'workbench-root' } as const;
+
+const WORKBENCH_ROOT_DESCRIPTION = '用工作台自己的工具：面板 / 安装 / 模块市场 / DIY';
+
+const WORKBENCH_ROOT_CONTENT =
+  '用户指定了工作台自己的工具（工具包 manage；DIY 会话是 diy-flow 及其子包）。';
+
+function workbenchRootCandidate(): SkillCandidate {
+  return {
+    name: WORKBENCH_ROOT,
+    description: WORKBENCH_ROOT_DESCRIPTION,
+    invocation: { modelInvocable: false, userInvocable: true },
+    source: 'custom',
+    provider: SKILL_PROVIDER,
+    rank: 0,
+    locator: WORKBENCH_ROOT_LOCATOR,
+  };
+}
+
 export function skillNameOf(unit: string): string {
   return `workbench-${unit}`;
 }
@@ -85,9 +106,9 @@ export function registerUnitSkills(deps: UnitSkillDeps): Array<() => void> {
     return {
       name: SKILL_PROVIDER,
       async list(options) {
+        const listed: SkillCandidate[] = [workbenchRootCandidate()];
         const workspace = deps.workspaceOf(options.cwd ?? null);
-        if (workspace === null) return [];
-        const listed: SkillCandidate[] = [];
+        if (workspace === null) return listed;
         for (const manifest of visibleOf(deps, workspace)) {
           const id = manifest.skillId ?? manifest.id;
           if (!SKILL_ID.test(id)) {
@@ -115,6 +136,16 @@ export function registerUnitSkills(deps: UnitSkillDeps): Array<() => void> {
         return listed;
       },
       async get(candidate) {
+        if (candidate.locator === WORKBENCH_ROOT_LOCATOR) {
+          return {
+            name: candidate.name,
+            description: candidate.description,
+            invocation: candidate.invocation,
+            source: candidate.source,
+            provider: candidate.provider,
+            content: WORKBENCH_ROOT_CONTENT,
+          };
+        }
         const unit = candidate.locator;
         if (typeof unit !== 'string') return undefined;
         const manifest = deps.manifests().find((one) => one.id === unit);

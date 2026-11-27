@@ -1120,6 +1120,10 @@ packages/core/skills/workbench-module-diy/
 - 默认读者在 DSH 的 DIY 会话里；不再按 core / dsh / agent-tools 分层，也不为非 dsh 或无工具环境单独写 fallback。
 - 数据源文档教 `data.read`，不教直接 import adapter。
 
+另外有一条运行期 skill（`modules/panels/model/unit-skills.ts`，只给人用、模型看不到）：
+`/workbench-<unit>` 列当前项目里启用且有工具的模块/插件单元，`/workbench` 是工作台自己那一套
+（`manage` / `diy-*`）。两者都只表达「用哪个工具包」的意图，不开包；开包仍由 agent 自己做。
+
 仓库根 `.agents/skills/` 是给在本仓写代码的 agent 用的工程 skill，和上面这套出货 skill 不是一层。
 
 ## 9. 安装与发布
