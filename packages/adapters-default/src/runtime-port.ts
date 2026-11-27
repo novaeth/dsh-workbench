@@ -111,7 +111,7 @@ export function createRuntimePort(options: RuntimePortOptions = {}): RuntimePort
               en: 'The opencli browser extension is not connected. Make sure the browser is running and the extension is enabled; install it once from the store if needed (then hit Retry here).',
             },
             link: {
-              label: { zh: '去 Chrome 应用商店装扩展', en: 'Get the extension in the Chrome Web Store' },
+              label: { zh: '去 Chrome 应用商店安装扩展', en: 'Get the extension in the Chrome Web Store' },
               href: 'https://chromewebstore.google.com/detail/opencli/ildkmabpimmkaediidaifkhjpohdnifk',
             },
           },

@@ -11,7 +11,7 @@
 
 | 症状 | 怎么办 |
 | --- | --- |
-| 「准备工作台」里「连接浏览器 · 还没连上」 | 通常是扩展未安装或未启用。两种安装方式都可以：从 [Chrome 应用商店安装 OpenCLI](https://chromewebstore.google.com/detail/opencli/ildkmabpimmkaediidaifkhjpohdnifk)；或离线使用工作台自带的那份 —— 打开 `chrome://extensions`、开启「开发者模式」、点击「加载已解压的扩展程序」，选择启动检查里显示的目录（默认 `~/.dsh/workbench/opencli/extension`）。安装完成后确认已启用、保持浏览器打开，再回到这一屏选择「重试」 |
+| 「准备工作台」里「连接浏览器 · 还没连上」 | 先在 `chrome://extensions` 里确认有没有 OpenCLI、开关是否打开：已安装的话回到这一屏点击「重试」；未安装的话，从 [Chrome 应用商店安装 OpenCLI](https://chromewebstore.google.com/detail/opencli/ildkmabpimmkaediidaifkhjpohdnifk)，或离线加载工作台自带的那份 —— 打开 `chrome://extensions`、开启「开发者模式」、点击「加载已解压的扩展程序」，选择启动检查里显示的目录（默认 `~/.dsh/workbench/opencli/extension`）。安装完成后确认已启用、保持浏览器打开，再回到这一屏选择「重试」 |
 | 更新工作台后需要重新选择扩展目录吗 | 不需要。自带的副本在固定路径（默认 `~/.dsh/workbench/opencli/extension`），更新只替换其中的文件；扩展自身升级时，最多在 `chrome://extensions` 点击一次「重新加载」 |
 | 选择「打开浏览器」没有反应 | 这个按钮只在 Desktop 里出现；它会打开上次承载扩展的那个浏览器（未记录时使用 Chrome）。如果打开后仍然连不上，请检查扩展是否被禁用 |
 | 提示连接了多个浏览器账号 | 每个浏览器账号各有一个扩展实例，工作台不会自行猜测。请按页面上给出的命令列出账号，并选择一个默认账号 |

@@ -221,7 +221,7 @@ describe('GATE_MOCKS', () => {
 
     expect(card?.methods).toHaveLength(1);
     expect(card?.methods?.[0]?.link?.href).toBe('https://example.com/extension');
-    expect(card?.methodHint).toBeUndefined();
+    expect(card?.methodHint).toBe(zh['env.fix.pickExtension']);
   });
 
   it('★ 副本和商店都给不出时：只留「确认扩展已启用」，不编装法', () => {

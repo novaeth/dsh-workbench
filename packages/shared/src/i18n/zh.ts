@@ -770,7 +770,7 @@ export const zh = {
   'env.fix.reason': '原因',
   'env.fix.situation': '现象',
   'env.fix.methods': '怎么解决',
-  'env.fix.pickMethod': '下面两种任选一种。',
+  'env.fix.pickExtension': '扩展已安装的话，点击下面的「重试」。',
   'env.fix.note': '做完后回来点击「重试」。',
   'env.fix.open': '打开',
   'env.fix.openExtensions': '打开 Chrome 扩展页',

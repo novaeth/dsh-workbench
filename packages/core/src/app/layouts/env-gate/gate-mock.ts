@@ -178,14 +178,14 @@ export const GATE_MOCKS: readonly GateMock[] = [
   mock(
     'warn-extension',
     '浏览器通道：扩展没连上',
-    'daemon 在跑、扩展没连上（最常见）：门**停在这一帧** —— 行尾说"没连上"，下面给两种装法：① 工作台自带的扩展副本（目录可直接复制）；② 去应用商店装。末尾一句「做完后回来点击重试」，再往下是「打开浏览器」（Desktop 才有）+「先进入工作台」。',
+    'daemon 在跑、扩展没连上（最常见）：门**停在这一帧** —— 行尾说"没连上"，装法前面挂一句"扩展已安装的话，点击下面的重试"，装法只作为未安装时的路。下面两种装法：① 工作台自带的扩展副本（目录可直接复制）；② 去应用商店安装。末尾一句「做完后回来点击重试」，再往下是「打开浏览器」（Desktop 才有）+「先进入工作台」。',
     extensionSnapshot({ extensionDir: '/Users/you/.dsh/workbench/opencli/extension' }),
     { hint: 'hold', command: false, bridgeIssues: ['extension'] },
   ),
   mock(
     'warn-extension-offline',
     '浏览器通道：没有本地副本可指',
-    '扩展没连上、这台机器上又没有随包带的副本：不给「加载本地副本」这条（没得选），只剩应用商店一条路。',
+    '扩展没连上、这台机器上又没有随包带的副本：不给「加载本地副本」这条（没得选），只剩应用商店一条路；「已安装就点重试」那句照旧挂着。',
     extensionSnapshot(),
     { hint: 'hold', command: false, bridgeIssues: ['extension'] },
   ),

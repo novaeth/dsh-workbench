@@ -128,7 +128,7 @@ function extensionFixOf(
     title: t('env.fix.title'),
     reason: t('env.bridge.reason.extension'),
     methods,
-    ...(methods.length > 1 ? { methodHint: t('env.fix.pickMethod') } : {}),
+    methodHint: t('env.fix.pickExtension'),
     note: t('env.fix.note'),
   };
 }

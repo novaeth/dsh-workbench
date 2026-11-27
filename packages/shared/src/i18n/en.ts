@@ -775,7 +775,7 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'env.fix.reason': 'Cause',
   'env.fix.situation': 'Symptom',
   'env.fix.methods': 'What to do',
-  'env.fix.pickMethod': 'Either method works.',
+  'env.fix.pickExtension': 'If the extension is installed, click Retry below.',
   'env.fix.note': 'When done, come back and click Retry.',
   'env.fix.open': 'Open',
   'env.fix.openExtensions': 'Open the Chrome extensions page',
