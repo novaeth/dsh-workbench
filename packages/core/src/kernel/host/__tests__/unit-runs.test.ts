@@ -65,8 +65,11 @@ describe('withRunsRoute', () => {
     );
     const handle = actionOf(mounted, stopRouteOf('unit'));
     expect(handle({ id: 'run-1' })).toEqual({ ok: true, stopped: true });
-    expect(handle({ id: ' ' })).toEqual({ ok: false, text: '要停哪一趟？给一个 id 才成' });
-    expect(handle({ id: 'nope' })).toEqual({ ok: false, text: '没有这一趟 —— id 对不上，没什么可停的' });
+    expect(handle({ id: ' ' })).toEqual({ ok: false, text: '没有指明要停哪一趟，请重试。' });
+    expect(handle({ id: 'nope' })).toEqual({
+      ok: false,
+      text: '没有这一趟，列表可能已经变化。请重新打开面板。',
+    });
     expect(stopped).toEqual(['run-1']);
   });
 
@@ -85,13 +88,16 @@ describe('withRunsRoute', () => {
     );
     const handle = actionOf(mounted, recheckRouteOf('unit'));
     expect(handle({ id: 'run-1' })).toEqual({ ok: true, rechecked: true });
-    expect(handle({ id: 'nope' })).toEqual({ ok: false, text: '没有这一趟 —— id 对不上，没什么可重查的' });
+    expect(handle({ id: 'nope' })).toEqual({
+      ok: false,
+      text: '没有这一趟，列表可能已经变化。请重新打开面板。',
+    });
     expect(rechecked).toEqual(['run-1']);
 
     const closed = withRunsRoute(mountResult({ resumable: false, snapshot: () => ({}), recheck: () => false }), 'unit');
     expect(actionOf(closed, recheckRouteOf('unit'))({ id: 'run-1' })).toEqual({
       ok: false,
-      text: '这一趟没有可重查的口 —— 模块没给重查处理',
+      text: '这一趟没有可重查的入口，模块没有提供重查处理。',
     });
   });
 
@@ -102,7 +108,7 @@ describe('withRunsRoute', () => {
     );
     expect(actionOf(mounted, recheckRouteOf('unit'))({ id: 'run-1' })).toEqual({
       ok: false,
-      text: '这一份工作台还是上一版的注册表，重查不了 —— 重新起一下工作台就能重查',
+      text: '这一份工作台仍是上一版的注册表，无法重查；重新启动工作台后即可重查。',
     });
   });
 });
@@ -175,15 +181,15 @@ describe('withRunsRoute：回执（answer 那条写路由）', () => {
 
     expect(handle({ id: 'run-1', values: { operator: '甲' } })).toEqual({
       ok: false,
-      text: '回执没交成 —— 还差必填项：控制台口令',
+      text: '回执未提交，还差必填项：控制台口令。',
     });
     expect(handle({ id: 'run-1', values: { operator: '  ' } })).toEqual({
       ok: false,
-      text: '回执没交成 —— 还差必填项：操作人、控制台口令',
+      text: '回执未提交，还差必填项：操作人、控制台口令。',
     });
     expect(handle({ id: 'run-1', values: { operator: '甲', token: 't-1' } })).toEqual({
       ok: false,
-      text: '回执没交成 —— 缺必填项，或这一趟已经不在等人了',
+      text: '回执未提交：缺少必填项，或这一趟已经不在等待处理。',
     });
   });
 
@@ -191,7 +197,7 @@ describe('withRunsRoute：回执（answer 那条写路由）', () => {
     const mounted = answerMount({ fields: undefined, answer: () => true });
     expect(actionOf(mounted, answerRouteOf('unit'))({ id: 'run-1', values: {} })).toEqual({
       ok: false,
-      text: '这一趟没有回执表单',
+      text: '这一趟没有回执表单。',
     });
   });
 
@@ -199,15 +205,18 @@ describe('withRunsRoute：回执（answer 那条写路由）', () => {
     const mounted = answerMount({ fields, answer: () => true });
     const handle = actionOf(mounted, answerRouteOf('unit'));
 
-    expect(handle({ id: ' ' })).toEqual({ ok: false, text: '要给哪一趟交回执？给一个 id 才成' });
-    expect(handle({ id: 'nope' })).toEqual({ ok: false, text: '没有这一趟 —— id 对不上，没什么可交回执的' });
+    expect(handle({ id: ' ' })).toEqual({ ok: false, text: '没有指明要交回执的哪一趟，请重试。' });
+    expect(handle({ id: 'nope' })).toEqual({
+      ok: false,
+      text: '没有这一趟，列表可能已经变化。请重新打开面板。',
+    });
   });
 
   it('★ 模块没给回执处理（answerable 假）→ 动作照挂，按下去明说交不了', () => {
     const mounted = answerMount({ answerable: false, fields, answer: () => false });
     expect(actionOf(mounted, answerRouteOf('unit'))({ id: 'run-1', values: {} })).toEqual({
       ok: false,
-      text: '这一趟交不了回执 —— 模块没给回执处理',
+      text: '这一趟交不了回执，模块没有提供回执处理。',
     });
   });
 
@@ -215,7 +224,7 @@ describe('withRunsRoute：回执（answer 那条写路由）', () => {
     const mounted = withRunsRoute(mountResult({ snapshot: () => ({}) }), 'unit');
     expect(actionOf(mounted, answerRouteOf('unit'))({ id: 'run-1' })).toEqual({
       ok: false,
-      text: '这一份工作台还是上一版的注册表，交不了回执 —— 重新起一下工作台就能交',
+      text: '这一份工作台仍是上一版的注册表，无法提交回执；重新启动工作台后即可提交。',
     });
   });
 

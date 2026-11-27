@@ -8,6 +8,8 @@ const NO_LONG_TASKS: LongTaskPresence = {
   byWorkspace: new Map(),
   waitingBySession: new Set(),
   waitingByWorkspace: new Map(),
+  doneBySession: new Set(),
+  doneByWorkspace: new Map(),
 };
 
 function session(id: string, patch: Partial<SessionsSnapshot['byId'][string]> = {}) {
@@ -184,6 +186,8 @@ describe('firstSessionIdOf（切项目打开哪条会话）', () => {
         byWorkspace: new Map([['/tmp/demo', 1]]),
         waitingBySession: new Set(),
         waitingByWorkspace: new Map(),
+        doneBySession: new Set(),
+        doneByWorkspace: new Map(),
       },
       openSession: (id) => calls.push(`open:${id}`),
       startSession: (id) => calls.push(`new:${id}`),
@@ -218,6 +222,8 @@ describe('firstSessionIdOf（切项目打开哪条会话）', () => {
         byWorkspace: new Map([['/tmp/demo', 1]]),
         waitingBySession: new Set(['s-wait']),
         waitingByWorkspace: new Map([['/tmp/demo', 1]]),
+        doneBySession: new Set(),
+        doneByWorkspace: new Map(),
       },
       openSession: (id) => calls.push(`open:${id}`),
       startSession: (id) => calls.push(`new:${id}`),

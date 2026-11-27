@@ -44,6 +44,7 @@ export interface LongTaskBase {
   readonly startedAt: string;
   readonly at: string;
   readonly session?: string | undefined;
+  readonly seen?: boolean | undefined;
 }
 
 export interface LongTaskStart {
@@ -54,7 +55,7 @@ export interface LongTaskStart {
 }
 
 export interface LongTaskChange<S extends LongTaskBase> {
-  readonly kind: 'start' | 'step' | 'settle';
+  readonly kind: 'start' | 'step' | 'settle' | 'seen';
   readonly snapshot: S;
   readonly step?: LongTaskStep | undefined;
   readonly by?: string | undefined;
@@ -102,8 +103,12 @@ export interface LongTaskRegistry<S extends LongTaskBase> {
   current(workspace: string): readonly Readonly<Record<string, unknown>>[];
   /** 现在活着的每一趟，不分工作区 / 目标；给侧栏状态点用。 */
   live(): readonly S[];
+  /** 现在活着的，加上最近 `recentMs` 内刚收尾的每一趟；给左栏那张全局长任务列表用。 */
+  recent(): readonly S[];
   /** 请求停止：把中断信号转给生产方；没有这趟或已经结束回 false。 */
   stop(id: string, by?: string): boolean;
+  /** 把已收尾的一趟标成「看过」；活着 / 不认识回 false。不刷新 `at`。 */
+  seen(id: string): boolean;
   recheck(id: string): boolean;
   /** 交回执：只认 intervention.fields 里的 key，必填缺失回 false。 */
   answer(id: string, values: Readonly<Record<string, string>>): boolean;
@@ -148,6 +153,7 @@ export function longTaskRowBase(snapshot: LongTaskBase): LongTaskRowBase {
       'loginUrl',
       'why',
       'session',
+      'seen',
     ]),
   };
 }
@@ -228,6 +234,13 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
       return [...runs.values()].filter((snapshot) => isLiveStatus(snapshot.status)) as S[];
     },
 
+    recent() {
+      const floor = epochOf(now()) - recentMs();
+      return [...runs.values()].filter(
+        (snapshot) => isLiveStatus(snapshot.status) || epochOf(snapshot.at) >= floor,
+      ) as S[];
+    },
+
     start(options) {
       const running = this.active(options.workspace, options.target);
       if (running !== null) return running;
@@ -243,6 +256,7 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
         history: [],
         startedAt,
         at: startedAt,
+        seen: false,
         ...(options.session === undefined ? {} : { session: options.session }),
       });
       notify({ kind: 'start', snapshot: runs.get(id) as S });
@@ -398,6 +412,16 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
         },
         { kind: 'settle', by },
       );
+      return true;
+    },
+
+    seen(id) {
+      const current = runs.get(id);
+      if (current === undefined || isLiveStatus(current.status)) return false;
+      if (current.seen === true) return true;
+      const patched = { ...current, seen: true };
+      runs.set(id, patched);
+      notify({ kind: 'seen', snapshot: patched as S });
       return true;
     },
 

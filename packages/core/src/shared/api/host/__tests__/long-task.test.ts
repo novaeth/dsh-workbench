@@ -151,6 +151,7 @@ describe('createLongTaskRegistry', () => {
       'startedAt',
       'at',
       'history',
+      'seen',
       'id',
       'note',
     ]);

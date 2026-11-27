@@ -133,28 +133,29 @@ export function apply(ctx) {
           throw new Error(`判红了，但没说清注册表缺方法：\n${badShape.out}`);
         }
 
-        writeFileSync(
-          join(probe, 'dist/host.js'),
-          faceSource(
-            '{ start: () => ({}), snapshot: () => null, active: () => null, current: () => [], live: () => [], onChange: () => () => {} }',
-          ),
-        );
-        const noStop = runContracts();
-        if (!noStop.failed) throw new Error('注册表只缺 stop，居然没被判红');
-        if (!noStop.out.includes('缺少方法 stop')) {
-          throw new Error(`判红了，但没点出缺的是 stop：\n${noStop.out}`);
-        }
+        const FULL = [
+          'start: () => ({})',
+          'snapshot: () => null',
+          'active: () => null',
+          'current: () => []',
+          'live: () => []',
+          'recent: () => []',
+          'stop: () => false',
+          'seen: () => false',
+          'onChange: () => () => {}',
+          'recheck: () => false',
+          'answer: () => false',
+        ];
+        const withoutOf = (method) =>
+          `{ ${FULL.filter((entry) => !entry.startsWith(`${method}:`)).join(', ')} }`;
 
-        writeFileSync(
-          join(probe, 'dist/host.js'),
-          faceSource(
-            '{ start: () => ({}), snapshot: () => null, active: () => null, current: () => [], stop: () => false, onChange: () => () => {} }',
-          ),
-        );
-        const noLive = runContracts();
-        if (!noLive.failed) throw new Error('注册表只缺 live，居然没被判红');
-        if (!noLive.out.includes('缺少方法 live')) {
-          throw new Error(`判红了，但没点出缺的是 live：\n${noLive.out}`);
+        for (const method of ['stop', 'live', 'seen']) {
+          writeFileSync(join(probe, 'dist/host.js'), faceSource(withoutOf(method)));
+          const outcome = runContracts();
+          if (!outcome.failed) throw new Error(`注册表只缺 ${method}，居然没被判红`);
+          if (!outcome.out.includes(`缺少方法 ${method}`)) {
+            throw new Error(`判红了，但没点出缺的是 ${method}：\n${outcome.out}`);
+          }
         }
         report(title, true);
       } catch (error) {

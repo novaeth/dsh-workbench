@@ -13,12 +13,14 @@ export interface LongTaskDotProps {
 export function LongTaskDot({ sessionId, t }: LongTaskDotProps): JSX.Element | null {
   const presence = useLongTaskPresence();
   const waiting = presence.waitingBySession.has(sessionId);
-  if (!waiting && !presence.bySession.has(sessionId)) return null;
-  const label = t(waiting ? 'status.longTaskWaiting' : 'status.longTask');
+  const live = presence.bySession.has(sessionId);
+  const done = presence.doneBySession.has(sessionId);
+  if (!waiting && !live && !done) return null;
+  const label = t(waiting ? 'status.longTaskWaiting' : live ? 'status.longTask' : 'status.longTaskDone');
   return (
     <Tip label={label}>
       <span className={styles.dot} role="img" aria-label={label}>
-        <StateDot state={waiting ? 'warning' : 'ongoing'} />
+        <StateDot state={waiting ? 'warning' : live ? 'ongoing' : 'done'} />
       </span>
     </Tip>
   );

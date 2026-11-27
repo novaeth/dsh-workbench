@@ -28,7 +28,7 @@ import { registerWorkshopSession } from '@/shared/api/host/workshop-session';
 import { WORKBENCH_ADAPTERS, needsOf, resolveAdapterSet, type AdapterSet, type NeedProbeInput, type PluginRowsSource, type PluginUnitsPort, type WorkbenchConfig } from '@dsh-workbench/shared/host';
 import { UNIT_MANIFESTS_ROUTE } from '@/kernel/contract/unit-manifests';
 import { LONG_TASKS_ROUTE } from '@/kernel/contract/long-tasks';
-import { liveLongTaskRows } from '@/shared/api/host/long-tasks';
+import { shellLongTaskRows } from '@/shared/api/host/long-tasks';
 import { createContextInjector, installContextInject, type ContextRenderer } from '@/shared/api/host/context-inject';
 import type { DshHostContext, LongTaskBase, LongTaskRegistry, UnitCall, UnitMountResult, ToolScopeContext } from '@dsh-workbench/shared/host';
 import { applyPlanFailures, declaredNotesOf, mountUnits, failureReasonOf, type UnitsPlan } from '@/kernel/host/mount-units';
@@ -214,7 +214,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
   const factsOfMap = new Map<string, (call: UnitCall) => readonly string[] | undefined>();
   const routesOfUnitMap = new Map<string, readonly string[]>();
   const ownersMap = new Map<string, string>();
-  routes[LONG_TASKS_ROUTE] = () => ({ ok: true, runs: liveLongTaskRows(longTaskRuns) });
+  routes[LONG_TASKS_ROUTE] = () => ({ ok: true, runs: shellLongTaskRows(longTaskRuns) });
   const factsOfUnit = (unit: string): readonly string[] => [...(routesOfUnitMap.get(unit) ?? []), 'capability'];
   const callFacts = (unit: string, call: UnitCall): readonly string[] =>
     factsOfMap.get(unit)?.(call) ?? factsOfUnit(unit);

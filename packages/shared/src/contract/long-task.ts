@@ -91,6 +91,16 @@ export function runsRouteOf(unit: string): string {
 }
 
 /**
+ * 「看过了」那条写路由（走 actions 通道的资源名）：`<单元>/runs/seen`。
+ * 收尾后由外壳在列表把它渲染出来时发，清掉工作区选择器与会话行上的「已完成」提示。
+ * @param unit 单元 id。
+ * @returns <单元>/runs/seen。
+ */
+export function seenRouteOf(unit: string): string {
+  return `${unit}/runs/seen`;
+}
+
+/**
  * 停止那条写路由（走 actions 通道的资源名）：`<单元>/runs/stop`。
  * @param unit 单元 id。
  * @returns <unit>/runs/stop。

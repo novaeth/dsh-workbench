@@ -14,11 +14,13 @@ export function LongTaskHover({ sessionId, t }: LongTaskHoverProps): JSX.Element
   const edition = useRuntimeSidebarEdition();
   const presence = useLongTaskPresence();
   const waiting = presence.waitingBySession.has(sessionId);
-  if (edition !== 'official' || (!waiting && !presence.bySession.has(sessionId))) return null;
+  const live = presence.bySession.has(sessionId);
+  const done = presence.doneBySession.has(sessionId);
+  if (edition !== 'official' || (!waiting && !live && !done)) return null;
   return (
     <div className={styles.hover}>
-      <StateDot state={waiting ? 'warning' : 'ongoing'} />
-      <span>{t(waiting ? 'status.longTaskWaiting' : 'status.longTask')}</span>
+      <StateDot state={waiting ? 'warning' : live ? 'ongoing' : 'done'} />
+      <span>{t(waiting ? 'status.longTaskWaiting' : live ? 'status.longTask' : 'status.longTaskDone')}</span>
     </div>
   );
 }

@@ -55,11 +55,15 @@ describe('长任务在跑（左栏会话行与项目下拉里那颗 loading 点�
     workspaces: Array<[string, number]>,
     waitingSessions: readonly string[] = [],
     waitingWorkspaces: Array<[string, number]> = [],
+    doneSessions: readonly string[] = [],
+    doneWorkspaces: Array<[string, number]> = [],
   ): LongTaskPresence => ({
     bySession: new Set(sessions),
     byWorkspace: new Map(workspaces),
     waitingBySession: new Set(waitingSessions),
     waitingByWorkspace: new Map(waitingWorkspaces),
+    doneBySession: new Set(doneSessions),
+    doneByWorkspace: new Map(doneWorkspaces),
   });
 
   it('★★ longTaskPresenceOf：有会话可归的进 bySession，每一条都按工作区数进 byWorkspace', () => {
@@ -79,6 +83,8 @@ describe('长任务在跑（左栏会话行与项目下拉里那颗 loading 点�
       byWorkspace: new Map(),
       waitingBySession: new Set(),
       waitingByWorkspace: new Map(),
+      doneBySession: new Set(),
+      doneByWorkspace: new Map(),
     });
   });
 
@@ -92,10 +98,23 @@ describe('长任务在跑（左栏会话行与项目下拉里那颗 loading 点�
 
     expect([...presence.waitingBySession]).toEqual(['a1']);
     expect([...presence.waitingByWorkspace]).toEqual([['/w/wa', 2]]);
-    expect([...presence.byWorkspace]).toEqual([
-      ['/w/wa', 3],
-      ['/w/wb', 1],
+    expect([...presence.byWorkspace]).toEqual([['/w/wa', 3]]);
+    expect([...presence.doneBySession]).toEqual(['b1']);
+    expect([...presence.doneByWorkspace]).toEqual([['/w/wb', 1]]);
+  });
+
+  it('★★ longTaskPresenceOf：收尾的进 done 两格；看过的不进任何一格', () => {
+    const presence = longTaskPresenceOf([
+      { workspace: '/w/wa', session: 'a1', status: 'ok' },
+      { workspace: '/w/wa', session: 'a2', status: 'failed' },
+      { workspace: '/w/wa', session: 'a3', status: 'stopped', seen: true },
+      { workspace: '/w/wb', status: 'ok' },
     ]);
+
+    expect([...presence.doneBySession].sort()).toEqual(['a1', 'a2']);
+    expect([...presence.doneByWorkspace]).toEqual([['/w/wa', 2], ['/w/wb', 1]]);
+    expect([...presence.bySession]).toEqual([]);
+    expect([...presence.byWorkspace]).toEqual([]);
   });
 
   it('★ 会话自己那一档：这条会话起的某趟长任务还在跑 ⇒ 它就是 ongoing（它那一轮可能早结束了）', () => {
@@ -311,5 +330,73 @@ describe('长任务在跑（左栏会话行与项目下拉里那颗 loading 点�
         longTasks: PRESENCE([], [], ['wait'], [['/w/wa', 1]]),
       }),
     ).toBe('wait');
+  });
+
+  it('★★ 收尾且没看过 ⇒ 工作区那行是 done 档，点名叫「长任务已完成」', () => {
+    const attention = attentionOf({
+      workspaces: [workspace('wa', ['a1'])],
+      sessions: snapshot([summary('a1')]),
+      statusById: statuses([]),
+      archivedIds: ARCHIVED_NONE,
+      currentWorkspaceId: 'wa',
+      longTasks: PRESENCE([], [], [], [], [], [['/w/wa', 2]]),
+    });
+
+    const own = attention.byWorkspace.get('wa');
+    expect(own).toEqual({ severity: 'done', count: 2, longTask: true, longTaskDone: true });
+    expect(attention.elsewhere).toBeNull();
+    expect(attention.overall).toEqual({ severity: 'done', count: 2, longTask: true, longTaskDone: true });
+    expect(attentionLabel(own as WorkspaceAttention, t)).toBe('project.attention.longTaskDone.other:2');
+    expect(attentionWordLabel(own as WorkspaceAttention, t)).toBe('project.attention.state.longTaskDone');
+  });
+
+  it('★★ 收尾但看过了 ⇒ 一行都不亮（行本身还在面板列表里）', () => {
+    const attention = attentionOf({
+      workspaces: [workspace('wa', [])],
+      sessions: snapshot([]),
+      statusById: statuses([]),
+      archivedIds: ARCHIVED_NONE,
+      currentWorkspaceId: 'wa',
+      longTasks: longTaskPresenceOf([{ workspace: '/w/wa', status: 'ok', seen: true }]),
+    });
+
+    expect(attention.byWorkspace.size).toBe(0);
+    expect(attention.overall).toBeNull();
+    expect(attention.elsewhere).toBeNull();
+  });
+
+  it('★ 同一工作区既有在跑又有刚收尾 ⇒ 报在跑（ongoing），不看 done', () => {
+    const attention = attentionOf({
+      workspaces: [workspace('wa', [])],
+      sessions: snapshot([]),
+      statusById: statuses([]),
+      archivedIds: ARCHIVED_NONE,
+      currentWorkspaceId: 'wa',
+      longTasks: PRESENCE([], [['/w/wa', 1]], [], [], [], [['/w/wa', 2]]),
+    });
+
+    expect(attention.byWorkspace.get('wa')).toEqual({ severity: 'ongoing', count: 1, longTask: true });
+  });
+
+  it('★ 别的工作区的收尾走 elsewhere（触发器那句「N 个长任务已完成」）', () => {
+    const attention = attentionOf({
+      workspaces: [workspace('wa', []), workspace('wb', [])],
+      sessions: snapshot([]),
+      statusById: statuses([]),
+      archivedIds: ARCHIVED_NONE,
+      currentWorkspaceId: 'wa',
+      longTasks: PRESENCE([], [], [], [], [], [['/w/wb', 1]]),
+    });
+
+    expect(attention.byWorkspace.get('wb')).toEqual({
+      severity: 'done',
+      count: 1,
+      longTask: true,
+      longTaskDone: true,
+    });
+    expect(attention.elsewhere).toEqual({ severity: 'done', count: 1, longTask: true, longTaskDone: true });
+    expect(attentionLabel(attention.elsewhere as WorkspaceAttention, t)).toBe(
+      'project.attention.longTaskDone.one:1',
+    );
   });
 });

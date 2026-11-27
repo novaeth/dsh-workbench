@@ -60,6 +60,7 @@ describe('mountUnits：长任务的停止（外壳按单元自动挂那条动作
       'demo/release',
       'demo/runs/answer',
       'demo/runs/recheck',
+      'demo/runs/seen',
       'demo/runs/stop',
     ]);
     expect(stop?.unit).toBe('demo');
@@ -133,12 +134,13 @@ describe('mountUnits：长任务的停止（外壳按单元自动挂那条动作
     expect(Object.keys(plan.routes)).toEqual(['demo/runs']);
     expect(plan.actions.map((item) => item.resource)).toEqual([
       'demo/runs/stop',
+      'demo/runs/seen',
       'demo/runs/recheck',
       'demo/runs/answer',
     ]);
     expect(stop?.handle({})).toEqual({
       ok: false,
-      text: '这一份工作台还是上一版的注册表，停不了 —— 重新起一下工作台就能停',
+      text: '这一份工作台仍是上一版的注册表，无法停止；重新启动工作台后即可停止。',
     });
   });
 });
@@ -198,6 +200,7 @@ describe('mountUnits：长任务的重查（外壳按单元自动挂「我处理
     expect(face.plan.actions.map((item) => item.resource).sort()).toEqual([
       'demo/runs/answer',
       'demo/runs/recheck',
+      'demo/runs/seen',
       'demo/runs/stop',
     ]);
     expect(face.recheck?.handle({ id })).toEqual({ ok: true, rechecked: true });
@@ -213,7 +216,7 @@ describe('mountUnits：长任务的重查（外壳按单元自动挂「我处理
 
     expect(face.recheck?.handle({ id })).toEqual({
       ok: false,
-      text: '这一趟没有可重查的口 —— 模块没给重查处理',
+      text: '这一趟没有可重查的入口，模块没有提供重查处理。',
     });
     expect(face.statusOf(id)).toBe('running');
     expect(face.runs('/w/a')).toEqual({ ok: true, runs: [expect.objectContaining({ id })] });
@@ -226,11 +229,11 @@ describe('mountUnits：长任务的重查（外壳按单元自动挂「我处理
     const face = recheckFace({ recheck: (current) => seen.push(current.id) });
     const id = face.start();
 
-    expect(face.recheck?.handle({})).toEqual({ ok: false, text: '要重查哪一趟？给一个 id 才成' });
+    expect(face.recheck?.handle({})).toEqual({ ok: false, text: '没有指明要重查哪一趟，请重试。' });
     expect(face.recheck?.handle({ id: '' })).toMatchObject({ ok: false });
     expect(face.recheck?.handle({ id: '不认识的-id' })).toEqual({
       ok: false,
-      text: '没有这一趟 —— id 对不上，没什么可重查的',
+      text: '没有这一趟，列表可能已经变化。请重新打开面板。',
     });
 
     expect(seen).toEqual([]);
@@ -256,12 +259,13 @@ describe('mountUnits：长任务的重查（外壳按单元自动挂「我处理
 
     expect(plan.actions.map((item) => item.resource)).toEqual([
       'demo/runs/stop',
+      'demo/runs/seen',
       'demo/runs/recheck',
       'demo/runs/answer',
     ]);
     expect(recheck?.handle({ id: 'any' })).toEqual({
       ok: false,
-      text: '这一份工作台还是上一版的注册表，重查不了 —— 重新起一下工作台就能重查',
+      text: '这一份工作台仍是上一版的注册表，无法重查；重新启动工作台后即可重查。',
     });
   });
 });
@@ -338,6 +342,87 @@ describe('mountUnits：长任务的回执（answer 动作连同 redact 一起挂
       ok: true,
       runs: [expect.objectContaining({ id, answerable: true })],
     });
+  });
+});
+
+describe('mountUnits：长任务的「看过」（收尾后清掉未看提示）', () => {
+  function seenFace(run: () => Promise<unknown> = () => new Promise<never>(() => {})): {
+    plan: ReturnType<typeof mountUnits>;
+    seen: { handle(payload: unknown): unknown } | undefined;
+    start: () => string;
+    statusOf: (id: string) => string | undefined;
+    snapshotOf: (id: string) => LongTaskBase | null | undefined;
+  } {
+    const box: {
+      start?: () => string;
+      status?: (id: string) => string | undefined;
+      snapshot?: (id: string) => LongTaskBase | null;
+    } = {};
+    const host = hostOf(manifest('demo', { inject: [] }), (deps) => {
+      const runs = deps.longTasks?.create({
+        key: 'release',
+        run,
+        view: (snapshot: { id: string; workspace: string; target: string; status: string }) => ({
+          id: snapshot.id,
+          env: snapshot.target,
+          status: snapshot.status,
+        }),
+      });
+      if (runs !== undefined) {
+        box.start = () => runs.start({ workspace: '/w/a', target: 'test' }).id;
+        box.status = (id: string) => runs.snapshot(id)?.status;
+        box.snapshot = (id: string) => runs.snapshot(id);
+      }
+      return { routes: {}, registerTools: () => [], ...(runs === undefined ? {} : { longTasks: runs }) };
+    });
+    const plan = mountUnits([host], {
+      ctx: ctxWith([]),
+      manifests: () => [],
+      longTasks: { scope: `test-${String(Date.now())}-${Math.random()}`, bump: () => {} },
+    });
+    return {
+      plan,
+      seen: plan.actions.find((item) => item.resource === 'demo/runs/seen'),
+      start: () => box.start?.() ?? '',
+      statusOf: (id) => box.status?.(id),
+      snapshotOf: (id) => box.snapshot?.(id),
+    };
+  }
+
+  it('★ 这一趟还在运行 → 回「结束后才能标记」那句，状态一个都不动', () => {
+    const face = seenFace();
+    const id = face.start();
+
+    expect(face.seen?.handle({ id })).toEqual({
+      ok: false,
+      text: '这一趟还在运行，结束后才能标记为已查看。',
+    });
+    expect(face.snapshotOf(id)?.seen).toBe(false);
+  });
+
+  it('★★ 收尾后 → ok 且快照 seen；再按一下还是 ok（幂等）', async () => {
+    const face = seenFace(() => Promise.resolve({}));
+    const id = face.start();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(face.statusOf(id)).toBe('ok');
+
+    expect(face.seen?.handle({ id })).toEqual({ ok: true, seen: true });
+    expect(face.snapshotOf(id)?.seen).toBe(true);
+    expect(face.seen?.handle({ id })).toEqual({ ok: true, seen: true });
+  });
+
+  it('★ 空 id / 不认识的 id → 各回一句人话', () => {
+    const face = seenFace();
+    const id = face.start();
+
+    expect(face.seen?.handle({})).toEqual({ ok: false, text: '没有指明要标记哪一趟，请重试。' });
+    expect(face.seen?.handle({ id: '' })).toMatchObject({ ok: false });
+    expect(face.seen?.handle({ id: '不认识的-id' })).toEqual({
+      ok: false,
+      text: '没有这一趟，列表可能已经变化。请重新打开面板。',
+    });
+    expect(face.snapshotOf(id)?.seen).toBe(false);
   });
 });
 

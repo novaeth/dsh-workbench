@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { longTaskPollMs, type FactTransportMode } from '@dsh-workbench/shared';
+import { longTaskIsLive, longTaskPollMs, type FactTransportMode } from '@dsh-workbench/shared';
 
 import {
   LONG_TASKS_ROUTE,
@@ -44,7 +44,7 @@ function hidden(): boolean {
 }
 
 function every(): number {
-  return mode === 'sse' ? SSE_HEARTBEAT_MS : longTaskPollMs(rows.length > 0);
+  return mode === 'sse' ? SSE_HEARTBEAT_MS : longTaskPollMs(rows.some((row) => longTaskIsLive(row.status)));
 }
 
 function clearTimer(): void {

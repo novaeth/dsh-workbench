@@ -1,6 +1,14 @@
-import { createElement as h, useState } from 'react';
+import { createElement as h, useEffect, useRef, useState } from 'react';
 import type { ShellLongTaskRow, Translate } from '@dsh-workbench/shared';
-import { answerRouteOf, pathBase, recheckRouteOf, stopRouteOf } from '@dsh-workbench/shared';
+import {
+  answerRouteOf,
+  longTaskDot,
+  longTaskIsLive,
+  pathBase,
+  recheckRouteOf,
+  seenRouteOf,
+  stopRouteOf,
+} from '@dsh-workbench/shared';
 import { IconFolderCloseRegular, Menu, StateDot } from '@deepseek-ai/dsh-client-ui-primitives';
 import { postWrite } from '@/shared/hooks/use-host-write';
 import { useExternalActions } from '@/shared/hooks/use-external-actions';
@@ -43,16 +51,49 @@ function resourceOf(kind: DoneKind, unit: string): string {
   return answerRouteOf(unit);
 }
 
+export function ackableLongTaskRows(rows: readonly ShellLongTaskRow[]): ShellLongTaskRow[] {
+  return rows.filter((row) => !longTaskIsLive(row.status) && row.seen !== true);
+}
+
 export function LongTaskFooterAction({ wide, t }: LongTaskFooterActionProps) {
   const rows = useShellLongTasks();
   const external = useExternalActions(() => undefined);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<Busy | null>(null);
   const [failed, setFailed] = useState<Failed | null>(null);
+  const acked = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!open) return;
+    for (const row of ackableLongTaskRows(rows)) {
+      if (acked.current.has(row.id)) continue;
+      acked.current.add(row.id);
+      void postWrite(
+        'actions',
+        seenRouteOf(row.unit),
+        { id: row.id },
+        '网络不通，标记为已查看的请求没发出去',
+      ).then((outcome) => {
+        if (!outcome.ok) acked.current.delete(row.id);
+      });
+    }
+  }, [open, rows]);
 
   if (rows.length === 0) return null;
 
   const waiting = rows.some((row) => row.status === 'needs-human' || row.status === 'needs-login');
+  const states = rows
+    .filter((row) => longTaskIsLive(row.status) || row.seen !== true)
+    .map((row) => longTaskDot(row.status));
+  const dotState = waiting
+    ? 'warning'
+    : states.includes('ongoing')
+      ? 'ongoing'
+      : states.includes('error')
+        ? 'error'
+        : states.includes('done')
+          ? 'done'
+          : 'idle';
   const byWorkspace = new Map<string, Map<string, ShellLongTaskRow[]>>();
   for (const row of rows) {
     const units = byWorkspace.get(row.workspace) ?? new Map<string, ShellLongTaskRow[]>();
@@ -97,7 +138,7 @@ export function LongTaskFooterAction({ wide, t }: LongTaskFooterActionProps) {
       'aria-expanded': open,
       onClick: () => setOpen((value) => !value),
     },
-    h('span', { className: styles.dot }, h(StateDot, { state: waiting ? 'warning' : 'ongoing' })),
+    h('span', { className: styles.dot }, h(StateDot, { state: dotState })),
     wide === true ? h('span', { className: styles.label }, t('longTask.list.entry', { n: rows.length })) : null,
   );
 

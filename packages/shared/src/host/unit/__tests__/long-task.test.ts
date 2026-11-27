@@ -303,6 +303,46 @@ describe('createLongTaskRegistry 的人工干预节点（needs-human）', () => 
     expect(runs.active('/w/a', 'release')?.status).toBe('needs-human');
   });
 
+  it('★★ recent()：活着的都在；收尾的在 recentMs 内还在、超出就掉', async () => {
+    let clock = '2026-10-21T02:00:00.000Z';
+    const h = harness({ now: () => clock, recentMs: 60_000 });
+    const runs = createLongTaskRegistry(h.deps);
+    runs.start({ workspace: '/w/a', target: 'live' });
+    const settled = runs.start({ workspace: '/w/a', target: 'settled' });
+
+    h.done({});
+    await flush();
+    expect(settled.status).toBe('running');
+    expect(runs.recent().map((one) => one.target).sort()).toEqual(['live', 'settled']);
+
+    clock = '2026-10-21T02:01:01.000Z';
+    expect(runs.recent().map((one) => one.target)).toEqual(['live']);
+    expect(runs.live().map((one) => one.target)).toEqual(['live']);
+  });
+
+  it('★★ seen(id)：只认已收尾的；标过不再通知，at 不动', async () => {
+    const h = harness();
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+
+    expect(runs.seen(started.id)).toBe(false);
+    expect(runs.snapshot(started.id)?.seen).toBe(false);
+
+    h.done({});
+    await flush();
+    const at = runs.snapshot(started.id)?.at;
+    const kinds: string[] = [];
+    runs.onChange((change) => kinds.push(change.kind));
+
+    expect(runs.seen(started.id)).toBe(true);
+    expect(runs.snapshot(started.id)?.seen).toBe(true);
+    expect(runs.snapshot(started.id)?.at).toBe(at);
+    expect(kinds).toEqual(['seen']);
+    expect(runs.seen(started.id)).toBe(true);
+    expect(kinds).toEqual(['seen']);
+    expect(runs.seen('run-nope')).toBe(false);
+  });
+
   it('★ 等人那一趟能停，载荷跟着清掉', () => {
     const h = harness();
     const runs = createLongTaskRegistry(h.deps);
@@ -845,6 +885,11 @@ describe('longTaskRowBase（外壳先铺这一层，view 只覆盖不遗漏）',
 
   it('★★ 没有 links 就不落这个键（旧快照不多一个空键）', () => {
     expect('links' in longTaskRowBase(base)).toBe(false);
+  });
+
+  it('★★ seen 只在 true 时带上（活着的不落这个键）', () => {
+    expect('seen' in longTaskRowBase(base)).toBe(false);
+    expect(longTaskRowBase({ ...base, seen: true }).seen).toBe(true);
   });
 
   it('★★ 有 links 就原样带上（逐条是 { href, text }）', () => {

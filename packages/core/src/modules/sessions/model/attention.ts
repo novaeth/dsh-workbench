@@ -14,6 +14,7 @@ export interface WorkspaceAttention {
   readonly count: number;
   readonly longTask?: boolean | undefined;
   readonly longTaskWaiting?: boolean | undefined;
+  readonly longTaskDone?: boolean | undefined;
 }
 
 export interface LongTaskPresence {
@@ -21,10 +22,16 @@ export interface LongTaskPresence {
   readonly byWorkspace: ReadonlyMap<string, number>;
   readonly waitingBySession: ReadonlySet<string>;
   readonly waitingByWorkspace: ReadonlyMap<string, number>;
+  readonly doneBySession: ReadonlySet<string>;
+  readonly doneByWorkspace: ReadonlyMap<string, number>;
 }
 
 function longTaskWaitingStatus(status: string | undefined): boolean {
   return status === 'needs-human' || status === 'needs-login';
+}
+
+function longTaskSettledStatus(status: string | undefined): boolean {
+  return status === 'ok' || status === 'failed' || status === 'stopped';
 }
 
 export function longTaskPresenceOf(
@@ -32,20 +39,29 @@ export function longTaskPresenceOf(
     readonly workspace: string;
     readonly session?: string | undefined;
     readonly status?: string | undefined;
+    readonly seen?: boolean | undefined;
   }[],
 ): LongTaskPresence {
   const bySession = new Set<string>();
   const byWorkspace = new Map<string, number>();
   const waitingBySession = new Set<string>();
   const waitingByWorkspace = new Map<string, number>();
+  const doneBySession = new Set<string>();
+  const doneByWorkspace = new Map<string, number>();
   for (const row of rows) {
+    if (longTaskSettledStatus(row.status)) {
+      if (row.seen === true) continue;
+      if (row.session !== undefined) doneBySession.add(row.session);
+      doneByWorkspace.set(row.workspace, (doneByWorkspace.get(row.workspace) ?? 0) + 1);
+      continue;
+    }
     if (row.session !== undefined) bySession.add(row.session);
     byWorkspace.set(row.workspace, (byWorkspace.get(row.workspace) ?? 0) + 1);
     if (!longTaskWaitingStatus(row.status)) continue;
     if (row.session !== undefined) waitingBySession.add(row.session);
     waitingByWorkspace.set(row.workspace, (waitingByWorkspace.get(row.workspace) ?? 0) + 1);
   }
-  return { bySession, byWorkspace, waitingBySession, waitingByWorkspace };
+  return { bySession, byWorkspace, waitingBySession, waitingByWorkspace, doneBySession, doneByWorkspace };
 }
 
 export interface Attention {
@@ -76,6 +92,29 @@ const SENTENCES: Record<AttentionSeverity, { readonly one: string; readonly othe
   ongoing: { one: 'project.attention.running.one', other: 'project.attention.running.other' },
   done: { one: 'project.attention.done.one', other: 'project.attention.done.other' },
 };
+
+const LONG_TASK_SENTENCES = {
+  one: 'project.attention.longTask.one',
+  other: 'project.attention.longTask.other',
+} as const;
+
+const LONG_TASK_WAITING_SENTENCES = {
+  one: 'project.attention.longTaskWaiting.one',
+  other: 'project.attention.longTaskWaiting.other',
+} as const;
+
+const LONG_TASK_DONE_SENTENCES = {
+  one: 'project.attention.longTaskDone.one',
+  other: 'project.attention.longTaskDone.other',
+} as const;
+
+function sentenceOf(
+  t: Translate,
+  count: number,
+  keys: { readonly one: string; readonly other: string },
+): string {
+  return t(count === 1 ? keys.one : keys.other, { n: count });
+}
 
 const WORDS: Record<AttentionSeverity, string> = {
   warning: 'project.attention.state.warning',
@@ -173,23 +212,26 @@ export function attentionOf(input: AttentionInput): Attention {
       }
     }
 
-    const waiting = input.longTasks?.waitingByWorkspace.get(workspace.path) ?? 0;
-    if (waiting > 0) {
-      const own: WorkspaceAttention = {
-        severity: 'warning',
-        count: waiting,
-        longTask: true,
-        longTaskWaiting: true,
-      };
+    const claim = (own: WorkspaceAttention): void => {
       byWorkspace.set(workspace.workspaceId, own);
       overall = merge(overall, own);
       if (workspace.workspaceId !== input.currentWorkspaceId) elsewhere = merge(elsewhere, own);
+    };
+
+    const waiting = input.longTasks?.waitingByWorkspace.get(workspace.path) ?? 0;
+    if (waiting > 0) {
+      claim({ severity: 'warning', count: waiting, longTask: true, longTaskWaiting: true });
       continue;
     }
 
     const longTasks = input.longTasks?.byWorkspace.get(workspace.path) ?? 0;
     if (severity === undefined && longTasks > 0) {
       byWorkspace.set(workspace.workspaceId, { severity: 'ongoing', count: longTasks, longTask: true });
+      continue;
+    }
+    const done = input.longTasks?.doneByWorkspace.get(workspace.path) ?? 0;
+    if (severity === undefined && done > 0) {
+      claim({ severity: 'done', count: done, longTask: true, longTaskDone: true });
       continue;
     }
     if (severity === undefined) continue;
@@ -208,32 +250,24 @@ function merge(current: WorkspaceAttention | null, next: WorkspaceAttention): Wo
   if (current === null || RANK[next.severity] > RANK[current.severity]) return next;
   if (next.severity !== current.severity) return current;
   const waiting = current.longTaskWaiting === true && next.longTaskWaiting === true;
+  const done = current.longTaskDone === true && next.longTaskDone === true;
   return {
     severity: current.severity,
     count: current.count + next.count,
     ...(waiting ? { longTask: true, longTaskWaiting: true } : {}),
+    ...(done ? { longTask: true, longTaskDone: true } : {}),
   };
 }
 
 export function attentionLabel(attention: WorkspaceAttention, t: Translate): string {
-  if (attention.longTaskWaiting === true) {
-    return t(
-      attention.count === 1
-        ? 'project.attention.longTaskWaiting.one'
-        : 'project.attention.longTaskWaiting.other',
-      { n: attention.count },
-    );
-  }
-  if (attention.longTask === true) {
-    return t(attention.count === 1 ? 'project.attention.longTask.one' : 'project.attention.longTask.other', {
-      n: attention.count,
-    });
-  }
-  const keys = SENTENCES[attention.severity];
-  return t(attention.count === 1 ? keys.one : keys.other, { n: attention.count });
+  if (attention.longTaskWaiting === true) return sentenceOf(t, attention.count, LONG_TASK_WAITING_SENTENCES);
+  if (attention.longTaskDone === true) return sentenceOf(t, attention.count, LONG_TASK_DONE_SENTENCES);
+  if (attention.longTask === true) return sentenceOf(t, attention.count, LONG_TASK_SENTENCES);
+  return sentenceOf(t, attention.count, SENTENCES[attention.severity]);
 }
 
 export function attentionWordLabel(attention: WorkspaceAttention, t: Translate): string {
   if (attention.longTaskWaiting === true) return t('project.attention.state.longTaskWaiting');
+  if (attention.longTaskDone === true) return t('project.attention.state.longTaskDone');
   return t(WORDS[attention.severity]);
 }

@@ -377,7 +377,9 @@ function fakeLongTasks(created) {
         active: () => null,
         current: () => [],
         live: () => [],
+        recent: () => [],
         stop: () => false,
+        seen: () => false,
         onChange: () => () => {},
         recheck: () => false,
         answer: () => false,
@@ -498,7 +500,7 @@ function mountOf(face, created, manifest, tools) {
   }
 }
 
-const LONG_TASK_METHODS = ['start', 'snapshot', 'active', 'current', 'live', 'stop', 'onChange', 'recheck', 'answer'];
+const LONG_TASK_METHODS = ['start', 'snapshot', 'active', 'current', 'live', 'recent', 'stop', 'seen', 'onChange', 'recheck', 'answer'];
 
 const LONG_TASK_RENDERERS = ['useLongTask', 'LongTaskRow', 'longTaskDot'];
 
@@ -968,7 +970,7 @@ export async function run(options = {}) {
         if (missing.length > 0) {
           problems.push(
             `${name}: 长任务注册表缺少方法 ${missing.join(' / ')} —— 工作台据此为该单元生成 /runs 路由（停止 / 已处理 / 回执三个按钮也据此发送），` +
-              `kit 的 useLongTask 与左栏会话行中的该 loading 指示点读取的也是它（后者使用 \`live()\`；注册表用 ` +
+              `kit 的 useLongTask 与左栏会话行中的该 loading 指示点、左栏底部的长任务列表读取的也是它（后者使用 \`live()\` / \`recent()\`；注册表用 ` +
               `@dsh-workbench/shared/host 的 createLongTaskRegistry 建）`,
           );
         }

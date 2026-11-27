@@ -154,16 +154,16 @@
 - `contracts` 判据：`apiVersion` 必须是 3；`needs` 走同一份 `NEED_KINDS` 注册表校验（`purpose` 必填、
   `bin`/`env` 不许带 `sources`（`bin` 需要代为安装就写 `install`）、`lib` 只认 npm 源）；
   声明了 `lib` 必须用 `deps.libInstallCommand`。
-  未知 `runtime` 不报错：探针给「这个运行时工作台还不认识」的 `unchecked`，等运行时 provider 补上。
+  未知 `runtime` 不报错：探针给「这个运行时工作台还不认识」的 `unchecked`，等 provider 补上。
 
 ## 9 长任务
 
-耗时几十秒以上的操作做成长任务：`mount` deps 的 `longTasks` 并挂回：
+耗时几十秒以上做成长任务：`mount` deps 的 `longTasks` 并挂回：
 
-`deps.longTasks.create(...)` 建注册表、`start` 起一趟；方法、字段见
-`LongTaskHost` / `LongTaskDeps` / `LongTaskRegistry`；`run` 里用 `onStep` 报步骤。
+`deps.longTasks.create(...)` 建注册表、`start` 起一趟；字段见 `LongTaskDeps`，方法见 `LongTaskRegistry`；
+`run` 里用 `onStep` 报步骤。
 
-- 来源：工具里 `runs.start({ …, session: deps.sessionIdOf(exec) ?? undefined })`。未记录 = 用户手动启动的 → 停止需审批。
+- 来源：工具里 `runs.start({ …, session: deps.sessionIdOf(exec) ?? undefined })`。未记录 = 用户手动起的 → 停止需审批。
 - 流程事件默认用 `longTaskStepOf(event)`。
 - **步骤链接**：步骤可带 `links`（`{ href, text }`，≤3、只认 `http(s)`），flow 用 `ctx.log(text, links?)`；
   快照另攒结构化 `history`（与 `steps` 同源同上限），旧视图照旧读 `steps`。
@@ -194,7 +194,8 @@
   他人的 / 用户手动启动的 / 未记录来源的需要审批；跨工作区直接拒绝。
 - `contracts` 查形状：注册表方法见 `LongTaskRegistry`，`create` 的字段见 `LongTaskDeps`；
   产物含 `useLongTask` / `LongTaskRow` 之一。是否实际响应 signal 不在检查范围内。
-- 左栏的状态点由工作台按 `live()` 驱动；等待人工处理时升级为「等你处理」的 warning，模块不做。
+- 左栏状态点按 `live()` 驱动（等人升 warning）；底部「工作台任务」按 `recent()` 取数（运行中 + 十分钟内收尾），
+  收尾行被看到后工作台调 `seen()` 清提示。
 - 用 `stop` / `session` / 长任务工具需把 `@dsh-workbench/core` peer 下限抬到含它们的版本（`check --only kit` 查）。
 
 `registerTools()` 调用时才注册、返回清理函数；工具名与 `dsh.workbench.tools` 一字不差，没有就 `() => []`。

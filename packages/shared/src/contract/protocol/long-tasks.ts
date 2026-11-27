@@ -7,7 +7,11 @@ import type {
 
 export const LONG_TASKS_ROUTE = 'long-tasks';
 
-export interface ShellLongTaskRow {
+interface ShellLongTaskSeenFields {
+  readonly seen?: boolean | undefined;
+}
+
+export interface ShellLongTaskRow extends ShellLongTaskSeenFields {
   readonly unit: string;
   readonly id: string;
   readonly workspace: string;

@@ -41,9 +41,28 @@ describe('左栏底部的长任务入口：一条入口 + 一张全局长任务�
     expect(CLIENT).not.toContain('registerLongTaskFooter');
   });
 
-  it('★★ 等待人工处理时点升级成 warning（与左栏状态点同一套）', () => {
+  it('★★ 等待人工处理时点升级成 warning；其余按六态取档（在跑 > 失败 > 完成 > 空闲）', () => {
     expect(ACTION).toContain("row.status === 'needs-human'");
-    expect(ACTION).toContain("waiting ? 'warning' : 'ongoing'");
+    expect(ACTION).toContain('const states = rows');
+    expect(ACTION).toContain("states.includes('ongoing')");
+    expect(ACTION).toContain("states.includes('error')");
+    expect(ACTION).toContain("states.includes('done')");
+    expect(ACTION).toContain("? 'warning'");
+  });
+
+  it('★★ 打开面板、行渲染出来才记「看过」：收尾且没看过的行发一次 seen，去重', () => {
+    expect(ACTION).toContain('export function ackableLongTaskRows');
+    expect(ACTION).toContain('!longTaskIsLive(row.status) && row.seen !== true');
+    expect(ACTION).toContain('if (!open) return;');
+    expect(ACTION).toContain('seenRouteOf(row.unit)');
+    expect(ACTION).toContain('acked.current.has(row.id)');
+    expect(ACTION).toContain('acked.current.add(row.id)');
+    expect(ACTION).toContain('if (!outcome.ok) acked.current.delete(row.id);');
+  });
+
+  it('★ 轮询按「有没有活任务」分档：有活 1.5 秒，全收尾 10 秒', () => {
+    const hook = read('../../../shared/hooks/use-shell-long-tasks.ts');
+    expect(hook).toContain('longTaskPollMs(rows.some((row) => longTaskIsLive(row.status)))');
   });
 
   it('★★ 宽态占满一整格：外壳撑满一行，行高 / 圆角跟底部那几格对齐', () => {
