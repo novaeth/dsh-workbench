@@ -80,7 +80,7 @@ function moduleShell(): Plugin {
 
 const nodeBuiltins = [...builtinModules, ...builtinModules.map((name) => `node:${name}`)];
 
-const BUNDLED_WORKSPACE_DEPS = new Set<string>();
+const BUNDLED_WORKSPACE_DEPS = new Set(['@dsh-workbench/shared']);
 
 const workspaceRuntimeDeps = (): readonly string[] => {
   try {

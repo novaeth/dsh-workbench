@@ -4,7 +4,7 @@ import { targetOf } from './run.js';
 import { schemaProblem } from './schema.js';
 
 export function openFlow(options: FlowOpenOptions): FlowSession {
-  const steps: Record<string, unknown> = { ...(options.resume?.values ?? {}) };
+  const steps: Record<string, unknown> = {};
   let current: FlowStepPosition | null = null;
   let schemaOfCurrent: unknown;
   let pending: { readonly stepId: string; readonly resolve: (value: unknown) => void } | null = null;
@@ -27,50 +27,35 @@ export function openFlow(options: FlowOpenOptions): FlowSession {
       pending = { stepId, resolve };
     });
 
-  const resumeIndex = options.resume === undefined
-    ? 0
-    : options.flow.steps.findIndex((step) => step.id === options.resume?.stepId);
-  if (resumeIndex < 0) {
+  void (async () => {
+    for (const [index, step] of options.flow.steps.entries()) {
+      if (stopped) break;
+      const title = step.title ?? step.id;
+      if (step.when !== undefined && !evalPredicate(step.when, { in: options.input, steps })) {
+        emit({ stepId: step.id, title, status: 'skipped' });
+        continue;
+      }
+      if (
+        options.flow.stopWhen !== undefined &&
+        evalPredicate(options.flow.stopWhen, { in: options.input, steps })
+      ) {
+        break;
+      }
+      current = { index, stepId: step.id, title };
+      schemaOfCurrent = 'schema' in step ? step.schema : undefined;
+      emit({ stepId: step.id, title, status: 'running' });
+      const value = await wait(step.id);
+      pending = null;
+      if (stopped) break;
+      steps[step.id] = value;
+      current = null;
+    }
     settle({
-      status: 'failed',
+      status: stopped ? 'stopped' : 'ok',
       target: targetOf(options.flow, { in: options.input, steps }),
       steps,
-      failedStep: options.resume?.stepId,
-      error: `流程定义里没有步骤 ${String(options.resume?.stepId)}`,
     });
-  } else {
-    void (async () => {
-      for (let index = resumeIndex; index < options.flow.steps.length; index += 1) {
-        const step = options.flow.steps[index];
-        if (step === undefined) continue;
-        if (stopped) break;
-        const title = step.title ?? step.id;
-        if (step.when !== undefined && !evalPredicate(step.when, { in: options.input, steps })) {
-          emit({ stepId: step.id, title, status: 'skipped' });
-          continue;
-        }
-        if (
-          options.flow.stopWhen !== undefined &&
-          evalPredicate(options.flow.stopWhen, { in: options.input, steps })
-        ) {
-          break;
-        }
-        current = { index, stepId: step.id, title };
-        schemaOfCurrent = 'schema' in step ? step.schema : undefined;
-        emit({ stepId: step.id, title, status: 'running' });
-        const value = await wait(step.id);
-        pending = null;
-        if (stopped) break;
-        steps[step.id] = value;
-        current = null;
-      }
-      settle({
-        status: stopped ? 'stopped' : 'ok',
-        target: targetOf(options.flow, { in: options.input, steps }),
-        steps,
-      });
-    })();
-  }
+  })();
 
   return {
     result,

@@ -76,38 +76,6 @@ describe('open：引擎不执行步骤，由外部逐步推进', () => {
     expect(session.provide('a', 1).ok).toBe(false);
   });
 
-  it('★ 从某一步恢复：前面的值算已完成，当前步继续等结果', async () => {
-    const session = createFlowHost().open({
-      flow,
-      input: {},
-      resume: { stepId: 'b', values: { a: { go: true } } },
-      onStep: () => {},
-    });
-
-    expect(session.current()).toEqual({ index: 1, stepId: 'b', title: 'B' });
-    expect(session.provide('b', 2).ok).toBe(true);
-    await tick();
-    session.provide('c', 3);
-
-    const result = await session.result;
-    expect(result.status).toBe('ok');
-    expect(result.steps).toEqual({ a: { go: true }, b: 2, c: 3 });
-  });
-
-  it('★ 恢复点不在定义里：直接 failed，不从头跑', async () => {
-    const session = createFlowHost().open({
-      flow,
-      input: {},
-      resume: { stepId: 'missing', values: {} },
-      onStep: () => {},
-    });
-
-    expect(session.current()).toBeNull();
-    const result = await session.result;
-    expect(result.status).toBe('failed');
-    expect(result.failedStep).toBe('missing');
-  });
-
   it('★ 外部推进的流程不许带执行体，校验点名那一步', () => {
     const host = createFlowHost();
     const withAction: FlowDefinition = {
