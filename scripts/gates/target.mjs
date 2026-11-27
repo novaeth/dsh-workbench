@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 
 import { misplacedTests } from '../arch/rules/tests-in-folders.mjs';
+import { GATE_STEPS } from '../gate/steps.mjs';
 import { ADAPTER_ALLOWED_IMPORTS, adapterPackageDirs } from '../arch/adapter-packages.mjs';
 import {
   CLIENT_GRAPH_HOST_PATHS,
@@ -675,9 +676,8 @@ const GATES = [
     id: 'CHAIN-2',
     title: '目标报告与默认 check 的并入时机',
     run() {
-      const pkg = JSON.parse(read(join(ROOT, 'package.json')));
       const allGreen = GATES.filter((gate) => gate.id !== 'CHAIN-2').every((gate) => gate.run().status === 'pass');
-      const inCheck = defaultCheckHasTarget(pkg);
+      const inCheck = defaultCheckHasTarget();
       if (chainTargetPolicy(allGreen, inCheck)) return pass(allGreen ? '全绿，目标报告已并入 check' : '仍有红，目标报告独立于 check');
       return fail([
         finding(
@@ -1092,8 +1092,8 @@ function packageHasScript(pkg, name) {
   return typeof pkg.scripts?.[name] === 'string';
 }
 
-function defaultCheckHasTarget(pkg) {
-  return String(pkg.scripts?.check ?? '').includes('check:gates:target');
+function defaultCheckHasTarget() {
+  return GATE_STEPS.some((step) => step.name === 'check:gates:target');
 }
 
 function chainTargetPolicy(allGreen, inCheck) {

@@ -340,8 +340,12 @@ dsh-wb-module design accept   # 在真实卡片上逐条验证后勾选
 ## 自己的自检
 
 ```bash
-node scripts/selfcheck/index.mjs
+node scripts/selfcheck/index.mjs --shards
 ```
+
+`--shards` 把判据按序号轮转切成几片并行执行，片数默认取 `min(4, CPU 核数 / 2)`；`--shards 1` 走单进程，
+`--shards 8` 指定片数。`--timing` 在每条判据后打印耗时。分片各自使用独立临时目录；`packages/` 下 `.init-*`
+残留那条判据固定留到父进程收尾时执行。
 
 工具箱的回归测试：模板 `init` 一遍、运行全套（含生成的 `.gitignore`）；判据的正例与负例都要通过；打包清单不含
 `.tpl` 残留、模板里没有 npm 打包会排除的点文件；`design` 的空格、README / DEVELOPING 同步、`accept`；`publish` 的清单；`release` 的验收门禁、

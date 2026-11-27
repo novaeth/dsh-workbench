@@ -98,6 +98,7 @@ export const checks = [
   },
   {
     title: LEFTOVER_TITLE,
+    shardExcluded: true,
     run(_ctx, report) {
 
       const leftovers = readdirSync(PACKAGES_DIR).filter((name) => name.startsWith('.init-'));

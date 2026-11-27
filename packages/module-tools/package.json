@@ -24,7 +24,7 @@
     "lint": "eslint src bin scripts",
     "arch": "arch-guard",
     "check": "pnpm run lint && pnpm run arch && pnpm run selfcheck",
-    "selfcheck": "node scripts/selfcheck/index.mjs",
+    "selfcheck": "node scripts/selfcheck/index.mjs --shards",
     "test": "vitest run --testTimeout=20000"
   },
   "dependencies": {

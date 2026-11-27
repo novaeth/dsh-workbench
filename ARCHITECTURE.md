@@ -1171,6 +1171,10 @@ check:release-artifacts
 ```
 <!-- doc-facts:end gate-chain -->
 
+顺序的唯一定义在 `scripts/gate/steps.mjs`，文档里的链由它渲染。默认不在第一个失败处停：互不依赖的步骤
+都执行完再汇总失败清单（每项附输出末尾）；依赖 `build` 的步骤在 `build` 失败时标为未运行。
+`node scripts/gate.mjs --fail-fast` 恢复第一个失败就停，`--only <名字,名字>` 只跑指定步骤。
+
 重复代码是基线门禁：存量克隆记在 `.jscpd-baseline.json`，`check:duplication` 只红在基线之外的
 新克隆；`pnpm run duplication:accept` 重写基线（**必须经用户明确同意**，和代码一起提交），`pnpm run duplication:report`
 出 `coverage/duplication/` 下的 HTML / JSON 全量报告。扫描面（`packages/` 与 `scripts/` 的

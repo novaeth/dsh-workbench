@@ -54,6 +54,9 @@ pnpm run check                        # 门禁：整仓那一套（= `pnpm -w ru
 `scripts/check-opencli-wire.mjs` → `check:release-packages` → `check:release-artifacts`
 <!-- doc-facts:end gate-chain-inline -->
 
+默认执行完所有步骤再汇总失败（依赖 `build` 的步骤在 `build` 失败时标为未运行）；`--fail-fast` 恢复第一个失败就停，
+`--only <名字,名字>` 只执行指定步骤。
+
 `pnpm release` 的闸也是它。
 发版另有一道无法跳过的更新日志闸（只对正式版本；`-beta` / `-rc` 这类预发布跳过）：目标版本必须已经在
 `packages/docs/site/desktop/views/changelog.md` 里有一节；构建后还会核对随 `@dsh-workbench/core`

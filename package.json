@@ -68,7 +68,7 @@
     "check:kit": "node packages/module-tools/bin/dsh-wb-module.mjs check --only kit",
     "check:module-tools": "pnpm --filter @dsh-workbench/module-tools run selfcheck",
     "check:adapter-defaults": "pnpm --filter @dsh-workbench/core run check:adapter-defaults",
-    "check": "pnpm run lint:commit && pnpm run build && pnpm run check:deps && pnpm run typecheck && pnpm run lint && pnpm run check:duplication && pnpm run check:swallow:strict && pnpm run coverage && pnpm run check:gates:target -- --fail-on-red && pnpm run arch && pnpm run check:docs && pnpm run check:copy:strict && pnpm run check:runtimes && pnpm run selfcheck && pnpm run check:modules && pnpm run check:adapter-defaults && node scripts/check-adapter-contract.mjs && node scripts/check-opencli-wire.mjs && pnpm run check:release-packages && pnpm run check:release-artifacts"
+    "check": "node scripts/gate.mjs"
   },
   "devDependencies": {
     "@arch-guard/core": "^0.12.0",

@@ -37,6 +37,10 @@ pnpm run check
 `scripts/check-opencli-wire.mjs` → `check:release-packages` → `check:release-artifacts`
 <!-- doc-facts:end gate-chain-inline -->
 
+`pnpm run check` 默认不在第一个失败处停：互不依赖的判据照常运行，最后列出失败清单与各自的输出末尾；
+依赖 `build` 的步骤在 `build` 失败时标为未运行。要恢复第一个失败就停，用 `--fail-fast`；只跑其中几条
+用 `--only <名字,名字>`（没选中的依赖视为满足）。
+
 `pnpm run dev` starts the workbench on `:3081` next to `dsh web` on `:3080` and
 watches `packages/core/src/**`.
 
@@ -116,7 +120,7 @@ bump PR，不和产品改动混在一起。
 ## Documentation facts
 
 Some document blocks are generated from code, not hand-written. Change the source
-(for example `package.json`'s `scripts.check`, `arch.config.mjs`, or a package's `arch.config.mjs`) and run
+(for example `scripts/gate/steps.mjs` for the gate chain, `arch.config.mjs`, or a package's `arch.config.mjs`) and run
 `pnpm run doc-facts:write`; `pnpm run check:doc-facts` fails when a block is stale.
 `pnpm run check:docs` runs it together with the other document checks.
 Husky also runs `pnpm run check:docs` plus the `DOC-3` link/§N gate on every

@@ -115,7 +115,7 @@ export function linkToolchain(toolchain, modules) {
 
 export function findToolchain() {
   return readdirSync(PACKAGES_DIR, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
     .map((entry) => join(PACKAGES_DIR, entry.name))
     .find(
       (dir) =>

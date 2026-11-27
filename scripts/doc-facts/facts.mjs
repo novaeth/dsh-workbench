@@ -3,21 +3,10 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { ROOT } from './lib.mjs';
+import { GATE_STEPS } from '../gate/steps.mjs';
 
 export function gateSteps() {
-  const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
-  const chain = pkg.scripts?.check;
-  if (typeof chain !== 'string') throw new Error('根 package.json 缺 scripts.check');
-  return chain.split(' && ').map(stepOf);
-}
-
-function stepOf(segment) {
-  const text = segment.trim();
-  const pnpm = text.match(/^pnpm(?: -w)? run ([^\s]+)(?: -- (.+))?$/);
-  if (pnpm !== null) return { name: pnpm[1], arg: pnpm[2] ?? '' };
-  const node = text.match(/^node (scripts\/[^\s]+)$/);
-  if (node !== null) return { name: node[1], arg: '' };
-  return { name: text, arg: '' };
+  return GATE_STEPS.map((step) => ({ name: step.name, arg: (step.args ?? []).join(' ') }));
 }
 
 export function workspacePackages() {
