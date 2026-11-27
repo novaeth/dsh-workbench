@@ -9,7 +9,12 @@ import {
   seenRouteOf,
   stopRouteOf,
 } from '@dsh-workbench/shared';
-import { IconFolderCloseRegular, Menu, StateDot } from '@deepseek-ai/dsh-client-ui-primitives';
+import {
+  IconChecklistOutlineRegular,
+  IconFolderCloseRegular,
+  Menu,
+  StateDot,
+} from '@deepseek-ai/dsh-client-ui-primitives';
 import { postWrite } from '@/shared/hooks/use-host-write';
 import { useExternalActions } from '@/shared/hooks/use-external-actions';
 import { useShellLongTasks } from '@/shared/hooks/use-shell-long-tasks';
@@ -20,6 +25,7 @@ import styles from './LongTaskFooterAction.module.css';
 export interface LongTaskFooterActionProps {
   readonly wide?: boolean | undefined;
   readonly t: Translate;
+  readonly pickWorkspacePath?: ((path: string) => void) | undefined;
 }
 
 type DoneKind = 'stop' | 'recheck' | 'answer';
@@ -55,8 +61,19 @@ export function ackableLongTaskRows(rows: readonly ShellLongTaskRow[]): ShellLon
   return rows.filter((row) => !longTaskIsLive(row.status) && row.seen !== true);
 }
 
-export function LongTaskFooterAction({ wide, t }: LongTaskFooterActionProps) {
+export function LongTaskFooterAction({
+  wide,
+  t,
+  pickWorkspacePath,
+}: LongTaskFooterActionProps) {
   const rows = useShellLongTasks();
+  const openOf = (path: string): (() => void) | undefined => {
+    if (pickWorkspacePath === undefined) return undefined;
+    return () => {
+      setOpen(false);
+      pickWorkspacePath(path);
+    };
+  };
   const external = useExternalActions(() => undefined);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<Busy | null>(null);
@@ -136,10 +153,28 @@ export function LongTaskFooterAction({ wide, t }: LongTaskFooterActionProps) {
       'aria-label': t('longTask.list.entry', { n: rows.length }),
       'aria-haspopup': 'menu',
       'aria-expanded': open,
+      ...(wide === true ? {} : { title: t('longTask.list.title') }),
       onClick: () => setOpen((value) => !value),
     },
-    h('span', { className: styles.dot }, h(StateDot, { state: dotState })),
-    wide === true ? h('span', { className: styles.label }, t('longTask.list.entry', { n: rows.length })) : null,
+    wide === true
+      ? h('span', { className: styles.dot }, h(StateDot, { state: dotState }))
+      : h(
+          'span',
+          { className: styles.icon, 'aria-hidden': true },
+          h(IconChecklistOutlineRegular, { size: 16 }),
+          dotState === 'idle'
+            ? null
+            : h(
+                'span',
+                { className: styles.badge },
+                dotState === 'ongoing'
+                  ? h('span', { className: styles.badgeBusy })
+                  : h(StateDot, { state: dotState, size: 8 }),
+              ),
+        ),
+    wide === true
+      ? h('span', { className: styles.label }, t('longTask.list.entry', { n: rows.length }))
+      : null,
   );
 
   const wiringOf = (
@@ -200,8 +235,23 @@ export function LongTaskFooterAction({ wide, t }: LongTaskFooterActionProps) {
           h(
             'div',
             { className: styles.groupTitle, title: workspace },
-            h('span', { className: styles.groupIcon }, h(IconFolderCloseRegular, { size: 14 })),
-            h('span', { className: styles.groupName }, pathBase(workspace) || workspace),
+            h(
+              openOf(workspace) === undefined ? 'span' : 'button',
+              {
+                className: openOf(workspace) === undefined ? styles.groupHead : styles.groupOpen,
+                ...(openOf(workspace) === undefined
+                  ? {}
+                  : {
+                      type: 'button',
+                      'aria-label': t('longTask.list.openWorkspace', {
+                        name: pathBase(workspace) || workspace,
+                      }),
+                      onClick: openOf(workspace),
+                    }),
+              },
+              h('span', { className: styles.groupIcon }, h(IconFolderCloseRegular, { size: 14 })),
+              h('span', { className: styles.groupName }, pathBase(workspace) || workspace),
+            ),
             h(
               'span',
               { className: styles.groupCount },

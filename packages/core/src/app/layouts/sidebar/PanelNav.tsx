@@ -45,7 +45,7 @@ export function PanelRow({
         {glyph}
         {hint !== null && !wide ? (
           <span className="wb-panelDot">
-            <StateDot state={hint.tone === 'danger' ? 'error' : 'warning'} size={9} />
+            <StateDot state={hint.tone === 'danger' ? 'error' : 'warning'} size={8} />
           </span>
         ) : null}
       </span>

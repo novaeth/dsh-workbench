@@ -11,14 +11,67 @@
 .entry {
   display: inline-flex;
   align-items: center;
-  gap: var(--wb-len-6);
-  height: var(--wb-len-20);
-  padding: 0 var(--wb-len-6);
+  justify-content: center;
+  width: var(--wb-len-36);
+  height: var(--wb-len-36);
+  padding: 0;
   border: 0;
-  border-radius: var(--dsw-radius-sm);
+  border-radius: var(--dsw-radius-md);
   background: transparent;
   color: var(--dsw-alias-label-secondary);
   cursor: pointer;
+}
+
+.icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badgeBusy {
+  position: relative;
+  display: inline-block;
+  width: var(--wb-len-8);
+  height: var(--wb-len-8);
+  color: var(--dsw-alias-state-business-primary);
+  animation: wb-long-task-pulse var(--wb-dur-1-5) var(--ds-ease-in-out, ease-in-out) infinite;
+}
+
+.badgeBusy::after {
+  content: '';
+  position: absolute;
+  inset: 20%;
+  border-radius: 50%;
+  corner-shape: round;
+  background: currentColor;
+}
+
+@keyframes wb-long-task-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badgeBusy {
+    animation: none;
+  }
 }
 
 .entryWide {
@@ -93,6 +146,38 @@
   font-size: var(--dsw-font-xxs-12-font-size);
   line-height: var(--wb-line-18);
   color: var(--dsw-alias-label-secondary);
+}
+
+.groupHead {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-len-6);
+  min-width: 0;
+}
+
+.groupOpen {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-len-6);
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.groupOpen:hover .groupName {
+  color: var(--dsw-alias-label-primary);
+  text-decoration: underline;
+}
+
+.groupOpen:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
 }
 
 .groupIcon {

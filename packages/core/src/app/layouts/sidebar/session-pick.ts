@@ -27,6 +27,16 @@ export function openPickedProject(input: PickProjectInput): void {
   else input.openSession(picked);
 }
 
+export function openWorkspaceByPath(
+  items: readonly WorkspaceView[],
+  path: string,
+  pick: (workspaceId: string) => void,
+): void {
+  const target = items.find((one) => one.path === path);
+  if (target === undefined) return;
+  pick(target.workspaceId);
+}
+
 export function firstSessionIdOf(
   workspace: WorkspaceView | null,
   sessions: SessionsSnapshot,

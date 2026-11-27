@@ -16,7 +16,7 @@ import type {
 import { selectProject, selectedProjectId, subscribeProject } from '@/app/layouts/project-selection';
 import { useBoardWorkspace } from '@/app/layouts/rightbar/use-panels';
 import type { SessionSearch } from '@/modules/sessions';
-import { openNewSession, openPickedProject } from './session-pick';
+import { openNewSession, openPickedProject, openWorkspaceByPath } from './session-pick';
 import { SidebarHeader } from './SidebarHeader';
 import { WorkspaceSection } from './WorkspaceSection';
 import { useSidebarAttention, useLongTaskPresence } from './use-attention';
@@ -224,7 +224,11 @@ export function Sidebar(props: SidebarProps) {
 
       <div className="wb-footArea">
         <div className="wb-footerActions">
-          {h(LongTaskFooterAction, { wide, t })}
+          {h(LongTaskFooterAction, {
+            wide,
+            t,
+            pickWorkspacePath: (path) => openWorkspaceByPath(items, path, pickProject),
+          })}
           {renderSlot('sidebar.footer.action', { wide })}
         </div>
         <div className="wb-settingsArea">{renderSlot('sidebar.settings', { wide })}</div>

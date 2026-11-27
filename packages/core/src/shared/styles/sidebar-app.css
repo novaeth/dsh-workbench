@@ -230,8 +230,8 @@
   align-items: center;
   justify-content: center;
   position: absolute;
-  top: var(--wb-len-neg-3);
-  right: var(--wb-len-neg-3);
+  top: 0;
+  right: var(--wb-len-neg-4);
 }html:has(.wb-root) button[class$=_workspace] {
   display: none;
 }

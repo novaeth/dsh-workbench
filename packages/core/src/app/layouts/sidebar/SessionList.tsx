@@ -14,7 +14,7 @@ import type {
 } from '@dsh-workbench/shared';
 import { SESSION_SEARCH_RESULT_LIMIT, currentSessionId, orderSessionRows, scrollEdgesOf, sessionNode, sessionRows, sessionStatuses, type LongTaskPresence, type ScrollEdges, type SessionNode, type SessionSearch, type SessionStatusDot } from '@/modules/sessions';
 
-import { cx, relativeTimeAgo, relativeTimeCompact } from '@dsh-workbench/shared';
+import { cx, relativeTimeAgo, relativeTimeCompact, useTextMarquee } from '@dsh-workbench/shared';
 
 import { HoverCard, IconEllipsisOutlineRegular, IconPinFillRegular, StateDot } from '@deepseek-ai/dsh-client-ui-primitives';
 
@@ -24,65 +24,7 @@ import { useSessionWatermark } from './use-session-watermark';
 import { SessionSearchResult } from './SessionSearchResult';
 import { SessionSearchSkeleton } from './SessionSearchSkeleton';
 
-const MIN_TITLE_REVEAL_PX = 8;
-const TITLE_MARQUEE_PX_PER_MS = 0.03;
-
 const REST_EDGES: ScrollEdges = { canScrollUp: false, canScrollDown: false };
-
-function placeTitle(title: HTMLElement, left: number, range: number): void {
-  title.scrollTo({ left, behavior: 'instant' });
-  if (left > 0) title.dataset.scrolled = '';
-  else delete title.dataset.scrolled;
-  if (left < range) title.dataset.clipped = '';
-  else delete title.dataset.clipped;
-}
-
-function restTitle(title: HTMLElement): void {
-  title.scrollTo({ left: 0, behavior: 'instant' });
-  delete title.dataset.scrolled;
-  delete title.dataset.clipped;
-}
-
-function useTitleMarquee(title: { readonly current: HTMLElement | null }) {
-  const frame = useRef(0);
-  useEffect(
-    () => () => {
-      cancelAnimationFrame(frame.current);
-    },
-    [],
-  );
-  return useMemo(
-    () => ({
-      enter: () => {
-        const element = title.current;
-        if (element === null) return;
-        const range = element.scrollWidth - element.clientWidth;
-        if (range <= MIN_TITLE_REVEAL_PX) return;
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          placeTitle(element, range, range);
-          return;
-        }
-        cancelAnimationFrame(frame.current);
-        let previous: number | undefined;
-        let position = 0;
-        const step = (now: number): void => {
-          position += previous === undefined ? 0 : (now - previous) * TITLE_MARQUEE_PX_PER_MS;
-          previous = now;
-          placeTitle(element, Math.min(position, range), range);
-          if (position < range) frame.current = requestAnimationFrame(step);
-        };
-        frame.current = requestAnimationFrame(step);
-      },
-      leave: () => {
-        cancelAnimationFrame(frame.current);
-        const element = title.current;
-        if (element === null) return;
-        restTitle(element);
-      },
-    }),
-    [title],
-  );
-}
 
 function SessionLeading({
   node,
@@ -164,7 +106,7 @@ function SessionRow({
   const statuses = sessionStatuses(node, t);
   const label = node.blank ? t('session.new') : node.title;
   const titleRef = useRef<HTMLSpanElement>(null);
-  const marquee = useTitleMarquee(titleRef);
+  const marquee = useTextMarquee(() => titleRef.current);
   const trailing = statuses[0]?.trailingLabel;
 
   const owner = { sessionId: node.id as SessionId, displayTitle: node.title };

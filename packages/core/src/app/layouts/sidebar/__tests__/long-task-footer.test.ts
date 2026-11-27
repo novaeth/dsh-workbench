@@ -34,7 +34,8 @@ describe('左栏底部的长任务入口：一条入口 + 一张全局长任务�
   });
 
   it('★★ 入口挂在左栏底部、排在调试那条之前；不新增槽位注册', () => {
-    expect(SHELL).toContain('h(LongTaskFooterAction, { wide, t })');
+    expect(SHELL).toContain('h(LongTaskFooterAction, {');
+    expect(SHELL).toContain('pickWorkspacePath: (path) => openWorkspaceByPath(');
     expect(SHELL.indexOf('h(LongTaskFooterAction')).toBeLessThan(
       SHELL.indexOf("renderSlot('sidebar.footer.action'"),
     );
@@ -63,6 +64,40 @@ describe('左栏底部的长任务入口：一条入口 + 一张全局长任务�
   it('★ 轮询按「有没有活任务」分档：有活 1.5 秒，全收尾 10 秒', () => {
     const hook = read('../../../shared/hooks/use-shell-long-tasks.ts');
     expect(hook).toContain('longTaskPollMs(rows.some((row) => longTaskIsLive(row.status)))');
+  });
+
+
+  it('★★ 工作区分组标题直接复用下拉菜单那套「切到该工作区」，不新增会话逻辑', () => {
+    expect(ACTION).toContain('pickWorkspacePath(patchWorkspace)'.replace('patchWorkspace', 'path'));
+    expect(ACTION).toContain("t('longTask.list.openWorkspace', {");
+    expect(ACTION).toContain("openOf(workspace) === undefined ? 'span' : 'button'");
+    expect(SHELL).toContain('pickWorkspacePath: (path) => openWorkspaceByPath(items, path, pickProject),');
+    const pick = read('session-pick.ts');
+    expect(pick).toContain('const target = items.find((one) => one.path === path);');
+    expect(pick).toContain('pick(target.workspaceId);');
+  });
+
+  it('★★ 收起态是一枚任务图标，状态点挂在它的右上角；全收尾就不挂点', () => {
+    expect(ACTION).toContain('IconChecklistOutlineRegular');
+    expect(ACTION).toContain("{ className: styles.icon, 'aria-hidden': true }");
+    expect(ACTION).toContain("dotState === 'idle'");
+    expect(ACTION).toContain("h(StateDot, { state: dotState, size: 8 })");
+    expect(CSS).toMatch(/\.icon\s*\{[^}]*position:\s*relative/);
+    expect(CSS).toMatch(/\.badge\s*\{[^}]*position:\s*absolute/);
+    expect(CSS).toMatch(/\.entry\s*\{[^}]*width:\s*var\(--wb-len-36\)/);
+    expect(CSS).toMatch(/\.badge\s*\{[^}]*transform:\s*translate\(50%,\s*-50%\)/);
+    expect(CSS).toMatch(/\.badge\s*\{[^}]*top:\s*0/);
+    expect(CSS).toMatch(/\.badge\s*\{[^}]*right:\s*0/);
+  });
+
+
+  it('★ 运行中用蓝点呼吸，不用小转圈（8px 的 spinner 读不出来）', () => {
+    expect(ACTION).toContain("dotState === 'ongoing'");
+    expect(ACTION).toContain('styles.badgeBusy');
+    expect(CSS).toMatch(/\.badgeBusy\s*\{[^}]*color:\s*var\(--dsw-alias-state-business-primary\)/);
+    expect(CSS).toMatch(/\.badgeBusy::after\s*\{[^}]*inset:\s*20%/);
+    expect(CSS).toContain('@keyframes wb-long-task-pulse');
+    expect(CSS).toMatch(/prefers-reduced-motion: reduce[\s\S]{0,120}\.badgeBusy\s*\{\s*animation:\s*none/);
   });
 
   it('★★ 宽态占满一整格：外壳撑满一行，行高 / 圆角跟底部那几格对齐', () => {

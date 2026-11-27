@@ -6,6 +6,7 @@ const HERE = new URL('../', import.meta.url);
 const read = (name: string): string => readFileSync(new URL(name, HERE), 'utf8');
 
 const VIEW = read('SessionList.tsx');
+const MARQUEE = read('../../../../../shared/src/components/card/use-text-marquee.ts');
 const CSS = read('../../../shared/styles/sidebar-app.css');
 
 function rule(selector: string): string {
@@ -83,9 +84,10 @@ describe('会话行与 dsh 0.2.x 的官方行（ui-workspace / Rows）逐条对�
   });
 
   it('★ 悬停时标题自己爬（dsh 的三条 mask + hover 下 text-overflow: clip）', () => {
-    expect(VIEW).toContain('requestAnimationFrame');
-    expect(VIEW).toContain("title.scrollTo({ left, behavior: 'instant' })");
-    expect(VIEW).toContain('prefers-reduced-motion: reduce');
+    expect(VIEW).toContain('useTextMarquee(() => titleRef.current)');
+    expect(MARQUEE).toContain('requestAnimationFrame');
+    expect(MARQUEE).toContain("title.scrollTo({ left, behavior: 'instant' })");
+    expect(MARQUEE).toContain('prefers-reduced-motion: reduce');
     expect(CSS).toContain('.wb-sessionTitle[data-scrolled] {');
     expect(CSS).toContain('.wb-sessionTitle[data-clipped] {');
     expect(CSS).toContain('.wb-sessionTitle[data-scrolled][data-clipped] {');
