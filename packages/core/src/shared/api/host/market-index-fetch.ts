@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, realpathSync, rmSync, statSync } from 'node:fs';
+import { dirname, join, resolve, sep } from 'node:path';
 
 import type {
   DiscoverProblem,
@@ -156,6 +156,29 @@ function classifyGitError(stderr: string, timedOut: boolean): DiscoverProblem {
   return { kind: 'git-network', detail: tail(stderr) };
 }
 
+const STALE_LOCK_MS = 5_000;
+const LOCK_CREATE = /unable to create '([^']+\.lock)': file exists/i;
+
+type LockLogger = { warn?(message: string): void } | undefined;
+
+function clearStaleLock(repo: string, stderr: string, at: number, logger: LockLogger): boolean {
+  const named = LOCK_CREATE.exec(stderr)?.[1];
+  if (named === undefined) return false;
+  const file = resolve(named);
+  try {
+    const root = realpathSync(repo);
+    const directory = realpathSync(dirname(file));
+    if (directory !== root && !directory.startsWith(`${root}${sep}`)) return false;
+    const info = statSync(file);
+    if (!info.isFile() || at - info.mtimeMs < STALE_LOCK_MS) return false;
+    rmSync(file, { force: true });
+    return true;
+  } catch (error) {
+    logger?.warn?.(`[dsh-workbench] 清理缓存仓库里的 ${file} 失败：${String(error)}`);
+    return false;
+  }
+}
+
 export function createMarketIndexReader(options: MarketIndexReaderOptions): MarketIndexReader {
   const now = options.now ?? Date.now;
   const ttlMs = options.ttlMs ?? DEFAULT_TTL_MS;
@@ -227,6 +250,14 @@ export function createMarketIndexReader(options: MarketIndexReaderOptions): Mark
     }
   }
 
+  async function fetchInto(repo: string, ref: string): Promise<RunResult> {
+    const args = ['fetch', '--depth', '1', 'origin', ref === '' ? 'HEAD' : ref];
+    const first = await run(args, repo);
+    if (first.ok) return first;
+    if (!clearStaleLock(repo, first.stderr ?? '', now(), options.logger)) return first;
+    return run(args, repo);
+  }
+
   async function branchOf(repo: string): Promise<string | undefined> {
     const result = await run(['symbolic-ref', '--short', 'HEAD'], repo);
     const branch = result.ok ? result.stdout.trim() : '';
@@ -266,7 +297,7 @@ export function createMarketIndexReader(options: MarketIndexReaderOptions): Mark
       }
       revision = 'HEAD';
     } else {
-      const fetched = await run(['fetch', '--depth', '1', 'origin', ref === '' ? 'HEAD' : ref], repo);
+      const fetched = await fetchInto(repo, ref);
       if (!fetched.ok) return withBranch(fetched, repo);
     }
     const exists = await run(['rev-parse', '--verify', 'HEAD'], repo);

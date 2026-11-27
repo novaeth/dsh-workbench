@@ -94,6 +94,8 @@ export function DiscoverPanel({ t, active, onShowInstalled, onAddModule, onDetai
   } else {
     const failed = d.payload.state === 'invalid' || d.payload.state === 'unreadable';
     const readFailed = readFailureOf(d, t, failed);
+    const staleDetail =
+      d.payload.stale === true && !failed ? (d.problem?.detail.trim() ?? '') : '';
     const uninitialized = d.loading ? null : d.uninitialized;
     const retrying = d.loading && failed;
     const emptyText = unfiltered({ query: d.query, category: d.category, labels: d.selectedLabels })
@@ -105,10 +107,13 @@ export function DiscoverPanel({ t, active, onShowInstalled, onAddModule, onDetai
         {d.loading && !d.manageOpen ? <DiscoverLoading label={t('panels.discover.loading')} /> : null}
         {slowHint}
         {!d.loading && d.payload.stale === true ? (
-          <p className={styles.discoverNotice} role="note">
-            <IconWarningOutlineRegular size={14} aria-hidden="true" />
-            <span>{t('panels.discover.stale')}</span>
-          </p>
+          <Fragment>
+            <p className={styles.discoverNotice} role="note">
+              <IconWarningOutlineRegular size={14} aria-hidden="true" />
+              <span>{t('panels.discover.stale')}</span>
+            </p>
+            {staleDetail === '' ? null : <p className={styles.discoverMuted}>{staleDetail}</p>}
+          </Fragment>
         ) : null}
         {uninitialized === null ? (
           readFailed === null ? null : (
