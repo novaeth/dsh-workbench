@@ -1,0 +1,56 @@
+.wb-progress {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--wb-radius-pill);
+  corner-shape: round;
+  background: var(--dsw-alias-bg-skeleton);
+  pointer-events: none;
+}
+
+.wb-progress-6 {
+  height: var(--wb-len-6);
+}
+
+.wb-progress-4 {
+  height: var(--wb-len-4);
+}
+
+.wb-progress-2 {
+  height: var(--wb-len-2);
+}
+
+.wb-progressFill {
+  height: 100%;
+  border-radius: var(--wb-radius-pill);
+  corner-shape: round;
+  transition: width var(--wb-dur-1-5) ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wb-progressFill {
+    transition: none;
+  }
+}
+
+.wb-progressFillNeutral {
+  background: var(--dsw-alias-label-tertiary);
+}
+
+.wb-progressFillOk {
+  background: var(--dsw-alias-state-success-primary);
+}
+
+.wb-progressFillWarn {
+  background: var(--dsw-alias-state-warn-primary);
+}
+
+.wb-progressFillBad {
+  background: var(--dsw-alias-state-error-primary);
+}
+
+.wb-progressFillBusy {
+  background: var(--dsw-alias-state-business-primary);
+}

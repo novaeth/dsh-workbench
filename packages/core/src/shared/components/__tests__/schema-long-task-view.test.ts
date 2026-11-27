@@ -261,7 +261,15 @@ describe('行内可读：状态词 · 耗时 · 当前步骤 · 结构化步骤'
 
   it('★★ meta = 状态词 · 耗时；行的时间从 startedAt 起算，结束态算到 at', () => {
     expect(VIEW).toContain('const ended = longTaskIsLive(row.status) ? now : dayjs(row.at).valueOf();');
-    expect(VIEW).toContain('meta: metaOf(row, t, now),');
+    expect(VIEW).toContain('const meta =');
+    expect(VIEW).toContain('? `${metaOf(row, t, now)} · ${progressText}` : metaOf(row, t, now);');
+    expect(VIEW).toContain('meta,');
+  });
+
+  it('★★ 密集档把步数并进 meta；两档都把 progress 与读屏名交给行', () => {
+    expect(VIEW).toContain("t('longTask.progress.text', { done: row.progress.done, total: row.progress.total })");
+    expect(VIEW).toContain("progressLabel: t('longTask.progress.label'),");
+    expect(VIEW).toContain('...(row.progress === undefined ? {} : { progress: row.progress }),');
   });
 
   it('★★ 当前步骤只在 running / stopped 传（人待已有干预行，不重复）', () => {

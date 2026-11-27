@@ -2,9 +2,11 @@ import { epochOf, now as clockNow, nowIso } from '../runtime/time.js';
 import {
   LONG_TASK_HISTORY_MAX,
   LONG_TASK_LINK_MAX,
+  longTaskProgressIsValid,
   runsRouteOf,
   type LongTaskIntervention,
   type LongTaskLink,
+  type LongTaskProgress,
   type LongTaskStatus,
   type LongTaskStep,
   type LongTaskStepRow,
@@ -45,6 +47,7 @@ export interface LongTaskBase {
   readonly at: string;
   readonly session?: string | undefined;
   readonly seen?: boolean | undefined;
+  readonly progress?: LongTaskProgress | undefined;
 }
 
 export interface LongTaskStart {
@@ -55,7 +58,7 @@ export interface LongTaskStart {
 }
 
 export interface LongTaskChange<S extends LongTaskBase> {
-  readonly kind: 'start' | 'step' | 'settle' | 'seen';
+  readonly kind: 'start' | 'step' | 'progress' | 'settle' | 'seen';
   readonly snapshot: S;
   readonly step?: LongTaskStep | undefined;
   readonly by?: string | undefined;
@@ -63,10 +66,11 @@ export interface LongTaskChange<S extends LongTaskBase> {
 
 /** 长任务怎么跑、怎么投影成面板那一行。 */
 export interface LongTaskDeps<S extends LongTaskBase> {
-  /** 真正执行任务：payload 来自 start，onStep 报步骤，signal 被 abort 时尽快退出。 */
+  /** 真正执行任务：payload 来自 start，onStep 报步骤，onProgress 报走到哪了，signal 被 abort 时尽快退出。 */
   readonly run: (options: {
     readonly payload: unknown;
     readonly onStep: (step: LongTaskStep) => void;
+    readonly onProgress: (progress: LongTaskProgress) => void;
     readonly signal: AbortSignal;
   }) => Promise<unknown>;
   readonly step?: ((step: LongTaskStep, current: S) => Partial<S>) | undefined;
@@ -154,6 +158,7 @@ export function longTaskRowBase(snapshot: LongTaskBase): LongTaskRowBase {
       'why',
       'session',
       'seen',
+      'progress',
     ]),
   };
 }
@@ -187,9 +192,46 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
   const patch = (id: string, next: Partial<LongTaskBase>, change: Omit<LongTaskChange<S>, 'snapshot'>): void => {
     const current = runs.get(id);
     if (current === undefined) return;
-    const patched = { ...current, ...next, at: now() };
+    const resolved =
+      next.progress === undefined ? current.progress : (progressOf(next.progress, current.progress) ?? undefined);
+    const patched: { -readonly [K in keyof LongTaskBase]: LongTaskBase[K] } = {
+      ...current,
+      ...next,
+      at: now(),
+    };
+    if (resolved === undefined) delete patched.progress;
+    else patched.progress = resolved;
     runs.set(id, patched);
     notify({ ...change, snapshot: patched as S });
+  };
+
+  const progressOf = (
+    next: LongTaskProgress,
+    current: LongTaskProgress | undefined,
+  ): LongTaskProgress | null => {
+    if (!longTaskProgressIsValid(next)) return null;
+    if (current === undefined) return { done: next.done, total: next.total };
+    if (current.total !== next.total) return { done: next.done, total: next.total };
+    if (next.done < current.done) return current;
+    return { done: next.done, total: next.total };
+  };
+
+  const setProgress = (id: string, next: LongTaskProgress | undefined): void => {
+    const current = runs.get(id);
+    if (current === undefined) return;
+    const resolved = next === undefined ? null : progressOf(next, current.progress);
+    if (resolved === null) {
+      if (current.progress === undefined) return;
+      const cleared: { -readonly [K in keyof LongTaskBase]: LongTaskBase[K] } = { ...current };
+      delete cleared.progress;
+      runs.set(id, cleared);
+      notify({ kind: 'progress', snapshot: cleared as S });
+      return;
+    }
+    if (current.progress?.done === resolved.done && current.progress.total === resolved.total) return;
+    const patched = { ...current, progress: resolved };
+    runs.set(id, patched);
+    notify({ kind: 'progress', snapshot: patched as S });
   };
 
   return {
@@ -336,17 +378,29 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
       const control = new AbortController();
       controls.set(id, control);
 
+      const onProgress = (next: LongTaskProgress): void => {
+        if (live(id) === null) return;
+        setProgress(id, next);
+      };
+
       void bound
-        .run({ payload: options.payload, onStep, signal: control.signal })
+        .run({ payload: options.payload, onStep, onProgress, signal: control.signal })
         .then((result) => {
           const current = live(id);
           if (current === null) return;
           controls.delete(id);
+          const outcome: Partial<S> = bound.outcome?.(result, current) ?? {};
+          const filled =
+            outcome.progress ??
+            (current.progress === undefined
+              ? undefined
+              : { done: current.progress.total, total: current.progress.total });
           patch(
             id,
             {
+              ...outcome,
               status: 'ok',
-              ...(bound.outcome?.(result, current) ?? {}),
+              ...(filled === undefined ? {} : { progress: filled }),
               intervention: undefined,
               loginUrl: undefined,
             },
@@ -439,61 +493,7 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
   };
 }
 
-/**
- * `withInterventionRetry` 的口径：最多试几次、每轮先等多久（也可按轮次算）、怎么等。
- */
-export interface InterventionRetryOptions {
-  readonly attempts?: number | undefined;
-  readonly delayMs?: number | ((attempt: number) => number) | undefined;
-  readonly sleep?: ((ms: number) => Promise<void>) | undefined;
-}
-
-const INTERVENTION_RETRY_ATTEMPTS = 5;
-
-const INTERVENTION_RETRY_DELAY_MS = 1500;
-
-function defaultInterventionSleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, Math.max(0, ms)));
-}
-
-/**
- * 把「看一眼接上没有」包成能交给 `longTasks.create({ recheck })` 的 handler：
- * 用户在人工干预节点上按「我处理完了」时先立刻试一次，没接上就有界地再试（第 2 轮起每轮先等）。
- * `check` 返回 true = 已经接上，不用再试；抛错算没接上、继续下一轮。
- * 同一 id 上一轮还在飞时再按直接忽略；成功 / 用尽都清单飞；**永不抛错**（fire-and-forget）。
- * @param check 看一眼接上没有，可同步可异步。
- * @param options 轮次上限（默认 5）、第几次等待等多久（默认 1500ms，可给函数，从第 1 次等待起算）、怎么等（默认真等，测试可注入假的）。
- * @returns 一条同签名的 handler，直接交给 `const longTasks = create({ recheck })`。
- */
-export function withInterventionRetry<S extends LongTaskBase>(
-  check: (current: S) => boolean | Promise<boolean>,
-  options: InterventionRetryOptions = {},
-): (current: S) => void {
-  const attempts = options.attempts ?? INTERVENTION_RETRY_ATTEMPTS;
-  const delayMs = options.delayMs ?? INTERVENTION_RETRY_DELAY_MS;
-  const sleep = options.sleep ?? defaultInterventionSleep;
-  const inFlight = new Set<string>();
-  return (current: S): void => {
-    if (inFlight.has(current.id)) return;
-    inFlight.add(current.id);
-    void (async () => {
-      try {
-        for (let attempt = 1; attempt <= attempts; attempt += 1) {
-          if (attempt > 1) {
-            await sleep(typeof delayMs === 'function' ? delayMs(attempt - 1) : delayMs);
-          }
-          try {
-            if (await check(current)) return;
-          } catch {
-          }
-        }
-      } catch {
-      } finally {
-        inFlight.delete(current.id);
-      }
-    })();
-  };
-}
+export { withInterventionRetry, type InterventionRetryOptions } from './with-intervention-retry.js';
 
 function isRegistry(value: unknown): value is LongTaskRegistry<LongTaskBase> {
   if (typeof value !== 'object' || value === null) return false;

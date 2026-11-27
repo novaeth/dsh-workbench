@@ -7,6 +7,51 @@ const read = (name: string): string => readFileSync(new URL(name, HERE), 'utf8')
 const ROW = read('LongTaskRow.tsx');
 const CSS = read('LongTaskRow.css');
 
+
+describe('长任务进度条：接线（读源码断言）', () => {
+  const BAR = read('../feedback/ProgressBar.tsx');
+  const BAR_CSS = read('../feedback/ProgressBar.css');
+
+  it('★★ 条在正文最后一行（raw 之后），只有有进度时才画', () => {
+    const last = ROW.lastIndexOf('{progress === undefined ? null : (');
+    const rawBlock = ROW.indexOf('props.rawTitle === undefined ? null : (');
+
+    expect(last).toBeGreaterThan(rawBlock);
+    expect(ROW).toContain('<ProgressBar');
+    expect(ROW).toContain("size={props.dense === true ? 2 : 4}");
+  });
+
+  it('★★ 紧凑档不留尾随数字（数字由调用点并进 meta）；普通档才画 3/7', () => {
+    expect(ROW).toContain('{props.dense === true ? null : (');
+    expect(ROW).toContain('className="wb-longTaskProgressText"');
+    expect(CSS).toContain('.wb-longTaskProgressText {');
+    expect(CSS).toContain('font-variant-numeric: tabular-nums');
+  });
+
+  it('★★ 六态取色：完成 / 失败 / 已停止 / 等人 / 在跑各一档', () => {
+    expect(ROW).toContain("props.status === 'ok'");
+    expect(ROW).toContain("props.status === 'failed'");
+    expect(ROW).toContain("props.status === 'stopped'");
+    expect(ROW).toContain("props.status === 'needs-human' || props.status === 'needs-login'");
+    expect(ROW).toContain("'busy'");
+  });
+
+  it('★★ 无障碍只在有合法进度时挂：progressbar 三个值 + 可读文本', () => {
+    expect(BAR).toContain('role="progressbar"');
+    expect(BAR).toContain('aria-valuemin={0}');
+    expect(BAR).toContain('aria-valuemax={progress.total}');
+    expect(BAR).toContain('aria-valuenow={progress.done}');
+    expect(BAR).toContain('aria-valuetext');
+    expect(BAR).toContain('if (!longTaskProgressIsValid(progress)) return null;');
+  });
+
+  it('★ 条不吃指针、有减少动效的退路', () => {
+    expect(BAR_CSS).toContain('pointer-events: none');
+    expect(BAR_CSS).toContain('prefers-reduced-motion: reduce');
+    expect(BAR_CSS).toContain('corner-shape: round');
+  });
+});
+
 describe('两按停止钮：接线（这仓的组件测试是 node 环境，读源码断言）', () => {
   it('★★ 不给 stop ⇒ 那颗钮整个不出现（停止钮只有一处入口）', () => {
     expect(ROW).toContain('const stop = props.stop;');

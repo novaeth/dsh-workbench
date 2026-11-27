@@ -212,12 +212,18 @@ export function SchemaLongTaskView({
       const dot =
         row.status === 'needs-human' || row.status === 'needs-login' ? 'warning' : undefined;
       const links = linksOf(row, override, t);
+      const progressText =
+        row.progress === undefined
+          ? ''
+          : t('longTask.progress.text', { done: row.progress.done, total: row.progress.total });
+      const meta =
+        dense === true && progressText !== '' ? `${metaOf(row, t, now)} · ${progressText}` : metaOf(row, t, now);
       return h(LongTaskRow, {
         key: row.id,
         status: row.status,
         headline,
         ...(step === undefined || step === '' ? {} : { step }),
-        meta: metaOf(row, t, now),
+        meta,
         ...(dot === undefined ? {} : { dot }),
         dotLabel: t(STATE_KEYS[row.status]),
         attemptLabel: (attempt: number) => t('longTask.attempt', { attempt }),
@@ -229,6 +235,8 @@ export function SchemaLongTaskView({
         ...(login === undefined ? {} : { login }),
         ...(intervention === undefined ? {} : { intervention }),
         ...(stop === undefined ? {} : { stop }),
+        ...(row.progress === undefined ? {} : { progress: row.progress }),
+        progressLabel: t('longTask.progress.label'),
         ...(dense === true ? { dense: true } : {}),
       });
     }),

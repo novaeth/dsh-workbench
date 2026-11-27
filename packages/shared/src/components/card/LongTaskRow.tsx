@@ -3,13 +3,16 @@ import {
   LONG_TASK_LINK_MAX,
   longTaskDot,
   longTaskIsLive,
+  longTaskProgressIsValid,
   longTaskStopPress,
   longTaskStopStage,
   LONG_TASK_STOP_ARM_MS,
   type LongTaskInterventionField,
+  type LongTaskProgress,
   type LongTaskStatus,
   type LongTaskStepRow,
 } from '../../contract/long-task.js';
+import { ProgressBar, type ProgressBarTone } from '../feedback/ProgressBar.js';
 import { Link } from '../layout/Link.js';
 import { Fragment, h, useEffect, useState } from '../../lib/react.js';
 import {
@@ -103,8 +106,12 @@ export interface LongTaskRowProps {
   readonly dotLabel?: string | undefined;
   /** 第几次重试那行的文案；只在 `attempt > 1` 时用，不给不画。 */
   readonly attemptLabel?: ((attempt: number) => string) | undefined;
-  /** 紧凑档（默认 false）。 */
+  /** 紧凑档（默认 false）；进度条降到 2px，数字由调用点并进 `meta`。 */
   readonly dense?: boolean | undefined;
+  /** 这一趟走到哪了；不合法或没给就一根条都不画。 */
+  readonly progress?: LongTaskProgress | undefined;
+  /** 进度条的读屏名；不给就不挂 `aria-label`。 */
+  readonly progressLabel?: string | undefined;
   /** 失败原因；不给不画。 */
   readonly problem?: string | undefined;
   /** 行尾的链接，通常指向产物或日志。 */
@@ -360,6 +367,20 @@ export function LongTaskRow(props: LongTaskRowProps) {
   const stopWhy = stop?.failed ?? '';
   const stopPending =
     stopFired && live && !busy && stopWhy === '' ? stop?.pending ?? '' : '';
+  const progress =
+    props.progress === undefined || !longTaskProgressIsValid(props.progress)
+      ? undefined
+      : props.progress;
+  const progressTone: ProgressBarTone =
+    props.status === 'ok'
+      ? 'ok'
+      : props.status === 'failed'
+        ? 'bad'
+        : props.status === 'stopped'
+          ? 'neutral'
+          : props.status === 'needs-human' || props.status === 'needs-login'
+            ? 'warn'
+            : 'busy';
 
   useEffect(() => {
     if (failed) setStepsOpen(true);
@@ -448,6 +469,21 @@ export function LongTaskRow(props: LongTaskRowProps) {
             copiedLabel={props.copiedLabel ?? ''}
           />
         </DumpBlock>
+      )}
+      {progress === undefined ? null : (
+        <div className="wb-longTaskProgress">
+          <ProgressBar
+            progress={progress}
+            size={props.dense === true ? 2 : 4}
+            tone={progressTone}
+            {...(props.progressLabel === undefined ? {} : { label: props.progressLabel })}
+          />
+          {props.dense === true ? null : (
+            <span className="wb-longTaskProgressText">
+              {`${String(progress.done)}/${String(progress.total)}`}
+            </span>
+          )}
+        </div>
       )}
     </div>
   );

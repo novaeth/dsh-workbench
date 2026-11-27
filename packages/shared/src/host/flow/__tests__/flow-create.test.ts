@@ -49,6 +49,45 @@ describe('createFlowTask：流程 + 长任务 + 工具的三件套', () => {
     longTasks.dispose();
   });
 
+
+  it('★★ 流程任务自带进度：定义几步就是几，条件步跳过也算走过，跑完补齐', async () => {
+    const { flowHost, longTasks } = hostOf();
+    const actions = flowHost.createActions();
+    actions.register('one', async () => 'a', { title: '第一步' });
+    actions.register('two', async () => 'b', { title: '第二步' });
+    const task = createFlowTask({
+      key: 'progress',
+      flow: {
+        id: 'progress',
+        title: '三步',
+        steps: [
+          { id: 'one', title: '第一步', action: 'one' },
+          { id: 'skip', title: '条件步', action: 'one', when: { $eq: [{ $lit: 1 }, { $lit: 2 }] } },
+          { id: 'two', title: '第二步', action: 'two' },
+        ],
+      },
+      actions,
+      flowHost,
+      longTasks: longTasks.host,
+      tool: { name: 'run', description: '跑' },
+    });
+    const seen: Array<{ done: number; total: number }> = [];
+    task.runs.onChange((change) => {
+      const progress = change.snapshot.progress;
+      if (change.kind === 'progress' && progress !== undefined) {
+        seen.push({ done: progress.done, total: progress.total });
+      }
+    });
+
+    const started = task.start({ workspace: '/w/a' });
+    await tick();
+
+    expect(seen[0]).toEqual({ done: 0, total: 3 });
+    expect(seen.some((one) => one.done === 1)).toBe(true);
+    expect(task.runs.snapshot(started.id)).toMatchObject({ status: 'ok', progress: { done: 3, total: 3 } });
+    longTasks.dispose();
+  });
+
   it('★★ 流程过不了 check 就不建注册表，错误里带步骤路径', () => {
     const { flowHost, longTasks } = hostOf();
     const actions = flowHost.createActions();

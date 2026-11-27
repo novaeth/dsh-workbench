@@ -83,9 +83,15 @@ export function flowTaskDeps(
   flowHost?: FlowHost,
 ): Pick<LongTaskDeps<LongTaskBase>, 'run' | 'outcome' | 'view' | 'stopped'> {
   return {
-    run: async ({ payload, onStep, signal }) => {
+    run: async ({ payload, onStep, onProgress, signal }) => {
       const parsed = payloadOf(payload);
       if (parsed === null) throw new Error('流程 run 的 payload 不对');
+      const total = parsed.flow.steps.length;
+      const finished = new Set<string>();
+      const report = (): void => {
+        if (total > 0) onProgress({ done: finished.size, total });
+      };
+      report();
       const runOptions = {
         flow: parsed.flow,
         input: parsed.input,
@@ -95,6 +101,10 @@ export function flowTaskDeps(
         workspace: parsed.workspace,
         ...(parsed.session === undefined ? {} : { sessionId: parsed.session }),
         onStep: (event: FlowStepEvent) => {
+          if (event.status === 'ok' || event.status === 'skipped') {
+            finished.add(event.stepId);
+            report();
+          }
           onStep(longStepOf(event));
         },
       };

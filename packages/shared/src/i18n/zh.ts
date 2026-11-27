@@ -1057,6 +1057,8 @@ export const zh = {
   'longTask.state.needsHuman': '等你处理',
   'longTask.state.needsLogin': '需要登录',
   'longTask.state.stopped': '已停止',
+  'longTask.progress.text': '{done}/{total}',
+  'longTask.progress.label': '进度',
   'longTask.state.ok': '已完成',
   'longTask.state.failed': '失败',
   'longTask.duration.sec': '{s} 秒',

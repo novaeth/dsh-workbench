@@ -75,6 +75,33 @@ describe('shellLongTaskRows：左栏那颗 loading 点读的那份清单', () =>
     expect(shellLongTaskRows(new Map([['inventory', runs]]))).toEqual([]);
   });
 
+
+  it('★★ 进度跟着行走：`progress` 原样进外壳行，没有就不落这个键', async () => {
+    const runs = createLongTaskRegistry<LongTaskBase>({
+      run: async ({ onProgress, signal }) => {
+        onProgress({ done: 2, total: 5 });
+        await new Promise<void>((resolve) => {
+          signal.addEventListener('abort', () => resolve(), { once: true });
+        });
+        return 'ok';
+      },
+      view: (snapshot) => ({ target: snapshot.target }),
+    });
+    runs.start({ workspace: '/w/a', target: 'env-prod' });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    const [withProgress] = shellLongTaskRows(new Map([['inventory', runs]]));
+    expect(withProgress).toMatchObject({ status: 'running', progress: { done: 2, total: 5 } });
+
+    const quiet = createLongTaskRegistry<LongTaskBase>({
+      run: () => new Promise((resolve) => setTimeout(() => resolve('ok'), 50)),
+      view: (snapshot) => ({ target: snapshot.target }),
+    });
+    quiet.start({ workspace: '/w/b', target: 'board' });
+    const [noProgress] = shellLongTaskRows(new Map([['board', quiet]]));
+    expect(noProgress).not.toHaveProperty('progress');
+  });
+
   it('★★ 人工干预节点跟着行走：needs-human 的 intervention 原样透传，没这一步的行不带这个键', async () => {
     const runs = createLongTaskRegistry<LongTaskBase>({
       run: async ({ onStep, signal }) => {

@@ -4,6 +4,8 @@ import {
   longTaskDot,
   longTaskIsLive,
   longTaskPollMs,
+  longTaskProgressIsValid,
+  longTaskProgressPercent,
   longTaskRunsOf,
   longTaskStopPress,
   longTaskStopStage,
@@ -113,7 +115,28 @@ describe('longTaskRunsOf（这一读交回的"当前那些趟"）', () => {
   });
 });
 
-describe('longTaskPollMs（轮询两档：还在跑要快，都收尾了也要问）', () => {
+
+describe('longTaskProgressIsValid / longTaskProgressPercent：合法才画条', () => {
+  it('★★ 两个有限数、total > 0、done 落在 [0, total] 才算合法', () => {
+    expect(longTaskProgressIsValid({ done: 0, total: 3 })).toBe(true);
+    expect(longTaskProgressIsValid({ done: 3, total: 3 })).toBe(true);
+    expect(longTaskProgressIsValid({ done: 0, total: 0 })).toBe(false);
+    expect(longTaskProgressIsValid({ done: 1, total: -3 })).toBe(false);
+    expect(longTaskProgressIsValid({ done: -1, total: 3 })).toBe(false);
+    expect(longTaskProgressIsValid({ done: 4, total: 3 })).toBe(false);
+    expect(longTaskProgressIsValid({ done: Number.NaN, total: 3 })).toBe(false);
+    expect(longTaskProgressIsValid({ done: 1, total: Number.POSITIVE_INFINITY })).toBe(false);
+  });
+
+  it('★★ 百分比：没给或非法回 null，合法按 done/total 算', () => {
+    expect(longTaskProgressPercent(undefined)).toBeNull();
+    expect(longTaskProgressPercent({ done: 9, total: 0 })).toBeNull();
+    expect(longTaskProgressPercent({ done: 1, total: 4 })).toBe(25);
+    expect(longTaskProgressPercent({ done: 4, total: 4 })).toBe(100);
+  });
+});
+
+describe('longTaskPollMs（轮询两档：运行中要快，全收尾了也要问）', () => {
   it('还在跑 → 快档（进度要跟手）', () => {
     expect(longTaskPollMs(true)).toBe(1500);
   });

@@ -1063,6 +1063,8 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'longTask.state.needsHuman': 'Waiting for you',
   'longTask.state.needsLogin': 'Needs sign-in',
   'longTask.state.stopped': 'Stopped',
+  'longTask.progress.text': '{done}/{total}',
+  'longTask.progress.label': 'Progress',
   'longTask.state.ok': 'Completed',
   'longTask.state.failed': 'Failed',
   'longTask.duration.sec': '{s}s',

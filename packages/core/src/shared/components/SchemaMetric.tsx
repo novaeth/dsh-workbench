@@ -1,6 +1,6 @@
 import { createElement as h, type ReactNode } from 'react';
 import type { CardViewTone } from '@dsh-workbench/shared';
-import { StateBlock } from '@dsh-workbench/shared';
+import { ProgressBar, StateBlock } from '@dsh-workbench/shared';
 import styles from './SchemaMetric.module.css';
 
 export interface SchemaMetricProps {
@@ -10,14 +10,6 @@ export interface SchemaMetricProps {
   readonly tone?: CardViewTone | undefined;
   readonly actions?: ReactNode | undefined;
 }
-
-const FILL: Record<CardViewTone, string> = {
-  neutral: styles.metricFillNeutral,
-  ok: styles.metricFillOk,
-  warn: styles.metricFillWarn,
-  bad: styles.metricFillBad,
-  busy: styles.metricFillBusy,
-};
 
 export function SchemaMetric({ label, value, percent, tone, actions }: SchemaMetricProps) {
   const width = Math.min(100, Math.max(0, percent));
@@ -31,20 +23,7 @@ export function SchemaMetric({ label, value, percent, tone, actions }: SchemaMet
     h(
       'div',
       { className: styles.metricBarRow },
-      h(
-        'div',
-        {
-          className: styles.metricTrack,
-          role: 'progressbar',
-          'aria-valuenow': width,
-          'aria-valuemin': 0,
-          'aria-valuemax': 100,
-        },
-        h('div', {
-          className: `${styles.metricFill} ${FILL[tone ?? 'neutral']}`,
-          style: { width: `${String(width)}%` },
-        }),
-      ),
+      h(ProgressBar, { progress: { done: width, total: 100 }, size: 6, tone: tone ?? 'neutral' }),
       h('span', { className: styles.metricPercent }, `${String(width)}%`),
     ),
   );

@@ -1,6 +1,7 @@
 import type {
   LongTaskIntervention,
   LongTaskLink,
+  LongTaskProgress,
   LongTaskStatus,
   LongTaskStepRow,
 } from '../long-task.js';
@@ -9,6 +10,7 @@ export const LONG_TASKS_ROUTE = 'long-tasks';
 
 interface ShellLongTaskSeenFields {
   readonly seen?: boolean | undefined;
+  readonly progress?: LongTaskProgress | undefined;
 }
 
 export interface ShellLongTaskRow extends ShellLongTaskSeenFields {

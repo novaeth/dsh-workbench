@@ -177,7 +177,7 @@
 - 进入 `needs-human` 时工作台自动向起它的会话发「在等你处理」notice（hold、按 run 去重），模块不做。
 - 流程侧对应 `ctx.need(intervention)`；`ctx.login(url)` 是旧路（仍产 `needs-login` + `loginUrl`，标 deprecated）。
 - 浏览器侧：`useLongTask` 读 `feed.runs`，`stop` / `recheck` / `answer` 各自带 `stopping` / `failed`；
-  画 `LongTaskRow`（六态；`step` / `meta` / `history` 给了才画）。
+  画 `LongTaskRow`（六态；`step` / `meta` / `history` / `progress` 给了才画）。
 
 ```
 ● 正在发布（2/3） [⏹]
@@ -190,7 +190,7 @@
 - 停止：`run` 收到 `signal` 被 abort = 有人点击停止；在循环点与每条子命令前后查 `signal.aborted`。
   不响应 signal 就不要画停止按钮。画钮传 `stop`（`onStop: () => feed.stop(run.id)`、`busy`、`failed`、
   `label: 停止任务 {label}`、`askLabel: '确认停止'`）；失败文案画行下；两步确认归组件。
-- 工作台自带 `workbench_long_tasks_list`（读）与 `workbench_long_tasks_stop`（写）。自己发起的长任务无需审批；
+- 工作台自带 `workbench_long_tasks_list`（读）/`workbench_long_tasks_stop`（写）。自己起的无需审批；
   他人的 / 用户手动启动的 / 未记录来源的需要审批；跨工作区直接拒绝。
 - `contracts` 查形状：注册表方法见 `LongTaskRegistry`，`create` 的字段见 `LongTaskDeps`；
   产物含 `useLongTask` / `LongTaskRow` 之一。是否实际响应 signal 不在检查范围内。
@@ -207,12 +207,12 @@
 
 - 固化 = 宿主半侧的 `FlowDefinition`（类型从 `@dsh-workbench/core/contract` 取）+ `deps.flow.run` + §9 的长任务 + `registerTools`。
 - 一次性 = 直接使用现有工具 / 命令执行，不建模块。
-- 写平台的 flow 工具在清单里 `writes: true` + `needsApproval`；运行前给出对象 / 环境 / 影响。
+- 写平台的 flow 工具在清单里 `writes: true` + `needsApproval`；运行前给出对象 / 影响。
 - `deps.flow.check(flow, actions)` 先过；动作里用 `ctx.need(intervention)` 报人工干预节点，`ctx.log` 报进度。
 - **agent 节点**：子 agent 读与判断，不写平台；结果进 `steps.<id>`；由看板按钮发起时会附带用户当前会话。见 [WORKFLOW.md](WORKFLOW.md) §4。
 - flow 的运行时只走 `deps.flow`，类型只走 `@dsh-workbench/core/contract`；不要为 flow 直接 import `@dsh-workbench/shared/host`。
 - 不要在 flow 里存凭据；不要把一次性任务静默固化。
-- 工具描述写「运行已固化的 <标题> 流程」；不要用它新建 flow，新需求先询问用户。
+- 工具描述写「运行已固化的 <标题> 流程」；不要用它新建 flow。
 
 ## 12 按工作区 / 模式收窄工具
 

@@ -105,6 +105,7 @@ export const PUBLIC_TYPES = {
   },
   'packages/core/src/shared/hooks/use-api-resource.ts': { ApiResourceOptions: 'all' },
   'packages/shared/src/api/workbench-client.ts': { ApiError: 'all', ApiGetOptions: 'all' },
+  'packages/shared/src/components/feedback/ProgressBar.tsx': { ProgressBarProps: 'all' },
 };
 
 export function memberJsDocOf(rel) {

@@ -26,6 +26,36 @@ export const LONG_TASK_LINK_MAX = 3;
 export const LONG_TASK_HISTORY_MAX = 20;
 
 /**
+ * 这一趟走到哪了：`done` 是已完成的数量，`total` 是一共多少。
+ * 没有单位词 —— 外壳只画 `3/7` 与一根条；「步」还是「项」由模块自己在步骤文案里说。
+ */
+export interface LongTaskProgress {
+  readonly done: number;
+  readonly total: number;
+}
+
+/**
+ * 进度是否可用：两个有限数、`total > 0`、`done` 落在 `[0, total]`。
+ * 不合法的进度一律当作「没有进度」，界面上不画条 —— 不夹到边界，免得把坏数字画成好数字。
+ * @param progress 模块或注册表给的进度。
+ * @returns 可用为 `true`。
+ */
+export function longTaskProgressIsValid(progress: LongTaskProgress): boolean {
+  const { done, total } = progress;
+  return Number.isFinite(done) && Number.isFinite(total) && total > 0 && done >= 0 && done <= total;
+}
+
+/**
+ * 把进度折成 0..100 的百分比，供那根条用。
+ * @param progress 进度；没给就当没有进度。
+ * @returns 百分比；没给或不合法回 `null`。
+ */
+export function longTaskProgressPercent(progress: LongTaskProgress | undefined): number | null {
+  if (progress === undefined || !longTaskProgressIsValid(progress)) return null;
+  return (progress.done / progress.total) * 100;
+}
+
+/**
  * 回执字段的输入类型：`text` 明文，`secret` 密码框（值同样只回给模块）。
  */
 export type LongTaskInterventionFieldKind = 'text' | 'secret';

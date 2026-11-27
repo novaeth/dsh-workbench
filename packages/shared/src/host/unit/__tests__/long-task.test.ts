@@ -343,6 +343,67 @@ describe('createLongTaskRegistry 的人工干预节点（needs-human）', () => 
     expect(runs.seen('run-nope')).toBe(false);
   });
 
+
+  it('★★ 进度只增不减：回退的 done 被忽略；结算时补齐到 total', async () => {
+    let progress: ((next: { done: number; total: number }) => void) | undefined;
+    let settle: ((result: unknown) => void) | undefined;
+    const h = harness({
+      run: (options) =>
+        new Promise((resolve) => {
+          progress = options.onProgress;
+          settle = resolve as (result: unknown) => void;
+        }),
+    });
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+
+    progress?.({ done: 3, total: 7 });
+    expect(runs.snapshot(started.id)?.progress).toEqual({ done: 3, total: 7 });
+
+    progress?.({ done: 1, total: 7 });
+    expect(runs.snapshot(started.id)?.progress).toEqual({ done: 3, total: 7 });
+
+    progress?.({ done: 5, total: 7 });
+    expect(runs.snapshot(started.id)?.progress).toEqual({ done: 5, total: 7 });
+
+    settle?.({});
+    await flush();
+    expect(runs.snapshot(started.id)?.status).toBe('ok');
+    expect(runs.snapshot(started.id)?.progress).toEqual({ done: 7, total: 7 });
+  });
+
+  it('★★ 非法进度当作没有：清掉这个键；不动 at；变更事件各一次', async () => {
+    let progress: ((next: { done: number; total: number }) => void) | undefined;
+    const h = harness({
+      run: (options) =>
+        new Promise(() => {
+          progress = options.onProgress;
+        }),
+    });
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+    const at = runs.snapshot(started.id)?.at;
+    const kinds: string[] = [];
+    runs.onChange((change) => kinds.push(change.kind));
+
+    progress?.({ done: 2, total: 5 });
+    expect(runs.snapshot(started.id)?.progress).toEqual({ done: 2, total: 5 });
+    expect(runs.snapshot(started.id)?.at).toBe(at);
+
+    progress?.({ done: 0, total: 0 });
+    expect(runs.snapshot(started.id)?.progress).toBeUndefined();
+    expect('progress' in (runs.snapshot(started.id) ?? {})).toBe(false);
+    expect(kinds).toEqual(['progress', 'progress']);
+  });
+
+  it('★ 没报过进度就不落这个键（旧快照不多一个空键）', () => {
+    const h = harness();
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+
+    expect('progress' in (runs.snapshot(started.id) ?? {})).toBe(false);
+  });
+
   it('★ 等人那一趟能停，载荷跟着清掉', () => {
     const h = harness();
     const runs = createLongTaskRegistry(h.deps);
