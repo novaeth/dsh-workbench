@@ -9,12 +9,12 @@
 | 用户已在浏览器登录过该系统 | DIY：用 opencli 复用登录探（下文五步） |
 | 要新凭据（账号 / 密钥 / token） | 工程：停，说清谁配什么 |
 
-判据是"要不要新凭据"，不是"要不要接新平台"。其余类型见 [DESIGN.md](DESIGN.md) §0。
+判据是"要不要新凭据"，不是"要不要接新平台"。其余去向见 [SKILL.md](SKILL.md) 的分诊表。
 
 ## 第 0 段：站点表
 
-站点事实放清单 `host.sites`，配方只写 `site`。探测清单、放行条件与生成物见 [SITES.md](SITES.md)。
-填完后运行 `check --only contracts`。
+顺序：**站点清单 → 站点探测 → 站点表 → 接口探测 → 功能**。站点表见 [SITES.md](SITES.md)；
+填完运行 `check --only contracts`，通过再探。
 
 ## 五步
 

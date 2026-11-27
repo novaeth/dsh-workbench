@@ -39,8 +39,8 @@ pnpm prepack                 # 打包前构建（npm pack / publish 自动触发
 
 **非生成段（这一节与下文）不会被 render 覆盖**：需求变化时修改这里，`design render` 只处理标记之间的段落。
 
-提问与填写方式见指引 `SKILL.md` 的七步、`DESIGN.md`（判域 / 两条分工 / 三张表）、
-`STEPS.md`（每步问什么、什么时候算完成）、`PANEL.md`、`TOOLS.md`、`LINKAGE.md`。
+去向与流程选择见 `SKILL.md`，方案节点见 `FLOW.md`；三张表与设计记录见 `DESIGN.md`，
+确认方案的问法见 `STEPS.md`，界面、能力与联动见 `PANEL.md`、`TOOLS.md`、`LINKAGE.md`。
 
 <!-- dsh-wb:design:start -->
 （这一段由 `design.json` 生成：修改需求时修改 `design.json`，再运行 `dsh-wb-module design render`；手动修改会在下一次 check 中判定失败。）

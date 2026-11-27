@@ -2,7 +2,7 @@
 
 [datasource](DATASOURCE.md) 只管读。本文件管写：提交 / 发布 / 建单 / 改配置。
 
-判域同 [DESIGN.md](DESIGN.md) §0：复用现有登录、一次调用能改完 → DIY；要新凭据 / 新服务或依赖 → 工程域；多步长流程先问一次性还是固化（[FLOW.md](FLOW.md)）。
+去向按 [SKILL.md](SKILL.md) 的分诊表判断：复用现有登录、一次调用能改完 → DIY；要新凭据 / 新服务或依赖 → 工程域；多步长流程先问一次性还是固化（[WORKFLOW.md](WORKFLOW.md)）。
 
 ## 四步
 
@@ -40,7 +40,7 @@
      上限 50 条、单条请求体 16 KB。备选方案：`opencli browser <会话> bind`（当前聚焦窗活动标签）或
      `open … --window foreground`，先 `network --follow` 再让用户操作；取 body 用 `network --raw`
      （同一调用内）；仍无则请用户从 DevTools 复制 curl。
-   - 参数与返回细则见 [FAMILY.md](FAMILY.md) §4。
+   - 参数与返回细则见 [FAMILY.md](FAMILY.md) §3。
    - 仅测试环境 / 可撤销目标可由 agent 自行操作。
 
    取证结果落成模块的写能力：`writes: true` + `needsApproval` 的 `headline` + 客户端 `approval.plan`（[TOOLS.md](TOOLS.md) §6）。
@@ -81,7 +81,7 @@
 
 - **预览**：先确认是否有 `yes` / `dryRun` / `confirm` 档；有则先走预览。`opencli inventory publish` / `inventory build`
   无预览开关，调用即真发布 / 真构建。**无预览档不许试写。**
-- 要新凭据 / 新依赖 → 工程域；多步长流程先问固化，固化走 [FLOW.md](FLOW.md) 的 workflow。
+- 要新凭据 / 新依赖 → 工程域；多步长流程先问固化，固化走 [WORKFLOW.md](WORKFLOW.md) 的 workflow。
 
 ## 写纪律
 

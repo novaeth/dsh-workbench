@@ -1,4 +1,4 @@
-# 实现：落点、模板、命令、两个面
+# 实现：落点、模板、两个面
 
 只管怎么落。依赖 / 安装 / 热换 / 发布见 [WIRING.md](WIRING.md)；需求见 [DESIGN.md](DESIGN.md) / [STEPS.md](STEPS.md)；
 门禁见 [REVIEW.md](REVIEW.md)。
@@ -26,7 +26,7 @@
 
 ⚠️ 如果没有可放代码的包（没有 `package.json`，或未声明 workspace），请询问用户：在这里建立 workspace，还是使用工坊的脚手架工作区。
 不要改动用户仓库的 monorepo 结构。从「创建模块」入口进入的会话已在工坊里，此时 `<dir>` 就是工坊。
-工具链与工作台不是同一代时无需处理：启动时会比对并在后台同步（`workbench_diy_status` 会给出状态）。
+工具链版本与同步故障见 [LIFECYCLE.md](LIFECYCLE.md)。
 
 模块内的 `pnpm build` / `pnpm exec dsh-wb-module` 与工作区根使用同一个二进制，不要在模块里另外安装（否则会静默出现两代）。
 
@@ -39,8 +39,9 @@ pnpm exec dsh-wb-module init <unit> --dir <目录> --template diy --description 
 ``<unit>`：小写短横线，同时是单元 id、包名后缀与样式前缀；全局唯一（与已安装模块、工作台单元冲突时，注册会抛错）。
 `<目录>` 是模块的创建位置：在某个工作区里时，选择它 glob 覆盖的目录（`packages/`、`apps/`、`modules/` 等均可）；
 也可以使用独立目录，此时这个包自己就是根。
-生成的骨架默认能通过 `check`；`selfcheck` 还包含 `design check`，要等设计底稿填写完成才会通过（共 10 个脚本）。**只有一个模板**：`--template diy`（默认），
-包含真实数据源、五态卡片，以及可运行的长任务 / 工具 / 动作通道样板；两份模板的维护成本过高。
+生成的骨架默认能通过 `check`；`selfcheck` 还包含 `design check`，要等设计记录（底稿）填写完成才会通过。
+`package.json` 至少保留 `build` / `typecheck` / `test` / `selfcheck` 四个脚本，`contracts` 点名缺失；模板自带 10 个脚本。
+**只有一个模板**：`--template diy`（默认），包含真实数据源、五种状态（五态）卡片，以及可运行的长任务 / 工具 / 动作通道样板；两份模板的维护成本过高。
 
 骨架分层：`src/model/**`（纯逻辑）、`src/components/**`（视图 + 同目录 `*.module.css`）、
 `src/messages.ts`、`src/host.ts`（宿主面）+ `src/host/**`（宿主侧内部实现，
@@ -61,22 +62,7 @@ pnpm exec dsh-wb-module init <unit> --dir <目录> --template diy --description 
 修改位置：视图改 `src/components/*.tsx` + 同目录 `*.module.css`；逻辑改 `src/model/**`；文案改 `src/messages.ts`；
 `src/client.tsx` 只留注册。宿主侧不 import `src/components/**`（跨运行时，`arch` 判定失败）。
 
-## 3 命令
-
-用 `pnpm exec dsh-wb-module …`；命令、`--only` 判据名与模板参数看 `--help` / `check --list`，不在指引里重复。
-`package.json` 至少保留 `build` / `typecheck` / `test` / `selfcheck` 四个脚本，`contracts` 点名缺失；
-模板自带 10 个（另含 `check` / `check:duplication` / `duplication:report` / `lint` / `design` / `prepack`）。
-
-- `check` 不会运行 `pnpm test`；状态、换算与边界测试需要自行运行。
-- `check:duplication` 用 jscpd 扫 `src` / `scripts`（阈值与忽略面在 `.jscpd.json`），有克隆就红；
-  `duplication:report` 把 HTML / JSON 报告出到 `coverage/duplication/`。它不在 `check` 链里，修改源码后要单独运行。
-- 「不适用」不等于「通过」：`standalone` 需要工作台源码在场，`markers` 只扫描公开包（DIY 模块 `private`）。
-  汇总行会列出未检查项。
-
-安装与添加到看板都由 agent 工具完成：`workbench_diy_install`、`workbench_diy_show`、`workbench_diy_status`
-（[WIRING.md](WIRING.md) §3）。添加到看板之后，按三张表逐条走查即为验收。
-
-## 4 两个面
+## 3 两个面
 
 宿主面（`defineUnitHostPlugin` 把 `name` / `inject` / `apply` 一起给）：
 
@@ -109,77 +95,3 @@ export const apply = plugin.apply;
 
 `idle` 是独立态（无工作区或 `enabled: false`），不画成空态。
 卡片在任意输入下不得抛异常或出现 `undefined` / `NaN`（`check --only cards`）。
-
-## 5 起子进程：走执行缝门面
-
-模块需要在宿主侧运行命令（构建、git、打包……）时，用工作台放进 `mount(deps)` 的执行缝门面 `deps.seam`。
-`ctx.get('shell')` / `ctx.get('workbenchShell')` / `ctx.get('seam')`、`runShell` / `shellOf`、裸
-`child_process` 都不给模块用，`check --only seam` 会判定失败。
-
-先在清单里声明要哪几档写入域（只认两档）：
-
-```json
-{ "host": { "inject": [], "writes": ["unit"] } }
-```
-
-| 档 | 可写在哪 | 什么时候给 |
-|---|---|---|
-| `unit` | `<运行时根>/units/<unit>/`（模块自己的数据目录；`HOME`、npm/pnpm 缓存与日志也注入到这里） | 声明了就常开、不用审批 |
-| `workspace` | 当前会话的工作区 | 声明了才给；调用时还要带上会话对象 |
-
-字段、默认值与错误码见 `UnitSeamRequest`；这一节只留必须遵守的约束。
-
-不写 `writes`（或写 `[]`）= 不拿门面：`deps.seam` 是 `undefined`，代码里按可选处理。
-
-读站点数据的模块声明 `host.sites`（短名 → 站点事实），`host.origins` 由它推导；显式 `origins` 仍可写：
-
-```json
-{
-  "host": {
-    "inject": [],
-    "sites": {
-      "oa": {
-        "origin": "https://oa.example.com",
-        "loginUrl": "https://oa.example.com/login",
-        "authLoss": { "path": "errorCode", "equals": "002" }
-      }
-    }
-  }
-}
-```
-
-声明后 `deps.data` 的 HTTP / 配方 / 计划只放行这些站点（站点 origin 并集 + 显式 origins）；未声明的 origin
-直接回 `invalid-request`；path / registry 安装预检会列出「会读取这些站」。配方与计划只写 `site: 'oa'`，
-运行时由宿主解析出 origin / 登录页 / 过期信号 / 会话 / 超时。
-无 URL 的 `browser` 脚本与 `command` 读不在 origin 校验范围。不写 = 兼容旧模块，仍放行；写 `[]` = 一个都不许。
-
-写计划放在 `writes: true` 的工具 `execute` 里（审批门在工具层先过）：
-
-```ts
-const out = await deps.data.submitPlan(plan, { idempotencyKey: input.idempotencyKey, confirm: () => true });
-```
-
-`confirm` 返回 false 就停；`onStep` 可把每步推成长任务行。`submitPlan` 不重复审批。
-
-长任务本身已经是用户确认后才启动的，里面的写计划直接传 `confirm: () => true` 即可，
-不要再逐步弹审批；要额外确认是产品自己的选择，不是 `submitPlan` 的默认要求。
-
-登录丢失可先用 `authLossOf(value)` 判：401、`status:false` + 登录/超时文案、跳 `/login`（403 算没权限）；
-`status:false` 单独不算，避免把业务错误误判成登录。
-
-```ts
-const result = await deps.seam?.run({
-  scope: 'unit',
-  command: 'git rev-parse --short HEAD',
-  timeoutMs: 10_000,
-});
-if (result === undefined || result.exitCode !== 0) {
-  return { ok: false, text: '这条命令未成功执行' };
-}
-```
-
-- `workspace` 档只给有会话的调用点（工具）；路由 / 动作没有会话，不要请求这一档。
-- 一条命令只声明一个写入域；要写两棵树就在步骤边界拆成两次调用。
-- 请求没声明的档在启动进程前就失败（`SeamError` 的 `scope-not-declared` / `workspace-unknown`），不要吞掉。
-- 这层门面是**约定 + 门禁 + 归因**，不是进程隔离：模块宿主代码与工作台同进程。真正的安全边界仍是
-  「是否安装模块 + 审批」。

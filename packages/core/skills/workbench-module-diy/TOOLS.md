@@ -9,7 +9,7 @@
 | 同一件事、同一份数据，只是要不要展开明细 | 一件事 + 一个"展开"选项 |
 | 动作或后果不同（看 vs 改） | 拆开 |
 | 用户反复做、每次都要批准 | 封成一个动作（一个按钮 + 一件事），不拆成多个小工具 |
-| 用户反复做、步骤多、要等 / 重试 | 固化成一条 workflow（[FLOW.md](FLOW.md)），不拆成多个小工具 |
+| 用户反复做、步骤多、要等 / 重试 | 固化成一条 workflow（[WORKFLOW.md](WORKFLOW.md)），不拆成多个小工具 |
 
 先定：用户会怎么对 agent 说？
 
@@ -203,13 +203,13 @@
 
 ## 9.1 多步流程（workflow）
 
-多步、需要等待、需要重试、需要取消、以后还要运行 → 先按 [FLOW.md](FLOW.md) 询问用户是否固化。
+多步、需要等待、需要重试、需要取消、以后还要运行 → 先按 [WORKFLOW.md](WORKFLOW.md) 询问用户是否固化。
 
 - 固化 = 宿主半侧的 `FlowDefinition`（类型从 `@dsh-workbench/core/contract` 取）+ `deps.flow.run` + §9 的长任务 + `registerTools`。
 - 一次性 = 直接使用现有工具 / 命令执行，不建模块。
 - 写平台的 flow 工具在清单里 `writes: true` + `needsApproval`；运行前给出对象 / 环境 / 影响。
 - `deps.flow.check(flow, actions)` 先过；动作里用 `ctx.need(intervention)` 报人工干预节点，`ctx.log` 报进度。
-- **agent 节点**：子 agent 读与判断，不写平台；结果进 `steps.<id>`；由看板按钮发起时会附带用户当前会话。见 [FLOW.md](FLOW.md) §4。
+- **agent 节点**：子 agent 读与判断，不写平台；结果进 `steps.<id>`；由看板按钮发起时会附带用户当前会话。见 [WORKFLOW.md](WORKFLOW.md) §4。
 - flow 的运行时只走 `deps.flow`，类型只走 `@dsh-workbench/core/contract`；不要为 flow 直接 import `@dsh-workbench/shared/host`。
 - 不要在 flow 里存凭据；不要把一次性任务静默固化。
 - 工具描述写「运行已固化的 <标题> 流程」；不要用它新建 flow，新需求先询问用户。

@@ -8,6 +8,20 @@ import { documentedInterfaces } from '../public-types.mjs';
 const skillFile = (name) => read(pkg(`skills/workbench-module-diy/${name}`));
 const diyConstants = () => read(pkg('../shared/src/contract/protocol/diy.ts'));
 
+function skillAnchorCheck(title, file, needles) {
+  return {
+    title,
+    run(_ctx, report) {
+      const text = skillFile(file);
+      report(
+        title,
+        needles.every((needle) => text.includes(needle)),
+        needles.map((needle) => `${needle} ${text.includes(needle)}`).join(' / '),
+      );
+    },
+  };
+}
+
 export const checks = [
   {
     title: '★ 宿主把工坊登记成工作台的工作区（少了它入口点了没反应，且不报错）',
@@ -129,48 +143,16 @@ export const checks = [
       );
     },
   },
-  {
-    title: '★ 判域按"要不要新凭据"判，不按"要不要接新平台"',
-    run(_ctx, report) {
-      const designMd = skillFile('DESIGN.md');
-      report(
-        '★ 判域按"要不要新凭据"判，不按"要不要接新平台"',
-        designMd.includes('要**新凭据**') && !designMd.includes('要接一个新平台的账号'),
-        designMd.includes('要**新凭据**') ? '按新凭据判 ✅' : '判域表里没写"新凭据"',
-      );
-    },
-  },
-  {
-    title: '★ 指引有"数据从哪来"那一节：站点表 → 预装的运行时探 → 固化成一条读 → 三态',
-    run(_ctx, report) {
-      const datasourceMd = skillFile('DATASOURCE.md');
-      report(
-        '★ 指引有"数据从哪来"那一节：站点表 → 预装的运行时探 → 固化成一条读 → 三态',
-        datasourceMd.includes('运行时') &&
-          datasourceMd.includes('预装') &&
-          datasourceMd.includes('侦察兵') &&
-          datasourceMd.includes('固化进模块') &&
-          datasourceMd.includes('没登录') &&
-          datasourceMd.includes('站点表') &&
-          datasourceMd.includes('check --only contracts'),
-        `运行时 ${datasourceMd.includes('运行时')} / 预装 ${datasourceMd.includes('预装')} / 固化 ${datasourceMd.includes('固化进模块')} / 三态 ${datasourceMd.includes('没登录')} / 站点表 ${datasourceMd.includes('站点表')} / 自检 ${datasourceMd.includes('check --only contracts')}`,
-      );
-    },
-  },
-  {
-    title: '★ 指引有"写通道"那一节：现成写命令 → 入参/出参来源 → 没有预览档的不许试',
-    run(_ctx, report) {
-      const writesMd = skillFile('WRITES.md');
-      report(
-        '★ 指引有"写通道"那一节：现成写命令 → 入参/出参来源 → 没有预览档的不许试',
-        writesMd.includes('运行时') &&
-          writesMd.includes('预览') &&
-          writesMd.includes('工程域') &&
-          writesMd.includes('回读'),
-        `运行时 ${writesMd.includes('运行时')} / 预览 ${writesMd.includes('预览')} / 工程域 ${writesMd.includes('工程域')} / 回读 ${writesMd.includes('回读')}`,
-      );
-    },
-  },
+  skillAnchorCheck(
+    '★ 指引有"数据从哪来"那一节：站点表 → 预装的运行时探 → 固化成一条读 → 三态',
+    'DATASOURCE.md',
+    ['运行时', '预装', '侦察兵', '固化进模块', '没登录', '站点表', 'check --only contracts'],
+  ),
+  skillAnchorCheck(
+    '★ 指引有"写通道"那一节：现成写命令 → 入参/出参来源 → 没有预览档的不许试',
+    'WRITES.md',
+    ['运行时', '预览', '工程域', '回读'],
+  ),
   {
     title: '★ 入口（SKILL.md）指向那一节，并且它排在"从模板改"之前',
     run(_ctx, report) {

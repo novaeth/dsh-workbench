@@ -1,197 +1,182 @@
-# Workflow：先判去向，再问一次固化
+# 工坊流程：三条流程的节点接口约定（契约）
 
-**先判去向**（见 [SKILL.md](SKILL.md) 第 0 步）。去向是「一次性」就直接执行；是「用现成的」就安装或添加到面板；
-是「改道」就给出指引。只有判定**要做模块**，且这项任务多步、需要等待、重试或写入平台时，才问下面这一句。
+步骤 id、顺序与提交字段以代码和工具定义为准；本页是节点投影。除方案步用 `workbench_diy_plan` 外，其余节点用 `workbench_diy_step` 提交；工具返回说明当前在等什么、下一步是什么。
 
-## 1 先问
+## `diy-board` · 建看板 / 建无看板
 
-问用户（给推荐，允许一字通过）：
+建看板与建无看板共用六个节点。无看板变体只替换方案、安装标题、验收与保存记录内容，不改步骤。
 
-> 这件事是一次性的，还是以后还要按同样步骤执行？我建议 **<一次性 / 固化>**，因为 **<重复信号 / 只此一次>**。
+无看板的三条硬约束：
 
-只问一次；用户已经说过「就这一次 / 以后都要 / 固化」，按用户的决定执行，不追问。
+1. 工具收在工具包里，用之前开包；包内写工具仍逐条审批，没有常驻工具这一档。
+2. 必须交付一个触发者：dsh 定时任务，或「你说一句我就执行」。
+3. 交付时说明上一次运行时间与查看位置。
 
-| 信号 | 建议 |
-|---|---|
-| 用户说「以后 / 每次 / 每周 / 按这个流程 / 固化 / 做成按钮」 | 固化 |
-| 三步以上、有先后依赖 | 固化 |
-| 要等、轮询、重试、取消、中途要人处理（登录等） | 固化 |
-| 要写平台、要审批、要留痕 | 固化 |
-| 只这一次、还在探、单步读 / 写 | 一次性 |
-| 无法判断 | 先按一次性处理，运行成功后再由用户决定是否固化 |
+### `probe` · 查看数据来源
 
-- **一次性**：不创建模块，也不写 flow；直接使用现有工具或命令执行到完成，并告诉用户「本次直接执行，未固化」。
-- **固化**：进入第 2 节；先画步骤链，再问一次「按这个固化吗？」。
+- **手里**：用户原话、去向与一句话复述；改模块不走这一节点。
+- **做**：把需求翻成站点与系统关键词，先找现成能力，再探接口或页面；试通一条最小读，记录参数、凭据来源、未登录、超时与返回结构。只探数据源，不写模块实现。
+- **交**：本次读到的站点清单；每条读都要有可重复的命令或请求作证据。
+- **完**：需要登录的站点已填站点表并通过站点检查，每条读的入口、返回与失败形态都已探明；简单公开读可跳过站点表。
+- **读**：先 [DATASOURCE.md](DATASOURCE.md) 第 0 段与「五步」，再 [SITES.md](SITES.md)「探什么 / 放行条件」；有写入再读 [WRITES.md](WRITES.md)「四步」。
+- **卡**：缺能力或工具包时按返回补齐；登录过期就让用户登录对应站点后继续，不猜接口或凭据。
 
-不要问「要不要用 FlowDefinition / 怎么写代码 / 选哪个引擎」——这些是实现，用户不决定。
+### `plan` · 确认方案
 
-## 2 固化后的形态
+- **手里**：一句话复述、站点清单与已探明的读写证据。
+- **做**：把方案收成四段「你会看到什么 / 你能做什么 / agent 能做什么 / 数据从哪来」，并画出真实文案的界面预览；只确认需求与后果，不定代码选型。
+- **交**：完整四段、界面预览；有写工具时补审批四格与审批屏。用 `workbench_diy_plan` 提交，获批后才进入创建。
+- **完**：四段都有实质内容，看板至少一张非审批图，写工具的审批材料齐全，用户已批准这一版。
+- **读**：先 [STEPS.md](STEPS.md) 的问法，再 [DESIGN.md](DESIGN.md) 的三张表与 ASCII，最后按下面勾选的轴读对应节。
+- **卡**：按 `workbench_diy_plan` 指出的缺段、缺图或缺审批格补齐；需求复述变化时先说明当前进度会清除，用户确认后带 `restart: true` 重新调用 `workbench_diy_plan`；去向变化则先终止当前流程。
 
-一条 workflow = 模块宿主半侧的一份 `FlowDefinition` + 动作表 + 长任务 + 工具（可选卡片）。
-**v0 没有 flow 仓库，固化就是写进模块**，不是存一份 JSON。
+这一步要勾完四条轴；可以同时成立，不是四选一：
 
-运行后用户会看到一条长任务行（六态与停止按钮见 [TOOLS.md](TOOLS.md) §9）：
+| 轴 | 这次要定什么 | 只读哪节 |
+|---|---|---|
+| 数据 | 只读，还是读加写；每条读的来源与证据 | [DATASOURCE.md](DATASOURCE.md)「配方」；写读 [WRITES.md](WRITES.md)「四步 / 写纪律」 |
+| 编排 | 单步、模块内 workflow，还是长任务；等待、停止与人工介入 | [TOOLS.md](TOOLS.md) §1 与 §9；[WORKFLOW.md](WORKFLOW.md) §2–§4 |
+| 判断 | 确定性代码，还是模型节点；模型结论如何影响后续 | [AI.md](AI.md) §1 与 §4；[WORKFLOW.md](WORKFLOW.md) §4 |
+| 界面 | 卡片、配置与工具分别承担什么 | [PANEL.md](PANEL.md) §1–§7；[KIT.md](KIT.md) §1–§5；无卡片看本页无看板变体 |
 
-- 写平台前有一次审批（模块清单 `writes: true` + `needsApproval`）。
-- 工具返回 `runId`；再调可看同一条。
+**无看板变体**：四段改写「输出 / 触发 / 批准 / 数据」，不画卡片、不建面板表；只在有写工具时画审批屏。触发者说不清就只问一次定时或手动，无法定时则降级为「你说一句我就执行」。
 
-固化前给用户看一条 ASCII 步骤链 + 一句确认。画，不写句子；一张图 = 一条流程：
+### `build` · 创建模块
 
-```
-⚠ 写平台：开始运行前先点击一次「允许一次」；拒绝则不运行
+- **手里**：已批准的四段与图、站点表、配方和写通道证据。
+- **做**：在 `workbench_diy_status` 给出的工作区选择落点，从 DIY 模板创建；实现数据、编排、判断与界面，再构建、检查并运行边界测试。没有可放置代码的包时，让用户选择在这里建立 workspace 或使用工坊，不改用户仓库结构。
+- **交**：本次模块标识；改动与构建结果留在对话中。
+- **完**：模板产物、数据源、两个面与声明一致，构建和模块检查通过，方案中的正常、空、出错与写入路径都有实现。
+- **读**：先 [BUILD.md](BUILD.md)「落点 / 从模板开始 / 两个面」，再按四轴读 [DATASOURCE.md](DATASOURCE.md)、[WORKFLOW.md](WORKFLOW.md)、[AI.md](AI.md)、[PANEL.md](PANEL.md) 与 [KIT.md](KIT.md) 的对应节；写完读 [REVIEW.md](REVIEW.md)。
+- **卡**：构建失败先自行修复，两轮仍未通过就说清未通过项与下一步；安装、生效或工具链问题转 [LIFECYCLE.md](LIFECYCLE.md)。
 
-发布（输入：环境 in.env）
+实现前再勾一次四轴，防止方案里有、模块里漏：
 
-  ① 拉代码 ── 读当前版本
-  │
-  ▼
-  ② 构建 ── 每 5s 查一次 · 最多 5 次
-  │        查到 done 往下；超时 → 失败停在这
-  ▼
-  ③ 发布 ── 写平台 · 失败重试 2 次（每次隔 3s）
-  │
-  ▼
-● 发布完成 · 随时可停 · 再调工具按 runId 看同一条
-```
+| 轴 | 这次要实现什么 | 只读哪节 |
+|---|---|---|
+| 数据 | 读配方或写通道进入宿主面，卡片只消费路由结果 | [DATASOURCE.md](DATASOURCE.md)「配方 / 三态 / 错误码」；[WRITES.md](WRITES.md)「执行体 / 回读」 |
+| 编排 | 单步工具、固化流程或长任务共用同一实现，支持停止与恢复 | [TOOLS.md](TOOLS.md) §5–§9；[WORKFLOW.md](WORKFLOW.md) §3 |
+| 判断 | 能确定的用代码；需语义判断的走模型节点并处理失败 | [AI.md](AI.md) §1、§4、§6–§7 |
+| 界面 | 卡片、配置、工具与审批各自按真实文案落地 | [PANEL.md](PANEL.md) §4–§7；[KIT.md](KIT.md) §2–§5；[COPY.md](COPY.md) |
 
-- 步骤名用长任务行会显示的那句；① ② ③ 的流向就是 `steps` 的顺序。
-- 等 / 轮询 / 重试写在那一步的箭头下：每隔多久、最多几次、超时往哪走（`maxMs: 0` 写「不限时」）。
-- 写平台的步骤只标「写平台」；`⚠` 与审批词写在开始运行的那一行，审批屏另画（[DESIGN.md](DESIGN.md) §3）。
-- agent 节点画成 `② 评审 · agent 读 diff，给结论`；写平台的那一步照常只标「写平台」。
-- 逐项、子流程、登录、分支在动作里，图上只标一句「动作里：…」，不画分支树。
-- `when` 写「不满足就跳过」；`stopWhen` 写「命中就结束」。
-- 用户改哪步就改图再问；图下只留「按这个固化吗？」，不补解释。
+### `install` · 添加模块到面板
 
-## 3 怎么写
+- **手里**：已通过构建的模块标识与产物。
+- **做**：调用 `workbench_diy_install`；返回未显示时再调用 `workbench_diy_show`，不重复安装。
+- **交**：模块标识与是否安装成功。
+- **完**：模块已安装并被当前工作区识别；看板已显示，无看板只安装、不要求出现卡片。
+- **读**：正常做法看 [WIRING.md](WIRING.md)「安装、添加到看板」；未出现或要重启看 [LIFECYCLE.md](LIFECYCLE.md)。
+- **卡**：按 `workbench_diy_status` 的安装、识别、显示与下一步处理；需要重启只说一次并等待。
 
-只走宿主 kit（`mount(deps)` 的 `deps.flow`）与 `@dsh-workbench/core/contract` 的类型：
+**无看板变体**：这一节点显示为「安装模块」，只安装并确认识别，不调用 `workbench_diy_show`，不要求出现面板卡片。
 
-- `FlowDefinition` / `FlowStep` / `FlowValue` / `FlowPredicate` 从 `@dsh-workbench/core/contract` 取。
-- `deps.flow.createActions()` / `deps.flow.check()` / `deps.flow.run()`。
+### `verify` · 检查模块显示
 
-最小宿主半侧（长任务与工具的完整签名见 [TOOLS.md](TOOLS.md) §9）：
+- **手里**：已安装模块、方案三张表与验收清单。
+- **做**：默认只读取证，对照每张图与每条能力逐项验证；结果分「验过 / 未验」，未验写明原因。需要真实交互时才申请页面调试。
+- **交**：已验证且通过的条目，以及未验证条目与原因。
+- **完**：每条验收都有归属，没有把未验写成通过；全部走通后才执行设计验收。
+- **读**：自动检查看 [REVIEW.md](REVIEW.md)；面板不正确按 [SYMPTOM.md](SYMPTOM.md) 查；无屏环境看 [LIFECYCLE.md](LIFECYCLE.md)。
+- **卡**：查的过程不改源码；确认要修就转 `diy-tweak` 或回到本流程创建节点。
 
-```ts
-import type { FlowDefinition, UnitModuleFace } from '@dsh-workbench/core/contract';
+**无看板变体**：这一节点显示为「检查模块功能」，不运行面板检查；以构建、模块检查和实际运行一次的结果验收。
 
-const flow: FlowDefinition = {
-  id: 'release',
-  title: '发布',
-  target: { $ref: 'in.env' },
-  steps: [
-    { id: 'read', action: 'read' },
-    {
-      id: 'wait',
-      action: 'wait',
-      poll: {
-        everyMs: 5000,
-        maxMs: 300000,
-        until: { $eq: [{ $ref: 'value.state' }, { $lit: 'done' }] },
-      },
-    },
-  ],
-};
+### `ledger` · 保存这次的设计
 
-export const face: UnitModuleFace = {
-  unit: 'release',
-  mount(deps) {
-    const actions = deps.flow.createActions();
-    actions.register('read', async () => ({ ok: true }));
-    actions.register('wait', async () => ({ state: 'done' }));
-    return { routes: {}, registerTools: () => [] };
-  },
-};
-```
+- **手里**：已批准方案、实际实现与「验过 / 未验」清单。
+- **做**：保存设计记录，生成用户说明与开发说明；模块说明必须与已批准方案一致。
+- **交**：本次设计保存到哪个文件。
+- **完**：设计检查通过、说明与方案无漂移，随后按入口页的三句话交付。
+- **读**：[DESIGN.md](DESIGN.md) §4–§6；文案看 [COPY.md](COPY.md)。
+- **卡**：按 `workbench_diy_step` 指出的说明缺段或方案差异补齐；要改变已批准内容就先终止并重新走方案。
 
-在模块 `mount` 里：
+**无看板变体**：不写 `design.json`；用户说明 `README.md` 手写；留存触发者、实际运行结果与查看位置。
 
-- **优先用 `createFlowTask({ key, flow, actions, flowHost: deps.flow, longTasks: deps.longTasks, tool })`**（`@dsh-workbench/shared/host`）：它做 `flow.check`、建长任务注册表，返回 `{ runs, start, tool }`；`tool` 的 `execute` 与 `start` 共用同一实现，`runId` 参数自动支持「只看那条」。
-- 要自定义 `view` / `step` / `outcome` 时才手写 `const runs = deps.longTasks.create({ key, run, view, outcome, stopped })`；`run` 调 `deps.flow.run`，把 `onStep` 映射到长任务的 `onStep`；返回 `status === 'failed'` 时 throw，让注册表标 failed。默认映射用 `longTaskStepOf(event)`（`@dsh-workbench/shared/host` 导出，`running`/`ok`/`skipped`/`failed`/`needs-login`/`needs-human` 各对应一种 `kind`，`needs-human` 带 `intervention`、空 `loginUrl` 不再带键）；要改文案或过滤步骤就自己写映射。自己写 `view` 时要把 `intervention` 带上（默认 `view` 已透传），否则面板行只知道停在 `needs-human`、不知道要人做什么。
-- `registerTools()`：**调用时才注册**，返回一组清理函数；里面 `tools.register(tool)`（`execute` 里 `start` 或 `runs.start`，返回 `{ ok, runId, status, text }`；再按 `runId` 查）。
-- 写平台的工具：清单 `writes: true` + `needsApproval`（含 `headline`）+ 客户端 `approval.plan`；动作里不要自己再问一遍。
-- 校验：`deps.flow.check(flow, actions)`；有问题先修复，不安装。
-- **数据步骤**：`{ id, title?, data: RequestPlan, when?, retry? }`，内联 plan；结果摊平成
-  `{ key, rows }` 挂到 `steps.<id>`，失败时 `failedStep` 指到这一步。不支持 `poll` / `forEach`；
-  `plan` 失败即这一步失败，auth 会自动进 `needs-human`（带登录链接）并在原地重试。
-  读站点数据的 plan 写法见 [DATASOURCE.md](DATASOURCE.md#多跳后一步要用前一步的结果)；
-  分页、HTML 表格都写在 plan 里（`repeat` / `while` / `response.kind: 'html'`）。
+## `diy-tweak` · 改模块
 
-`registerTools()` 的返回值是**清理函数数组**（工作台卸载 / 热换时逐个调），不是“注册函数数组”。
-清单里每一条 `dsh.workbench.tools` 必须在这里注册一把、名字逐字一致；没有工具就 `() => []`。
-可运行的完整样板：`dsh-wb-module init --template diy` 生成的模块里那把 `__UNIT___run`
-（`createFlowTask` 把工具 + 长任务 + 动作通道收成一份实现）。
+这条流程从方案开始，没有数据源探测，也不新建模块。数据源改变或需求范围换成另一件事时，先终止当前流程，再按新需求分诊。
 
-### v0.1 能用的形状
+### `plan` · 补充方案
 
-| 需要 | 写法 |
-|---|---|
-| 等 / 轮询 | `poll: { everyMs, maxMs, until }` |
-| 超时继续 | `poll.onTimeout: 'continue'`，后面用 `when: { $not: { $exists: ... } }` |
-| 不限时（审核） | `poll.maxMs: 0` |
-| 逐项 + 轮询 | `forEach` 与 `poll` 同一步；每项单独轮询 |
-| 子流程 | `{ id, flow: subFlow, with: { ... } }`；结果在 `steps.<id>` |
-| 多跳读 | `{ id, data: RequestPlan }`；结果在 `steps.<id>.<步骤名>`，默认先打开 origin（`open: false` 可关） |
-| 提前结束 | `flow.stopWhen` |
-| 步骤链接 | `ctx.log('已创建分支', [{ href, text: '打开分支' }])`；每步 ≤3、只认 `http(s)`，画在步骤行尾 |
-| 行尾链接 | 长任务快照 `links`（`{ href, text }`，≤3）；与卡片覆盖按 `href` 合并去重 |
-| 步骤归并 | 同一 `stepId` 只留一行（结果覆盖进行中），`attempt` 记第几次；不传 `stepId` 的模块照旧逐条平铺 |
-| 人工干预 | 动作里调 `ctx.need(intervention)`（`title` 说清要人做什么，可选 `hint` / `actions`），长任务进 `needs-human`；报告后继续自行轮询，条件满足再发下一步；需要「我处理完了」这个按钮，就在 `longTasks.create` 里给可选 `recheck`（点击后只请模块重新检查一次，工作台不承诺恢复；要自动重试就用 `withInterventionRetry(check, { attempts, delayMs })` 当 handler，check 回 `true` 即停）；要行上出回执表单，就给 `intervention.fields`（`{key,label,kind?:'text'|'secret',placeholder?,required?}`）与 `submitLabel`，并在 `longTasks.create` 里给 `answer?(current, values)` —— values 只回给模块，不进快照 / agent 可读处 |
-| 登录 | 动作用 `withLoginRetry(action)`：认证失败自动 `ctx.login(url)` 并在原地重试；长任务进 `needs-login`。data 步骤换了新路：`auth` 且计划给了 `loginUrl` 进 `needs-human` + 登录链接；没给就当场失败 |
+- **手里**：现有模块标识、用户要改的那一条、模块根已有的设计记录。
+- **做**：先复述看什么、哪几格、什么时候会变，只问「还是这些吗，要改哪一条」；给出四段变化与改之后的图，不重新访谈。
+- **交**：四段逐条写新增、删除或修改，没变的段只写没变；有写工具时更新审批材料，用 `workbench_diy_plan` 提交。
+- **完**：用户确认本次变化，方案工具接受；四段不能全部没变。
+- **读**：先 [DESIGN.md](DESIGN.md) §2–§5，再按变化读对应轴文档。
+- **卡**：按方案返回补变化标签、图或审批材料；需求复述变化时先说明当前进度会清除，用户确认后带 `restart: true` 重新调用 `workbench_diy_plan`，不能在旧方案上静默改。
 
-分支（`already_merged` / `can_merge` / `REVIEW_WAITING`）继续写在动作里；flow 只保留稳定的外层顺序。
+### `build` · 修改模块
 
-## 4 agent 节点（读与判断）
+- **手里**：已批准的四段变化、现有模块与本次验收范围。
+- **做**：只改本次涉及的文件，构建并运行对应检查；不重探未变的数据源，不从模板重建。
+- **交**：现有模块标识。
+- **完**：变化已落入实现，构建与相关检查通过，未改范围没有被动到。
+- **读**：先 [BUILD.md](BUILD.md)「两个面」，再按变化读数据、编排、判断或界面对应节；检查看 [REVIEW.md](REVIEW.md)。
+- **卡**：构建失败按同一节点自修；构建成功但未生效转 [LIFECYCLE.md](LIFECYCLE.md)，不重复安装。
 
-流程里可以有一类步骤让子 agent 去读、去判断、去起草；它**不写平台**。
+### `install` · 替换模块
 
-```ts
-{
-  id: 'review',
-  title: '评审',
-  agent: {
-    prompt: { $ref: 'steps.diff' },
-    schema: {
-      type: 'object',
-      properties: {
-        verdict: { type: 'string' },
-        reasons: { type: 'array', items: { type: 'string' } },
-      },
-      required: ['verdict'],
-    },
-  },
-}
-```
+- **手里**：同一模块标识与新构建产物。
+- **做**：用构建与热换替换运行中的模块；只有安装声明变化或返回明确要求时才重启。
+- **交**：同一模块标识与是否已安装成功。
+- **完**：`workbench_diy_status` 确认新产物已应用；等待重启时如实停住。
+- **读**：[WIRING.md](WIRING.md)「热换」；故障看 [LIFECYCLE.md](LIFECYCLE.md)。
+- **卡**：源新于产物、未收到推送或仍待重启时按生命周期表处理。
 
-- **什么时候用**：这次能不能发、构建为什么失败、这批工单怎么分诊、这次变更有没有风险、起草一条评论或发布说明。
-  判据一句：**这步做错了，用户需要「重新执行」还是「说明原因」** —— 后者才是 agent；需要「代为执行」就回到动作步骤 + 审批。
-- **结果进 `steps.<id>`**：没 `schema` 是一段文本（最后一条回复），有 `schema` 是那个对象；后面的步骤用
-  `$ref: steps.review.verdict` 取。`ok` 那一行还带一行摘要（结果首行、最多 40 字）。
-- **能给它的输入**：`prompt` 是值表达式，能从 `in` / 前面的 `steps` / `forEach` 的 `item` 取。
-  子 agent 是全新会话，看不到聊天记录，所以 **prompt 要自包含**。
-- **它不能做什么**：不写平台（清单 `writes: true` 的工具它调不了）、不问人、不再委派、不排日程、不等轮询。
-  要人处理就让它的结论进 `when`，下一步在动作里 `ctx.need(intervention)` 停下来。
-- `provider` / `model` / `preset` 可以单步覆盖；`name` 给子会话起一个可识别的名字（`forEach` 里不要写，会撞名）。
-- **次数上限**：一条 run 默认最多 16 次 agent 调用（`forEach` 与重试都算），超了这一步失败。
-- **会话**：agent 节点借用本次运行的会话作为父 agent。工具发起的流程自带会话；由看板按钮发起的，工作台会把**你当前
-  这个对话**一并传入，子 agent 挂在该对话下，trace 在会话树里可见。宿主侧没有会话时（直接调用动作
-  接口），才为本次运行创建一条临时会话，完成后一并结束。
+### `verify` · 只检查该模块
 
-人工干预进入 `needs-human` 时，工作台会自动向发起它的会话发送一条「在等你处理」通知（hold、按 run 去重），flow 侧无需做任何事。
+- **手里**：已应用的新模块与本次变化的验收项。
+- **做**：只验证受影响的图、状态、工具与联动；保留未验原因，不重走全量访谈。
+- **交**：本次通过与未验证的条目。
+- **完**：每条变化都有证据或明确未验，旧能力没有因本次修改失效。
+- **读**：先 [SYMPTOM.md](SYMPTOM.md) 的对应症状，再 [REVIEW.md](REVIEW.md) 的相关检查。
+- **卡**：发现问题先完成定位；需要再改就回到本流程的修改模块节点。
 
-## 5 不要做
+### `ledger` · 保存这次的设计
 
-- 为一次性任务创建模块或写 flow；应先直接执行。
-- 不问用户就固化；也不要把「要不要固化」问成技术选型。
-- 把分支、重试、登录循环全部写入 flow 配置；flow 表达不了的就放到动作里。
-- 在 flow 里存密钥 / token；凭据走已有登录或 `needs`。
-- 让 flow 绕过审批；写工具的审批在清单，不在动作里。
-- 让 agent 节点写平台、问人、再委派；它只读与判断，写与等人都在动作步骤里。
-- 把 `data.plan` 的失败当成功：它返回每步结果、从不抛错；不判 `.ok`，空列表会被当成"读到了"。
-- throw 裸 `DataError` 对象当步骤失败：包成 `Error`（带 `code` / `helpUrl`），否则长任务行显示 `[object Object]`。
+- **手里**：已批准的变化、实际结果与验收清单。
+- **做**：更新原有设计记录和模块说明，不另建一份模块设计记录。
+- **交**：原设计文件的保存位置。
+- **完**：说明与本次已批准变化一致，设计检查通过，交付时说明以后仍可继续修改这个模块。
+- **读**：[DESIGN.md](DESIGN.md) §4–§6。
+- **卡**：方案与说明不一致时按工具返回修正，或终止后重新确认方案。
 
-## 6 验收
+## `diy-write-record` · 录制一次写入
 
-- `deps.flow.check` 无问题；`dsh-wb-module build` / `check` 绿。
-- 真实运行一次：长任务行出现、进度准确、可以停止、失败时给出原因；需要人工处理时，该行要说明做什么、去哪里做（`ctx.need` 的 `intervention` 或旧的 `ctx.login`）。
-- 写平台前审批屏能看到对象 / 环境 / 影响；拒绝后不运行。
-- 用户只说过需求；没被问实现。
+由 `workbench_diy_record_prepare` 直接开启，不经过方案步。它录的是一次真实写入的材料，不是建模块流程；同一时间只开一场。
+
+### `record` · 录制
+
+- **手里**：模块标识、同域页面地址、这次写入叫什么，以及已排除现成写命令的证据。
+- **做**：调 `workbench_diy_record_prepare`，让用户在真实页面操作一次并结束录制；用 `workbench_diy_record_read` 取完整清单，不让用户重复操作。
+- **交**：这一场录制到的请求行，原样保留标记与定位信息。
+- **完**：清单已提交并进入检查；录制尚未结束时等待，不提前结束录制。
+- **读**：先 [WRITES.md](WRITES.md)「四步」的录制段，再 [FAMILY.md](FAMILY.md) 的录制前置与参数之外的坑。
+- **卡**：已有录制、页面跨域或无法捕获时按工具返回处理；此节点不能调用停止工具丢弃材料。
+
+### `scan` · 检查录制结果
+
+- **手里**：录制清单与期望捕获的那一次写入。
+- **做**：按定位信息调用 `workbench_diy_record_detail` 读取请求与响应原文，核对方法、地址、入参、出参与必填证据；凭据不写入设计记录。
+- **交**：是否需要补录，以及仍缺的材料，一条一句。
+- **完**：目标写入已找到且材料足够固化，或所有缺口都已明确写出。
+- **读**：[WRITES.md](WRITES.md) 的「录制 → 配方」与硬纪律；工具选择看 [FAMILY.md](FAMILY.md)。
+- **卡**：抓不到请求体、捕获被截断或目标行不明确都记为缺口，不猜、不重放真实写入。
+
+### `supplement` · 补录
+
+- **手里**：上一节点列出的具体缺口；只有需要补录时才出现这一节点。
+- **做**：针对缺口重新准备一场，让用户补做必要操作，再读回新增行；不重复已经齐全的材料。
+- **交**：补录这一场新增的完整请求行。
+- **完**：新增行已提交，可以回到检查结果继续核对；仍有缺口就继续如实保留。
+- **读**：[WRITES.md](WRITES.md) 的录制段与 [FAMILY.md](FAMILY.md) 的录制限制。
+- **卡**：一场就是一个周期；重新录制需要重新准备与审批，此节点不能提前停止并丢掉原文。
+
+### `finish` · 完成
+
+- **手里**：原始清单、详情证据与仍未补齐的缺口。
+- **做**：先读完需要的详情，再调 `workbench_diy_record_stop` 结束录制；把可用材料转成写通道证据，缺什么仍写什么。
+- **交**：材料处理完毕后的完成信号；有缺口不能伪装成完整。
+- **完**：捕获、标签与录制状态已清理，原文保留位置明确，流程返回完成。
+- **读**：[WRITES.md](WRITES.md)「执行体 / 写纪律」；结束录制顺序看 [FAMILY.md](FAMILY.md)。
+- **卡**：先读后结束录制；仍有缺口时先在 `supplement` 节点补齐，已到 `finish` 且确实无法补齐才按停止工具要求给出强制结束原因，并在交付中保留缺口。

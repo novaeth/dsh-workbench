@@ -1,6 +1,6 @@
-# 门禁：判据、修法、取证
+# 自动检查（门禁）：检查项（判据）与修法
 
-运行 `dsh-wb-module check` 或 `check --only <判据>`。红即修，不转给用户。
+运行 `dsh-wb-module check` 或 `check --only <判据>`。检查未通过就修复，不转给用户。
 
 `release` / `publish` 用 `check --package <本包>`：单模块判据只跑本包，兄弟模块自己的问题不挡；
 单元 id 重复、供应来源冲突、工作台源码点名模块仍按全工作区校验。整仓状态用仓库根不带 `--package` 的 `check`。
@@ -22,6 +22,16 @@
 | `style` | 模块定义 `.wb-*`；手写行 / 操作区 / 表单（F1–F4）；`--dsw-*` / `--wb-*` 不在现读的令牌清单 | 样式走 `*.module.css`（无 `wb-` 前缀）；借工作台类用 `:global(.wb-…)`；行 / 操作区用 `FormRow(s)` / `FormActions`，表单用 `Form`（[KIT.md](KIT.md) §5）。F4：裸 `<form` 或手写 `wb-formRow` / `wb-formRows` / `wb-field`。令牌名现查：读令牌声明 |
 | `arch` | 结构：巨文件 / 反向依赖 / 跨运行时 / 表外目录 / 模型无测试 / 测试住 `__tests__`；依赖白名单（含 execa / which / proper-lockfile / write-file-atomic / dayjs / zod）+ `shell-quote` / `shelljs` / `zx` deny；能力首选 dayjs / structuredClone / URLSearchParams / zod（日期已是硬门禁） | 见「第十二条」 |
 | `lint` | 语法：`as any` / `console` / `debugger` / 颜色字面量 / `!important` / **直接读 `process.platform` / `versions.electron` / `dshDesktop` / `navigator.userAgent`** / react-hooks | 见「第十三条」 |
+
+## 运行范围
+
+用 `pnpm exec dsh-wb-module …`；命令、`--only` 判据名与模板参数看 `--help` / `check --list`，不在指引里重复。
+
+- `check` 不会运行 `pnpm test`；状态、换算与边界测试需要自行运行。
+- `check:duplication` 用 jscpd 扫 `src` / `scripts`（阈值与忽略面在 `.jscpd.json`），有克隆就红；
+  `duplication:report` 把 HTML / JSON 报告出到 `coverage/duplication/`。它不在 `check` 链里，修改源码后要单独运行。
+- 「不适用」不等于「通过」：`standalone` 需要工作台源码在场，`markers` 只扫描公开包（DIY 模块 `private`）。
+  汇总行会列出未检查项。
 
 ## 站点审查
 
@@ -105,27 +115,3 @@ export default [
 ## 怀疑门禁
 
 骨架刚 `init`、尚未改动就判定失败，说明是模板或工具的问题，与模块无关。
-
-## 卡片故障：四步取证
-
-先取证再改代码；某步有结论就停在对应侧修。
-
-**默认只读取证**：第 1、3、4 步与 `read=<地址>` 都不需要审批，先走这一圈。多数问题到这里就有结论，
-不需要动用户的屏幕。
-
-1. `workbench_diy_panel`：每个模块的读取状态（宿主码与原文）、是否崩溃过（原因、次数）。有结论即止。
-2. 看卡片（**需要真实交互才做**）：`workbench_diy_screenshot` / `_html` / `_find` / `_eval`，作用于用户
-   当前页的该卡（`unit=…`）。这一族（14 把 + `logs_*`）需要先调用 `workbench_diy_debug_start`（`unit=…`，
-   审批一次），否则会被拒绝；`_panel` / `_status` / `read=` 这几档不需要。申请时说清占用范围与大概多久
-   （占用会持续到你主动停止或自动暂停）。用完后调用 `_debug_pause`，结束时调用 `_debug_stop`。
-3. `workbench_diy_status`（`unit=…`）：查看启动状态一行（初始化错误 / 声明被拒原文）。
-4. 直接请求路由：`curl '<工作台地址>/workbench/api/<unit>/<route>'`（默认 `http://127.0.0.1:3081`）。
-   接口对 → 渲染侧；接口错 → 宿主侧（按 [DATASOURCE.md](DATASOURCE.md) 重探）。需要在页面内请求时用
-   `_eval`（`read=<站点>`）。控制台：`_logs_watch` → 操作 → `_logs_read`（每页 200 条 / 单条 400 字，
-   刷新即失；用 `_logs_stop` 卸载）。`opencli browser … console` 是空桩（恒空、exit 0），不用。
-   宿主热换 / 装载错误在启动工作台的终端。
-
-不要求用户截图或转述报错。验收由 agent 用上述工具逐条对照三张表：读数、动作返回、收发包与日志都算证据；
-结果写成「验过 / 未验」两列贴给用户，未验必须明写「未验」。全部走通后才执行 `design accept`，走不通就
-记为「未验」。参数与返回保持 opencli 原样（[FAMILY.md](FAMILY.md)）。
-面板运行态由用户页面上报；第 1 步为空时，先让用户切到该工作区并刷新一次。

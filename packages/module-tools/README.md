@@ -123,7 +123,7 @@ pnpm design check # 检查设计底稿的空白项、README 是否覆盖能力 /
 `HOME` 与 npm/pnpm 缓存也注入在那里），`workspace` 档写当前会话工作区、还要带上会话对象；
 不写 `writes` 就不会提供门面（`deps.seam` 为 `undefined`）。模块宿主代码与工作台同进程 —— 这层是
 **约定 + 门禁 + 定位来源（归因）**，不是安全边界。完整写法见
-[BUILD.md](../core/skills/workbench-module-diy/BUILD.md) §5。
+[WIRING.md](../core/skills/workbench-module-diy/WIRING.md) §6。
 
 ### `arch`：模块包的分层规则集（方言）
 

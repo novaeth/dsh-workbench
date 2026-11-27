@@ -1,0 +1,197 @@
+# Workflow：先判去向，再问一次固化
+
+**先判去向**（见 [SKILL.md](SKILL.md) 第 0 步）。去向是「一次性」就直接执行；是「现成的」就安装或添加到面板；
+是「改道」就给出指引。只有判定**要做模块**，且这项任务多步、需要等待、重试或写入平台时，才问下面这一句。
+
+## 1 先问
+
+问用户（给推荐，允许一字通过）：
+
+> 这件事是一次性的，还是以后还要按同样步骤执行？我建议 **<一次性 / 固化>**，因为 **<重复信号 / 只此一次>**。
+
+只问一次；用户已经说过「就这一次 / 以后都要 / 固化」，按用户的决定执行，不追问。
+
+| 信号 | 建议 |
+|---|---|
+| 用户说「以后 / 每次 / 每周 / 按这个流程 / 固化 / 做成按钮」 | 固化 |
+| 三步以上、有先后依赖 | 固化 |
+| 要等、轮询、重试、取消、中途要人处理（登录等） | 固化 |
+| 要写平台、要审批、要留痕 | 固化 |
+| 只这一次、还在探、单步读 / 写 | 一次性 |
+| 无法判断 | 先按一次性处理，运行成功后再由用户决定是否固化 |
+
+- **一次性**：不创建模块，也不写 flow；直接使用现有工具或命令执行到完成，并告诉用户「本次已直接执行，未创建模块；结果已发到对话中。以后需要重复执行时，再创建模块」。
+- **固化**：进入第 2 节；先画步骤链，再问一次「按这个固化吗？」。
+
+不要问「要不要用 FlowDefinition / 怎么写代码 / 选哪个引擎」——这些是实现，用户不决定。
+
+## 2 固化后的形态
+
+一条 workflow = 模块宿主半侧的一份 `FlowDefinition` + 动作表 + 长任务 + 工具（可选卡片）。
+**v0 没有 flow 仓库，固化就是写进模块**，不是存一份 JSON。
+
+运行后用户会看到一条长任务行（六态与停止按钮见 [TOOLS.md](TOOLS.md) §9）：
+
+- 写平台前有一次审批（模块清单 `writes: true` + `needsApproval`）。
+- 工具返回 `runId`；再调可看同一条。
+
+固化前给用户看一条 ASCII 步骤链 + 一句确认。画，不写句子；一张图 = 一条流程：
+
+```
+⚠ 写平台：开始运行前先点击一次「允许一次」；拒绝则不运行
+
+发布（输入：环境 in.env）
+
+  ① 拉代码 ── 读当前版本
+  │
+  ▼
+  ② 构建 ── 每 5s 查一次 · 最多 5 次
+  │        查到 done 往下；超时 → 失败停在这
+  ▼
+  ③ 发布 ── 写平台 · 失败重试 2 次（每次隔 3s）
+  │
+  ▼
+● 发布完成 · 随时可停 · 再调工具按 runId 看同一条
+```
+
+- 步骤名用长任务行会显示的那句；① ② ③ 的流向就是 `steps` 的顺序。
+- 等 / 轮询 / 重试写在那一步的箭头下：每隔多久、最多几次、超时往哪走（`maxMs: 0` 写「不限时」）。
+- 写平台的步骤只标「写平台」；`⚠` 与审批词写在开始运行的那一行，审批屏另画（[DESIGN.md](DESIGN.md) §3）。
+- agent 节点画成 `② 评审 · agent 读 diff，给结论`；写平台的那一步照常只标「写平台」。
+- 逐项、子流程、登录、分支在动作里，图上只标一句「动作里：…」，不画分支树。
+- `when` 写「不满足就跳过」；`stopWhen` 写「命中就结束」。
+- 用户改哪步就改图再问；图下只留「按这个固化吗？」，不补解释。
+
+## 3 怎么写
+
+只走宿主 kit（`mount(deps)` 的 `deps.flow`）与 `@dsh-workbench/core/contract` 的类型：
+
+- `FlowDefinition` / `FlowStep` / `FlowValue` / `FlowPredicate` 从 `@dsh-workbench/core/contract` 取。
+- `deps.flow.createActions()` / `deps.flow.check()` / `deps.flow.run()`。
+
+最小宿主半侧（长任务与工具的完整签名见 [TOOLS.md](TOOLS.md) §9）：
+
+```ts
+import type { FlowDefinition, UnitModuleFace } from '@dsh-workbench/core/contract';
+
+const flow: FlowDefinition = {
+  id: 'release',
+  title: '发布',
+  target: { $ref: 'in.env' },
+  steps: [
+    { id: 'read', action: 'read' },
+    {
+      id: 'wait',
+      action: 'wait',
+      poll: {
+        everyMs: 5000,
+        maxMs: 300000,
+        until: { $eq: [{ $ref: 'value.state' }, { $lit: 'done' }] },
+      },
+    },
+  ],
+};
+
+export const face: UnitModuleFace = {
+  unit: 'release',
+  mount(deps) {
+    const actions = deps.flow.createActions();
+    actions.register('read', async () => ({ ok: true }));
+    actions.register('wait', async () => ({ state: 'done' }));
+    return { routes: {}, registerTools: () => [] };
+  },
+};
+```
+
+在模块 `mount` 里：
+
+- **优先用 `createFlowTask({ key, flow, actions, flowHost: deps.flow, longTasks: deps.longTasks, tool })`**（`@dsh-workbench/shared/host`）：它做 `flow.check`、建长任务注册表，返回 `{ runs, start, tool }`；`tool` 的 `execute` 与 `start` 共用同一实现，`runId` 参数自动支持「只看那条」。
+- 要自定义 `view` / `step` / `outcome` 时才手写 `const runs = deps.longTasks.create({ key, run, view, outcome, stopped })`；`run` 调 `deps.flow.run`，把 `onStep` 映射到长任务的 `onStep`；返回 `status === 'failed'` 时 throw，让注册表标 failed。默认映射用 `longTaskStepOf(event)`（`@dsh-workbench/shared/host` 导出，`running`/`ok`/`skipped`/`failed`/`needs-login`/`needs-human` 各对应一种 `kind`，`needs-human` 带 `intervention`、空 `loginUrl` 不再带键）；要改文案或过滤步骤就自己写映射。自己写 `view` 时要把 `intervention` 带上（默认 `view` 已透传），否则面板行只知道停在 `needs-human`、不知道要人做什么。
+- `registerTools()`：**调用时才注册**，返回一组清理函数；里面 `tools.register(tool)`（`execute` 里 `start` 或 `runs.start`，返回 `{ ok, runId, status, text }`；再按 `runId` 查）。
+- 写平台的工具：清单 `writes: true` + `needsApproval`（含 `headline`）+ 客户端 `approval.plan`；动作里不要自己再问一遍。
+- 校验：`deps.flow.check(flow, actions)`；有问题先修复，不安装。
+- **数据步骤**：`{ id, title?, data: RequestPlan, when?, retry? }`，内联 plan；结果摊平成
+  `{ key, rows }` 挂到 `steps.<id>`，失败时 `failedStep` 指到这一步。不支持 `poll` / `forEach`；
+  `plan` 失败即这一步失败，auth 会自动进 `needs-human`（带登录链接）并在原地重试。
+  读站点数据的 plan 写法见 [DATASOURCE.md](DATASOURCE.md#多跳后一步要用前一步的结果)；
+  分页、HTML 表格都写在 plan 里（`repeat` / `while` / `response.kind: 'html'`）。
+
+`registerTools()` 的返回值是**清理函数数组**（工作台卸载 / 热换时逐个调），不是“注册函数数组”。
+清单里每一条 `dsh.workbench.tools` 都必须在这里有对应注册，名字逐字一致；没有工具就 `() => []`。
+可运行的完整样板：`dsh-wb-module init --template diy` 生成的模块里那把 `__UNIT___run`
+（`createFlowTask` 把工具 + 长任务 + 动作通道收成一份实现）。
+
+### v0.1 能用的形状
+
+| 需要 | 写法 |
+|---|---|
+| 等 / 轮询 | `poll: { everyMs, maxMs, until }` |
+| 超时继续 | `poll.onTimeout: 'continue'`，后面用 `when: { $not: { $exists: ... } }` |
+| 不限时（审核） | `poll.maxMs: 0` |
+| 逐项 + 轮询 | `forEach` 与 `poll` 同一步；每项单独轮询 |
+| 子流程 | `{ id, flow: subFlow, with: { ... } }`；结果在 `steps.<id>` |
+| 多跳读 | `{ id, data: RequestPlan }`；结果在 `steps.<id>.<步骤名>`，默认先打开 origin（`open: false` 可关） |
+| 提前结束 | `flow.stopWhen` |
+| 步骤链接 | `ctx.log('已创建分支', [{ href, text: '打开分支' }])`；每步 ≤3、只认 `http(s)`，画在步骤行尾 |
+| 行尾链接 | 长任务快照 `links`（`{ href, text }`，≤3）；与卡片覆盖按 `href` 合并去重 |
+| 步骤归并 | 同一 `stepId` 只留一行（结果覆盖进行中），`attempt` 记第几次；不传 `stepId` 的模块照旧逐条平铺 |
+| 人工干预 | 动作里调 `ctx.need(intervention)`（`title` 说清要人做什么，可选 `hint` / `actions`），长任务进 `needs-human`；报告后继续自行轮询，条件满足再发下一步；需要「我处理完了」这个按钮，就在 `longTasks.create` 里给可选 `recheck`（点击后只请模块重新检查一次，工作台不承诺恢复；要自动重试就用 `withInterventionRetry(check, { attempts, delayMs })` 当 handler，check 回 `true` 即停）；要行上出回执表单，就给 `intervention.fields`（`{key,label,kind?:'text'|'secret',placeholder?,required?}`）与 `submitLabel`，并在 `longTasks.create` 里给 `answer?(current, values)` —— values 只回给模块，不进快照 / agent 可读处 |
+| 登录 | 动作用 `withLoginRetry(action)`：认证失败自动 `ctx.login(url)` 并在原地重试；长任务进 `needs-login`。data 步骤换了新路：`auth` 且计划给了 `loginUrl` 进 `needs-human` + 登录链接；没给就当场失败 |
+
+分支（`already_merged` / `can_merge` / `REVIEW_WAITING`）继续写在动作里；flow 只保留稳定的外层顺序。
+
+## 4 agent 节点（读与判断）
+
+流程里可以有一类步骤让子 agent 去读、去判断、去起草；它**不写平台**。
+
+```ts
+{
+  id: 'review',
+  title: '评审',
+  agent: {
+    prompt: { $ref: 'steps.diff' },
+    schema: {
+      type: 'object',
+      properties: {
+        verdict: { type: 'string' },
+        reasons: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['verdict'],
+    },
+  },
+}
+```
+
+- **什么时候用**：这次能不能发、构建为什么失败、这批工单怎么分诊、这次变更有没有风险、起草一条评论或发布说明。
+  判据一句：**这步做错了，用户需要「重新执行」还是「说明原因」** —— 后者才是 agent；需要「代为执行」就回到动作步骤 + 审批。
+- **结果进 `steps.<id>`**：没 `schema` 是一段文本（最后一条回复），有 `schema` 是那个对象；后面的步骤用
+  `$ref: steps.review.verdict` 取。`ok` 那一行还带一行摘要（结果首行、最多 40 字）。
+- **能给它的输入**：`prompt` 是值表达式，能从 `in` / 前面的 `steps` / `forEach` 的 `item` 取。
+  子 agent 是全新会话，看不到聊天记录，所以 **prompt 要自包含**。
+- **它不能做什么**：不写平台（清单 `writes: true` 的工具它调不了）、不问人、不再委派、不排日程、不等轮询。
+  要人处理就让它的结论进 `when`，下一步在动作里 `ctx.need(intervention)` 停下来。
+- `provider` / `model` / `preset` 可以单步覆盖；`name` 给子会话起一个可识别的名字（`forEach` 里不要写，会撞名）。
+- **次数上限**：一条 run 默认最多 16 次 agent 调用（`forEach` 与重试都算），超了这一步失败。
+- **会话**：agent 节点借用本次运行的会话作为父 agent。工具发起的流程自带会话；由看板按钮发起的，工作台会把**你当前
+  这个对话**一并传入，子 agent 挂在该对话下，trace 在会话树里可见。宿主侧没有会话时（直接调用动作
+  接口），才为本次运行创建一条临时会话，完成后一并结束。
+
+人工干预进入 `needs-human` 时，工作台会自动向发起它的会话发送一条「在等你处理」通知（hold、按 run 去重），flow 侧无需做任何事。
+
+## 5 不要做
+
+- 为一次性任务创建模块或写 flow；应先直接执行。
+- 不问用户就固化；也不要把「要不要固化」问成技术选型。
+- 把分支、重试、登录循环全部写入 flow 配置；flow 表达不了的就放到动作里。
+- 在 flow 里存密钥 / token；凭据走已有登录或 `needs`。
+- 让 flow 绕过审批；写工具的审批在清单，不在动作里。
+- 让 agent 节点写平台、问人、再委派；它只读与判断，写与等人都在动作步骤里。
+- 把 `data.plan` 的失败当成功：它返回每步结果、从不抛错；不判 `.ok`，空列表会被当成"读到了"。
+- throw 裸 `DataError` 对象当步骤失败：包成 `Error`（带 `code` / `helpUrl`），否则长任务行显示 `[object Object]`。
+
+## 6 验收
+
+- `deps.flow.check` 无问题；`dsh-wb-module build` / `check` 绿。
+- 真实运行一次：长任务行出现、进度准确、可以停止、失败时给出原因；需要人工处理时，该行要说明做什么、去哪里做（`ctx.need` 的 `intervention` 或旧的 `ctx.login`）。
+- 写平台前审批屏能看到对象 / 环境 / 影响；拒绝后不运行。
+- 用户只说过需求；没被问实现。

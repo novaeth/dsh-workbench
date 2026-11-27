@@ -7,15 +7,14 @@ import { arrayLengthOf, arrayValuesOf, interfaceFacts, objectKeysOf } from './ts
 
 const DIGITS = { 零: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
 const SKILL_DIR = 'packages/core/skills/workbench-module-diy';
-const SKILL_FILES = ['SKILL.md', 'DESIGN.md', 'STEPS.md', 'DATASOURCE.md', 'WRITES.md', 'PANEL.md', 'KIT.md', 'TOOLS.md', 'COPY.md', 'FAMILY.md', 'LINKAGE.md', 'BUILD.md', 'WIRING.md', 'REVIEW.md', 'FLOW.md'];
+const SKILL_FILES = ['SKILL.md', 'DESIGN.md', 'STEPS.md', 'DATASOURCE.md', 'SITES.md', 'WRITES.md', 'PANEL.md', 'KIT.md', 'TOOLS.md', 'COPY.md', 'FAMILY.md', 'LINKAGE.md', 'AI.md', 'BUILD.md', 'WIRING.md', 'REVIEW.md', 'FLOW.md', 'WORKFLOW.md', 'SYMPTOM.md', 'LIFECYCLE.md'];
 
 function finding(file, line, message, fix) {
   return { file, line, message, fix };
 }
 
 function lineOf(text, needle) {
-  const index = text.indexOf(needle);
-  return index === -1 ? 1 : lineOfIndex(text, index);
+  return text.includes(needle) ? lineOfIndex(text, text.indexOf(needle)) : 1;
 }
 
 export function numberFrom(text) {

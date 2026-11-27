@@ -15,6 +15,7 @@ import * as rightbarWire from './checks/rightbar-wire.mjs';
 import * as workshop from './checks/workshop.mjs';
 import * as workshopWiring from './checks/workshop-wiring.mjs';
 import * as diyEntry from './checks/diy-entry.mjs';
+import * as diySkillCoverage from './checks/diy-skill-coverage.mjs';
 import * as diyTools from './checks/diy-tools.mjs';
 import * as gateChain from './checks/gate-chain.mjs';
 import * as kernelShape from './checks/kernel-shape.mjs';
@@ -46,6 +47,7 @@ const PANEL_CHECKS = [
   workshop,
   workshopWiring,
   diyEntry,
+  diySkillCoverage,
   diyTools,
 ];
 

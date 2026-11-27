@@ -1092,26 +1092,31 @@ dsh-wb-module init      从模板建模块
 
 ```text
 packages/core/skills/workbench-module-diy/
-  SKILL.md        入口：流程与索引
-  DESIGN.md       判域、三张表、ASCII、design.json
-  STEPS.md        三步问法
-  DATASOURCE.md   探数据源、固化读
+  SKILL.md        入口：分诊、流程选择、跨入口规则与索引
+  FLOW.md         建看板 / 无看板、改模块、录制的节点接口约定
+  SYMPTOM.md      按症状查面板、数据源、联动与流程
+  LIFECYCLE.md    安装、构建、生效、重启与取消
+  DESIGN.md       三张表、ASCII、design.json、readme.json
+  STEPS.md        确认方案的问法
+  DATASOURCE.md   探数据源、站点表、固化读
+  SITES.md        站点事实与放行条件
   WRITES.md       写通道
+  WORKFLOW.md     模块内 workflow（固化）
   PANEL.md        面板、状态矩阵、界面规则
   KIT.md          组件与表单
   TOOLS.md        agent 能力、审批、长任务
+  AI.md           模型与 agent 节点
   COPY.md         文案
   FAMILY.md       工具族：怎么选、怎么串
-  FLOW.md         一次性还是固化、流程落地
   LINKAGE.md      刷新与事实
   BUILD.md        落点、模板、两个面
-  WIRING.md       安装、热换、发布
-  REVIEW.md       门禁与取证
+  WIRING.md       依赖、禁区、安装、热换、发布
+  REVIEW.md       门禁与修法
 ```
 
 规则：
 
-- `SKILL.md` 只做流程与索引，不塞完整方法；其余文档按需读。
+- `SKILL.md` 只做分诊、流程选择、跨入口规则与索引；节点接口约定进 `FLOW.md`，其余文档按需读。
 - 默认读者在 DSH 的 DIY 会话里；不再按 core / dsh / agent-tools 分层，也不为非 dsh 或无工具环境单独写 fallback。
 - 数据源文档教 `data.read`，不教直接 import adapter。
 

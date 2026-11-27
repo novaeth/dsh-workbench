@@ -24,7 +24,7 @@ const RAW_SEAM = [
 const SEAM_FIX =
   '模块启动子进程只通过门面：mount(deps) 中的 `deps.seam.run({ scope: "unit" | "workspace", command })`，' +
   '清单中用 `dsh.workbench.host.writes` 声明需要哪几档（写法见 `@dsh-workbench/core` 的 ' +
-  '`skills/workbench-module-diy/BUILD.md`）';
+  '`skills/workbench-module-diy/WIRING.md`）';
 
 const WRITE_SCOPES = ['unit', 'workspace'];
 
