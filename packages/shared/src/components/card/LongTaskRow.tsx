@@ -110,6 +110,8 @@ export interface LongTaskRowProps {
   readonly dense?: boolean | undefined;
   /** 这一趟走到哪了；不合法或没给就一根条都不画。 */
   readonly progress?: LongTaskProgress | undefined;
+  /** 计划里还没开始的步骤（只有给了计划才有）；展开时排在已发生的步骤后面。 */
+  readonly pending?: readonly string[] | undefined;
   /** 进度条的读屏名；不给就不挂 `aria-label`。 */
   readonly progressLabel?: string | undefined;
   /** 失败原因；不给不画。 */
@@ -362,6 +364,7 @@ export function LongTaskRow(props: LongTaskRowProps) {
   const problem = props.problem ?? '';
   const raw = (props.raw ?? '').trim();
   const steps = props.steps ?? [];
+  const pending = (props.pending ?? []).filter((text) => text.trim() !== '');
   const stop = props.stop;
   const busy = stop?.busy === true;
   const stopWhy = stop?.failed ?? '';
@@ -386,7 +389,8 @@ export function LongTaskRow(props: LongTaskRowProps) {
     if (failed) setStepsOpen(true);
   }, [failed]);
 
-  const expandable = props.stepsTitle !== undefined && (history.length > 0 || steps.length > 0);
+  const expandable =
+    props.stepsTitle !== undefined && (history.length > 0 || steps.length > 0 || pending.length > 0);
   const stepShown = step !== '' && !props.headline.includes(step);
   const dotNode =
     props.dotLabel === undefined ? (
@@ -400,13 +404,14 @@ export function LongTaskRow(props: LongTaskRowProps) {
   return (
     <div className={props.dense === true ? 'wb-longTask wb-longTaskDense' : 'wb-longTask'}>
       <DisclosureRow
-        icon={dotNode}
+          icon={dotNode}
         title={props.headline}
         open={expandable && stepsOpen}
         expandable={expandable}
         expandOnRowClick
         previewChevron
         titleClassName="wb-longTaskHeadline"
+        rowClassName="wb-longTaskHeadRow"
         onToggle={() => setStepsOpen((value) => !value)}
         headerAccessory={
           <span className="wb-longTaskHeadEnd">
@@ -426,7 +431,7 @@ export function LongTaskRow(props: LongTaskRowProps) {
         }
       >
         {stepShown ? <p className="wb-longTaskStep">{step}</p> : null}
-        {history.length === 0 ? (
+        {history.length === 0 && pending.length === 0 ? (
           <CodeBlock
             code={steps.join('\n')}
             className="wb-longTaskDump"
@@ -444,6 +449,12 @@ export function LongTaskRow(props: LongTaskRowProps) {
                 last={index === history.length - 1}
                 {...(props.attemptLabel === undefined ? {} : { attemptLabel: props.attemptLabel })}
               />
+            ))}
+            {pending.map((text) => (
+              <li className="wb-longTaskStepRow" data-kind="pending" key={`pending:${text}`}>
+                <StateDot state="idle" size={8} />
+                <span className="wb-longTaskStepText">{text}</span>
+              </li>
             ))}
           </ul>
         )}

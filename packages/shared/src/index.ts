@@ -14,6 +14,7 @@ export * from './components/card/CardHead.js';
 export * from './components/card/LongTaskRow.js';
 export * from './components/card/board-module.js';
 export * from './components/card/card-view-validate.js';
+export * from './components/card/use-text-marquee.js';
 export * from './components/feedback/EmptyIllustration.js';
 export * from './components/feedback/Note.js';
 export * from './components/feedback/ProgressBar.js';

@@ -1,11 +1,8 @@
 import type { ToolDefinition, ToolRunContext } from '../../contract/module-context.js';
 import type { FlowHost } from './kit.js';
 import type { FlowActionRegistry, FlowDefinition } from './types.js';
-import type {
-  LongTaskBase,
-  LongTaskHost,
-  LongTaskRegistry,
-} from '../unit/long-task.js';
+import type { LongTaskBase, LongTaskRegistry } from '../unit/long-task.js';
+import type { LongTaskHost } from '../unit/long-task-host.js';
 import { flowTaskDeps, startFlow } from './task.js';
 import { flowTool } from './tool.js';
 
@@ -53,6 +50,12 @@ export function createFlowTask(options: CreateFlowTaskOptions): FlowTask {
 
   const runs = options.longTasks.create<LongTaskBase>({
     key: options.key,
+    plan: {
+      steps: options.flow.steps.map((step) => ({
+        id: step.id,
+        ...(step.title === undefined ? {} : { title: step.title }),
+      })),
+    },
     ...flowTaskDeps(options.actions, options.flowHost),
   });
 

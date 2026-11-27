@@ -52,6 +52,23 @@ describe('长任务进度条：接线（读源码断言）', () => {
   });
 });
 
+
+  it('★★ 紧凑档标题折行（不硬切、不跑马灯）；时间仍留在同一行右侧', () => {
+    expect(ROW).toContain('rowClassName="wb-longTaskHeadRow"');
+    expect(CSS).toMatch(/\.wb-longTaskDense \.wb-longTaskHeadRow\s*\{[^}]*height:\s*auto/);
+    expect(CSS).toMatch(/\.wb-longTaskDense \.wb-longTaskHeadline\s*\{[^}]*white-space:\s*normal/);
+    expect(ROW).not.toContain('useTextMarquee');
+  });
+
+  it('★★ 计划里还没开始的步骤列在已发生的后面（灰点），光有计划也能展开', () => {
+    expect(ROW).toContain('const pending = (props.pending ?? [])');
+    expect(ROW).toContain('history.length > 0 || steps.length > 0 || pending.length > 0');
+    expect(ROW).toContain('history.length === 0 && pending.length === 0 ? (');
+    expect(ROW).toContain('data-kind="pending"');
+    expect(ROW).toContain('<StateDot state="idle" size={8} />');
+    expect(CSS).toContain(".wb-longTaskStepRow[data-kind='pending'] .wb-longTaskStepText {");
+  });
+
 describe('两按停止钮：接线（这仓的组件测试是 node 环境，读源码断言）', () => {
   it('★★ 不给 stop ⇒ 那颗钮整个不出现（停止钮只有一处入口）', () => {
     expect(ROW).toContain('const stop = props.stop;');
@@ -310,14 +327,14 @@ describe('行内可读：当前步骤 / 状态 · 耗时 / 结构化步骤 / 停
   });
 
   it('★★ 没有 history 回退旧 CodeBlock：旧模块一个像素不变', () => {
-    expect(ROW).toContain('history.length === 0 ? (');
+    expect(ROW).toContain('history.length === 0 && pending.length === 0 ? (');
     expect(ROW).toContain('code={steps.join(');
   });
 
   it('★★ 步骤块的展开不再绑死失败：给 stepsTitle 且有内容就画，失败默认开', () => {
     expect(ROW).toContain("useState(props.status === 'failed')");
     expect(ROW).toContain('if (failed) setStepsOpen(true);');
-    expect(ROW).toContain('const expandable = props.stepsTitle !== undefined && (history.length > 0 || steps.length > 0);');
+    expect(ROW).toContain('props.stepsTitle !== undefined && (history.length > 0 || steps.length > 0 || pending.length > 0)');
     expect(ROW).toContain('open={expandable && stepsOpen}');
     expect(ROW).toContain('expandable={expandable}');
   });

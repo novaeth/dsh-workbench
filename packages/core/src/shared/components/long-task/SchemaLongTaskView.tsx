@@ -212,6 +212,14 @@ export function SchemaLongTaskView({
       const dot =
         row.status === 'needs-human' || row.status === 'needs-login' ? 'warning' : undefined;
       const links = linksOf(row, override, t);
+      const seenSteps = new Set(
+        (row.history ?? [])
+          .map((one) => one.stepId)
+          .filter((one) => one !== undefined),
+      );
+      const pending = (row.plan ?? [])
+        .filter((step) => !seenSteps.has(step.id))
+        .map((step) => step.title ?? step.id);
       const progressText =
         row.progress === undefined
           ? ''
@@ -236,6 +244,7 @@ export function SchemaLongTaskView({
         ...(intervention === undefined ? {} : { intervention }),
         ...(stop === undefined ? {} : { stop }),
         ...(row.progress === undefined ? {} : { progress: row.progress }),
+        ...(pending.length === 0 ? {} : { pending }),
         progressLabel: t('longTask.progress.label'),
         ...(dense === true ? { dense: true } : {}),
       });

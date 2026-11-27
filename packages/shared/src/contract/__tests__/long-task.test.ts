@@ -4,6 +4,8 @@ import {
   longTaskDot,
   longTaskIsLive,
   longTaskPollMs,
+  longTaskPlanStepsOf,
+  longTaskPlanTotalOf,
   longTaskProgressIsValid,
   longTaskProgressPercent,
   longTaskRunsOf,
@@ -115,6 +117,23 @@ describe('longTaskRunsOf（这一读交回的"当前那些趟"）', () => {
   });
 });
 
+
+
+describe('longTaskPlanTotalOf / longTaskPlanStepsOf：两种写法都认', () => {
+  it('★★ 步骤表按长度算，只给个数按它算；非法当没有计划', () => {
+    expect(longTaskPlanTotalOf({ steps: [{ id: 'a' }, { id: 'b' }] })).toBe(2);
+    expect(longTaskPlanTotalOf({ total: 5 })).toBe(5);
+    expect(longTaskPlanTotalOf({ total: 0 })).toBe(0);
+    expect(longTaskPlanTotalOf({ total: -2 })).toBe(0);
+    expect(longTaskPlanTotalOf({ total: Number.NaN })).toBe(0);
+    expect(longTaskPlanTotalOf({ steps: [] })).toBe(0);
+  });
+
+  it('★ 只给个数时列不出步骤（回空表）', () => {
+    expect(longTaskPlanStepsOf({ total: 3 })).toEqual([]);
+    expect(longTaskPlanStepsOf({ steps: [{ id: 'a', title: '合并' }] })).toEqual([{ id: 'a', title: '合并' }]);
+  });
+});
 
 describe('longTaskProgressIsValid / longTaskProgressPercent：合法才画条', () => {
   it('★★ 两个有限数、total > 0、done 落在 [0, total] 才算合法', () => {

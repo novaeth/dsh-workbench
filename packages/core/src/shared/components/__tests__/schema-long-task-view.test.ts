@@ -266,6 +266,14 @@ describe('行内可读：状态词 · 耗时 · 当前步骤 · 结构化步骤'
     expect(VIEW).toContain('meta,');
   });
 
+  it('★★ 计划里没开始的步骤算成 pending 交给行：按 history 的 stepId 去重', () => {
+    expect(VIEW).toContain('.map((one) => one.stepId)');
+    expect(VIEW).toContain('const pending = (row.plan ?? [])');
+    expect(VIEW).toContain('.filter((step) => !seenSteps.has(step.id))');
+    expect(VIEW).toContain('.map((step) => step.title ?? step.id);');
+    expect(VIEW).toContain('...(pending.length === 0 ? {} : { pending }),');
+  });
+
   it('★★ 密集档把步数并进 meta；两档都把 progress 与读屏名交给行', () => {
     expect(VIEW).toContain("t('longTask.progress.text', { done: row.progress.done, total: row.progress.total })");
     expect(VIEW).toContain("progressLabel: t('longTask.progress.label'),");

@@ -50,6 +50,41 @@ export function longTaskProgressIsValid(progress: LongTaskProgress): boolean {
  * @param progress 进度；没给就当没有进度。
  * @returns 百分比；没给或不合法回 `null`。
  */
+/**
+ * 计划里的一步：`id` 与步骤事件里的 `stepId` 对齐，`title` 只是给展开里那行用的名字。
+ */
+export interface LongTaskPlanStep {
+  readonly id: string;
+  readonly title?: string | undefined;
+}
+
+/**
+ * 这一趟打算走几步：给步骤表（能顺带列出没开始的步骤），或只给个数。
+ * 数字由外壳从步骤事件自己数，模块不报 `done`。
+ */
+export type LongTaskPlan =
+  | { readonly steps: readonly LongTaskPlanStep[] }
+  | { readonly total: number };
+
+/**
+ * 计划的总步数；两种写法都认，`total` 不合法时回 0（当作没有计划）。
+ * @param plan 模块声明的计划。
+ * @returns 步数。
+ */
+export function longTaskPlanTotalOf(plan: LongTaskPlan): number {
+  const total = 'steps' in plan ? plan.steps.length : plan.total;
+  return Number.isFinite(total) && total > 0 ? total : 0;
+}
+
+/**
+ * 计划里的步骤表；只给了个数的那种回空表（列不出没开始的步骤）。
+ * @param plan 模块声明的计划。
+ * @returns 步骤表。
+ */
+export function longTaskPlanStepsOf(plan: LongTaskPlan): readonly LongTaskPlanStep[] {
+  return 'steps' in plan ? plan.steps : [];
+}
+
 export function longTaskProgressPercent(progress: LongTaskProgress | undefined): number | null {
   if (progress === undefined || !longTaskProgressIsValid(progress)) return null;
   return (progress.done / progress.total) * 100;

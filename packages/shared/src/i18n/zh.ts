@@ -1051,6 +1051,7 @@ export const zh = {
   'longTask.stopPending': '已请求停止，等模块确认',
   'longTask.attempt': '第 {attempt} 次',
   'longTask.list.entry': '工作台任务 {n}',
+  'longTask.list.openWorkspace': '打开工作区 {name}',
   'longTask.list.count': '{n} 个',
   'longTask.list.title': '工作台任务',
   'longTask.state.running': '运行中',

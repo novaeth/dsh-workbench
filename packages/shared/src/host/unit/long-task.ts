@@ -1,11 +1,14 @@
 import { epochOf, now as clockNow, nowIso } from '../runtime/time.js';
+import { derivedLongTaskProgress, nextLongTaskProgress } from './long-task-progress.js';
 import {
   LONG_TASK_HISTORY_MAX,
   LONG_TASK_LINK_MAX,
-  longTaskProgressIsValid,
-  runsRouteOf,
+  longTaskPlanTotalOf,
+  longTaskPlanStepsOf,
   type LongTaskIntervention,
   type LongTaskLink,
+  type LongTaskPlan,
+  type LongTaskPlanStep,
   type LongTaskProgress,
   type LongTaskStatus,
   type LongTaskStep,
@@ -48,6 +51,7 @@ export interface LongTaskBase {
   readonly session?: string | undefined;
   readonly seen?: boolean | undefined;
   readonly progress?: LongTaskProgress | undefined;
+  readonly plan?: readonly LongTaskPlanStep[] | undefined;
 }
 
 export interface LongTaskStart {
@@ -66,6 +70,8 @@ export interface LongTaskChange<S extends LongTaskBase> {
 
 /** 长任务怎么跑、怎么投影成面板那一行。 */
 export interface LongTaskDeps<S extends LongTaskBase> {
+  /** 这一趟打算走几步；给了就有进度条（外壳从步骤事件自己数），没给就不画。 */
+  readonly plan?: LongTaskPlan | undefined;
   /** 真正执行任务：payload 来自 start，onStep 报步骤，onProgress 报走到哪了，signal 被 abort 时尽快退出。 */
   readonly run: (options: {
     readonly payload: unknown;
@@ -159,6 +165,7 @@ export function longTaskRowBase(snapshot: LongTaskBase): LongTaskRowBase {
       'session',
       'seen',
       'progress',
+      'plan',
     ]),
   };
 }
@@ -168,6 +175,9 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
 
   const runs = new Map<string, LongTaskBase>();
   const controls = new Map<string, AbortController>();
+  const reported = new Set<string>();
+  const counted = new Set<string>();
+  const warned = new Set<string>();
   const now = (): string => (bound.now ?? nowIso)();
   let counter = 0;
   const nextId = (): string => (bound.nextId ?? (() => `run-${clockNow()}-${(counter += 1)}`))();
@@ -193,7 +203,9 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
     const current = runs.get(id);
     if (current === undefined) return;
     const resolved =
-      next.progress === undefined ? current.progress : (progressOf(next.progress, current.progress) ?? undefined);
+      next.progress === undefined
+        ? current.progress
+        : (nextLongTaskProgress(next.progress, current.progress) ?? undefined);
     const patched: { -readonly [K in keyof LongTaskBase]: LongTaskBase[K] } = {
       ...current,
       ...next,
@@ -205,21 +217,10 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
     notify({ ...change, snapshot: patched as S });
   };
 
-  const progressOf = (
-    next: LongTaskProgress,
-    current: LongTaskProgress | undefined,
-  ): LongTaskProgress | null => {
-    if (!longTaskProgressIsValid(next)) return null;
-    if (current === undefined) return { done: next.done, total: next.total };
-    if (current.total !== next.total) return { done: next.done, total: next.total };
-    if (next.done < current.done) return current;
-    return { done: next.done, total: next.total };
-  };
-
   const setProgress = (id: string, next: LongTaskProgress | undefined): void => {
     const current = runs.get(id);
     if (current === undefined) return;
-    const resolved = next === undefined ? null : progressOf(next, current.progress);
+    const resolved = next === undefined ? null : nextLongTaskProgress(next, current.progress);
     if (resolved === null) {
       if (current.progress === undefined) return;
       const cleared: { -readonly [K in keyof LongTaskBase]: LongTaskBase[K] } = { ...current };
@@ -288,6 +289,8 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
       if (running !== null) return running;
       const id = nextId();
       const startedAt = now();
+      const planTotal = bound.plan === undefined ? 0 : longTaskPlanTotalOf(bound.plan);
+      const planSteps = bound.plan === undefined ? [] : longTaskPlanStepsOf(bound.plan);
       runs.set(id, {
         id,
         workspace: options.workspace,
@@ -299,6 +302,8 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
         startedAt,
         at: startedAt,
         seen: false,
+        ...(planTotal > 0 ? { progress: { done: 0, total: planTotal } } : {}),
+        ...(planSteps.length === 0 ? {} : { plan: planSteps }),
         ...(options.session === undefined ? {} : { session: options.session }),
       });
       notify({ kind: 'start', snapshot: runs.get(id) as S });
@@ -328,12 +333,28 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
         const steps = history.map(
           (row) => `${row.kind === 'fail' ? '✗ ' : ''}${row.text}`,
         );
-        const extra = bound.step?.(step, current) ?? {};
+        const extra: Partial<S> = bound.step?.(step, current) ?? {};
+        if (extra.progress !== undefined) reported.add(id);
+        const derived = reported.has(id)
+          ? undefined
+          : derivedLongTaskProgress(history, planTotal, planSteps);
+        if (derived !== undefined) counted.add(id);
+        if (planTotal === 0 && !reported.has(id) && !warned.has(id)) {
+          const ids = new Set(history.map((row) => row.stepId));
+          if (ids.size >= 3) {
+            warned.add(id);
+            console.warn(
+              `[dsh-workbench] 长任务（${current.target}）已经报了 ${String(ids.size)} 个步骤却没有计划 —— ` +
+                '行上没有进度条：在 longTasks.create 里给一次 plan（{ steps } 或 { total }），步数由外壳自己数',
+            );
+          }
+        }
+        const next = derived === undefined ? extra : { ...extra, progress: derived };
         if (step.intervention !== undefined) {
           patch(
             id,
             {
-              ...extra,
+              ...next,
               status: 'needs-human',
               step: step.text,
               steps,
@@ -349,7 +370,7 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
           patch(
             id,
             {
-              ...extra,
+              ...next,
               status: 'needs-login',
               step: step.text,
               steps,
@@ -363,7 +384,7 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
         patch(
           id,
           {
-            ...extra,
+            ...next,
             status: 'running',
             step: step.text,
             steps,
@@ -380,6 +401,8 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
 
       const onProgress = (next: LongTaskProgress): void => {
         if (live(id) === null) return;
+        reported.add(id);
+        counted.add(id);
         setProgress(id, next);
       };
 
@@ -492,67 +515,6 @@ export function createLongTaskRegistry<S extends LongTaskBase>(deps: LongTaskDep
     },
   };
 }
-
 export { withInterventionRetry, type InterventionRetryOptions } from './with-intervention-retry.js';
 
-function isRegistry(value: unknown): value is LongTaskRegistry<LongTaskBase> {
-  if (typeof value !== 'object' || value === null) return false;
-  const candidate = value as Partial<LongTaskRegistry<LongTaskBase>>;
-  return (
-    typeof candidate.start === 'function' &&
-    typeof candidate.current === 'function' &&
-    typeof candidate.snapshot === 'function' &&
-    typeof candidate.onChange === 'function'
-  );
-}
 
-export function sharedLongTaskRegistry<S extends LongTaskBase>(
-  scope: string,
-  key: string,
-  deps: LongTaskDeps<S>,
-): LongTaskRegistry<S> {
-  const store = globalThis as unknown as Record<symbol, LongTaskRegistry<LongTaskBase> | undefined>;
-  const slot = Symbol.for(`dsh-workbench:long-task:${scope}:${key}`);
-  const existing = store[slot];
-  if (existing !== undefined && isRegistry(existing)) {
-    existing.rebind?.(deps as LongTaskDeps<LongTaskBase>);
-    return existing as unknown as LongTaskRegistry<S>;
-  }
-  const created = createLongTaskRegistry(deps);
-  store[slot] = created as unknown as LongTaskRegistry<LongTaskBase>;
-  return created;
-}
-
-/** 一个单元的长任务入口：按 key 建注册表。 */
-export interface LongTaskHost {
-  /** key 是模块内稳定的标识；run / view 必给，recheck / answer 决定行上有没有恢复与回执。 */
-  create<S extends LongTaskBase>(options: { readonly key: string } & LongTaskDeps<S>): LongTaskRegistry<S>;
-}
-
-export function createLongTaskHost(options: {
-  readonly scope: string;
-  readonly unit: string;
-  readonly bump: (facts: readonly string[]) => void;
-  readonly notify?: ((change: LongTaskChange<LongTaskBase>) => void) | undefined;
-}): { readonly host: LongTaskHost; dispose(): void } {
-  const offs: Array<() => void> = [];
-  return {
-    host: {
-      create(createOptions) {
-        const { key, facts, ...deps } = createOptions;
-        const registry = sharedLongTaskRegistry(options.scope, `${options.unit}:${key}`, deps);
-        offs.push(
-          registry.onChange((change) => {
-            const named = [runsRouteOf(options.unit), ...(facts?.(change) ?? [])];
-            options.bump([...new Set(named)]);
-            options.notify?.(change);
-          }),
-        );
-        return registry;
-      },
-    },
-    dispose() {
-      for (const off of offs.splice(0)) off();
-    },
-  };
-}

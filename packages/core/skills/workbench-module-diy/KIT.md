@@ -78,7 +78,7 @@ h(Rows, null,
 
 - `ActivityBlock` / `ActivityLine` / `ActivityAction`：活动记录；时间用它。
 - `LongTaskRow` / `LongTaskRun` / `LongTaskSection`：长任务行与自接线版（六态见 [TOOLS.md](TOOLS.md)）。`needs-human` 传 `intervention`，形状见 TOOLS.md；`stop` 要宿主认 signal。
-  进度条只认 `progress`（`{ done, total }`）：模块在 `run` 里调 `onProgress` 才有，流程任务按定义步数自动算；没有总量不画。
+  进度：`longTasks.create({ plan })` 声明一次步数（`{ steps }` 或 `{ total }`），外壳从步骤事件自己数；下载这类量化场景才用 `onProgress`。没有计划不画。
 - `ApprovalDetail` / `ApprovalPlan`：审批屏两格；形状见 [DESIGN.md](DESIGN.md) §3 末节。
 - 路径显示：`shortenPath` 缩主目录（macOS / Linux / Windows 都认），`pathBase` 取末段（`/` 与 `\` 都认）。
 

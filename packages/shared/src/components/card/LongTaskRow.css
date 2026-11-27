@@ -200,6 +200,19 @@
   text-overflow: ellipsis;
 }
 
+.wb-longTaskDense .wb-longTaskHeadRow {
+  height: auto;
+  min-height: var(--wb-len-24);
+  overflow: visible;
+}
+
+.wb-longTaskDense .wb-longTaskHeadline {
+  width: auto;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .wb-longTaskMeta {
   margin: 0;
   min-width: 0;
@@ -247,6 +260,11 @@
 
 .wb-longTaskStepRow[data-kind='fail'] .wb-longTaskStepText {
   color: var(--dsw-alias-state-error-primary);
+}
+
+.wb-longTaskStepRow[data-kind='pending'] .wb-longTaskStepText {
+  color: var(--dsw-alias-label-tertiary);
+  opacity: 0.7;
 }
 
 .wb-longTaskStepLink {

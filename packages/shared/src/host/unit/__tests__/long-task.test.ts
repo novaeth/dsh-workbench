@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { LongTaskIntervention, LongTaskStep } from '../../../contract/long-task.js';
 import {
-  createLongTaskHost,
   createLongTaskRegistry,
   longTaskRowBase,
-  sharedLongTaskRegistry,
   withInterventionRetry,
   type LongTaskBase,
   type LongTaskDeps,
 } from '../long-task.js';
+import { createLongTaskHost, sharedLongTaskRegistry } from '../long-task-host.js';
 
 interface Probe extends LongTaskBase {
   readonly note?: string | undefined;
@@ -43,6 +42,102 @@ const flush = async (): Promise<void> => {
   await Promise.resolve();
   await Promise.resolve();
 };
+
+
+describe('长任务计划（plan）：外壳自己数步数，模块不报数字', () => {
+  it('★★ 起手就是 0/N；步骤事件按 stepId 去重累计；ok 铺满', async () => {
+    const h = harness({
+      plan: { steps: [{ id: 'a', title: '合并' }, { id: 'b', title: '构建' }, { id: 'c', title: '发布' }] },
+    });
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+
+    expect(runs.snapshot(started.id)?.progress).toEqual({ done: 0, total: 3 });
+    expect(runs.snapshot(started.id)?.plan?.map((one) => one.id)).toEqual(['a', 'b', 'c']);
+
+    h.step({ kind: 'succeed', text: '合并', stepId: 'a' });
+    expect(runs.snapshot(started.id)?.progress).toEqual({ done: 1, total: 3 });
+
+    h.step({ kind: 'succeed', text: '合并（重试成功）', stepId: 'a' });
+    expect(runs.snapshot(started.id)?.progress).toEqual({ done: 1, total: 3 });
+
+    h.step({ kind: 'info', text: '构建（跳过）', stepId: 'b' });
+    expect(runs.snapshot(started.id)?.progress).toEqual({ done: 2, total: 3 });
+
+    h.step({ kind: 'start', text: '发布', stepId: 'c' });
+    expect(runs.snapshot(started.id)?.progress).toEqual({ done: 2, total: 3 });
+
+    h.done({});
+    await flush();
+    expect(runs.snapshot(started.id)?.progress).toEqual({ done: 3, total: 3 });
+  });
+
+  it('★★ 计划外的事件不计数；只给个数时只认成功；超了夹到 total', async () => {
+    const only = harness({ plan: { total: 2 } });
+    const counted = createLongTaskRegistry(only.deps);
+    const one = counted.start({ workspace: '/w/a', target: 'release' });
+
+    only.step({ kind: 'info', text: '等一下', stepId: 'x' });
+    expect(counted.snapshot(one.id)?.progress).toEqual({ done: 0, total: 2 });
+
+    only.step({ kind: 'succeed', text: 'A', stepId: 'x' });
+    only.step({ kind: 'succeed', text: 'B', stepId: 'y' });
+    only.step({ kind: 'succeed', text: 'C', stepId: 'z' });
+    expect(counted.snapshot(one.id)?.progress).toEqual({ done: 2, total: 2 });
+
+    const planned = harness({ plan: { steps: [{ id: 'a' }] } });
+    const strict = createLongTaskRegistry(planned.deps);
+    const two = strict.start({ workspace: '/w/a', target: 'release' });
+    planned.step({ kind: 'succeed', text: '别的步', stepId: 'zzz' });
+    expect(strict.snapshot(two.id)?.progress).toEqual({ done: 0, total: 1 });
+  });
+
+
+  it('★ 报了 3 个步骤却没有计划：开发期只告警一次，不影响快照', () => {
+    const h = harness();
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+    const calls: unknown[][] = [];
+    const original = console.warn;
+    console.warn = (...args: unknown[]) => void calls.push(args);
+    try {
+      for (const id of ['a', 'b', 'c', 'd']) {
+        h.step({ kind: 'succeed', text: id, stepId: id });
+      }
+    } finally {
+      console.warn = original;
+    }
+
+    expect(calls).toHaveLength(1);
+    expect(String(calls[0]?.[0])).toContain('没有计划');
+    expect(runs.snapshot(started.id)?.progress).toBeUndefined();
+  });
+
+  it('★★ 模块自己 onProgress 时报的优先：plan 不再覆盖它；没 plan 就不落这个键', async () => {
+    let report: ((next: { done: number; total: number }) => void) | undefined;
+    const h = harness({
+      plan: { total: 6 },
+      run: (options) =>
+        new Promise(() => {
+          report = options.onProgress;
+        }),
+    });
+    const runs = createLongTaskRegistry(h.deps);
+    const started = runs.start({ workspace: '/w/a', target: 'release' });
+
+    report?.({ done: 2, total: 100 });
+    expect(runs.snapshot(started.id)?.progress).toEqual({ done: 2, total: 100 });
+
+    h.step({ kind: 'succeed', text: '一步', stepId: 'a' });
+    expect(runs.snapshot(started.id)?.progress).toEqual({ done: 2, total: 100 });
+
+    const plain = harness();
+    const bare = createLongTaskRegistry(plain.deps);
+    const none = bare.start({ workspace: '/w/a', target: 'release' });
+    plain.step({ kind: 'succeed', text: '一步', stepId: 'a' });
+    expect('progress' in (bare.snapshot(none.id) ?? {})).toBe(false);
+  });
+});
 
 describe('createLongTaskRegistry.stop（停止只是转发给生产方，认不认 signal 是模块的事）', () => {
   it('★★ stop：run 拿到的 signal 被 abort，这一趟变 stopped，回 true', () => {

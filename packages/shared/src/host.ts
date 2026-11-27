@@ -180,6 +180,8 @@ export * from './host/unit/facts.js';
 export * from './host/unit/host-actions.js';
 export * from './host/unit/host-kit.js';
 export * from './host/unit/local-declaration.js';
+export * from './host/unit/long-task-host.js';
+export * from './host/unit/long-task-progress.js';
 export * from './host/unit/long-task.js';
 export * from './host/unit/needs.js';
 export * from './host/unit/panel-state.js';

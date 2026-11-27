@@ -92,6 +92,7 @@ describe('shellLongTaskRows：左栏那颗 loading 点读的那份清单', () =>
 
     const [withProgress] = shellLongTaskRows(new Map([['inventory', runs]]));
     expect(withProgress).toMatchObject({ status: 'running', progress: { done: 2, total: 5 } });
+    expect(withProgress).not.toHaveProperty('plan');
 
     const quiet = createLongTaskRegistry<LongTaskBase>({
       run: () => new Promise((resolve) => setTimeout(() => resolve('ok'), 50)),

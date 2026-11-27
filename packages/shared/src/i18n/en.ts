@@ -1057,6 +1057,7 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'longTask.stopPending': 'Stop requested; waiting for the module',
   'longTask.attempt': 'Attempt {attempt}',
   'longTask.list.entry': 'Workbench tasks {n}',
+  'longTask.list.openWorkspace': 'Open workspace {name}',
   'longTask.list.count': '{n}',
   'longTask.list.title': 'Workbench tasks',
   'longTask.state.running': 'Running',

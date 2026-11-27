@@ -12,10 +12,10 @@ export const PUBLIC_TYPES = {
   'packages/shared/src/host/drafts/draft-store.ts': { DraftStore: 'all' },
   'packages/shared/src/host/runtime/workspace-store.ts': { WorkspaceStore: ['for'] },
   'packages/shared/src/host/unit/long-task.ts': {
-    LongTaskHost: ['create'],
-    LongTaskDeps: ['run', 'view', 'recheck', 'answer'],
+    LongTaskDeps: ['plan', 'run', 'view', 'recheck', 'answer'],
     LongTaskRegistry: ['resumable', 'answerable', 'start', 'snapshot', 'active', 'current', 'live', 'stop', 'answer'],
   },
+  'packages/shared/src/host/unit/long-task-host.ts': { LongTaskHost: ['create'] },
   'packages/shared/src/host/ai/port.ts': { AiPort: ['ask', 'askJson', 'askRich', 'agent'] },
   'packages/shared/src/contract/data.ts': {
     DataReader: ['read', 'request', 'requestMany', 'plan', 'submitPlan', 'submit'],
@@ -106,6 +106,7 @@ export const PUBLIC_TYPES = {
   'packages/core/src/shared/hooks/use-api-resource.ts': { ApiResourceOptions: 'all' },
   'packages/shared/src/api/workbench-client.ts': { ApiError: 'all', ApiGetOptions: 'all' },
   'packages/shared/src/components/feedback/ProgressBar.tsx': { ProgressBarProps: 'all' },
+  'packages/shared/src/components/card/use-text-marquee.ts': { TextMarquee: 'all' },
 };
 
 export function memberJsDocOf(rel) {

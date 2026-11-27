@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { DshToolRunContext } from '../../../api/dsh.js';
 import { createFlowHost } from '../kit.js';
 import { createFlowTask } from '../create.js';
-import { createLongTaskHost } from '../../unit/long-task.js';
+import { createLongTaskHost } from '../../unit/long-task-host.js';
 
 const tick = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -82,7 +82,8 @@ describe('createFlowTask：流程 + 长任务 + 工具的三件套', () => {
     const started = task.start({ workspace: '/w/a' });
     await tick();
 
-    expect(seen[0]).toEqual({ done: 0, total: 3 });
+    expect(started.progress).toEqual({ done: 0, total: 3 });
+    expect(task.runs.snapshot(started.id)?.plan?.map((one) => one.id)).toEqual(['one', 'skip', 'two']);
     expect(seen.some((one) => one.done === 1)).toBe(true);
     expect(task.runs.snapshot(started.id)).toMatchObject({ status: 'ok', progress: { done: 3, total: 3 } });
     longTasks.dispose();

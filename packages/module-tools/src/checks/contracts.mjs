@@ -987,6 +987,13 @@ export async function run(options = {}) {
             `${name}: longTasks.create({key:'${String(options?.key ?? '')}'}) 未提供 view —— 卡片上该行需要渲染的快照没有来源`,
           );
         }
+        if (typeof options?.run === 'function' && options?.plan === undefined) {
+          warnings.push(
+            `${name}: longTasks.create({key:'${String(options?.key ?? '')}'}) 自己有 run 但没给 plan —— ` +
+              '这一趟算不出进度（行上没有进度条）：按流程的步骤给一次 plan（{ steps } 或 { total }），' +
+              '步数由工作台从步骤事件自己数，run 里不用报 done',
+          );
+        }
       }
       const clientText = existsSync(join(pkg.dir, 'client.js'))
         ? readFileSync(join(pkg.dir, 'client.js'), 'utf8')
