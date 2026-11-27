@@ -8,6 +8,8 @@ import type { Pending } from './market-view-text';
 import type { SharedState } from './market-shared-rows';
 import type { PackageKind } from './market-row-icon';
 import { MarketRowControls, MarketRowFailure } from './market-section';
+import { FailureCard } from './FailureCard';
+import { rowProblemCardOf } from './market-problem-card';
 import { SharedActions } from './SharedSection';
 import { marketDetailFacts, type MarketRuntimeFact } from './market-detail-facts';
 import { dependencyRowActions, type DetailDependency } from './market-detail-deps';
@@ -98,7 +100,15 @@ export function MarketDetail({
   const title = marketRowTitle(row, t);
   const facts = marketDetailFacts(row, t, info, runtime);
   const version = row.version?.installed;
-  const noteText = row.note === undefined ? null : t(row.note.key, row.note.params);
+  const problemModel = row.problem === undefined ? undefined : rowProblemCardOf(t, row);
+  const hiddenNote = problemModel !== undefined && row.problem?.kind !== 'startup';
+  const noteText = row.note === undefined || hiddenNote ? null : t(row.note.key, row.note.params);
+  const problemAction =
+    row.problem?.kind === 'drift'
+      ? () => onRequest('install-version')
+      : row.problem?.kind === 'reinstall'
+        ? () => onRequest('update-workbench')
+        : onRecheck;
   const idPrefix = `installed-detail-${row.id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
   return (
     <div className={styles.discoverDetail} data-market-detail={row.id}>
@@ -125,7 +135,7 @@ export function MarketDetail({
               <h3 className={styles.discoverDetailTitle}>{title}</h3>
               {version === undefined ? null : <Tag tone="neutral">{version}</Tag>}
               {row.state === 'installed' ? null : (
-                <Tag tone={STATE_TONE[row.state]}>{t(MARKET_STATE_KEY[row.state])}</Tag>
+                <Tag tone={STATE_TONE[row.state]}>{t(row.stateKey ?? MARKET_STATE_KEY[row.state])}</Tag>
               )}
               {row.local === true ? <Tag tone="neutral">{t('panels.market.localMark')}</Tag> : null}
             </div>
@@ -154,6 +164,9 @@ export function MarketDetail({
               rechecking={rechecking}
               onApprove={onApproveBuilds}
             />
+            {problemModel === undefined || failure !== null ? null : (
+              <FailureCard t={t} model={problemModel} extras={problemModel} onRecheck={problemAction} rechecking={rechecking} />
+            )}
             {row.hint === undefined ? null : <p className={styles.discoverMuted}>{t(row.hint.key, row.hint.params)}</p>}
             {noteText === null ? null : (
               <p className={row.note?.tone === 'alert' ? styles.discoverError : styles.discoverMuted}>

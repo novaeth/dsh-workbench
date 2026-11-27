@@ -607,7 +607,7 @@ describe('工作台那一行：不混进模块里，也不单占一段', () => {
       tone: 'warning',
     });
     expect(hintOf({ pkg: CORE, installed: '', broken: true, rescue: 'dsh plugin add x' })).toEqual({
-      labelKey: 'panels.market.hasProblem',
+      labelKey: 'panels.market.workbenchProblem',
       tone: 'danger',
     });
   });

@@ -30,6 +30,10 @@ function brokenRow(version: WorkbenchVersion): MarketRow {
       command === ''
         ? { key: 'panels.market.workbenchBrokenNoFix', params: {}, tone: 'alert' }
         : { key: 'panels.market.workbenchBroken', params: { command }, tone: 'alert' },
+    problem:
+      command === ''
+        ? { kind: 'workbench-broken' as const }
+        : { kind: 'workbench-broken' as const, command },
     pkg: version.pkg,
   };
 }
@@ -132,6 +136,14 @@ export function workbenchRow(
       : { moduleUpdate: { ...update, ...(blocked === undefined ? {} : { blocked }) } }),
     ...(followUp === undefined ? {} : { followUp }),
     ...(followUpState ? { hint: { key: 'panels.market.migrationHint' } } : {}),
+    ...(selfUpdate?.reinstall?.state === 'failed'
+      ? {
+          problem: {
+            kind: 'reinstall' as const,
+            ...(selfUpdate.reinstall.reason === undefined ? {} : { detail: selfUpdate.reinstall.reason }),
+          },
+        }
+      : {}),
     pkg: version.pkg,
     ...(version.spec === undefined ? {} : { spec: version.spec }),
     ...(version.registry === undefined ? {} : { registry: version.registry }),

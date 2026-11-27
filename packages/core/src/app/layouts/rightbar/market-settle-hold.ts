@@ -3,6 +3,7 @@ import { readText, writeText, type Translate } from '@dsh-workbench/shared';
 import type { WorkbenchSelfUpdate } from '@/kernel/contract/bundle-install';
 
 import type { MarketFailure } from './market-row-types';
+import { selfUpdateFailureCardOf } from './market-problem-card';
 import { REMOVAL_ACTIONS, WORKBENCH_SWAP_POLL_MS, holdWindowMs, selfUpdateNote, selfUpdateStop } from './market-settle';
 import type { Pending } from './market-view-text';
 
@@ -81,7 +82,12 @@ export function useSettleHold(input: {
       selfUpdate,
     );
     if (note === undefined) return;
-    setFailed({ id, message: t(note.key, note.params) });
+    setFailed({
+      id,
+      message: t(note.key, note.params),
+      card: selfUpdateFailureCardOf(t, selfUpdate?.tail ?? stopFix ?? ''),
+      retry: 'update-workbench',
+    });
   }, [stopKind, stopCause, stopFix, stopVersion, id, setPending, setFailed, t, selfUpdate]);
 
   useEffect(() => {

@@ -47,6 +47,7 @@ export function depsOnlyInstall(row: MarketRow | undefined, action: MarketRowAct
 }
 
 export function actionLabelKey(row: MarketRow | undefined, action: MarketRowAction): string {
+  if (action === 'install-version' && row?.problem?.kind === 'drift') return 'panels.market.reinstall';
   if (action === 'update' && row?.staleDeps !== undefined && row.moduleUpdate === undefined) {
     return 'panels.market.updateDeps';
   }

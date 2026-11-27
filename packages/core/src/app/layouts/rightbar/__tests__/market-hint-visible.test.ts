@@ -31,6 +31,7 @@ const BEHIND = [{ unit: 'hello', pkg: 'pkg-hello', installed: '0.1.8', latest: '
 
 const NEW = { labelKey: 'panels.market.hasNew', tone: 'warning' };
 const PROBLEM = { labelKey: 'panels.market.hasProblem', tone: 'danger' };
+const WORKBENCH_PROBLEM = { labelKey: 'panels.market.workbenchProblem', tone: 'danger' };
 const RESTART = { labelKey: 'panels.market.pendingRestart', tone: 'warning' };
 
 describe('左栏入口那枚标签：与市场页读同一份模块版本', () => {
@@ -110,7 +111,7 @@ describe('左栏入口那枚标签：与市场页读同一份模块版本', () =
   });
 });
 
-describe('左栏入口那枚标签：三档（模块异常 / 重启后生效 / 有新版本）', () => {
+describe('左栏入口那枚标签：四档（工作台异常 / 模块异常 / 重启后生效 / 有新版本）', () => {
   it('★ 装了还没载入 → 「状态未知」（未生效那一档不再由我们产出）', () => {
     expect(
       marketHintOf({
@@ -131,6 +132,59 @@ describe('左栏入口那枚标签：三档（模块异常 / 重启后生效 / �
         workbench: { pkg: CORE, installed: '0.1.19', running: '0.1.18' },
       }),
     ).toEqual(RESTART);
+  });
+
+  it('★ 工作台更新没成功（还在用旧版）→ 不亮「工作台异常」；有新版本时只亮「有新版本」', () => {
+    const selfUpdate = { state: 'failed' as const, at: '2026-11-27T00:00:00.000Z', version: '0.1.18' };
+    expect(
+      marketHintOf({
+        manifests: [MANIFEST],
+        capabilities: OK,
+        modules: [],
+        workbench: { pkg: CORE, installed: '0.1.18' },
+        selfUpdate,
+      }),
+    ).toBeNull();
+    expect(
+      marketHintOf({
+        manifests: [MANIFEST],
+        capabilities: OK,
+        modules: [],
+        workbench: { pkg: CORE, installed: '0.1.18', latest: '0.1.19' },
+        selfUpdate,
+      }),
+    ).toEqual(NEW);
+  });
+
+  it('★ 更新装好了但依赖重装没成 → 算「工作台异常」，不算模块', () => {
+    expect(
+      marketHintOf({
+        manifests: [MANIFEST],
+        capabilities: OK,
+        modules: [],
+        workbench: { pkg: CORE, installed: '0.1.19' },
+        selfUpdate: {
+          state: 'ok',
+          at: '2026-11-27T00:00:00.000Z',
+          version: '0.1.19',
+          reinstall: { state: 'failed', attempts: 1 },
+        },
+      }),
+    ).toEqual(WORKBENCH_PROBLEM);
+  });
+
+  it('★ 工作台和模块同时异常 → 徽标先说「工作台异常」，模块那条留在名字里', () => {
+    expect(
+      marketHintOf({
+        manifests: [MANIFEST],
+        capabilities: OK,
+        modules: [],
+        workbench: { pkg: CORE, installed: '', broken: true, rescue: 'dsh plugin add x' },
+        installed: [
+          { unit: 'ghost', pkg: '@a/ghost', installed: '1.0.0', clientRefused: ['宿主把这份拒了'] },
+        ],
+      }),
+    ).toEqual({ ...WORKBENCH_PROBLEM, moreKeys: ['panels.market.hasProblem'] });
   });
 
   it('★ 装了但用不了（不可用）→ 模块异常', () => {

@@ -189,6 +189,9 @@ export function installedRows(
           : { hint: updateBlockHintOf(blocked) }),
       ...(note === undefined ? {} : { note }),
       ...(module.local === true ? { local: true } : {}),
+      ...(drifted && declared !== undefined
+        ? { problem: { kind: 'drift' as const, declared, installed: module.installed } }
+        : {}),
       pkg: module.pkg,
       ...(module.spec === undefined ? {} : { spec: module.spec }),
       ...(module.registry === undefined ? {} : { registry: module.registry }),
@@ -498,6 +501,15 @@ export function marketRows(
       ...(entry?.registry === undefined ? {} : { registry: entry.registry }),
       ...(entry?.market === undefined ? {} : { removeViaBundle: true }),
       ...(moduleUpdate === undefined ? (note === undefined ? {} : { note }) : {}),
+      ...(capability?.status === 'failed'
+        ? {
+            stateKey: 'panels.market.startupFailed',
+            problem: {
+              kind: 'startup' as const,
+              ...(capability.detail === undefined ? {} : { detail: capability.detail }),
+            },
+          }
+        : {}),
       ...(local ? { local: true } : {}),
       defaultShown: defaults.has(manifest.id),
       defaultChanged: changed[manifest.id] ?? 0,

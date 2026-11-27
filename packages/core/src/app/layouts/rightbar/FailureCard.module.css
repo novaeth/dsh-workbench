@@ -53,3 +53,16 @@
   margin-top: var(--wb-len-2);
   min-width: 0;
 }
+
+.command {
+  margin: var(--wb-len-2) 0 0;
+  padding: var(--wb-len-6) var(--wb-len-8);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-secondary);
+  font-family: var(--ds-font-family-code, monospace);
+  font-size: var(--dsw-font-xxs-12-font-size);
+  line-height: var(--wb-line-18);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

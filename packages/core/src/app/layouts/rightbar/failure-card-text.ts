@@ -14,6 +14,15 @@ export interface FailureCardModel {
   readonly copiedHint?: string | undefined;
 }
 
+export interface FailureCardExtras {
+  readonly actionLabel?: string | undefined;
+  readonly askAgent?: string | undefined;
+  readonly outputLabel?: string | undefined;
+  readonly hideOutputLabel?: string | undefined;
+  readonly showCommand?: boolean | undefined;
+  readonly actionFirst?: boolean | undefined;
+}
+
 const TITLE_KEY: Readonly<Record<InstallFailure['kind'], string>> = {
   permission: 'panels.market.failure.permission',
   'disk-full': 'panels.market.failure.diskFull',

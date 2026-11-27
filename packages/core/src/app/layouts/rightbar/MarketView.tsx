@@ -286,7 +286,8 @@ export function MarketView({
       readStale={readStale}
       pending={pending}
       failed={failed}
-      notice={listUnread ? t('market.listUnread', { reason: readFailure ?? '' }) : notice}
+      notice={notice}
+      readFailure={listUnread ? readFailure : null}
       act={act}
       onConfirming={setConfirming}
       setDefault={setDefault}

@@ -18,6 +18,7 @@ export interface MarketBodyProps {
   readonly pending: Pending | null;
   readonly failed: MarketFailure | null;
   readonly notice: string | null;
+  readonly readFailure?: string | null | undefined;
   readonly act: MarketAct;
   readonly onConfirming: (id: string | null) => void;
   readonly setDefault: (id: string, next: boolean) => Promise<void>;

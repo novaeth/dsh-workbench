@@ -2,7 +2,7 @@ import { createElement as h, useCallback, useState } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
 import { Button, StateDot, TerminalBlock, writeClipboard } from '@deepseek-ai/dsh-client-ui-primitives';
 import type { TerminalBlockLabels } from '@deepseek-ai/dsh-client-ui-primitives';
-import type { FailureCardModel } from './failure-card-text';
+import type { FailureCardExtras, FailureCardModel } from './failure-card-text';
 import styles from './FailureCard.module.css';
 
 const COPIED_MS = 1200;
@@ -29,25 +29,37 @@ function terminalLabels(t: Translate): TerminalBlockLabels {
 export function FailureCard({
   t,
   model,
+  extras,
   onRecheck,
   rechecking,
 }: {
   readonly t: Translate;
   readonly model: FailureCardModel;
+  readonly extras?: FailureCardExtras | undefined;
   readonly onRecheck: () => void;
   readonly rechecking: boolean;
 }) {
   const hasOutput = model.command !== '' || model.output !== '';
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<'fix' | 'agent' | null>(null);
   const [open, setOpen] = useState(false);
 
-  const onCopy = useCallback(() => {
-    void writeClipboard(model.fix).then((ok) => {
+  const onCopy = useCallback((kind: 'fix' | 'agent', text: string) => {
+    void writeClipboard(text).then((ok) => {
       if (!ok) return;
-      setCopied(true);
-      setTimeout(() => setCopied(false), COPIED_MS);
+      setCopied(kind);
+      setTimeout(() => setCopied(null), COPIED_MS);
     });
-  }, [model.fix]);
+  }, []);
+
+  const fix = model.fix;
+  const askAgent = extras?.askAgent ?? '';
+  const showOutputLabel = extras?.outputLabel ?? t('panels.market.failure.showOutput');
+  const hideOutputLabel = extras?.hideOutputLabel ?? t('panels.market.failure.hideOutput');
+  const retry = (
+    <Button type="button" size="sm" variant="ghost" disabled={rechecking} onClick={onRecheck}>
+      {extras?.actionLabel ?? t('panels.market.failure.recheck')}
+    </Button>
+  );
 
   return (
     <div className={styles.block}>
@@ -57,21 +69,32 @@ export function FailureCard({
           <span className={styles.title}>{model.title}</span>
         </div>
       )}
-      <p className={model.tone === 'alert' ? styles.factAlert : styles.fact}>{model.fact}</p>
+      {model.fact === '' ? null : (
+        <p className={model.tone === 'alert' ? styles.factAlert : styles.fact}>{model.fact}</p>
+      )}
       <div className={styles.actions}>
-        <Button type="button" size="sm" variant="ghost" onClick={onCopy}>
-          {copied ? t('panels.market.failure.copied') : model.fixLabel}
-        </Button>
-        <Button type="button" size="sm" variant="ghost" disabled={rechecking} onClick={onRecheck}>
-          {t('panels.market.failure.recheck')}
-        </Button>
+        {extras?.actionFirst === true ? retry : null}
+        {fix === '' ? null : (
+          <Button type="button" size="sm" variant="ghost" onClick={() => onCopy('fix', fix)}>
+            {copied === 'fix' ? t('panels.market.failure.copied') : model.fixLabel}
+          </Button>
+        )}
+        {extras?.actionFirst === true ? null : retry}
+        {askAgent === '' ? null : (
+          <Button type="button" size="sm" variant="ghost" onClick={() => onCopy('agent', askAgent)}>
+            {copied === 'agent' ? t('askAgent.copied') : t('askAgent.copy')}
+          </Button>
+        )}
         {hasOutput ? (
           <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(!open)}>
-            {open ? t('panels.market.failure.hideOutput') : t('panels.market.failure.showOutput')}
+            {open ? hideOutputLabel : showOutputLabel}
           </Button>
         ) : null}
       </div>
-      {copied && model.copiedHint !== undefined ? <p className={styles.hint}>{model.copiedHint}</p> : null}
+      {copied === 'fix' && model.copiedHint !== undefined ? <p className={styles.hint}>{model.copiedHint}</p> : null}
+      {extras?.showCommand === true && model.command !== '' ? (
+        <pre className={styles.command}>{model.command}</pre>
+      ) : null}
       {open && hasOutput ? (
         <TerminalBlock
           command={model.command}

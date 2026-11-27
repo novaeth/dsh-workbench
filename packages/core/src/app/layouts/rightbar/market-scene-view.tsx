@@ -19,6 +19,7 @@ export function MarketSceneView({
   pending,
   failed,
   notice,
+  readFailure = null,
   act,
   onConfirming,
   setDefault,
@@ -96,6 +97,7 @@ export function MarketSceneView({
   return (
     <>
       <MarketBody
+        readFailure={readFailure ?? null}
         t={t}
         runtimePluginMarket={runtimePluginMarket}
         self={self}

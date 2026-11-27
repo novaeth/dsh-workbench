@@ -1,4 +1,5 @@
 import { Fragment, createElement as h } from 'react';
+import { FailureCard } from './FailureCard';
 import type { MarketFailure, MarketRow, MarketRowAction } from './market-row-types';
 import type { MarketBodyExtras, MarketBodyProps } from './market-body-props';
 import { marketFootVisible } from './market-view-text';
@@ -6,12 +7,13 @@ import { marketRowTitle, updatablePlugins } from './market-rows';
 import { marketOrder, marketSections } from './market-sections';
 import { MarketSection } from './market-section';
 import { MarketUnreadableBadge } from './market-unreadable-badge';
+import { listReadCardOf } from './market-problem-card';
 import { UpdateAllPlugins } from './UpdateAllPlugins';
 import { marketSectionIcon } from './market-section-icon';
 import { PanelFoot } from '@/shared/components/PanelFoot';
 import styles from '../market/MarketPage.module.css';
 
-const CONFIRM_ACTIONS: readonly MarketRowAction[] = ['uninstall', 'remove-bundle', 'uninstall-plugin'];
+const CONFIRM_ACTIONS = ['uninstall', 'remove-bundle', 'uninstall-plugin'] as const satisfies readonly MarketRowAction[];
 const NO_ROWS: readonly MarketRow[] = [];
 
 export function MarketBody({
@@ -25,6 +27,7 @@ export function MarketBody({
   pending,
   failed,
   notice,
+  readFailure = null,
   act,
   onConfirming,
   setDefault,
@@ -42,6 +45,7 @@ export function MarketBody({
   );
   const installed = sections.find((section) => section.id === 'installed');
   const pendingSection = sections.find((section) => section.id === 'not-installed');
+  const listCard = readFailure === null ? undefined : listReadCardOf(t, readFailure);
   const common = {
     t,
     onDefault: setDefault,
@@ -57,7 +61,13 @@ export function MarketBody({
   } as const;
   return (
     <>
-      {notice === null ? null : <div className={styles.marketNote}>{notice}</div>}
+      {listCard === undefined ? (
+        notice === null ? null : <div className={styles.marketNote}>{notice}</div>
+      ) : (
+        <div className={styles.marketFailureSeat}>
+          <FailureCard t={t} model={listCard} extras={listCard} onRecheck={onRecheck} rechecking={rechecking} />
+        </div>
+      )}
       {readStale ? <div className={styles.marketNote}>{t('panels.staleNote')}</div> : null}
       <MarketSection {...common} rows={self === undefined ? [] : [self]} />
       {self === undefined ? null : (

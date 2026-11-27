@@ -1,14 +1,21 @@
 import type { BundleVersionList, ModuleUpdateBlock } from '@/kernel/contract/bundle-install';
 import type { MarketInstalledModule } from '@/kernel/contract/market-index';
 import type { InstallFailure } from '@dsh-workbench/shared';
-import type { FailureCardModel } from './failure-card-text';
+import type { FailureCardExtras, FailureCardModel } from './failure-card-text';
+
+export type MarketProblem =
+  | { readonly kind: 'startup'; readonly detail?: string }
+  | { readonly kind: 'workbench-broken'; readonly command?: string }
+  | { readonly kind: 'reinstall'; readonly detail?: string }
+  | { readonly kind: 'drift'; readonly declared: string; readonly installed: string };
 
 export interface MarketFailure {
   readonly id: string;
   readonly message: string;
   readonly failure?: InstallFailure;
-  readonly card?: FailureCardModel;
+  readonly card?: FailureCardModel & FailureCardExtras;
   readonly action?: MarketRowAction;
+  readonly retry?: 'update-workbench';
   readonly pendingBuilds?: readonly string[];
 }
 
@@ -126,6 +133,8 @@ export interface MarketRow {
   readonly defaultShown?: boolean;
   readonly defaultChanged?: number;
   readonly broken?: boolean;
+  readonly stateKey?: string;
+  readonly problem?: MarketProblem;
   readonly followUp?: MarketFollowUp;
   readonly spec?: string;
   readonly registry?: string;

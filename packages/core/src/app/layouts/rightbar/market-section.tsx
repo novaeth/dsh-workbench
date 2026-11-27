@@ -23,9 +23,10 @@ import type { MarketSectionIcon } from './market-section-icon';
 import { BuildApproval } from './BuildApproval';
 import { FailureCard } from './FailureCard';
 import { failureCardOf } from './failure-card-text';
+import { rowProblemCardOf } from './market-problem-card';
 import styles from '../market/MarketPage.module.css';
 
-const CONFIRM_DANGER: readonly MarketRowAction[] = ['uninstall', 'remove-bundle', 'uninstall-plugin'];
+const CONFIRM_DANGER = ['uninstall', 'remove-bundle', 'uninstall-plugin'] as const satisfies readonly MarketRowAction[];
 
 function MigrationConfirm({
   t,
@@ -90,8 +91,9 @@ export function MarketLineStatus({
   readonly row: MarketRow;
   readonly quiet: boolean;
 }) {
-  const stateText = t(MARKET_STATE_KEY[row.state]);
-  const noteText = row.note === undefined ? null : t(row.note.key, row.note.params);
+  const stateText = t(row.stateKey ?? MARKET_STATE_KEY[row.state]);
+  const hiddenNote = row.problem !== undefined && row.problem.kind !== 'startup';
+  const noteText = row.note === undefined || hiddenNote ? null : t(row.note.key, row.note.params);
   if (quiet) return null;
   return (
     <span className={styles.marketStatus}>
@@ -150,7 +152,7 @@ export function MarketRowFailure({
   if (model !== undefined) {
     return (
       <div className={styles.marketFailureSeat}>
-        <FailureCard t={t} model={model} onRecheck={onRecheck} rechecking={rechecking} />
+        <FailureCard t={t} model={model} extras={failure.card} onRecheck={onRecheck} rechecking={rechecking} />
       </div>
     );
   }
@@ -201,7 +203,7 @@ export function MarketRowControls({
       ) : actions.length === 0 ? null : (
         <span className={styles.marketActions}>
           {actions.map((action) => {
-            const danger = CONFIRM_DANGER.includes(action);
+            const danger = CONFIRM_DANGER.some((one) => one === action);
             const update = UPDATE_ACTIONS.includes(action) || depsOnlyInstall(row, action);
             return (
               <Button
@@ -299,6 +301,14 @@ function MarketLine({
   const title = marketRowTitle(row, t);
   const quiet = row.workbench === true && row.state === 'installed' && row.hint === undefined;
   const clickable = row.pkg !== undefined && onOpenDetail !== undefined;
+  const problemModel = row.problem === undefined ? undefined : rowProblemCardOf(t, row);
+  const problemAction =
+    row.problem?.kind === 'drift'
+      ? () => onAct('install-version')
+      : row.problem?.kind === 'reinstall'
+        ? () => onAct('update-workbench')
+        : onRecheck;
+  const failureAction = failure?.retry === 'update-workbench' ? () => onAct('update-workbench') : onRecheck;
   return (
     <li className={styles.marketRow} data-open={clickable ? 'true' : undefined}>
       <span className={styles.marketIcon} aria-hidden="true">
@@ -352,7 +362,19 @@ function MarketLine({
         />
       </div>
 
-      <MarketRowFailure t={t} failure={failure} onRecheck={onRecheck} rechecking={rechecking} onApprove={onApprove} />
+      {problemModel === undefined || failure !== null ? null : (
+        <div className={styles.marketFailureSeat}>
+          <FailureCard t={t} model={problemModel} extras={problemModel} onRecheck={problemAction} rechecking={rechecking} />
+        </div>
+      )}
+
+      <MarketRowFailure
+        t={t}
+        failure={failure}
+        onRecheck={failureAction}
+        rechecking={rechecking}
+        onApprove={onApprove}
+      />
     </li>
   );
 }

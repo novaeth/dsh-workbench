@@ -35,6 +35,7 @@ interface Signal {
   readonly tone: PanelHintTone;
 }
 
+const WORKBENCH_PROBLEM_KEY = 'panels.market.workbenchProblem';
 const PROBLEM_KEY = 'panels.market.hasProblem';
 
 const RESTART_KEY = 'panels.market.pendingRestart';
@@ -43,21 +44,23 @@ const UNKNOWN_KEY = 'panels.market.unchecked';
 const UPDATES_KEY = 'panels.market.hasNew';
 
 const SELF_UPDATE_NOTES: ReadonlySet<string> = new Set<string>([
-  'panels.market.selfUpdateRetry',
   'panels.market.selfUpdateReinstallFailed',
   'panels.market.selfUpdateReinstallStopped',
 ]);
 
-function isProblem(row: MarketRow): boolean {
-  return (
+type ProblemKind = 'workbench' | 'module';
+
+function problemKindOf(row: MarketRow): ProblemKind | null {
+  const problem =
     row.broken === true ||
     row.state === 'broken' ||
     row.state === 'unusable' ||
     row.state === 'unsupported' ||
     (row.state === 'missing' && row.version?.installed !== undefined) ||
     row.note?.key === 'panels.market.moduleRefused' ||
-    (row.workbench === true && SELF_UPDATE_NOTES.has(row.note?.key ?? ''))
-  );
+    (row.workbench === true && SELF_UPDATE_NOTES.has(row.note?.key ?? ''));
+  if (!problem) return null;
+  return row.workbench === true ? 'workbench' : 'module';
 }
 
 function isRestart(row: MarketRow, installing: boolean): boolean {
@@ -95,8 +98,10 @@ export function marketHintOf(input: MarketHintInput): PanelHint | null {
   const rosterRead = input.modules !== null;
   const signal = (key: string, tone: PanelHintTone, on: boolean): readonly Signal[] =>
     on ? [{ key, tone }] : [];
+  const problemKinds = new Set(rows.map((row) => problemKindOf(row)));
   const signals: readonly Signal[] = [
-    ...signal(PROBLEM_KEY, 'danger', rows.some(isProblem)),
+    ...signal(WORKBENCH_PROBLEM_KEY, 'danger', problemKinds.has('workbench')),
+    ...signal(PROBLEM_KEY, 'danger', problemKinds.has('module')),
     ...signal(RESTART_KEY, 'warning', rows.some((row) => isRestart(row, installing))),
     ...signal(FOLLOWUP_KEY, 'warning', rows.some((row) => row.state === 'pending-followup')),
     ...signal(UNKNOWN_KEY, 'warning', !installing && rows.some((row) => isUnknown(row, rosterRead))),
