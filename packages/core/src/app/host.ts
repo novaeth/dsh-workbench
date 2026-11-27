@@ -5,6 +5,7 @@ import { holdHostLeaseEffect, waitOutReinstall } from '@/shared/api/host/host-le
 import { bootChores, seedRuntime } from '@/shared/api/host/boot-chores';
 import { diagnoseModuleRows } from '@/shared/api/host/module-rows-sync';
 import { bootOkAction } from '@/shared/api/host/boot-ok';
+import { diagClientAction } from '@/shared/api/host/diag-client-act';
 import { provideGitProcessSeam } from '@/shared/api/host/git-process';
 import { browserExtensionInputOf, shippedAdapterSet } from '@/shared/api/host/shipped-adapter-set';
 import { createHostRoutes } from '@/shared/api/host/host-routes';
@@ -98,6 +99,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     profile: adapters.profile,
     diag: diagRoutesOf(workbenchRoot(), diagHostOf(ctx)),
   });
+  const diagRecorder = diagRoutesOf(workbenchRoot(), diagHostOf(ctx)).recorder;
   const baseHealth = routes.health;
   const adapterFailure = loaded.ok || loaded.failure === 'not-configured' ? null : loaded.failure;
   const adapterSpec = loaded.spec ?? null;
@@ -248,7 +250,9 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
       sidebarEditionAction({ profileDir, reconcile: sidebarReconcile }),
       bootOkAction({ version: () => runningVersionOf(import.meta.url) ?? '' }),
       workbenchSettingsAction(settings),
+      diagClientAction(diagRecorder),
     ],
+    diag: diagRecorder,
   });
   function unmountUnit(id: string): void {
     const item = mounted.get(id);
@@ -483,7 +487,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     `${PLUGIN_ID}: 对话引用注入`,
   );
   ctx.effect(() => registerFactStream(ctx, facts), `${PLUGIN_ID}: 变更流`);
-  ctx.effect(() => registerPanelState(ctx, panelState), `${PLUGIN_ID}: 面板运行态上报（浏览器半侧报自己的取数与渲染收尾）`);
-  ctx.effect(() => registerDiyActs(ctx, { bump: (names) => facts.bump(names) }), `${PLUGIN_ID}: DIY 的两族键（用户按的）`);
-  ctx.effect(() => registerApi(ctx, routes), `${PLUGIN_ID}: HTTP 投影`);
+  ctx.effect(() => registerPanelState(ctx, panelState, diagRecorder), `${PLUGIN_ID}: 面板运行态上报（浏览器半侧报自己的取数与渲染收尾）`);
+  ctx.effect(() => registerDiyActs(ctx, { bump: (names) => facts.bump(names) }, diagRecorder), `${PLUGIN_ID}: DIY 的两族键（用户按的）`);
+  ctx.effect(() => registerApi(ctx, routes, diagRecorder), `${PLUGIN_ID}: HTTP 投影`);
 }

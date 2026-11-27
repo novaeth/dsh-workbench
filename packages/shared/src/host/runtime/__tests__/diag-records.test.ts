@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createDiagRecorder, type DiagHost, type DiagRecord } from '../diag-records.js';
+import { createDiagRecorder, DIAG_SINK_RETRY_MS, type DiagHost, type DiagRecord } from '../diag-records.js';
 
 function fixedClock(): () => number {
   let now = 1_000;
@@ -187,5 +187,31 @@ describe('诊断记录器', () => {
     expect(recorder.record({ code: 'SELF_UPDATE_FAILED', level: 'error' })).not.toBeNull();
     expect(seen.map((one) => one.code)).toEqual(['SELF_UPDATE_FAILED']);
     expect(recorder.recent()).toHaveLength(1);
+  });
+
+  it('★★ 落盘失败只冷却重试：恢复后 sinkStatus 回到 ok，失败记录不重复刷', () => {
+    let at = 1_000_000;
+    let calls = 0;
+    const recorder = createDiagRecorder({
+      clock: () => at,
+      nextCorrId: () => 'c-1',
+      level: 'info',
+      sinks: [
+        () => {
+          calls += 1;
+          if (calls === 1) throw new Error('EACCES');
+        },
+      ],
+    });
+
+    recorder.record({ code: 'READ_FAILED' });
+    expect(recorder.sinkStatus()).toMatchObject({ ok: false, error: 'EACCES' });
+    recorder.record({ code: 'READ_FAILED' });
+    expect(calls).toBe(1);
+
+    at += DIAG_SINK_RETRY_MS + 1;
+    recorder.record({ code: 'READ_FAILED' });
+    expect(recorder.sinkStatus().ok).toBe(true);
+    expect(recorder.recent({ code: 'DIAG_SINK_FAILED' })).toHaveLength(1);
   });
 });

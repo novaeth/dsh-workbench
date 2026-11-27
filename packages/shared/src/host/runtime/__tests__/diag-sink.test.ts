@@ -82,6 +82,16 @@ describe('诊断记录的落盘 sink', () => {
     expect(sink.readDay('2026-11-21').records).toHaveLength(0);
   });
 
+  it('★ status 报出当天是否到上限', () => {
+    const clock = clockAt(Date.parse('2026-11-21T10:00:00.000Z'));
+    const sink = createDiagFileSink({ dir, clock, pid: 1, dayBytes: 40 });
+
+    expect(sink.status()).toMatchObject({ capped: false, bytes: 0 });
+    expect(() => sink.sink(recordAt(clock()))).toThrowError(/上限/);
+    expect(sink.status().capped).toBe(true);
+  });
+
+
   it('★ 半写入的坏行跳过并计数，好的照样读回来', () => {
     const clock = clockAt(Date.parse('2026-11-21T10:00:00.000Z'));
     const sink = createDiagFileSink({ dir, clock, pid: 3 });

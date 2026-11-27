@@ -146,6 +146,10 @@ export const en: Record<keyof WorkbenchMessages, string> = {
   'panels.market.installed': 'installed',
   'diag.code.readFailed': 'Could not read',
   'diag.hint.readFailed': 'The data could not be fetched. This is not the same as having no data; try again.',
+  'diag.code.actionFailed': 'This step did not complete.',
+  'diag.hint.actionFailed': 'Try again; if it keeps failing, copy it for the agent.',
+  'diag.code.clientFailed': 'This part of the interface hit an error.',
+  'diag.hint.clientFailed': 'Try again; if it keeps failing, copy it for the agent.',
   'diag.code.configCorrupt': 'The config file could not be read; the original has been backed up.',
   'diag.code.moduleUnreadable': 'The module is installed but cannot be read.',
   'diag.code.manifestsGaveUp': 'The module list failed to load repeatedly; the board will stay empty.',
@@ -813,6 +817,7 @@ export const en: Record<keyof WorkbenchMessages, string> = {
 
   'askAgent.title': 'Agent diagnosis needed',
   'askAgent.copy': 'Copy for the agent',
+  'askAgent.prompt.corrId': 'Correlation id: {corrId} (ask the agent to look it up with workbench_diag)',
   'askAgent.copied': 'Copied',
   'askAgent.prompt.head': 'The workbench ran into a problem that needs your diagnosis.',
   'askAgent.prompt.whereOnly': 'Where: {screen}',

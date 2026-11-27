@@ -51,6 +51,7 @@ export interface DiagRecord {
 
 export interface DiagInput {
   readonly code: string;
+  readonly area?: DiagArea;
   readonly level?: DiagLevel;
   readonly subject?: DiagSubject;
   readonly corrId?: string;
@@ -78,15 +79,24 @@ export interface DiagRecorderOptions {
   readonly host?: DiagHost | undefined;
 }
 
+export interface DiagSinkStatus {
+  readonly ok: boolean;
+  readonly error?: string;
+  readonly at?: number;
+}
+
 export interface DiagRecorder {
   record(input: DiagInput): DiagRecord | null;
   once(key: string, input: DiagInput): DiagRecord | null;
   recent(filter?: DiagRecentFilter): readonly DiagRecord[];
   counts(): ReadonlyMap<string, DiagCount>;
+  sinkStatus(): DiagSinkStatus;
   subscribe(listener: (record: DiagRecord) => void): () => void;
 }
 
 export const DIAG_RING_CAP = 500;
+
+export const DIAG_SINK_RETRY_MS = 60_000;
 
 const DETAIL_KEYS = new Set(DIAG_DETAIL_KEYS);
 const LEVEL_RANK = new Map<DiagLevel, number>(DIAG_LEVELS.map((level, index) => [level, index]));
@@ -127,7 +137,7 @@ export function createDiagRecorder(options: DiagRecorderOptions = {}): DiagRecor
   const cap = options.cap ?? DIAG_RING_CAP;
   const listeners = new Set<(record: DiagRecord) => void>();
   const sinks = [...(options.sinks ?? [])];
-  const failedSinks = new Set<number>();
+  const sinkErrors = new Map<number, { at: number; retryAt: number; message: string }>();
   const seenOnce = new Set<string>();
   const countsByCode = new Map<string, DiagCount>();
   const ring: DiagRecord[] = [];
@@ -163,7 +173,7 @@ export function createDiagRecorder(options: DiagRecorderOptions = {}): DiagRecor
       level,
       code: spec.code,
       class: spec.class,
-      area: spec.area,
+      area: input.area ?? spec.area,
       ...(input.subject === undefined ? {} : { subject: input.subject }),
       ...(host === undefined ? {} : { host }),
       corrId: input.corrId ?? nextCorrId(),
@@ -188,20 +198,25 @@ export function createDiagRecorder(options: DiagRecorderOptions = {}): DiagRecor
     };
     emit(clean);
     sinks.forEach((sink, index) => {
-      if (failedSinks.has(index)) return;
+      const prior = sinkErrors.get(index);
+      if (prior !== undefined && clock() < prior.retryAt) return;
       try {
         sink(clean);
+        sinkErrors.delete(index);
       } catch (error) {
-        failedSinks.add(index);
+        const message = error instanceof Error ? error.message : String(error);
+        const at = clock();
+        sinkErrors.set(index, { at, retryAt: at + DIAG_SINK_RETRY_MS, message });
+        if (prior?.message === message) return;
         emit({
-          ts: clock(),
+          ts: at,
           level: 'error',
           code: 'DIAG_SINK_FAILED',
           class: 'bug',
           area: 'diag',
           corrId: clean.corrId,
           ...(host === undefined ? {} : { host }),
-          cause: { message: error instanceof Error ? error.message : String(error) },
+          cause: { message },
           detail: { sink: index },
         });
       }
@@ -223,6 +238,10 @@ export function createDiagRecorder(options: DiagRecorderOptions = {}): DiagRecor
       return hit.slice(Math.max(0, hit.length - limit));
     },
     counts: () => new Map(countsByCode),
+    sinkStatus() {
+      const latest = [...sinkErrors.values()].sort((left, right) => right.at - left.at)[0];
+      return latest === undefined ? { ok: true } : { ok: false, error: latest.message, at: latest.at };
+    },
     subscribe(listener) {
       listeners.add(listener);
       return () => {

@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import { basename, join } from 'node:path';
-import type { DiagHost, DiagRecorder, DiagReadResult, DshHostContext, RouteHandler } from '@dsh-workbench/shared/host';
+import type { DiagFileSink, DiagHost, DiagRecorder, DiagReadResult, DshHostContext, RouteHandler } from '@dsh-workbench/shared/host';
 import { createDiagFileSink, createDiagRecorder, hostSurface, now, originsOf } from '@dsh-workbench/shared/host';
 import { DIAG_AREAS, DIAG_CLASSES, diagMatches, param } from '@dsh-workbench/shared/host';
 import type { DiagArea, DiagClass } from '@dsh-workbench/shared/host';
@@ -14,6 +14,7 @@ export const DIAG_LIMIT_MAX = 500;
 
 export interface DiagRoutesDeps {
   readonly recorder: DiagRecorder;
+  readonly sink?: DiagFileSink | undefined;
   readonly dirOf?: (() => string | null) | undefined;
   readonly readDisk?: ((day: string) => DiagReadResult) | undefined;
   readonly clock?: (() => number) | undefined;
@@ -137,6 +138,7 @@ export function diagRoutesOf(root: string, host?: DiagHost): DiagRoutesDeps {
     recorder: createDiagRecorder({ sinks: [files.sink], host: effective }),
     readDisk: (day) => files.readDay(day),
     host: effective,
+    sink: files,
   };
   BY_ROOT.set(root, made);
   return made;

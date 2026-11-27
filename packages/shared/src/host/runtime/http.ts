@@ -10,8 +10,11 @@ import {
   type ProvisionRequest,
 } from '../supply/provision.js';
 import type { RuntimeStatus } from '../adapters/adapter-types.js';
+import type { DiagArea } from '../../contract/blocker.js';
 import { WorkbenchDataError } from '../data/data-error.js';
 import { writeResultForClient } from './write-result.js';
+import type { DiagRecorder } from './diag-records.js';
+import { firstLineOfText } from './diag-text.js';
 
 export type RouteHandler = (search: URLSearchParams) => Promise<unknown> | unknown;
 
@@ -58,6 +61,71 @@ function toErrorPayload(error: unknown): Record<string, unknown> {
   return { code: 'internal', message: error instanceof Error ? error.message : String(error) };
 }
 
+const DIAG_FAILURE_WINDOW_MS = 10 * 60 * 1000;
+
+const DIAG_AREA_OF: Readonly<Record<string, DiagArea>> = {
+  panels: 'panels',
+  market: 'market',
+  discover: 'market',
+  supply: 'supply',
+  modules: 'supply',
+  settings: 'settings',
+  'config-sync': 'settings',
+  profile: 'settings',
+  preflight: 'preflight',
+  'self-update': 'self-update',
+};
+
+function diagAreaOf(route: string): DiagArea {
+  const head = route.split('/')[0] ?? '';
+  return DIAG_AREA_OF[head] ?? DIAG_AREA_OF[head.split('-')[0] ?? ''] ?? 'diag';
+}
+
+function failureOf(value: unknown): { readonly code: string; readonly message: string } | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const box = value as { readonly ok?: unknown; readonly error?: unknown };
+  if (box.ok !== false) return undefined;
+  const error = typeof box.error === 'object' && box.error !== null
+    ? box.error as { readonly code?: unknown; readonly message?: unknown }
+    : {};
+  return {
+    code: typeof error.code === 'string' && error.code !== '' ? error.code : 'failed',
+    message: typeof error.message === 'string' ? error.message : '',
+  };
+}
+
+function diagCorrIdOf(
+  diag: DiagRecorder | undefined,
+  input: {
+    readonly route: string;
+    readonly unit?: string;
+    readonly area: DiagArea;
+    readonly code: string;
+    readonly failure: { readonly code: string; readonly message: string };
+  },
+): string | undefined {
+  if (diag === undefined) return undefined;
+  const at = now();
+  const existing = diag.recent({ since: at - DIAG_FAILURE_WINDOW_MS, area: input.area })
+    .find((one) => one.subject?.route === input.route && one.code === input.code);
+  if (existing !== undefined) return existing.corrId;
+  const made = diag.record({
+    code: input.code,
+    area: input.area,
+    subject: { route: input.route, ...(input.unit === undefined ? {} : { unit: input.unit }) },
+    cause: {
+      ...(input.failure.code === '' ? {} : { code: input.failure.code }),
+      message: firstLineOfText(input.failure.message) || '这一步没有成功，也没说为什么',
+    },
+  });
+  return made?.corrId;
+}
+
+function withDiagCorrId(value: unknown, corrId: string | undefined): unknown {
+  if (corrId === undefined || typeof value !== 'object' || value === null) return value;
+  return { ...(value as Record<string, unknown>), diag: { corrId } };
+}
+
 export function flag(search: URLSearchParams, name: string): boolean {
   const raw = search.get(name);
   if (raw === null) return false;
@@ -69,7 +137,7 @@ export function param(search: URLSearchParams, name: string): string | undefined
   return raw === null || raw === '' ? undefined : raw;
 }
 
-export function registerApi(ctx: DshHostContext, routes: RouteTable): () => void {
+export function registerApi(ctx: DshHostContext, routes: RouteTable, diag?: DiagRecorder): () => void {
   return ctx.webServer.register({
     kind: 'prefix',
     path: API_PREFIX,
@@ -92,14 +160,26 @@ export function registerApi(ctx: DshHostContext, routes: RouteTable): () => void
       }
 
       try {
-        sendJson(res, 200, await handler(search));
+        const result = await handler(search);
+        const failure = failureOf(result);
+        const corrId = failure === undefined
+          ? undefined
+          : diagCorrIdOf(diag, { route, area: diagAreaOf(route), code: 'READ_FAILED', failure });
+        sendJson(res, 200, withDiagCorrId(result, corrId));
       } catch (error) {
+        const payload = toErrorPayload(error);
+        const corrId = diagCorrIdOf(diag, {
+          route,
+          area: diagAreaOf(route),
+          code: 'READ_FAILED',
+          failure: { code: String(payload['code'] ?? 'internal'), message: String(payload['message'] ?? '') },
+        });
         if (isDataError(error)) {
-          sendJson(res, 200, { ok: false, error: toErrorPayload(error) });
+          sendJson(res, 200, withDiagCorrId({ ok: false, error: payload }, corrId));
           return;
         }
         ctx.logger?.warn?.(`[dsh-workbench] 路由 ${route} 失败：${String(error)}`);
-        sendJson(res, 500, { ok: false, error: toErrorPayload(error) });
+        sendJson(res, 500, withDiagCorrId({ ok: false, error: payload }, corrId));
       }
     },
   });
@@ -173,9 +253,10 @@ function registerPost(
     readonly resources: readonly PostResource[];
     readonly refusedCode: string;
     readonly wrote?: ((resource: string, write: PostWrite) => void) | undefined;
+    readonly diag?: DiagRecorder | undefined;
   },
 ): () => void {
-  const { prefix, what, resources, refusedCode, wrote } = options;
+  const { prefix, what, resources, refusedCode, wrote, diag } = options;
   const table = new Map(resources.map((item) => [item.resource, item] as const));
   return ctx.webServer.register({
     kind: 'prefix',
@@ -209,9 +290,29 @@ function registerPost(
       try {
         const result = await resource.handle(payload);
         wrote?.(requested, { ...(resource.redact === true ? {} : { args: payload }), result });
-        sendJson(res, 200, writeResultForClient(result, refusedCode));
+        const body = writeResultForClient(result, refusedCode);
+        const failure = failureOf(body);
+        const corrId = failure === undefined
+          ? undefined
+          : diagCorrIdOf(diag, {
+              route: requested,
+              ...(resource.unit === undefined ? {} : { unit: resource.unit }),
+              area: diagAreaOf(requested),
+              code: 'ACTION_FAILED',
+              failure,
+            });
+        sendJson(res, 200, withDiagCorrId(body, corrId));
       } catch (error) {
-        sendJson(res, 200, { ok: false, error: toErrorPayload(error) });
+        const payloadError = toErrorPayload(error);
+        ctx.logger?.warn?.(`[dsh-workbench] ${requested} 失败：${String(error)}`);
+        const corrId = diagCorrIdOf(diag, {
+          route: requested,
+          ...(resource.unit === undefined ? {} : { unit: resource.unit }),
+          area: diagAreaOf(requested),
+          code: 'ACTION_FAILED',
+          failure: { code: String(payloadError['code'] ?? 'internal'), message: String(payloadError['message'] ?? '') },
+        });
+        sendJson(res, 200, withDiagCorrId({ ok: false, error: payloadError }, corrId));
       }
     },
   });
@@ -288,85 +389,66 @@ export function healthHandler(
   };
 }
 
-export function registerPrefs(
-  ctx: DshHostContext,
-  resources: readonly PostResource[],
-  wrote?: ((resource: string, write: PostWrite) => void) | undefined,
-): () => void {
-  return registerPost(ctx, {
-    prefix: PREFS_PREFIX,
-    what: '偏好写',
-    refusedCode: 'write-refused',
-    resources,
-    ...(wrote === undefined ? {} : { wrote }),
-  });
+const channelOf = (prefix: string, what: string, refusedCode: string) =>
+  (
+    ctx: DshHostContext,
+    resources: readonly PostResource[],
+    wrote?: ((resource: string, write: PostWrite) => void) | undefined,
+    diag?: DiagRecorder | undefined,
+  ): (() => void) => registerPost(ctx, { prefix, what, refusedCode, resources, wrote, diag });
+
+export const registerPrefs = channelOf(PREFS_PREFIX, '偏好写', 'write-refused');
+
+export const registerActions = channelOf(ACTIONS_PREFIX, '动作', 'action-refused');
+
+function reportResource<T>(
+  resource: string,
+  parse: (payload: unknown) => { readonly ok: true; readonly value: T } | { readonly ok: false; readonly message: string },
+  apply: (value: T) => void,
+): PostResource {
+  return {
+    resource,
+    handle(payload) {
+      const parsed = parse(payload);
+      if (!parsed.ok) return { ok: false, text: parsed.message };
+      apply(parsed.value);
+      return { ok: true, at: now() };
+    },
+  };
 }
 
-export function registerActions(
-  ctx: DshHostContext,
-  resources: readonly PostResource[],
-  wrote?: ((resource: string, write: PostWrite) => void) | undefined,
-): () => void {
-  return registerPost(ctx, {
-    prefix: ACTIONS_PREFIX,
-    what: '动作',
-    refusedCode: 'action-refused',
-    resources,
-    ...(wrote === undefined ? {} : { wrote }),
-  });
-}
-
-export function registerPanelState(ctx: DshHostContext, store: PanelStateStore): () => void {  return registerPost(ctx, {
-    prefix: PANEL_STATE_PREFIX,
-    what: '面板运行态',
-    refusedCode: 'report-refused',
-    resources: [
-      {
-        resource: 'cards',
-        handle(payload) {
-          const parsed = parseCardsReport(payload);
-          if (!parsed.ok) return { ok: false, text: parsed.message };
-          store.cards(parsed.value);
-          return { ok: true, at: now() };
-        },
-      },
-      {
-        resource: 'crash',
-        handle(payload) {
-          const parsed = parseCrashReport(payload);
-          if (!parsed.ok) return { ok: false, text: parsed.message };
-          store.crash(parsed.value);
-          return { ok: true, at: now() };
-        },
-      },
+export function registerPanelState(ctx: DshHostContext, store: PanelStateStore, diag?: DiagRecorder): () => void {
+  return registerPost(ctx, { prefix: PANEL_STATE_PREFIX, what: '面板运行态', refusedCode: 'report-refused', wrote: undefined, diag, resources: [
+      reportResource('cards', parseCardsReport, (value) => store.cards(value)),
+      reportResource('crash', parseCrashReport, (value) => store.crash(value)),
     ],
   });
 }
 
+function registerDiyAct(
+  ctx: DshHostContext,
+  options: {
+    readonly prefix: string;
+    readonly what: string;
+    readonly resource: PostResource;
+    readonly fact: string;
+    readonly log: { bump(facts: readonly string[]): unknown } | undefined;
+    readonly diag: DiagRecorder | undefined;
+  },
+): () => void {
+  return registerPost(ctx, { prefix: `${API_PREFIX}/${options.prefix}`, what: options.what, refusedCode: 'action-refused', resources: [options.resource], wrote: () => options.log?.bump([options.fact]), diag: options.diag });
+}
+
+type DiyLog = { bump(facts: readonly string[]): unknown };
+
 export function registerDiyDebugAct(
   ctx: DshHostContext,
   resource: PostResource,
-  log?: { bump(facts: readonly string[]): unknown } | undefined,
+  log?: DiyLog,
+  diag?: DiagRecorder,
 ): () => void {
-  return registerPost(ctx, {
-    prefix: `${API_PREFIX}/${DIY_DEBUG_PATH}`,
-    what: '工作台 DIY 调试动作',
-    refusedCode: 'action-refused',
-    resources: [resource],
-    wrote: () => log?.bump(['diy-debug']),
-  });
+  return registerDiyAct(ctx, { prefix: DIY_DEBUG_PATH, what: '工作台 DIY 调试动作', resource, fact: 'diy-debug', log, diag });
 }
 
-export function registerDiyRecordAct(
-  ctx: DshHostContext,
-  resource: PostResource,
-  log?: { bump(facts: readonly string[]): unknown } | undefined,
-): () => void {
-  return registerPost(ctx, {
-    prefix: `${API_PREFIX}/${DIY_RECORD_PATH}`,
-    what: '工作台 DIY 录制交接动作',
-    refusedCode: 'action-refused',
-    resources: [resource],
-    wrote: () => log?.bump(['diy-record']),
-  });
-}
+export const registerDiyRecordAct = (ctx: DshHostContext, resource: PostResource, log?: DiyLog, diag?: DiagRecorder): (() => void) =>
+  registerDiyAct(ctx, { prefix: DIY_RECORD_PATH, what: '工作台 DIY 录制交接动作', resource, fact: 'diy-record', log, diag });

@@ -512,6 +512,12 @@ describe('故障面出口矩阵：每个分支都有下一步', () => {
     }
   });
 
+  it('★ 带关联号的错误：提示词里能对上那条记录', () => {
+    const blocker = blockerOfError({ code: 'boom', message: '炸了', diag: { corrId: 'abc12345' } }, t);
+    const ask = blocker.actions.find((action) => action.kind === 'ask-agent');
+    expect(ask?.kind === 'ask-agent' ? ask.prompt : '').toContain('abc12345');
+  });
+
   it('有确定解释的分支不硬塞「复制给 agent」', () => {
     const known = [
       blockerOfError({ code: 'auth-required', message: '需要登录' } as ApiError, t),

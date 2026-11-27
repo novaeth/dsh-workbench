@@ -30,11 +30,18 @@ export interface DiagReadResult {
   readonly read: number;
 }
 
+export interface DiagFileSinkStatus {
+  readonly capped: boolean;
+  readonly path: string;
+  readonly bytes: number;
+}
+
 export interface DiagFileSink {
   readonly sink: DiagSink;
   readDay(day: string): DiagReadResult;
   cleanup(): number;
   pathOf(day: string): string;
+  status(): DiagFileSinkStatus;
 }
 
 function dayOf(ts: number): string {
@@ -139,5 +146,5 @@ export function createDiagFileSink(options: DiagFileSinkOptions): DiagFileSink {
     bytes += size;
   };
 
-  return { sink, readDay, cleanup, pathOf };
+  return { sink, readDay, cleanup, pathOf, status: () => ({ capped, path, bytes }) };
 }

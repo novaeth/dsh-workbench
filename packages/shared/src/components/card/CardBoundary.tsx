@@ -4,6 +4,7 @@ import { Component, h } from '../../lib/react.js';
 import { CodeBlock, DisclosureRow, IconInfoOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives';
 import { createCopyFlash } from '../../lib/copy-flash.js';
 import { faultPromptOf, firstLineOf } from '../../lib/fault-prompt.js';
+import { newCorrId, reportClientFailure } from '../../lib/client-diag.js';
 import { Note } from '../feedback/Note.js';
 import { FormActions } from '../form/FormActions.js';
 import styles from './CardBoundary.module.css';
@@ -54,7 +55,7 @@ export function errorReasonOf(error: unknown): string {
  * @param t - 文案函数，键在 askAgent.* 与 panels.* 下。
  * @returns 可直接粘贴给 agent 的多行提示词。
  */
-export function cardBrokenPromptOf(unit: string, reason: string, t: Translate): string {
+export function cardBrokenPromptOf(unit: string, reason: string, t: Translate, corrId?: string): string {
   const cause = firstLineOf(reason);
   return faultPromptOf(
     {
@@ -62,6 +63,7 @@ export function cardBrokenPromptOf(unit: string, reason: string, t: Translate): 
       problem: {
         why: t('panels.cardBroken', { unit }),
         ...(cause === undefined ? {} : { reason: cause }),
+        ...(corrId === undefined ? {} : { corrId }),
       },
     },
     t,
@@ -81,12 +83,22 @@ export class CardBoundary extends Component<CardBoundaryProps, CardBoundaryState
 
   private readonly flash = createCopyFlash(COPIED_MS);
 
+  private lastCorrId: string | undefined;
+
   static getDerivedStateFromError(error: unknown): CardBoundaryState {
     return stateOf(errorReasonOf(error));
   }
 
   override componentDidCatch(error: unknown): void {
     const reason = errorReasonOf(error);
+    const corrId = newCorrId();
+    this.lastCorrId = corrId;
+    reportClientFailure({
+      corrId,
+      screen: this.props.t('askAgent.screen.board'),
+      step: this.props.unit,
+      reason,
+    });
     console.error(`[dsh-workbench] 模块 ${this.props.unit} 渲染失败：${reason}`, error);
     this.props.onFailure?.(reason);
   }
@@ -103,13 +115,14 @@ export class CardBoundary extends Component<CardBoundaryProps, CardBoundaryState
 
   private readonly reset = (): void => {
     this.flash.dispose();
+    this.lastCorrId = undefined;
     this.setState(stateOf(null));
   };
 
   private readonly copyPrompt = (): void => {
     const reason = this.state.reason;
     if (reason === null) return;
-    this.flash.copy(cardBrokenPromptOf(this.props.unit, reason, this.props.t), (copied) =>
+    this.flash.copy(cardBrokenPromptOf(this.props.unit, reason, this.props.t, this.lastCorrId), (copied) =>
       this.setState({ copied }),
     );
   };

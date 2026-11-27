@@ -81,6 +81,8 @@ describe('自更新：现场落在哪里', () => {
     expect(plan.command.args[0]?.endsWith('self-update-runner.js')).toBe(true);
     expect(plan.command.args[1]).toBe(plan.paths.planFile);
     expect(plan.command.log).toBe(plan.paths.log);
+    expect(plan.command.env['DSH_WB_DIAG_PROFILE']).toBe('workbench');
+    expect(plan.command.env['DSH_WB_DIAG_DEPLOYMENT']).toBe('web');
     expect(plan.steps.steps.map((step) => step.kind)).toEqual([
       'version',
       'install',

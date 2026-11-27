@@ -42,7 +42,7 @@ export type DiagArea =
   | 'settings'
   | 'diag';
 
-export type DiagActionKind = BlockerAction['kind'] | 'open-settings' | 'export-diagnostics';
+export type DiagActionKind = BlockerAction['kind'] | 'open-settings';
 
 export type DiagLevel = 'info' | 'warn' | 'error';
 
@@ -74,92 +74,61 @@ export const DIAG_ACTIONS: readonly DiagActionKind[] = [
   'run-fix',
   'open-market',
   'open-settings',
-  'export-diagnostics',
 ];
 
 export const DIAG_LEVELS: readonly DiagLevel[] = ['info', 'warn', 'error'];
 
-function preflightSpec(code: string, key: string): DiagCodeSpec {
+function keyOf(code: string): string {
+  return code
+    .replace(/^DIAG_/, '')
+    .toLowerCase()
+    .replace(/_([a-z])/g, (_all, letter: string) => letter.toUpperCase());
+}
+
+function specOfCode(init: {
+  readonly code: string;
+  readonly class: DiagClass;
+  readonly area: DiagArea;
+  readonly action: DiagActionKind;
+  readonly hint?: boolean;
+}): DiagCodeSpec {
+  const key = keyOf(init.code);
   return {
-    code,
-    class: 'env',
-    area: 'preflight',
-    action: 'retry',
+    code: init.code,
+    class: init.class,
+    area: init.area,
+    action: init.action,
     messageKey: `diag.code.${key}`,
-    hintKey: `diag.hint.${key}`,
+    ...(init.hint === true ? { hintKey: `diag.hint.${key}` } : {}),
   };
 }
 
+const envOf = (code: string, area: DiagArea, hint = false): DiagCodeSpec =>
+  specOfCode({ code, class: 'env', area, action: 'retry', hint });
+
+const userOf = (code: string, area: DiagArea, action: DiagActionKind): DiagCodeSpec =>
+  specOfCode({ code, class: 'user', area, action });
+
+const bugOf = (code: string, area: DiagArea, hint = false): DiagCodeSpec =>
+  specOfCode({ code, class: 'bug', area, action: 'retry', hint });
+
 export const DIAG_CODES: readonly DiagCodeSpec[] = [
-  {
-    code: 'READ_FAILED',
-    class: 'env',
-    area: 'panels',
-    action: 'retry',
-    messageKey: 'diag.code.readFailed',
-    hintKey: 'diag.hint.readFailed',
-  },
-  {
-    code: 'CONFIG_CORRUPT',
-    class: 'user',
-    area: 'settings',
-    action: 'open-settings',
-    messageKey: 'diag.code.configCorrupt',
-  },
-  {
-    code: 'MODULE_UNREADABLE',
-    class: 'user',
-    area: 'market',
-    action: 'open-settings',
-    messageKey: 'diag.code.moduleUnreadable',
-  },
-  {
-    code: 'MANIFESTS_GAVE_UP',
-    class: 'env',
-    area: 'panels',
-    action: 'retry',
-    messageKey: 'diag.code.manifestsGaveUp',
-  },
-  {
-    code: 'SELF_UPDATE_FAILED',
-    class: 'env',
-    area: 'self-update',
-    action: 'retry',
-    messageKey: 'diag.code.selfUpdateFailed',
-  },
-  {
-    code: 'SUPPLY_INSTALL_FAILED',
-    class: 'env',
-    area: 'supply',
-    action: 'retry',
-    messageKey: 'diag.code.supplyInstallFailed',
-  },
-  preflightSpec('PREFLIGHT_DIY_ROW_BROKEN', 'preflightDiyRowBroken'),
-  preflightSpec('PREFLIGHT_DIY_PRESET_MISSING', 'preflightDiyPresetMissing'),
-  preflightSpec('PREFLIGHT_BRIDGE_HOLD', 'preflightBridgeHold'),
-  preflightSpec('PREFLIGHT_HOST_OLDER', 'preflightHostOlder'),
-  preflightSpec('PREFLIGHT_HOST_NEWER', 'preflightHostNewer'),
-  {
-    code: 'DIAG_BAD_PARAM',
-    class: 'user',
-    area: 'diag',
-    action: 'retry',
-    messageKey: 'diag.code.badParam',
-  },
-  {
-    code: 'DIAG_SINK_FAILED',
-    class: 'bug',
-    area: 'diag',
-    action: 'export-diagnostics',
-    messageKey: 'diag.code.sinkFailed',
-  },
-  {
-    code: 'DIAG_UNKNOWN_CODE',
-    class: 'bug',
-    area: 'diag',
-    action: 'export-diagnostics',
-    messageKey: 'diag.code.unknownCode',
-  },
+  envOf('READ_FAILED', 'panels', true),
+  envOf('ACTION_FAILED', 'diag', true),
+  bugOf('CLIENT_FAILED', 'panels', true),
+  userOf('CONFIG_CORRUPT', 'settings', 'open-settings'),
+  userOf('MODULE_UNREADABLE', 'market', 'open-settings'),
+  envOf('MANIFESTS_GAVE_UP', 'panels'),
+  envOf('SELF_UPDATE_FAILED', 'self-update'),
+  envOf('SUPPLY_INSTALL_FAILED', 'supply'),
+  envOf('PREFLIGHT_DIY_ROW_BROKEN', 'preflight', true),
+  envOf('PREFLIGHT_DIY_PRESET_MISSING', 'preflight', true),
+  envOf('PREFLIGHT_BRIDGE_HOLD', 'preflight', true),
+  envOf('PREFLIGHT_HOST_OLDER', 'preflight', true),
+  envOf('PREFLIGHT_HOST_NEWER', 'preflight', true),
+  userOf('DIAG_BAD_PARAM', 'diag', 'retry'),
+  bugOf('DIAG_SINK_FAILED', 'diag'),
+  bugOf('DIAG_UNKNOWN_CODE', 'diag'),
 ];
 
 export interface DiagFilter {

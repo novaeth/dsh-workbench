@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -250,3 +250,135 @@ describe('诊断工具：带上启动检查快照', () => {
     expect(JSON.parse(JSON.stringify(result))).toStrictEqual(result);
   });
 });
+
+describe('诊断工具：按关联号与最近窗口取', () => {
+  function toolWith(root: string, units?: unknown): DshToolDefinition {
+    const registered: DshToolDefinition[] = [];
+    const tools = {
+      register: (tool: DshToolDefinition) => {
+        registered.push(tool);
+        return () => undefined;
+      },
+    } as unknown as DshToolRegistry;
+    const ctx = {
+      get: (name: string) => (name === 'tools' ? tools : name === UNITS_SERVICE ? units : undefined),
+    } as unknown as DshHostContext;
+    vi.stubEnv('DSH_WORKBENCH_HOME', root);
+    registerDiagTools(ctx);
+    return registered[0] as DshToolDefinition;
+  }
+
+
+  function writeOwn(root: string, records: readonly DiagRecord[]): void {
+    const day = new Date().toISOString().slice(0, 10);
+    const dir = join(root, 'diagnostics', 'records');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, `record-${day}-999.jsonl`), `${records.map((one) => JSON.stringify(one)).join('\n')}\n`);
+  }
+
+  it('★★ 关联号能从磁盘历史里精确取回一条，headline 同一条', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'wb-diag-corr-'));
+    writeOwn(root, [recordOf(1, 'READ_FAILED', 'c-hit')]);
+    const tool = toolWith(root);
+    const result = (await tool.execute({ corrId: 'c-hit' }, {} as never)) as Record<string, unknown>;
+    vi.stubEnv('DSH_WORKBENCH_HOME', '');
+    rmSync(root, { recursive: true, force: true });
+
+    const records = result['records'] as Array<{ corrId: string }>;
+    expect(records.map((one) => one.corrId)).toEqual(['c-hit']);
+    expect((result['headline'] as { corrId: string }).corrId).toBe('c-hit');
+  });
+
+  it('★ headline 取最新的一条失败，recent 只回看窗口内', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'wb-diag-headline-'));
+    const now = Date.now();
+    writeOwn(root, [
+      recordOf(now - 60 * 60 * 1000, 'READ_FAILED', 'c-old'),
+      recordOf(now - 1000, 'ACTION_FAILED', 'c-new'),
+    ]);
+    const tool = toolWith(root);
+    const result = (await tool.execute({}, {} as never)) as Record<string, unknown>;
+    vi.stubEnv('DSH_WORKBENCH_HOME', '');
+    rmSync(root, { recursive: true, force: true });
+
+    expect((result['headline'] as { corrId: string }).corrId).toBe('c-new');
+    expect((result['recent'] as Array<{ corrId: string }>).map((one) => one.corrId)).toEqual(['c-new']);
+  });
+
+  it('★ 历史超过上限时带 truncated，不再静默丢', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'wb-diag-trunc-'));
+    writeOwn(root, Array.from({ length: 25 }, (_, index) => recordOf(1000 + index, 'READ_FAILED', 'c-' + String(index))));
+    const tool = toolWith(root);
+    const result = (await tool.execute({}, {} as never)) as Record<string, unknown>;
+    vi.stubEnv('DSH_WORKBENCH_HOME', '');
+    rmSync(root, { recursive: true, force: true });
+
+    const history = result['history'] as { records: unknown[]; truncated: boolean };
+    expect(history.records).toHaveLength(20);
+    expect(history.truncated).toBe(true);
+    expect(result['truncated']).toEqual({ memory: false, history: true });
+  });
+
+  it('★ 磁盘读不了：说 unavailable 并带上原因，不冒充没有记录', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'wb-diag-eacces-'));
+    writeShard(root, [recordOf(1, 'READ_FAILED', 'c-locked')]);
+    const dir = join(root, 'diagnostics', 'records');
+    const file = join(dir, readdirSync(dir)[0] as string);
+    chmodSync(file, 0o000);
+    const tool = toolWith(root);
+    const result = (await tool.execute({}, {} as never)) as Record<string, unknown>;
+    chmodSync(file, 0o644);
+    vi.stubEnv('DSH_WORKBENCH_HOME', '');
+    rmSync(root, { recursive: true, force: true });
+
+    expect(result['disk']).toBe('unavailable');
+    expect(String(result['diskError'])).toContain('EACCES');
+  });
+
+  it('★ 模块拒收读取抛错：工具不整体失败，给出 refusalsError', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'wb-diag-refusals-error-'));
+    const tool = toolWith(root, {
+      refusals: () => {
+        throw new Error('registry down');
+      },
+    });
+    const result = (await tool.execute({}, {} as never)) as Record<string, unknown>;
+    vi.stubEnv('DSH_WORKBENCH_HOME', '');
+    rmSync(root, { recursive: true, force: true });
+
+    expect(result['refusalsError']).toBe('registry down');
+    expect(result['refusals']).toBeUndefined();
+  });
+
+  it('★ 自更新那种带来源的记录：默认视图的 headline 能看到，不再被 unknown 过滤', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'wb-diag-self-update-'));
+    const day = new Date().toISOString().slice(0, 10);
+    const dir = join(root, 'diagnostics', 'records');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(
+      join(dir, `record-${day}-9-workbench.jsonl`),
+      `${JSON.stringify({ ...recordOf(1, 'SELF_UPDATE_FAILED', 'c-self'), host: { profile: 'workbench', deployment: 'web', pid: 9 } })}\n`,
+    );
+    const registered: DshToolDefinition[] = [];
+    const tools = {
+      register: (tool: DshToolDefinition) => {
+        registered.push(tool);
+        return () => undefined;
+      },
+    } as unknown as DshToolRegistry;
+    const ctx = {
+      get: (name: string) =>
+        name === 'tools' ? tools : name === 'profileContext' ? { dir: '/tmp/workbench' } : undefined,
+    } as unknown as DshHostContext;
+    vi.stubEnv('DSH_WORKBENCH_HOME', root);
+    registerDiagTools(ctx);
+    const result = (await registered[0]?.execute({}, {} as never)) as Record<string, unknown>;
+    vi.stubEnv('DSH_WORKBENCH_HOME', '');
+    rmSync(root, { recursive: true, force: true });
+
+    expect(result['host']).toBe('workbench');
+    expect((result['headline'] as { code: string }).code).toBe('SELF_UPDATE_FAILED');
+    expect((result['history'] as { records: unknown[] }).records).toHaveLength(1);
+  });
+});
+

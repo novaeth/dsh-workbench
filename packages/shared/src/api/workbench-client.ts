@@ -17,6 +17,8 @@ export interface ApiError {
   readonly helpUrl?: string;
   /** 安装类失败的结构化现场；界面据此给修法。 */
   readonly failure?: InstallFailure;
+  /** 失败记录的关联号；有就带进「复制给 agent」的提示词。 */
+  readonly diag?: { readonly corrId?: string };
 }
 
 /**

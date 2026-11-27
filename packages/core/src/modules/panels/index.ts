@@ -61,7 +61,6 @@ import { diyFlowRoutes } from './model/flow/routes';
 import { DIY_PRESET_ID } from '@/shared/api/diy';
 import { absentScreenReason, diyManageAbsentReason, offBoardReason, packClosedReason } from './model/closed-tool';
 import { registerToolboxTools } from './model/toolbox-tools';
-import { diagExportAction } from '@/shared/api/host/diag-export-action';
 import { registerDiagTools } from './model/diag-tool';
 import { registerUnitSkills } from './model/unit-skills';
 import type { UnitSkillDeps } from './model/unit-skills';
@@ -461,10 +460,7 @@ export const panelsHost: UnitOwnedFace = {
           };
         },
       },
-      actions: [
-        marketSourcesAction(marketSources, marketInit),
-        diagExportAction(ctx),
-      ],
+      actions: [marketSourcesAction(marketSources, marketInit)],
       prefs: { resource: PANELS_PREF_RESOURCE, handle: (payload: unknown) => applyPanelsPref(panels, payload) },
       provision: {
         handle: async (request) => {

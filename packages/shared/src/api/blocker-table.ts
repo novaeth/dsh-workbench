@@ -203,6 +203,7 @@ export function blockerOfError(
               ...(firstLineOf(error.detail ?? error.message) === undefined
                 ? {}
                 : { reason: firstLineOf(error.detail ?? error.message) }),
+              ...(error.diag?.corrId === undefined ? {} : { corrId: error.diag.corrId }),
             },
           }),
           retryAction(t),

@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import {
   createDiagFileSink,
   createDiagRecorder,
@@ -11,6 +11,7 @@ import {
   rewriteUpdateLease,
   writeJsonFile,
 } from '@dsh-workbench/shared/host';
+import type { DiagHost } from '@dsh-workbench/shared/host';
 import { runSelfUpdateSteps, selfUpdateJournalPath } from './self-update-run.js';
 import { reinstallProfileWhenIdle } from './self-update-reinstall.js';
 import { selfUpdateBootFile, selfUpdatePaths, selfUpdateUpFile } from './self-update-plan.js';
@@ -18,6 +19,16 @@ import type { SelfUpdateSteps } from './self-update-steps.js';
 
 function report(line: string): void {
   process.stderr.write(`${line}\n`);
+}
+
+function diagHostOfRunner(): DiagHost {
+  const profile = process.env['DSH_WB_DIAG_PROFILE']?.trim() ?? '';
+  const deployment = process.env['DSH_WB_DIAG_DEPLOYMENT'];
+  return {
+    profile: profile === '' ? 'unknown' : basename(profile),
+    deployment: deployment === 'web' || deployment === 'desktop' ? deployment : 'unknown',
+    pid: process.pid,
+  };
 }
 
 function releaseLeaseByToken(): void {
@@ -120,11 +131,15 @@ async function main(): Promise<number> {
   try {
     writeJsonFile(plan.markerPath, { ...plan.marker, pid: process.pid });
     const processes = createNodeProcessHost();
-    const diagFiles = createDiagFileSink({ dir: join(workbenchRoot(), 'diagnostics', 'records') });
+    const diagnosed = diagHostOfRunner();
+    const diagFiles = createDiagFileSink({
+      dir: join(workbenchRoot(), 'diagnostics', 'records'),
+      profile: diagnosed.profile,
+    });
     const result = await runSelfUpdateSteps(plan, {
       processes,
       log: report,
-      diag: createDiagRecorder({ sinks: [diagFiles.sink] }),
+      diag: createDiagRecorder({ sinks: [diagFiles.sink], host: diagnosed }),
     });
     const journal = recoverJournal(plan);
     if (journal.kind === 'restored') report(`退出前按日志恢复：${journal.detail}`);

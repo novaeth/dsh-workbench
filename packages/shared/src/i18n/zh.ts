@@ -145,6 +145,10 @@ export const zh = {
   'panels.market.installed': '已安装',
   'diag.code.readFailed': '读取失败',
   'diag.hint.readFailed': '数据没能取回来。这次不是「没有数据」，重试一次看看。',
+  'diag.code.actionFailed': '这一步没有完成。',
+  'diag.hint.actionFailed': '重试一次看看；还不行就复制给 agent。',
+  'diag.code.clientFailed': '界面这里出了一次错。',
+  'diag.hint.clientFailed': '重试一次看看；还不行就复制给 agent。',
   'diag.code.configCorrupt': '配置文件读坏了，原文件已经备份。',
   'diag.code.moduleUnreadable': '模块已经安装，但读不出来。',
   'diag.code.manifestsGaveUp': '模块清单多次读取都失败，面板会一直是空的。',
@@ -808,6 +812,7 @@ export const zh = {
 
   'askAgent.title': '需要 agent 诊断',
   'askAgent.copy': '复制给 agent',
+  'askAgent.prompt.corrId': '关联号：{corrId}（让 agent 用 workbench_diag 查它）',
   'askAgent.copied': '已复制',
   'askAgent.prompt.head': '工作台遇到一个问题，需要你定位。',
   'askAgent.prompt.whereOnly': '位置：{screen}',

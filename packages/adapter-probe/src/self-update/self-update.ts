@@ -84,6 +84,8 @@ export function planSelfUpdate(
         ...(options.leaseToken === undefined || options.leaseToken === ''
           ? {}
           : { DSH_WB_UPDATE_LEASE_TOKEN: options.leaseToken }),
+        ...(request.profile === '' ? {} : { DSH_WB_DIAG_PROFILE: request.profile }),
+        DSH_WB_DIAG_DEPLOYMENT: hostSurface().deployment,
       },
       log: paths.log,
     },

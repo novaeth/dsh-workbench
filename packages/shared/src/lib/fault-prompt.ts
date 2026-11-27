@@ -11,6 +11,7 @@ export interface PromptProblem {
   readonly rows?: string;
   readonly issue?: string;
   readonly reason?: string;
+  readonly corrId?: string;
 }
 
 export interface PromptContext {
@@ -53,38 +54,27 @@ export function faultPromptOf(facts: PromptFacts, t: Translate): string {
   const problem = facts.problem ?? {};
   const context = facts.context ?? {};
   const host = facts.host;
-  const pick = (key: string, params: Record<string, string | number> | undefined): string[] =>
-    params === undefined ? [] : [t(key, params)];
   const where =
     facts.step === undefined || facts.step.trim() === ''
       ? t('askAgent.prompt.whereOnly', { screen: facts.screen })
       : t('askAgent.prompt.where', { screen: facts.screen, step: facts.step });
-  const lines = [
-    t('askAgent.prompt.head'),
-    where,
-    ...pick('askAgent.prompt.why', problem.why === undefined ? undefined : { detail: problem.why }),
-    ...pick('askAgent.prompt.rows', problem.rows === undefined ? undefined : { rows: problem.rows }),
-    ...pick('askAgent.prompt.issue', problem.issue === undefined ? undefined : { issue: problem.issue }),
-    ...pick('askAgent.prompt.reason', problem.reason === undefined ? undefined : { reason: problem.reason }),
-    ...pick(
-      'askAgent.prompt.host',
-      host === undefined ? undefined : { host: host.label, version: host.version, verified: host.verified },
-    ),
-    ...pick(
-      'askAgent.prompt.deployment',
-      context.deployment === undefined ? undefined : { deployment: context.deployment },
-    ),
-    ...pick(
-      'askAgent.prompt.configDir',
-      context.configDir === undefined ? undefined : { configDir: context.configDir },
-    ),
-    ...pick('askAgent.prompt.logDir', context.logDir === undefined ? undefined : { dir: context.logDir }),
-    ...pick(
-      'askAgent.prompt.tried',
-      context.tried === undefined || context.tried <= 0 ? undefined : { n: context.tried },
-    ),
-    ...pick('askAgent.prompt.evidence', context.evidence === undefined ? undefined : { files: context.evidence }),
-    t('askAgent.prompt.ask'),
-  ];
+  const lines = [t('askAgent.prompt.head'), where];
+  const add = (key: string, value: string | number | undefined, param: string): void => {
+    if (value !== undefined) lines.push(t(key, { [param]: value }));
+  };
+  add('askAgent.prompt.why', problem.why, 'detail');
+  add('askAgent.prompt.rows', problem.rows, 'rows');
+  add('askAgent.prompt.issue', problem.issue, 'issue');
+  add('askAgent.prompt.reason', problem.reason, 'reason');
+  add('askAgent.prompt.corrId', problem.corrId, 'corrId');
+  if (host !== undefined) {
+    lines.push(t('askAgent.prompt.host', { host: host.label, version: host.version, verified: host.verified }));
+  }
+  add('askAgent.prompt.deployment', context.deployment, 'deployment');
+  add('askAgent.prompt.configDir', context.configDir, 'configDir');
+  add('askAgent.prompt.logDir', context.logDir, 'dir');
+  add('askAgent.prompt.tried', context.tried !== undefined && context.tried > 0 ? context.tried : undefined, 'n');
+  add('askAgent.prompt.evidence', context.evidence, 'files');
+  lines.push(t('askAgent.prompt.ask'));
   return lines.join('\n');
 }

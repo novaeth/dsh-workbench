@@ -1,6 +1,6 @@
 import type { DshHostContext } from '@dsh-workbench/shared/host';
 import { workbenchRoot } from '@dsh-workbench/shared/host';
-import type { PostResource, PostWrite } from '@dsh-workbench/shared/host';
+import type { DiagRecorder, PostResource, PostWrite } from '@dsh-workbench/shared/host';
 import { withDiagProvision } from './diag-provision.js';
 import { diagHostOf, diagRoutesOf } from './diag-routes.js';
 import {
@@ -18,6 +18,7 @@ export interface PostChannelDeps {
   readonly mounted: ReadonlyMap<string, { readonly plan: UnitsPlan }>;
   readonly facts: { bump(names: readonly string[]): unknown };
   readonly shellActions: readonly PostResource[];
+  readonly diag?: DiagRecorder | undefined;
 }
 
 export interface PostChannels {
@@ -26,7 +27,7 @@ export interface PostChannels {
 }
 
 export function createPostChannels(deps: PostChannelDeps): PostChannels {
-  const { ctx, mounted, facts, shellActions } = deps;
+  const { ctx, mounted, facts, shellActions, diag } = deps;
   let undo: Array<(() => void) | undefined> = [];
   const bind = (prefix: string, register: () => () => void): void => {
     try {
@@ -42,8 +43,8 @@ export function createPostChannels(deps: PostChannelDeps): PostChannels {
       const prefs = [...mounted.values()].flatMap((item) => item.plan.prefs);
       const actions = [...shellActions, ...[...mounted.values()].flatMap((item) => item.plan.actions)];
       const provision = [...mounted.values()].find((item) => item.plan.provision !== undefined)?.plan.provision;
-      if (prefs.length > 0) bind(PREFS_PREFIX, () => registerPrefs(ctx, prefs, wrote));
-      if (actions.length > 0) bind(ACTIONS_PREFIX, () => registerActions(ctx, actions, wrote));
+      if (prefs.length > 0) bind(PREFS_PREFIX, () => registerPrefs(ctx, prefs, wrote, diag));
+      if (actions.length > 0) bind(ACTIONS_PREFIX, () => registerActions(ctx, actions, wrote, diag));
       if (provision !== undefined) bind(PROVISION_PREFIX, () => registerProvision(ctx, withDiagProvision(provision, diagRoutesOf(workbenchRoot(), diagHostOf(ctx)).recorder), facts));
     },
     dispose() {
