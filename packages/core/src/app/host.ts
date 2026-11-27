@@ -19,7 +19,7 @@ import {
 } from '@dsh-workbench/shared/host';
 import { PANEL_STATE_SERVICE, createFactLog, createPanelStateStore, toolUnits } from '@dsh-workbench/shared/host';
 
-import { createMcpScope } from '@/shared/api/host/pack-scope';
+import { createMcpScope, registeredToolNames } from '@/shared/api/host/pack-scope';
 import { mountWorkbenchSettings, workbenchSettingsAction } from '@/shared/api/host/workbench-settings';
 import { mountModuleModels } from '@/shared/api/host/module-model';
 import { basename } from 'node:path';
@@ -232,7 +232,7 @@ export async function apply(ctx: DshHostContext, config?: WorkbenchConfig): Prom
     if (context.session === null || !flowAgents.isChild(context.session)) {
       return [...new Set([...gates, ...mcpScope.denied(context)])];
     }
-    const hidden = [...FLOW_CHILD_HIDDEN_TOOLS, ...flowChildHiddenNames(unitsOfTool().keys())];
+    const hidden = [...FLOW_CHILD_HIDDEN_TOOLS, ...flowChildHiddenNames(registeredToolNames(ctx))];
     return [...new Set([...gates, ...mcpScope.denied(context), ...hidden])];
   };
   const closedReasonOf = createClosedReasonOf({

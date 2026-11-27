@@ -13,7 +13,7 @@ interface ToolRegistryView {
   view(scope?: unknown): { readonly knownNames?: ReadonlySet<string> };
 }
 
-function registeredToolNames(ctx: DshHostContext, scope?: unknown): readonly string[] {
+export function registeredToolNames(ctx: DshHostContext, scope?: unknown): readonly string[] {
   const registry = ctx.get('tools') as unknown as ToolRegistryView | undefined;
   if (registry === undefined) return [];
   try {

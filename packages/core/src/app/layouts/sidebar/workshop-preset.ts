@@ -9,6 +9,8 @@ export function installWorkshopPreset(ctx: DshClientContext): () => void {
   const asked = new Set<string>();
   const pending = new Set<string>();
   const failures = new Map<string, number>();
+  const retryAt = new Map<string, number>();
+  const timers = new Map<string, ReturnType<typeof setTimeout>>();
   const notified = new Set<string>();
   const presets = ctx.remote.agentPresets;
   let defaultPreset: string | undefined;
@@ -33,6 +35,14 @@ export function installWorkshopPreset(ctx: DshClientContext): () => void {
     failures.set(sessionId, count);
     if (count >= 3) notice(sessionId);
     console.warn(`[dsh-workbench] 工坊会话未切换到 DIY 模式：${reasonOf(error)}`);
+    const delay = Math.min(1000 * 2 ** (count - 1), 8000);
+    retryAt.set(sessionId, Date.now() + delay);
+    const timer = setTimeout(() => {
+      timers.delete(sessionId);
+      retryAt.delete(sessionId);
+      upgrade();
+    }, delay);
+    timers.set(sessionId, timer);
   };
 
   const learnDefault = (): void => {
@@ -58,6 +68,7 @@ export function installWorkshopPreset(ctx: DshClientContext): () => void {
     const snapshot = sessions.list.getSnapshot() as SessionsSnapshot;
     const sessionId = currentSessionId(snapshot, false);
     if (sessionId === undefined || asked.has(sessionId) || pending.has(sessionId)) return;
+    if ((retryAt.get(sessionId) ?? 0) > Date.now()) return;
     const workshop = workshopOf();
     if (workshop === undefined) return;
     if (presets === undefined) return;
@@ -75,7 +86,11 @@ export function installWorkshopPreset(ctx: DshClientContext): () => void {
         if (result.ok) {
           asked.add(sessionId);
           failures.delete(sessionId);
+          retryAt.delete(sessionId);
           pending.delete(sessionId);
+          const timer = timers.get(sessionId);
+          if (timer !== undefined) clearTimeout(timer);
+          timers.delete(sessionId);
           return;
         }
         failed(sessionId, result);
@@ -92,5 +107,8 @@ export function installWorkshopPreset(ctx: DshClientContext): () => void {
   return () => {
     offSessions();
     offWorkspaces();
+    for (const timer of timers.values()) clearTimeout(timer);
+    timers.clear();
+    retryAt.clear();
   };
 }

@@ -101,12 +101,16 @@ export function registerDiyPreset(ctx: DshHostContext, port: DiyPresetSourcePort
           ? `[dsh-workbench] dsh 里没有「${source}」这个模式；DIY 模式改为从「${DIY_PRESET_SOURCE_DEFAULT}」派生`
           : `[dsh-workbench] 「${source}」无法派生 DIY 模式；改为从「${DIY_PRESET_SOURCE_DEFAULT}」派生`,
       );
+      const generated = '（基于「标准模式」）';
+      const base = fallback.definition.description ?? '';
       return {
         ok: true,
         source: fallback.source,
         definition: {
           ...fallback.definition,
-          description: `${fallback.definition.description}（${reason}，已改为基于标准模式）`,
+          description: base.endsWith(generated)
+            ? `${base.slice(0, -generated.length)}（基于标准模式；${reason}）`
+            : `${base}（${reason}）`,
         },
       };
     }

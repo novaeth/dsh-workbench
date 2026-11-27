@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DshClientContext, SessionsSnapshot, SessionSummary, WorkspaceSnapshot } from '@dsh-workbench/shared';
 import { DIY_PRESET_ID } from '@/shared/api/diy';
 import { installWorkshopPreset } from '../workshop-preset';
@@ -82,6 +82,10 @@ function harness(
   };
 }
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe('工坊空白会话补 DIY 模式', () => {
   it('★ 首启那条空白、没记录过模式 → 补 workbench-diy（三行全绿却少一把手的那个症状）', () => {
     const { ctx, select } = harness();
@@ -137,7 +141,8 @@ describe('工坊空白会话补 DIY 模式', () => {
     expect(select).toHaveBeenCalledWith('s1', DIY_PRESET_ID);
   });
 
-  it('★ 第一次没切成：下一次快照再试，成功之后才不再重复', async () => {
+  it('★ 第一次没切成：退避之后重试，成功之后才不再重复', async () => {
+    vi.useFakeTimers();
     const select = vi.fn().mockRejectedValueOnce(new Error('busy')).mockResolvedValueOnce({ ok: true });
     const { ctx, appear } = harness({
       select: () => select() as Promise<{ ok: boolean }>,
@@ -150,6 +155,11 @@ describe('工坊空白会话补 DIY 模式', () => {
     appear(sessionOf({}));
     await Promise.resolve();
     await Promise.resolve();
+    expect(select).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1000);
+    await Promise.resolve();
+    await Promise.resolve();
     expect(select).toHaveBeenCalledTimes(2);
 
     appear(sessionOf({}));
@@ -158,6 +168,7 @@ describe('工坊空白会话补 DIY 模式', () => {
   });
 
   it('★ 连续三次失败给用户一句可见的说明，不只是一条 console.warn', async () => {
+    vi.useFakeTimers();
     const notify = vi.fn();
     const select = vi.fn(() => Promise.reject(new Error('no')));
     const { ctx, appear } = harness({
@@ -165,13 +176,14 @@ describe('工坊空白会话补 DIY 模式', () => {
       contextMenus: { notify },
     });
     installWorkshopPreset(ctx);
-    for (let i = 0; i < 3; i += 1) {
+    for (let i = 0; i < 2; i += 1) {
       await Promise.resolve();
       await Promise.resolve();
       appear(sessionOf({}));
+      await vi.advanceTimersByTimeAsync(1000 * 2 ** i);
+      await Promise.resolve();
+      await Promise.resolve();
     }
-    await Promise.resolve();
-    await Promise.resolve();
 
     expect(notify).toHaveBeenCalledWith(expect.stringContaining('请在模式选择器中选择 DIY 模式'), false);
   });

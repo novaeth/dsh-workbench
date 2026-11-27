@@ -154,7 +154,7 @@ export function registerToolboxTools(ctx: DshHostContext, toolbox: Toolbox): Arr
   const openTool = targetTool(
     TOOLBOX_OPEN_TOOL,
     '开启工作台工具包。面板 / 模块 / 模块市场 / 长任务用 manage（DIY 模式不提供）；' +
-      '工坊流程用 diy-flow（默认），创建与安装用 diy-build，页面用 diy-page；其余用 workbench_toolbox_list 查看；' +
+      '工坊流程用 diy-flow（默认），创建与安装用 diy-build，页面用 diy-page，录制用 diy-record；其余用 workbench_toolbox_list 查看；' +
       'MCP server 用 mcp:<server>；模块工具用 unit:<id>。',
     false,
     (plan, exec) => {

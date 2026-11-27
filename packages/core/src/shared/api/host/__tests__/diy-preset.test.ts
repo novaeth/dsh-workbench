@@ -171,6 +171,8 @@ describe('registerDiyPreset（启动时现场注册）', () => {
     const definition = register.mock.calls[0]?.[0] as DshAgentPresetDefinition;
     expect(idsOf(definition)).not.toContain('tool-mine');
     expect(definition.description).toContain('原来源不可用');
+    expect(definition.description).toContain('基于标准模式');
+    expect(definition.description).not.toContain('（基于「标准模式」）');
     expect(String(warn.mock.calls[0]?.[0] ?? '')).toContain('gone');
   });
 
