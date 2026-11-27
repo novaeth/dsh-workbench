@@ -78,6 +78,7 @@ function mount(
   extra: readonly UnitManifest[] = [],
   presetOf: (session: string) => string | null = () => null,
   skills = true,
+  ownedExtra: readonly string[] = [],
 ) {
   const registered: DshToolDefinition[] = [];
   const warnings: string[] = [];
@@ -145,7 +146,7 @@ function mount(
     ctx,
     logger: { info: () => {}, warn: (message: string) => { warnings.push(message); } },
     manifests: () => [panelsUnit, boardUnit, ...extra],
-    ownedUnits: () => [panelsUnit.id, 'board-x'],
+    ownedUnits: () => [panelsUnit.id, 'board-x', ...ownedExtra],
     store: store(),
     data: createNoopDataReader(),
     ...createHostKit({ libInstallCommand: (options) => `npm i ${options.need.name}`, surface: hostSurface() }),
@@ -511,6 +512,25 @@ const emptyUnit: UnitManifest = {
   tools: [],
 };
 
+const pluginUnit: UnitManifest = {
+  id: 'plugin:opencli-plugin-grafana',
+  skillId: 'grafana',
+  title: { zh: 'grafana', en: 'grafana' },
+  titleKey: 'grafana.title',
+  card: null,
+  host: { inject: [], optional: [] },
+  tools: [{ name: 'grafana_query', writes: false }],
+};
+
+const oddUnit: UnitManifest = {
+  id: '中文:乱码',
+  title: { zh: '怪名字', en: 'Odd' },
+  titleKey: 'odd.title',
+  card: null,
+  host: { inject: [], optional: [] },
+  tools: [{ name: 'odd_query', writes: false }],
+};
+
 function providerOf(skillRegistry: { readonly providers: readonly SkillProvider[] }): SkillProvider {
   const provider = skillRegistry.providers[0];
   if (provider === undefined) throw new Error('没有注册 skill provider');
@@ -567,5 +587,24 @@ describe('模块 skill：/workbench-<unit-id> 只列当前工作区可用、仅�
   it('skills 服务缺失：不炸，也不注册', () => {
     const { skillRegistry } = mount([], [], () => null, false);
     expect(skillRegistry.providers).toEqual([]);
+  });
+
+  it('★ 按已装插件合成的单元也给一条 skill：名字取插件名，合法 kebab-case', async () => {
+    const { skillRegistry } = mount([], [pluginUnit], () => null, true, [pluginUnit.id]);
+
+    const skills = await providerOf(skillRegistry).list({ cwd: dir });
+
+    expect(skills.map((one) => one.name)).toEqual(['workbench-board-x', 'workbench-grafana']);
+    expect(skills[1]?.description).toBe('grafana');
+    expect(skills[1]?.locator).toBe(pluginUnit.id);
+  });
+
+  it('★ 拼不出合法名字的单元：跳过并记一条警告，不把坏名字发给 dsh', async () => {
+    const { skillRegistry, warnings } = mount([], [oddUnit], () => null, true, [oddUnit.id]);
+
+    const skills = await providerOf(skillRegistry).list({ cwd: dir });
+
+    expect(skills.map((one) => one.name)).toEqual(['workbench-board-x']);
+    expect(warnings.join('\n')).toContain(oddUnit.id);
   });
 });

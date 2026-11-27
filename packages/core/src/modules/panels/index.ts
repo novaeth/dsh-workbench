@@ -401,6 +401,7 @@ export const panelsHost: UnitOwnedFace = {
           skills: ctx.get('skills') as UnitSkillDeps['skills'],
           manifests,
           toolbox,
+          logger,
           workspaceOf: (cwd) => registeredWorkspacePathOf(ctx, cwd),
           subscribe: (listener) => panels.subscribe(listener),
         }),

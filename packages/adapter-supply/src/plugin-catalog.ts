@@ -1,4 +1,12 @@
-import { OPENCLI_TIMEOUT_MS, now, productWrite, type Seam } from '@dsh-workbench/shared/host';
+import {
+  OPENCLI_TIMEOUT_MS,
+  now,
+  productWrite,
+  quoteShellArgFor,
+  text,
+  texts,
+  type Seam,
+} from '@dsh-workbench/shared/host';
 import { opencliResultOf } from '@dsh-workbench/adapter-runtime';
 
 export interface PluginCommandArg {
@@ -68,35 +76,48 @@ function recordOf(value: unknown): Record<string, unknown> | undefined {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : undefined;
 }
 
-function textOf(value: unknown): string {
-  return typeof value === 'string' ? value : '';
-}
 
-function stringsOf(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
-}
-
-function argsOf(raw: unknown): PluginCommandArg[] {
+function argsOf(raw: unknown, positionalAs?: boolean): PluginCommandArg[] {
   if (!Array.isArray(raw)) return [];
   return raw.flatMap((item) => {
     const record = recordOf(item);
     if (record === undefined) return [];
-    const name = textOf(record['name']).trim();
+    const name = text(record['name']).trim();
     if (name === '') return [];
     const fallback = record['default'];
+    const positional = positionalAs ?? record['positional'] === true;
     return [
       {
         name,
-        type: textOf(record['type']) || 'string',
+        type: text(record['type']) || 'string',
         required: record['required'] === true,
-        positional: record['positional'] === true,
-        valueRequired: record['valueRequired'] === true,
-        choices: stringsOf(record['choices']),
+        positional,
+        valueRequired: positional || record['valueRequired'] === true,
+        choices: texts(record['choices']),
         ...(fallback === undefined || fallback === null ? {} : { defaultValue: fallback }),
-        help: textOf(record['help']),
+        help: text(record['help']),
       },
     ];
   });
+}
+
+function commandRowOf(record: Record<string, unknown>, site: string): CommandRow | undefined {
+  const name = text(record['name']).trim();
+  if (site === '' || name === '') return undefined;
+  return {
+    site,
+    name,
+    description: text(record['description']),
+    access: text(record['access']),
+    browser: record['browser'] === true,
+    siteSession: text(record['siteSession']),
+    ...(text(record['domain']) === '' ? {} : { domain: text(record['domain']) }),
+    args: [
+      ...argsOf(record['args']),
+      ...argsOf(record['command_options']),
+      ...argsOf(record['positionals'], true),
+    ],
+  };
 }
 
 function rowsOf(parsed: unknown): readonly unknown[] | undefined {
@@ -132,28 +153,27 @@ function pickRows<T>(stdout: string, pick: (record: Record<string, unknown>) => 
 
 export function parsePluginRows(stdout: string): PluginRow[] | undefined {
   return pickRows(stdout, (record) => {
-    const name = textOf(record['name']).trim();
+    const name = text(record['name']).trim();
     if (name === '') return undefined;
-    return { name, version: textOf(record['version']), commands: stringsOf(record['commands']) };
+    return { name, version: text(record['version']), commands: texts(record['commands']) };
   });
 }
 
+export function parseSiteCommands(stdout: string, site: string): CommandRow[] | undefined {
+  return pickRows(stdout, (record) => commandRowOf(record, site));
+}
+
+function indexedRowsOf(stdout: string): boolean {
+  const records = recordsOf(stdout);
+  return (
+    records !== undefined &&
+    records.length > 0 &&
+    records.every((record) => text(record['command']).trim() !== '')
+  );
+}
+
 export function parseCommandRows(stdout: string): CommandRow[] | undefined {
-  return pickRows(stdout, (record) => {
-    const site = textOf(record['site']).trim();
-    const name = textOf(record['name']).trim();
-    if (site === '' || name === '') return undefined;
-    return {
-      site,
-      name,
-      description: textOf(record['description']),
-      access: textOf(record['access']),
-      browser: record['browser'] === true,
-      siteSession: textOf(record['siteSession']),
-      ...(textOf(record['domain']) === '' ? {} : { domain: textOf(record['domain']) }),
-      args: argsOf(record['args']),
-    };
-  });
+  return pickRows(stdout, (record) => commandRowOf(record, text(record['site']).trim()));
 }
 
 function commandOf(plugin: string, row: CommandRow): PluginCommand {
@@ -261,6 +281,28 @@ export function createPluginCatalog(options: PluginCatalogOptions): PluginCatalo
     return current;
   }
 
+  async function siteRowsOf(
+    plugins: readonly PluginRow[],
+    problems: string[],
+  ): Promise<CommandRow[]> {
+    const rows: CommandRow[] = [];
+    for (const plugin of plugins) {
+      const line = `${options.command} ${quoteShellArgFor(plugin.name)} --help -f json`;
+      const run = await read(line);
+      if (!run.ok) {
+        problems.push(`「${plugin.name}」的站点说明没读出来（${run.problem}）—— 它这次不合成工具`);
+        continue;
+      }
+      const parsed = parseSiteCommands(run.stdout, plugin.name);
+      if (parsed === undefined) {
+        problems.push(`「${plugin.name}」的站点说明读不懂（不是带 name 的 commands）—— 它这次不合成工具`);
+        continue;
+      }
+      rows.push(...parsed);
+    }
+    return rows;
+  }
+
   async function refresh(callOptions: { readonly force?: boolean } = {}): Promise<PluginCatalogSnapshot> {
     const pluginsRun = await read(`${options.command} plugin list -f json`);
     if (!pluginsRun.ok) return fail(pluginsRun.problem);
@@ -277,14 +319,20 @@ export function createPluginCatalog(options: PluginCatalogOptions): PluginCatalo
 
     const commandsRun = await read(`${options.command} list -f json`);
     if (!commandsRun.ok) return fail(commandsRun.problem);
-    const rows = parseCommandRows(commandsRun.stdout);
-    if (rows === undefined) {
-      return fail('opencli list -f json 的输出读不懂（不是带 site / name 的 JSON 数组）');
+    const direct = parseCommandRows(commandsRun.stdout);
+    const indexed = direct === undefined && indexedRowsOf(commandsRun.stdout);
+    if (direct === undefined && !indexed) {
+      return fail(
+        'opencli list -f json 的输出读不懂（既不是带 site / name 的命令，也不是带 command 的索引）',
+      );
     }
 
+    const siteProblems: string[] = [];
+    const rows = direct ?? (await siteRowsOf(plugins, siteProblems));
     const attributed = attributeCommands(plugins, rows);
-    heavy = { fingerprint, sets: attributed.sets, problems: attributed.problems };
-    current = { ok: true, at: now(), sets: attributed.sets, problems: attributed.problems };
+    const problems = [...siteProblems, ...attributed.problems];
+    heavy = { fingerprint, sets: attributed.sets, problems };
+    current = { ok: true, at: now(), sets: attributed.sets, problems };
     return current;
   }
 

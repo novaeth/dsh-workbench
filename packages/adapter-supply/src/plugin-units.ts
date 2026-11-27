@@ -213,6 +213,7 @@ function faceOf(
   const byTool = new Map(unit.tools.map((tool) => [tool.name, tool.command]));
   const manifest: UnitManifest = {
     id: unit.id,
+    skillId: unit.plugin,
     title: { zh: unit.plugin, en: unit.plugin },
     titleKey: unitTitleKey(unit.id),
     card: null,

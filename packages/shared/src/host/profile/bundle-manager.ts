@@ -3,6 +3,7 @@ import { profileDirOf } from '../supply/installed-module.js';
 import { generationDirOf } from '../supply/module-root.js';
 import { reconcileWorkbenchLinks } from '../supply/workbench-links.js';
 import { RESTART_REASONS } from '../../contract/protocol/bundle-install.js';
+import { texts } from '../../contract/guards.js';
 import type { BundleManager } from '../adapters/adapter-types.js';
 import type {
   BundleChange,
@@ -63,10 +64,6 @@ function asRegistry(value: unknown): BundleRegistry | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
-function asTextArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
-}
-
 function asRegistries(raw: unknown): BundleRegistries | null {
   const record = asRecord(raw);
   if (record === undefined) return null;
@@ -74,7 +71,7 @@ function asRegistries(raw: unknown): BundleRegistries | null {
   if (registry === undefined) return null;
   return {
     registry,
-    fallbackRegistries: asTextArray(record.fallbackRegistries),
+    fallbackRegistries: texts(record.fallbackRegistries),
     resolved: typeof record.resolved === 'string' ? record.resolved : null,
   };
 }
@@ -100,7 +97,7 @@ function asChange(raw: unknown): BundleChange | null {
   if (application === undefined || stage === undefined) return null;
   const error = asRecord(record.error);
   const packageResult = asPackageResult(record.packageResult);
-  const pendingBuilds = asTextArray(record.pendingBuilds);
+  const pendingBuilds = texts(record.pendingBuilds);
   const restartReason = pick(RESTART_REASONS, record.restartReason);
   const failedAt = pick(['registry', 'spec-host'] as const, record.failedAt);
   const bundle = asText(record.bundle);
@@ -228,7 +225,7 @@ function asVersionEntry(raw: unknown): BundleVersionEntry | null {
   const incompatible = asIncompatible(record.incompatible);
   return {
     version,
-    tags: asTextArray(record.tags),
+    tags: texts(record.tags),
     prerelease: record.prerelease === true,
     bundle: record.bundle === true,
     ...(publishedAt === '' ? {} : { publishedAt }),

@@ -101,6 +101,7 @@ export interface PluginRelease {
  */
 export interface UnitManifest {
   readonly id: string;
+  readonly skillId?: string;
   readonly title?: UnitTitle;
   readonly titleKey: string;
   readonly description?: string;

@@ -10,6 +10,7 @@ import {
   createPluginCatalog,
   parseCommandRows,
   parsePluginRows,
+  parseSiteCommands,
 } from '../index.js';
 
 const PLUGINS = [
@@ -249,5 +250,126 @@ describe('探测：只读、带超时、按插件版本缓存', () => {
 
     expect(snapshot.ok).toBe(false);
     expect(snapshot.problems.join('\n')).toContain('执行缝');
+  });
+});
+
+const INDEX = {
+  commands: [{ command: 'inventory builds', description: '构建列表', access: 'read' }],
+  total: 1,
+};
+
+const SITE_INVENTORY = {
+  site: 'inventory',
+  command_count: 2,
+  commands: [
+    {
+      name: 'builds',
+      description: '构建列表',
+      access: 'read',
+      browser: true,
+      domain: 'inventory.example.cn',
+      siteSession: 'persistent',
+      positionals: [],
+      command_options: [{ name: 'job', help: '构建配置 ID' }],
+    },
+    {
+      name: 'build',
+      description: '一键构建',
+      access: 'write',
+      browser: true,
+      siteSession: 'ephemeral',
+      command_options: [{ name: 'enterprise', required: true, help: '企业 ID' }],
+    },
+  ],
+};
+
+const SITE_DEPLOY = {
+  site: 'deploy',
+  commands: [{ name: 'applications', description: '应用列表', access: 'read' }],
+};
+
+describe('opencli 2.x：list 只给索引，命令详情问站点说明', () => {
+  it('★ 站点说明带上 browser / domain / 参数，逐个插件问一次', async () => {
+    const fake = createFakeShell((call) => {
+      if (call.command.endsWith('plugin list -f json')) return json(PLUGINS);
+      if (call.command === 'opencli list -f json') return json(INDEX);
+      if (call.command === "opencli 'inventory' --help -f json") return json(SITE_INVENTORY);
+      if (call.command === "opencli 'deploy' --help -f json") return json(SITE_DEPLOY);
+      return { exitCode: 1, stderr: `unexpected ${call.command}` };
+    });
+    const catalog = createPluginCatalog({ seam: seamFor(fake), command: 'opencli' });
+
+    const snapshot = await catalog.refresh();
+
+    expect(snapshot.ok).toBe(true);
+    expect(snapshot.sets.map((set) => set.plugin)).toEqual(['inventory', 'deploy']);
+    expect(snapshot.sets[0]?.commands.map((command) => command.name)).toEqual(['builds', 'build']);
+    expect(snapshot.sets[0]?.commands[0]).toMatchObject({
+      browser: true,
+      domain: 'inventory.example.cn',
+      siteSession: 'persistent',
+      args: [{ name: 'job', positional: false }],
+    });
+    expect(snapshot.sets[0]?.commands[1]?.args[0]).toMatchObject({ name: 'enterprise', required: true });
+    expect(fake.commands()).toEqual([
+      'opencli plugin list -f json',
+      'opencli list -f json',
+      "opencli 'inventory' --help -f json",
+      "opencli 'deploy' --help -f json",
+    ]);
+  });
+
+  it('★ 某个插件的站点说明没读出来 ⇒ 点名它，其余照常', async () => {
+    const fake = createFakeShell((call) => {
+      if (call.command.endsWith('plugin list -f json')) return json(PLUGINS);
+      if (call.command === 'opencli list -f json') return json(INDEX);
+      if (call.command === "opencli 'inventory' --help -f json") return { exitCode: 1, stderr: 'no adapter' };
+      if (call.command === "opencli 'deploy' --help -f json") return json(SITE_DEPLOY);
+      return { exitCode: 1, stderr: `unexpected ${call.command}` };
+    });
+    const catalog = createPluginCatalog({ seam: seamFor(fake), command: 'opencli' });
+
+    const snapshot = await catalog.refresh();
+
+    expect(snapshot.sets.map((set) => set.plugin)).toEqual(['deploy']);
+    expect(snapshot.problems.join('\n')).toContain('inventory');
+    expect(snapshot.problems.join('\n')).toContain('no adapter');
+  });
+
+  it('站点说明：positionals 进位置参数，command_options 进旗标参数', () => {
+    const rows = parseSiteCommands(
+      JSON.stringify({
+        commands: [
+          {
+            name: 'show',
+            positionals: [{ name: 'target', required: true, help: '目标' }],
+            command_options: [{ name: 'env', choices: ['test', 'uat'], default: 'test', help: '环境' }],
+          },
+        ],
+      }),
+      'demo',
+    );
+
+    expect(rows?.[0]?.args).toEqual([
+      {
+        name: 'env',
+        type: 'string',
+        required: false,
+        positional: false,
+        valueRequired: false,
+        choices: ['test', 'uat'],
+        defaultValue: 'test',
+        help: '环境',
+      },
+      {
+        name: 'target',
+        type: 'string',
+        required: true,
+        positional: true,
+        valueRequired: true,
+        choices: [],
+        help: '目标',
+      },
+    ]);
   });
 });

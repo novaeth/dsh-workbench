@@ -45,7 +45,10 @@ export interface UnitSkillDeps {
   readonly toolbox: Pick<Toolbox, 'resolve'>;
   readonly workspaceOf: (cwd: string | null) => string | null;
   readonly subscribe: (listener: () => void) => () => void;
+  readonly logger?: { warn?(message: string): void } | undefined;
 }
+
+const SKILL_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const SKILL_PROVIDER = 'workbench';
 
@@ -75,6 +78,7 @@ function visibleOf(deps: UnitSkillDeps, workspace: string): readonly UnitManifes
 
 export function registerUnitSkills(deps: UnitSkillDeps): Array<() => void> {
   if (deps.skills === undefined) return [];
+  const warned = new Set<string>();
   const dispose = deps.skills.registerProvider((control) => {
     const offChange = deps.subscribe(() => control.invalidate());
     control.signal.addEventListener('abort', () => offChange(), { once: true });
@@ -83,10 +87,22 @@ export function registerUnitSkills(deps: UnitSkillDeps): Array<() => void> {
       async list(options) {
         const workspace = deps.workspaceOf(options.cwd ?? null);
         if (workspace === null) return [];
-        return visibleOf(deps, workspace).map((manifest) => {
+        const listed: SkillCandidate[] = [];
+        for (const manifest of visibleOf(deps, workspace)) {
+          const id = manifest.skillId ?? manifest.id;
+          if (!SKILL_ID.test(id)) {
+            if (!warned.has(id)) {
+              warned.add(id);
+              deps.logger?.warn?.(
+                `[dsh-workbench] 模块 ${manifest.id} 的 /workbench- 标识不是 kebab-case（${id}）—— 这条入口先不给；` +
+                  '标识只能用小写字母、数字和横线',
+              );
+            }
+            continue;
+          }
           const whenToUse = manifest.description?.trim();
-          return {
-            name: skillNameOf(manifest.id),
+          listed.push({
+            name: skillNameOf(id),
             description: skillDescriptionOf(manifest),
             ...(whenToUse === undefined ? {} : { whenToUse }),
             invocation: { modelInvocable: false, userInvocable: true },
@@ -94,8 +110,9 @@ export function registerUnitSkills(deps: UnitSkillDeps): Array<() => void> {
             provider: SKILL_PROVIDER,
             rank: 0,
             locator: manifest.id,
-          };
-        });
+          });
+        }
+        return listed;
       },
       async get(candidate) {
         const unit = candidate.locator;
