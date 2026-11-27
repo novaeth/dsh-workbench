@@ -1,3 +1,14 @@
+.wb-mockFloat {
+  position: fixed;
+  left: var(--wb-len-12);
+  right: var(--wb-len-12);
+  bottom: var(--wb-len-12);
+  z-index: var(--wb-z-1100);
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-base);
+}
+
 .wb-mockStrip {
   display: flex;
   flex-wrap: wrap;
@@ -44,8 +55,4 @@
   border-color: transparent;
   background: var(--dsw-alias-brand-primary);
   color: var(--dsw-alias-label-primary-foreground);
-}
-
-.wb-panelBody.wb-panelMany .wb-mockStrip {
-  display: none;
 }

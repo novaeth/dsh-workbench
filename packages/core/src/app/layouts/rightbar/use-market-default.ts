@@ -10,12 +10,11 @@ export interface MarketDefaultSeat {
 
 export function useMarketDefault(input: {
   readonly t: Translate;
-  readonly mocked: boolean;
   readonly defaults: readonly string[];
   readonly changed: Readonly<Record<string, number>>;
   readonly setNotice: (next: string | null) => void;
 }): MarketDefaultSeat {
-  const { t, mocked, defaults, changed, setNotice } = input;
+  const { t, defaults, changed, setNotice } = input;
   const boardWrite = useHostWrite<unknown>({
     channel: 'prefs',
     resource: 'panels',
@@ -25,7 +24,6 @@ export function useMarketDefault(input: {
   const settle = useBoardSettle(machineBoardSignature(defaults, changed));
 
   const setDefault = async (id: string, next: boolean): Promise<void> => {
-    if (mocked) return;
     setWriting(true);
     settle.begin();
     const outcome = await boardWrite.send({ action: next ? 'show' : 'hide', id, scope: 'machine' });

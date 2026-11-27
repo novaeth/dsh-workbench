@@ -12,6 +12,9 @@ const PKG_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SPEC_HINT = '内部设计记录';
 
 const MARKERS = [
+  'dev-fixtures',
+  'wbScene',
+  'wbHost',
   'wbMock',
   'MockStrip',
   'useFixturePick',
@@ -27,6 +30,7 @@ const MARKERS_CI = ['mockstrip', 'wb-mock'];
 
 const FIXTURE_NAME_PATTERNS = [
   'dev/',
+  'dev-fixtures',
   'fixture-unit-mock',
   'board-mock',
   'market-mock',
@@ -131,7 +135,7 @@ function looksLikeDevBuild(rootDir, m1Files) {
 
 const DEV_BUILD_HINT = [
   'ℹ️ 包内现在是**开发档**：client.js / dist/client/* 里带着夹具，而发布构建的产物不可能有它们',
-  '   （`WB_RELEASE=1` 把 `@/shared/dev-surface/install` 那条接缝换成了空实现），宿主产物是干净的 —— 夹具纯客户端。',
+  '   （`WB_RELEASE=1` 不注册那条构建期注入，`src/dev/**` 连 import 图都进不去），宿主产物是干净的 —— 夹具纯客户端。',
   '   所以这条红不是"产物脏"，先看你是哪种情况：',
   '   ① 正在发版：发布构建没写进包内 —— `WB_STAGE_DIR` 被带进了环境？用了 `--skip-build`？还是被',
   '      `pnpm run dev` 的 watcher 覆盖了？先停掉 watcher / 别带 `WB_STAGE_DIR` 再发；发版脚本那边',

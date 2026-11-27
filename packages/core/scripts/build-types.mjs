@@ -9,34 +9,11 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const STAGE = process.env.WB_STAGE_DIR;
 const OUT = STAGE ? join(STAGE, 'dist/types') : join(ROOT, 'dist/types');
 
-const FIXTURE_FILES = new Set(
-  [
-    'app/units/fixture-unit-mock.tsx',
-    'app/layouts/rightbar/board-mock.ts',
-    'app/layouts/rightbar/BoardMockStrip.tsx',
-    'app/layouts/rightbar/market-mock.ts',
-    'app/layouts/rightbar/market-installed-mock.ts',
-    'app/layouts/rightbar/panel-mock.ts',
-    'app/layouts/market/add-module-mock.ts',
-    'app/layouts/env-gate/gate-mock.ts',
-    'app/layouts/rightbar/kit-preview.tsx',
-    'app/layouts/rightbar/kit-preview-rows.tsx',
-    'app/layouts/rightbar/kit-preview-controls.tsx',
-    'app/layouts/rightbar/kit-preview-frame.tsx',
-    'shared/hooks/mock-mode.ts',
-    'shared/hooks/use-fixture-pick.ts',
-    'dev/surface.ts',
-    'dev/MockStrip.tsx',
-  ].map((path) => `${path.replace(/\.tsx?$/, '')}.d.ts`),
-);
-
 const isFixtureName = (name) => /mock/i.test(name) || name.startsWith('kit-preview');
 
 const dropped = (rel) => {
-  if (rel.startsWith('dev/')) return true;
   const parts = rel.split('/');
   if (parts.includes('__tests__')) return true;
-  if (FIXTURE_FILES.has(rel)) return true;
   return isFixtureName(parts[parts.length - 1]);
 };
 

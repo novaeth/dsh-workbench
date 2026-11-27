@@ -195,6 +195,7 @@ module client
 | `packages/adapters-default/` | 默认适配器集合 | `@dsh-workbench/adapters-default` |
 | `packages/adapters-chrome-mcp/` | 实验的第二份适配器集合（stdio + 仓内 stub MCP server） | 私有，不发布 |
 | `packages/adapter-fixture/` | 最小 `AdapterSet` 夹具，只给集成测试 | 私有，不发布 |
+| `packages/dev-fixtures/` | 开发夹具：dev 期假宿主与场景表，只在开发构建里注入 | 私有，不发布 |
 | `packages/docs/` | 文档站，私有构建，不出货 | — |
 
 ### 1.1 依赖图
@@ -265,9 +266,10 @@ packages/core/src/
     hooks/             浏览器 hooks
     components/        哑组件
     styles/            令牌与全局样式
-    dev-surface/       开发夹具
-  dev/                 本地开发入口
 ```
+
+**开发夹具不在这个树里**：它住在独立包 `packages/dev-fixtures/`（private）。只有开发构建才由
+`vite.config.ts` 把一条 import 注入产品入口；发布构建不注册，源码里没有引用。
 
 `packages/core/src/adapters/` 和 `packages/core/src/units/` 不存在。
 适配器实现住 `packages/adapter-*`；`app/units` 是装配层，不是内核。
@@ -288,14 +290,12 @@ packages/core/src/
 | `lib:kernel/contract` | `src/kernel/contract/**` | 2 | — | — | — |
 | `lib:shared/styles` | `src/shared/styles/**` | 0 | — | — | — |
 | `lib:shared/api` | `src/shared/api/**` | 4 | — | — | — |
-| `lib:shared/dev-surface` | `src/shared/dev-surface/**` | 4 | — | — | — |
 | `lib:shared/hooks` | `src/shared/hooks/**` | 4 | — | — | — |
 | `lib:shared/components` | `src/shared/components/**` | 4 | — | — | — |
 | `lib:modules/sessions` | `src/modules/sessions/**` | 5 | — | — | — |
 | `lib:modules/panels` | `src/modules/panels/**` | 5 | — | — | — |
 | `lib:app/layouts` | `src/app/layouts/**` | 6 | — | — | — |
 | `lib:app/units` | `src/app/units/**` | 7 | — | — | — |
-| `lib:dev` | `src/dev/**` | 9 | — | — | — |
 | `core:test-setup` | `vitest.setup.ts` | 99 | — | — | — |
 <!-- arch-guard:end roles -->
 
@@ -303,11 +303,10 @@ packages/core/src/
 
 ```text
 层 10  app/host.ts · app/client.tsx          入口 / 组合根
-层  9  dev/                                  本地开发
 层  7  app/units/                            清单装配
 层  6  app/layouts/                          左栏 / 右栏 / 市场 / 环境门
 层  5  modules/panels · modules/sessions     工作台自己的域
-层  4  shared/api · shared/hooks · shared/components · shared/dev-surface
+层  4  shared/api · shared/hooks · shared/components
 层  3  （没有源码角色；具体适配器住 packages/adapter-*）
 层  2  kernel/host · kernel/client · kernel/contract
 层  0  shared/styles                         令牌
@@ -1159,6 +1158,9 @@ module 包 ──市场安装──► profile（普通依赖 + wb-<unit> 行）
 - 正式版本发布成功后自动部署文档站（`pnpm run deploy:docs` → `gh-pages`），预发布版跳过；
   部署失败不回滚已发布的包，`pnpm run release:resume` 重试文档部署与 git 收尾。
 - 发布产物零夹具：`check:release-artifacts` 扫 `WB_RELEASE=1` 的临时产物。
+- 开发夹具是**dev 期假宿主**：独立包 `packages/dev-fixtures/`（private）在浏览器与宿主之间接管 `fetch` / `changes` / 事件三条通道，
+  按场景表回宿主信封；只在开发构建里由 `vite.config.ts` 把一条 import 注入产品入口（`WB_RELEASE=1` 不注册），
+  产品源码零引用。`?wbMock=1` 打开，浮条选场景；「真实」透传给真宿主。
 
 ## 10. 门禁
 

@@ -1,13 +1,10 @@
 import { createElement as h, useEffect, useRef } from 'react';
 import { Tip } from '@/shared/components/Tip';
 import type { Translate } from '@dsh-workbench/shared';
-import type { UnitManifest } from '@dsh-workbench/shared';
 import { IconModules } from '@/shared/components/IconModules';
 import { Button } from '@deepseek-ai/dsh-client-ui-primitives';
 import { markNextProbeSilent } from '@/shared/hooks/use-capabilities';
 import { useCapabilityMap } from '@/shared/hooks/use-capability-gate';
-import { devSurface } from '@/shared/dev-surface';
-import type { PanelMock } from './panel-mock';
 
 import styles from './ModulesPage.module.css';
 import { MARKET_STALE_MS, shouldProbeOnEnter } from './market-freshness';
@@ -23,7 +20,6 @@ export interface PanelModulesProps {
   readonly enabledUnits: PanelBoardView | null;
   readonly workspace: string | null;
   readonly refreshToken: number;
-  readonly manifests: readonly UnitManifest[];
   readonly onOpenMarket: () => void;
 }
 
@@ -34,7 +30,6 @@ export function PanelModules({
   enabledUnits,
   workspace,
   refreshToken,
-  manifests,
   onOpenMarket,
 }: PanelModulesProps) {
   const { capabilities, checkedAt, forceProbe } = useCapabilityMap(refreshToken);
@@ -47,9 +42,6 @@ export function PanelModules({
     forceProbe();
   }, [open, checkedAt, forceProbe]);
   const root = useRef<HTMLDivElement | null>(null);
-  const devPanel = devSurface.useStrips<PanelMock>('panel', manifests);
-  const panelMock = devPanel.current;
-  const mockNonce = devPanel.pick.nonce;
 
   useDismissOnOutsidePointer(root, open, (next) =>
     dismissPanelByPointer(next, document, onOpenChange),
@@ -78,22 +70,15 @@ export function PanelModules({
             <span className={styles.title}>{t('panels.tab.modules')}</span>
           </header>
 
-          {devPanel.strip}
-
           <ModulesPage
-            key={`${panelMock?.id ?? 'real-modules'}-${mockNonce}`}
             t={t}
-            units={panelMock?.units ?? units}
-            plugins={panelMock?.plugins ?? enabledUnits?.plugins ?? []}
-            capabilities={
-              panelMock === undefined ? (devPanel.enabled ? null : capabilities) : panelMock.capabilities
-            }
+            units={units}
+            plugins={enabledUnits?.plugins ?? []}
+            capabilities={capabilities}
             loading={enabledUnits === null}
             own={enabledUnits?.own === true}
             onOpenMarket={onOpenMarket}
-            mocked={devPanel.enabled}
             workspace={workspace}
-            mock={panelMock}
           />
         </div>
       ) : null}

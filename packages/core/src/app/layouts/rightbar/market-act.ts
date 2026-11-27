@@ -59,7 +59,6 @@ export interface MarketActSeats {
 
 export interface MarketActOptions {
   readonly t: Translate;
-  readonly mocked: boolean;
   readonly rowOf: (id: string) => MarketRow | undefined;
   readonly seats: MarketActSeats;
   readonly send: (body: Record<string, unknown>) => Promise<WriteOutcome<unknown>>;
@@ -76,13 +75,12 @@ export interface MarketAct {
 }
 
 export function marketActOf(options: MarketActOptions): MarketAct {
-  const { t, mocked, rowOf, seats, send, onChanged } = options;
+  const { t, rowOf, seats, send, onChanged } = options;
   let quiet = false;
   const changed = (reload?: MarketReloadOptions): void => {
     if (!quiet) onChanged(reload);
   };
   const act = async (id: string, action: MarketRowAction, options?: MarketActRunOptions): Promise<void> => {
-    if (mocked) return;
     const row = rowOf(id);
     const label = row === undefined ? undefined : marketRowTitle(row, t);
     const next: Pending = {

@@ -21,7 +21,6 @@ function actOf(rows: readonly MarketRow[]) {
   const sent: unknown[] = [];
   const act = marketActOf({
     t: ((key: string) => key) as never,
-    mocked: false,
     rowOf: (id) => rows.find((row) => row.id === id),
     seats: seatsOf(),
     send: async (body) => {
@@ -129,7 +128,6 @@ describe('批量升级：过程里不刷新，收尾刷一次', () => {
     const reloads: unknown[] = [];
     const act = marketActOf({
       t: ((key: string) => key) as never,
-      mocked: false,
       rowOf: (id) => rows.find((row) => row.id === id),
       seats: seatsOf(),
       send: async (body) => {

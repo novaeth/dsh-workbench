@@ -59,7 +59,7 @@ describe('左栏那枚徽标：装的过程中 / 刚装完那一下（接线判�
     const panel = read('market/panel.tsx');
 
     expect(panel).toContain('const held = install.applied;');
-    expect(panel).toContain('settling={mock === undefined ? held : undefined}');
+    expect(panel).toContain('settling={held}');
   });
 
   it('★ 装模块一步到位：装完包接着装它声明的依赖（模块行路径回到 supplyAfter）', () => {
@@ -80,7 +80,7 @@ describe('左栏那枚徽标：装的过程中 / 刚装完那一下（接线判�
     const panel = read('market/panel.tsx');
     const view = read('rightbar/MarketView.tsx');
 
-    expect(panel).toContain('installing={mock === undefined ? install.installing : false}');
+    expect(panel).toContain('installing={install.installing}');
     expect(view).toContain('checkingRows(marketRows(');
     expect(view).toContain('readonly installing?: boolean | undefined;');
   });

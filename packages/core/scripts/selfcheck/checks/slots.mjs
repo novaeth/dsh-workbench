@@ -4,13 +4,15 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { read, pkg, SRC } from '../lib.mjs';
 
-const panelCss = (injectedStyles) => injectedStyles[0]?.textContent ?? '';
-const rightbarSource = () => read(pkg('src/app/layouts/rightbar/Rightbar.tsx'));
-const panelModule = () => read(pkg('src/app/layouts/rightbar/Rightbar.module.css'));
+const sources = {
+  panelCss: (injectedStyles) => injectedStyles[0]?.textContent ?? '',
+  rightbar: () => read(pkg('src/app/layouts/rightbar/Rightbar.tsx')),
+  panelModule: () => read(pkg('src/app/layouts/rightbar/Rightbar.module.css')),
+};
 
 export const checks = [
   {
-    title: '★ 发布图里没有夹具（发布入口的可达图里不许出现夹具模块；夹具只许走 @/shared/dev-surface/install 接缝）',
+    title: '★ 发布图里没有夹具（发布入口的可达图里不许出现 dev/ 与夹具模块；夹具只在开发构建里注入）',
     run(ctx, report) {
 
       const srcRoot = pathToFileURL(`${SRC}/`);
@@ -18,7 +20,6 @@ export const checks = [
       const rel = (url) => fileURLToPath(url).slice(root.length);
 
       const resolveSpec = (spec, from) => {
-        if (spec === '@/shared/dev-surface/install') return new URL('dev/surface.stub.ts', srcRoot);
         if (spec.startsWith('@/')) return new URL(spec.slice(2), srcRoot);
         if (spec.startsWith('.')) return new URL(spec, from);
         return null;
@@ -63,24 +64,9 @@ export const checks = [
         edges.set(file.path, targets);
       }
 
-      const fixtures = new Set([
-        'app/units/fixture-unit-mock.tsx',
-        'app/layouts/rightbar/board-mock.ts',
-        'app/layouts/rightbar/BoardMockStrip.tsx',
-        'app/layouts/rightbar/market-mock.ts',
-        'app/layouts/rightbar/market-installed-mock.ts',
-        'app/layouts/rightbar/panel-mock.ts',
-        'app/layouts/market/add-module-mock.ts',
-        'app/layouts/env-gate/gate-mock.ts',
-        'app/layouts/rightbar/kit-preview.tsx',
-        'app/layouts/rightbar/kit-preview-rows.tsx',
-        'app/layouts/rightbar/kit-preview-controls.tsx',
-        'app/layouts/rightbar/kit-preview-frame.tsx',
-        'shared/hooks/mock-mode.ts',
-        'shared/hooks/use-fixture-pick.ts',
-        'dev/surface.ts',
-        'dev/MockStrip.tsx',
-      ]);
+      const fixturePath = (path) =>
+        path.startsWith('dev/') ||
+        /(?:^|\/)(?:[^/]*-mock|[^/]*fixture[^/]*|kit-preview[^/]*)\.tsx?$/.test(path);
 
       const seen = new Set(['app/client.tsx']);
       const queue = ['app/client.tsx'];
@@ -90,12 +76,12 @@ export const checks = [
         for (const next of edges.get(here) ?? []) {
           if (seen.has(next)) continue;
           seen.add(next);
-          if (fixtures.has(next)) reachable.push(next);
+          if (fixturePath(next)) reachable.push(next);
           queue.push(next);
         }
       }
       report(
-        '★ 发布图里没有夹具（发布入口的可达图里不许出现夹具模块；夹具只许走 @/shared/dev-surface/install 接缝）',
+        '★ 发布图里没有夹具（发布入口的可达图里不许出现 dev/ 与夹具模块；夹具只在开发构建里注入）',
         reachable.length === 0,
         reachable.join('、'),
       );
@@ -509,9 +495,9 @@ export const checks = [
     run(ctx, report) {
 
       const { injectedStyles } = ctx;
-      const css = panelCss(injectedStyles);
-      const source = rightbarSource();
-      const module = panelModule();
+      const css = sources.panelCss(injectedStyles);
+      const source = sources.rightbar();
+      const module = sources.panelModule();
       const zeroSlow = /--ds-transition-duration-slow:\s*0s/.test(css);
       const scoped = css.includes('[data-animating]') && css.includes('[data-sidebar-right-panel]');
       const noOwnMotion = !/transition|translateX|animation/.test(module);
@@ -527,8 +513,8 @@ export const checks = [
     title: '★ 面板列自己带层号（推开 10 / 全屏 40，照出厂的 dock 层；对话的浮条盖不住它）',
     run(ctx, report) {
 
-      const source = rightbarSource();
-      const module = panelModule();
+      const source = sources.rightbar();
+      const module = sources.panelModule();
       report(
         '★ 面板列自己带层号（推开 10 / 全屏 40，照出厂的 dock 层；对话的浮条盖不住它）',
         /--wb-z-10/.test(module) &&

@@ -1,4 +1,3 @@
-import styles from './BootGate.module.css';
 import type {
   PreflightBridgeIssue,
   PreflightDiyGap,
@@ -384,47 +383,3 @@ export const GATE_MOCKS: readonly GateMock[] = [
   ),
 ];
 
-function el(tag: string, className: string, text?: string): HTMLElement {
-  const node = document.createElement(tag);
-  node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
-
-export function mountGateMockStrip(options: { onPick: (snapshot: PreflightSnapshot | null) => void }): HTMLElement {
-  const strip = el('div', `wb-mockStrip ${styles.mockSlot}`);
-  const note = el('span', 'wb-mockNote');
-  const chips: HTMLButtonElement[] = [];
-
-  const paint = (active: GateMock | null): void => {
-    note.textContent = `夹具：钉住启动页的状态，不轮询、不放行 —— ${active?.note ?? '不接管：按真机走（就绪就放行）。'}`;
-    chips.forEach((chip) => {
-      chip.className = `wb-mockChip${chip.dataset.mock === active?.id ? ' wb-mockChipOn' : ''}`;
-    });
-  };
-
-  const pick = (active: GateMock | null): void => {
-    paint(active);
-    options.onPick(active === null ? null : active.snapshot);
-  };
-
-  const real = el('button', 'wb-mockChip', '真实') as HTMLButtonElement;
-  real.setAttribute('type', 'button');
-  real.dataset.mock = '';
-  real.addEventListener('click', () => pick(null));
-
-  strip.append(note, real);
-  chips.push(real);
-
-  for (const item of GATE_MOCKS) {
-    const chip = el('button', 'wb-mockChip', item.label) as HTMLButtonElement;
-    chip.setAttribute('type', 'button');
-    chip.dataset.mock = item.id;
-    chip.addEventListener('click', () => pick(item));
-    strip.append(chip);
-    chips.push(chip);
-  }
-
-  pick(GATE_MOCKS[0] ?? null);
-  return strip;
-}

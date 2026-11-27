@@ -210,15 +210,6 @@
   gap: var(--wb-len-12);
 }
 
-.mockSlot {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  justify-content: center;
-  background: var(--dsw-alias-bg-base);
-}
-
 .button {
   box-sizing: border-box;
   display: inline-flex;

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { zh, type Translate } from '@dsh-workbench/shared';
 import { AddModuleDialog } from '../AddModuleDialog';
-import { ADD_MODULE_MOCKS, stateOfMock } from '../add-module-mock';
+import { ADD_MODULE_MOCKS, stateOfMock } from './add-module-states';
 import type { AddModuleState } from '../use-add-module';
 
 const t = ((key: string, params?: Readonly<Record<string, string>>) => {
@@ -11,13 +11,6 @@ const t = ((key: string, params?: Readonly<Record<string, string>>) => {
 }) as unknown as Translate;
 
 const holder = vi.hoisted(() => ({ state: undefined as unknown as AddModuleState }));
-
-vi.mock('@/shared/dev-surface', () => ({
-  devSurface: {
-    useStrips: () => ({ current: undefined, strip: null }),
-    addModuleState: (base: unknown) => base,
-  },
-}));
 
 vi.mock('../use-add-module', () => ({
   useAddModule: () => holder.state,

@@ -16,7 +16,6 @@ function rig(outcome: unknown) {
   const failed: (MarketFailure | null)[] = [];
   const act = marketActOf({
     t: ((key: string) => key) as never,
-    mocked: false,
     rowOf: (id) => (id === row.id ? row : undefined),
     seats: {
       setPending: () => undefined,

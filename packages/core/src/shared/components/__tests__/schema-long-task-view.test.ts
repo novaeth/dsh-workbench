@@ -10,7 +10,6 @@ const CARD_VIEW = read('SchemaCardView.tsx');
 const EXTERNAL = read('../hooks/use-external-actions.ts');
 const WIRING = read('../hooks/use-long-task.ts');
 const HANDLERS = read('long-task/long-task-handlers.ts');
-const PREVIEW = read('../../app/layouts/rightbar/kit-preview-rows.tsx');
 
 describe('SchemaLongTaskView：needs-human 投影成人待那一行（接线，node 环境读源码断言）', () => {
   it('★★ 旧 needs-login 那一支一个字没动：还是那条判定、那颗「去登录」', () => {
@@ -211,38 +210,6 @@ describe('SchemaCard / SchemaCardView：两条卡片路径都接上 openExternal
     expect(CARD_VIEW).toContain('answering: longTaskAnswering ?? null,');
     expect(CARD_VIEW).toContain('answerFailed: longTaskAnswerFailed ?? null,');
     expect(CARD_VIEW).toContain('onAnswer: onLongTaskAnswer ?? (() => {}),');
-  });
-});
-
-describe('kit 预览画廊：六态都摆得出来，needs-human 那条带两个动作', () => {
-  it('★★ 加了一条 needs-human：带 intervention 与两个动作（打开 / 复制地址）', () => {
-    expect(PREVIEW).toContain('status="needs-human"');
-    expect(PREVIEW).toContain("title: '去控制台点「确认发布」',");
-    expect(PREVIEW).toContain("hint: '凭证过期了',");
-    expect(PREVIEW).toContain("key: 'open'");
-    expect(PREVIEW).toContain("key: 'copy'");
-  });
-
-  it('★★ 还留了一条没有动作的 needs-human（只画标题）与旧的 needs-login 行', () => {
-    expect(PREVIEW).toContain('intervention={{ title: \'去平台重新生成 Token\' }}');
-    expect(PREVIEW).toContain('<LongTaskRow status="needs-login" headline="要登录腾讯云" problem="凭证过期了" />');
-  });
-
-  it('★★ 画廊加了一条带「我处理完了」的 needs-human（可重查那一档的观感）', () => {
-    expect(PREVIEW).toContain("key: 'handled', label: '我处理完了', onPress: () => undefined");
-    expect(PREVIEW).toContain("hint: '点完回来按「我处理完了」',");
-  });
-
-  it('★★ 画廊再加一条带 fields（text + secret 必填）与 submit 的 needs-human（回执那一档的观感）', () => {
-    expect(PREVIEW).toContain(
-      "key: 'operator', label: '操作人', kind: 'text', required: true, placeholder: '你的名字'",
-    );
-    expect(PREVIEW).toContain("key: 'token', label: '控制台口令', kind: 'secret', required: true");
-    expect(PREVIEW).toContain("submit: { label: '提交', onSubmit: () => undefined }");
-  });
-
-  it('★ 说明从「五种状态」改成覆盖新态', () => {
-    expect(PREVIEW).toContain('六种状态：跑着 / 要登录（旧路）/ 等你处理（人工干预节点）');
   });
 });
 

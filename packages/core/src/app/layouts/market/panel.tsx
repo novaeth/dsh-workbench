@@ -5,8 +5,6 @@ import type { Translate } from '@dsh-workbench/shared';
 import type { UnitManifest } from '@dsh-workbench/shared';
 import { IconModules } from '@/shared/components/IconModules';
 import { useCapabilityMap } from '@/shared/hooks/use-capability-gate';
-import { devSurface } from '@/shared/dev-surface';
-import type { MarketMock } from '../rightbar/market-mock';
 
 import { LOCALE_NS } from '@dsh-workbench/shared';
 import { publishPanelHint } from '../panel-hint';
@@ -31,8 +29,6 @@ import type { AddModulePreset } from './use-add-module';
 import styles from './MarketPage.module.css';
 
 export const MARKET_PANEL_ID = 'workbench-market';
-
-const MOCK_FRESHNESS: MarketFreshness = { loaded: true, checking: false, checkedAt: null };
 
 function useLiveManifests(units: ClientUnitRegistry): readonly UnitManifest[] {
   const subscribe = useCallback((listener: () => void) => units.subscribe(listener), [units]);
@@ -143,16 +139,7 @@ function MarketPanel({
     checking: checking || versionsChecking,
     checkedAt,
   };
-  const pendingFreshness: MarketFreshness = { loaded: false, checking: true, checkedAt: null };
-
-  const devMarket = devSurface.useStrips<MarketMock>('market', manifests);
-  const mock = devMarket.current;
-  const mockNonce = devMarket.pick.nonce;
-
-  const shownFreshness =
-    mock === undefined ? freshness : mock.loaded === false ? pendingFreshness : MOCK_FRESHNESS;
-  const shownRead = mock === undefined ? installedRead : (mock.installedRead ?? true);
-  const busy = !marketSettled(shownFreshness, shownRead) || acting;
+  const busy = !marketSettled(freshness, installedRead) || acting;
   const detailOpen = tab === 'installed' ? installedDetailOpen : discoverDetailOpen;
   return (
     <div className={styles.marketPage} data-detail={detailOpen ? 'true' : 'false'}>
@@ -168,7 +155,6 @@ function MarketPanel({
           onAdd={openAddModule}
         />
       )}
-      {devMarket.strip}
       <div
         id={`${MARKET_PANEL_ID}-panel-installed`}
         ref={installedPanel}
@@ -178,14 +164,13 @@ function MarketPanel({
         onScroll={trackInstalledScroll}
       >
         <MarketView
-          key={`${mock?.id ?? 'real-market'}-${mockNonce}`}
           t={t}
           titleOf={titleOf}
           manifests={manifests}
           installable={installable}
           capabilities={capabilities}
           runtimePluginMarket={pluginMarketOf(runtimeCapabilities)}
-          freshness={shownFreshness}
+          freshness={freshness}
           onChanged={reload}
           onPending={setActing}
           updates={updates}
@@ -197,13 +182,12 @@ function MarketPanel({
           unreadable={unreadable}
           readFailure={readFailure}
           readStale={versionsStale}
-          installedRead={shownRead}
+          installedRead={installedRead}
           workbench={workbench}
           selfUpdate={selfUpdate}
           plugins={plugins}
-          settling={mock === undefined ? held : undefined}
-          installing={mock === undefined ? install.installing : false}
-          mock={mock}
+          settling={held}
+          installing={install.installing}
           defaults={machineBoard?.defaults ?? []}
           changed={machineBoard?.changed ?? {}}
           onDetailChange={setInstalledDetailOpen}

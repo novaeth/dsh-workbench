@@ -15,7 +15,6 @@ import { PanelGroupRows } from './PanelGroupRows';
 import { PanelRowControls } from './PanelRowControls';
 import { useBoardSettle, panelBoardSignature } from './panel-write';
 import { useDragListeners } from './use-drag-listeners';
-import type { PanelMock } from './panel-mock';
 import type { PanelPluginUnit, PanelUnit } from './use-panels';
 
 interface DragState {
@@ -176,8 +175,6 @@ export interface ModulesPageProps {
   readonly capabilities: CapabilityMap | null;
   readonly loading?: boolean;
   readonly onOpenMarket: () => void;
-  readonly mocked?: boolean;
-  readonly mock?: PanelMock | undefined;
   readonly own?: boolean;
 }
 
@@ -189,14 +186,12 @@ export function ModulesPage({
   capabilities,
   loading = false,
   onOpenMarket,
-  mocked = false,
-  mock,
   own = false,
 }: ModulesPageProps) {
-  const [drag, setDrag] = useState<DragState | null>(mock?.drag ?? null);
+  const [drag, setDrag] = useState<DragState | null>(null);
   const [tipEpoch, setTipEpoch] = useState(0);
-  const [writing, setWriting] = useState(mock?.busy ?? false);
-  const [failed, setFailed] = useState(mock?.failed ?? false);
+  const [writing, setWriting] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [confirmingReset, setConfirmingReset] = useState(false);
   const listRef = useRef<HTMLUListElement | null>(null);
   const rows = selectPanelRows(units, plugins, capabilities);
@@ -214,7 +209,6 @@ export function ModulesPage({
   });
 
   const write = async (body: Record<string, unknown>): Promise<void> => {
-    if (mocked) return;
     setWriting(true);
     setFailed(false);
     settle.begin();

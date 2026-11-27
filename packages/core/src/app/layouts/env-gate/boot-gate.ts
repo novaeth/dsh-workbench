@@ -4,7 +4,6 @@ import styles from './BootGate.module.css';
 import { WAKE_BROWSER_ROUTE, type WakeBrowserReply } from '@/kernel/contract/preflight-wake';
 import { apiGet } from '@dsh-workbench/shared';
 import { LOCALE_NS } from '@dsh-workbench/shared';
-import { devSurface } from '@/shared/dev-surface';
 import { hostSurfaceValue, runtimeProfileValue } from '@/shared/hooks/use-runtime-capabilities';
 import { stepDetailText } from './gate-text';
 import type { RuntimeProfile } from '@dsh-workbench/shared';
@@ -102,7 +101,6 @@ export function createBootGate(
   let timer: ReturnType<typeof setTimeout> | undefined;
   let cancelled = false;
   const forcePlan = createForcePlan();
-  let pinned: PreflightSnapshot | null = null;
   let lastSnapshot: PreflightSnapshot | null = null;
   let runtimeProfile: RuntimeProfile | undefined;
   let retried = 0;
@@ -267,7 +265,6 @@ export function createBootGate(
 
   async function poll(): Promise<void> {
     if (cancelled) return;
-    if (pinned !== null) return;
     const response = await nullOnFailure(request<PreflightSnapshot>('preflight', forcePlan.next()));
     if (cancelled) return;
 
@@ -288,14 +285,10 @@ export function createBootGate(
 
   function retryNow(): void {
     retried += 1;
-    forcePlan.again(retryTargetOf(pinned ?? lastSnapshot));
+    forcePlan.again(retryTargetOf(lastSnapshot));
     for (const one of cards) {
       one.root.hidden = true;
       one.setBusy(true);
-    }
-    if (pinned !== null) {
-      render(pinned);
-      return;
     }
     void poll();
   }
@@ -334,26 +327,10 @@ export function createBootGate(
     bridgeCard.openStatus(t('env.bridge.opened'));
   }
 
-  const search = typeof window === 'undefined' ? '' : (window.location?.search ?? '');
-  if (devSurface.on(search)) {
-    const strip = devSurface.gateStrip({
-      onPick: (snapshot) => {
-        pinned = snapshot;
-        if (snapshot !== null) {
-          render(snapshot);
-          return;
-        }
-        void poll();
-      },
-    });
-    if (strip !== null) overlay.append(strip);
-  }
-
   void readRuntimeCapabilities()
     .then((answer) => {
       runtimeProfile = answer.ok ? (answer.runtimeProfile ?? undefined) : undefined;
-      if (pinned !== null) render(pinned);
-      else if (lastSnapshot !== null) render(lastSnapshot);
+      if (lastSnapshot !== null) render(lastSnapshot);
     })
     .catch(() => undefined);
 

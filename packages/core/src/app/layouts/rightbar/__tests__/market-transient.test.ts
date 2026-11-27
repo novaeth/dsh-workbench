@@ -69,7 +69,7 @@ describe('市场页的动作状态：页面读的是页面外的那一份（接�
     const source = readFileSync(new URL('market-transient-state.ts', HERE), 'utf8');
 
     expect(source).toContain('useSyncExternalStore(subscribeMarketTransient, marketTransientFacts)');
-    expect(source).toContain('mock === undefined ? live.pending : draft.pending');
-    expect(source).toContain('mock === undefined ? setMarketPending : setDraftPending');
+    expect(source).toContain('setPending: setMarketPending');
+    expect(source).not.toContain('useState');
   });
 });

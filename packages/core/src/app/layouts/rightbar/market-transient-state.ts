@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
-import type { MarketMock } from './market-mock';
 import type { Pending } from './market-view-text';
 import type { MarketFailure } from './market-row-types';
 
@@ -62,64 +61,33 @@ export function resetMarketTransient(): void {
   publish(IDLE);
 }
 
-export function setMarketPending(next: Pending | null): void {
-  publish({ ...facts, pending: next });
-}
+export const setMarketPending = (next: Pending | null): void => publish({ ...facts, pending: next });
 
-export function setMarketConfirming(next: string | null): void {
-  publish({ ...facts, confirming: next });
-}
+export const setMarketConfirming = (next: string | null): void => publish({ ...facts, confirming: next });
 
-export function setMarketFailed(next: MarketFailure | null): void {
-  publish({ ...facts, failed: next });
-}
+export const setMarketFailed = (next: MarketFailure | null): void => publish({ ...facts, failed: next });
 
-export function setMarketNotice(next: string | null): void {
-  publish({ ...facts, notice: next });
-}
-
-function factsOfMock(mock: MarketMock | undefined): MarketTransientFacts {
-  return {
-    pending: mock?.pending ?? null,
-    confirming: mock?.confirming ?? null,
-    failed: mock?.failure ?? null,
-    notice: null,
-  };
-}
+export const setMarketNotice = (next: string | null): void => publish({ ...facts, notice: next });
 
 export function useMarketTransient(input: {
-  readonly mock: MarketMock | undefined;
   readonly onPending?: ((pending: boolean) => void) | undefined;
 }): MarketTransient {
-  const { mock, onPending } = input;
+  const { onPending } = input;
   const live = useSyncExternalStore(subscribeMarketTransient, marketTransientFacts);
-  const [draft, setDraft] = useState<MarketTransientFacts>(() => factsOfMock(mock));
-  const setDraftPending = useCallback((next: Pending | null): void => {
-    setDraft((previous) => (previous.pending === next ? previous : { ...previous, pending: next }));
-  }, []);
-  const setDraftConfirming = useCallback((next: string | null): void => {
-    setDraft((previous) => (previous.confirming === next ? previous : { ...previous, confirming: next }));
-  }, []);
-  const setDraftFailed = useCallback((next: MarketFailure | null): void => {
-    setDraft((previous) => (previous.failed === next ? previous : { ...previous, failed: next }));
-  }, []);
-  const setDraftNotice = useCallback((next: string | null): void => {
-    setDraft((previous) => (previous.notice === next ? previous : { ...previous, notice: next }));
-  }, []);
-
-  const pending = mock === undefined ? live.pending : draft.pending;
-  const confirming = mock === undefined ? live.confirming : draft.confirming;
-  const failed = mock === undefined ? live.failed : draft.failed;
-  const notice = mock === undefined ? live.notice : draft.notice;
-  const setPending = mock === undefined ? setMarketPending : setDraftPending;
-  const setConfirming = mock === undefined ? setMarketConfirming : setDraftConfirming;
-  const setFailed = mock === undefined ? setMarketFailed : setDraftFailed;
-  const setNotice = mock === undefined ? setMarketNotice : setDraftNotice;
 
   useEffect(() => {
-    onPending?.(pending !== null);
+    onPending?.(live.pending !== null);
     return () => onPending?.(false);
-  }, [pending, onPending]);
+  }, [live.pending, onPending]);
 
-  return { pending, setPending, confirming, setConfirming, failed, setFailed, notice, setNotice };
+  return {
+    pending: live.pending,
+    setPending: setMarketPending,
+    confirming: live.confirming,
+    setConfirming: setMarketConfirming,
+    failed: live.failed,
+    setFailed: setMarketFailed,
+    notice: live.notice,
+    setNotice: setMarketNotice,
+  };
 }

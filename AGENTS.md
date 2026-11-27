@@ -24,6 +24,7 @@ profile**（插件页一条龙，见 ADR-0037）。
 | `packages/adapter-probe/` | preflight、探测、工具链、self-update |
 | `packages/adapters-default/` | 默认适配器集合；core 只依赖它 |
 | `packages/adapter-fixture/` | 最小 `AdapterSet` 夹具，只给集成测试（私有，不发布） |
+| `packages/dev-fixtures/` | 开发夹具：dev 期假宿主与场景表，只在开发构建里由 `vite.config.ts` 注入；私有，不发布 |
 | `packages/adapters-chrome-mcp/` | 实验的第二份适配器集合（私有，stdio + 仓内 stub MCP server） |
 | `packages/docs/` | 文档站（Pagoda CLI，私有包，不出货）：`site/desktop/views/*.md` 是页面，`views/index.vue` 是首页；`pnpm run dev:docs` 起站、`pnpm run build:docs` 出 `site-dist/` |
 | `ARCHITECTURE.md` | 仓库与工作台的架构：层序、两个运行时、单元协议、槽位、数据通路、门禁 |

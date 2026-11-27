@@ -48,7 +48,6 @@ describe('工作台自己那一行的更新：只走三拍，不额外加话', (
     const { seen, seats } = seatsOf();
     const act = marketActOf({
       t,
-      mocked: false,
       rowOf: () => row('workbench'),
       seats,
       send: async () => landed('restart-required'),
@@ -75,7 +74,6 @@ describe('工作台自己那一行的更新：只走三拍，不额外加话', (
     const sent: Array<Record<string, unknown>> = [];
     const act = marketActOf({
       t,
-      mocked: false,
       rowOf: () => followUpRow(false),
       seats,
       send: async (body) => {
@@ -96,7 +94,6 @@ describe('工作台自己那一行的更新：只走三拍，不额外加话', (
     const { seen, seats } = seatsOf();
     const act = marketActOf({
       t,
-      mocked: false,
       rowOf: () => followUpRow(false),
       seats,
       send: async () => ({ ok: true, value: { files: 3 } }),
@@ -113,7 +110,6 @@ describe('工作台自己那一行的更新：只走三拍，不额外加话', (
     const sent: Array<Record<string, unknown>> = [];
     const act = marketActOf({
       t,
-      mocked: false,
       rowOf: () => followUpRow(false),
       seats,
       send: async (body) => {
@@ -134,7 +130,6 @@ describe('工作台自己那一行的更新：只走三拍，不额外加话', (
     const { seen, seats } = seatsOf();
     const act = marketActOf({
       t,
-      mocked: false,
       rowOf: () => row('hello'),
       seats,
       send: async () => landed('restart-required'),
@@ -150,7 +145,6 @@ describe('工作台自己那一行的更新：只走三拍，不额外加话', (
     const { seen, seats } = seatsOf();
     const act = marketActOf({
       t,
-      mocked: false,
       rowOf: () => row('hello'),
       seats,
       send: async () => landed('applied'),
@@ -170,7 +164,6 @@ describe('工作台自己那一行的更新：只走三拍，不额外加话', (
     const { seen, seats } = seatsOf();
     const act = marketActOf({
       t,
-      mocked: false,
       rowOf: () => ({ ...row('hello'), version: undefined }),
       seats,
       send: async () => landed('applied'),
@@ -186,7 +179,6 @@ describe('工作台自己那一行的更新：只走三拍，不额外加话', (
     const { seen, seats } = seatsOf();
     const act = marketActOf({
       t,
-      mocked: false,
       rowOf: () => row('hello'),
       seats,
       send: async () => ({
@@ -210,7 +202,6 @@ describe('工作台自己那一行的更新：只走三拍，不额外加话', (
     const command = "dsh plugin --profile workbench add '@p/hello@0.9.0'";
     const act = marketActOf({
       t,
-      mocked: false,
       rowOf: () => row('hello'),
       seats,
       send: async () => ({
@@ -244,7 +235,6 @@ describe('工作台自己那一行的更新：只走三拍，不额外加话', (
     const { seen, seats } = seatsOf();
     const act = marketActOf({
       t,
-      mocked: false,
       rowOf: () => row('hello'),
       seats,
       send: async () => ({
@@ -267,7 +257,6 @@ describe('工作台自己那一行的更新：只走三拍，不额外加话', (
     const { seen, seats } = seatsOf();
     const act = marketActOf({
       t,
-      mocked: false,
       rowOf: () => row('hello'),
       seats,
       send: async () => ({
@@ -289,7 +278,6 @@ describe('工作台自己那一行的更新：只走三拍，不额外加话', (
     const { seen, seats } = seatsOf();
     const act = marketActOf({
       t: named,
-      mocked: false,
       rowOf: () => row('hello'),
       seats,
       send: async () => landed('applied'),
@@ -308,7 +296,6 @@ describe('工作台自己那一行的更新：只走三拍，不额外加话', (
     const { seen, seats } = seatsOf();
     const act = marketActOf({
       t,
-      mocked: false,
       rowOf: () => row('workbench'),
       seats,
       send: async () => ({ ok: false, message: '炸了' }),
@@ -332,7 +319,6 @@ describe('卸载：写回不算完，读数里没它了才解锁', () => {
     const { seen, seats } = seatsOf();
     const act = marketActOf({
       t,
-      mocked: false,
       rowOf: () => row('hello'),
       seats,
       send: async () => reply(value),
@@ -377,7 +363,6 @@ describe('卸载：名字在点下去那一刻就快照下来', () => {
     const { seen, seats } = seatsOf();
     const act = marketActOf({
       t: titleOf as unknown as Translate,
-      mocked: false,
       rowOf: () => ({
         ...row('delivery'),
         titleKey: unitTitleKey('delivery'),

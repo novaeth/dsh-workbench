@@ -10,14 +10,8 @@ import type { InstalledPlugin } from '@/shared/api/installed-plugins';
 import type { ModuleVersion } from '@/kernel/contract/bundle-install';
 import { latestCheckSummary } from './market-rows';
 
-interface MarketMockSeats {
-  readonly installed?: readonly ModuleVersion[] | undefined;
-  readonly plugins?: readonly InstalledPlugin[] | undefined;
-}
-
 export interface MarketChecksInput {
   readonly t: Translate;
-  readonly mock: MarketMockSeats | undefined;
   readonly installed: readonly ModuleVersion[] | null | undefined;
   readonly plugins: readonly InstalledPlugin[] | null | undefined;
   readonly modulesCheck: VersionsCheck | undefined;
@@ -40,21 +34,20 @@ const IDLE_CHECK: VersionsCheck = { checking: false, failed: false, checkedAt: n
 
 export function useMarketChecks(input: MarketChecksInput): MarketChecks {
   const { t } = input;
-  const mock = input.mock;
   const { busy: rechecking } = useVisibleBusy(input.checking, MIN_BUSY_MS);
   const recheck = (): void => {
     input.setFailed(null);
-    if (mock === undefined) input.onChanged({ force: true });
+    input.onChanged({ force: true });
   };
   const checks = sectionChecksOf(
     t,
     { modules: input.modulesCheck ?? IDLE_CHECK, plugins: input.pluginsCheck ?? IDLE_CHECK },
     {
-      latestModules: latestCheckSummary(mock?.installed ?? input.installed ?? undefined),
+      latestModules: latestCheckSummary(input.installed ?? undefined),
       latestPlugins: { unknown: 0 },
       disabled: input.pending !== null,
       moduleSourceFailed: input.marketProblem,
-      onCheck: mock === undefined ? input.onCheck : undefined,
+      onCheck: input.onCheck,
     },
   );
   return { checks, recheck, rechecking };

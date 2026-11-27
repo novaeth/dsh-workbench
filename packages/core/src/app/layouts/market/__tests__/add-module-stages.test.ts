@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { zh, type Translate } from '@dsh-workbench/shared';
 import { AddModulePreview, AddModuleResult } from '../AddModuleStages';
-import { ADD_MODULE_MOCKS, stateOfMock } from '../add-module-mock';
+import { ADD_MODULE_MOCKS, stateOfMock } from './add-module-states';
 import type { AddModuleState } from '../use-add-module';
 
 const t = ((key: string, params?: Readonly<Record<string, string>>) => {

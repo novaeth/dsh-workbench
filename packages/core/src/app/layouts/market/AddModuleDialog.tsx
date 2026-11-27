@@ -8,12 +8,10 @@ import {
   Button,
   Modal,
 } from '@deepseek-ai/dsh-client-ui-primitives';
-import { devSurface } from '@/shared/dev-surface';
 import { AddModuleForm } from './AddModuleForm';
 import { SafetyNote } from './SafetyNote';
 import { AddModulePending, AddModulePreview, AddModuleFailure, AddModuleResult } from './AddModuleStages';
-import type { AddModuleMock } from './add-module-mock';
-import { useAddModule, type AddModulePreset, type AddModuleState } from './use-add-module';
+import { useAddModule, type AddModulePreset } from './use-add-module';
 
 export interface AddModuleDialogProps {
   readonly t: Translate;
@@ -34,14 +32,11 @@ function AddModuleContent({
   onInstalled,
   preset,
 }: Omit<AddModuleDialogProps, 'open'>) {
-  const real = useAddModule({
+  const state = useAddModule({
     onInstalled,
     failedText: t('panels.failed'),
     ...(preset === undefined ? {} : { preset }),
   });
-  const devAdd = devSurface.useStrips<AddModuleMock>('addModule', []);
-  const mock = devAdd.current;
-  const state = mock === undefined ? real : (devSurface.addModuleState(real, mock) as AddModuleState);
 
   const installing = state.phase === 'installing';
   const checking = state.phase === 'inspecting';
@@ -140,8 +135,6 @@ function AddModuleContent({
       footer={footer}
     >
       <div className={styles.stack}>
-        {devAdd.strip}
-
         {state.phase === 'idle' ? <AddModuleForm t={t} state={state} /> : null}
         {state.phase === 'inspecting' ? <AddModulePending t={t} kind="inspecting" /> : null}
         {state.phase === 'preview' ? <AddModulePreview t={t} state={state} /> : null}

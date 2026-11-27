@@ -216,7 +216,7 @@ describe('市场页头：动作在飞，页头与列表里的钮一起禁用', (
     const transient = read('market-transient-state.ts');
     const view = read('MarketView.tsx');
 
-    expect(page).toMatch(/marketSettled\(shownFreshness, shownRead\) \|\| acting/);
+    expect(page).toMatch(/marketSettled\(freshness, installedRead\) \|\| acting/);
     expect(page).toContain('busy={busy}');
     expect(header.match(/disabled=\{busy\}/g)).toHaveLength(2);
     expect(page).toContain('modulesCheck={modulesCheck}');
@@ -231,8 +231,8 @@ describe('市场页头：动作在飞，页头与列表里的钮一起禁用', (
     expect(check).toContain('variant="ghost"');
     expect(check).not.toContain('updatesCount');
     expect(check).toContain('disabled={disabled || checking}');
-    expect(view).toContain('useMarketTransient({ mock, onPending })');
-    expect(transient).toContain('onPending?.(pending !== null)');
+    expect(view).toContain('useMarketTransient({ onPending })');
+    expect(transient).toContain('onPending?.(live.pending !== null)');
   });
 
   it('★ 页头那颗 ⟳ 查全部；两段区块头只查自己那一段（局部检查，不动整页）', () => {

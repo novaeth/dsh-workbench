@@ -1,4 +1,3 @@
-import '@/shared/dev-surface/install';
 import '@/shared/styles/index.css';
 import { createElement } from 'react';
 import type {

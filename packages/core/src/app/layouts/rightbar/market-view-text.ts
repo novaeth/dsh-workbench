@@ -169,8 +169,6 @@ export function marketFootVisible(
   return shown.length > 0 || installed.length > 0;
 }
 
-const NO_NAMES: MarketNameMap = new Map();
-
 export function marketRowMap(
   shown: readonly MarketRow[],
   self: MarketRow | undefined,
@@ -188,9 +186,8 @@ export function marketNamesOf(
   t: Translate,
   modules: readonly NameSource[],
   titleOf: TitleResolve,
-  mocked: boolean,
 ): MarketNameMap {
-  return mocked ? NO_NAMES : namesOf(t, modules, titleOf);
+  return namesOf(t, modules, titleOf);
 }
 
 export interface HeldRowControl {

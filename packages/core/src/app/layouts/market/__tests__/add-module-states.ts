@@ -6,7 +6,7 @@ import type {
   AddModulePreview,
   AddModuleProblem,
   AddModuleState,
-} from './use-add-module';
+} from '../use-add-module';
 
 export interface AddModuleMock {
   readonly id: string;

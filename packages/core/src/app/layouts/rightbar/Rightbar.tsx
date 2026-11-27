@@ -1,7 +1,6 @@
 import dayjs from 'dayjs';
 import { Fragment, createElement as h, useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Tip } from '@/shared/components/Tip';
-import { devSurface } from '@/shared/dev-surface';
 import type { ClientUnitRegistry } from '@/kernel/client/registry';
 import type {
   SessionsSnapshot,
@@ -63,7 +62,6 @@ interface PanelHeaderProps {
   readonly modulesOpen: boolean;
   readonly onModulesOpenChange: (open: boolean) => void;
   readonly enabledUnits: PanelBoardView | null;
-  readonly manifests: ReturnType<ClientUnitRegistry['manifests']>;
   readonly workspace: string | null;
   readonly refreshToken: number;
   readonly onOpenMarket: () => void;
@@ -82,7 +80,6 @@ function PanelHeader({
   modulesOpen,
   onModulesOpenChange,
   enabledUnits,
-  manifests,
   workspace,
   refreshToken,
   onOpenMarket,
@@ -123,7 +120,6 @@ function PanelHeader({
               enabledUnits={enabledUnits}
               workspace={workspace}
               refreshToken={refreshToken}
-              manifests={manifests}
               onOpenMarket={onOpenMarket}
             />
             <Tip label={t('rightbar.collapse')}>
@@ -262,14 +258,13 @@ export function Rightbar(props: RightbarProps) {
 
   const [modulesOpen, setModulesOpen] = useState(false);
   const asideRef = useRef<HTMLElement | null>(null);
-  const devBoard = devSurface.useBoard({ manifests, all: modules.all(), search: window.location.search });
 
   const visibleModules = selectBoardModules(enabledUnits, (id) => modules.byId(id), capabilities);
-  const plan = planBoard(
-    devBoard.shape,
-    { modules: visibleModules, configRead: panelBoard !== null, configFailed: panelRead.failed },
-    devBoard.seed,
-  );
+  const plan = planBoard({
+    modules: visibleModules,
+    configRead: panelBoard !== null,
+    configFailed: panelRead.failed,
+  });
 
 
   const world = createSuiteWorld({
@@ -287,10 +282,9 @@ export function Rightbar(props: RightbarProps) {
   const onCardFailure = useCallback((unit: string, reason: string) => {
     reportPanelCrash({ unit, reason });
   }, []);
-  const fixtureMode = devBoard.mode;
   useEffect(() => {
-    setPanelWorkspace(fixtureMode ? null : boardWorkspace);
-  }, [boardWorkspace, fixtureMode]);
+    setPanelWorkspace(boardWorkspace);
+  }, [boardWorkspace]);
   const summary = aggregateSummaries(
     plan.modules
       .map((entry) => summaries[entry.module.id])
@@ -312,7 +306,7 @@ export function Rightbar(props: RightbarProps) {
         workbench: true,
         where: boardWorkspace ?? '',
         bar: true,
-        board: fixtureMode ? '' : (boardWorkspace ?? ''),
+        board: boardWorkspace ?? '',
         open: shown,
         drawn: drawnNow(),
       });
@@ -324,7 +318,7 @@ export function Rightbar(props: RightbarProps) {
       observer?.disconnect();
       publishBoardProbe(BOARD_PROBE_UNKNOWN);
     };
-  }, [boardWorkspace, fixtureMode, shown]);
+  }, [boardWorkspace, shown]);
   const presentation = rightbarPresentation({
     shown,
     viewportWidth: props.viewportWidth,
@@ -349,8 +343,8 @@ export function Rightbar(props: RightbarProps) {
       style={{ width: panelWidth }}
       data-open={shown ? '' : undefined}
       data-fullscreen={fullscreen ? '' : undefined}
-      data-wb-board={fixtureMode ? undefined : (boardWorkspace ?? undefined)}
-      data-wb-open={fixtureMode || !shown ? undefined : ''}
+      data-wb-board={boardWorkspace ?? undefined}
+      data-wb-open={shown ? '' : undefined}
       aria-label={props.t('rightbar.label')}
     >
       <PanelHeader
@@ -365,16 +359,13 @@ export function Rightbar(props: RightbarProps) {
         modulesOpen={modulesOpen}
         onModulesOpenChange={setModulesOpen}
         enabledUnits={panelBoard}
-        manifests={manifests}
         workspace={boardWorkspace}
         refreshToken={panelToken}
         onOpenMarket={openMarket}
         onCollapse={props.toggleRightbar}
       />
 
-      {devBoard.strip(top.kind === 'board')}
-
-      <div className={`wb-panelBody${plan.repeated ? ' wb-panelMany' : ''}`}>
+      <div className="wb-panelBody">
         <BoardContent
           top={top}
           plan={plan}

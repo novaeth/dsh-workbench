@@ -7,38 +7,33 @@ import { MarketDetailPage } from './market-detail-page';
 import { SharedDetailPage } from './market-shared-detail';
 import { UninstallConfirm } from './market-uninstall';
 
-export function MarketSceneView({
-  t,
-  runtimePluginMarket,
-  self,
-  shown,
-  pluginList,
-  installedList,
-  unreadable = [],
-  readStale = false,
-  pending,
-  failed,
-  notice,
-  readFailure = null,
-  act,
-  onConfirming,
-  setDefault,
-  boardBusy,
-  checks,
-  onRecheck,
-  rechecking,
-  onOpenDetail,
-  detailRow,
-  detailShared,
-  detailDependencies,
-  confirming,
-  confirmingRow,
-  rowById,
-  settled,
-  nothing,
-  settlingSize,
-  onBack,
-}: MarketBodyProps & MarketSceneExtras) {
+export function MarketSceneView(props: MarketBodyProps & MarketSceneExtras) {
+  const {
+    t,
+    shown,
+    installedList,
+    unreadable = [],
+    pending,
+    failed,
+    notice,
+    readFailure = null,
+    act,
+    onConfirming,
+    setDefault,
+    boardBusy,
+    onRecheck,
+    rechecking,
+    detailRow,
+    detailShared,
+    detailDependencies,
+    confirming,
+    confirmingRow,
+    rowById,
+    settled,
+    nothing,
+    settlingSize,
+    onBack,
+  } = props;
   if (detailShared !== undefined) {
     const sharedFailure = failed?.id === detailShared.id ? failed : null;
     return (
@@ -96,28 +91,7 @@ export function MarketSceneView({
   }
   return (
     <>
-      <MarketBody
-        readFailure={readFailure ?? null}
-        t={t}
-        runtimePluginMarket={runtimePluginMarket}
-        self={self}
-        shown={shown}
-        pluginList={pluginList}
-        installedList={installedList}
-        unreadable={unreadable}
-        readStale={readStale}
-        pending={pending}
-        failed={failed}
-        notice={notice}
-        act={act}
-        onConfirming={onConfirming}
-        setDefault={setDefault}
-        boardBusy={boardBusy}
-        checks={checks}
-        onRecheck={onRecheck}
-        rechecking={rechecking}
-        onOpenDetail={onOpenDetail}
-      />
+      <MarketBody {...props} readFailure={readFailure ?? null} />
       <UninstallConfirm
         t={t}
         confirming={confirming}

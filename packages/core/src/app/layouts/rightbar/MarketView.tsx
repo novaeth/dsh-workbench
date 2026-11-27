@@ -35,7 +35,6 @@ import {
 import { MarketSceneView } from './market-scene-view';
 import type { MarketNameMap, TitleResolve } from './market-names';
 import { workbenchRow } from './market-workbench-row';
-import type { MarketMock } from './market-mock';
 import type { MarketFailure } from './market-row-types';
 import type { ModuleUpdateMap } from './market-rows';
 import type { WorkbenchSelfUpdate, WorkbenchVersion } from '@/kernel/contract/bundle-install';
@@ -83,7 +82,6 @@ export interface MarketViewProps {
   readonly plugins?: readonly InstalledPlugin[] | null | undefined;
   readonly settling?: ReadonlySet<string> | undefined;
   readonly installing?: boolean | undefined;
-  readonly mock?: MarketMock | undefined;
   readonly defaults?: readonly string[] | undefined;
   readonly changed?: Readonly<Record<string, number>> | undefined;
   readonly onDetailChange?: ((open: boolean) => void) | undefined;
@@ -100,7 +98,6 @@ function useMarketScene(input: {
   readonly installed: readonly InstalledWorkbenchModule[] | undefined;
   readonly settling: ReadonlySet<string> | undefined;
   readonly installing: boolean;
-  readonly mock: MarketMock | undefined;
   readonly defaults: readonly string[];
   readonly changed: Readonly<Record<string, number>>;
   readonly pending: Pending | null;
@@ -120,15 +117,15 @@ function useMarketScene(input: {
   readonly removing: string | null;
   readonly busyId: string | null;
 } {
-  const { t, titleOf, manifests, installable, capabilities, updates, installed, settling, mock, defaults, changed, pending, failed, heldPlugins } = input;
-  const names = marketNamesOf(t, installed ?? [], titleOf, mock !== undefined);
-  const catalog = mock?.manifests ?? manifests;
-  const marketable = mock === undefined ? marketCatalog(manifests, installable) : catalog;
-  const effective = mock === undefined ? capabilities : mock.capabilities;
-  const installedIds = installedIdSet(mock === undefined ? installed : undefined);
+  const { t, titleOf, manifests, installable, capabilities, updates, installed, settling, defaults, changed, pending, failed, heldPlugins } = input;
+  const names = marketNamesOf(t, installed ?? [], titleOf);
+  const catalog = manifests;
+  const marketable = marketCatalog(manifests, installable);
+  const effective = capabilities;
+  const installedIds = installedIdSet(installed);
   const source = liveManifests(marketable, effective, installedIds);
   const byDefault = new Set(defaults);
-  const updateMap = mock?.updates ?? updates ?? {};
+  const updateMap = updates ?? {};
   const rows = checkingRows(marketRows(source, effective, updateMap, byDefault, changed, heldPlugins), {
     units: settling ?? NO_UNITS,
   });
@@ -139,7 +136,7 @@ function useMarketScene(input: {
   const busyId = heldIdOf(pending, steady.held);
   const listedIds = new Set(rows.map((row) => row.id));
   const installedList = installedRows(
-    installedToShow(mock?.installed ?? installed ?? [], {
+    installedToShow(installed ?? [], {
       listed: listedIds,
       settling: settling ?? NO_UNITS,
       ...(busyId === null ? {} : { busyId }),
@@ -148,7 +145,7 @@ function useMarketScene(input: {
     }),
     catalog,
     listedIds,
-    mock === undefined ? names : undefined,
+    names,
     byDefault,
     changed,
   );
@@ -188,15 +185,14 @@ export function MarketView({
   plugins,
   settling,
   installing = false,
-  mock,
   defaults = [],
   changed = {},
   onDetailChange,
 }: MarketViewProps) {
   const { pending, setPending, confirming, setConfirming, failed, setFailed, notice, setNotice } =
-    useMarketTransient({ mock, onPending });
+    useMarketTransient({ onPending });
   const { source: pluginSource, rows: pluginList, held: heldPlugins } = marketPluginReadOf(
-    mock?.plugins ?? plugins ?? null,
+    plugins ?? null,
     new Set(defaults),
     changed,
   );
@@ -211,7 +207,6 @@ export function MarketView({
       installed,
       settling,
       installing,
-      mock,
       defaults,
       changed,
       pending,
@@ -222,19 +217,18 @@ export function MarketView({
   const provision = useHostWrite({ channel: 'provision', networkText: t('panels.failed') });
   const { pending: defaultPending, setDefault } = useMarketDefault({
     t,
-    mocked: mock !== undefined,
     defaults,
     changed,
     setNotice,
   });
   const { busy: boardBusy } = useVisibleBusy(defaultPending, MIN_BUSY_MS);
-  const effectiveSelfUpdate = mock?.selfUpdate ?? selfUpdate;
-  const selfUpdateTold = useSelfUpdateTold(mock === undefined ? effectiveSelfUpdate : null, mock === undefined);
+  const effectiveSelfUpdate = selfUpdate;
+  const selfUpdateTold = useSelfUpdateTold(effectiveSelfUpdate, true);
   const pendingRow = pendingRowOf({ pending, removing, rows, names });
   const self = workbenchSelfOf({
-    workbench: mock === undefined ? workbench : mock.workbench,
+    workbench,
     selfUpdate: effectiveSelfUpdate,
-    toldAt: mock === undefined ? selfUpdateTold : undefined,
+    toldAt: selfUpdateTold,
   });
   const shown = withPinnedRow(pendingRow === undefined ? rows : [...rows, pendingRow], pinned);
   const rowById = marketRowMap(shown, self, installedList, pluginList);
@@ -248,7 +242,6 @@ export function MarketView({
   const seats = { setPending, setHeld: steady.hold, setConfirming, setFailed, setNotice };
   const act = marketActOf({
     t,
-    mocked: mock !== undefined,
     rowOf: (id) => rowById.get(id),
     seats,
     send: (body) => provision.send(body),
@@ -266,13 +259,10 @@ export function MarketView({
     installed,
   });
   useSettleHold({ pending, landed, t, onChanged, selfUpdate: effectiveSelfUpdate, setPending, setFailed });
-  useSelfUpdateBusyRefresh(effectiveSelfUpdate?.busy === true && mock === undefined, onChanged);
+  useSelfUpdateBusyRefresh(effectiveSelfUpdate?.busy === true, onChanged);
   const nothing = marketNothingOf(shown, self, installedList, pluginList);
-  const unreadableRows = mock?.unreadable ?? unreadable;
-  const listUnread = unreadableRows.length === 0 && readFailure !== null;
-  const { checks, recheck, rechecking: checkingShown } = useMarketChecks(
-    { t, mock, installed, plugins, modulesCheck, pluginsCheck, pending, onCheck, onChanged, setFailed, checking: freshness.checking, marketProblem },
-  );
+  const listUnread = unreadable.length === 0 && readFailure !== null;
+  const { checks, recheck, rechecking: checkingShown } = useMarketChecks({ t, installed, plugins, modulesCheck, pluginsCheck, pending, onCheck, onChanged, setFailed, checking: freshness.checking, marketProblem });
 
   return (
     <MarketSceneView
@@ -282,7 +272,7 @@ export function MarketView({
       shown={shown}
       pluginList={pluginList}
       installedList={installedList}
-      unreadable={unreadableRows}
+      unreadable={unreadable}
       readStale={readStale}
       pending={pending}
       failed={failed}
