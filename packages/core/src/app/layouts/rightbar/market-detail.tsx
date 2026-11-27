@@ -179,52 +179,63 @@ export function MarketDetail({
                 {detailFacts({ t, facts })}
               </section>
             )}
-            {row.plugin === true || row.workbench === true ? null : (
-            <section className={styles.discoverSection}>
-              <h4 className={styles.discoverSectionTitle}>{t('panels.market.detailDepsTitle')}</h4>
-              {dependencies.length === 0 ? (
-                <p className={styles.discoverMuted}>{t('panels.market.detailDepsEmpty')}</p>
-              ) : (
-                <ul className={styles.marketListFlat}>
-                  {dependencies.map((need) => (
-                    <li key={`${need.kind}:${need.name}`} className={styles.marketRow}>
-                      <DependencyLine
-                        t={t}
-                        kind={DEPENDENCY_ICON_KIND[need.kind]}
-                        label={need.name}
-                        version={{
-                          ...(need.installed === undefined ? {} : { installed: need.installed }),
-                          ...(need.latest === undefined ? {} : { latest: need.latest }),
-                        }}
-                        state={DEPENDENCY_STATE[need.status]}
-                        stateText={
-                          need.kind === 'env' && need.status === 'missing'
-                            ? t('panels.market.depEnvNotSet')
-                            : undefined
-                        }
-                        note={[
-                          t(DEPENDENCY_KIND_KEY[need.kind]),
-                          ...(need.optional === true ? [t('panels.market.depOptional')] : []),
-                        ].join(t('panels.market.listSeparator'))}
-                      />
-                      <div className={styles.marketEnd}>
-                        <SharedActions
-                          t={t}
-                          actions={dependencyRowActions(need)}
-                          running={null}
-                          locked={pending !== null}
-                          onAct={onRequest}
-                        />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-            )}
+            {row.plugin === true || row.workbench === true
+              ? null
+              : dependenciesSectionOf(t, dependencies, pending, onRequest)}
           </Fragment>
         ),
       })}
     </div>
+  );
+}
+
+function dependenciesSectionOf(
+  t: Translate,
+  dependencies: readonly DetailDependency[],
+  pending: Pending | null,
+  onRequest: (action: MarketRowAction) => void,
+) {
+  return (
+    <section className={styles.discoverSection}>
+      <h4 className={styles.discoverSectionTitle}>{t('panels.market.detailDepsTitle')}</h4>
+      {dependencies.length === 0 ? (
+        <p className={styles.discoverMuted}>{t('panels.market.detailDepsEmpty')}</p>
+      ) : (
+        <ul className={styles.marketListFlat}>
+          {dependencies.map((need) => (
+            <li key={`${need.kind}:${need.name}`} className={styles.marketRow}>
+              <DependencyLine
+                t={t}
+                kind={DEPENDENCY_ICON_KIND[need.kind]}
+                label={need.name}
+                version={{
+                  ...(need.installed === undefined ? {} : { installed: need.installed }),
+                  ...(need.latest === undefined ? {} : { latest: need.latest }),
+                }}
+                state={DEPENDENCY_STATE[need.status]}
+                stateText={
+                  need.kind === 'env' && need.status === 'missing'
+                    ? t('panels.market.depEnvNotSet')
+                    : undefined
+                }
+                note={[
+                  t(DEPENDENCY_KIND_KEY[need.kind]),
+                  ...(need.optional === true ? [t('panels.market.depOptional')] : []),
+                ].join(t('panels.market.listSeparator'))}
+              />
+              <div className={styles.marketEnd}>
+                <SharedActions
+                  t={t}
+                  actions={dependencyRowActions(need)}
+                  running={null}
+                  locked={pending !== null}
+                  onAct={onRequest}
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
