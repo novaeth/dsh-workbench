@@ -220,32 +220,53 @@ window.__ModuleLoader__.load({
         });
     }
 
-    function menuChildren(state, choose) {
+    function menuChildren(state, choose, expanded, toggle) {
       var groups = grouped(state.scenes);
+      if (groups.length === 0) {
+        return [React.createElement('div', { key: 'empty', style: { padding: '10px 8px', opacity: 0.6 } }, state.error === '' ? '场景还没读出来' : state.error)];
+      }
       var children = groups.map(function (pair) {
         var name = pair[0];
         var items = pair[1];
+        var open = expanded[name] === true;
         return React.createElement(
           'div',
-          { key: name },
+          { key: name, style: { borderTop: '1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.08))' } },
           React.createElement(
-            'div',
-            { style: { padding: '6px 8px 2px', opacity: 0.6, fontSize: 11, fontWeight: 600 } },
-            name + ' · ' + String(items.length),
+            ui.Button,
+            {
+              variant: 'ghost',
+              size: 'sm',
+              'aria-expanded': open,
+              style: { display: 'flex', width: '100%', justifyContent: 'space-between', padding: '7px 6px', marginTop: '2px' },
+              onClick: function () { toggle(name); },
+            },
+            React.createElement(
+              'span',
+              { style: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 } },
+              React.createElement(ui.IconChevronRightOutlineRegular, {
+                size: 14,
+                style: { flex: 'none', transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s ease', opacity: 0.7 },
+              }),
+              React.createElement('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, name),
+              React.createElement('span', { style: { opacity: 0.45, fontSize: 11 } }, String(items.length)),
+            ),
           ),
-          items.map(function (scene) {
-            return React.createElement(
-              ui.Button,
-              {
-                key: scene.id,
-                variant: scene.id === state.current ? 'secondary' : 'ghost',
-                size: 'sm',
-                style: { display: 'flex', width: '100%', justifyContent: 'flex-start' },
-                onClick: function () { choose(scene.id); },
-              },
-              scene.label,
-            );
-          }),
+          open
+            ? items.map(function (scene) {
+                return React.createElement(
+                  ui.Button,
+                  {
+                    key: scene.id,
+                    variant: scene.id === state.current ? 'secondary' : 'ghost',
+                    size: 'sm',
+                    style: { display: 'flex', width: '100%', justifyContent: 'flex-start', paddingLeft: '26px' },
+                    onClick: function () { choose(scene.id); },
+                  },
+                  scene.label,
+                );
+              })
+            : null,
         );
       });
       if (state.error !== '') {
@@ -258,6 +279,21 @@ window.__ModuleLoader__.load({
       var state = React.useSyncExternalStore(subscribe, snapshot);
       var menu = React.useSyncExternalStore(subscribeMenu, function () { return menuState.version; });
       var rect = menu.rect;
+      var expandedState = React.useState({});
+      var expanded = expandedState[0];
+      var setExpanded = expandedState[1];
+
+      React.useEffect(function () { setExpanded({}); }, [rect]);
+
+      function toggle(name) {
+        setExpanded(function (current) {
+          var next = {};
+          for (var key in current) next[key] = current[key];
+          if (next[name] === true) delete next[name];
+          else next[name] = true;
+          return next;
+        });
+      }
 
       function choose(id) {
         closeMenu();
@@ -278,8 +314,9 @@ window.__ModuleLoader__.load({
             zIndex: 2147483002,
             width: '380px',
             maxHeight: '70vh',
-            overflow: 'auto',
-            padding: '8px',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
             borderRadius: '12px',
             background: 'var(--dsw-alias-bg-layer-3, #22252b)',
             color: 'var(--dsw-alias-label-primary, #f4f6fb)',
@@ -290,11 +327,16 @@ window.__ModuleLoader__.load({
         },
         React.createElement(
           'div',
-          { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 4px 6px' } },
-          React.createElement('span', { style: { fontWeight: 600 } }, '调试场景'),
+          { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px 6px', flex: 'none' } },
+          React.createElement(
+            'span',
+            { style: { fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' } },
+            '调试场景',
+            React.createElement('span', { style: { opacity: 0.45, fontWeight: 400, fontSize: 11 } }, groupOf(state.current)),
+          ),
           React.createElement(ui.Button, { size: 'sm', variant: 'ghost', onClick: closeMenu }, '关闭'),
         ),
-        menuChildren(state, choose),
+        React.createElement('div', { style: { overflow: 'auto', padding: '0 8px 8px', flex: '1 1 auto', minHeight: 0 } }, menuChildren(state, choose, expanded, toggle)),
       );
       return ReactDOM.createPortal(panel, document.body);
     }
