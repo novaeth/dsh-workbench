@@ -105,6 +105,7 @@ window.__ModuleLoader__.load({
       sceneState.error = error;
       sceneState.version = { scenes: scenes, current: current, error: error };
       sceneState.listeners.forEach(function (listener) { listener(); });
+      syncRowHint();
     }
 
     var menuState = { rect: null, listeners: new Set(), version: { rect: null } };
@@ -156,6 +157,23 @@ window.__ModuleLoader__.load({
         if (sceneState.scenes[index].id === id) return sceneState.scenes[index].label;
       }
       return id;
+    }
+
+    function syncRowHint() {
+      if (typeof document === 'undefined') return;
+      var row = document.querySelector('button[aria-label^="调试场景"]');
+      if (row === null) return;
+      var hint = row.querySelector('[data-fixture-row-hint]');
+      if (hint === null) {
+        hint = document.createElement('span');
+        hint.setAttribute('data-fixture-row-hint', '');
+        hint.style.cssText =
+          'margin-left:auto;opacity:.55;font-size:11px;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+        row.appendChild(hint);
+      }
+      var text = groupOf(sceneState.current) + ' · ' + labelOf(sceneState.current);
+      if (hint.textContent !== text) hint.textContent = text;
+      if (hint.title !== text) hint.title = text;
     }
 
     function clearSceneParam() {
@@ -301,6 +319,10 @@ window.__ModuleLoader__.load({
         },
         'dev-fixtures: 场景入口',
       );
+      if (typeof MutationObserver === 'function' && typeof document !== 'undefined') {
+        new MutationObserver(function () { syncRowHint(); }).observe(document.body, { childList: true, subtree: true });
+      }
+      setTimeout(syncRowHint, 0);
       ctx.effect(
         function () {
           return ctx.slots.inject('sidebar.footer.action', function () {
