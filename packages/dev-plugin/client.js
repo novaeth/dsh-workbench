@@ -184,27 +184,7 @@ window.__ModuleLoader__.load({
         });
     }
 
-    function SceneMenu() {
-      var state = React.useSyncExternalStore(subscribe, snapshot);
-      var openState = React.useState(false);
-      var busyState = React.useState(false);
-      var open = openState[0];
-      var setOpen = openState[1];
-      var busy = busyState[0];
-      var setBusy = busyState[1];
-
-      function choose(id) {
-        setOpen(false);
-        setBusy(true);
-        switchScene(id)
-          .catch(function () {
-            publish(state.scenes, state.current, '切换失败');
-          })
-          .then(function () {
-            setBusy(false);
-          });
-      }
-
+    function menuChildren(state) {
       var groups = grouped(state.scenes);
       var children = groups.map(function (pair) {
         var name = pair[0];
@@ -235,7 +215,28 @@ window.__ModuleLoader__.load({
       if (state.error !== '') {
         children.push(React.createElement('div', { key: 'error', style: { padding: '6px 8px', opacity: 0.7 } }, state.error));
       }
+      return children;
+    }
 
+    function SceneMenuHost() {
+      var state = React.useSyncExternalStore(subscribe, snapshot);
+      var anchorState = React.useState(null);
+      var openState = React.useState(false);
+      var anchor = anchorState[0];
+      var setAnchor = anchorState[1];
+      var open = openState[0];
+      var setOpen = openState[1];
+
+      React.useEffect(function () {
+        function onOpen(event) {
+          setAnchor(event.detail.anchor);
+          setOpen(true);
+        }
+        window.addEventListener('dsh-wb-fixture-open', onOpen);
+        return function () { window.removeEventListener('dsh-wb-fixture-open', onOpen); };
+      }, []);
+
+      if (anchor === null) return null;
       return React.createElement(
         ui.Menu,
         {
@@ -243,20 +244,14 @@ window.__ModuleLoader__.load({
           onClose: function () { setOpen(false); },
           portal: true,
           autoFocus: true,
-          anchor: React.createElement(
-            ui.Button,
-            {
-              variant: 'ghost',
-              size: 'sm',
-              onClick: function () { setOpen(!open); },
-              'aria-haspopup': 'menu',
-              'aria-expanded': open,
-            },
-            busy ? '切换中…' : '夹具场景',
-          ),
+          anchor: anchor,
         },
-        children,
+        menuChildren(state),
       );
+    }
+
+    function FixtureGlyph(props) {
+      return React.createElement(ui.IconAppsAddOutlineRegular, { size: props.size ?? 16 });
     }
 
     wrapEventSource();
@@ -264,17 +259,38 @@ window.__ModuleLoader__.load({
     function apply(ctx) {
       registerUnits(ctx);
       loadScenes();
-      ctx.inject(['slots'], function (sub) {
-        sub.effect(
+      ctx.inject(['slots'], function () {
+        ctx.effect(
           function () {
-            return sub.slots.register(
-              { name: 'sidebar.footer.action', id: 'fixture-scenes', order: 1 },
-              SceneMenu,
+            var entry = ctx.slots.register(
+              { name: 'sidebar.panellist', id: 'fixture-scenes', label: '夹具场景', order: 20 },
+              FixtureGlyph,
             );
+            var host = ctx.slots.register(
+              { name: 'sidebar.footer.action', id: 'fixture-scenes-host' },
+              SceneMenuHost,
+            );
+            return function () {
+              entry();
+              host();
+            };
           },
           'dev-fixtures: 场景入口',
         );
       });
+      if (typeof document.addEventListener === 'function') {
+        document.addEventListener(
+          'click',
+          function (event) {
+            var target = event.target && event.target.closest ? event.target.closest('[data-panel-id="fixture-scenes"]') : null;
+            if (target === null) return;
+            event.preventDefault();
+            event.stopPropagation();
+            window.dispatchEvent(new CustomEvent('dsh-wb-fixture-open', { detail: { anchor: target } }));
+          },
+          true,
+        );
+      }
     }
 
     exports.apply = apply;
