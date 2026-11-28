@@ -1,7 +1,7 @@
 [
   {
     "id": "boot-boot",
-    "label": "启动页：刚立起来",
+    "label": "刚立起来",
     "note": "还没拿到体检结果的那一帧：只有标题 + 一句\"正在检测运行环境…\"，一行步骤都还没有。",
     "catalog": {
       "manifests": [],
@@ -32,7 +32,7 @@
   },
   {
     "id": "boot-checking",
-    "label": "启动页：检测中",
+    "label": "检测中",
     "note": "第一步在跑（转圈 + 它正在执行的命令），第二步还没轮到（短横）。",
     "catalog": {
       "manifests": [],
@@ -81,7 +81,7 @@
   },
   {
     "id": "boot-installing",
-    "label": "启动页：安装中（pnpm 在跑）",
+    "label": "安装中（pnpm 在跑）",
     "note": "缺命令行：正在装。行内日志会一直长出来（静止的圆点看不出在干活）。",
     "catalog": {
       "manifests": [],
@@ -131,7 +131,7 @@
   },
   {
     "id": "boot-toolchain-installing",
-    "label": "启动页：运行环境在装",
+    "label": "运行环境在装",
     "note": "Desktop 上 pnpm 低于 10 时，这一行会自己装本地 pnpm：顶上那句换成\"在装 pnpm\"，行内日志照旧长出来 —— 几分钟的下载不该看起来像卡死。",
     "catalog": {
       "manifests": [],
@@ -184,7 +184,7 @@
   },
   {
     "id": "boot-ready",
-    "label": "启动页：都就绪（真机到这就放行）",
+    "label": "都就绪（真机到这就放行）",
     "note": "两步都过。这一帧之后 gate 立刻撤掉 —— 钉住它只是为了看一眼这两行长什么样。",
     "catalog": {
       "manifests": [],
@@ -238,7 +238,7 @@
   },
   {
     "id": "boot-warn-extension",
-    "label": "启动页：浏览器通道：扩展没连上",
+    "label": "浏览器通道：扩展没连上",
     "note": "daemon 在跑、扩展没连上（最常见）：门**停在这一帧** —— 行尾说\"没连上\"，装法前面挂一句\"扩展已安装的话，点击下面的重试\"，装法只作为未安装时的路。下面两种装法：① 工作台自带的扩展副本（目录可直接复制）；② 去应用商店安装。末尾一句「做完后回来点击重试」，再往下是「打开浏览器」（Desktop 才有）+「先进入工作台」。",
     "catalog": {
       "manifests": [],
@@ -293,7 +293,7 @@
   },
   {
     "id": "boot-warn-extension-offline",
-    "label": "启动页：浏览器通道：没有本地副本可指",
+    "label": "浏览器通道：没有本地副本可指",
     "note": "扩展没连上、这台机器上又没有随包带的副本：不给「加载本地副本」这条（没得选），只剩应用商店一条路；「已安装就点重试」那句照旧挂着。",
     "catalog": {
       "manifests": [],
@@ -347,7 +347,7 @@
   },
   {
     "id": "boot-warn-bridge-incompatible",
-    "label": "启动页：浏览器通道：扩展版本不兼容",
+    "label": "浏览器通道：扩展版本不兼容",
     "note": "扩展连上了但版本对不上：三步（打开扩展页 → 重新加载或更新 → 确认版本），不再教怎么装。",
     "catalog": {
       "manifests": [],
@@ -402,7 +402,7 @@
   },
   {
     "id": "boot-warn-daemon",
-    "label": "启动页：浏览器通道：服务没起来",
+    "label": "浏览器通道：服务没起来",
     "note": "daemon 没起来（扩展跟着也连不上）：两条人话都摆出来，命令给 `daemon restart`。",
     "catalog": {
       "manifests": [],
@@ -457,7 +457,7 @@
   },
   {
     "id": "boot-warn-profile",
-    "label": "启动页：浏览器通道：没选默认 profile",
+    "label": "浏览器通道：没选默认 profile",
     "note": "连了多个浏览器 profile 但没选默认：只说\"选哪个\"（重启服务解决不了它），命令给 `profile list`。",
     "catalog": {
       "manifests": [],
@@ -511,7 +511,7 @@
   },
   {
     "id": "boot-warn-host",
-    "label": "启动页：dsh 升到了没验过的一代",
+    "label": "dsh 升到了没验过的一代",
     "note": "运行中的 dsh 比这份工作台验过的那一代新（跨代）。门停在这一帧：行尾说「未验证」，下面说清是哪一版、验的是哪一版，并给「先进入工作台」；再往下是打不开时的恢复步骤（界面句 + 一行原样的键路径）。",
     "catalog": {
       "manifests": [],
@@ -580,7 +580,7 @@
   },
   {
     "id": "boot-warn-host-older",
-    "label": "启动页：dsh 比验证过的版本旧",
+    "label": "dsh 比验证过的版本旧",
     "note": "运行中的 dsh 低于这份工作台验过的那一代：卡上给升级步骤（网页版带命令）+ 一条「一直打不开时」的退路。",
     "catalog": {
       "manifests": [],
@@ -649,7 +649,7 @@
   },
   {
     "id": "boot-warn-diy",
-    "label": "启动页：DIY 模式：版本过低",
+    "label": "DIY 模式：版本过低",
     "note": "dsh 比这份工作台验过的那一代旧（版本事实可证）：卡片给出版本、验证过的版本与升级命令，桌面版不显示命令。门**停在这一帧**。",
     "catalog": {
       "manifests": [],
@@ -717,7 +717,7 @@
   },
   {
     "id": "boot-warn-diy-broken",
-    "label": "启动页：DIY 模式：几行没有启动",
+    "label": "DIY 模式：几行没有启动",
     "note": "版本不是原因（dsh 没升级也能出现）：某几行插件没导入成功，真正报错只在 dsh 启动日志里。卡片不再断言原因、不给命令，只陈述「哪几行没有启动」+ 复制给 agent。",
     "catalog": {
       "manifests": [],
@@ -783,7 +783,7 @@
   },
   {
     "id": "boot-warn-diy-preset-missing",
-    "label": "启动页：DIY 模式：模式列表里没有",
+    "label": "DIY 模式：模式列表里没有",
     "note": "启动检查没在 dsh 的模式列表里找到「工作台 DIY 模式」：兜底卡，只陈述事实 +「复制给 agent」，不给命令。",
     "catalog": {
       "manifests": [],
@@ -847,7 +847,7 @@
   },
   {
     "id": "boot-warn-bridge-unknown",
-    "label": "启动页：浏览器连接：认不出问题",
+    "label": "浏览器连接：认不出问题",
     "note": "doctor 报了问题但认不出是哪一类：卡片陈述事实并给「复制给 agent」，不再让人自己展开原文猜。",
     "catalog": {
       "manifests": [],
@@ -904,7 +904,7 @@
   },
   {
     "id": "boot-failed-permission",
-    "label": "启动页：装不上：权限不足",
+    "label": "装不上：权限不足",
     "note": "失败态：为什么需要它 → 确切命令（可复制）→ 照做能解决的一句人话（EACCES → 换目录 / sudo）。",
     "catalog": {
       "manifests": [],
@@ -949,7 +949,7 @@
   },
   {
     "id": "boot-failed-network",
-    "label": "启动页：装不上：网络不通",
+    "label": "装不上：网络不通",
     "note": "同一档失败，但人话换成\"查代理\"那条（EAI_AGAIN / ENOTFOUND）。",
     "catalog": {
       "manifests": [],
@@ -994,7 +994,7 @@
   },
   {
     "id": "boot-failed-unknown",
-    "label": "启动页：装不上：认不出的错",
+    "label": "装不上：认不出的错",
     "note": "认不出失败种类时**不编**建议：只给命令与原文（多一句假建议比少一句更糟）。",
     "catalog": {
       "manifests": [],
@@ -1039,7 +1039,7 @@
   },
   {
     "id": "boot-failed-path",
-    "label": "启动页：装了但还找不到",
+    "label": "装了但还找不到",
     "note": "装完了 `--version` 还是不行：**不再让用户装一遍**（PATH / 新终端的事），所以不给命令。",
     "catalog": {
       "manifests": [],
@@ -1084,7 +1084,7 @@
   },
   {
     "id": "boot-failed-shell",
-    "label": "启动页：执行缝坏了",
+    "label": "执行缝坏了",
     "note": "连 shell 都调不动：装也不可能成功。没有\"正在执行的动作\"、也没有命令 —— 该做的是重启宿主。",
     "catalog": {
       "manifests": [],
@@ -1128,7 +1128,7 @@
   },
   {
     "id": "boot-failed-host",
-    "label": "启动页：命令没有返回",
+    "label": "命令没有返回",
     "note": "命令发出去了、结果没回来（沙箱子进程起不来）：给的是\"退干净、清残留、再打开\"，不是让人重装 Node / npm。",
     "catalog": {
       "manifests": [],

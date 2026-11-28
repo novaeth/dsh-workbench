@@ -144,7 +144,7 @@
   },
   {
     "id": "market-outdated",
-    "label": "缺必需命令",
+    "label": "已装 · 缺命令（行上只显示有新版本）",
     "note": "行上只说「有新版本」，不点名缺什么",
     "catalog": {
       "manifests": [
@@ -631,7 +631,7 @@
   },
   {
     "id": "market-missing-undeclared",
-    "label": "未装 + 没声明怎么装",
+    "label": "未装 · 模块没声明来源",
     "note": "宿主没给装法：行上不给按钮",
     "catalog": {
       "manifests": [
@@ -705,69 +705,9 @@
     "writes": {}
   },
   {
-    "id": "market-unknown",
-    "label": "探测失败（状态未知）",
-    "note": "能力里没有这一条：行上写「状态未知」",
-    "catalog": {
-      "manifests": [
-        {
-          "id": "fixture-argocd",
-          "titleKey": "fixture-argocd.title",
-          "card": {
-            "order": 10
-          },
-          "tools": [],
-          "host": {
-            "inject": []
-          }
-        }
-      ],
-      "installable": [
-        "fixture-argocd"
-      ],
-      "refusals": []
-    },
-    "modules": [],
-    "workbench": {
-      "pkg": "@dsh-workbench/core",
-      "installed": "1.5.6"
-    },
-    "panels": {
-      "units": [],
-      "plugins": [],
-      "defaults": [],
-      "own": false,
-      "changed": {}
-    },
-    "plugins": [],
-    "capabilities": [],
-    "preflight": {
-      "phase": "ready",
-      "at": 1790574156506,
-      "steps": [
-        {
-          "id": "cli",
-          "status": "ok",
-          "detail": "2.0.3"
-        },
-        {
-          "id": "bridge",
-          "status": "ok",
-          "detail": "Everything looks good!"
-        }
-      ],
-      "paths": {
-        "workbenchRoot": "/Users/you/.dsh/workbench",
-        "dshHome": "/Users/you/.dsh"
-      }
-    },
-    "faults": {},
-    "writes": {}
-  },
-  {
     "id": "market-checking",
     "label": "检测中",
-    "note": "能力读口不回：行上一直转圈",
+    "note": "能力读口不回：整页停在骨架屏，不会落成空态",
     "catalog": {
       "manifests": [
         {
@@ -974,8 +914,8 @@
   },
   {
     "id": "market-busy",
-    "label": "正在装",
-    "note": "点「安装」看这一屏（写请求会挂起）",
+    "label": "可安装 · 点安装看正在装",
+    "note": "写请求挂起：行上给正在装与取消",
     "catalog": {
       "manifests": [
         {
@@ -1075,8 +1015,8 @@
   },
   {
     "id": "market-confirm",
-    "label": "等确认卸载",
-    "note": "点「卸载」看确认卡（这一步是客户端状态）",
+    "label": "已装 · 点卸载看确认",
+    "note": "先弹确认，不直接删",
     "catalog": {
       "manifests": [
         {
@@ -1172,8 +1112,8 @@
   },
   {
     "id": "market-failed",
-    "label": "失败（红字贴行）",
-    "note": "点「卸载」，写请求回失败",
+    "label": "已装 · 点卸载看失败",
+    "note": "写请求回失败，红字贴行",
     "catalog": {
       "manifests": [
         {
@@ -1270,7 +1210,8 @@
         "kind": "fail",
         "status": 500,
         "code": "fixture",
-        "message": "没成功：命令失败（退出码 1）：夹具里的一条失败原因"
+        "message": "没成功：命令失败（退出码 1）：夹具里的一条失败原因",
+        "detail": "命令：pnpm remove @acme/fixture-argocd\n退出码：1\n输出：\nERR_PNPM_FIXTURE  夹具：卸载脚本失败\n宿主返回 HTTP 500"
       }
     }
   },
@@ -1457,7 +1398,7 @@
   },
   {
     "id": "market-long-error",
-    "label": "超长错误信息",
+    "label": "已装 · 点卸载看超长错误",
     "note": "失败卡里的长路径会不会溢出",
     "catalog": {
       "manifests": [
@@ -1558,117 +1499,6 @@
         "message": "没成功：命令失败（退出码 1）：Error: EPERM: operation not permitted, unlink '/Users/someone/.dsh/workbench/opencli/home/.opencli/plugins/acme-permission-copy-with-a-very-long-directory-name'"
       }
     }
-  },
-  {
-    "id": "market-two-deps",
-    "label": "两份依赖（只装缺的）",
-    "note": "两条 need：一条好、一条缺",
-    "catalog": {
-      "manifests": [
-        {
-          "id": "fixture-argocd",
-          "titleKey": "fixture-argocd.title",
-          "card": {
-            "order": 10
-          },
-          "tools": [],
-          "host": {
-            "inject": []
-          },
-          "needs": [
-            {
-              "kind": "extension",
-              "runtime": "opencli",
-              "name": "fixture",
-              "commands": [
-                "x"
-              ],
-              "purpose": "夹具",
-              "sources": [
-                {
-                  "kind": "npm",
-                  "package": "acme-plugin-fixture"
-                }
-              ]
-            },
-            {
-              "kind": "extension",
-              "runtime": "opencli",
-              "name": "fixture-second",
-              "commands": [
-                "y"
-              ],
-              "purpose": "夹具"
-            }
-          ]
-        }
-      ],
-      "installable": [
-        "fixture-argocd"
-      ],
-      "refusals": []
-    },
-    "modules": [],
-    "workbench": {
-      "pkg": "@dsh-workbench/core",
-      "installed": "1.5.6"
-    },
-    "panels": {
-      "units": [],
-      "plugins": [],
-      "defaults": [],
-      "own": false,
-      "changed": {}
-    },
-    "plugins": [],
-    "capabilities": [
-      {
-        "unit": "fixture-argocd",
-        "status": "missing",
-        "needs": [
-          {
-            "id": "extension:fixture",
-            "kind": "extension",
-            "name": "fixture",
-            "status": "ok",
-            "detail": "夹具"
-          },
-          {
-            "id": "extension:fixture-second",
-            "kind": "extension",
-            "name": "fixture-second",
-            "status": "missing",
-            "detail": "夹具",
-            "missing": [
-              "y"
-            ],
-            "provision": "ready"
-          }
-        ]
-      }
-    ],
-    "preflight": {
-      "phase": "ready",
-      "at": 1790574156506,
-      "steps": [
-        {
-          "id": "cli",
-          "status": "ok",
-          "detail": "2.0.3"
-        },
-        {
-          "id": "bridge",
-          "status": "ok",
-          "detail": "Everything looks good!"
-        }
-      ],
-      "paths": {
-        "workbenchRoot": "/Users/you/.dsh/workbench",
-        "dshHome": "/Users/you/.dsh"
-      }
-    },
-    "faults": {},
-    "writes": {}
   },
   {
     "id": "market-many",
@@ -2503,113 +2333,6 @@
     "writes": {}
   },
   {
-    "id": "market-first-paint",
-    "label": "刚进页面（检测中）",
-    "note": "能力与本机清单都还没结论：整页「检测中」",
-    "catalog": {
-      "manifests": [
-        {
-          "id": "fixture-argocd",
-          "titleKey": "fixture-argocd.title",
-          "card": {
-            "order": 10
-          },
-          "tools": [],
-          "host": {
-            "inject": []
-          }
-        }
-      ],
-      "installable": [
-        "fixture-argocd"
-      ],
-      "refusals": []
-    },
-    "modules": [
-      {
-        "unit": "fixture-argocd",
-        "pkg": "@acme/fixture-argocd",
-        "title": {
-          "zh": "argocd",
-          "en": "argocd"
-        },
-        "installed": "1.1.10",
-        "manifest": {
-          "id": "fixture-argocd",
-          "titleKey": "fixture-argocd.title",
-          "card": {
-            "order": 10
-          },
-          "tools": [],
-          "host": {
-            "inject": []
-          }
-        },
-        "packageModule": true,
-        "installable": true
-      }
-    ],
-    "workbench": {
-      "pkg": "@dsh-workbench/core",
-      "installed": "1.5.6"
-    },
-    "panels": {
-      "units": [],
-      "plugins": [],
-      "defaults": [],
-      "own": false,
-      "changed": {}
-    },
-    "plugins": [],
-    "capabilities": [
-      {
-        "unit": "fixture-argocd",
-        "status": "ok",
-        "needs": [
-          {
-            "id": "extension:fixture",
-            "kind": "extension",
-            "name": "fixture",
-            "status": "ok",
-            "detail": "夹具"
-          }
-        ]
-      }
-    ],
-    "preflight": {
-      "phase": "ready",
-      "at": 1790574156506,
-      "steps": [
-        {
-          "id": "cli",
-          "status": "ok",
-          "detail": "2.0.3"
-        },
-        {
-          "id": "bridge",
-          "status": "ok",
-          "detail": "Everything looks good!"
-        }
-      ],
-      "paths": {
-        "workbenchRoot": "/Users/you/.dsh/workbench",
-        "dshHome": "/Users/you/.dsh"
-      }
-    },
-    "faults": {
-      "capability": {
-        "kind": "hang"
-      },
-      "module-versions": {
-        "kind": "hang"
-      },
-      "panels/market-installed": {
-        "kind": "hang"
-      }
-    },
-    "writes": {}
-  },
-  {
     "id": "market-unreadable",
     "label": "有模块读不出来",
     "note": "三份坏模块：段头挂徽标",
@@ -2713,16 +2436,6 @@
       }
     },
     "faults": {
-      "module-versions": {
-        "kind": "envelope",
-        "body": {
-          "ok": false,
-          "error": {
-            "code": "read",
-            "message": "安装清单没读出来（假宿主）"
-          }
-        }
-      },
       "panels/market-installed": {
         "kind": "envelope",
         "body": {
@@ -3195,8 +2908,8 @@
   },
   {
     "id": "market-workbench-migrating",
-    "label": "工作台：迁移中",
-    "note": "点「迁移」看行内转圈、按钮禁用",
+    "label": "工作台迁移 · 点迁移看进度",
+    "note": "行内转圈、按钮禁用",
     "catalog": {
       "manifests": [],
       "installable": [],

@@ -73,13 +73,13 @@ export function FailureCard({
         <p className={model.tone === 'alert' ? styles.factAlert : styles.fact}>{model.fact}</p>
       )}
       <div className={styles.actions}>
-        {extras?.actionFirst === true ? retry : null}
+        {extras?.actionFirst === true && extras?.hideRetry !== true ? retry : null}
         {fix === '' ? null : (
           <Button type="button" size="sm" variant="ghost" onClick={() => onCopy('fix', fix)}>
             {copied === 'fix' ? t('panels.market.failure.copied') : model.fixLabel}
           </Button>
         )}
-        {extras?.actionFirst === true ? null : retry}
+        {extras?.actionFirst === true || extras?.hideRetry === true ? null : retry}
         {askAgent === '' ? null : (
           <Button type="button" size="sm" variant="ghost" onClick={() => onCopy('agent', askAgent)}>
             {copied === 'agent' ? t('askAgent.copied') : t('askAgent.copy')}

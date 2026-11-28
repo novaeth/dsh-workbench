@@ -336,7 +336,9 @@ function noteOf(
     const source = need?.kind === 'extension' ? need.sources?.find((item) => envNameOf(item) !== '') : undefined;
     return { key: 'panels.market.needEnv', params: { env: envNameOf(source) } };
   }
-  if (problem.provision === 'not-declared') return { key: 'panels.market.noSource', params: {} };
+  if (problem.provision === 'not-declared') {
+    return { key: 'panels.market.noSourceNeed', params: { need: problem.name } };
+  }
   if (problem.provision === 'malformed') return { key: 'panels.market.badSource', params: {} };
   return undefined;
 }
@@ -429,6 +431,9 @@ export function marketRows(
     const capability = capabilities?.[manifest.id];
     const install = capability?.needs.some((need) => need.provision === 'ready') === true;
     const installDeclared = capability?.needs.some((need) => need.provision !== undefined) === true;
+    const undeclared = capability?.needs.find(
+      (need) => need.provision === 'not-declared' && (need.kind === 'extension' || need.kind === 'lib'),
+    );
     const entry = updates[manifest.id];
     const local = entry?.local === true;
     const state: MarketState =
@@ -482,6 +487,11 @@ export function marketRows(
       id: manifest.id,
       titleKey: manifest.titleKey,
       state: shown,
+      ...(entry === undefined && shown === 'missing'
+        ? install === false && undeclared !== undefined
+          ? { stateKey: 'panels.market.cannotInstall' }
+          : { stateKey: 'panels.market.notInstalled' }
+        : {}),
       canInstall: !depsOnly && !builtinBroken && state !== 'installed' && (install || reAdopt),
       canUpdate: onMachine && isOutdated(capability),
       canUninstall: entry !== undefined || isOnMachine(state),

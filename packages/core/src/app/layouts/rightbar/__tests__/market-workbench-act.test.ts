@@ -305,7 +305,12 @@ describe('工作台自己那一行的更新：只走三拍，不额外加话', (
     await act('workbench', 'update-workbench');
 
     expect(seen.held.at(-1)).toBeUndefined();
-    expect(seen.failed.at(-1)).toEqual({ id: 'workbench', message: 'panels.market.failed' });
+    expect(seen.failed.at(-1)).toEqual({
+      id: 'workbench',
+      action: 'update-workbench',
+      retry: 'update-workbench',
+      message: 'panels.market.failed',
+    });
   });
 });
 

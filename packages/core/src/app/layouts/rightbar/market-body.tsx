@@ -64,28 +64,31 @@ export function MarketBody({
   } as const;
   return (
     <>
-      {listCard === undefined ? (
-        notice === null ? null : <div className={styles.marketNote}>{notice}</div>
-      ) : (
-        <div className={styles.marketFailureSeat}>
-          <FailureCard t={t} model={listCard} extras={listCard} onRecheck={onRecheck} rechecking={rechecking} />
-        </div>
-      )}
+      {listCard === undefined && notice !== null ? (
+        <div className={styles.marketNote}>{notice}</div>
+      ) : null}
       {readStale ? <div className={styles.marketNote}>{t('panels.staleNote')}</div> : null}
       <MarketSection {...common} rows={self === undefined ? [] : [self]} />
       {self === undefined ? null : (
         <div className={styles.marketSelfDivider} aria-hidden="true" />
       )}
-      <MarketSection
-        {...common}
-        titleKey="panels.market.sectionInstalled"
-        icon={marketSectionIcon('installed')}
-        rows={installedRows}
-        keepHead
-        titleNote={h(MarketUnreadableBadge, { t, rows: unreadable })}
-        headAction={checks.modules}
-      />
-      {installedRows.length === 0 ? (
+      {listCard === undefined ? null : (
+        <div className={styles.marketFailureSeat}>
+          <FailureCard t={t} model={listCard} extras={listCard} onRecheck={onRecheck} rechecking={rechecking} />
+        </div>
+      )}
+      {readFailure !== null && installedRows.length === 0 ? null : (
+        <MarketSection
+          {...common}
+          titleKey="panels.market.sectionInstalled"
+          icon={marketSectionIcon('installed')}
+          rows={installedRows}
+          keepHead
+          titleNote={h(MarketUnreadableBadge, { t, rows: unreadable })}
+          headAction={checks.modules}
+        />
+      )}
+      {installedRows.length === 0 && readFailure === null ? (
         <div className={styles.marketEmptyInline}>
           <MarketEmpty t={t} {...(onBuildModule === undefined ? {} : { onBuildModule })} />
         </div>

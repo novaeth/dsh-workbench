@@ -196,6 +196,10 @@ window.__ModuleLoader__.load({
           if (payload.ok !== true) throw new Error('切换失败');
           clearSceneParam();
           publish(sceneState.scenes, String(payload.scene), '');
+          if (typeof location !== 'undefined' && typeof location.reload === 'function') {
+            location.reload();
+            return payload;
+          }
           refreshFacts();
           return payload;
         });
@@ -267,17 +271,37 @@ window.__ModuleLoader__.load({
                     style: {
                       display: 'flex',
                       width: '100%',
+                      alignItems: 'flex-start',
                       justifyContent: 'flex-start',
+                      height: 'auto',
+                      paddingTop: '5px',
+                      paddingBottom: '5px',
                       paddingLeft: '26px',
                       ...(current ? { fontWeight: 600 } : {}),
                     },
+                    'data-current-scene': current ? '' : undefined,
                     onClick: function () { choose(scene.id); },
                   },
                   React.createElement(
                     'span',
-                    { style: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 } },
-                    current ? React.createElement(ui.IconCheckOutlineRegular, { size: 14 }) : null,
-                    React.createElement('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, scene.label),
+                    { style: { display: 'flex', alignItems: 'flex-start', gap: '6px', minWidth: 0, textAlign: 'left' } },
+                    current ? React.createElement(ui.IconCheckOutlineRegular, { size: 14, style: { flex: 'none', marginTop: '2px' } }) : null,
+                    React.createElement(
+                      'span',
+                      { style: { display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 } },
+                      React.createElement(
+                        'span',
+                        { style: { whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.35 } },
+                        scene.label,
+                      ),
+                      scene.note
+                        ? React.createElement(
+                            'span',
+                            { style: { opacity: 0.5, fontSize: 11, lineHeight: 1.35, whiteSpace: 'normal' } },
+                            scene.note,
+                          )
+                        : null,
+                    ),
                   ),
                 );
               })
@@ -298,6 +322,25 @@ window.__ModuleLoader__.load({
       var expanded = expandedState[0];
       var setExpanded = expandedState[1];
       var panelRef = React.useRef(null);
+      var contentRef = React.useRef(null);
+      var scrolledFor = React.useRef(null);
+
+      React.useEffect(function () {
+        if (rect === null) {
+          scrolledFor.current = null;
+          return undefined;
+        }
+        if (scrolledFor.current === rect) return undefined;
+        var box = contentRef.current;
+        var row = box === null ? null : box.querySelector('[data-current-scene]');
+        if (box === null || row === null) return undefined;
+        scrolledFor.current = rect;
+        var rowRect = row.getBoundingClientRect();
+        var boxRect = box.getBoundingClientRect();
+        var top = box.scrollTop + (rowRect.top - boxRect.top) - (box.clientHeight - rowRect.height) / 2;
+        box.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+        return undefined;
+      }, [rect, expanded, state.current, state.scenes]);
 
       React.useEffect(function () {
         if (sceneState.current === 'real') return;
@@ -383,7 +426,7 @@ window.__ModuleLoader__.load({
             React.createElement(ui.Button, { size: 'sm', variant: 'ghost', onClick: closeMenu }, '关闭'),
           ),
         ),
-        React.createElement('div', { style: { overflow: 'auto', padding: '0 8px 8px', flex: '1 1 auto', minHeight: 0 } }, menuChildren(state, choose, expanded, toggle)),
+        React.createElement('div', { ref: contentRef, style: { overflow: 'auto', padding: '0 8px 8px', flex: '1 1 auto', minHeight: 0 } }, menuChildren(state, choose, expanded, toggle)),
       );
       return ReactDOM.createPortal(panel, document.body);
     }
@@ -400,16 +443,25 @@ window.__ModuleLoader__.load({
       loadScenes();
       ctx.effect(
         function () {
-          return ctx.slots.inject('sidebar.panellist', function () {
+          var off = ctx.slots.subscribe('sidebar.panellist', syncRowHint);
+          var dispose = ctx.slots.inject('sidebar.panellist', function () {
             return ctx.slots.register(
               { name: 'sidebar.panellist', id: 'fixture-scenes', label: '调试场景', order: 20 },
               FixtureGlyph,
             );
           });
+          return function () {
+            off();
+            dispose();
+          };
         },
         'dev-fixtures: 场景入口',
       );
       setTimeout(syncRowHint, 0);
+      var hintTimer = setInterval(syncRowHint, 500);
+      ctx.effect(function () {
+        return function () { clearInterval(hintTimer); };
+      }, 'dev-fixtures: 行回显');
       ctx.effect(
         function () {
           return ctx.slots.inject('sidebar.footer.action', function () {

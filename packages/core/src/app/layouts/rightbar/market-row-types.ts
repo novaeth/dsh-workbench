@@ -15,7 +15,8 @@ export interface MarketFailure {
   readonly failure?: InstallFailure;
   readonly card?: FailureCardModel & FailureCardExtras;
   readonly action?: MarketRowAction;
-  readonly retry?: 'update-workbench';
+  readonly detail?: string;
+  readonly retry?: MarketRowAction;
   readonly pendingBuilds?: readonly string[];
 }
 
@@ -56,6 +57,7 @@ export interface MarketNote {
     | 'panels.market.needBinary'
     | 'panels.market.needLib'
     | 'panels.market.needBuiltinMissing'
+    | 'panels.market.noSourceNeed'
     | 'panels.market.moduleRefused'
     | 'panels.market.moduleRestartHint'
     | 'panels.market.pluginAlsoKnownAs'

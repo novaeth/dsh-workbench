@@ -12,11 +12,11 @@ dev 期 dsh 夹具插件。不发布。
 ## 场景
 
 src/host/scenes/ 按落点分四份：market / panel / add-module / boot-gate，
-共 104 个场景（由旧 dev-fixtures 反建）。scenes.ts 只负责拼起来变成 World；每屏都过 validateWorld。
+共 101 个场景（由旧 dev-fixtures 反建）。scenes.ts 只负责拼起来变成 World；每屏都过 validateWorld。
 
 ## 已知限制
 
-- core 的 /workbench/events 不能覆盖；dev client 包了一层 EventSource，切场景后推一帧新 epoch 让页面重读，不刷新页面；
+- core 的 /workbench/events 不能覆盖；浏览器里切场景成功后整页 reload，确保市场等 fact 缓存重新取数；非浏览器环境退回推一帧新 epoch；
 - prefs/panels 用更深的 exact 路径接管；prefs 其余键仍走真宿主。
 
 ## 命令

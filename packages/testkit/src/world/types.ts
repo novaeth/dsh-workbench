@@ -127,7 +127,7 @@ export type Faults = Readonly<Record<string, FaultMode>>;
 
 export type WriteMode =
   | { readonly kind: 'ok'; readonly facts?: readonly string[] }
-  | { readonly kind: 'fail'; readonly status?: number; readonly code: string; readonly message: string }
+  | { readonly kind: 'fail'; readonly status?: number; readonly code: string; readonly message: string; readonly detail?: string }
   | { readonly kind: 'hang' };
 
 export type Writes = Readonly<Record<string, WriteMode>>;

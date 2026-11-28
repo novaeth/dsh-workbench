@@ -146,7 +146,10 @@ export function marketActOf(options: MarketActOptions): MarketAct {
       seats.setHeld(undefined);
       seats.setFailed({
         id,
+        action,
+        retry: action,
         message: t('panels.market.failed', { reason: outcome.message }),
+        ...(outcome.detail === undefined ? {} : { detail: outcome.detail }),
         ...(outcome.failure === undefined ? {} : { failure: outcome.failure }),
         ...(outcome.pendingBuilds === undefined
           ? {}

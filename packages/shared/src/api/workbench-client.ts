@@ -89,6 +89,12 @@ export async function apiPost<T>(route: string, body: Record<string, unknown>): 
   });
 
   if (!response.ok) {
+    const text = await response.text();
+    const body = text.startsWith('{') ? (JSON.parse(text) as { readonly error?: ApiError }) : null;
+    const error = body?.error;
+    if (error !== undefined && typeof error.code === 'string' && typeof error.message === 'string') {
+      return { ok: false, error };
+    }
     return { ok: false, error: { code: 'http', message: `宿主返回 HTTP ${response.status}` } };
   }
 

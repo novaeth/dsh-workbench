@@ -1,7 +1,7 @@
 [
   {
     "id": "add-refused-invalid-spec",
-    "label": "添加模块：预检拒 / invalid-spec",
+    "label": "点添加模块 + 填包名 · 预检拒 / invalid-spec",
     "note": "输入框里填任意包名，预检回这一条",
     "catalog": {
       "manifests": [],
@@ -64,7 +64,7 @@
   },
   {
     "id": "add-refused-already-installed",
-    "label": "添加模块：预检拒 / already-installed",
+    "label": "点添加模块 + 填包名 · 预检拒 / already-installed",
     "note": "输入框里填任意包名，预检回这一条",
     "catalog": {
       "manifests": [],
@@ -127,7 +127,7 @@
   },
   {
     "id": "add-refused-not-found",
-    "label": "添加模块：预检拒 / not-found",
+    "label": "点添加模块 + 填包名 · 预检拒 / not-found",
     "note": "输入框里填任意包名，预检回这一条",
     "catalog": {
       "manifests": [],
@@ -190,7 +190,7 @@
   },
   {
     "id": "add-refused-not-a-package",
-    "label": "添加模块：预检拒 / not-a-package",
+    "label": "点添加模块 + 填包名 · 预检拒 / not-a-package",
     "note": "输入框里填任意包名，预检回这一条",
     "catalog": {
       "manifests": [],
@@ -253,7 +253,7 @@
   },
   {
     "id": "add-refused-not-a-bundle",
-    "label": "添加模块：预检拒 / not-a-bundle",
+    "label": "点添加模块 + 填包名 · 预检拒 / not-a-bundle",
     "note": "输入框里填任意包名，预检回这一条",
     "catalog": {
       "manifests": [],
@@ -316,7 +316,7 @@
   },
   {
     "id": "add-refused-not-a-module-or-plugin",
-    "label": "添加模块：预检拒 / not-a-module-or-plugin",
+    "label": "点添加模块 + 填包名 · 预检拒 / not-a-module-or-plugin",
     "note": "输入框里填任意包名，预检回这一条",
     "catalog": {
       "manifests": [],
@@ -379,7 +379,7 @@
   },
   {
     "id": "add-refused-not-a-workbench-module",
-    "label": "添加模块：预检拒 / not-a-workbench-module",
+    "label": "点添加模块 + 填包名 · 预检拒 / not-a-workbench-module",
     "note": "输入框里填任意包名，预检回这一条",
     "catalog": {
       "manifests": [],
@@ -442,7 +442,7 @@
   },
   {
     "id": "add-refused-module-builtin-missing",
-    "label": "添加模块：预检拒 / module-builtin-missing",
+    "label": "点添加模块 + 填包名 · 预检拒 / module-builtin-missing",
     "note": "输入框里填任意包名，预检回这一条",
     "catalog": {
       "manifests": [],
@@ -505,7 +505,7 @@
   },
   {
     "id": "add-refused-network",
-    "label": "添加模块：预检拒 / network",
+    "label": "点添加模块 + 填包名 · 预检拒 / network",
     "note": "输入框里填任意包名，预检回这一条",
     "catalog": {
       "manifests": [],
@@ -568,7 +568,7 @@
   },
   {
     "id": "add-refused-unknown",
-    "label": "添加模块：预检拒 / unknown",
+    "label": "点添加模块 + 填包名 · 预检拒 / unknown",
     "note": "输入框里填任意包名，预检回这一条",
     "catalog": {
       "manifests": [],
@@ -631,7 +631,7 @@
   },
   {
     "id": "add-preview",
-    "label": "添加模块：可装",
+    "label": "点添加模块 + 填包名 · 可装",
     "note": "输入框里填任意包名，预检通过",
     "catalog": {
       "manifests": [],
@@ -699,7 +699,7 @@
   },
   {
     "id": "add-preview-no-source",
-    "label": "添加模块：预览（问不出源）",
+    "label": "点添加模块 + 填包名 · 预览（问不出源）",
     "note": "来源那一格是空的",
     "catalog": {
       "manifests": [],
@@ -766,7 +766,7 @@
   },
   {
     "id": "add-preview-git",
-    "label": "添加模块：预览（Git 来源）",
+    "label": "点添加模块 + 填包名 · 预览（Git 来源）",
     "note": "repo / ref / 目录都写出来",
     "catalog": {
       "manifests": [],
@@ -837,7 +837,7 @@
   },
   {
     "id": "add-preview-plugin",
-    "label": "添加模块：预览（插件）",
+    "label": "点添加模块 + 填包名 · 预览（插件）",
     "note": "装的是运行时插件，不是工作台模块",
     "catalog": {
       "manifests": [],
@@ -902,8 +902,8 @@
   },
   {
     "id": "add-installing",
-    "label": "添加模块：正在安装（可取消）",
-    "note": "点「运行」开始装：写请求挂起；点取消回「已取消」",
+    "label": "点添加模块 + 运行 · 安装中（可取消）",
+    "note": "写请求挂起；点取消回「已取消」",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -970,7 +970,7 @@
   },
   {
     "id": "add-needs-approval",
-    "label": "添加模块：安装脚本待批",
+    "label": "点添加模块 + 运行 · 安装脚本待批",
     "note": "装载成功但被脚本审批拦住：给出待批的脚本",
     "catalog": {
       "manifests": [],
@@ -1038,7 +1038,7 @@
   },
   {
     "id": "add-failed-registry",
-    "label": "添加模块：失败 / 源上没有",
+    "label": "点添加模块 + 运行 · 失败 / 源上没有",
     "note": "失败卡写「源上没有」",
     "catalog": {
       "manifests": [],
@@ -1106,7 +1106,7 @@
   },
   {
     "id": "add-failed-pnpm",
-    "label": "添加模块：失败 / 执行出错",
+    "label": "点添加模块 + 运行 · 失败 / 执行出错",
     "note": "带一段原文",
     "catalog": {
       "manifests": [],
@@ -1174,7 +1174,7 @@
   },
   {
     "id": "add-failed-host",
-    "label": "添加模块：失败 / 宿主只回一句话",
+    "label": "点添加模块 + 运行 · 失败 / 宿主只回一句话",
     "note": "不是一个完整信封：界面仍要有一句人话",
     "catalog": {
       "manifests": [],
@@ -1249,7 +1249,7 @@
   },
   {
     "id": "add-done-applied",
-    "label": "添加模块：装好了（已生效）",
+    "label": "点添加模块 + 运行 · 装好了（已生效）",
     "note": "结果屏",
     "catalog": {
       "manifests": [],
@@ -1317,7 +1317,7 @@
   },
   {
     "id": "add-done-plugin",
-    "label": "添加模块：装好了（插件）",
+    "label": "点添加模块 + 运行 · 装好了（插件）",
     "note": "结果屏：插件行",
     "catalog": {
       "manifests": [],
@@ -1386,7 +1386,7 @@
   },
   {
     "id": "add-done-restart",
-    "label": "添加模块：装好了（要重启）",
+    "label": "点添加模块 + 运行 · 装好了（要重启）",
     "note": "说清是哪种：某个已装的包换了目录",
     "catalog": {
       "manifests": [],
@@ -1454,7 +1454,7 @@
   },
   {
     "id": "add-not-a-module",
-    "label": "添加模块：装进来的不是模块",
+    "label": "点添加模块 + 运行 · 装进来的不是模块",
     "note": "给「移除」与指路",
     "catalog": {
       "manifests": [],
@@ -1522,7 +1522,7 @@
   },
   {
     "id": "add-cancelled",
-    "label": "添加模块：已取消",
+    "label": "点添加模块 + 运行 + 取消 · 已取消",
     "note": "结果屏：这一趟取消了",
     "catalog": {
       "manifests": [],
@@ -1590,7 +1590,7 @@
   },
   {
     "id": "add-removed",
-    "label": "添加模块：移除掉了",
+    "label": "点添加模块 + 运行 + 移除 · 移除掉了",
     "note": "结果屏：不是模块的那一份被移除",
     "catalog": {
       "manifests": [],

@@ -82,7 +82,7 @@ export function MarketSceneView(props: MarketBodyProps & MarketSceneExtras) {
   }
   if (!settled || (settlingSize > 0 && shown.length === 0 && installedList.length === 0))
     return <MarketChecking t={t} />;
-  if (nothing) {
+  if (nothing && readFailure === null) {
     return (
       <>
         {h(MarketUnreadableBadge, { t, rows: unreadable })}

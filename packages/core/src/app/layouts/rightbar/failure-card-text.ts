@@ -21,6 +21,7 @@ export interface FailureCardExtras {
   readonly hideOutputLabel?: string | undefined;
   readonly showCommand?: boolean | undefined;
   readonly actionFirst?: boolean | undefined;
+  readonly hideRetry?: boolean | undefined;
 }
 
 const TITLE_KEY: Readonly<Record<InstallFailure['kind'], string>> = {

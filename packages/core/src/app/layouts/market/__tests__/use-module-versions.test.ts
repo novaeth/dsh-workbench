@@ -90,6 +90,38 @@ describe('版本读数在写完之后不许被旧的在飞读取盖回去', () =
   });
 });
 
+describe('读取失败', () => {
+  it('回 ok:false 时落 readFailure，不落成空态', async () => {
+    vi.mocked(readModuleVersions).mockResolvedValueOnce({
+      ok: false,
+      error: { code: 'read', message: '安装清单没读出来' },
+    });
+
+    await runInstalledRead();
+
+    expect(moduleVersionsValue().readFailure).toBe('安装清单没读出来');
+    expect(moduleVersionsValue().read).toBe(true);
+  });
+
+  it('本机清单读失败时保留版本与工作台，只标记 readFailure', async () => {
+    vi.mocked(readModuleVersions).mockResolvedValueOnce({
+      ok: true,
+      modules: [],
+      workbench: { pkg: '@dsh-workbench/core', installed: '1.5.6' },
+    });
+    vi.mocked(readMarketInstalled).mockResolvedValueOnce({
+      ok: false,
+      error: { code: 'read', message: '安装清单没读出来' },
+    });
+
+    await runInstalledRead();
+
+    expect(moduleVersionsValue().readFailure).toBe('安装清单没读出来');
+    expect(moduleVersionsValue().workbench?.installed).toBe('1.5.6');
+    expect(moduleVersionsValue().read).toBe(true);
+  });
+});
+
 describe('★ 检查更新的转圈要罩到读数落地', () => {
   it('起读就亮，落地才灭', async () => {
     const read = deferred<ApiResponse<ModuleVersionsPayload>>();

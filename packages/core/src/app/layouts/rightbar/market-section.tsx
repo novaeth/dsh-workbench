@@ -156,7 +156,29 @@ export function MarketRowFailure({
       </div>
     );
   }
-  return <div className={styles.marketFailure}>{failure.message}</div>;
+  return (
+    <div className={styles.marketFailureSeat}>
+      <FailureCard
+        t={t}
+        model={{
+          title: t('panels.market.failure.operation'),
+          fact: failure.message,
+          command: '',
+          output: failure.detail ?? '',
+          exitCode: null,
+          fixLabel: '',
+          fix: '',
+        }}
+        extras={{
+          hideRetry: true,
+          outputLabel: t('panels.market.failure.showDetail'),
+          hideOutputLabel: t('panels.market.failure.hideDetail'),
+        }}
+        onRecheck={onRecheck}
+        rechecking={rechecking}
+      />
+    </div>
+  );
 }
 
 function ActionLabel({
@@ -308,7 +330,7 @@ function MarketLine({
       : row.problem?.kind === 'reinstall'
         ? () => onAct('update-workbench')
         : onRecheck;
-  const failureAction = failure?.retry === 'update-workbench' ? () => onAct('update-workbench') : onRecheck;
+  const failureAction = failure?.retry === undefined ? onRecheck : () => onAct(failure.retry as MarketRowAction);
   return (
     <li className={styles.marketRow} data-open={clickable ? 'true' : undefined}>
       <span className={styles.marketIcon} aria-hidden="true">

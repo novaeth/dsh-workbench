@@ -89,7 +89,10 @@ export function createFixtureHost(
       return;
     }
     if (mode.kind === 'fail') {
-      sendJson(res, mode.status ?? 500, { ok: false, error: { code: mode.code, message: mode.message } });
+      sendJson(res, mode.status ?? 500, {
+        ok: false,
+        error: { code: mode.code, message: mode.message, ...(mode.detail === undefined ? {} : { detail: mode.detail }) },
+      });
       return;
     }
     log.bump(mode.facts ?? FACT_ROUTES);
@@ -169,7 +172,7 @@ export function createFixtureHost(
       sendJson(res, 200, {
         ok: true,
         current: current.id,
-        scenes: SCENES.map((scene) => ({ id: scene.id, label: scene.label })),
+        scenes: SCENES.map((scene) => ({ id: scene.id, label: scene.label, note: scene.note ?? '' })),
         routes: TAKEOVER_ROUTES,
         paths: TAKEOVER_ROUTES.map((item) => pathOf(item.route)),
       });

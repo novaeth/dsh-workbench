@@ -305,32 +305,41 @@ function runRead(run: ReadRun): Promise<void> {
   const pluginsTicket = tickets.get('plugins');
   const modulesCheckTicket = checkTickets.get('modules') ?? 0;
   const pluginsCheckTicket = checkTickets.get('plugins') ?? 0;
+  const publishReadFailure = (message: string): void => {
+    publish({
+      ...state,
+      read: true,
+      readFailure: message,
+      stale: moduleVersionsValue().modules !== null,
+      ...(check
+        ? {
+            modulesCheck: landed(
+              state.modulesCheck,
+              modulesCheckTicket,
+              checkSeq.modules,
+              false,
+              Date.now(),
+            ),
+          }
+        : {}),
+    });
+  };
   const modulesRead =
     modulesTicket === undefined
       ? null
       : readModulesOnce(run.force, check).then((response) => {
           if (dropped('modules', modulesTicket, modulesCheckTicket)) return;
           if (response === null) {
-            publish({
-              ...state,
-              readFailure: lastModulesFailure ?? '安装清单没读出来',
-              stale: moduleVersionsValue().modules !== null,
-              ...(check
-                ? {
-                    modulesCheck: landed(
-                      state.modulesCheck,
-                      modulesCheckTicket,
-                      checkSeq.modules,
-                      false,
-                      Date.now(),
-                    ),
-                  }
-                : {}),
-            });
+            publishReadFailure(lastModulesFailure ?? '安装清单没读出来');
             return;
           }
           const [modules, market] = response;
-          const payload = modules.ok === true ? modules : null;
+          const marketFailure = market.ok === true ? null : market.error.message;
+          if (modules.ok !== true) {
+            publishReadFailure(modules.error.message);
+            return;
+          }
+          const payload = modules;
           const listed =
             payload === null
               ? null
@@ -338,7 +347,7 @@ function runRead(run: ReadRun): Promise<void> {
           const shown = listed === null ? null : check ? listed : withPreviousLatest(listed, state.modules ?? []);
           publish({
             ...state,
-            readFailure: null,
+            readFailure: marketFailure,
             stale: payload === null && moduleVersionsValue().modules !== null,
             ...(check && market.ok === true ? { marketProblem: market.problem ?? null } : {}),
             unreadable: check ? (payload?.unreadable ?? []) : state.unreadable,

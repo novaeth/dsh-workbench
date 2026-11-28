@@ -131,6 +131,15 @@ describe('marketRows', () => {
     expect(marketActions(row as never)).toEqual(['uninstall']);
   });
 
+  it('未装时行上写「未安装」，不是「缺少依赖」', () => {
+    const row = marketRows([unit('issues')], missing({ provision: 'ready' }))[0];
+
+    expect(row?.state).toBe('missing');
+    expect(row?.canInstall).toBe(true);
+    expect(row?.stateKey).toBe('panels.market.notInstalled');
+    expect(row?.note).toBeUndefined();
+  });
+
   it('★ 缺的是机器上的二进制命令 → 状态 missing，note 指到那条命令，不给安装', () => {
     const gitops = binNeedOf('gitops');
     const row = marketRows(
@@ -213,9 +222,12 @@ describe('marketRows', () => {
       params: { env: 'DSH_WORKBENCH_DEMO_REGISTRY' },
     });
 
-    expect(marketRows([unit('issues')], missing({ provision: 'not-declared' }))[0]?.note?.key).toBe(
-      'panels.market.noSource',
-    );
+    const undeclared = marketRows([unit('issues')], missing({ provision: 'not-declared' }))[0];
+    expect(undeclared?.stateKey).toBe('panels.market.cannotInstall');
+    expect(undeclared?.note).toEqual({
+      key: 'panels.market.noSourceNeed',
+      params: { need: 'demo' },
+    });
     expect(marketRows([unit('issues')], missing({ provision: 'malformed' }))[0]?.note?.key).toBe(
       'panels.market.badSource',
     );
@@ -442,7 +454,7 @@ describe('checkingRows：装的过程中 / 刚装完那一下的读数缺口', (
       [unit('issues')],
       capsOf('issues', 'unchecked', [needStateOf(DEMO, 'unchecked', { provision: 'not-declared' })]),
     );
-    expect(rows[0]?.note?.key).toBe('panels.market.noSource');
+    expect(rows[0]?.note?.key).toBe('panels.market.noSourceNeed');
     expect(checkingRows(rows, scoped(['issues']))[0]?.note).toBeUndefined();
   });
 

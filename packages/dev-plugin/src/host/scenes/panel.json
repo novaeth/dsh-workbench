@@ -1,7 +1,7 @@
 [
   {
     "id": "panel-rows",
-    "label": "面板三行",
+    "label": "三行",
     "note": "两行开着、一行关着；开关与拖动都是真的",
     "catalog": {
       "manifests": [
@@ -120,7 +120,7 @@
   },
   {
     "id": "panel-one",
-    "label": "面板一行",
+    "label": "一行",
     "note": "一行：已启用、装好了",
     "catalog": {
       "manifests": [
@@ -193,7 +193,7 @@
   },
   {
     "id": "panel-off",
-    "label": "面板：已停用",
+    "label": "已停用",
     "note": "开关关着（行还在，卡片不上板）",
     "catalog": {
       "manifests": [
@@ -266,7 +266,7 @@
   },
   {
     "id": "panel-missing",
-    "label": "面板：没装好 → 不列",
+    "label": "没装好 → 不列",
     "note": "能力 missing：这一行不进列表（去市场装）",
     "catalog": {
       "manifests": [
@@ -339,7 +339,7 @@
   },
   {
     "id": "panel-outdated",
-    "label": "面板：缺命令 → 不列",
+    "label": "缺命令 → 不列",
     "note": "能力 outdated：同样不进列表",
     "catalog": {
       "manifests": [
@@ -412,7 +412,7 @@
   },
   {
     "id": "panel-unchecked",
-    "label": "面板：检测不了",
+    "label": "检测不了",
     "note": "能力 unchecked：行在、徽标说「检测不了」",
     "catalog": {
       "manifests": [
@@ -485,7 +485,7 @@
   },
   {
     "id": "panel-many",
-    "label": "面板：顺序与停用混着",
+    "label": "顺序与停用混着",
     "note": "三行：顺序 / 停用混着",
     "catalog": {
       "manifests": [
@@ -604,7 +604,7 @@
   },
   {
     "id": "panel-no-card",
-    "label": "面板：没看板的模块",
+    "label": "没看板的模块",
     "note": "也列出来、带「无看板」标签，开关照常能用",
     "catalog": {
       "manifests": [
@@ -677,7 +677,7 @@
   },
   {
     "id": "panel-long",
-    "label": "面板：超长模块名",
+    "label": "超长模块名",
     "note": "省略号与开关的位置",
     "catalog": {
       "manifests": [
@@ -750,7 +750,7 @@
   },
   {
     "id": "panel-hidden",
-    "label": "面板：卸载后不显示",
+    "label": "卸载后不显示",
     "note": "未启用 + 没装：配置里有、列表里不出现",
     "catalog": {
       "manifests": [
@@ -823,8 +823,8 @@
   },
   {
     "id": "panel-busy",
-    "label": "面板：正在改配置",
-    "note": "点开关看禁用（写请求会挂起）",
+    "label": "面板 · 点开关看改配置",
+    "note": "写请求挂起，开关禁用",
     "catalog": {
       "manifests": [
         {
@@ -900,8 +900,8 @@
   },
   {
     "id": "panel-failed",
-    "label": "面板：改配置失败",
-    "note": "点开关，写请求回失败（红字）",
+    "label": "面板 · 点开关看失败",
+    "note": "写请求回失败，红字",
     "catalog": {
       "manifests": [
         {
@@ -980,8 +980,8 @@
   },
   {
     "id": "panel-drag",
-    "label": "面板：拖动落点",
-    "note": "按住行拖起来看落点提示（客户端状态）",
+    "label": "面板 · 点住行拖看落点",
+    "note": "拖动时显示落点提示（客户端状态）",
     "catalog": {
       "manifests": [
         {
@@ -1053,7 +1053,7 @@
   },
   {
     "id": "panel-checking",
-    "label": "面板：还没探到",
+    "label": "还没探到",
     "note": "能力读口不回：没有徽标",
     "catalog": {
       "manifests": [
@@ -1124,7 +1124,7 @@
   },
   {
     "id": "panel-plugins",
-    "label": "面板插件行",
+    "label": "插件行",
     "note": "插件行：一条开着、一条关着",
     "catalog": {
       "manifests": [],
@@ -1183,7 +1183,7 @@
   },
   {
     "id": "panel-empty",
-    "label": "面板列表空",
+    "label": "列表空",
     "note": "一个模块都没开：空态与它的两条出路",
     "catalog": {
       "manifests": [],
@@ -1229,7 +1229,7 @@
   },
   {
     "id": "panel-unread",
-    "label": "面板配置还没读到",
+    "label": "配置还没读到",
     "note": "面板读口一直不回：看板说「正在读取」、列表不落空态",
     "catalog": {
       "manifests": [],

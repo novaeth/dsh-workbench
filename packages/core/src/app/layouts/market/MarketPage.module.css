@@ -254,13 +254,6 @@
   overflow-wrap: anywhere;
 }
 
-.marketFailure {
-  grid-column: 2 / -1;
-  font: var(--dsw-font-s-14);
-  color: var(--dsw-alias-state-error-primary);
-  overflow-wrap: anywhere;
-}
-
 .marketFailureSeat {
   position: relative;
   z-index: var(--wb-z-10);
