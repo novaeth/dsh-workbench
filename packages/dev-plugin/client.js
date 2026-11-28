@@ -140,9 +140,10 @@ window.__ModuleLoader__.load({
     }
 
     function grouped(scenes) {
-      var order = ['模块市场', '面板', '添加模块', '启动页', '通用', '其它'];
+      var order = ['模块市场', '面板', '添加模块', '启动页', '其它'];
       var buckets = {};
       scenes.forEach(function (scene) {
+        if (scene.id === 'real') return;
         var name = groupOf(scene.id);
         if (buckets[name] === undefined) buckets[name] = [];
         buckets[name].push(scene);
@@ -171,7 +172,7 @@ window.__ModuleLoader__.load({
           'margin-left:auto;opacity:.55;font-size:11px;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
         row.appendChild(hint);
       }
-      var text = groupOf(sceneState.current) + ' · ' + labelOf(sceneState.current);
+      var text = sceneState.current === 'real' ? '真宿主' : groupOf(sceneState.current) + ' · ' + labelOf(sceneState.current);
       if (hint.textContent !== text) hint.textContent = text;
       if (hint.title !== text) hint.title = text;
     }
@@ -332,9 +333,14 @@ window.__ModuleLoader__.load({
             'span',
             { style: { fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' } },
             '调试场景',
-            React.createElement('span', { style: { opacity: 0.45, fontWeight: 400, fontSize: 11 } }, groupOf(state.current)),
+            React.createElement('span', { style: { opacity: 0.45, fontWeight: 400, fontSize: 11 } }, state.current === 'real' ? '真宿主' : groupOf(state.current)),
           ),
-          React.createElement(ui.Button, { size: 'sm', variant: 'ghost', onClick: closeMenu }, '关闭'),
+          React.createElement(
+            'div',
+            { style: { display: 'flex', alignItems: 'center', gap: '4px' } },
+            React.createElement(ui.Button, { size: 'sm', variant: 'ghost', onClick: function () { choose('real'); } }, '重置'),
+            React.createElement(ui.Button, { size: 'sm', variant: 'ghost', onClick: closeMenu }, '关闭'),
+          ),
         ),
         React.createElement('div', { style: { overflow: 'auto', padding: '0 8px 8px', flex: '1 1 auto', minHeight: 0 } }, menuChildren(state, choose, expanded, toggle)),
       );
