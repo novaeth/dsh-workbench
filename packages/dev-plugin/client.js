@@ -251,7 +251,7 @@ window.__ModuleLoader__.load({
     }
 
     function FixtureGlyph(props) {
-      return React.createElement(ui.IconAppsAddOutlineRegular, { size: props.size ?? 16 });
+      return React.createElement(ui.IconInspectOutlineRegular, { size: props.size ?? 16 });
     }
 
     wrapEventSource();
@@ -263,7 +263,7 @@ window.__ModuleLoader__.load({
         ctx.effect(
           function () {
             var entry = ctx.slots.register(
-              { name: 'sidebar.panellist', id: 'fixture-scenes', label: '夹具场景', order: 20 },
+              { name: 'sidebar.panellist', id: 'fixture-scenes', label: '调试场景', order: 20 },
               FixtureGlyph,
             );
             var host = ctx.slots.register(
@@ -283,7 +283,7 @@ window.__ModuleLoader__.load({
           'click',
           function (event) {
             var row = event.target && event.target.closest ? event.target.closest('button') : null;
-            if (row === null || row.textContent.indexOf('夹具场景') !== 0) return;
+            if (row === null || row.textContent.indexOf('调试场景') !== 0) return;
             event.preventDefault();
             event.stopPropagation();
             window.dispatchEvent(new CustomEvent('dsh-wb-fixture-open', { detail: { anchor: row } }));
