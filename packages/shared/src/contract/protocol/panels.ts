@@ -11,6 +11,7 @@ export type PanelSource = 'default' | 'user';
 export interface PanelUnitView {
   readonly id: string;
   readonly titleKey: string;
+  readonly order?: number | undefined;
   readonly shown: boolean;
   readonly source: PanelSource;
   readonly hasCard: boolean;

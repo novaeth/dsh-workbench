@@ -33,6 +33,7 @@ export function MarketSceneView(props: MarketBodyProps & MarketSceneExtras) {
     nothing,
     settlingSize,
     onBack,
+    onBuildModule,
   } = props;
   if (detailShared !== undefined) {
     const sharedFailure = failed?.id === detailShared.id ? failed : null;
@@ -85,7 +86,7 @@ export function MarketSceneView(props: MarketBodyProps & MarketSceneExtras) {
     return (
       <>
         {h(MarketUnreadableBadge, { t, rows: unreadable })}
-        <MarketEmpty t={t} />
+        <MarketEmpty t={t} {...(onBuildModule === undefined ? {} : { onBuildModule })} />
       </>
     );
   }

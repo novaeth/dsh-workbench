@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "inspection": {
+    "status": "refused",
+    "problem": "already-installed",
+    "reason": "@dsh-workbench/module-hello is already installed"
+  }
+}

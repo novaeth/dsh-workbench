@@ -3,8 +3,13 @@ import type { ModuleBlocker, Translate } from '@dsh-workbench/shared';
 import { askAgentActionOf, blockerOfDiag, isDiagCode } from '@dsh-workbench/shared';
 import { BlockerState } from '@/shared/components/BlockerState';
 
-function fallbackOf(t: Translate, detail: string | null, code: string | null | undefined): ModuleBlocker {
-  const title = t('panels.boardReadFailed');
+function fallbackOf(
+  t: Translate,
+  detail: string | null,
+  code: string | null | undefined,
+  manifestsOnly: boolean,
+): ModuleBlocker {
+  const title = t(manifestsOnly ? 'panels.manifestsReadFailed' : 'panels.boardReadFailed');
   const reason = (detail ?? '')
     .split('\n')
     .map((one) => one.trim())
@@ -13,7 +18,7 @@ function fallbackOf(t: Translate, detail: string | null, code: string | null | u
     id: code ?? 'board-read-failed',
     severity: 'block',
     title,
-    hint: t('panels.boardReadFailedHint'),
+    hint: t(manifestsOnly ? 'panels.manifestsReadFailedHint' : 'panels.boardReadFailedHint'),
     ...(detail === null ? {} : { detail }),
     actions: [
       askAgentActionOf(t, {
@@ -31,17 +36,19 @@ export function BoardReadFailed({
   detail,
   code,
   busy,
+  manifestsOnly = false,
   onRetry,
 }: {
   readonly t: Translate;
   readonly detail: string | null;
   readonly code?: string | null | undefined;
   readonly busy?: boolean | undefined;
+  readonly manifestsOnly?: boolean | undefined;
   readonly onRetry: () => void;
 }) {
   const blocker: ModuleBlocker =
     code !== undefined && code !== null && isDiagCode(code)
       ? blockerOfDiag(code, t, detail)
-      : fallbackOf(t, detail, code);
+      : fallbackOf(t, detail, code, manifestsOnly);
   return <BlockerState blocker={blocker} t={t} busy={busy ?? false} onRetry={onRetry} />;
 }

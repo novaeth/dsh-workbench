@@ -16,6 +16,25 @@ export function diyStartOptions(workspaceId: string, workshopId: string | undefi
   return workshopId !== undefined && workshopId === workspaceId ? { agentPreset: DIY_PRESET_ID } : undefined;
 }
 
+export interface DiyDraftOptions {
+  readonly agentPreset?: string;
+  readonly prompt?: string;
+  readonly whenDraftExists?: 'replace';
+}
+
+export function diyDraftOptions(
+  workspaceId: string,
+  workshopId: string | undefined,
+  prompt: string | undefined,
+): DiyDraftOptions | undefined {
+  const preset = diyStartOptions(workspaceId, workshopId)?.agentPreset;
+  if (preset === undefined && prompt === undefined) return undefined;
+  return {
+    ...(preset === undefined ? {} : { agentPreset: preset }),
+    ...(prompt === undefined ? {} : { prompt, whenDraftExists: 'replace' as const }),
+  };
+}
+
 export function workshopPresetUpgrade(input: {
   readonly workshop: boolean;
   readonly blank: boolean;

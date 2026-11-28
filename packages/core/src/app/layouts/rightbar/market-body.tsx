@@ -1,5 +1,6 @@
 import { Fragment, createElement as h } from 'react';
 import { FailureCard } from './FailureCard';
+import { MarketEmpty } from './MarketStates';
 import type { MarketFailure, MarketRow, MarketRowAction } from './market-row-types';
 import type { MarketBodyExtras, MarketBodyProps } from './market-body-props';
 import { marketFootVisible } from './market-view-text';
@@ -37,6 +38,7 @@ export function MarketBody({
   rechecking,
   runtimePluginMarket,
   onOpenDetail,
+  onBuildModule,
 }: MarketBodyProps & MarketBodyExtras) {
   const failureOf = (id: string): MarketFailure | null => (failed?.id === id ? failed : null);
   const foot = marketFootVisible(shown, installedList);
@@ -44,6 +46,7 @@ export function MarketBody({
     marketOrder([...shown, ...installedList], (row) => marketRowTitle(row, t)),
   );
   const installed = sections.find((section) => section.id === 'installed');
+  const installedRows = installed?.rows ?? NO_ROWS;
   const pendingSection = sections.find((section) => section.id === 'not-installed');
   const listCard = readFailure === null ? undefined : listReadCardOf(t, readFailure);
   const common = {
@@ -77,11 +80,16 @@ export function MarketBody({
         {...common}
         titleKey="panels.market.sectionInstalled"
         icon={marketSectionIcon('installed')}
-        rows={installed?.rows ?? NO_ROWS}
+        rows={installedRows}
         keepHead
         titleNote={h(MarketUnreadableBadge, { t, rows: unreadable })}
         headAction={checks.modules}
       />
+      {installedRows.length === 0 ? (
+        <div className={styles.marketEmptyInline}>
+          <MarketEmpty t={t} {...(onBuildModule === undefined ? {} : { onBuildModule })} />
+        </div>
+      ) : null}
       {pendingSection === undefined ? null : (
         <MarketSection
           {...common}

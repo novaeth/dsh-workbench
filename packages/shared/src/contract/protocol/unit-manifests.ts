@@ -9,6 +9,7 @@ export interface UnitManifestRefusal {
 }
 
 export interface UnitManifestsPayload {
+  readonly ok?: true;
   readonly manifests: readonly UnitManifest[];
   readonly installable: readonly string[];
   readonly refusals?: readonly UnitManifestRefusal[];

@@ -1,0 +1,1663 @@
+[
+  {
+    "id": "add-refused-invalid-spec",
+    "label": "添加模块：预检拒 / invalid-spec",
+    "note": "输入框里填任意包名，预检回这一条",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "refused",
+          "problem": "invalid-spec",
+          "reason": "假宿主：invalid-spec"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-refused-already-installed",
+    "label": "添加模块：预检拒 / already-installed",
+    "note": "输入框里填任意包名，预检回这一条",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "refused",
+          "problem": "already-installed",
+          "reason": "假宿主：already-installed"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-refused-not-found",
+    "label": "添加模块：预检拒 / not-found",
+    "note": "输入框里填任意包名，预检回这一条",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "refused",
+          "problem": "not-found",
+          "reason": "假宿主：not-found"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-refused-not-a-package",
+    "label": "添加模块：预检拒 / not-a-package",
+    "note": "输入框里填任意包名，预检回这一条",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "refused",
+          "problem": "not-a-package",
+          "reason": "假宿主：not-a-package"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-refused-not-a-bundle",
+    "label": "添加模块：预检拒 / not-a-bundle",
+    "note": "输入框里填任意包名，预检回这一条",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "refused",
+          "problem": "not-a-bundle",
+          "reason": "假宿主：not-a-bundle"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-refused-not-a-module-or-plugin",
+    "label": "添加模块：预检拒 / not-a-module-or-plugin",
+    "note": "输入框里填任意包名，预检回这一条",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "refused",
+          "problem": "not-a-module-or-plugin",
+          "reason": "假宿主：not-a-module-or-plugin"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-refused-not-a-workbench-module",
+    "label": "添加模块：预检拒 / not-a-workbench-module",
+    "note": "输入框里填任意包名，预检回这一条",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "refused",
+          "problem": "not-a-workbench-module",
+          "reason": "假宿主：not-a-workbench-module"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-refused-module-builtin-missing",
+    "label": "添加模块：预检拒 / module-builtin-missing",
+    "note": "输入框里填任意包名，预检回这一条",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "refused",
+          "problem": "module-builtin-missing",
+          "reason": "假宿主：module-builtin-missing"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-refused-network",
+    "label": "添加模块：预检拒 / network",
+    "note": "输入框里填任意包名，预检回这一条",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "refused",
+          "problem": "network",
+          "reason": "假宿主：network"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-refused-unknown",
+    "label": "添加模块：预检拒 / unknown",
+    "note": "输入框里填任意包名，预检回这一条",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "refused",
+          "problem": "unknown",
+          "reason": "假宿主：unknown"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-preview",
+    "label": "添加模块：可装",
+    "note": "输入框里填任意包名，预检通过",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "accepted",
+          "kind": "registry",
+          "name": "@acme/module-hello",
+          "version": "0.1.2",
+          "description": "最小样本模块：一枚「你好」卡片",
+          "bundle": false,
+          "registry": null,
+          "host": "registry.npmjs.org"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-preview-no-source",
+    "label": "添加模块：预览（问不出源）",
+    "note": "来源那一格是空的",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "accepted",
+          "kind": "registry",
+          "name": "@acme/module-hello",
+          "version": "0.1.2",
+          "description": "最小样本模块：一枚「你好」卡片",
+          "bundle": false,
+          "registry": null
+        }
+      }
+    }
+  },
+  {
+    "id": "add-preview-git",
+    "label": "添加模块：预览（Git 来源）",
+    "note": "repo / ref / 目录都写出来",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "accepted",
+          "kind": "git",
+          "name": "@acme/module-wallet-details",
+          "version": "1.4.0",
+          "description": "钱包明细看板：按日汇总，点开看流水",
+          "bundle": false,
+          "registry": null,
+          "host": "git.example.com",
+          "origins": [
+            "git+ssh://git@git.example.com/acme/dsh-workbench-market.git#e87c7a16fa5&path:/artifacts/@acme/module-wallet-details"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "id": "add-preview-plugin",
+    "label": "添加模块：预览（插件）",
+    "note": "装的是运行时插件，不是工作台模块",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "plugin",
+          "pkg": "acme-plugin-dashboards",
+          "registry": null,
+          "pluginName": "dashboards",
+          "version": "1.0.16"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-installing",
+    "label": "添加模块：正在安装（可取消）",
+    "note": "点「运行」开始装：写请求挂起；点取消回「已取消」",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "accepted",
+          "kind": "registry",
+          "name": "@acme/module-hello",
+          "version": "0.1.2",
+          "description": "最小样本模块：一枚「你好」卡片",
+          "bundle": false,
+          "registry": null,
+          "host": "registry.npmjs.org"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-needs-approval",
+    "label": "添加模块：安装脚本待批",
+    "note": "装载成功但被脚本审批拦住：给出待批的脚本",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "accepted",
+          "kind": "registry",
+          "name": "@acme/module-hello",
+          "version": "0.1.2",
+          "description": "最小样本模块：一枚「你好」卡片",
+          "bundle": false,
+          "registry": null,
+          "host": "registry.npmjs.org"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-failed-registry",
+    "label": "添加模块：失败 / 源上没有",
+    "note": "失败卡写「源上没有」",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "accepted",
+          "kind": "registry",
+          "name": "@acme/module-hello",
+          "version": "0.1.2",
+          "description": "最小样本模块：一枚「你好」卡片",
+          "bundle": false,
+          "registry": null,
+          "host": "registry.npmjs.org"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-failed-pnpm",
+    "label": "添加模块：失败 / 执行出错",
+    "note": "带一段原文",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "accepted",
+          "kind": "registry",
+          "name": "@acme/module-hello",
+          "version": "0.1.2",
+          "description": "最小样本模块：一枚「你好」卡片",
+          "bundle": false,
+          "registry": null,
+          "host": "registry.npmjs.org"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-failed-host",
+    "label": "添加模块：失败 / 宿主只回一句话",
+    "note": "不是一个完整信封：界面仍要有一句人话",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {
+      "provision": {
+        "kind": "fail",
+        "status": 500,
+        "code": "fixture",
+        "message": "夹具失败"
+      }
+    },
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "accepted",
+          "kind": "registry",
+          "name": "@acme/module-hello",
+          "version": "0.1.2",
+          "description": "最小样本模块：一枚「你好」卡片",
+          "bundle": false,
+          "registry": null,
+          "host": "registry.npmjs.org"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-done-applied",
+    "label": "添加模块：装好了（已生效）",
+    "note": "结果屏",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "accepted",
+          "kind": "registry",
+          "name": "@acme/module-hello",
+          "version": "0.1.2",
+          "description": "最小样本模块：一枚「你好」卡片",
+          "bundle": false,
+          "registry": null,
+          "host": "registry.npmjs.org"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-done-plugin",
+    "label": "添加模块：装好了（插件）",
+    "note": "结果屏：插件行",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {
+      "provision": {
+        "kind": "ok"
+      }
+    },
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "plugin",
+          "pkg": "acme-plugin-inventory",
+          "registry": null,
+          "pluginName": "inventory",
+          "version": "1.0.16"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-done-restart",
+    "label": "添加模块：装好了（要重启）",
+    "note": "说清是哪种：某个已装的包换了目录",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "accepted",
+          "kind": "registry",
+          "name": "@acme/module-hello",
+          "version": "0.1.2",
+          "description": "最小样本模块：一枚「你好」卡片",
+          "bundle": false,
+          "registry": null,
+          "host": "registry.npmjs.org"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-not-a-module",
+    "label": "添加模块：装进来的不是模块",
+    "note": "给「移除」与指路",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "accepted",
+          "kind": "registry",
+          "name": "@acme/module-hello",
+          "version": "0.1.2",
+          "description": "最小样本模块：一枚「你好」卡片",
+          "bundle": false,
+          "registry": null,
+          "host": "registry.npmjs.org"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-cancelled",
+    "label": "添加模块：已取消",
+    "note": "结果屏：这一趟取消了",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {},
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "accepted",
+          "kind": "registry",
+          "name": "@acme/module-hello",
+          "version": "0.1.2",
+          "description": "最小样本模块：一枚「你好」卡片",
+          "bundle": false,
+          "registry": null,
+          "host": "registry.npmjs.org"
+        }
+      }
+    }
+  },
+  {
+    "id": "add-removed",
+    "label": "添加模块：移除掉了",
+    "note": "结果屏：不是模块的那一份被移除",
+    "catalog": {
+      "manifests": [],
+      "installable": [],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {
+      "provision": {
+        "kind": "ok"
+      }
+    },
+    "bundle": {
+      "registries": {
+        "available": true,
+        "registries": {
+          "registry": null,
+          "fallbackRegistries": [],
+          "resolved": null
+        }
+      },
+      "inspect": {
+        "inspection": {
+          "status": "accepted",
+          "kind": "registry",
+          "name": "@acme/module-hello",
+          "version": "0.1.2",
+          "description": "最小样本模块：一枚「你好」卡片",
+          "bundle": false,
+          "registry": null,
+          "host": "registry.npmjs.org"
+        }
+      }
+    }
+  }
+]

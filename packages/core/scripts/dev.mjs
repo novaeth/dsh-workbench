@@ -8,8 +8,11 @@ import { build } from 'vite';
 import { launcherInvocationOf, launcherPathOf, shellKindOf } from '@dsh-workbench/shared/host';
 
 const PKG = '@dsh-workbench/core';
+const DEV_PLUGIN = '@dsh-workbench/dev-plugin';
 
 const pkgRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const repoRoot = path.resolve(pkgRoot, '..', '..');
+const devPluginRoot = path.join(repoRoot, 'packages', 'dev-plugin');
 const bin = launcherPathOf(path.join(pkgRoot, 'bin'));
 
 function launcher(args) {
@@ -85,6 +88,40 @@ async function ensureProfile() {
   }
 }
 
+async function buildDevPlugin() {
+  for (const name of ['@dsh-workbench/testkit', DEV_PLUGIN]) {
+    const code = await exitCodeOf(
+      execa('pnpm', ['--filter', name, 'run', 'build'], { cwd: repoRoot, stdio: 'inherit', reject: false }),
+    );
+    if (code !== 0) {
+      console.error(`dev：${name} 构建失败（退出码 ${code}）`);
+      process.exit(code);
+    }
+  }
+}
+
+function ensureDevPlugin() {
+  const manifestPath = path.join(profileDir, 'package.json');
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  const bundles = manifest.dsh?.profile?.bundles;
+  if (!Array.isArray(bundles)) {
+    console.error('dev：profile 的 package.json 没有 dsh.profile.bundles —— 先跑一次 setup');
+    process.exit(1);
+  }
+  if (!bundles.includes(DEV_PLUGIN)) bundles.push(DEV_PLUGIN);
+  manifest.dependencies = { ...(manifest.dependencies ?? {}), [DEV_PLUGIN]: `link:${devPluginRoot}` };
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+  const link = path.join(profileDir, 'node_modules', '@dsh-workbench', 'dev-plugin');
+  fs.mkdirSync(path.dirname(link), { recursive: true });
+  try {
+    if (fs.lstatSync(link).isSymbolicLink()) fs.unlinkSync(link);
+  } catch {
+  }
+  if (!fs.existsSync(link)) fs.symlinkSync(devPluginRoot, link, 'junction');
+  console.log(`dev：夹具插件已挂进 profile（${DEV_PLUGIN}）`);
+}
+
 async function watchMode(mode) {
   const watcher = await build({ root: pkgRoot, mode, logLevel: 'info', build: { watch: {} } });
   watchers.push(watcher);
@@ -130,7 +167,8 @@ function shutdown(code) {
   for (const watcher of watchers) {
     try {
       watcher.close();
-    } catch {
+    } catch (error) {
+      console.warn('[dev] watcher 关闭失败，继续退出', error);
     }
   }
   app?.kill('SIGTERM');
@@ -145,7 +183,11 @@ process.on('SIGINT', () => {
 process.on('SIGTERM', () => shutdown(0));
 
 if (desktop) reportDesktopProfile();
-else await ensureProfile();
+else {
+  await ensureProfile();
+  await buildDevPlugin();
+  ensureDevPlugin();
+}
 
 function newestMtime(dir) {
   if (!fs.existsSync(dir)) return 0;

@@ -1,0 +1,6 @@
+{
+  "hostVersion": "1.5.6",
+  "dshVersion": "0.2.2-rc.5",
+  "capturedAt": "2026-11-28",
+  "source": "real host, profile fixture-real, modules: module-fixture + module-hello"
+}

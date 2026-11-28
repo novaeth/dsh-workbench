@@ -1,18 +1,35 @@
 import { createElement as h } from 'react';
 import type { Translate } from '@dsh-workbench/shared';
-import { EmptyIllustration } from '@dsh-workbench/shared';
+import { CenteredState, EmptyIllustration } from '@dsh-workbench/shared';
+import { Button } from '@deepseek-ai/dsh-client-ui-primitives';
 import { DiscoverSkeleton } from '../market/discover-states';
-import styles from '../market/MarketPage.module.css';
 
 export function MarketChecking({ t }: { readonly t: Translate }) {
   return <DiscoverSkeleton label={t('panels.market.checking')} />;
 }
 
-export function MarketEmpty({ t }: { readonly t: Translate }) {
+export function MarketEmpty({
+  t,
+  onBuildModule,
+}: {
+  readonly t: Translate;
+  readonly onBuildModule?: (() => void) | undefined;
+}) {
   return (
-    <div className={styles.marketEmpty}>
-      <EmptyIllustration />
-      <div className={styles.marketEmptyTitle}>{t('panels.market.empty')}</div>
-    </div>
+    <CenteredState
+      compact
+      icon={<EmptyIllustration size={72} />}
+      title={t('panels.market.emptyInstalled')}
+      hint={t('panels.market.emptyInstalledHint')}
+      {...(onBuildModule === undefined
+        ? {}
+        : {
+            action: (
+              <Button type="button" size="sm" variant="outline" onClick={onBuildModule}>
+                {t('panels.buildModule')}
+              </Button>
+            ),
+          })}
+    />
   );
 }

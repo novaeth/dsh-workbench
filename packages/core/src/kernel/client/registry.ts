@@ -21,6 +21,7 @@ export interface ClientUnitRegistry {
   setManifests(manifests: readonly UnitManifest[], installable?: readonly string[]): void;
   setManifestReadFailure(reason: string | null): void;
   manifestReadFailure(): string | null;
+  manifestsSettled(): boolean;
   readonly board: BoardRegistry;
   subscribe(listener: () => void): () => void;
   version(): number;
@@ -77,6 +78,7 @@ export function createClientUnitRegistry(
   let manifestsCache: readonly UnitManifest[] | undefined;
   let titleSignature = '';
   let manifestReadFailure: string | null = null;
+  let manifestsSettled = false;
 
   function titlesOf(manifests: readonly UnitManifest[]): string {
     return manifests
@@ -181,12 +183,17 @@ export function createClientUnitRegistry(
     installable: () => installableIds,
 
     setManifestReadFailure(reason) {
-      if (manifestReadFailure === reason) return;
+      const settledNow = manifestsSettled;
+      manifestsSettled = true;
+      if (manifestReadFailure === reason && settledNow) return;
       manifestReadFailure = reason;
       notify();
     },
     manifestReadFailure: () => manifestReadFailure,
+    manifestsSettled: () => manifestsSettled,
     setManifests(manifests, installable) {
+      const settledBefore = manifestsSettled;
+      manifestsSettled = true;
       known = new Map(manifests.map((manifest) => [manifest.id, manifest]));
       installableIds = installable === undefined ? null : new Set(installable);
       let changed = false;
@@ -210,7 +217,10 @@ export function createClientUnitRegistry(
         titleSignature = titles;
         changed = true;
       }
-      if (!changed) return;
+      if (!changed) {
+        if (!settledBefore) notify();
+        return;
+      }
       manifestsCache = undefined;
       notify();
     },

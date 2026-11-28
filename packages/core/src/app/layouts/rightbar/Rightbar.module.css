@@ -11,6 +11,24 @@
   z-index: var(--wb-z-40);
 }
 
+.readingRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wb-len-8);
+}
+
+.boardReadFailedSeat {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.boardReadFailedSeat > * {
+  width: 100%;
+}
+
 .panel[data-open] {
   visibility: visible;
 }

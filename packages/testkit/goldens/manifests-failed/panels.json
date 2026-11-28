@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "units": [
+    {
+      "id": "issues",
+      "titleKey": "issues.title",
+      "shown": true,
+      "source": "user",
+      "hasCard": false
+    }
+  ],
+  "plugins": [],
+  "defaults": [],
+  "own": false,
+  "changed": {}
+}

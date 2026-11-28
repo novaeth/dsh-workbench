@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "plugins": [
+    {
+      "pkg": "@fixture/notes",
+      "installed": "0.1.0",
+      "name": "notes"
+    }
+  ]
+}

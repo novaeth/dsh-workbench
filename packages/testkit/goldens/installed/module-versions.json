@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "modules": [
+    {
+      "unit": "issues",
+      "pkg": "@fixture/issues",
+      "installed": "0.1.0",
+      "title": {
+        "zh": "issues",
+        "en": "issues"
+      },
+      "latest": "0.2.0"
+    },
+    {
+      "unit": "builds",
+      "pkg": "@fixture/builds",
+      "installed": "0.1.0",
+      "title": {
+        "zh": "builds",
+        "en": "builds"
+      }
+    }
+  ],
+  "workbench": {
+    "pkg": "@dsh-workbench/core",
+    "installed": "1.5.6"
+  }
+}

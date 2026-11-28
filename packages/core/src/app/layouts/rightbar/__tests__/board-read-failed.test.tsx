@@ -24,6 +24,15 @@ describe('面板列读失败的阻断态', () => {
     expect(source).not.toBe(fallback);
   });
 
+  it('★ 清单读失败：标题说清单，不栽到「面板配置」上', () => {
+    const html = renderToStaticMarkup(
+      h(BoardReadFailed, { t, detail: '清单读不了', manifestsOnly: true, onRetry: () => undefined }),
+    );
+
+    expect(html).toContain('panels.manifestsReadFailed');
+    expect(html).not.toContain('panels.boardReadFailed');
+  });
+
   it('没有码时只放原因', () => {
     expect(() => renderToStaticMarkup(h(BoardReadFailed, { t, detail: '网络断了', onRetry: () => undefined }))).not.toThrow();
   });

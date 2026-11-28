@@ -1,26 +1,19 @@
 import { apiGet, factOfRoute } from '@dsh-workbench/shared';
-import { UNIT_MANIFESTS_ROUTE, type UnitManifestRefusal, type UnitManifestsPayload } from '@/kernel/contract/unit-manifests';
+import { UNIT_MANIFESTS_ROUTE, type UnitManifestsPayload } from '@/kernel/contract/unit-manifests';
 import { subscribeFactRevision } from '@/shared/hooks/use-facts';
 import type { ClientUnitRegistry } from '@/kernel/client/registry';
 
 export interface UnitManifestLoaderOptions {
   readonly subscribeFacts?: (fact: string, listener: () => void) => () => void;
-  readonly retryDelayMs?: number;
-  readonly maxRetries?: number;
 }
 
-const DEFAULT_RETRY_DELAY_MS = 1000;
-
-const MANIFESTS_GAVE_UP = '模块清单读了 30 次都没成功：面板会一直是空的，检查宿主日志';
-
-function hostRefusalOf(
-  rows: readonly UnitManifestRefusal[] | undefined,
-  unit: string,
-): UnitManifestRefusal | undefined {
-  return rows?.find((one) => one.unit === unit);
+function failureTextOf(response: unknown): string {
+  const error = (response as { readonly error?: { readonly message?: unknown } } | null)?.error;
+  const message = error?.message;
+  return typeof message === 'string' && message !== ''
+    ? message
+    : '模块清单没读出来（宿主没有返回清单）';
 }
-
-const DEFAULT_MAX_RETRIES = 30;
 
 export function createUnitManifestLoader(
   options: UnitManifestLoaderOptions = {},
@@ -28,10 +21,6 @@ export function createUnitManifestLoader(
   let inFlight = false;
   let queued = false;
   let watching = false;
-  let retries = 0;
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  const retryDelayMs = options.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS;
-  const maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
   const subscribeFacts = options.subscribeFacts ?? subscribeFactRevision;
 
   const load = async (registry: ClientUnitRegistry): Promise<void> => {
@@ -40,40 +29,21 @@ export function createUnitManifestLoader(
       return;
     }
     inFlight = true;
-    let settled = false;
     try {
-      let response: Awaited<ReturnType<typeof apiGet<UnitManifestsPayload>>> | null = null;
-      try {
-        response = await apiGet<UnitManifestsPayload>(UNIT_MANIFESTS_ROUTE);
-      } catch (error) {
-        registry.setManifestReadFailure(error instanceof Error ? error.message : String(error));
-      }
+      const response = await apiGet<UnitManifestsPayload>(UNIT_MANIFESTS_ROUTE);
       if (response?.ok === true && Array.isArray(response.manifests)) {
         registry.setManifests(
           response.manifests,
           Array.isArray(response.installable) ? response.installable : undefined,
         );
         registry.setManifestReadFailure(null);
-        const missing = registry.refusals().filter((item) => item.kind === 'no-manifest');
-        const explained =
-          response.refusals === undefined
-            ? []
-            : missing.filter((item) => hostRefusalOf(response.refusals, item.unit) !== undefined);
-        settled = missing.length === 0 || explained.length === missing.length;
+      } else {
+        registry.setManifestReadFailure(failureTextOf(response));
       }
+    } catch (error) {
+      registry.setManifestReadFailure(error instanceof Error ? error.message : String(error));
     } finally {
       inFlight = false;
-      if (settled) {
-        retries = 0;
-      } else if (retries < maxRetries && timer === null) {
-        retries += 1;
-        timer = setTimeout(() => {
-          timer = null;
-          void load(registry);
-        }, retryDelayMs);
-      } else if (retries >= maxRetries && !settled) {
-        registry.setManifestReadFailure(MANIFESTS_GAVE_UP);
-      }
       if (queued) {
         queued = false;
         void load(registry);
@@ -85,7 +55,6 @@ export function createUnitManifestLoader(
     if (!watching) {
       watching = true;
       subscribeFacts(factOfRoute(UNIT_MANIFESTS_ROUTE), () => {
-        retries = 0;
         void load(registry);
       });
     }

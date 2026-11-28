@@ -245,6 +245,7 @@ export interface MarketInstalledModule {
 }
 
 export interface MarketInstalledPayload {
+  readonly ok?: true;
   readonly modules: readonly MarketInstalledModule[];
   readonly problem?: DiscoverProblem;
 }

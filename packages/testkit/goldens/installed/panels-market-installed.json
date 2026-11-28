@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "modules": [
+    {
+      "pkg": "@fixture/issues",
+      "unit": "issues",
+      "version": "0.1.0",
+      "sourceId": "registry",
+      "sourceLabel": "registry",
+      "source": {
+        "type": "npm",
+        "registry": "https://registry.invalid/"
+      }
+    }
+  ]
+}

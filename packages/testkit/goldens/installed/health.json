@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "capabilities": {
+    "console": true,
+    "pluginMarket": true,
+    "browserBridge": true
+  }
+}

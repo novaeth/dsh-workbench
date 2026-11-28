@@ -4,6 +4,7 @@ import {
   WORKSHOP_PAST_TITLES,
   WORKSHOP_RELATIVE,
   WORKSHOP_TITLE,
+  diyDraftOptions,
   diyStartOptions,
   isWorkshopPath,
   workshopPresetUpgrade,
@@ -47,6 +48,29 @@ describe('diyStartOptions（新会话往哪儿落）', () => {
 
   it('工坊还没登记成工作区时不猜（工坊不在列表里 → 谁都当普通工作区）', () => {
     expect(diyStartOptions('w-diy', undefined)).toBeUndefined();
+  });
+});
+
+describe('diyDraftOptions（点「创建模块」跳过去时输入框里的示例）', () => {
+  it('★ 工坊里：preset 与示例提示词一起给（只给 preset 就丢了那句示例）', () => {
+    expect(diyDraftOptions('w-diy', 'w-diy', '创建一个模块')).toEqual({
+      agentPreset: DIY_PRESET_ID,
+      prompt: '创建一个模块',
+      whenDraftExists: 'replace',
+    });
+  });
+
+  it('普通工作区不套 preset，但示例提示词照给', () => {
+    expect(diyDraftOptions('w-app', 'w-diy', '创建一个模块')).toEqual({
+      prompt: '创建一个模块',
+      whenDraftExists: 'replace',
+    });
+  });
+
+  it('没有提示词时退回原来的 preset 行为（别把空串塞进输入框）', () => {
+    expect(diyDraftOptions('w-diy', 'w-diy', undefined)).toEqual({ agentPreset: DIY_PRESET_ID });
+    expect(diyDraftOptions('w-diy', 'w-diy', undefined)).not.toHaveProperty('whenDraftExists');
+    expect(diyDraftOptions('w-app', undefined, undefined)).toBeUndefined();
   });
 });
 

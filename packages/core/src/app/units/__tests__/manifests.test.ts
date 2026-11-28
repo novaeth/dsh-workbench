@@ -189,7 +189,7 @@ describe('createUnitManifestLoader', () => {
     expect(fetchState.manifestsCalls()).toBe(2);
   });
 
-  it('★ 宿主路由还没起（503）时自己重试，拿到清单就停', async () => {
+  it('★ 503 只打一次：失败就登记，不自己重试（用户点重试再读）', async () => {
     const { createUnitManifestLoader } = await import('../manifests');
     let calls = 0;
     vi.stubGlobal('fetch', (url: string) => {
@@ -197,21 +197,21 @@ describe('createUnitManifestLoader', () => {
         return Promise.resolve({ ok: false, status: 404, json: async () => ({ ok: false }) });
       }
       calls += 1;
-      if (calls < 3) return Promise.resolve({ ok: false, status: 503, json: async () => ({ ok: false }) });
       return Promise.resolve({
-        ok: true,
-        status: 200,
-        json: async () => ({ ok: true, manifests: [manifest('hello')] }),
+        ok: false,
+        status: 503,
+        json: async () => ({ ok: false, error: { code: 'busy', message: '宿主还没起来' } }),
       });
     });
     const { registry, written } = registrySpy();
-    const load = createUnitManifestLoader({ retryDelayMs: 0 });
+    const load = createUnitManifestLoader();
 
     load(registry);
     for (let round = 0; round < 6; round += 1) await flush();
 
-    expect(calls).toBe(3);
-    expect(written.map((items) => items.map((item) => item.id))).toEqual([['hello']]);
+    expect(calls).toBe(1);
+    expect(written).toEqual([]);
+    expect(registry.manifestReadFailure()).toContain('503');
   });
 
   it('★ 清单里还缺刚注册的 unit（读者先到）也会再读一次，卡片才挂得上', async () => {
@@ -227,7 +227,7 @@ describe('createUnitManifestLoader', () => {
       const manifests = calls === 1 ? [manifest('panels')] : [manifest('panels'), manifest('hello')];
       return Promise.resolve({ ok: true, status: 200, json: async () => ({ ok: true, manifests }) });
     });
-    const load = createUnitManifestLoader({ retryDelayMs: 0, maxRetries: 5 });
+    const load = createUnitManifestLoader();
     const units = createClientUnitRegistry({ onUnknownUnit: () => load(units) });
 
     load(units);
@@ -241,7 +241,7 @@ describe('createUnitManifestLoader', () => {
     warn.mockRestore();
   });
 
-  it('★ 重试有上限：一直 503 就停，不无限打宿主', async () => {
+  it('★ 一直 503 也不自己重试：只打一次', async () => {
     const { createUnitManifestLoader } = await import('../manifests');
     let calls = 0;
     vi.stubGlobal('fetch', (url: string) => {
@@ -252,15 +252,15 @@ describe('createUnitManifestLoader', () => {
       return Promise.resolve({ ok: false, status: 503, json: async () => ({ ok: false }) });
     });
     const { registry } = registrySpy();
-    const load = createUnitManifestLoader({ retryDelayMs: 0, maxRetries: 2 });
+    const load = createUnitManifestLoader();
 
     load(registry);
     for (let round = 0; round < 8; round += 1) await flush();
 
-    expect(calls).toBe(3);
+    expect(calls).toBe(1);
   });
 
-  it('★ 重试走到头还读不到：登记成"读失败了"，界面才分得清空态与故障', async () => {
+  it('★ 一次读不到就登记成"读失败了"，界面才分得清空态与故障', async () => {
     const { createUnitManifestLoader } = await import('../manifests');
     vi.stubGlobal('fetch', (url: string) => {
       if (!String(url).includes(UNIT_MANIFESTS_ROUTE)) {
@@ -269,7 +269,7 @@ describe('createUnitManifestLoader', () => {
       return Promise.resolve({ ok: false, status: 503, json: async () => ({ ok: false }) });
     });
     const { registry } = registrySpy();
-    const load = createUnitManifestLoader({ retryDelayMs: 0, maxRetries: 2 });
+    const load = createUnitManifestLoader();
 
     load(registry);
     for (let round = 0; round < 8; round += 1) await flush();
@@ -293,7 +293,11 @@ describe('createUnitManifestLoader', () => {
       });
     });
     const { registry } = registrySpy();
-    const load = createUnitManifestLoader({ retryDelayMs: 0, maxRetries: 3 });
+    const load = createUnitManifestLoader();
+
+    load(registry);
+    for (let round = 0; round < 8; round += 1) await flush();
+    expect(registry.manifestReadFailure()).not.toBeNull();
 
     load(registry);
     for (let round = 0; round < 8; round += 1) await flush();
@@ -347,7 +351,7 @@ describe('createUnitManifestLoader', () => {
         }),
       });
     });
-    const load = createUnitManifestLoader({ retryDelayMs: 0, maxRetries: 5 });
+    const load = createUnitManifestLoader();
     const units = createClientUnitRegistry({ onUnknownUnit: () => load(units) });
 
     load(units);
@@ -361,7 +365,7 @@ describe('createUnitManifestLoader', () => {
     warn.mockRestore();
   });
 
-  it('★ 老宿主不带拒绝理由：照旧重试到上限，报「读了 30 次」', async () => {
+  it('★ 清单缺刚注册的 unit：只补读一次，不报读失败', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { createUnitManifestLoader } = await import('../manifests');
     const { createClientUnitRegistry } = await import('@/kernel/client/registry');
@@ -377,7 +381,7 @@ describe('createUnitManifestLoader', () => {
         json: async () => ({ ok: true, manifests: [manifest('panels')] }),
       });
     });
-    const load = createUnitManifestLoader({ retryDelayMs: 0, maxRetries: 2 });
+    const load = createUnitManifestLoader();
     const units = createClientUnitRegistry({ onUnknownUnit: () => load(units) });
 
     load(units);
@@ -385,8 +389,8 @@ describe('createUnitManifestLoader', () => {
     units.register({ unit: 'ghost', card: () => null });
     for (let round = 0; round < 10; round += 1) await flush();
 
-    expect(units.manifestReadFailure()).toContain('模块清单读了 30 次都没成功');
-    expect(calls).toBeGreaterThan(1);
+    expect(units.manifestReadFailure()).toBeNull();
+    expect(calls).toBe(2);
     warn.mockRestore();
   });
 });

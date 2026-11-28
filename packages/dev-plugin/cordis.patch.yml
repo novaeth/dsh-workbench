@@ -1,0 +1,3 @@
+- insert:
+    - id: dev-fixtures
+      name: '@dsh-workbench/dev-plugin'

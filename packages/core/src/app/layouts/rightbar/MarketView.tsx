@@ -85,6 +85,7 @@ export interface MarketViewProps {
   readonly defaults?: readonly string[] | undefined;
   readonly changed?: Readonly<Record<string, number>> | undefined;
   readonly onDetailChange?: ((open: boolean) => void) | undefined;
+  readonly onBuildModule?: (() => void) | undefined;
 }
 
 
@@ -188,6 +189,7 @@ export function MarketView({
   defaults = [],
   changed = {},
   onDetailChange,
+  onBuildModule,
 }: MarketViewProps) {
   const { pending, setPending, confirming, setConfirming, failed, setFailed, notice, setNotice } =
     useMarketTransient({ onPending });
@@ -297,6 +299,7 @@ export function MarketView({
       settled={marketSettled(freshness, installedRead)}
       nothing={nothing}
       settlingSize={settling?.size ?? 0}
+      onBuildModule={onBuildModule}
       onBack={() => setDetailId(null)}
     />
   );

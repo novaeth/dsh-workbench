@@ -1,0 +1,34 @@
+{
+  "ok": true,
+  "units": [
+    {
+      "id": "issues",
+      "titleKey": "issues.title",
+      "shown": true,
+      "source": "user",
+      "hasCard": false
+    },
+    {
+      "id": "builds",
+      "titleKey": "builds.title",
+      "shown": false,
+      "source": "user",
+      "hasCard": false
+    }
+  ],
+  "plugins": [
+    {
+      "id": "plugin:@fixture/notes",
+      "pkg": "@fixture/notes",
+      "title": "notes",
+      "name": "notes",
+      "shown": true,
+      "source": "user"
+    }
+  ],
+  "defaults": [
+    "issues"
+  ],
+  "own": false,
+  "changed": {}
+}

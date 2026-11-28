@@ -26,40 +26,7 @@ function at(relativePath: string): string {
   return stageRoot === undefined ? join(PKG_ROOT, relativePath) : join(stageRoot, relativePath);
 }
 
-const release = process.env.WB_RELEASE === '1';
 const CLIENT_ENTRY = fileURLToPath(new URL('./src/app/client.tsx', import.meta.url));
-const DEV_FIXTURES_AUTO = fileURLToPath(new URL('../dev-fixtures/src/auto.ts', import.meta.url));
-const DEV_FIXTURES_UNITS = fileURLToPath(new URL('../dev-fixtures/src/units.tsx', import.meta.url));
-const DEV_FIXTURES_SPEC = '@dsh-workbench/dev-fixtures/auto';
-const DEV_FIXTURES_UNITS_SPEC = '@dsh-workbench/dev-fixtures/units';
-const UNITS_MODULE = fileURLToPath(new URL('./src/app/units/index.ts', import.meta.url));
-const UNITS_NEEDLE = 'const CLIENT_UNITS: readonly UnitClientFace[] = [];';
-
-function devFakeHost(): Plugin {
-  return {
-    name: 'dsh-workbench:dev-fake-host',
-    apply: 'build',
-    enforce: 'pre',
-    transform(code, id) {
-      if (release) return null;
-      if (id === CLIENT_ENTRY) {
-        return { code: `import '${DEV_FIXTURES_SPEC}';\n${code}`, map: null };
-      }
-      if (id === UNITS_MODULE && code.includes(UNITS_NEEDLE)) {
-        return {
-          code:
-            `import { registerDevFixtures } from '${DEV_FIXTURES_UNITS_SPEC}';\n` +
-            code.replace(
-              'export function assembleClientUnits(registry: { register(face: UnitClientFace): () => void }): void {',
-              'export function assembleClientUnits(registry: { register(face: UnitClientFace): () => void }): void {\n  registerDevFixtures(registry);',
-            ),
-          map: null,
-        };
-      }
-      return null;
-    },
-  };
-}
 export const PLUGIN_ID = '@dsh-workbench/core';
 
 function indent(text: string, spaces = 6): string {
@@ -163,16 +130,10 @@ function hostConfig() {
 function clientConfig() {
   return {
     resolve: {
-      alias: release
-        ? srcAlias
-        : {
-            ...srcAlias,
-            [DEV_FIXTURES_SPEC]: DEV_FIXTURES_AUTO,
-            [DEV_FIXTURES_UNITS_SPEC]: DEV_FIXTURES_UNITS,
-          },
+      alias: srcAlias,
     },
 
-    plugins: [devFakeHost(), moduleShell()],
+    plugins: [moduleShell()],
     esbuild: {
 
       jsx: 'transform' as const,

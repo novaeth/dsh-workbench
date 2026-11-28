@@ -53,3 +53,4 @@ packages/core/src.hidden/
 # 机器相关的 MCP 配置（含本机绝对路径）：不进仓库，各人自己填
 mcp/**/cordis.patch.yml
 .release-state.json
+.tmp-dsh/

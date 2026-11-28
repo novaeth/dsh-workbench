@@ -8,7 +8,7 @@ import type {
   Translate,
   WorkspaceSnapshot,
 } from '@dsh-workbench/shared';
-import { CardAnchor, CardBoundary, CenteredState } from '@dsh-workbench/shared';
+import { CardAnchor, CardBoundary, CenteredState, Spinner } from '@dsh-workbench/shared';
 import type { ModuleSummary, PanelStep, SuiteWorld } from '@dsh-workbench/shared';
 import { IconBrandMark } from '@dsh-workbench/shared';
 import { useCapabilityMap } from '@/shared/hooks/use-capability-gate';
@@ -16,6 +16,7 @@ import { useCapabilityMap } from '@/shared/hooks/use-capability-gate';
 import { Breadcrumbs, type StepTitleKeyOf } from './Breadcrumbs';
 import { publishBoardProbe, BOARD_PROBE_UNKNOWN } from './board-fact';
 import { BoardEmpty } from './BoardEmpty';
+import { boardEmptyVisible } from './board-plan';
 import { BoardReadFailed } from './BoardReadFailed';
 import { PanelModules } from './PanelModules';
 import { aggregateSummaries, selectBoardModules } from './board-selection';
@@ -46,8 +47,29 @@ export interface RightbarActions {
   openPanel: (step: PanelStep) => void;
   goToPanel: (index: number) => void;
   openMarket: () => void;
-  buildModule: () => void;
+  buildModule: (prompt?: string) => void;
+  reloadManifests: () => void;
   units: ClientUnitRegistry;
+}
+
+function ReadingState({
+  t,
+  textKey,
+}: {
+  readonly t: Translate;
+  readonly textKey: 'panels.reading' | 'panels.readingManifests';
+}) {
+  return (
+    <CenteredState
+      icon={null}
+      title={
+        <span className={styles.readingRow}>
+          <Spinner size={12} />
+          <TextShimmer active>{t(textKey)}</TextShimmer>
+        </span>
+      }
+    />
+  );
 }
 
 interface PanelHeaderProps {
@@ -158,6 +180,8 @@ function BoardContent({
   onCardFailure,
   buildModule,
   readFailed,
+  manifestsFailed,
+  manifestsSettled,
   readDetail,
   readCode,
   readStale,
@@ -176,14 +200,18 @@ function BoardContent({
   onSummary: (id: string, summary: ModuleSummary) => void;
   onOpenModules: () => void;
   onCardFailure: (unit: string, reason: string) => void;
-  buildModule: () => void;
+  buildModule: (prompt?: string) => void;
   readFailed: boolean;
+  manifestsFailed: boolean;
+  manifestsSettled: boolean;
   readDetail: string | null;
   readCode?: string | null | undefined;
   readStale?: boolean | undefined;
   onRetryRead: () => void;
   t: Translate;
 }) {
+  const buildModuleWithPrompt = useCallback((): void => buildModule(t('panels.createPrompt')), [buildModule, t]);
+
   if (top.kind !== 'board') {
     const owner = board.stepOwner(top.kind);
     if (owner === undefined) {
@@ -216,19 +244,30 @@ function BoardContent({
 
   return (
     <>
-      {plan.reading ? (
-        <CenteredState icon={null} title={<TextShimmer active>{t('panels.reading')}</TextShimmer>} />
+      {plan.reading ? <ReadingState t={t} textKey="panels.reading" /> : null}
+      {readFailed ? (
+        <div className={styles.boardReadFailedSeat}>
+          <BoardReadFailed
+            t={t}
+            detail={readDetail}
+            code={readCode}
+            manifestsOnly={manifestsFailed}
+            onRetry={onRetryRead}
+          />
+        </div>
       ) : null}
-      {readFailed ? <BoardReadFailed t={t} detail={readDetail} code={readCode} onRetry={onRetryRead} /> : null}
+      {!readFailed && !plan.reading && !manifestsSettled ? (
+        <ReadingState t={t} textKey="panels.readingManifests" />
+      ) : null}
       {readStale === true ? (
         <p className="wb-panelStale" role="note">
           {t('panels.staleNote')}
         </p>
       ) : null}
-      {plan.empty ? (
+      {boardEmptyVisible(plan, readFailed) && manifestsSettled ? (
         <BoardEmpty
           t={t}
-          onBuildModule={buildModule}
+          onBuildModule={buildModuleWithPrompt}
           onOpenModules={onOpenModules}
           onOpenMarket={onOpenMarket}
         />
@@ -250,7 +289,7 @@ function BoardContent({
 }
 
 export function Rightbar(props: RightbarProps) {
-  const { units, modules, manifests, titleKeyOf, state, sessions, workspaces, panelToken, refreshPanel, capabilities, board } = useRightbarWiring(props);
+  const { units, modules, manifests, titleKeyOf, state, sessions, workspaces, panelToken, refreshPanel, retryBoardRead, capabilities, board } = useRightbarWiring(props);
   const boardWorkspace = board.path;
   const panelRead = useEnabledUnitsState(panelToken, boardWorkspace);
   const panelBoard = panelRead.board;
@@ -263,6 +302,7 @@ export function Rightbar(props: RightbarProps) {
   const plan = planBoard({
     modules: visibleModules,
     configRead: panelBoard !== null,
+    configUnits: enabledUnits?.length ?? 0,
     configFailed: panelRead.failed,
   });
 
@@ -381,10 +421,12 @@ export function Rightbar(props: RightbarProps) {
           onCardFailure={onCardFailure}
           buildModule={props.buildModule}
           readFailed={plan.readFailed || units.manifestReadFailure() !== null}
-          readDetail={panelRead.detail ?? units.manifestReadFailure()}
+          manifestsFailed={units.manifestReadFailure() !== null}
+          manifestsSettled={units.manifestsSettled()}
+          readDetail={units.manifestReadFailure() ?? panelRead.detail}
           readCode={panelRead.code}
           readStale={panelRead.stale}
-          onRetryRead={refreshPanel}
+          onRetryRead={retryBoardRead}
           t={props.t}
         />
       </div>
@@ -408,7 +450,12 @@ function useRightbarWiring(props: RightbarProps) {
 
   const [panelToken, setPanelToken] = useState(0);
   const refreshPanel = useCallback(() => setPanelToken((value) => value + 1), []);
+  const reloadManifests = props.reloadManifests;
+  const retryBoardRead = useCallback((): void => {
+    refreshPanel();
+    reloadManifests();
+  }, [refreshPanel, reloadManifests]);
   const { capabilities } = useCapabilityMap(panelToken);
   const board = useBoardWorkspace(workspaces, sessions);
-  return { units, subscribeUnits, unitsRevision, modules, manifests, titleKeyOf, state, sessions, workspaces, panelToken, refreshPanel, capabilities, board };
+  return { units, subscribeUnits, unitsRevision, modules, manifests, titleKeyOf, state, sessions, workspaces, panelToken, refreshPanel, retryBoardRead, capabilities, board };
 }

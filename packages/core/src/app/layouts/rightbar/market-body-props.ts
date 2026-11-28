@@ -30,6 +30,7 @@ export interface MarketBodyProps {
 
 export interface MarketBodyExtras {
   readonly onOpenDetail?: ((id: string) => void) | undefined;
+  readonly onBuildModule?: (() => void) | undefined;
 }
 
 export interface MarketSceneExtras {
@@ -44,4 +45,5 @@ export interface MarketSceneExtras {
   readonly nothing: boolean;
   readonly settlingSize: number;
   readonly onBack: () => void;
+  readonly onBuildModule?: (() => void) | undefined;
 }

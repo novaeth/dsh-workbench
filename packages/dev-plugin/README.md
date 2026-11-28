@@ -1,0 +1,25 @@
+# @dsh-workbench/dev-plugin（私有）
+
+dev 期 dsh 夹具插件。不发布。
+
+## 它做什么
+
+- 宿主侧：用 dsh webServer 的 exact 路由接管 /workbench/api/* 里需要假的端点；
+  没接管的请求继续落到真工作台前缀处理器。
+- 浏览器侧：底部浮条选场景；场景写进 ?wbScene；「真实」把接管全部摘掉。
+- 默认不接管：dev 起来仍是真宿主；选场景才激活。
+
+## 场景
+
+src/host/scenes/ 按落点分四份：market / panel / add-module / boot-gate，
+共 104 个场景（由旧 dev-fixtures 反建）。scenes.ts 只负责拼起来变成 World；每屏都过 validateWorld。
+
+## 已知限制
+
+- core 已注册的 exact /workbench/events 无法被覆盖，切场景后浮条会 reload 一次；
+- prefs/panels 用更深的 exact 路径接管；prefs 其余键仍走真宿主。
+
+## 命令
+
+pnpm --filter @dsh-workbench/dev-plugin run build
+pnpm --filter @dsh-workbench/dev-plugin test

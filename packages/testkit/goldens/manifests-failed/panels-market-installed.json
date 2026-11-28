@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "modules": [
+    {
+      "pkg": "@fixture/issues",
+      "unit": "issues",
+      "version": "0.1.0",
+      "sourceId": "local",
+      "sourceLabel": "本机",
+      "source": {
+        "type": "npm"
+      }
+    }
+  ]
+}

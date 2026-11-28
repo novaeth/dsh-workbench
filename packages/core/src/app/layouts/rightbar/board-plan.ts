@@ -3,6 +3,7 @@ import type { BoardModule } from '@dsh-workbench/shared';
 export interface RealBoard {
   readonly modules: readonly BoardModule[];
   readonly configRead: boolean;
+  readonly configUnits?: number | undefined;
   readonly configFailed?: boolean | undefined;
 }
 
@@ -14,11 +15,15 @@ export interface BoardPlan {
   readonly detail: string | null;
 }
 
+export function boardEmptyVisible(plan: BoardPlan, readFailed: boolean): boolean {
+  return plan.empty && !readFailed;
+}
+
 export function planBoard(real: RealBoard): BoardPlan {
   const failed = real.configFailed === true;
   return {
     modules: real.modules.map((module) => ({ key: module.id, module })),
-    empty: !failed && real.configRead && real.modules.length === 0,
+    empty: !failed && real.configRead && (real.configUnits ?? real.modules.length) === 0,
     reading: !failed && !real.configRead,
     readFailed: failed,
     detail: null,

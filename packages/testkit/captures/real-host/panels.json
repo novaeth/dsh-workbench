@@ -1,0 +1,25 @@
+{
+  "ok": true,
+  "units": [
+    {
+      "id": "hello",
+      "titleKey": "dsh-workbench.unit.hello.title",
+      "order": 90,
+      "shown": false,
+      "source": "default",
+      "hasCard": true
+    },
+    {
+      "id": "fixture",
+      "titleKey": "dsh-workbench.unit.fixture.title",
+      "order": 91,
+      "shown": false,
+      "source": "default",
+      "hasCard": true
+    }
+  ],
+  "plugins": [],
+  "defaults": [],
+  "own": false,
+  "changed": {}
+}

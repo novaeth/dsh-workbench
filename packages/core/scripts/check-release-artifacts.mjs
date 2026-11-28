@@ -13,6 +13,9 @@ const SPEC_HINT = '内部设计记录';
 
 const MARKERS = [
   'dev-fixtures',
+  'dev-plugin',
+  'dsh-workbench/testkit',
+  '__fixture/',
   'wbScene',
   'wbHost',
   'wbMock',
@@ -30,6 +33,7 @@ const MARKERS_CI = ['mockstrip', 'wb-mock'];
 
 const FIXTURE_NAME_PATTERNS = [
   'dev/',
+  'dev-plugin',
   'dev-fixtures',
   'fixture-unit-mock',
   'board-mock',

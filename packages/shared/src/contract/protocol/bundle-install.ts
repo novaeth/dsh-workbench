@@ -331,6 +331,7 @@ export interface UnreadableModule {
 }
 
 export interface ModuleVersionsPayload {
+  readonly ok?: true;
   readonly modules: readonly ModuleVersion[];
   readonly unreadable?: readonly UnreadableModule[];
   readonly workbench?: WorkbenchVersion;

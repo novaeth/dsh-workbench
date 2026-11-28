@@ -194,8 +194,10 @@ module client
 | `packages/adapter-probe/` | preflight、探测、工具链、self-update | `@dsh-workbench/adapter-probe` |
 | `packages/adapters-default/` | 默认适配器集合 | `@dsh-workbench/adapters-default` |
 | `packages/adapters-chrome-mcp/` | 实验的第二份适配器集合（stdio + 仓内 stub MCP server） | 私有，不发布 |
-| `packages/adapter-fixture/` | 最小 `AdapterSet` 夹具，只给集成测试 | 私有，不发布 |
-| `packages/dev-fixtures/` | 开发夹具：dev 期假宿主与场景表，只在开发构建里注入 | 私有，不发布 |
+| `packages/adapter-fixture/` | 最小 `AdapterSet` 夹具，只给集成测试与 selfcheck | 私有，不发布 |
+| `packages/testkit/` | 测试工具包：World、投影、不变量、契约 golden、真实宿主 parity 捕获 | 私有，不发布 |
+| `packages/dev-plugin/` | dev 期 dsh 夹具插件：精确路由接管、控制面、changes、浮条 | 私有，不发布 |
+| `packages/module-fixture/` | 真实模块包样本（parity 用） | 私有，不发布 |
 | `packages/docs/` | 文档站，私有构建，不出货 | — |
 
 ### 1.1 依赖图
@@ -268,8 +270,8 @@ packages/core/src/
     styles/            令牌与全局样式
 ```
 
-**开发夹具不在这个树里**：它住在独立包 `packages/dev-fixtures/`（private）。只有开发构建才由
-`vite.config.ts` 把一条 import 注入产品入口；发布构建不注册，源码里没有引用。
+**开发夹具不在这个树里**：它住在独立包 `packages/dev-plugin/`（private），是一个 dsh 插件。
+宿主侧用精确路由盖住要假的端点，浏览器侧只挂浮条；产品源码与构建配置都不认识它，发布产物也不含它。
 
 `packages/core/src/adapters/` 和 `packages/core/src/units/` 不存在。
 适配器实现住 `packages/adapter-*`；`app/units` 是装配层，不是内核。
@@ -1158,9 +1160,9 @@ module 包 ──市场安装──► profile（普通依赖 + wb-<unit> 行）
 - 正式版本发布成功后自动部署文档站（`pnpm run deploy:docs` → `gh-pages`），预发布版跳过；
   部署失败不回滚已发布的包，`pnpm run release:resume` 重试文档部署与 git 收尾。
 - 发布产物零夹具：`check:release-artifacts` 扫 `WB_RELEASE=1` 的临时产物。
-- 开发夹具是**dev 期假宿主**：独立包 `packages/dev-fixtures/`（private）在浏览器与宿主之间接管 `fetch` / `changes` / 事件三条通道，
-  按场景表回宿主信封；只在开发构建里由 `vite.config.ts` 把一条 import 注入产品入口（`WB_RELEASE=1` 不注册），
-  产品源码零引用。`?wbMock=1` 打开，浮条选场景；「真实」透传给真宿主。
+- 开发夹具是**dev 期 dsh 插件**：独立包 `packages/dev-plugin/`（private）用 webServer 的精确路由接管读/写/控制端点，
+  按 World 回宿主信封；产品源码与构建配置零引用，发布产物不含它。浮条选场景，场景写进 `?wbScene`，默认仍是真宿主；
+  选「真实」把接管全部摘掉。
 
 ## 10. 门禁
 

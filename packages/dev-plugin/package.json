@@ -1,0 +1,46 @@
+{
+  "name": "@dsh-workbench/dev-plugin",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Dev-only dsh plugin that takes over selected workbench API routes with a fixture world; never shipped.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/host/plugin.ts",
+      "import": "./dist/host/index.js"
+    },
+    "./client": "./client.js"
+  },
+  "scripts": {
+    "build": "esbuild src/host/plugin.ts --bundle --format=esm --platform=node --outfile=dist/host/index.js --external:@dsh-workbench/shared --external:@dsh-workbench/testkit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --testTimeout=20000"
+  },
+  "dependencies": {
+    "@dsh-workbench/shared": "workspace:*",
+    "@dsh-workbench/testkit": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.2",
+    "@types/node": "^24.19.0"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": []
+    },
+    "bundle": {
+      "patch": [
+        "./cordis.patch.yml"
+      ]
+    }
+  },
+  "files": [
+    "dist",
+    "client.js",
+    "cordis.patch.yml"
+  ]
+}

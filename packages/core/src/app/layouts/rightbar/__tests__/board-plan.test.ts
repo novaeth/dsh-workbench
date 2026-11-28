@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { BoardModule } from '@dsh-workbench/shared';
-import { planBoard } from '../board-plan';
+import { boardEmptyVisible, planBoard } from '../board-plan';
 
 function module(id: string): BoardModule {
   return { id, titleKey: id, order: 1, View: () => null };
@@ -35,6 +35,12 @@ describe('planBoard', () => {
     expect(plan.reading).toBe(true);
   });
 
+  it('★ 配置里选了模块、但声明还没解析出来 → 不是空态（不能拿 0 张可画的卡当「没有模块」）', () => {
+    const plan = planBoard({ modules: [], configRead: true, configUnits: 2 });
+
+    expect(plan.empty).toBe(false);
+  });
+
   it('★ 读失败：别说空态、也别说在读，交给那张失败卡', () => {
     const plan = planBoard({ modules: [], configRead: false, configFailed: true });
 
@@ -42,6 +48,13 @@ describe('planBoard', () => {
     expect(plan.empty).toBe(false);
     expect(plan.reading).toBe(false);
     expect(plan.readFailed).toBe(true);
+  });
+
+  it('★ 清单读失败和空态不同时出现：失败卡在，就不摆「没有模块」', () => {
+    const empty = planBoard({ modules: [], configRead: true });
+
+    expect(boardEmptyVisible(empty, false)).toBe(true);
+    expect(boardEmptyVisible(empty, true)).toBe(false);
   });
 
   it('★ 「在读」与「空」永远不会同时出现（两种说法互斥）', () => {

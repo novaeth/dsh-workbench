@@ -17,7 +17,7 @@ import { registerDebugFooter } from '@/app/layouts/sidebar/debug-footer';
 import { clientSurface } from '@/shared/api/platform/client';
 import { registerWorkbenchSettings } from '@/app/layouts/workbench-settings/register';
 import { selectProject, selectedProjectId } from '@/app/layouts/project-selection';
-import { WORKSHOP_PAST_TITLES, WORKSHOP_TITLE, diyStartOptions, isWorkshopPath } from '@/shared/api/diy';
+import { WORKSHOP_PAST_TITLES, WORKSHOP_TITLE, diyDraftOptions, isWorkshopPath } from '@/shared/api/diy';
 import { installWorkshopPreset } from '@/app/layouts/sidebar/workshop-preset';
 import type { MessagesContribution } from '@dsh-workbench/shared';
 import { assembleClientUnits } from '@/app/units';
@@ -202,20 +202,20 @@ function mount(ctx: DshClientContext): void {
   const workshopWorkspace = () =>
     ctx.workspaces.list.getSnapshot().items.find((item) => isWorkshopPath(item.path));
 
-  const startSessionIn = (workspaceId: string): void => {
-    const options = diyStartOptions(workspaceId, workshopWorkspace()?.workspaceId);
+  const startSessionIn = (workspaceId: string, prompt?: string): void => {
+    const options = diyDraftOptions(workspaceId, workshopWorkspace()?.workspaceId, prompt);
     if (options === undefined) ctx.uiWorkspace.startSession(workspaceId as WorkspaceId);
     else ctx.uiWorkspace.startSession(workspaceId as WorkspaceId, options);
   };
 
-  const buildModule = (): void => {
+  const buildModule = (prompt?: string): void => {
     const workshop = workshopWorkspace();
     if (workshop === undefined) {
       console.warn('[dsh-workbench] 工坊还没登记成工作区 —— 重启一次工作台');
       return;
     }
     selectProject(workshop.workspaceId);
-    startSessionIn(workshop.workspaceId);
+    startSessionIn(workshop.workspaceId, prompt);
   };
 
   const layoutPanels = (ctx.layout as typeof ctx.layout & { readonly panels?: DshLayoutPanels }).panels;
@@ -250,6 +250,7 @@ function mount(ctx: DshClientContext): void {
     openPanel: (step: PanelStep) => store.open(step),
     goToPanel: (index: number) => store.goTo(index),
     buildModule,
+    reloadManifests: () => loadUnitManifests(units),
   };
   const rightbarHooks = { hooks: { rightbar: observable } };
 
@@ -411,7 +412,7 @@ function mount(ctx: DshClientContext): void {
     };
   }, 'dsh-workbench: 官方左栏选中的项目就是右栏的项目');
 
-  attemptEntry('market-panel', () => registerMarketPanel(ctx, units));
+  attemptEntry('market-panel', () => registerMarketPanel(ctx, units, buildModule));
   attemptEntry('market-auto-check', () => {
     ctx.effect(() => startMarketAutoCheck(), 'dsh-workbench: market auto check');
   });

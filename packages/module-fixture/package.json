@@ -1,0 +1,74 @@
+{
+  "name": "@dsh-workbench/module-fixture",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Private fixture module: a real workbench module package used by host parity checks; never shipped.",
+  "type": "module",
+  "exports": {
+    ".": "./dist/host.js",
+    "./client": "./client.js"
+  },
+  "files": [
+    "dist",
+    "client.js"
+  ],
+  "scripts": {
+    "build": "dsh-wb-module build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --testTimeout=20000",
+    "check": "dsh-wb-module check",
+    "selfcheck": "dsh-wb-module build && node scripts/smoke.mjs",
+    "arch": "node ../module-tools/bin/dsh-wb-module.mjs check --only arch",
+    "lint": "dsh-wb-module lint"
+  },
+  "dsh": {
+    "workbench": {
+      "apiVersion": 3,
+      "unit": "fixture",
+      "title": {
+        "zh": "夹具模块",
+        "en": "Fixture module"
+      },
+      "tools": [],
+      "host": {
+        "inject": [],
+        "writes": []
+      },
+      "card": {
+        "order": 91
+      }
+    },
+    "workbenchFaces": {
+      "host": "src/host.ts",
+      "client": "src/client.tsx"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@dsh-workbench/core"
+      ],
+      "external": [
+        "@dsh-workbench/core/client"
+      ]
+    }
+  },
+  "peerDependencies": {
+    "@dsh-workbench/core": "^1.0.0",
+    "react": "*"
+  },
+  "devDependencies": {
+    "@dsh-workbench/core": "workspace:*",
+    "@dsh-workbench/module-tools": "workspace:*",
+    "@types/node": "^24.19.0",
+    "esbuild": "^0.28.2",
+    "typescript": "5.9",
+    "vitest": "^5.0.2",
+    "react": "^19.3.1",
+    "@types/react": "^19.3.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  }
+}

@@ -268,11 +268,6 @@
   min-width: 0;
 }
 
-.marketEmpty {
-  padding: var(--wb-len-18) var(--wb-len-16);
-  text-align: center;
-}
-
 .marketPage {
   box-sizing: border-box;
   height: 100%;
@@ -371,18 +366,8 @@
   border-radius: var(--dsw-radius-md);
 }
 
-.marketEmpty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--wb-len-8);
-  padding: var(--wb-len-64) var(--wb-len-16);
-  text-align: center;
-}
-
-.marketEmptyTitle {
-  font: var(--dsw-font-base-strong-16);
-  color: var(--dsw-alias-label-primary);
+.marketEmptyInline {
+  padding-block: var(--wb-len-24);
 }
 
 .discoverPage {

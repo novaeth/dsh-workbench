@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "available": true,
+  "registries": {
+    "registry": null,
+    "fallbackRegistries": [
+      "https://registry.npmmirror.com/"
+    ],
+    "resolved": "https://registry.npmmirror.com/"
+  }
+}

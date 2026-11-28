@@ -1,0 +1,37 @@
+{
+  "ok": true,
+  "modules": [
+    {
+      "unit": "fixture",
+      "pkg": "@dsh-workbench/module-fixture",
+      "installed": "0.0.0",
+      "title": {
+        "zh": "夹具模块",
+        "en": "Fixture module"
+      },
+      "local": true,
+      "latestUnavailable": "local",
+      "spec": "link:<repo>/packages/module-fixture"
+    },
+    {
+      "unit": "hello",
+      "pkg": "@dsh-workbench/module-hello",
+      "installed": "1.5.6",
+      "title": {
+        "zh": "示例模块",
+        "en": "Sample module"
+      },
+      "local": true,
+      "latestUnavailable": "local",
+      "spec": "link:<repo>/packages/module-hello"
+    }
+  ],
+  "workbench": {
+    "pkg": "@dsh-workbench/core",
+    "installed": "1.5.6",
+    "running": "1.5.6",
+    "local": true,
+    "spec": "link:<repo>/packages/core",
+    "dshVersion": "0.2.2-rc.5"
+  }
+}

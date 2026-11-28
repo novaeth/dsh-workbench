@@ -19,6 +19,21 @@ function warnLines(spy: { mock: { calls: readonly (readonly unknown[])[] } }): s
   return spy.mock.calls.map((call) => String(call[0])).join('\n');
 }
 
+describe('manifestsSettled（清单读没读成）', () => {
+  it('★ 没读之前不算落定；读成（哪怕是空）或读失败都算落定', () => {
+    const fresh = createClientUnitRegistry();
+    expect(fresh.manifestsSettled()).toBe(false);
+
+    fresh.setManifests([]);
+    expect(fresh.manifestsSettled()).toBe(true);
+
+    const failed = createClientUnitRegistry();
+    failed.setManifestReadFailure('读不了');
+    expect(failed.manifestsSettled()).toBe(true);
+  });
+
+});
+
 describe('createClientUnitRegistry', () => {
   it('注册与注销都通知订阅者，版本号跟着走', () => {
     const registry = createClientUnitRegistry();
@@ -29,7 +44,7 @@ describe('createClientUnitRegistry', () => {
     const off = registry.register(face('inventory'));
     off();
 
-    expect(seen).toEqual([1, 2]);
+    expect(seen).toEqual([2, 3]);
     expect(registry.all()).toEqual([]);
     expect(registry.manifests()).toEqual([]);
   });
@@ -86,7 +101,7 @@ describe('createClientUnitRegistry', () => {
     off();
     off();
 
-    expect(seen).toEqual([2]);
+    expect(seen).toEqual([3]);
   });
 
   it('manifests 跟着注册表走，注销后不留缓存', () => {

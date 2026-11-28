@@ -1,0 +1,16 @@
+{
+  "phase": "ready",
+  "at": 0,
+  "steps": [
+    {
+      "id": "cli",
+      "status": "ok",
+      "detail": "2.0.3"
+    },
+    {
+      "id": "bridge",
+      "status": "ok",
+      "detail": "Everything looks good!"
+    }
+  ]
+}

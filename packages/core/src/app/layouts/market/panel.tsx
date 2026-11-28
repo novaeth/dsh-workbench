@@ -87,10 +87,12 @@ function MarketPanel({
   t,
   units,
   titleOf,
+  buildModule,
 }: {
   t: Translate;
   units: ClientUnitRegistry;
   titleOf: TitleResolve;
+  buildModule: (prompt?: string) => void;
 }) {
   const manifests = useLiveManifests(units);
   const installable = useInstallableUnits(units);
@@ -121,6 +123,7 @@ function MarketPanel({
   const { tab, setTab } = useMarketTab();
   const { installedDetailOpen, discoverDetailOpen, setInstalledDetailOpen, setDiscoverDetailOpen, installedPanel, discoverPanel, trackInstalledScroll, trackDiscoverScroll } = useMarketPanelScroll();
   const openAddModule = useCallback((): void => setAdding({ spec: '' }), []);
+  const onBuildModule = useCallback((): void => buildModule(t('panels.createPrompt')), [buildModule, t]);
 
   const updates = useMemo(() => marketUpdatesOf(modules), [modules]);
   const installed = modules === null ? undefined : withClientRefusals(modules, units.refusals());
@@ -190,6 +193,7 @@ function MarketPanel({
           installing={install.installing}
           defaults={machineBoard?.defaults ?? []}
           changed={machineBoard?.changed ?? {}}
+          onBuildModule={onBuildModule}
           onDetailChange={setInstalledDetailOpen}
         />
         <AddModuleDialog
@@ -220,7 +224,7 @@ function MarketPanel({
   );
 }
 
-export function registerMarketPanel(ctx: DshClientContext, units: ClientUnitRegistry): void {
+export function registerMarketPanel(ctx: DshClientContext, units: ClientUnitRegistry, buildModule: (prompt?: string) => void): void {
   const t = ctx.locale.bind(LOCALE_NS);
   const titleOf: TitleResolve = (title) =>
     title === undefined ? '' : (ctx.locale.resolveText?.({ zh: title.zh, en: title.en }) ?? title.zh);
@@ -240,7 +244,7 @@ export function registerMarketPanel(ctx: DshClientContext, units: ClientUnitRegi
 
   ctx.slots.inject('main', () =>
     ctx.slots.register(
-      { name: 'main', key: MARKET_PANEL_ID, locale: LOCALE_NS, inject: () => ({ units, titleOf }) },
+      { name: 'main', key: MARKET_PANEL_ID, locale: LOCALE_NS, inject: () => ({ units, titleOf, buildModule }) },
       MarketPanel,
     ),
   );

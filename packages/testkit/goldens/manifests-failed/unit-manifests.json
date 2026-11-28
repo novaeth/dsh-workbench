@@ -1,0 +1,18 @@
+{
+  "ok": true,
+  "manifests": [
+    {
+      "id": "issues",
+      "titleKey": "issues.title",
+      "card": null,
+      "tools": [],
+      "host": {
+        "inject": []
+      }
+    }
+  ],
+  "installable": [
+    "issues"
+  ],
+  "refusals": []
+}

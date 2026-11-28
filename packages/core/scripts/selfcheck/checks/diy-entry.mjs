@@ -115,7 +115,7 @@ export const checks = [
       report(
         '★ 落 DIY 模式只有一份实现（`diyStartOptions` 带 agentPreset），客户端一行都不许自己写 preset',
         startsAt >= 0 &&
-          startsBody.includes('diyStartOptions(') &&
+          startsBody.includes('diyDraftOptions(') &&
           startsBody.includes('ctx.uiWorkspace.startSession(') &&
           presetSites === 1 &&
           presetMentions === 0,
