@@ -1161,7 +1161,7 @@ module 包 ──市场安装──► profile（普通依赖 + wb-<unit> 行）
   部署失败不回滚已发布的包，`pnpm run release:resume` 重试文档部署与 git 收尾。
 - 发布产物零夹具：`check:release-artifacts` 扫 `WB_RELEASE=1` 的临时产物。
 - 开发夹具是**dev 期 dsh 插件**：独立包 `packages/dev-plugin/`（private）用 webServer 的精确路由接管读/写/控制端点，
-  按 World 回宿主信封；产品源码与构建配置零引用，发布产物不含它。浮条选场景，也可用 `?wbScene=…` 直接进某屏（应用后地址栏清掉，状态在服务端），默认仍是真宿主；
+  按 World 回宿主信封；产品源码与构建配置零引用，发布产物不含它。侧栏的「夹具场景」菜单按落点分组选场景，也可用 `?wbScene=…` 直接进某屏（应用后地址栏清掉，状态在服务端），默认仍是真宿主；
   选「真实」把接管全部摘掉。
 
 ## 10. 门禁
