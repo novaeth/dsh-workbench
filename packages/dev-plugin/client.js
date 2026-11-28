@@ -282,11 +282,11 @@ window.__ModuleLoader__.load({
         document.addEventListener(
           'click',
           function (event) {
-            var target = event.target && event.target.closest ? event.target.closest('[data-panel-id="fixture-scenes"]') : null;
-            if (target === null) return;
+            var row = event.target && event.target.closest ? event.target.closest('button') : null;
+            if (row === null || row.textContent.indexOf('夹具场景') !== 0) return;
             event.preventDefault();
             event.stopPropagation();
-            window.dispatchEvent(new CustomEvent('dsh-wb-fixture-open', { detail: { anchor: target } }));
+            window.dispatchEvent(new CustomEvent('dsh-wb-fixture-open', { detail: { anchor: row } }));
           },
           true,
         );

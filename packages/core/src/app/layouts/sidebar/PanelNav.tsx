@@ -37,7 +37,6 @@ export function PanelRow({
     <button
       type="button"
       className={cx('wb-panelRow', active && 'wb-panelActive')}
-      data-panel-id={id ?? undefined}
       aria-current={active ? 'page' : undefined}
       aria-label={name}
       onClick={() => onSelect(id)}
