@@ -1,8 +1,8 @@
 [
   {
     "id": "add-refused-invalid-spec",
-    "label": "点添加模块 + 填包名 · 预检拒 / invalid-spec",
-    "note": "输入框里填任意包名，预检回这一条",
+    "label": "填包名 · 预检拒绝（invalid-spec）",
+    "note": "预检拒绝原因：包名不是有效的包标识。界面停在输入步骤，不进入安装。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -64,8 +64,8 @@
   },
   {
     "id": "add-refused-already-installed",
-    "label": "点添加模块 + 填包名 · 预检拒 / already-installed",
-    "note": "输入框里填任意包名，预检回这一条",
+    "label": "填包名 · 预检拒绝（already-installed）",
+    "note": "预检拒绝原因：这个包已经安装。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -127,8 +127,8 @@
   },
   {
     "id": "add-refused-not-found",
-    "label": "点添加模块 + 填包名 · 预检拒 / not-found",
-    "note": "输入框里填任意包名，预检回这一条",
+    "label": "填包名 · 预检拒绝（not-found）",
+    "note": "预检拒绝原因：来源中没有这个包。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -190,8 +190,8 @@
   },
   {
     "id": "add-refused-not-a-package",
-    "label": "点添加模块 + 填包名 · 预检拒 / not-a-package",
-    "note": "输入框里填任意包名，预检回这一条",
+    "label": "填包名 · 预检拒绝（not-a-package）",
+    "note": "预检拒绝原因：目标不是 npm 包。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -253,8 +253,8 @@
   },
   {
     "id": "add-refused-not-a-bundle",
-    "label": "点添加模块 + 填包名 · 预检拒 / not-a-bundle",
-    "note": "输入框里填任意包名，预检回这一条",
+    "label": "填包名 · 预检拒绝（not-a-bundle）",
+    "note": "预检拒绝原因：目标不是可安装包。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -316,8 +316,8 @@
   },
   {
     "id": "add-refused-not-a-module-or-plugin",
-    "label": "点添加模块 + 填包名 · 预检拒 / not-a-module-or-plugin",
-    "note": "输入框里填任意包名，预检回这一条",
+    "label": "填包名 · 预检拒绝（not-a-module-or-plugin）",
+    "note": "预检拒绝原因：目标既不是工作台模块，也不是插件。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -379,8 +379,8 @@
   },
   {
     "id": "add-refused-not-a-workbench-module",
-    "label": "点添加模块 + 填包名 · 预检拒 / not-a-workbench-module",
-    "note": "输入框里填任意包名，预检回这一条",
+    "label": "填包名 · 预检拒绝（not-a-workbench-module）",
+    "note": "预检拒绝原因：目标不是工作台模块。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -442,8 +442,8 @@
   },
   {
     "id": "add-refused-module-builtin-missing",
-    "label": "点添加模块 + 填包名 · 预检拒 / module-builtin-missing",
-    "note": "输入框里填任意包名，预检回这一条",
+    "label": "填包名 · 预检拒绝（module-builtin-missing）",
+    "note": "预检拒绝原因：模块声明的内置依赖缺失。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -505,8 +505,8 @@
   },
   {
     "id": "add-refused-network",
-    "label": "点添加模块 + 填包名 · 预检拒 / network",
-    "note": "输入框里填任意包名，预检回这一条",
+    "label": "填包名 · 预检拒绝（network）",
+    "note": "预检拒绝原因：网络请求失败。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -568,8 +568,8 @@
   },
   {
     "id": "add-refused-unknown",
-    "label": "点添加模块 + 填包名 · 预检拒 / unknown",
-    "note": "输入框里填任意包名，预检回这一条",
+    "label": "填包名 · 预检拒绝（unknown）",
+    "note": "预检拒绝原因：无法归类的预检错误。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -631,8 +631,8 @@
   },
   {
     "id": "add-preview",
-    "label": "点添加模块 + 填包名 · 可装",
-    "note": "输入框里填任意包名，预检通过",
+    "label": "填包名 · 预检通过",
+    "note": "预检通过：显示安装预览，点「安装」继续。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -699,8 +699,8 @@
   },
   {
     "id": "add-preview-no-source",
-    "label": "点添加模块 + 填包名 · 预览（问不出源）",
-    "note": "来源那一格是空的",
+    "label": "填包名 · 预检通过 · 来源为空",
+    "note": "来源一栏为空：安装预览无法说明从哪里安装。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -766,8 +766,8 @@
   },
   {
     "id": "add-preview-git",
-    "label": "点添加模块 + 填包名 · 预览（Git 来源）",
-    "note": "repo / ref / 目录都写出来",
+    "label": "填包名 · 预检通过 · Git 来源",
+    "note": "预览写出 repo、ref 与目录。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -837,8 +837,8 @@
   },
   {
     "id": "add-preview-plugin",
-    "label": "点添加模块 + 填包名 · 预览（插件）",
-    "note": "装的是运行时插件，不是工作台模块",
+    "label": "填包名 · 预检通过 · 插件",
+    "note": "安装的是运行时插件，不是工作台模块。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -902,8 +902,8 @@
   },
   {
     "id": "add-installing",
-    "label": "点添加模块 + 运行 · 安装中（可取消）",
-    "note": "写请求挂起；点取消回「已取消」",
+    "label": "填包名 · 点安装 · 安装中（可取消）",
+    "note": "写请求不返回：显示安装中与取消；点取消后回到「已取消」。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -970,8 +970,8 @@
   },
   {
     "id": "add-needs-approval",
-    "label": "点添加模块 + 运行 · 安装脚本待批",
-    "note": "装载成功但被脚本审批拦住：给出待批的脚本",
+    "label": "填包名 · 点安装 · 安装脚本等待批准",
+    "note": "安装已下载但被脚本审批拦截：列出等待批准的脚本。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -1038,8 +1038,8 @@
   },
   {
     "id": "add-failed-registry",
-    "label": "点添加模块 + 运行 · 失败 / 源上没有",
-    "note": "失败卡写「源上没有」",
+    "label": "填包名 · 点安装 · 安装失败：来源没有这个包",
+    "note": "失败卡说明来源中没有这个包。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -1106,8 +1106,8 @@
   },
   {
     "id": "add-failed-pnpm",
-    "label": "点添加模块 + 运行 · 失败 / 执行出错",
-    "note": "带一段原文",
+    "label": "填包名 · 点安装 · 安装失败：命令执行出错",
+    "note": "失败卡包含一段命令原始输出。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -1174,8 +1174,8 @@
   },
   {
     "id": "add-failed-host",
-    "label": "点添加模块 + 运行 · 失败 / 宿主只回一句话",
-    "note": "不是一个完整信封：界面仍要有一句人话",
+    "label": "填包名 · 点安装 · 安装失败：返回内容不完整",
+    "note": "返回内容不完整：界面仍需给出一句可读说明。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -1249,8 +1249,8 @@
   },
   {
     "id": "add-done-applied",
-    "label": "点添加模块 + 运行 · 装好了（已生效）",
-    "note": "结果屏",
+    "label": "填包名 · 点安装 · 安装完成（立即生效）",
+    "note": "结果页显示安装完成并立即生效。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -1317,8 +1317,8 @@
   },
   {
     "id": "add-done-plugin",
-    "label": "点添加模块 + 运行 · 装好了（插件）",
-    "note": "结果屏：插件行",
+    "label": "填包名 · 点安装 · 安装完成（插件）",
+    "note": "结果页显示插件行。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -1386,8 +1386,8 @@
   },
   {
     "id": "add-done-restart",
-    "label": "点添加模块 + 运行 · 装好了（要重启）",
-    "note": "说清是哪种：某个已装的包换了目录",
+    "label": "填包名 · 点安装 · 安装完成（需要重启）",
+    "note": "说明需要重启的原因：某个已安装包更换了目录。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -1454,8 +1454,8 @@
   },
   {
     "id": "add-not-a-module",
-    "label": "点添加模块 + 运行 · 装进来的不是模块",
-    "note": "给「移除」与指路",
+    "label": "填包名 · 点安装 · 安装结果不是模块",
+    "note": "结果页提供「移除」与后续指引。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -1522,8 +1522,8 @@
   },
   {
     "id": "add-cancelled",
-    "label": "点添加模块 + 运行 + 取消 · 已取消",
-    "note": "结果屏：这一趟取消了",
+    "label": "填包名 · 点安装 · 点取消 · 已取消",
+    "note": "结果页显示本次安装已取消。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -1590,8 +1590,8 @@
   },
   {
     "id": "add-removed",
-    "label": "点添加模块 + 运行 + 移除 · 移除掉了",
-    "note": "结果屏：不是模块的那一份被移除",
+    "label": "填包名 · 点安装 · 点移除 · 已移除",
+    "note": "结果页显示不是模块的那一份已移除。",
     "catalog": {
       "manifests": [],
       "installable": [],

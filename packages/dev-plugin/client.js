@@ -16,24 +16,61 @@ window.__ModuleLoader__.load({
       ['fixture-long', '一个名字特别特别长的模块用来验证省略号'],
       ['fixture-crash', '崩溃的卡片'],
       ['fixture-kit', '示例模块'],
+      ['fixture-eight', '第八个模块'],
     ];
 
+    var cardKit;
+    var cardKitRead = false;
+
+    function loadCardKit() {
+      if (cardKitRead) return cardKit;
+      cardKitRead = true;
+      try {
+        cardKit = require('@dsh-workbench/core/client').kit;
+      } catch (error) {
+        console.warn('[dev-fixtures] 取不到工作台 kit：看板卡片退化成纯文本', error);
+      }
+      return cardKit;
+    }
+
+    function cardOf(id, title, withStep, titleKey) {
+      var key = titleKey || id + '.title';
+      return function (props) {
+        var body = React.createElement('p', { style: { margin: 0, opacity: 0.7 } }, title);
+        var go = withStep
+          ? React.createElement(ui.Button, { size: 'sm', variant: 'ghost', onClick: function () { props.onNavigate('detail'); } }, '进入详情')
+          : null;
+        var kit = loadCardKit();
+        if (kit === null || kit.components === undefined || kit.components.Card === undefined) {
+          return React.createElement(React.Fragment, null, body, go);
+        }
+        return React.createElement(
+          kit.components.Card,
+          { t: props.t, title: props.t(key), refreshing: false, onRefresh: props.onRefresh },
+          body,
+          go,
+        );
+      };
+    }
+
     function faceOf(id, title) {
-      return {
+      var face = {
         unit: id,
         card:
           id === 'fixture-crash'
             ? function () {
                 throw new Error('夹具：这张卡片故意渲染失败（看一张卡片崩溃不带走面板）');
               }
-            : function () {
-                return null;
-              },
+            : cardOf(id, title, id === 'fixture-board'),
         messages: {
-          zh: Object.fromEntries([[id + '.title', title]]),
-          en: Object.fromEntries([[id + '.title', title]]),
+          zh: Object.fromEntries([[id + '.title', title], [id + '.detail', '看板详情']]),
+          en: Object.fromEntries([[id + '.title', title], [id + '.detail', 'Board detail']]),
         },
       };
+      if (id === 'fixture-board') {
+        face.steps = { detail: { titleKey: 'fixture-board.detail', View: cardOf(id, '看板详情', false, 'fixture-board.detail') } };
+      }
+      return face;
     }
 
     function registerUnits(ctx) {
@@ -106,6 +143,7 @@ window.__ModuleLoader__.load({
       sceneState.version = { scenes: scenes, current: current, error: error };
       sceneState.listeners.forEach(function (listener) { listener(); });
       syncRowHint();
+      syncExitButton();
     }
 
     var menuState = { rect: null, listeners: new Set(), version: { rect: null } };
@@ -130,7 +168,7 @@ window.__ModuleLoader__.load({
       if (id === 'real') return '通用';
       var groups = [
         ['模块市场', 'market-'],
-        ['面板', 'panel-'],
+        ['面板配置', 'panel-'],
         ['添加模块', 'add-'],
         ['启动页', 'boot-'],
       ];
@@ -140,12 +178,23 @@ window.__ModuleLoader__.load({
       return '其它';
     }
 
+    function groupOfScene(scene) {
+      return scene.group ? scene.group : groupOf(scene.id);
+    }
+
+    function groupOfCurrent() {
+      for (var index = 0; index < sceneState.scenes.length; index += 1) {
+        if (sceneState.scenes[index].id === sceneState.current) return groupOfScene(sceneState.scenes[index]);
+      }
+      return groupOf(sceneState.current);
+    }
+
     function grouped(scenes) {
-      var order = ['模块市场', '面板', '添加模块', '启动页', '其它'];
+      var order = ['模块市场', '面板', '面板配置', '添加模块', '启动页', '其它'];
       var buckets = {};
       scenes.forEach(function (scene) {
         if (scene.id === 'real') return;
-        var name = groupOf(scene.id);
+        var name = groupOfScene(scene);
         if (buckets[name] === undefined) buckets[name] = [];
         buckets[name].push(scene);
       });
@@ -174,8 +223,56 @@ window.__ModuleLoader__.load({
       if (typeof document === 'undefined') return;
       var row = document.querySelector('button[aria-label^="调试场景"]');
       if (row === null) return;
-      var text = sceneState.current === 'real' ? '真宿主' : groupOf(sceneState.current) + ' · ' + labelOf(sceneState.current);
+      var text = sceneState.current === 'real' ? '真宿主' : groupOfCurrent() + ' · ' + labelOf(sceneState.current);
       if (row.getAttribute('data-fixture-hint') !== text) row.setAttribute('data-fixture-hint', text);
+    }
+
+    var exitButton = null;
+
+    function ensureExitButton() {
+      if (typeof document === 'undefined' || document.body === undefined) return null;
+      if (exitButton !== null) return exitButton;
+      var existing = document.querySelector('button[data-fixture-exit]');
+      if (existing !== null) {
+        exitButton = existing;
+        return exitButton;
+      }
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.setAttribute('data-fixture-exit', '');
+      button.setAttribute('aria-label', '退出启动页，切回真宿主');
+      button.title = '退出启动页（切回真宿主）';
+      button.textContent = '退出启动页';
+      button.style.cssText = [
+        'position:fixed',
+        'top:var(--wb-len-12)',
+        'right:var(--wb-len-12)',
+        'z-index:2147483003',
+        'display:none',
+        'padding:var(--wb-len-6) var(--wb-len-12)',
+        'border:1px solid var(--dsw-alias-border-l2)',
+        'border-radius:var(--dsw-radius-md)',
+        'background:var(--dsw-alias-bg-layer-3)',
+        'color:var(--dsw-alias-label-primary)',
+        'font-family:var(--dsw-font-family)',
+        'font-size:var(--dsw-font-xs-13-font-size)',
+        'box-shadow:var(--dsw-elevation-panel)',
+        'cursor:pointer',
+      ].join(';');
+      button.addEventListener('click', function () {
+        switchScene('real').catch(function () {
+          publish(sceneState.scenes, sceneState.current, '退出启动页失败');
+        });
+      });
+      document.body.appendChild(button);
+      exitButton = button;
+      return button;
+    }
+
+    function syncExitButton() {
+      var button = ensureExitButton();
+      if (button === null) return;
+      button.style.display = sceneState.current.indexOf('boot-') === 0 ? 'inline-flex' : 'none';
     }
 
     function clearSceneParam() {
@@ -344,7 +441,7 @@ window.__ModuleLoader__.load({
 
       React.useEffect(function () {
         if (sceneState.current === 'real') return;
-        var currentGroup = groupOf(sceneState.current);
+        var currentGroup = groupOfCurrent();
         setExpanded(function (current) {
           if (current[currentGroup] === true) return current;
           var next = {};
@@ -417,7 +514,7 @@ window.__ModuleLoader__.load({
             'span',
             { style: { fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' } },
             '调试场景',
-            React.createElement('span', { style: { opacity: 0.45, fontWeight: 400, fontSize: 11 } }, state.current === 'real' ? '真宿主' : groupOf(state.current)),
+            React.createElement('span', { style: { opacity: 0.45, fontWeight: 400, fontSize: 11 } }, state.current === 'real' ? '真宿主' : groupOfCurrent()),
           ),
           React.createElement(
             'div',
@@ -458,6 +555,7 @@ window.__ModuleLoader__.load({
         'dev-fixtures: 场景入口',
       );
       setTimeout(syncRowHint, 0);
+      setTimeout(syncExitButton, 0);
       var hintTimer = setInterval(syncRowHint, 500);
       ctx.effect(function () {
         return function () { clearInterval(hintTimer); };

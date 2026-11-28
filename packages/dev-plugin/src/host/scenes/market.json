@@ -1,8 +1,8 @@
 [
   {
     "id": "market-empty",
-    "label": "市场空态（干净机器）",
-    "note": "一个模块都没装：工作台本体那一行常驻，下面给空态与「创建模块」",
+    "label": "市场空态",
+    "note": "没有安装任何模块：工作台一行常驻，下面显示空态与「创建模块」。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -47,8 +47,8 @@
   },
   {
     "id": "market-installed",
-    "label": "已装",
-    "note": "一条已装：有版本、有「卸载」",
+    "label": "已安装",
+    "note": "显示版本与「卸载」。",
     "catalog": {
       "manifests": [
         {
@@ -144,8 +144,8 @@
   },
   {
     "id": "market-outdated",
-    "label": "已装 · 缺命令（行上只显示有新版本）",
-    "note": "行上只说「有新版本」，不点名缺什么",
+    "label": "已安装 · 缺少命令",
+    "note": "行上只显示「有新版本」，不说明缺少什么。",
     "catalog": {
       "manifests": [
         {
@@ -244,8 +244,8 @@
   },
   {
     "id": "market-module-update",
-    "label": "模块包有新版本",
-    "note": "行上给「更新」，装了要重启",
+    "label": "模块有新版本",
+    "note": "行上提供「更新」；安装后需要重启。",
     "catalog": {
       "manifests": [
         {
@@ -343,7 +343,7 @@
   {
     "id": "market-outdated-release",
     "label": "依赖有新版本",
-    "note": "模块版本没变，行上给「更新依赖」",
+    "note": "模块版本未变，行上提供「更新依赖」。",
     "catalog": {
       "manifests": [
         {
@@ -442,8 +442,8 @@
   },
   {
     "id": "market-missing",
-    "label": "未装（可装）",
-    "note": "状态 missing、装法 ready：行上给「安装」",
+    "label": "未安装 · 可安装",
+    "note": "安装方式可自动完成：行上提供「安装」。",
     "catalog": {
       "manifests": [
         {
@@ -539,8 +539,8 @@
   },
   {
     "id": "market-missing-env",
-    "label": "未装 + 要先设环境变量",
-    "note": "供给源要一个环境变量：行上只说明、不给安装",
+    "label": "未安装 · 需要环境变量",
+    "note": "行上只说明，不提供安装按钮。",
     "catalog": {
       "manifests": [
         {
@@ -631,8 +631,8 @@
   },
   {
     "id": "market-missing-undeclared",
-    "label": "未装 · 模块没声明来源",
-    "note": "宿主没给装法：行上不给按钮",
+    "label": "未安装 · 未声明来源",
+    "note": "行上不提供按钮。",
     "catalog": {
       "manifests": [
         {
@@ -707,7 +707,7 @@
   {
     "id": "market-checking",
     "label": "检测中",
-    "note": "能力读口不回：整页停在骨架屏，不会落成空态",
+    "note": "模块能力请求不返回：整页停在骨架屏，不落成空态。",
     "catalog": {
       "manifests": [
         {
@@ -770,8 +770,8 @@
   },
   {
     "id": "market-shared",
-    "label": "两个模块（同一份安装）",
-    "note": "两行共用同一份供给",
+    "label": "两个模块共用依赖",
+    "note": "两行共用同一份依赖。",
     "catalog": {
       "manifests": [
         {
@@ -914,8 +914,8 @@
   },
   {
     "id": "market-busy",
-    "label": "可安装 · 点安装看正在装",
-    "note": "写请求挂起：行上给正在装与取消",
+    "label": "点安装 · 安装中",
+    "note": "行上显示安装中与取消。",
     "catalog": {
       "manifests": [
         {
@@ -1015,8 +1015,8 @@
   },
   {
     "id": "market-confirm",
-    "label": "已装 · 点卸载看确认",
-    "note": "先弹确认，不直接删",
+    "label": "点卸载 · 确认",
+    "note": "二次确认后才删除。",
     "catalog": {
       "manifests": [
         {
@@ -1112,8 +1112,8 @@
   },
   {
     "id": "market-failed",
-    "label": "已装 · 点卸载看失败",
-    "note": "写请求回失败，红字贴行",
+    "label": "点卸载 · 卸载失败",
+    "note": "错误显示在行上。",
     "catalog": {
       "manifests": [
         {
@@ -1218,7 +1218,7 @@
   {
     "id": "market-long-title",
     "label": "超长模块名",
-    "note": "省略号会不会把按钮挤下去",
+    "note": "检查省略号是否影响按钮位置。",
     "catalog": {
       "manifests": [
         {
@@ -1307,7 +1307,7 @@
   {
     "id": "market-long-env",
     "label": "超长环境变量名",
-    "note": "环境变量名特别长时行怎么排",
+    "note": "检查换行与按钮位置。",
     "catalog": {
       "manifests": [
         {
@@ -1398,8 +1398,8 @@
   },
   {
     "id": "market-long-error",
-    "label": "已装 · 点卸载看超长错误",
-    "note": "失败卡里的长路径会不会溢出",
+    "label": "点卸载 · 超长错误",
+    "note": "检查失败卡里的长路径是否溢出。",
     "catalog": {
       "manifests": [
         {
@@ -1502,8 +1502,8 @@
   },
   {
     "id": "market-many",
-    "label": "很多行（要滚）",
-    "note": "八行已装",
+    "label": "八行已安装 · 需要滚动",
+    "note": "检查滚动与底部留白。",
     "catalog": {
       "manifests": [
         {
@@ -1865,7 +1865,7 @@
   {
     "id": "market-no-supply",
     "label": "没有环境依赖的模块",
-    "note": "供给是基座命令那种：市场里有它这一行",
+    "note": "依赖是基础命令的模块：市场中仍有一行。",
     "catalog": {
       "manifests": [
         {
@@ -1954,7 +1954,7 @@
   {
     "id": "market-no-card",
     "label": "没有卡片的模块",
-    "note": "市场里有这一行，有版本、有「更新」",
+    "note": "市场中有这一行，有版本与「更新」。",
     "catalog": {
       "manifests": [
         {
@@ -2039,8 +2039,8 @@
   },
   {
     "id": "market-local-no-update",
-    "label": "本机那份（link: 装的）",
-    "note": "有「本地」标记、不给「更新」",
+    "label": "本地目录安装 · 不提供更新",
+    "note": "显示「本地」标记，不提供「更新」。",
     "catalog": {
       "manifests": [
         {
@@ -2129,8 +2129,8 @@
   },
   {
     "id": "market-installed-refused",
-    "label": "本机装了，但宿主不认它的声明",
-    "note": "行上说得出理由（只有本机清单、没有目录行）",
+    "label": "本机已安装 · 声明未通过",
+    "note": "行上说明理由：只有本机清单，没有安装目录。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -2199,8 +2199,8 @@
   },
   {
     "id": "market-installed-pending",
-    "label": "本机装了、宿主还没加载它",
-    "note": "重启一次就会出来（行上写「未知」并指路）",
+    "label": "本机已安装 · 尚未加载",
+    "note": "重启后出现；行上显示「未知」并说明下一步。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -2266,8 +2266,8 @@
   },
   {
     "id": "market-installed-pending-update",
-    "label": "本机装了、还没加载 + 源上有新版本",
-    "note": "给「更新」，也说明要重启",
+    "label": "本机已安装 · 尚未加载 · 有新版本",
+    "note": "提供「更新」，并说明需要重启。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -2334,8 +2334,8 @@
   },
   {
     "id": "market-unreadable",
-    "label": "有模块读不出来",
-    "note": "三份坏模块：段头挂徽标",
+    "label": "模块无法读取",
+    "note": "三份损坏模块：分组标题带标记。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -2394,8 +2394,8 @@
   },
   {
     "id": "market-read-failed",
-    "label": "已装清单读失败",
-    "note": "读口回错：市场显示重试卡，不落成空态",
+    "label": "已安装清单读取失败",
+    "note": "读取接口返回错误：市场显示重试卡，不落成空态。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -2451,8 +2451,8 @@
   },
   {
     "id": "market-plugin-outdated",
-    "label": "插件：有新版本",
-    "note": "给更新 / 卸载",
+    "label": "插件有新版本",
+    "note": "提供更新与卸载。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -2506,8 +2506,8 @@
   },
   {
     "id": "market-plugin-local",
-    "label": "插件：本地目录装的",
-    "note": "没有版本源，只给卸载",
+    "label": "插件从本地目录安装",
+    "note": "没有版本来源，只提供卸载。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -2559,8 +2559,8 @@
   },
   {
     "id": "market-plugin-alias",
-    "label": "插件名 ≠ 包名",
-    "note": "行上两个都写出来（按包名更新 / 卸载）",
+    "label": "插件名与包名不同",
+    "note": "行上同时写出两个名字；按包名更新与卸载。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -2614,8 +2614,8 @@
   },
   {
     "id": "market-plugin-broken",
-    "label": "插件装坏了",
-    "note": "目录在但看不出是个插件：直说，给卸载与指路",
+    "label": "插件损坏",
+    "note": "目录存在但无法识别为插件：行上说明，提供卸载与指引。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -2671,7 +2671,7 @@
   {
     "id": "market-workbench-update",
     "label": "工作台有新版本",
-    "note": "这一行给「更新」",
+    "note": "这一行提供「更新」。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -2717,8 +2717,8 @@
   },
   {
     "id": "market-workbench-current",
-    "label": "工作台已经最新",
-    "note": "只显示版本，没有按钮",
+    "label": "工作台已是最新",
+    "note": "只显示版本，没有按钮。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -2763,8 +2763,8 @@
   },
   {
     "id": "market-workbench-local",
-    "label": "工作台是源码目录那份",
-    "note": "link: 装的：不给更新，打「本地」",
+    "label": "工作台来自源码目录",
+    "note": "通过 link: 安装：不提供更新，显示「本地」。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -2810,8 +2810,8 @@
   },
   {
     "id": "market-workbench-restart",
-    "label": "工作台更新完待重启",
-    "note": "装的是 0.1.19、运行的是 0.1.18：黄点「重启后生效」",
+    "label": "工作台更新后待重启",
+    "note": "安装 0.1.19、运行 0.1.18：黄点提示「重启后生效」。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -2857,8 +2857,8 @@
   },
   {
     "id": "market-workbench-migrate",
-    "label": "工作台：旧数据待迁移",
-    "note": "迁移 / 不再提醒都有二次确认",
+    "label": "工作台 · 旧数据待迁移",
+    "note": "迁移与「不再提醒」都需要二次确认。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -2908,8 +2908,8 @@
   },
   {
     "id": "market-workbench-migrating",
-    "label": "工作台迁移 · 点迁移看进度",
-    "note": "行内转圈、按钮禁用",
+    "label": "工作台迁移 · 查看进度",
+    "note": "行内转圈，按钮禁用。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -2959,8 +2959,8 @@
   },
   {
     "id": "market-workbench-followup-hard",
-    "label": "工作台：硬性待办",
-    "note": "只给迁移，没有「不再提醒」",
+    "label": "工作台 · 必须迁移",
+    "note": "只提供迁移，没有「不再提醒」。",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -3010,8 +3010,8 @@
   },
   {
     "id": "market-workbench-restart-local",
-    "label": "源码目录那份永远等于装着的那份",
-    "note": "不亮「待重启」、也不劝重启",
+    "label": "源码目录安装 · 无需重启",
+    "note": "不显示「待重启」，也不提示重启。",
     "catalog": {
       "manifests": [],
       "installable": [],

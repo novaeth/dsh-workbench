@@ -35,6 +35,7 @@ interface GeneratedScene {
   readonly id: string;
   readonly label: string;
   readonly note: string;
+  readonly group?: string | undefined;
   readonly catalog: CatalogState;
   readonly modules: readonly GeneratedModule[];
   readonly workbench: WorkbenchState;
@@ -66,6 +67,7 @@ export interface Scene {
   readonly id: string;
   readonly label: string;
   readonly note?: string | undefined;
+  readonly group?: string | undefined;
   readonly world: World;
 }
 
@@ -73,6 +75,7 @@ const generated: readonly Scene[] = data.scenes.map((item) => ({
   id: item.id,
   label: item.label,
   note: item.note,
+  ...(item.group === undefined ? {} : { group: item.group }),
   world: world({
     provenance: transport('由 dev-fixtures 旧场景反建（2026-11-28）'),
     modules: item.modules as readonly InstalledModule[],

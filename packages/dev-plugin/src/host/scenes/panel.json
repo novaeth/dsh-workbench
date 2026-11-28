@@ -1,8 +1,9 @@
 [
   {
     "id": "panel-rows",
-    "label": "三行",
-    "note": "两行开着、一行关着；开关与拖动都是真的",
+    "label": "三行 · 两行启用",
+    "note": "开关与拖动都可操作；第三行停用。",
+    "group": "面板配置",
     "catalog": {
       "manifests": [
         {
@@ -120,8 +121,9 @@
   },
   {
     "id": "panel-one",
-    "label": "一行",
-    "note": "一行：已启用、装好了",
+    "label": "一行 · 已启用",
+    "note": "只启用一个模块：看板一张卡，配置一行。",
+    "group": "面板",
     "catalog": {
       "manifests": [
         {
@@ -194,7 +196,8 @@
   {
     "id": "panel-off",
     "label": "已停用",
-    "note": "开关关着（行还在，卡片不上板）",
+    "note": "开关关闭；行仍列出，卡片不出现在看板。",
+    "group": "面板配置",
     "catalog": {
       "manifests": [
         {
@@ -266,8 +269,9 @@
   },
   {
     "id": "panel-missing",
-    "label": "没装好 → 不列",
-    "note": "能力 missing：这一行不进列表（去市场装）",
+    "label": "缺少依赖 · 不列出",
+    "note": "能力状态为「缺少依赖」：这一行不进入列表，需要到模块市场安装。",
+    "group": "面板配置",
     "catalog": {
       "manifests": [
         {
@@ -339,8 +343,9 @@
   },
   {
     "id": "panel-outdated",
-    "label": "缺命令 → 不列",
-    "note": "能力 outdated：同样不进列表",
+    "label": "需要更新 · 不列出",
+    "note": "同样不进入列表，需要更新后才会出现。",
+    "group": "面板配置",
     "catalog": {
       "manifests": [
         {
@@ -412,8 +417,9 @@
   },
   {
     "id": "panel-unchecked",
-    "label": "检测不了",
-    "note": "能力 unchecked：行在、徽标说「检测不了」",
+    "label": "无法检测",
+    "note": "能力状态未知：行保留，标记显示「无法检测」。",
+    "group": "面板配置",
     "catalog": {
       "manifests": [
         {
@@ -485,8 +491,9 @@
   },
   {
     "id": "panel-many",
-    "label": "顺序与停用混着",
-    "note": "三行：顺序 / 停用混着",
+    "label": "三行 · 顺序与停用混排",
+    "note": "三行中顺序与停用状态混合；拖动可调整顺序。",
+    "group": "面板配置",
     "catalog": {
       "manifests": [
         {
@@ -604,8 +611,9 @@
   },
   {
     "id": "panel-no-card",
-    "label": "没看板的模块",
-    "note": "也列出来、带「无看板」标签，开关照常能用",
+    "label": "无看板模块",
+    "note": "仍列出一行，带「无看板」标记；开关可用。",
+    "group": "面板配置",
     "catalog": {
       "manifests": [
         {
@@ -678,7 +686,8 @@
   {
     "id": "panel-long",
     "label": "超长模块名",
-    "note": "省略号与开关的位置",
+    "note": "检查省略号与开关位置。",
+    "group": "面板配置",
     "catalog": {
       "manifests": [
         {
@@ -750,8 +759,9 @@
   },
   {
     "id": "panel-hidden",
-    "label": "卸载后不显示",
-    "note": "未启用 + 没装：配置里有、列表里不出现",
+    "label": "未启用且未安装 · 不列出",
+    "note": "配置中有记录，但列表不显示。",
+    "group": "面板配置",
     "catalog": {
       "manifests": [
         {
@@ -823,8 +833,9 @@
   },
   {
     "id": "panel-busy",
-    "label": "面板 · 点开关看改配置",
-    "note": "写请求挂起，开关禁用",
+    "label": "点开关 · 写配置不返回",
+    "note": "开关禁用。",
+    "group": "面板配置",
     "catalog": {
       "manifests": [
         {
@@ -900,8 +911,9 @@
   },
   {
     "id": "panel-failed",
-    "label": "面板 · 点开关看失败",
-    "note": "写请求回失败，红字",
+    "label": "点开关 · 写配置失败",
+    "note": "行上显示错误。",
+    "group": "面板配置",
     "catalog": {
       "manifests": [
         {
@@ -980,8 +992,9 @@
   },
   {
     "id": "panel-drag",
-    "label": "面板 · 点住行拖看落点",
-    "note": "拖动时显示落点提示（客户端状态）",
+    "label": "拖动行 · 查看落点",
+    "note": "拖动时显示落点提示（客户端状态）。",
+    "group": "面板配置",
     "catalog": {
       "manifests": [
         {
@@ -1053,8 +1066,9 @@
   },
   {
     "id": "panel-checking",
-    "label": "还没探到",
-    "note": "能力读口不回：没有徽标",
+    "label": "能力探测不返回",
+    "note": "行上没有标记，不得显示为缺少依赖。",
+    "group": "面板配置",
     "catalog": {
       "manifests": [
         {
@@ -1124,8 +1138,9 @@
   },
   {
     "id": "panel-plugins",
-    "label": "插件行",
-    "note": "插件行：一条开着、一条关着",
+    "label": "插件行 · 一开一关",
+    "note": "两个插件行：一个启用、一个停用。",
+    "group": "面板配置",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -1183,8 +1198,9 @@
   },
   {
     "id": "panel-empty",
-    "label": "列表空",
-    "note": "一个模块都没开：空态与它的两条出路",
+    "label": "空看板",
+    "note": "没有启用任何模块：空态提供创建模块、选择模块与浏览市场三条路径。",
+    "group": "面板",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -1229,8 +1245,9 @@
   },
   {
     "id": "panel-unread",
-    "label": "配置还没读到",
-    "note": "面板读口一直不回：看板说「正在读取」、列表不落空态",
+    "label": "读取面板配置不返回",
+    "note": "看板显示「正在读取面板配置…」，配置列表不落空态。",
+    "group": "面板",
     "catalog": {
       "manifests": [],
       "installable": [],
@@ -1275,6 +1292,660 @@
         "kind": "hang"
       }
     },
+    "writes": {}
+  },
+  {
+    "id": "panel-manifests-reading",
+    "label": "读取模块清单不返回",
+    "note": "看板显示「正在读取模块清单…」。",
+    "group": "面板",
+    "catalog": {
+      "manifests": [
+        {
+          "id": "fixture-argocd",
+          "titleKey": "fixture-argocd.title",
+          "card": {
+            "order": 10
+          },
+          "tools": [],
+          "host": {
+            "inject": []
+          }
+        }
+      ],
+      "installable": [
+        "fixture-argocd"
+      ],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [
+        {
+          "id": "fixture-argocd",
+          "shown": true,
+          "source": "user",
+          "hasCard": true
+        }
+      ],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [
+      {
+        "unit": "fixture-argocd",
+        "status": "ok",
+        "needs": []
+      }
+    ],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {
+      "unit-manifests": {
+        "kind": "hang"
+      }
+    },
+    "writes": {}
+  },
+  {
+    "id": "panel-read-failed",
+    "label": "读取面板配置失败",
+    "note": "看板显示重试卡，不落空态。",
+    "group": "面板",
+    "catalog": {
+      "manifests": [
+        {
+          "id": "fixture-argocd",
+          "titleKey": "fixture-argocd.title",
+          "card": {
+            "order": 10
+          },
+          "tools": [],
+          "host": {
+            "inject": []
+          }
+        }
+      ],
+      "installable": [
+        "fixture-argocd"
+      ],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [
+        {
+          "id": "fixture-argocd",
+          "shown": true,
+          "source": "user",
+          "hasCard": true
+        }
+      ],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [
+      {
+        "unit": "fixture-argocd",
+        "status": "ok",
+        "needs": []
+      }
+    ],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {
+      "panels": {
+        "kind": "envelope",
+        "body": {
+          "ok": false,
+          "error": {
+            "code": "read",
+            "message": "面板配置没读出来（夹具）"
+          }
+        }
+      }
+    },
+    "writes": {}
+  },
+  {
+    "id": "panel-manifests-failed",
+    "label": "读取模块清单失败",
+    "note": "清单请求返回错误：看板显示重试卡，标题说明模块清单未能读出。",
+    "group": "面板",
+    "catalog": {
+      "manifests": [
+        {
+          "id": "fixture-argocd",
+          "titleKey": "fixture-argocd.title",
+          "card": {
+            "order": 10
+          },
+          "tools": [],
+          "host": {
+            "inject": []
+          }
+        }
+      ],
+      "installable": [
+        "fixture-argocd"
+      ],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [
+        {
+          "id": "fixture-argocd",
+          "shown": true,
+          "source": "user",
+          "hasCard": true
+        }
+      ],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [
+      {
+        "unit": "fixture-argocd",
+        "status": "ok",
+        "needs": []
+      }
+    ],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {
+      "unit-manifests": {
+        "kind": "envelope",
+        "body": {
+          "ok": false,
+          "error": {
+            "code": "read",
+            "message": "模块清单没读出来（夹具）"
+          }
+        }
+      }
+    },
+    "writes": {}
+  },
+  {
+    "id": "panel-many-cards",
+    "label": "八张卡 · 需要滚动",
+    "note": "列满，内容区可滚动。",
+    "group": "面板",
+    "catalog": {
+      "manifests": [
+        {
+          "id": "fixture-argocd",
+          "titleKey": "fixture-argocd.title",
+          "card": {
+            "order": 10
+          },
+          "tools": [],
+          "host": {
+            "inject": []
+          }
+        },
+        {
+          "id": "fixture-cmdb",
+          "titleKey": "fixture-cmdb.title",
+          "card": {
+            "order": 10
+          },
+          "tools": [],
+          "host": {
+            "inject": []
+          }
+        },
+        {
+          "id": "fixture-demo",
+          "titleKey": "fixture-demo.title",
+          "card": {
+            "order": 10
+          },
+          "tools": [],
+          "host": {
+            "inject": []
+          }
+        },
+        {
+          "id": "fixture-board",
+          "titleKey": "fixture-board.title",
+          "card": {
+            "order": 10
+          },
+          "tools": [],
+          "host": {
+            "inject": []
+          }
+        },
+        {
+          "id": "fixture-plain",
+          "titleKey": "fixture-plain.title",
+          "card": {
+            "order": 10
+          },
+          "tools": [],
+          "host": {
+            "inject": []
+          }
+        },
+        {
+          "id": "fixture-long",
+          "titleKey": "fixture-long.title",
+          "card": {
+            "order": 10
+          },
+          "tools": [],
+          "host": {
+            "inject": []
+          }
+        },
+        {
+          "id": "fixture-kit",
+          "titleKey": "fixture-kit.title",
+          "card": {
+            "order": 10
+          },
+          "tools": [],
+          "host": {
+            "inject": []
+          }
+        },
+        {
+          "id": "fixture-eight",
+          "titleKey": "fixture-eight.title",
+          "card": {
+            "order": 10
+          },
+          "tools": [],
+          "host": {
+            "inject": []
+          }
+        }
+      ],
+      "installable": [
+        "fixture-argocd",
+        "fixture-cmdb",
+        "fixture-demo",
+        "fixture-board",
+        "fixture-plain",
+        "fixture-long",
+        "fixture-kit",
+        "fixture-eight"
+      ],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [
+        {
+          "id": "fixture-argocd",
+          "shown": true,
+          "source": "user",
+          "hasCard": true
+        },
+        {
+          "id": "fixture-cmdb",
+          "shown": true,
+          "source": "user",
+          "hasCard": true
+        },
+        {
+          "id": "fixture-demo",
+          "shown": true,
+          "source": "user",
+          "hasCard": true
+        },
+        {
+          "id": "fixture-board",
+          "shown": true,
+          "source": "user",
+          "hasCard": true
+        },
+        {
+          "id": "fixture-plain",
+          "shown": true,
+          "source": "user",
+          "hasCard": true
+        },
+        {
+          "id": "fixture-long",
+          "shown": true,
+          "source": "user",
+          "hasCard": true
+        },
+        {
+          "id": "fixture-kit",
+          "shown": true,
+          "source": "user",
+          "hasCard": true
+        },
+        {
+          "id": "fixture-eight",
+          "shown": true,
+          "source": "user",
+          "hasCard": true
+        }
+      ],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [
+      {
+        "unit": "fixture-argocd",
+        "status": "ok",
+        "needs": []
+      },
+      {
+        "unit": "fixture-cmdb",
+        "status": "ok",
+        "needs": []
+      },
+      {
+        "unit": "fixture-demo",
+        "status": "ok",
+        "needs": []
+      },
+      {
+        "unit": "fixture-board",
+        "status": "ok",
+        "needs": []
+      },
+      {
+        "unit": "fixture-plain",
+        "status": "ok",
+        "needs": []
+      },
+      {
+        "unit": "fixture-long",
+        "status": "ok",
+        "needs": []
+      },
+      {
+        "unit": "fixture-kit",
+        "status": "ok",
+        "needs": []
+      },
+      {
+        "unit": "fixture-eight",
+        "status": "ok",
+        "needs": []
+      }
+    ],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {}
+  },
+  {
+    "id": "panel-card-crash",
+    "label": "一张卡渲染失败",
+    "note": "失败只影响这一张卡，旁边的卡仍显示。",
+    "group": "面板",
+    "catalog": {
+      "manifests": [
+        {
+          "id": "fixture-argocd",
+          "titleKey": "fixture-argocd.title",
+          "card": {
+            "order": 10
+          },
+          "tools": [],
+          "host": {
+            "inject": []
+          }
+        },
+        {
+          "id": "fixture-crash",
+          "titleKey": "fixture-crash.title",
+          "card": {
+            "order": 10
+          },
+          "tools": [],
+          "host": {
+            "inject": []
+          }
+        }
+      ],
+      "installable": [
+        "fixture-argocd",
+        "fixture-crash"
+      ],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [
+        {
+          "id": "fixture-argocd",
+          "shown": true,
+          "source": "user",
+          "hasCard": true
+        },
+        {
+          "id": "fixture-crash",
+          "shown": true,
+          "source": "user",
+          "hasCard": true
+        }
+      ],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [
+      {
+        "unit": "fixture-argocd",
+        "status": "ok",
+        "needs": []
+      },
+      {
+        "unit": "fixture-crash",
+        "status": "ok",
+        "needs": []
+      }
+    ],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
+    "writes": {}
+  },
+  {
+    "id": "panel-step",
+    "label": "卡片内层 · 点「进入详情」",
+    "note": "面包屑变为「看板 › 详情」，返回后回到看板。",
+    "group": "面板",
+    "catalog": {
+      "manifests": [
+        {
+          "id": "fixture-board",
+          "titleKey": "fixture-board.title",
+          "card": {
+            "order": 10
+          },
+          "tools": [],
+          "host": {
+            "inject": []
+          }
+        }
+      ],
+      "installable": [
+        "fixture-board"
+      ],
+      "refusals": []
+    },
+    "modules": [],
+    "workbench": {
+      "pkg": "@dsh-workbench/core",
+      "installed": "1.5.6"
+    },
+    "panels": {
+      "units": [
+        {
+          "id": "fixture-board",
+          "shown": true,
+          "source": "user",
+          "hasCard": true
+        }
+      ],
+      "plugins": [],
+      "defaults": [],
+      "own": false,
+      "changed": {}
+    },
+    "plugins": [],
+    "capabilities": [
+      {
+        "unit": "fixture-board",
+        "status": "ok",
+        "needs": []
+      }
+    ],
+    "preflight": {
+      "phase": "ready",
+      "at": 1790574156506,
+      "steps": [
+        {
+          "id": "cli",
+          "status": "ok",
+          "detail": "2.0.3"
+        },
+        {
+          "id": "bridge",
+          "status": "ok",
+          "detail": "Everything looks good!"
+        }
+      ],
+      "paths": {
+        "workbenchRoot": "/Users/you/.dsh/workbench",
+        "dshHome": "/Users/you/.dsh"
+      }
+    },
+    "faults": {},
     "writes": {}
   }
 ]

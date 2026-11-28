@@ -259,7 +259,7 @@ export function projectRoute(
   if (route === MODULE_VERSIONS_ROUTE) return moduleVersionsOf(world);
   if (route === MARKET_INSTALLED_ROUTE) return marketInstalledOf(world);
   if (route === INSTALLED_PLUGINS_ROUTE) return installedPluginsOf(world);
-  if (route === PREFLIGHT_ROUTE) return preflightOf(world);
+  if (route === PREFLIGHT_ROUTE) return { ok: true, ...preflightOf(world) };
   if (route === HEALTH_ROUTE) {
     return { ok: true, capabilities: { console: true, pluginMarket: true, browserBridge: true } };
   }

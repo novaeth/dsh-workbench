@@ -32,6 +32,12 @@ describe('接管清单覆盖：新路由不补投影/golden/parity 就红', () =
     }
   });
 
+  it('★ preflight 也是读口信封，不能把快照裸给客户端', () => {
+    const payload = projectRoute(emptyWorld(), 'preflight') as { ok?: boolean; phase?: string };
+    expect(payload.ok).toBe(true);
+    expect(payload.phase).toBe('ready');
+  });
+
   it('★ 每条被接管的读口都有契约 golden', () => {
     for (const route of READ_ROUTES) {
       if ((RUNTIME_ROUTES as readonly string[]).includes(route)) continue;

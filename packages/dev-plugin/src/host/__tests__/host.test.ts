@@ -56,6 +56,15 @@ describe('夹具宿主：只接管清单里的精确路由', () => {
     expect(reply.body).toMatchObject({ manifests: [{ id: 'issues' }] });
   });
 
+  it('★ preflight 也走读口信封：客户端按 ok 判断，不能收到裸快照', async () => {
+    const host = createFixtureHost();
+    const { res, read } = fakeResponse();
+
+    await host.handle('preflight', request('/workbench/api/preflight'), res);
+
+    expect(read().body).toMatchObject({ ok: true, phase: 'ready' });
+  });
+
   it('panels 按 path 选中工作区', async () => {
     const host = createFixtureHost(sample());
     const { res, read } = fakeResponse();

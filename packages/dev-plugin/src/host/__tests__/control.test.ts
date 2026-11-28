@@ -68,6 +68,40 @@ describe('场景控制面', () => {
     expect(host.world().machine.modules.length).toBeGreaterThan(0);
   });
 
+  it('重置到 real 会改 current，不只是回一句 ok', async () => {
+    const host = createFixtureHost();
+    await host.control(controlRequest({ scene: 'market-installed' }), fakeResponse().res);
+
+    const response = fakeResponse();
+    await host.control(controlRequest({ scene: 'real' }), response.res);
+
+    expect(response.status()).toBe(200);
+    expect(response.body()).toMatchObject({ ok: true, scene: 'real' });
+    expect(host.scene().id).toBe('real');
+    expect(host.world().machine.modules).toEqual([]);
+  });
+
+  it('场景清单带分组：面板与面板配置分开', () => {
+    const host = createFixtureHost();
+    const response = fakeResponse();
+
+    host.scenes(getRequest('/workbench/api/__fixture/scenes'), response.res);
+
+    const body = response.body() as { scenes: { id: string; group: string }[] };
+    const groupOf = (id: string): string | undefined => body.scenes.find((scene) => scene.id === id)?.group;
+    expect(groupOf('panel-empty')).toBe('面板');
+    expect(groupOf('panel-unread')).toBe('面板');
+    expect(groupOf('panel-one')).toBe('面板');
+    expect(groupOf('panel-many-cards')).toBe('面板');
+    expect(groupOf('panel-card-crash')).toBe('面板');
+    expect(groupOf('panel-step')).toBe('面板');
+    expect(groupOf('panel-manifests-reading')).toBe('面板');
+    expect(groupOf('panel-read-failed')).toBe('面板');
+    expect(groupOf('panel-manifests-failed')).toBe('面板');
+    expect(groupOf('panel-rows')).toBe('面板配置');
+    expect(groupOf('panel-unchecked')).toBe('面板配置');
+  });
+
   it('changes 按 since 返回增量，epoch 不换', async () => {
     const host = createFixtureHost();
     await host.control(controlRequest({ scene: 'market-installed' }), fakeResponse().res);

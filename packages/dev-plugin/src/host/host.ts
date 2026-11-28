@@ -149,11 +149,6 @@ export function createFixtureHost(
         sendJson(res, 400, { ok: false, error: { code: 'invalid-scene', message: '缺 scene' } });
         return;
       }
-      if (id === REAL_SCENE.id) {
-        options.onScene?.(REAL_SCENE.id);
-        sendJson(res, 200, { ok: true, scene: REAL_SCENE.id, epoch: log.epoch(), rev: log.revision(), facts: [] });
-        return;
-      }
       const scene = sceneById(id);
       if (scene === undefined) {
         sendJson(res, 404, { ok: false, error: { code: 'unknown-scene', message: `没有这个场景：${id}` } });
@@ -172,7 +167,7 @@ export function createFixtureHost(
       sendJson(res, 200, {
         ok: true,
         current: current.id,
-        scenes: SCENES.map((scene) => ({ id: scene.id, label: scene.label, note: scene.note ?? '' })),
+        scenes: SCENES.map((scene) => ({ id: scene.id, label: scene.label, note: scene.note ?? '', group: scene.group ?? '' })),
         routes: TAKEOVER_ROUTES,
         paths: TAKEOVER_ROUTES.map((item) => pathOf(item.route)),
       });
