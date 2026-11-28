@@ -283,8 +283,29 @@ window.__ModuleLoader__.load({
       var expandedState = React.useState({});
       var expanded = expandedState[0];
       var setExpanded = expandedState[1];
+      var panelRef = React.useRef(null);
 
       React.useEffect(function () { setExpanded({}); }, [rect]);
+
+      React.useEffect(function () {
+        if (rect === null) return undefined;
+        function onPointerDown(event) {
+          var panel = panelRef.current;
+          var target = event.target;
+          if (panel !== null && panel.contains(target)) return;
+          if (target !== null && target.closest && target.closest('button[aria-label^="调试场景"]')) return;
+          closeMenu();
+        }
+        function onKeyDown(event) {
+          if (event.key === 'Escape') closeMenu();
+        }
+        document.addEventListener('pointerdown', onPointerDown, true);
+        document.addEventListener('keydown', onKeyDown);
+        return function () {
+          document.removeEventListener('pointerdown', onPointerDown, true);
+          document.removeEventListener('keydown', onKeyDown);
+        };
+      }, [rect]);
 
       function toggle(name) {
         setExpanded(function (current) {
@@ -305,8 +326,9 @@ window.__ModuleLoader__.load({
 
       if (rect === null) return React.createElement('span', { style: { display: 'none' }, 'data-fixture-host': '' });
       var panel = React.createElement(
-        'div',
+        ui.MenuSurface,
         {
+          ref: panelRef,
           'data-fixture-panel': '',
           style: {
             position: 'fixed',
@@ -318,12 +340,7 @@ window.__ModuleLoader__.load({
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
-            borderRadius: '12px',
-            background: 'var(--dsw-alias-bg-layer-3, #22252b)',
-            color: 'var(--dsw-alias-label-primary, #f4f6fb)',
-            border: '1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12))',
-            boxShadow: '0 12px 32px rgba(0,0,0,.36)',
-            font: '12px/1.4 ui-sans-serif,system-ui,sans-serif',
+            padding: 0,
           },
         },
         React.createElement(
