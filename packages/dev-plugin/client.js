@@ -255,16 +255,29 @@ window.__ModuleLoader__.load({
           ),
           open
             ? items.map(function (scene) {
+                var current = scene.id === state.current;
                 return React.createElement(
                   ui.Button,
                   {
                     key: scene.id,
-                    variant: scene.id === state.current ? 'secondary' : 'ghost',
+                    variant: current ? 'secondary' : 'ghost',
                     size: 'sm',
-                    style: { display: 'flex', width: '100%', justifyContent: 'flex-start', paddingLeft: '26px' },
+                    'aria-current': current ? 'true' : undefined,
+                    style: {
+                      display: 'flex',
+                      width: '100%',
+                      justifyContent: 'flex-start',
+                      paddingLeft: '26px',
+                      ...(current ? { fontWeight: 600 } : {}),
+                    },
                     onClick: function () { choose(scene.id); },
                   },
-                  scene.label,
+                  React.createElement(
+                    'span',
+                    { style: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 } },
+                    current ? React.createElement(ui.IconCheckOutlineRegular, { size: 14 }) : null,
+                    React.createElement('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, scene.label),
+                  ),
                 );
               })
             : null,
@@ -285,7 +298,17 @@ window.__ModuleLoader__.load({
       var setExpanded = expandedState[1];
       var panelRef = React.useRef(null);
 
-      React.useEffect(function () { setExpanded({}); }, [rect]);
+      React.useEffect(function () {
+        if (sceneState.current === 'real') return;
+        var currentGroup = groupOf(sceneState.current);
+        setExpanded(function (current) {
+          if (current[currentGroup] === true) return current;
+          var next = {};
+          for (var key in current) next[key] = current[key];
+          next[currentGroup] = true;
+          return next;
+        });
+      }, [sceneState.current]);
 
       React.useEffect(function () {
         if (rect === null) return undefined;
