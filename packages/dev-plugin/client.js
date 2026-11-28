@@ -161,21 +161,21 @@ window.__ModuleLoader__.load({
       return id;
     }
 
+    function ensureRowHintStyle() {
+      if (typeof document === 'undefined' || document.querySelector('style[data-fixture-hint-style]') !== null) return;
+      var style = document.createElement('style');
+      style.setAttribute('data-fixture-hint-style', '');
+      style.textContent =
+        'button[data-fixture-hint]::after{content:attr(data-fixture-hint);flex:none;margin-left:auto;padding-left:8px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.55;font-size:11px}';
+      document.head.appendChild(style);
+    }
+
     function syncRowHint() {
       if (typeof document === 'undefined') return;
       var row = document.querySelector('button[aria-label^="调试场景"]');
       if (row === null) return;
-      var hint = row.querySelector('[data-fixture-row-hint]');
-      if (hint === null) {
-        hint = document.createElement('span');
-        hint.setAttribute('data-fixture-row-hint', '');
-        hint.style.cssText =
-          'margin-left:auto;opacity:.55;font-size:11px;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-        row.appendChild(hint);
-      }
       var text = sceneState.current === 'real' ? '真宿主' : groupOf(sceneState.current) + ' · ' + labelOf(sceneState.current);
-      if (hint.textContent !== text) hint.textContent = text;
-      if (hint.title !== text) hint.title = text;
+      if (row.getAttribute('data-fixture-hint') !== text) row.setAttribute('data-fixture-hint', text);
     }
 
     function clearSceneParam() {
@@ -396,6 +396,7 @@ window.__ModuleLoader__.load({
 
     function apply(ctx) {
       registerUnits(ctx);
+      ensureRowHintStyle();
       loadScenes();
       ctx.effect(
         function () {
