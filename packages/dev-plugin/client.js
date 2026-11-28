@@ -116,6 +116,7 @@ window.__ModuleLoader__.load({
     }
 
     function openMenu(rect) {
+      syncRowHint();
       menuState.rect = rect;
       menuState.version = { rect: rect };
       menuState.listeners.forEach(function (listener) { listener(); });
@@ -407,9 +408,6 @@ window.__ModuleLoader__.load({
         },
         'dev-fixtures: 场景入口',
       );
-      if (typeof MutationObserver === 'function' && typeof document !== 'undefined') {
-        new MutationObserver(function () { syncRowHint(); }).observe(document.body, { childList: true, subtree: true });
-      }
       setTimeout(syncRowHint, 0);
       ctx.effect(
         function () {
@@ -423,22 +421,22 @@ window.__ModuleLoader__.load({
         'dev-fixtures: 场景浮层',
       );
       if (typeof document.addEventListener === 'function') {
-        document.addEventListener(
-          'click',
-          function (event) {
-            var row = event.target && event.target.closest ? event.target.closest('button') : null;
-            if (row === null || row.textContent.indexOf('调试场景') !== 0) return;
-            event.preventDefault();
-            event.stopPropagation();
-            if (menuState.rect !== null) {
-              closeMenu();
-              return;
-            }
-            var box = row.getBoundingClientRect();
-            openMenu({ left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height });
-          },
-          true,
-        );
+        function onSceneRowClick(event) {
+          var row = event.target && event.target.closest ? event.target.closest('button') : null;
+          if (row === null || row.textContent.indexOf('调试场景') !== 0) return;
+          event.preventDefault();
+          event.stopPropagation();
+          if (menuState.rect !== null) {
+            closeMenu();
+            return;
+          }
+          var box = row.getBoundingClientRect();
+          openMenu({ left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height });
+        }
+        document.addEventListener('click', onSceneRowClick, true);
+        ctx.effect(function () {
+          return function () { document.removeEventListener('click', onSceneRowClick, true); };
+        }, 'dev-fixtures: 场景入口点击');
       }
     }
 
