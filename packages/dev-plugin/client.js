@@ -4,6 +4,7 @@ window.__ModuleLoader__.load({
     var module = { exports: {} };
     var exports = module.exports;
     var React = require('react');
+    var ReactDOM = require('react-dom');
     var ui = require('@deepseek-ai/dsh-client-ui-primitives');
 
     var SAMPLE = [
@@ -106,6 +107,23 @@ window.__ModuleLoader__.load({
       sceneState.listeners.forEach(function (listener) { listener(); });
     }
 
+    var menuState = { rect: null, listeners: new Set(), version: { rect: null } };
+
+    function subscribeMenu(listener) {
+      menuState.listeners.add(listener);
+      return function () { menuState.listeners.delete(listener); };
+    }
+
+    function openMenu(rect) {
+      menuState.rect = rect;
+      menuState.version = { rect: rect };
+      menuState.listeners.forEach(function (listener) { listener(); });
+    }
+
+    function closeMenu() {
+      openMenu(null);
+    }
+
     function groupOf(id) {
       if (id === 'real') return '通用';
       var groups = [
@@ -184,7 +202,7 @@ window.__ModuleLoader__.load({
         });
     }
 
-    function menuChildren(state) {
+    function menuChildren(state, choose) {
       var groups = grouped(state.scenes);
       var children = groups.map(function (pair) {
         var name = pair[0];
@@ -220,34 +238,47 @@ window.__ModuleLoader__.load({
 
     function SceneMenuHost() {
       var state = React.useSyncExternalStore(subscribe, snapshot);
-      var anchorState = React.useState(null);
-      var openState = React.useState(false);
-      var anchor = anchorState[0];
-      var setAnchor = anchorState[1];
-      var open = openState[0];
-      var setOpen = openState[1];
+      var menu = React.useSyncExternalStore(subscribeMenu, function () { return menuState.version; });
+      var rect = menu.rect;
 
-      React.useEffect(function () {
-        function onOpen(event) {
-          setAnchor(event.detail.anchor);
-          setOpen(true);
-        }
-        window.addEventListener('dsh-wb-fixture-open', onOpen);
-        return function () { window.removeEventListener('dsh-wb-fixture-open', onOpen); };
-      }, []);
+      function choose(id) {
+        closeMenu();
+        switchScene(id).catch(function () {
+          publish(state.scenes, state.current, '切换失败');
+        });
+      }
 
-      if (anchor === null) return null;
-      return React.createElement(
-        ui.Menu,
+      if (rect === null) return React.createElement('span', { style: { display: 'none' }, 'data-fixture-host': '' });
+      var panel = React.createElement(
+        'div',
         {
-          open: open,
-          onClose: function () { setOpen(false); },
-          portal: true,
-          autoFocus: true,
-          anchor: anchor,
+          'data-fixture-panel': '',
+          style: {
+            position: 'fixed',
+            left: String(Math.max(16, Math.min(rect.right + 8, 520))) + 'px',
+            top: String(Math.max(12, rect.top - 8)) + 'px',
+            zIndex: 2147483002,
+            width: '380px',
+            maxHeight: '70vh',
+            overflow: 'auto',
+            padding: '8px',
+            borderRadius: '12px',
+            background: 'var(--dsw-alias-bg-layer-3, #22252b)',
+            color: 'var(--dsw-alias-label-primary, #f4f6fb)',
+            border: '1px solid var(--dsw-alias-border-l2, rgba(255,255,255,.12))',
+            boxShadow: '0 12px 32px rgba(0,0,0,.36)',
+            font: '12px/1.4 ui-sans-serif,system-ui,sans-serif',
+          },
         },
-        menuChildren(state),
+        React.createElement(
+          'div',
+          { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 4px 6px' } },
+          React.createElement('span', { style: { fontWeight: 600 } }, '调试场景'),
+          React.createElement(ui.Button, { size: 'sm', variant: 'ghost', onClick: closeMenu }, '关闭'),
+        ),
+        menuChildren(state, choose),
       );
+      return ReactDOM.createPortal(panel, document.body);
     }
 
     function FixtureGlyph(props) {
@@ -259,25 +290,28 @@ window.__ModuleLoader__.load({
     function apply(ctx) {
       registerUnits(ctx);
       loadScenes();
-      ctx.inject(['slots'], function () {
-        ctx.effect(
-          function () {
-            var entry = ctx.slots.register(
+      ctx.effect(
+        function () {
+          return ctx.slots.inject('sidebar.panellist', function () {
+            return ctx.slots.register(
               { name: 'sidebar.panellist', id: 'fixture-scenes', label: '调试场景', order: 20 },
               FixtureGlyph,
             );
-            var host = ctx.slots.register(
+          });
+        },
+        'dev-fixtures: 场景入口',
+      );
+      ctx.effect(
+        function () {
+          return ctx.slots.inject('sidebar.footer.action', function () {
+            return ctx.slots.register(
               { name: 'sidebar.footer.action', id: 'fixture-scenes-host' },
               SceneMenuHost,
             );
-            return function () {
-              entry();
-              host();
-            };
-          },
-          'dev-fixtures: 场景入口',
-        );
-      });
+          });
+        },
+        'dev-fixtures: 场景浮层',
+      );
       if (typeof document.addEventListener === 'function') {
         document.addEventListener(
           'click',
@@ -286,7 +320,12 @@ window.__ModuleLoader__.load({
             if (row === null || row.textContent.indexOf('调试场景') !== 0) return;
             event.preventDefault();
             event.stopPropagation();
-            window.dispatchEvent(new CustomEvent('dsh-wb-fixture-open', { detail: { anchor: row } }));
+            if (menuState.rect !== null) {
+              closeMenu();
+              return;
+            }
+            var box = row.getBoundingClientRect();
+            openMenu({ left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height });
           },
           true,
         );

@@ -169,7 +169,7 @@ export function createFixtureHost(
       sendJson(res, 200, {
         ok: true,
         current: current.id,
-        scenes: [...SCENES.map((scene) => ({ id: scene.id, label: scene.label })), REAL_SCENE],
+        scenes: SCENES.map((scene) => ({ id: scene.id, label: scene.label })),
         routes: TAKEOVER_ROUTES,
         paths: TAKEOVER_ROUTES.map((item) => pathOf(item.route)),
       });
