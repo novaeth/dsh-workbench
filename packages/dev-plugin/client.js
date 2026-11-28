@@ -109,7 +109,7 @@ window.__ModuleLoader__.load({
               status.textContent = '切换失败';
               return;
             }
-            remember(scene);
+            clearSceneParam();
             status.textContent = '已切到：' + String(payload.scene);
             if (reloadAfter) location.reload();
           })
@@ -118,10 +118,10 @@ window.__ModuleLoader__.load({
           });
       }
 
-      function remember(scene) {
+      function clearSceneParam() {
         var url = new URL(location.href);
-        if (scene === 'real') url.searchParams.delete('wbScene');
-        else url.searchParams.set('wbScene', scene);
+        if (!url.searchParams.has('wbScene')) return;
+        url.searchParams.delete('wbScene');
         history.replaceState(null, '', url);
       }
 
@@ -135,6 +135,7 @@ window.__ModuleLoader__.load({
             if (wanted === null) return;
             if (wanted === payload.current) {
               sessionStorage.removeItem('wb-fixture-reload');
+              clearSceneParam();
               return;
             }
             if (sessionStorage.getItem('wb-fixture-reload') === wanted) return;
